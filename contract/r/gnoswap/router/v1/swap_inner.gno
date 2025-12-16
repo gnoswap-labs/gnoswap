@@ -22,11 +22,11 @@ const (
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func (r *routerV1) swapInner(
-	amountSpecified *i256.Int,
+	amountSpecified int64,
 	recipient address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv, poolOut *u256.Uint) {
+) (int64, int64) {
 	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
 
@@ -43,10 +43,10 @@ func (r *routerV1) swapInner(
 		data.fee,
 		recipient,
 		zeroForOne,
-		amountSpecified.ToString(),
+		formatInt64(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
-		func(cur realm, amount0Delta, amount1Delta int64) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			return router.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, data.payer)
 		},
 	)
@@ -54,20 +54,20 @@ func (r *routerV1) swapInner(
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolOut, poolRecv = i256MinMax(amount0, amount1)
+	poolOut, poolRecv := i256MinMax(amount0, amount1)
 	if poolRecv.IsOverflow() || poolOut.IsOverflow() {
 		panic("overflow in swapInner")
 	}
 
-	return poolRecv, poolOut
+	return poolRecv.Int64(), poolOut.Int64()
 }
 
 // swapDryInner performs a dry-run of a swap operation without executing it.
 func (r *routerV1) swapDryInner(
-	amountSpecified *i256.Int,
+	amountSpecified int64,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (poolRecv, poolOut *u256.Uint) {
+) (int64, int64) {
 	zeroForOne := data.tokenIn < data.tokenOut
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
@@ -77,22 +77,22 @@ func (r *routerV1) swapDryInner(
 		data.tokenOut,
 		data.fee,
 		zeroForOne,
-		amountSpecified.ToString(),
+		formatInt64(amountSpecified),
 		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {
-		return zero, zero
+		return 0, 0
 	}
 
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
-	poolOut, poolRecv = i256MinMax(amount0, amount1)
+	poolOut, poolRecv := i256MinMax(amount0, amount1)
 	if poolRecv.IsOverflow() || poolOut.IsOverflow() {
 		panic("overflow in swapDryInner")
 	}
 
-	return poolRecv, poolOut
+	return poolRecv.Int64(), poolOut.Int64()
 }
 
 // RealSwapExecutor implements SwapExecutor for actual swaps.
@@ -101,7 +101,7 @@ type RealSwapExecutor struct {
 }
 
 // execute performs the actual swap execution.
-func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	caller := runtime.PreviousRealm().Address()
 	recipient := routerAddr
 
@@ -119,7 +119,7 @@ type DrySwapExecutor struct {
 }
 
 // execute performs the dry swap execution.
-func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	previousRealmAddr := runtime.PreviousRealm().Address()
 
 	return e.router.swapDryInner(

@@ -48,10 +48,7 @@ class GnoModuleManager
 
         # Get the directory containing gnomod.toml
         module_dir = File.dirname(mod_file)
-        
-        # Skip contract/r/scenario/metric directory
-        next if module_dir.include?("contract/r/scenario/metric")
-        
+
         # Extract relative path after gno.land/
         relative_path = module_path.sub("gno.land/", "")
         

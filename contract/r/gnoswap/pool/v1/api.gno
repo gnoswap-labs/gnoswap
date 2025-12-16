@@ -10,11 +10,6 @@ import (
 )
 
 func (i *poolV1) ApiGetPool(poolPath string) string {
-	pools := i.store.GetPools()
-	if _, exists := pools[poolPath]; !exists {
-		return ""
-	}
-
 	pool := i.mustGetPool(poolPath)
 
 	node := json.ObjectNode("", map[string]*json.Node{
@@ -35,14 +30,7 @@ func (i *poolV1) ApiGetPool(poolPath string) string {
 func (i *poolV1) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 	stat := newStatNode().JSON()
 
-	pools := i.store.GetPools()
-	pool, exist := pools[poolPath]
-	if !exist {
-		return json.ObjectNode("", map[string]*json.Node{
-			"stat":  stat,
-			"error": json.StringNode("error", "pool not found"),
-		}).String()
-	}
+	pool := i.mustGetPool(poolPath)
 
 	twapTick, err := getTWAP(pool, secondsAgo)
 	if err != nil {

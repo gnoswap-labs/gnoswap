@@ -124,11 +124,6 @@ func GetPoolTierRatio(poolPath string) uint64 {
 	return getImplementation().GetPoolTierRatio(poolPath)
 }
 
-// GetPrintExternalInfo returns external incentive information as string.
-func GetPrintExternalInfo() string {
-	return getImplementation().GetPrintExternalInfo()
-}
-
 // GetSpecificTokenMinimumRewardAmount returns the minimum reward amount for a specific token.
 func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return getImplementation().GetSpecificTokenMinimumRewardAmount(tokenPath)
@@ -142,11 +137,6 @@ func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string 
 // GetUnstakingFee returns the unstaking fee percentage.
 func GetUnstakingFee() int64 {
 	return getImplementation().GetUnstakingFee()
-}
-
-// IsArchivedExternalIncentive returns whether an external incentive is archived.
-func IsArchivedExternalIncentive(incentiveId string) bool {
-	return getImplementation().IsArchivedExternalIncentive(incentiveId)
 }
 
 // IsStaked returns whether a position is staked.

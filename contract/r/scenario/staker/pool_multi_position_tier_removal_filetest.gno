@@ -242,7 +242,7 @@ func userBCreatePosition() {
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionB))
 
 	println("[EXPECTED] User B cannot stake position after tier removal")
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-010] pool is not incentivized", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-STAKER-007] pool is not incentivized", func() {
 		sr.StakeToken(cross, positionB, "")
 	})
 

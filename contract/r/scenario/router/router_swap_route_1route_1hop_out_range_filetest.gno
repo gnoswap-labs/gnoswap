@@ -99,11 +99,11 @@ func main() {
 
 	println("[INFO] Attempting ExactIn swap with high slippage tolerance")
 	println("[INFO] Expected to fail due to slippage check")
-	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)")
+	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:2710, got:367)")
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)`,
+		`[GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:2710, got:367)`,
 		func() {
 			router.ExactInSwapRoute(
 				cross,
@@ -140,5 +140,5 @@ func main() {
 // [EXPECTED] dry swap result: 367 expected: 367
 // [INFO] Attempting ExactIn swap with high slippage tolerance
 // [INFO] Expected to fail due to slippage check
-// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactIn: too few received (min:2710, got:367)
+// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:2710, got:367)
 // [INFO] Scenario completed

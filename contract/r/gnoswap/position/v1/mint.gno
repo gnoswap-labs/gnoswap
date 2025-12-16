@@ -72,13 +72,6 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 // processMintInput processes and validates user input for minting liquidity.
 // It handles token ordering, amount validation, and native token wrapping.
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
-	assertValidNumberString(input.amount0Desired)
-	assertValidNumberString(input.amount1Desired)
-	assertValidNumberString(input.amount0Min)
-	assertValidNumberString(input.amount1Min)
-	var result ProcessedMintInput
-
-	// process tokens
 	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := p.processTokens(
 		input.token0,
 		input.token1,
@@ -112,9 +105,7 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		pair.token0IsNative, pair.token1IsNative = pair.token1IsNative, pair.token0IsNative
 	}
 
-	poolPath := computePoolPath(pair.token0, pair.token1, input.fee)
-
-	result = ProcessedMintInput{
+	return ProcessedMintInput{
 		tokenPair:      pair,
 		amount0Desired: amount0Desired,
 		amount1Desired: amount1Desired,
@@ -122,10 +113,8 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		amount1Min:     amount1Min,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
-		poolPath:       poolPath,
-	}
-
-	return result, nil
+		poolPath:       pl.GetPoolPath(pair.token0, pair.token1, input.fee),
+	}, nil
 }
 
 // processTokens validates token paths and handles native token wrapping.
@@ -190,61 +179,32 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
-	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
-		currentSqrtPriceX96,
-		lowerTickSqrtPriceX96,
-		upperTickSqrtPriceX96,
-		position.Liquidity(),
-	)
-	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
-	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
-	{
-		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside0LastX128, position.FeeGrowthInside0LastX128())
-		if underflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128 underflow")
-		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.Liquidity()), q128)
+	feeGrowth := FeeGrowthInside{
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+	}
+	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
-		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), mulDiv)
-		if overflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed0 + mulDiv overflow")
-		}
-		position.SetTokensOwed0(tokensOwed0)
+	liquidityAmount, overflow := u256.Zero().AddOverflow(position.Liquidity(), liquidity)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
+	}
+	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
+	}
+	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
 	}
 
-	{
-		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside1LastX128, position.FeeGrowthInside1LastX128())
-		if underflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128 underflow")
-		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.Liquidity()), q128)
-
-		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), mulDiv)
-		if overflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed1 + mulDiv overflow")
-		}
-		position.SetTokensOwed1(tokensOwed1)
-	}
+	position.SetTokensOwed0(tokensOwed0)
+	position.SetTokensOwed1(tokensOwed1)
 
 	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
-
-	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(position.Liquidity()), liquidity)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token0Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken0Balance), amount0)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token1Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken1Balance), amount1)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
 
 	position.SetLiquidity(liquidityAmount)
 	position.SetToken0Balance(token0Balance)
@@ -255,7 +215,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	if err != nil {
 		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,
-			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.positionId),
+			ufmt.Sprintf("cannot increase liquidity for non-existent position(%d)", params.positionId),
 		)
 	}
 
@@ -286,9 +246,4 @@ func isValidTokenPath(tokenPath string) bool {
 // parseAmounts converts amount strings to u256.Uint values.
 func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
-}
-
-// computePoolPath returns the pool path based on token pair and fee tier.
-func computePoolPath(token0, token1 string, fee uint32) string {
-	return pl.GetPoolPath(token0, token1, fee)
 }

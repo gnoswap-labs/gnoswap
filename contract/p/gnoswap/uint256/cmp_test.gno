@@ -71,6 +71,7 @@ func TestLtUint64(t *testing.T) {
 		{"0", 1, true},
 		{"1", 0, false},
 		{"10", 10, false},
+		{"18446744073709551616", 1, false}, // exceeds uint64
 	}
 
 	for _, tc := range tests {
@@ -154,6 +155,33 @@ func TestGte(t *testing.T) {
 	}
 }
 
+func TestGtUint64(t *testing.T) {
+	tests := []struct {
+		x    string
+		y    uint64
+		want bool
+	}{
+		{"0", 1, false},
+		{"1", 0, true},
+		{"10", 10, false},
+		{"18446744073709551616", 1, true}, // higher word set
+	}
+
+	for _, tc := range tests {
+		x, err := FromDecimal(tc.x)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		got := x.GtUint64(tc.y)
+
+		if got != tc.want {
+			t.Errorf("GtUint64(%s, %d) = %v, want %v", tc.x, tc.y, got, tc.want)
+		}
+	}
+}
+
 func TestEq(t *testing.T) {
 	tests := []struct {
 		x    string
@@ -183,6 +211,60 @@ func TestEq(t *testing.T) {
 
 		if got != tc.want {
 			t.Errorf("Eq(%s, %s) = %v, want %v", tc.x, tc.y, got, tc.want)
+		}
+	}
+}
+
+func TestNeq(t *testing.T) {
+	tests := []struct {
+		x    string
+		y    string
+		want bool
+	}{
+		{"0", "0", false},
+		{"0", "1", true},
+		{"1", "0", true},
+		{"10", "10", false},
+		{"10", "11", true},
+	}
+
+	for _, tc := range tests {
+		x, err := FromDecimal(tc.x)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		y, err := FromDecimal(tc.y)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		got := x.Neq(y)
+
+		if got != tc.want {
+			t.Errorf("Neq(%s, %s) = %v, want %v", tc.x, tc.y, got, tc.want)
+		}
+	}
+}
+
+func TestSign(t *testing.T) {
+	tests := []struct {
+		x    string
+		want int
+	}{
+		{"0", 0},
+		{"1", 1},
+		{"18446744073709551615", 1}, // below 2^255
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819968", -1}, // 2^255
+		{MAX_UINT256, -1},
+	}
+
+	for _, tc := range tests {
+		x := MustFromDecimal(tc.x)
+		if got := x.Sign(); got != tc.want {
+			t.Errorf("Sign(%s) = %d, want %d", tc.x, got, tc.want)
 		}
 	}
 }

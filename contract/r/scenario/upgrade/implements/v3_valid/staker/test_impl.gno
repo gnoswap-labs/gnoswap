@@ -186,10 +186,6 @@ func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
 	return t.instance.GetPoolTierRatio(poolPath)
 }
 
-func (t *TestStaker) GetPrintExternalInfo() string {
-	return t.instance.GetPrintExternalInfo()
-}
-
 func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return t.instance.GetSpecificTokenMinimumRewardAmount(tokenPath)
 }
@@ -200,10 +196,6 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 
 func (t *TestStaker) GetUnstakingFee() int64 {
 	return t.instance.GetUnstakingFee()
-}
-
-func (t *TestStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	return t.instance.IsArchivedExternalIncentive(incentiveId)
 }
 
 func (t *TestStaker) IsStaked(positionId uint64) bool {

@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"strconv"
-	"strings"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,36 +12,6 @@ var (
 	zeroUint256 = u256.Zero()
 	zeroInt256  = i256.Zero()
 )
-
-// EncodeInt takes an int32 and returns a zero-padded decimal string
-// with up to 10 digits for the absolute value.
-// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
-func EncodeInt(num int32) string {
-	// Convert the absolute value to a decimal string.
-	absValue := int64(num)
-	isNegative := false
-	if num < 0 {
-		isNegative = true
-		absValue = -absValue // Safely negate into int64 to avoid overflow.
-	}
-
-	s := strconv.FormatInt(absValue, 10)
-
-	// Zero-pad to a total of 10 digits for the absolute value.
-	// (The '-' sign will be added later if needed.)
-	zerosNeeded := 10 - len(s)
-	if zerosNeeded < 0 {
-		zerosNeeded = 0
-	}
-
-	padded := strings.Repeat("0", zerosNeeded) + s
-
-	// If the original number was negative, prepend '-'.
-	if isNegative {
-		return "-" + padded
-	}
-	return padded
-}
 
 type TickResolver struct {
 	*sr.Tick
@@ -102,20 +69,18 @@ func NewTickResolver(tick *sr.Tick) *TickResolver {
 
 // swapStartHook is called when a swap starts
 // This hook initializes the batch processor for accumulating tick crosses
-func (s *stakerV1) swapStartHook() func(cur realm, poolPath string, timestamp int64) {
-	return func(cur realm, poolPath string, timestamp int64) {
-		pool, ok := s.getPools().Get(poolPath)
-		if !ok {
-			return
-		}
+func (s *stakerV1) swapStartHook(poolPath string, timestamp int64) {
+	pool, ok := s.getPools().Get(poolPath)
+	if !ok {
+		return
+	}
 
-		// Initialize batch processor for this swap
-		// This will accumulate all tick crosses until swap completion
-		currentSwapBatch := sr.NewSwapBatchProcessor(poolPath, pool, timestamp)
-		err := s.store.SetCurrentSwapBatch(currentSwapBatch)
-		if err != nil {
-			panic(err)
-		}
+	// Initialize batch processor for this swap
+	// This will accumulate all tick crosses until swap completion
+	currentSwapBatch := sr.NewSwapBatchProcessor(poolPath, pool, timestamp)
+	err := s.store.SetCurrentSwapBatch(currentSwapBatch)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -125,34 +90,32 @@ func (s *stakerV1) swapStartHook() func(cur realm, poolPath string, timestamp in
 // 1. O(1) pool state updates instead of O(n) where n = number of tick crosses
 // 2. Reduced computational overhead for reward calculations
 // 3. Atomic processing ensuring consistency across all tick updates
-func (s *stakerV1) swapEndHook() func(cur realm, poolPath string) error {
-	return func(cur realm, poolPath string) error {
-		// Validate batch processor state
-		currentSwapBatch := s.store.GetCurrentSwapBatch()
+func (s *stakerV1) swapEndHook(poolPath string) error {
+	// Validate batch processor state
+	currentSwapBatch := s.store.GetCurrentSwapBatch()
 
-		if currentSwapBatch == nil || !currentSwapBatch.IsActive() || currentSwapBatch.PoolPath() != poolPath {
-			return nil
-		}
-
-		// Disable further accumulation
-		currentSwapBatch.SetIsActive(false)
-
-		// Process all accumulated tick crosses in a single batch
-		// This is where the optimization happens - instead of processing
-		// each tick cross individually, we calculate cumulative effects
-		err := s.processBatchedTickCrosses()
-		if err != nil {
-			return err
-		}
-
-		// Clean up batch processor
-		err = s.store.SetCurrentSwapBatch(nil)
-		if err != nil {
-			return err
-		}
-
+	if currentSwapBatch == nil || !currentSwapBatch.IsActive() || currentSwapBatch.PoolPath() != poolPath {
 		return nil
 	}
+
+	// Disable further accumulation
+	currentSwapBatch.SetIsActive(false)
+
+	// Process all accumulated tick crosses in a single batch
+	// This is where the optimization happens - instead of processing
+	// each tick cross individually, we calculate cumulative effects
+	err := s.processBatchedTickCrosses()
+	if err != nil {
+		return err
+	}
+
+	// Clean up batch processor
+	err = s.store.SetCurrentSwapBatch(nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // tickCrossHook is called when a tick is crossed
@@ -160,38 +123,36 @@ func (s *stakerV1) swapEndHook() func(cur realm, poolPath string) error {
 // - During swaps: accumulates tick crosses for batch processing at swap end
 // - Outside swaps: processes tick crosses immediately for real-time updates
 // The hybrid approach optimizes for both swap performance and non-swap responsiveness
-func (s *stakerV1) tickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-	return func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
-		pool, ok := s.getPools().Get(poolPath)
-		if !ok {
-			return
-		}
-
-		tick := pool.Ticks().Get(tickId)
-		// Skip ticks with zero staked liquidity (no reward impact)
-		if tick.StakedLiquidityDelta().Sign() == 0 {
-			return
-		}
-
-		currentSwapBatch := s.store.GetCurrentSwapBatch()
-		// Batch processing path: accumulate tick crosses during active swap
-		if currentSwapBatch != nil && currentSwapBatch.IsActive() && currentSwapBatch.PoolPath() == poolPath {
-			// Pre-calculate liquidity delta with direction consideration
-			// zeroForOne swap: liquidity delta is negated (liquidity being removed from current tick)
-			liquidityDelta := tick.StakedLiquidityDelta()
-			if zeroForOne {
-				liquidityDelta = i256.Zero().Neg(liquidityDelta)
-			}
-
-			// Accumulate this tick cross for batch processing
-			currentSwapBatch.AddCross(sr.NewSwapTickCross(tickId, zeroForOne, liquidityDelta))
-			return
-		}
-
-		// Immediate processing path: handle tick crosses outside of swap context
-		// This ensures real-time updates for non-swap operations (e.g., position modifications)
-		s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
+func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+	pool, ok := s.getPools().Get(poolPath)
+	if !ok {
+		return
 	}
+
+	tick := pool.Ticks().Get(tickId)
+	// Skip ticks with zero staked liquidity (no reward impact)
+	if tick.StakedLiquidityDelta().Sign() == 0 {
+		return
+	}
+
+	currentSwapBatch := s.store.GetCurrentSwapBatch()
+	// Batch processing path: accumulate tick crosses during active swap
+	if currentSwapBatch != nil && currentSwapBatch.IsActive() && currentSwapBatch.PoolPath() == poolPath {
+		// Pre-calculate liquidity delta with direction consideration
+		// zeroForOne swap: liquidity delta is negated (liquidity being removed from current tick)
+		liquidityDelta := tick.StakedLiquidityDelta()
+		if zeroForOne {
+			liquidityDelta = i256.Zero().Neg(liquidityDelta)
+		}
+
+		// Accumulate this tick cross for batch processing
+		currentSwapBatch.AddCross(sr.NewSwapTickCross(tickId, zeroForOne, liquidityDelta))
+		return
+	}
+
+	// Immediate processing path: handle tick crosses outside of swap context
+	// This ensures real-time updates for non-swap operations (e.g., position modifications)
+	s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
 }
 
 // processTickCrossImmediate processes a single tick cross immediately
@@ -280,10 +241,11 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 
 func (s *stakerV1) setupSwapHooks() {
 	// Set tick cross hook for pool contract
-	s.poolAccessor.SetTickCrossHook(s.tickCrossHook())
+	s.poolAccessor.SetTickCrossHook(s.tickCrossHook)
 
 	// Set swap start/end hooks for batch processing
-	s.poolAccessor.SetSwapStartHook(s.swapStartHook())
+	s.poolAccessor.SetSwapStartHook(s.swapStartHook)
 
-	s.poolAccessor.SetSwapEndHook(s.swapEndHook())
+	// Set swap end hook for batch processing
+	s.poolAccessor.SetSwapEndHook(s.swapEndHook)
 }

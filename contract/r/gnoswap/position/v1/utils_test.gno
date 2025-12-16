@@ -60,37 +60,37 @@ func TestAssertValidNumberString(t *testing.T) {
 			name:                 "assertValidNumberString is failed by empty string",
 			input:                "",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input is empty",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input is empty",
 		},
 		{
 			name:                 "assertValidNumberString is failed by alphabet in string",
 			input:                "12a45",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 12a45",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input string : 12a45",
 		},
 		{
 			name:                 "assertValidNumberString is failed by special characters",
 			input:                "123@45",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 123@45",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input string : 123@45",
 		},
 		{
 			name:                 "assertValidNumberString is failed by leading plus sign",
 			input:                "+12345",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : +12345",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input string : +12345",
 		},
 		{
 			name:                 "assertValidNumberString is failed by multiple negative signs",
 			input:                "--12345",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : --12345",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input string : --12345",
 		},
 		{
 			name:                 "assertValidNumberString is failed by space in string",
 			input:                "123 45",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-005] invalid input data || input string : 123 45",
+			expectedPanicMessage: "[GNOSWAP-POSITION-004] invalid input data || input string : 123 45",
 		},
 	}
 
@@ -120,13 +120,13 @@ func TestPositionIdFrom(t *testing.T) {
 		{
 			name:        "positionIdFrom is failed by nil",
 			input:       nil,
-			expected:    "[GNOSWAP-POSITION-005] invalid input data || positionId is nil",
+			expected:    "[GNOSWAP-POSITION-004] invalid input data || positionId is nil",
 			shouldPanic: true,
 		},
 		{
 			name:        "positionIdFrom is failed by unsupported type",
 			input:       float64(1),
-			expected:    "[GNOSWAP-POSITION-005] invalid input data || unsupported positionId type",
+			expected:    "[GNOSWAP-POSITION-004] invalid input data || unsupported positionId type",
 			shouldPanic: true,
 		},
 		{
@@ -284,13 +284,13 @@ func TestPoolKeyDivide(t *testing.T) {
 		{
 			name:          "pool key divide is failed by invalid poolKey",
 			poolKey:       "gno.land/r/onbloc",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/onbloc)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey(gno.land/r/onbloc)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "pool key divide is failed by empty poolKey",
 			poolKey:       "",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey()",
 			shouldPanic:   true,
 		},
 	}
@@ -346,31 +346,31 @@ func TestSplitOf(t *testing.T) {
 		{
 			name:          "split of is failed by empty poolKey",
 			poolKey:       "",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey()",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by invalid delimiter",
 			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/gnoland/wugnot-500",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(gno.land/r/gnoland/wugnot-500)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee(gno.land/r/gnoland/wugnot-500)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by non-numeric fee",
 			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:fee",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(fee)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee(fee)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by missing fee part",
 			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee()",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee()",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by insufficient parts",
 			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/gnoswap/gns:gno.land/r/demo)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey(gno.land/r/gnoswap/gns:gno.land/r/demo)",
 			shouldPanic:   true,
 		},
 		{

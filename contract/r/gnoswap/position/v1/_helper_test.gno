@@ -54,6 +54,9 @@ const (
 )
 
 var (
+	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
+
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -569,6 +572,7 @@ func mockInstanceReposition(
 	amount1DesiredStr string,
 	amount0MinStr string,
 	amount1MinStr string,
+	deadline int64,
 	caller address,
 ) (uint64, string, int32, int32, string, string) {
 	amount0Int, _ := strconv.ParseInt(amount0DesiredStr, 10, 64)
@@ -588,6 +592,7 @@ func mockInstanceReposition(
 			amount1DesiredStr,
 			amount0MinStr,
 			amount1MinStr,
+			deadline,
 		)
 	}(cross)
 }

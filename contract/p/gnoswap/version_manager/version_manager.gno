@@ -4,7 +4,6 @@
 //
 // Key Features:
 //   - Dynamic implementation registration and switching
-//   - Permission-based access control (write/read-only) per implementation
 //   - Domain-scoped security (only authorized packages can register)
 //   - Zero-downtime upgrades through hot-swapping
 //
@@ -24,18 +23,20 @@ import (
 )
 
 // versionManager is the concrete implementation of VersionManager interface.
-// It manages multiple versioned implementations of a domain (e.g., protocol_fee/v1, protocol_fee/v2)
-// and controls their access permissions to a shared KVStore.
+// It manages multiple versioned implementations of a domain (e.g., protocol_fee/v1, protocol_fee/v2).
 //
-// The manager maintains a single active implementation with write access while keeping
-// previous versions available in read-only mode for backward compatibility.
+// Storage Access Model:
+// Implementation realms do NOT receive direct storage permissions. Instead, when calls flow
+// from the domain proxy to the implementation, runtime.CurrentRealm() remains the domain
+// (proxy) realm, which already has write permission to the KVStore. This design prevents
+// external callers from directly invoking implementation realms to modify storage.
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
 	initializers *avl.Tree
 
 	// domainKVStore is the shared storage layer accessible by all versions
-	// Access permissions are managed dynamically based on the active implementation
+	// The domain (proxy) realm is the owner and has write permission
 	domainKVStore store.KVStore
 
 	// initializeDomainStoreFn wraps the KVStore into domain-specific storage interface
@@ -51,7 +52,6 @@ type versionManager struct {
 	currentPackagePath string
 
 	// currentImplementation is the active version's instance
-	// Only this implementation has write access to domainKVStore
 	currentImplementation any
 }
 
@@ -61,9 +61,6 @@ type versionManager struct {
 // The registration process:
 //  1. Validates the caller is within the authorized domain path
 //  2. Stores the initializer function for later version switching
-//  3. Handles first-time registration differently from subsequent ones:
-//     - First registration: Activates the version with write access
-//     - Subsequent registrations: Grants read-only access only
 //
 // Parameters:
 //   - initializer: A function that receives a storage interface and returns an implementation instance
@@ -89,31 +86,23 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	// Register the initializer function for this package path
 	vm.initializers.Set(targetPackagePath, initializer)
 
-	// Determine if this is the first registration (bootstrap case)
-	initialized := vm.currentImplementation != nil
-	if initialized {
-		// Already have an active implementation, add this as read-only
-		return vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.ReadOnly)
-	}
-
-	// Grant write access to the first (current) implementation
-	err := vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
-	if err != nil {
-		return err
-	}
-
-	// First registration: activate this version as the current implementation
-	prevPackagePath := vm.currentPackagePath
-
-	// Update internal state only after successful permission grant
-	vm.currentPackagePath = targetPackagePath
-	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
-
 	chain.Emit(
 		"RegisterInitializer",
-		"previousPackagePath", prevPackagePath,
-		"newPackagePath", targetPackagePath,
+		"domainPath", vm.domainPath,
+		"registeredPackagePath", targetPackagePath,
 	)
+
+	// Initialize the current implementation if it hasn't been done yet
+	if vm.currentPackagePath == "" || vm.currentImplementation == nil {
+		vm.currentPackagePath = targetPackagePath
+		vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+
+		chain.Emit(
+			"InitializeImplementation",
+			"domainPath", vm.domainPath,
+			"newPackagePath", targetPackagePath,
+		)
+	}
 
 	return nil
 }
@@ -124,19 +113,12 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 // The switching process:
 //  1. Validates the target version has been registered via RegisterInitializer
 //  2. Retrieves and executes the target version's initializer
-//  3. Updates storage permissions:
-//     - Revokes write access from the previous active version
-//     - Grants write access to the new active version
-//     - Maintains read-only access for all non-active versions
 //
 // Parameters:
 //   - packagePath: The full package path of the target version (e.g., "gno.land/r/gnoswap/protocol_fee/v2")
 //
 // Returns:
-//   - error: If target version is not registered, initializer is invalid, or permission update fails
-//
-// Note: This operation is atomic in terms of permission changes - if any permission update fails,
-// the error is returned immediately, but previous permission changes are not rolled back.
+//   - error: If target version is not registered or initializer is invalid
 func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	// Verify the target implementation has been registered
 	if !vm.initializers.Has(packagePath) {
@@ -159,31 +141,9 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	vm.currentPackagePath = packagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
 
-	// Update storage permissions for all registered implementations
-	storeAuthorizedCallers, err := vm.domainKVStore.GetAuthorizedCallers()
-	if err != nil {
-		return err
-	}
-
-	// Reconfigure permissions: write access for new active version, read-only for others
-	packageAddress := chain.PackageAddress(packagePath)
-	for caller := range storeAuthorizedCallers {
-		updatedPermission := store.ReadOnly
-
-		// Grant write access only to the new active implementation
-		isCurrentPackageAddress := caller == packageAddress
-		if isCurrentPackageAddress {
-			updatedPermission = store.Write
-		}
-
-		err := vm.domainKVStore.UpdateAuthorizedCaller(caller, updatedPermission)
-		if err != nil {
-			return err
-		}
-	}
-
 	chain.Emit(
 		"ChangeImplementation",
+		"domainPath", vm.domainPath,
 		"previousPackagePath", prevPackagePath,
 		"newPackagePath", packagePath,
 	)
@@ -247,7 +207,7 @@ func (vm *versionManager) isContainDomainPath() bool {
 //     Used for access control to ensure only authorized packages can register
 //
 //   - kvStore: The shared key-value store that all versions will access
-//     Permissions to this store are managed dynamically by the version manager
+//     The domain realm (proxy) is the owner and has write permission to this store
 //
 //   - initializeDomainStoreFn: A factory function that wraps the KVStore into a domain-specific storage interface
 //     This abstraction allows each version to work with a familiar storage API

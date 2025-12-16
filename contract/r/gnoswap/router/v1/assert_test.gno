@@ -29,13 +29,13 @@ func TestAssertIsNotExpired(t *testing.T) {
 			name:        "expired deadline by 1 second",
 			deadline:    time.Now().Unix() - 1,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-004]",
+			errorMsg:    "[GNOSWAP-ROUTER-003]",
 		},
 		{
 			name:        "expired deadline long ago",
 			deadline:    time.Now().Unix() - 100000,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-004]",
+			errorMsg:    "[GNOSWAP-ROUTER-003]",
 		},
 		{
 			name:        "far future deadline",
@@ -46,13 +46,13 @@ func TestAssertIsNotExpired(t *testing.T) {
 			name:        "zero deadline",
 			deadline:    0,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-004]",
+			errorMsg:    "[GNOSWAP-ROUTER-003]",
 		},
 		{
 			name:        "negative deadline",
 			deadline:    -1,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-004]",
+			errorMsg:    "[GNOSWAP-ROUTER-003]",
 		},
 		{
 			name:        "max int64 deadline",
@@ -97,21 +97,21 @@ func TestAssertIsValidUserCoinSend(t *testing.T) {
 		},
 		{
 			name:        "invalid amount format - non-numeric",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "abc",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "invalid amount format - empty string",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "invalid amount format - decimal number",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "100.5",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
@@ -136,14 +136,14 @@ func TestAssertIsValidUserCoinSend(t *testing.T) {
 		},
 		{
 			name:        "amount with spaces",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      " 1000 ",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "amount overflow int64",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "9223372036854775808", // int64 max + 1
 			shouldPanic: true,
 			errorMsg:    "value out of range",
@@ -190,37 +190,37 @@ func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
 			name:        "empty string",
 			input:       "",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid format - non-numeric",
 			input:       "abc",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid format - negative number",
 			input:       "-100",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid format - decimal number",
 			input:       "100.5",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid format - hex number",
 			input:       "0x100",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid format - spaces",
 			input:       " 100 ",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "zero value",
@@ -236,7 +236,7 @@ func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
 			name:        "special characters",
 			input:       "100@#$",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 	}
 
@@ -276,7 +276,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "route with comma separator",
@@ -284,7 +284,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "route with POOL_SEPARATOR",
@@ -292,7 +292,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenC",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "invalid first token",
@@ -300,7 +300,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-018]",
+			errorMsg:    "[GNOSWAP-ROUTER-014]",
 		},
 		{
 			name:        "invalid last token",
@@ -308,7 +308,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-019]",
+			errorMsg:    "[GNOSWAP-ROUTER-015]",
 		},
 		{
 			name:        "valid real token addresses",
@@ -323,7 +323,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-009]",
+			errorMsg:    "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:        "invalid pool path format - empty token",
@@ -331,7 +331,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-009]",
+			errorMsg:    "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:        "route with multiple commas",
@@ -339,7 +339,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "route with multiple POOL_SEPARATORs",
@@ -347,7 +347,7 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenD",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-005]",
+			errorMsg:    "[GNOSWAP-ROUTER-004]",
 		},
 		{
 			name:        "same input and output token",
@@ -408,7 +408,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-018]",
+			errorMsg:    "[GNOSWAP-ROUTER-014]",
 		},
 		{
 			name:        "invalid last token in second route",
@@ -416,7 +416,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-019]",
+			errorMsg:    "[GNOSWAP-ROUTER-015]",
 		},
 		{
 			name:        "valid multi-hop route",
@@ -431,7 +431,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-009]",
+			errorMsg:    "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:        "empty route path",
@@ -439,7 +439,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-009]",
+			errorMsg:    "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:        "route with empty segment",
@@ -447,7 +447,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-009]",
+			errorMsg:    "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:        "all routes with wrong input token",
@@ -455,7 +455,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-018]",
+			errorMsg:    "[GNOSWAP-ROUTER-014]",
 		},
 		{
 			name:        "all routes with wrong output token",
@@ -463,7 +463,7 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-ROUTER-019]",
+			errorMsg:    "[GNOSWAP-ROUTER-015]",
 		},
 		{
 			name:        "valid real token addresses",
@@ -513,13 +513,13 @@ func TestAssertIsExistsPools(t *testing.T) {
 			name:         "invalid route path format - missing fee",
 			routePathArr: "tokenA:tokenB",
 			shouldPanic:  true,
-			errorMsg:     "[GNOSWAP-ROUTER-009]",
+			errorMsg:     "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:         "invalid route path format - empty token",
 			routePathArr: ":tokenB:3000",
 			shouldPanic:  true,
-			errorMsg:     "[GNOSWAP-ROUTER-009]",
+			errorMsg:     "[GNOSWAP-ROUTER-008]",
 		},
 		{
 			name:         "invalid route path format - non-numeric fee",
@@ -531,7 +531,7 @@ func TestAssertIsExistsPools(t *testing.T) {
 			name:         "empty route path array",
 			routePathArr: "",
 			shouldPanic:  true,
-			errorMsg:     "[GNOSWAP-ROUTER-009]",
+			errorMsg:     "[GNOSWAP-ROUTER-008]",
 		},
 	}
 

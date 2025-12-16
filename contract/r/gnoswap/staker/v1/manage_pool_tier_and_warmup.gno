@@ -5,8 +5,6 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
@@ -47,7 +45,8 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(s, poolPath)
@@ -56,10 +55,9 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	currentTime := time.Now().Unix()
 	previousTier, newTier := s.changePoolTier(poolPath, tier, currentTime)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ChangePoolTier",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"prevTier", formatUint(previousTier),
@@ -74,7 +72,8 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) RemovePoolTier(poolPath string) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(s, poolPath)
@@ -82,10 +81,9 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 	currentTime := time.Now().Unix()
 	s.removePoolTier(poolPath, currentTime)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"RemovePoolTier",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"currentTime", formatInt(currentTime),
@@ -98,15 +96,15 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	s.setWarmUp(pct, timeDuration)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetWarmUp",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"pct", formatInt(pct),
 		"timeDuration", formatInt(timeDuration),
@@ -119,7 +117,7 @@ func (s *stakerV1) setPoolTier(poolPath string, tier uint64, currentTime int64) 
 
 	pool := s.getPools().GetPoolOrNil(poolPath)
 	if pool == nil {
-		pool = sr.NewPool(poolPath, time.Now().Unix())
+		pool = sr.NewPool(poolPath, currentTime)
 		s.getPools().set(poolPath, pool)
 	}
 	poolTier := s.getPoolTier()
@@ -174,15 +172,5 @@ func pctToIndex(pct int64) int {
 		return 3
 	default:
 		panic("staker.gno__pctToIndex() || pct is not valid")
-	}
-}
-
-// assertPoolMustExist panics if the pool doesn't exist.
-func assertPoolMustExist(s *stakerV1, poolPath string) {
-	if !s.poolAccessor.ExistsPoolPath(poolPath) {
-		panic(makeErrorWithDetails(
-			errInvalidPoolPath,
-			ufmt.Sprintf("pool(%s) does not exist", poolPath),
-		))
 	}
 }

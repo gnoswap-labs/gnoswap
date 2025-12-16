@@ -10,13 +10,15 @@ type IncentivesResolver struct {
 	*sr.Incentives
 }
 
-// Get incentive by incentiveId (checks both active and archived)
-func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
-	// First check active incentives
-	if incentive, ok := retrieveIncentive(self.IncentiveTrees(), incentiveId); ok {
-		return incentive, true
+func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
+	return &IncentivesResolver{
+		Incentives: incentives,
 	}
-	return retrieveIncentive(self.ArchivedIncentives(), incentiveId)
+}
+
+// Get incentive by incentiveId
+func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
+	return retrieveIncentive(self.IncentiveTrees(), incentiveId)
 }
 
 func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*ExternalIncentiveResolver, bool) {
@@ -24,11 +26,6 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 		return NewExternalIncentiveResolver(incentive), true
 	}
 	return nil, false
-}
-
-func (self *IncentivesResolver) IsArchived(incentiveId string) bool {
-	_, exists := self.ArchivedIncentives().Get(incentiveId)
-	return exists
 }
 
 func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) {
@@ -41,30 +38,6 @@ func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) 
 		panic("failed to cast value to *sr.ExternalIncentive")
 	}
 	return v, true
-}
-
-// Get all incentives that is active in given [startTimestamp, endTimestamp)
-func (self *IncentivesResolver) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*sr.ExternalIncentive {
-	incentives := make(map[string]*sr.ExternalIncentive)
-
-	// Only iterate active incentives (not archived)
-	self.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
-		if !ok {
-			return false
-		}
-
-		// incentive is not active
-		if incentive.StartTimestamp() > endTimestamp || incentive.EndTimestamp() < startTimestamp {
-			return false
-		}
-
-		incentives[incentive.IncentiveId()] = incentive
-
-		return false
-	})
-
-	return incentives
 }
 
 // Create a new external incentive
@@ -119,14 +92,6 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	}
 }
 
-// archiveIncentive moves an ended incentive from active to archived storage
-func (self *IncentivesResolver) archiveIncentive(incentiveId string) {
-	if incentive, exists := self.IncentiveTrees().Get(incentiveId); exists {
-		self.ArchivedIncentives().Set(incentiveId, incentive)
-		self.IncentiveTrees().Remove(incentiveId)
-	}
-}
-
 // calculate unclaimable reward by checking unclaimable periods
 func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) int64 {
 	incentive, ok := self.Get(incentiveId)
@@ -137,12 +102,12 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	timeDiff := int64(0)
 
 	// Find unclaimable periods that end before or at incentive start
-	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp(), func(key int64, value any) bool {
-		startTimestamp := key
+	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp(), func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}
+
 		if endTimestamp == 0 {
 			endTimestamp = incentive.EndTimestamp()
 		}
@@ -159,14 +124,13 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.EndTimestamp(),
 		)
 
-		timeDiff += duration
+		timeDiff = safeAddInt64(timeDiff, duration)
 
 		return true
 	})
 
 	// Find unclaimable periods that start within incentive period
-	self.UnclaimablePeriods().Iterate(incentive.StartTimestamp(), incentive.EndTimestamp(), func(key int64, value any) bool {
-		startTimestamp := key
+	self.UnclaimablePeriods().Iterate(incentive.StartTimestamp(), incentive.EndTimestamp(), func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
@@ -183,9 +147,9 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 			incentive.StartTimestamp(),
 			incentive.EndTimestamp(),
 		)
+		timeDiff = safeAddInt64(timeDiff, duration)
 
-		timeDiff += duration
-
+		// ensures continue iterating through all unclaimable periods
 		return false
 	})
 
@@ -213,10 +177,4 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 
 	// Calculate overlap duration
 	return safeSubInt64(endTime, startTime)
-}
-
-func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
-	return &IncentivesResolver{
-		Incentives: incentives,
-	}
 }

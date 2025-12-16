@@ -23,6 +23,8 @@ import (
 
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	pl "gno.land/r/gnoswap/pool"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -129,7 +131,7 @@ func TestMustGetPosition(t *testing.T) {
 			inputPositionId:      999,
 			expectedPosition:     position.Position{},
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
@@ -634,7 +636,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   0,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
@@ -649,7 +651,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   1300,
 			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
 		},
 		{
 			name:           "processTokens is failed by token1 is native",
@@ -678,7 +680,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      true,
 			expectedWrap:   2300,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(ugnot)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
 		},
 		{
 			name:           "processTokens is failed by invalid token path",
@@ -688,7 +690,7 @@ func TestProcessTokens(t *testing.T) {
 			amount1Desired: "200",
 			caller:         testutils.TestAddress("user5"),
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(invalidToken), token1(tokenB)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
 		},
 	}
 
@@ -799,7 +801,7 @@ func TestMint(t *testing.T) {
 			mintTo:           alice,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -818,7 +820,7 @@ func TestMint(t *testing.T) {
 			mintTo:           alice,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
+			expectedErrorMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -837,7 +839,7 @@ func TestMint(t *testing.T) {
 			mintTo:           adminAddr,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -930,7 +932,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(-10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 		},
 		{
 			name:             "increase liquidity is failed by invalid amount string",
@@ -941,7 +943,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid_amount",
+			expectedErrorMsg: "[GNOSWAP-POSITION-004] invalid input data || input string : invalid_amount",
 		},
 		{
 			name:             "increase liquidity is failed by position does not exist",
@@ -952,7 +954,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedErrorMsg: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
@@ -1061,7 +1063,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectedHasAbort:  true,
-			expectedErrorMsg:  "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-009] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 		{
 			name:              "decrease liquidity is fail by underflow",
@@ -1073,7 +1075,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-019] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-018] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
 		},
 		{
 			name:              "decrease liquidity is fail by deadline exceeded",
@@ -1083,7 +1085,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadlineOffset:    -time.Hour,
 			unwrapResult:      false,
 			expectedHasAbort:  true,
-			expectedErrorMsg:  "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
 		{
 			name:              "decrease liquidity is success by increase and decrease",
@@ -1279,7 +1281,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -5000,
 			tickUpper:            5000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:                 "reposition is failed by partial liquidity removal",
@@ -1291,7 +1293,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -3000,
 			tickUpper:            3000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:                 "reposition is failed by non-existent positionId",
@@ -1301,7 +1303,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -4000,
 			tickUpper:            4000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
@@ -1357,6 +1359,7 @@ func TestReposition(t *testing.T) {
 						tt.mintAmount1,
 						"0",
 						"0",
+						time.Now().Add(time.Hour).Unix(),
 						adminAddr,
 					)
 				})
@@ -1370,6 +1373,7 @@ func TestReposition(t *testing.T) {
 					tt.mintAmount1,
 					"0",
 					"0",
+					time.Now().Add(time.Hour).Unix(),
 					adminAddr,
 				)
 				uassert.Equal(t, tickL, tt.tickLower)
@@ -1491,35 +1495,35 @@ func TestComputePoolPath(t *testing.T) {
 			token0:       gnsPath,
 			token1:       barPath,
 			fee:          fee3000,
-			expectedPath: computePoolPath(gnsPath, barPath, fee3000),
+			expectedPath: pl.GetPoolPath(gnsPath, barPath, fee3000),
 		},
 		{
 			name:         "Pool path with fee 500",
 			token0:       gnsPath,
 			token1:       wugnotPath,
 			fee:          fee500,
-			expectedPath: computePoolPath(gnsPath, wugnotPath, fee500),
+			expectedPath: pl.GetPoolPath(gnsPath, wugnotPath, fee500),
 		},
 		{
 			name:         "Pool path with fee 100",
 			token0:       barPath,
 			token1:       bazPath,
 			fee:          fee100,
-			expectedPath: computePoolPath(barPath, bazPath, fee100),
+			expectedPath: pl.GetPoolPath(barPath, bazPath, fee100),
 		},
 		{
 			name:         "Pool path with fee 10000",
 			token0:       gnsPath,
 			token1:       oblPath,
 			fee:          fee10000,
-			expectedPath: computePoolPath(gnsPath, oblPath, fee10000),
+			expectedPath: pl.GetPoolPath(gnsPath, oblPath, fee10000),
 		},
 		{
 			name:         "Pool path with reversed token order",
 			token0:       barPath,
 			token1:       gnsPath,
 			fee:          fee3000,
-			expectedPath: computePoolPath(barPath, gnsPath, fee3000),
+			expectedPath: pl.GetPoolPath(barPath, gnsPath, fee3000),
 		},
 	}
 
@@ -1527,7 +1531,7 @@ func TestComputePoolPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			result := computePoolPath(tt.token0, tt.token1, tt.fee)
+			result := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
 			uassert.NotEqual(t, "", result, "pool path should not be empty")
 			// The actual pool path format depends on pool.GetPoolPath implementation
 			// We just verify it returns a non-empty string
@@ -1672,10 +1676,10 @@ func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+					calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
 				})
 			} else {
-				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
 
 				uassert.Equal(t, tt.expectedAmountNoFee, amountNoFee)
 				uassert.Equal(t, tt.expectedFee, feeAmount)
@@ -1832,4 +1836,284 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 // Helper function to check if string contains substring
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
+}
+
+// TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
+// is enforced on actually collected amounts, not on burned amounts.
+// This prevents cases where user receives less than expected due to pool constraints.
+func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
+	tests := []struct {
+		name              string
+		liquidityToRemove string
+		amount0Min        string
+		amount1Min        string
+		expectedHasAbort  bool
+		expectedErrorMsg  string
+	}{
+		{
+			name:              "success with reasonable slippage bounds",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "1",
+			expectedHasAbort:  false,
+		},
+		{
+			name:              "fail when amount0 collected < amount0Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "1",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount0",
+		},
+		{
+			name:              "fail when amount1 collected < amount1Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount1",
+		},
+		{
+			name:              "fail when both amounts collected < mins",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			deadline := time.Now().Add(time.Hour).Unix()
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			if tc.expectedHasAbort {
+				uassert.AbortsContains(t, tc.expectedErrorMsg, func() {
+					mockInstanceDecreaseLiquidity(
+						1,
+						tc.liquidityToRemove,
+						tc.amount0Min,
+						tc.amount1Min,
+						deadline,
+						false,
+					)
+				})
+			} else {
+				_, liquidity, _, _, collect0, collect1, _ := mockInstanceDecreaseLiquidity(
+					1,
+					tc.liquidityToRemove,
+					tc.amount0Min,
+					tc.amount1Min,
+					deadline,
+					false,
+				)
+
+				// Verify liquidity was decreased
+				uassert.Equal(t, tc.liquidityToRemove, liquidity)
+
+				// Verify some tokens were collected
+				collect0Val, _ := strconv.ParseUint(collect0, 10, 64)
+				collect1Val, _ := strconv.ParseUint(collect1, 10, 64)
+				uassert.True(t, collect0Val > 0, "should collect some token0")
+				uassert.True(t, collect1Val > 0, "should collect some token1")
+			}
+		})
+	}
+}
+
+// TestDecreaseLiquidity_PoolBalanceInsufficient tests the edge case where
+// pool balance is insufficient, causing collect amounts to be less than burn amounts.
+// This verifies that slippage check is enforced on actually collected amounts.
+func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
+	initPositionTest(t)
+
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetRealm(adminRealm)
+	// Step 1: Mint position to add liquidity
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Step 2: Manually reduce pool balance to simulate insufficient balance
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	currentBalance0 := pool.BalanceToken0()
+	currentBalance1 := pool.BalanceToken1()
+
+	// Reduce pool balance to 50% to create burn > collect scenario
+	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
+	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	pool.SetBalanceToken0(reducedBalance0)
+	pool.SetBalanceToken1(reducedBalance1)
+
+	deadline := time.Now().Add(time.Hour).Unix()
+
+	// Step 3: Try to decrease liquidity with slippage check
+	// burn amounts will be ~500,000 each (50% of 1,000,000)
+	// but collect amounts will be limited by pool balance (~500,000 total / 2 = ~250,000 each)
+	// So if we set amount0Min = 400,000, it should fail because collect0 < 400,000
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// This should FAIL because collect0 will be less than amount0Min
+	// Even though burn0 would be >= 400,000, collect0 will be limited by pool balance
+	uassert.AbortsContains(t, "collectAmount0", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000", // Remove 50% liquidity
+			"400000", // amount0Min - higher than what pool can provide
+			"1",      // amount1Min - low to isolate amount0 failure
+			deadline,
+			false,
+		)
+	})
+
+	// Reset pool balance for next test
+	pool.SetBalanceToken0(currentBalance0)
+	pool.SetBalanceToken1(currentBalance1)
+
+	// This should FAIL for amount1
+	pool.SetBalanceToken0(currentBalance0) // Restore balance0
+	pool.SetBalanceToken1(reducedBalance1) // Keep balance1 reduced
+
+	uassert.AbortsContains(t, "collectAmount1", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000", // Remove 50% liquidity
+			"1",      // amount0Min - low
+			"400000", // amount1Min - higher than what pool can provide
+			deadline,
+			false,
+		)
+	})
+}
+
+// TestReposition_DeadlineValidation tests that Reposition enforces deadline
+// to prevent stale transactions from being executed after market movements.
+func TestReposition_DeadlineValidation(t *testing.T) {
+	tests := []struct {
+		name             string
+		deadlineOffset   time.Duration
+		expectAbort      bool
+		expectedErrorMsg string
+	}{
+		{
+			name:           "success with valid deadline",
+			deadlineOffset: time.Hour,
+			expectAbort:    false,
+		},
+		{
+			name:             "fail with expired deadline",
+			deadlineOffset:   -time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+		{
+			name:             "fail with significantly expired deadline",
+			deadlineOffset:   -24 * time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetOriginCaller(adminAddr)
+			// Step 1: Mint initial position
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			// Step 2: Get position liquidity and decrease 100% to clear for reposition
+			position, _ := mockInstance.GetPosition(1)
+			liquidity := position.Liquidity().ToString()
+
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+				1,
+				liquidity,
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+
+			// Step 3: Attempt reposition with test deadline
+			deadline := time.Now().Add(tt.deadlineOffset).Unix()
+
+			if tt.expectAbort {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					mockInstanceReposition(
+						1,
+						-5000,
+						5000,
+						"500000",
+						"1000000",
+						"0",
+						"0",
+						deadline,
+						adminAddr,
+					)
+				})
+			} else {
+				posId, liq, tickL, tickH, amt0, amt1 := mockInstanceReposition(
+					1,
+					-5000,
+					5000,
+					"500000",
+					"1000000",
+					"0",
+					"0",
+					deadline,
+					adminAddr,
+				)
+
+				// Verify reposition succeeded
+				uassert.Equal(t, uint64(1), posId)
+				uassert.Equal(t, int32(-5000), tickL)
+				uassert.Equal(t, int32(5000), tickH)
+
+				// Verify liquidity was added
+				liquidityVal, _ := strconv.ParseUint(liq, 10, 64)
+				uassert.True(t, liquidityVal > 0, "liquidity should be greater than 0")
+
+				// Verify amounts were used
+				amt0Val, _ := strconv.ParseUint(amt0, 10, 64)
+				amt1Val, _ := strconv.ParseUint(amt1, 10, 64)
+				uassert.True(t, amt0Val > 0, "amount0 should be greater than 0")
+				uassert.True(t, amt1Val > 0, "amount1 should be greater than 0")
+			}
+		})
+	}
 }

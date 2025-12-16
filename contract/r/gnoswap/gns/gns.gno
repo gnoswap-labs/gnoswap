@@ -95,8 +95,8 @@ func MintGns(cur realm, address address) int64 {
 	}
 
 	setLastMintedTimestamp(currentTime)
-	setMintedEmissionAmount(MintedEmissionAmount() + amountToMint)
-	setLeftEmissionAmount(LeftEmissionAmount() - amountToMint)
+	setMintedEmissionAmount(safeAddInt64(MintedEmissionAmount(), amountToMint))
+	setLeftEmissionAmount(safeSubInt64(LeftEmissionAmount(), amountToMint))
 
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
@@ -129,7 +129,7 @@ func Burn(cur realm, from address, amount int64) {
 
 	checkErr(privateLedger.Burn(from, amount))
 
-	burnAmount += amount
+	burnAmount = safeAddInt64(burnAmount, amount)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -238,14 +238,14 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 
 		amountPerSecond := GetAmountPerSecondPerHalvingYear(year)
 
-		yearAmountToMint := amountPerSecond * seconds
+		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
 			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
-			yearAmountToMint += leftover
+			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
 		}
 
-		totalAmountToMint += yearAmountToMint
+		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
 		getEmissionState().addHalvingYearAccumulatedAmount(year, yearAmountToMint)
 		getEmissionState().subHalvingYearLeftAmount(year, yearAmountToMint)
@@ -278,7 +278,7 @@ func isLastSecondOfHalvingYear(timestamp int64) bool {
 
 // handleLeftEmissionAmount returns the remaining emission amount for a halving year.
 func handleLeftEmissionAmount(year, amount int64) int64 {
-	return GetHalvingYearLeftAmount(year) - amount
+	return safeSubInt64(GetHalvingYearLeftAmount(year), amount)
 }
 
 // skipIfSameHeight returns true if last minted height equals current height,

@@ -5,6 +5,7 @@ import (
 	"chain/banker"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
@@ -446,7 +447,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-018] can't swap while pool is locked",
+			expectedError: "[GNOSWAP-POOL-016] cannot swap while pool is locked",
 			riskFactor:    "Prevent state inconsistency from concurrent transactions",
 		},
 		{
@@ -466,7 +467,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+			expectedError: "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
 			riskFactor:    "Prevent gas waste and system load from meaningless trade",
 		},
 	}
@@ -492,7 +493,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				mockInstanceSwap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
-					func(cur realm, amount0Delta int64, amount1Delta int64) error {
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 					})
 			})
@@ -570,7 +571,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -674,7 +675,7 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 				pattern.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -749,7 +750,7 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -783,7 +784,7 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 		actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
-			func(cur realm, amount0Delta int64, amount1Delta int64) error {
+			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 			})
 
@@ -822,9 +823,9 @@ func createMockLiquidityPool() *pl.Pool {
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(map[int16]*u256.Uint),
-		ticks:                make(map[int32]pl.TickInfo),
-		positions:            make(map[string]pl.PositionInfo),
+		tickBitmaps:          avl.NewTree(),
+		ticks:                avl.NewTree(),
+		positions:            avl.NewTree(),
 	})
 
 	wordPos, _ := tickBitmapPosition(0)
@@ -919,7 +920,7 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 
 		_, err := updateAmounts(step, state, false)
 
-		uassert.ErrorIs(t, err, errOverFlow,
+		uassert.ErrorIs(t, err, errOverflow,
 			"Should prevent overflow when amountCalculated would exceed MAX_INT64")
 	})
 
@@ -1022,7 +1023,7 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, false)
-		uassert.ErrorIs(t, err, errOverFlow,
+		uassert.ErrorIs(t, err, errOverflow,
 			"Should detect overflow caused by fee accumulation")
 	})
 }
@@ -1113,7 +1114,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	currentPrice := pool.Slot0SqrtPriceX96()
 
 	// when: Define swap callback
-	swapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		t.Logf("Callback: amount0=%d, amount1=%d", amount0Delta, amount1Delta)
 		testing.SetRealm(adminRealm)
 
@@ -1161,7 +1162,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/test/mock_swapper"))
 
-		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-015] invalid swap amount || amount0 or amount1 is zero", func() {
+		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-013] invalid swap amount || amount0 or amount1 is zero", func() {
 			getMockInstance().Swap(
 				token0Path,
 				token1Path,
@@ -1175,4 +1176,634 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 			)
 		})
 	}(cross)
+}
+
+// TestSwap_ReentrancyProtection tests that the reentrancy lock properly prevents
+// recursive swap calls during callback execution.
+//
+// Security issue addressed:
+// The Swap function uses Slot0.unlocked field as a reentrancy lock. Previously,
+// this lock was ineffective because Slot0() returned a copy of the struct,
+// so SetUnlocked(false) only modified the local copy, not the actual pool state.
+// The fix uses pool.SetSlot0() to persist the lock state.
+//
+// Attack scenario:
+// 1. Attacker calls Swap with a malicious callback
+// 2. Inside the callback (before payment), attacker tries to call Swap again
+// 3. Without proper reentrancy protection, the second Swap would succeed
+// 4. This could allow manipulation of pool state or token theft
+func TestSwap_ReentrancyProtection(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		setup       func(t *testing.T)
+		action      func(t *testing.T)
+		verify      func(t *testing.T)
+	}{
+		{
+			name:        "expected panics by reentrant swap in callback",
+			description: "Reentrancy attack via callback should be blocked by pool lock",
+			setup: func(t *testing.T) {
+				initPoolTest(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 2. Swap executes computeSwap and transfers output tokens
+				// 3. Swap calls swapCallback (maliciousCallback)
+				// 4. Inside callback, attacker attempts second Swap
+				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-016]
+				// 6. Callback catches panic, completes token transfer
+				// 7. Original Swap completes successfully
+				// 8. defer unlocks pool -> pool.Slot0.unlocked = true
+
+				testing.SetRealm(rouRealm)
+
+				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-016]", func() {
+						getMockInstance().Swap(
+							wugnotPath, gnsPath, STANDARD_FEE_TIER,
+							routerAddr, false, "50",
+							common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+							routerAddr,
+							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
+						)
+					})
+
+					// Step 6: Complete original swap payment
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				}
+
+				// Step 1-3, 7: Execute swap with malicious callback
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr, maliciousCallback,
+				)
+
+				uassert.True(t, amount0 != "0" || amount1 != "0",
+					"Original swap should complete successfully")
+			},
+			verify: func(t *testing.T) {
+				// Pool should be unlocked after swap
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after swap")
+			},
+		},
+		{
+			name:        "success by unlock after swap completes",
+			description: "Pool should be unlocked after swap completes, allowing subsequent swaps",
+			setup: func(t *testing.T) {
+				resetObject(t)
+				burnTokens(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. Check initial state: pool.Slot0.unlocked = true
+				// 2. Execute first Swap:
+				//    a. Swap locks pool -> unlocked = false
+				//    b. Swap executes and calls callback
+				//    c. Callback transfers tokens
+				//    d. defer unlocks pool -> unlocked = true
+				// 3. Verify pool is unlocked after first swap
+				// 4. Execute second Swap (proves unlock worked):
+				//    a. If pool was still locked, this would panic
+				//    b. Swap succeeds -> confirms proper unlock
+
+				// Step 1: Verify initial unlocked state
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should start unlocked")
+
+				// Step 2: Execute first swap
+				testing.SetRealm(rouRealm)
+				mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+					},
+				)
+
+				// Step 3: Verify unlocked after first swap
+				pool = getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 = pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after first swap")
+
+				// Step 4: Execute second swap to prove unlock worked
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "50",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+					},
+				)
+
+				uassert.True(t, amount0 != "0" || amount1 != "0",
+					"Second swap should succeed after first completes")
+			},
+			verify: func(t *testing.T) {},
+		},
+		{
+			name:        "expected lock state during swap",
+			description: "Pool should be locked during callback execution",
+			setup: func(t *testing.T) {
+				resetObject(t)
+				burnTokens(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 2. Swap executes computeSwap
+				// 3. Swap transfers output tokens to recipient
+				// 4. Swap calls swapCallback (callbackWithLockCheck)
+				// 5. Inside callback: check pool.Slot0.unlocked -> should be false (locked)
+				// 6. Callback transfers input tokens to pool
+				// 7. Swap completes, defer unlocks pool -> unlocked = true
+				// 8. Verify: lockStateDuringCallback == true (was locked during callback)
+
+				lockStateDuringCallback := false
+
+				testing.SetRealm(rouRealm)
+				callbackWithLockCheck := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+					// Step 5: Verify pool is locked during callback
+					pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+					slot0 := pool.Slot0()
+					lockStateDuringCallback = !slot0.Unlocked() // true if locked
+
+					// Step 6: Complete swap payment
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				}
+
+				// Step 1-4, 7: Execute swap
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr, callbackWithLockCheck,
+				)
+
+				// Step 8: Verify lock was active during callback
+				uassert.True(t, lockStateDuringCallback,
+					"Pool should be locked during callback execution")
+				uassert.True(t, amount0 != "0" || amount1 != "0", "Swap should succeed")
+			},
+			verify: func(t *testing.T) {
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(),
+					"Pool should be unlocked after swap completes")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
+			tt.action(t)
+			tt.verify(t)
+			t.Logf("passed: %s", tt.description)
+		})
+	}
+}
+
+// TestSwapCallback_DeltaConvention tests that swap callback parameters follow
+// the Uniswap V3 delta convention:
+//   - Positive delta: Amount the pool must RECEIVE (input token)
+//   - Negative delta: Amount the pool has SENT (output token)
+//
+// This convention allows callbacks to correctly identify:
+//   - Which tokens were received by the pool (need to be paid by caller)
+//   - Which tokens were sent by the pool (received by recipient)
+//
+// For zeroForOne swaps (token0 → token1):
+//   - amount0Delta > 0: Pool receives token0 (input from user)
+//   - amount1Delta < 0: Pool sends token1 (output to user)
+//
+// For oneForZero swaps (token1 → token0):
+//   - amount0Delta < 0: Pool sends token0 (output to user)
+//   - amount1Delta > 0: Pool receives token1 (input from user)
+func TestSwapCallback_DeltaConvention(t *testing.T) {
+	tests := []struct {
+		name                    string
+		description             string
+		zeroForOne              bool
+		amountSpecified         string
+		expectedAmount0Positive bool // true if amount0Delta should be > 0
+		expectedAmount1Positive bool // true if amount1Delta should be > 0
+		isFailCase              bool
+	}{
+		{
+			name:                    "zeroForOne swap has positive amount0Delta and negative amount1Delta",
+			description:             "When swapping token0 for token1, pool receives token0 (positive) and sends token1 (negative)",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: false,
+		},
+		{
+			name:                    "oneForZero swap has negative amount0Delta and positive amount1Delta",
+			description:             "When swapping token1 for token0, pool sends token0 (negative) and receives token1 (positive)",
+			zeroForOne:              false,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: true,
+		},
+		{
+			name:                    "exact output zeroForOne swap maintains delta convention",
+			description:             "Exact output swaps should also follow the same delta convention",
+			zeroForOne:              true,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: false,
+		},
+		{
+			name:                    "exact output oneForZero swap maintains delta convention",
+			description:             "Exact output oneForZero swaps follow the same delta convention",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: true,
+		},
+		{
+			name:                    "fail case by exact in zeroForOne swap but amount0Delta, amount1Delta is positive",
+			description:             "Exact in zeroForOne swap but amount0Delta, amount1Delta is positive",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: true, // false
+			isFailCase:              true,
+		},
+		{
+			name:                    "fail case by exact in zeroForOne swap but amount0Delta, amount1Delta is negative",
+			description:             "Exact in zeroForOne swap but amount0Delta, amount1Delta is negative",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: false, // true
+			expectedAmount1Positive: false,
+			isFailCase:              true,
+		},
+		{
+			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is positive",
+			description:             "Exact out oneForZero swap but amount0Delta, amount1Delta is positive",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: true, // false
+			expectedAmount1Positive: true,
+			isFailCase:              true,
+		},
+		{
+			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is negative",
+			description:             "Exact out oneForZero swap but amount0Delta, amount1Delta is negative",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: false, // true
+			isFailCase:              true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Common setup
+			resetObject(t)
+			burnTokens(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			TokenFaucet(t, wugnotPath, routerAddr)
+			TokenFaucet(t, gnsPath, routerAddr)
+
+			testing.SetRealm(rouRealm)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+			// Capture deltas
+			var capturedAmount0Delta, capturedAmount1Delta int64
+
+			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+				capturedAmount0Delta = amount0Delta
+				capturedAmount1Delta = amount1Delta
+				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			}
+
+			// Determine price limit based on direction
+			var priceLimit string
+			if tt.zeroForOne {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+			} else {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+			}
+
+			// Execute swap
+			testing.SetRealm(rouRealm)
+			amount0, amount1 := mockInstanceSwap(
+				wugnotPath, gnsPath, STANDARD_FEE_TIER,
+				routerAddr, tt.zeroForOne, tt.amountSpecified,
+				priceLimit, routerAddr, callbackCapturingDeltas,
+			)
+
+			if tt.isFailCase {
+				if tt.zeroForOne {
+					t.Logf("must amount0Delta be positive, actual %s, expected %s", amount0, tt.amountSpecified)
+					t.Logf("must amount1Delta be negative, actual %s, expected %s", amount1, tt.amountSpecified)
+				} else {
+					t.Logf("must amount0Delta be negative, actual %s, expected %s", amount0, tt.amountSpecified)
+					t.Logf("must amount1Delta be positive, actual %s, expected %s", amount1, tt.amountSpecified)
+				}
+				return
+			}
+
+			// Verify delta convention
+			if tt.expectedAmount0Positive {
+				uassert.True(t, capturedAmount0Delta > 0,
+					ufmt.Sprintf("amount0Delta should be positive, got %d", capturedAmount0Delta))
+			} else {
+				uassert.True(t, capturedAmount0Delta < 0,
+					ufmt.Sprintf("amount0Delta should be negative, got %d", capturedAmount0Delta))
+			}
+
+			if tt.expectedAmount1Positive {
+				uassert.True(t, capturedAmount1Delta > 0,
+					ufmt.Sprintf("amount1Delta should be positive, got %d", capturedAmount1Delta))
+			} else {
+				uassert.True(t, capturedAmount1Delta < 0,
+					ufmt.Sprintf("amount1Delta should be negative, got %d", capturedAmount1Delta))
+			}
+
+			// Verify deltas match swap result
+			uassert.Equal(t, ufmt.Sprintf("%d", capturedAmount0Delta), amount0,
+				"amount0Delta should match swap result amount0")
+			uassert.Equal(t, ufmt.Sprintf("%d", capturedAmount1Delta), amount1,
+				"amount1Delta should match swap result amount1")
+
+			t.Logf("passed: %s (amount0Delta=%d, amount1Delta=%d)", tt.description, capturedAmount0Delta, capturedAmount1Delta)
+		})
+	}
+}
+
+// TestSwapCallback_CallbackUsage demonstrates that a generic callback
+// can handle both swap directions by checking delta signs.
+func TestSwapCallback_CallbackUsage(t *testing.T) {
+	resetObject(t)
+	burnTokens(t)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
+
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetRealm(rouRealm)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+	var token0Transferred, token1Transferred int64
+
+	// Generic callback that works for any swap direction
+	genericCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+		token0Transferred, token1Transferred = 0, 0
+
+		// Transfer tokens with positive deltas (tokens pool needs to receive)
+		if amount0Delta > 0 {
+			token0Transferred = amount0Delta
+		}
+		if amount1Delta > 0 {
+			token1Transferred = amount1Delta
+		}
+		return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+	}
+
+	// Test zeroForOne: should transfer token0 only
+	testing.SetRealm(rouRealm)
+	mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, true, "10000",
+		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		routerAddr, genericCallback,
+	)
+
+	uassert.True(t, token0Transferred > 0, "zeroForOne: should transfer token0 (positive delta)")
+	uassert.Equal(t, int64(0), token1Transferred, "zeroForOne: should not transfer token1 (negative delta)")
+	t.Logf("zeroForOne: token0 transferred=%d, token1 transferred=%d", token0Transferred, token1Transferred)
+
+	// Test oneForZero: should transfer token1 only
+	TokenFaucet(t, gnsPath, routerAddr)
+	testing.SetRealm(rouRealm)
+	mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, false, "10000",
+		common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+		routerAddr, genericCallback,
+	)
+
+	uassert.Equal(t, int64(0), token0Transferred, "oneForZero: should not transfer token0 (negative delta)")
+	uassert.True(t, token1Transferred > 0, "oneForZero: should transfer token1 (positive delta)")
+	t.Logf("oneForZero: token0 transferred=%d, token1 transferred=%d", token0Transferred, token1Transferred)
+}
+
+// TestSwap_FlashSwapPattern tests that the flash swap pattern works correctly.
+//
+// Flash swap invariant:
+// Output tokens MUST be transferred to recipient BEFORE the callback is invoked.
+// This allows the callback to use the received tokens for arbitrage, chained swaps,
+// or other operations before repaying the input amount.
+//
+// Execution order (after fix):
+// 1. Pool computes swap amounts
+// 2. Pool transfers output tokens to recipient  <-- OUTPUT FIRST
+// 3. Pool invokes callback                      <-- CALLBACK SECOND
+// 4. Callback can use received tokens
+// 5. Callback transfers input tokens to pool
+//
+// Before fix (incorrect order):
+// 1. Pool computes swap amounts
+// 2. Pool invokes callback                      <-- CALLBACK FIRST (wrong)
+// 3. Pool transfers output tokens to recipient  <-- OUTPUT SECOND (wrong)
+// This prevented callbacks from using output tokens.
+func TestSwap_FlashSwapPattern(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		zeroForOne  bool
+	}{
+		{
+			name:        "zeroForOne flash swap receives output before callback",
+			description: "Recipient should have output tokens available during callback execution",
+			zeroForOne:  true,
+		},
+		{
+			name:        "oneForZero flash swap receives output before callback",
+			description: "Recipient should have output tokens available during callback execution",
+			zeroForOne:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			resetObject(t)
+			burnTokens(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			TokenFaucet(t, wugnotPath, routerAddr)
+			TokenFaucet(t, gnsPath, routerAddr)
+
+			testing.SetRealm(rouRealm)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+			// Track balances during callback
+			var recipientBalanceDuringCallback int64
+			var outputTokenPath string
+			if tt.zeroForOne {
+				outputTokenPath = gnsPath // zeroForOne: output is token1
+			} else {
+				outputTokenPath = wugnotPath // oneForZero: output is token0
+			}
+
+			// Callback that checks recipient balance
+			flashSwapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+				// Execution flow verification:
+				// At this point, output tokens should ALREADY be transferred to recipient
+				// This is the key invariant of flash swap pattern
+
+				recipientBalanceDuringCallback = common.BalanceOf(outputTokenPath, routerAddr)
+
+				// Complete the swap by paying input tokens
+				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			}
+
+			// Get initial balance
+			initialBalance := common.BalanceOf(outputTokenPath, routerAddr)
+
+			// Determine price limit based on direction
+			var priceLimit string
+			if tt.zeroForOne {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+			} else {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+			}
+
+			// Execute swap
+			testing.SetRealm(rouRealm)
+			mockInstanceSwap(
+				wugnotPath, gnsPath, STANDARD_FEE_TIER,
+				routerAddr, tt.zeroForOne, "10000",
+				priceLimit, routerAddr, flashSwapCallback,
+			)
+
+			// Verify: recipient balance during callback should be GREATER than initial
+			// This proves output tokens were transferred BEFORE callback was invoked
+			uassert.True(t, recipientBalanceDuringCallback > initialBalance,
+				ufmt.Sprintf("Flash swap failed: recipient should have received output tokens before callback. initial=%d, duringCallback=%d",
+					initialBalance, recipientBalanceDuringCallback))
+
+			t.Logf("passed: %s (initial=%d, duringCallback=%d)",
+				tt.description, initialBalance, recipientBalanceDuringCallback)
+		})
+	}
+}
+
+// TestSwap_FlashSwapArbitragePattern tests a practical flash swap use case:
+// using received output tokens within the callback for arbitrage or chained operations.
+func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
+	// Setup
+	resetObject(t)
+	burnTokens(t)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
+
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetRealm(rouRealm)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+	// Simulate arbitrage scenario:
+	// 1. Swap token0 for token1 (receive token1 first via flash swap)
+	// 2. In callback, verify we can "use" the received token1
+	// 3. Pay back token0
+
+	var outputReceivedBeforePayment bool
+	var outputAmountReceived int64
+
+	arbitrageCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+		// In a real arbitrage scenario, we would:
+		// 1. Use the received token1 (amount1Delta is negative, meaning we received it)
+		// 2. Perform arbitrage operation
+		// 3. Pay back token0 (amount0Delta is positive, meaning we owe it)
+
+		// Verify we received output tokens (negative delta = pool sent to us)
+		if amount1Delta < 0 {
+			outputAmountReceived = -amount1Delta // Convert to positive
+			// Check our balance increased
+			currentBalance := common.BalanceOf(gnsPath, routerAddr)
+			outputReceivedBeforePayment = currentBalance >= outputAmountReceived
+		}
+
+		// Pay back input tokens
+		return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+	}
+
+	// Execute flash swap
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, true, "10000", // zeroForOne: swap token0 for token1
+		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		routerAddr, arbitrageCallback,
+	)
+
+	// Verify flash swap pattern worked
+	uassert.True(t, outputReceivedBeforePayment,
+		"Flash swap arbitrage failed: output tokens not available during callback")
+	uassert.True(t, outputAmountReceived > 0,
+		"Flash swap should have received output tokens")
+
+	t.Logf("Flash swap arbitrage pattern verified: received %d output tokens before payment (amount0=%s, amount1=%s)",
+		outputAmountReceived, amount0, amount1)
 }

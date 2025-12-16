@@ -2,6 +2,7 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 )
 
 // IPool interface defines all public methods that must be implemented by pool contract versions.
@@ -102,7 +103,7 @@ type IPoolSwap interface {
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
 		payer address,
-		swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+		swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 	) (string, string)
 
 	SetSwapEndHook(hook func(cur realm, poolPath string) error)
@@ -224,8 +225,8 @@ type IPoolGetter interface {
 // and modify pool state, ensuring data consistency across versions.
 type IPoolStore interface {
 	HasPools() bool
-	GetPools() map[string]*Pool
-	SetPools(pools map[string]*Pool) error
+	GetPools() *avl.Tree
+	SetPools(pools *avl.Tree) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
@@ -255,3 +256,5 @@ type IPoolStore interface {
 	GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 	SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
 }
+
+type CallbackMarker struct{}

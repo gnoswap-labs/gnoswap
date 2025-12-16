@@ -130,29 +130,24 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
-	// Check if there are any active incentives at current time
 	currentTime := time.Now().Unix()
-
-	hasActive := false
-
-	incentives := self.Incentives()
-
-	incentives.IncentiveTrees().Iterate("", "", func(key string, value interface{}) bool {
+	hasIncentive := false
+	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
 		}
 
-		incentiveResolver := NewExternalIncentiveResolver(incentive)
-
-		if incentiveResolver.isActive(currentTime) {
-			hasActive = true
-			return false
+		resolver := NewExternalIncentiveResolver(incentive)
+		if !resolver.IsEnded(currentTime) {
+			hasIncentive = true
+			return true
 		}
-		return true
+
+		return false
 	})
 
-	return hasActive
+	return hasIncentive
 }
 
 // Get the latest reward in [0, currentTime] range.
@@ -238,11 +233,12 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 
 // RewardStateOf initializes a new RewardState for the given deposit.
 func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
+	warmups := len(deposit.Warmups())
 	result := &RewardState{
 		pool:      self,
 		deposit:   NewDepositResolver(deposit),
-		rewards:   make([]int64, len(deposit.Warmups())),
-		penalties: make([]int64, len(deposit.Warmups())),
+		rewards:   make([]int64, warmups),
+		penalties: make([]int64, warmups),
 	}
 
 	for i := range result.rewards {
@@ -251,6 +247,14 @@ func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
 	}
 
 	return result
+}
+
+// reset clears cached rewards/penalties so a RewardState can be reused without re-allocating.
+func (self *RewardState) reset() {
+	for i := range self.rewards {
+		self.rewards[i] = 0
+		self.penalties[i] = 0
+	}
 }
 
 // NewPool creates a new pool with the given poolPath and currentHeight.
@@ -316,29 +320,31 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 		startTime = lastCollectTime
 	}
 
-	if endTime < incentive.StartTimestamp() {
+	ictvStart := incentive.StartTimestamp()
+	if endTime < ictvStart {
 		return nil // Not started yet
 	}
 
-	if startTime < incentive.StartTimestamp() {
-		startTime = incentive.StartTimestamp()
+	if startTime < ictvStart {
+		startTime = ictvStart
 	}
 
-	if endTime > incentive.EndTimestamp() {
-		endTime = incentive.EndTimestamp()
+	ictvEnd := incentive.EndTimestamp()
+	if endTime > ictvEnd {
+		endTime = ictvEnd
 	}
 
-	if startTime > incentive.EndTimestamp() {
+	if startTime > ictvEnd {
 		return nil // Already ended
 	}
 
 	return self.rewardPerWarmup(startTime, endTime, incentive.RewardPerSecond())
 }
 
-// calculateTotalExternalReward calculates the total external reward for the deposit.
+// calculateCollectableExternalReward calculates the calculated external reward for the deposit.
 // It calls updateExternalReward for the incentive period, applies warmup and returns the rewards and penalties.
-// used for total reward calculation for a ended incentive
-func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) int64 {
+// used for reward calculation for a calculatable incentive
+func (self *RewardState) calculateCollectableExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) int64 {
 	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
 		panic(err)
@@ -350,9 +356,7 @@ func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, 
 		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
 	}
 
-	collectedReward := self.deposit.CollectedExternalReward(incentive.IncentiveId())
-
-	return safeAddInt64(safeConvertToInt64(currentReward), collectedReward)
+	return safeConvertToInt64(currentReward)
 }
 
 // calculateExternalReward calculates the external reward for the deposit.
@@ -499,7 +503,7 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
 // It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
-func (self *PoolResolver) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+func (self *PoolResolver) processUnclaimableReward(endTime int64) int64 {
 	// Check current pool liquidity state
 	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
 

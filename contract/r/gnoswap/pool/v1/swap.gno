@@ -38,6 +38,8 @@ var (
 //
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	halt.AssertIsNotHaltedPool()
+
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -54,6 +56,8 @@ func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId i
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
+	halt.AssertIsNotHaltedPool()
+
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -70,6 +74,8 @@ func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestam
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
+	halt.AssertIsNotHaltedPool()
+
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -102,7 +108,7 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-// SwapWithCallback executes a swap with callback pattern for optimistic transfers.
+// Swap executes a swap with callback pattern for optimistic transfers.
 // This allows flash swaps where tokens are sent before payment is received.
 //
 // The flow is:
@@ -112,14 +118,15 @@ type SwapComputation struct {
 // 4. Pool validates its balance increased correctly
 //
 // Parameters:
-//   - tokenIn: Input token path
-//   - tokenOut: Output token path
+//   - token0Path: Path of token0 in the pool
+//   - token1Path: Path of token1 in the pool
 //   - fee: Pool fee tier
 //   - recipient: Address to receive output tokens
 //   - zeroForOne: Direction of swap (true = token0 to token1)
 //   - amountSpecified: Exact input (positive) or exact output (negative)
 //   - sqrtPriceLimitX96: Price limit for the swap
-//   - data: Arbitrary data passed to callback
+//   - payer: Address that provides input tokens
+//   - swapCallback: Callback function to handle token transfers
 //
 // Returns amount0 and amount1 deltas as strings.
 func (i *poolV1) Swap(
@@ -131,7 +138,7 @@ func (i *poolV1) Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer address,
-	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
 
@@ -551,7 +558,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 
 	newProtocolFee, overflow := u256.Zero().AddOverflow(state.protocolFee, delta)
 	if overflow {
-		return state, step, errOverFlow
+		return state, step, errOverflow
 	}
 	state.protocolFee = newProtocolFee
 
@@ -625,12 +632,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Poo
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(maxInt256) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	var (
@@ -651,17 +658,17 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	} else {
 		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
 		if overflow {
-			return state, errOverFlow
+			return state, errOverflow
 		}
 		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
 		if overflow {
-			return state, errOverFlow
+			return state, errOverflow
 		}
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
 	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	// If an underflowed value is stored in state, it may cause problems in the next step

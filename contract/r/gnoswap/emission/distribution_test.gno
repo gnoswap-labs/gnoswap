@@ -37,7 +37,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if target is invalid",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(9)",
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 9},
 			pcts:        []int64{1000, 2000, 3000, 4000},
@@ -45,7 +45,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if sum of percentages is not 100%",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 10001",
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 10001",
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []int64{1000, 2000, 3000, 4001},
@@ -157,7 +157,7 @@ func TestTransferToTarget(t *testing.T) {
 			name:        "invalid target",
 			shouldAbort: false,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			errorMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(9)",
 			target:      9,
 			amount:      100,
 		},
@@ -554,7 +554,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 
 	// attempts to set 40000 basis points = 400%
 	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(t *testing.T) {
-		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
 			ChangeDistributionPct(
 				cross,
 				LIQUIDITY_STAKER, 10000, // 100%
@@ -829,37 +829,37 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 			name:    "panic - invalid target 0",
 			target:  0,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(0)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(0)",
 		},
 		{
 			name:    "panic - invalid target -1",
 			target:  -1,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(-1)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(-1)",
 		},
 		{
 			name:    "panic - invalid target 5",
 			target:  5,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(5)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(5)",
 		},
 		{
 			name:    "panic - invalid target 999",
 			target:  999,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(999)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(999)",
 		},
 		{
 			name:    "panic - max int value",
 			target:  2147483647,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(2147483647)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2147483647)",
 		},
 		{
 			name:    "panic - min int value",
 			target:  -2147483648,
 			wantErr: true,
-			errMsg:  "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(-2147483648)",
+			errMsg:  "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(-2147483648)",
 		},
 	}
 
@@ -1099,7 +1099,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
 				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1107,7 +1107,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{DEVOPS, DEVOPS, DEVOPS, DEVOPS},
 				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1115,7 +1115,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, GOV_STAKER, LIQUIDITY_STAKER, GOV_STAKER},
 				percentages: [4]int64{3000, 2000, 3000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1123,7 +1123,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: adminRealm,
 				targets:     [4]int{COMMUNITY_POOL, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
 				percentages: [4]int64{5000, 2500, 2500, 0},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1184,7 +1184,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{GOV_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
 				percentages: [4]int64{5000, 2000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1192,7 +1192,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{LIQUIDITY_STAKER, LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL},
 				percentages: [4]int64{3000, 3000, 2000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1200,7 +1200,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				callerRealm: govRealm,
 				targets:     [4]int{COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL},
 				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				shouldPanic: true,
 			},
 			{
@@ -1275,7 +1275,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				isAdmin:     true,
 				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
 				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				description: "distribution should remain unchanged after failed duplicate attempt",
 			},
 			{
@@ -1295,7 +1295,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 				isAdmin:     false,
 				targets:     [4]int{GOV_STAKER, LIQUIDITY_STAKER, DEVOPS, GOV_STAKER},
 				percentages: [4]int64{3000, 5000, 1500, 500},
-				expectedErr: "[GNOSWAP-EMISSION-004] duplicate emission target",
+				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
 				description: "GOV_STAKER should remain at 0% after failed manipulation attempt",
 			},
 		}

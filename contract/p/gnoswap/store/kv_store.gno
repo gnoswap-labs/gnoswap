@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
 )
 
 // kvStore represents a domain-specific key-value storage
@@ -215,6 +214,10 @@ func (k *kvStore) AddAuthorizedCaller(caller address, permission Permission) err
 		return ErrAuthorizedCallerAlreadyRegistered
 	}
 
+	if !isValidPermission(permission) {
+		return ErrInvalidPermission
+	}
+
 	k.authorizedCallers[caller] = permission
 
 	return nil
@@ -228,6 +231,10 @@ func (k *kvStore) UpdateAuthorizedCaller(caller address, permission Permission) 
 
 	if !k.isRegisteredAuthorizedCaller(caller) {
 		return ErrAuthorizedCallerNotFound
+	}
+
+	if !isValidPermission(permission) {
+		return ErrInvalidPermission
 	}
 
 	k.authorizedCallers[caller] = permission
@@ -266,5 +273,10 @@ func (k *kvStore) isUpdatableAuthorizedCaller() bool {
 
 // makeKey creates a prefixed key with the domain address to ensure isolation
 func (k *kvStore) makeKey(key string) string {
-	return ufmt.Sprintf("%s:%s", k.domainAddress, key)
+	return string(k.domainAddress) + ":" + key
+}
+
+// isValidPermission ensures only ReadOnly and Write permissions are assignable via registration APIs.
+func isValidPermission(permission Permission) bool {
+	return permission == ReadOnly || permission == Write
 }

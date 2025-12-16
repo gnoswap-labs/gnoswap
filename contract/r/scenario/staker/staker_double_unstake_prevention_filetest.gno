@@ -207,7 +207,7 @@ func secondUnstakeAttempt() {
 	testing.SetRealm(adminRealm)
 
 	var t *testing.T
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-022]", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-STAKER-013]", func() {
 		println("[EXPECTED] Try to unstake the same position again - should fail")
 		sr.UnStakeToken(cross, 1, false)
 	})

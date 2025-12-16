@@ -1,11 +1,11 @@
 package v1
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -129,7 +129,7 @@ func TestRemoveToken(t *testing.T) {
 			inputTokenPath:        GNS_PATH,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, customTokenPath},
 			expectedHasAbort:      true,
-			expectedAbortMsg:      "[GNOSWAP-STAKER-018] can not delete default external token: can not remove default token(gno.land/r/gnoswap/gns)",
+			expectedAbortMsg:      "[GNOSWAP-STAKER-010] cannot delete default external token: cannot remove default token(gno.land/r/gnoswap/gns)",
 			expectedHasPanic:      false,
 			expectedPanicMsg:      "",
 		},
@@ -209,7 +209,7 @@ func TestModifyTokenList(t *testing.T) {
 			caller:         getAdminAddress(t),
 			inputTokenPath: GNS_PATH,
 			inputValidator: func(tokenPath string) error {
-				return ufmt.Errorf("validation failure")
+				return errors.New("validation failure")
 			},
 			inputExecutor:         addTokenExecutor,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM},
@@ -408,13 +408,13 @@ func TestAddTokenValidator(t *testing.T) {
 			name:          "invalid - GNOT is default",
 			tokenPath:     GNOT_DENOM,
 			expectError:   true,
-			expectedError: "can not add existing token",
+			expectedError: "cannot add existing token",
 		},
 		{
 			name:          "invalid - GNS_PATH is default",
 			tokenPath:     GNS_PATH,
 			expectError:   true,
-			expectedError: "can not add existing token",
+			expectedError: "cannot add existing token",
 		},
 		{
 			name:          "valid - custom token path",
@@ -456,13 +456,13 @@ func TestRemoveTokenValidator(t *testing.T) {
 			name:          "invalid - cannot remove GNOT",
 			tokenPath:     GNOT_DENOM,
 			expectError:   true,
-			expectedError: "can not remove default token",
+			expectedError: "cannot remove default token",
 		},
 		{
 			name:          "invalid - cannot remove GNS_PATH",
 			tokenPath:     GNS_PATH,
 			expectError:   true,
-			expectedError: "can not remove default token",
+			expectedError: "cannot remove default token",
 		},
 		{
 			name:          "valid - non-default token",

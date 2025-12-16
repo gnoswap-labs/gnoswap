@@ -1,6 +1,9 @@
 package v1
 
-import sr "gno.land/r/gnoswap/staker"
+import (
+	"gno.land/p/nt/avl"
+	sr "gno.land/r/gnoswap/staker"
+)
 
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.
@@ -14,44 +17,32 @@ type Reward struct {
 
 // calculate total position rewards and penalties
 func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	pools := s.getPools()
-	poolTier := s.getPoolTier()
-	deposits := s.getDeposits()
-
 	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
-		Deposits:      deposits,
-		Pools:         pools,
-		PoolTier:      poolTier,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	})
 
 	internal := int64(0)
+	internalPenalty := int64(0)
+
+	rewardLen := len(rewards)
+	externalReward := make(map[string]int64, rewardLen)
+	externalPenalty := make(map[string]int64, rewardLen)
+
 	for _, reward := range rewards {
 		internal = safeAddInt64(internal, reward.Internal)
-	}
-
-	internalPenalty := int64(0)
-	for _, reward := range rewards {
 		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
-	}
 
-	externalReward := make(map[string]int64)
-	for _, reward := range rewards {
-		if reward.External != nil {
-			for incentive, reward := range reward.External {
-				externalReward[incentive] = safeAddInt64(externalReward[incentive], reward)
-			}
+		for incentive, amount := range reward.External {
+			externalReward[incentive] = safeAddInt64(externalReward[incentive], amount)
 		}
-	}
 
-	externalPenalty := make(map[string]int64)
-	for _, reward := range rewards {
-		if reward.ExternalPenalty != nil {
-			for incentive, penalty := range reward.ExternalPenalty {
-				externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
-			}
+		for incentive, penalty := range reward.ExternalPenalty {
+			externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
 		}
 	}
 
@@ -95,64 +86,73 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	lastCollectTime := depositResolver.InternalRewardLastCollectTime()
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
-	warmups := len(deposit.Warmups())
-	internalRewards := make([]int64, warmups)
-	internalPenalties := make([]int64, warmups)
-	externalRewards := make([]map[string]int64, warmups)
-	externalPenalties := make([]map[string]int64, warmups)
+	rewardState := poolResolver.RewardStateOf(deposit)
 
 	// Calculate internal rewards regardless of current tier status
 	// The reward cache system will automatically handle periods with 0 rewards
 	// This allows collecting rewards earned while the pool was in a tier,
 	// while preventing new rewards after tier removal
-	internalRewards, internalPenalties = poolResolver.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
+	calculatedInternalRewards, calculatedInternalPenalties := rewardState.calculateInternalReward(lastCollectTime, param.CurrentTime)
 
-	// Initialize maps for external rewards
-	for i := range externalRewards {
-		externalRewards[i] = make(map[string]int64)
-		externalPenalties[i] = make(map[string]int64)
+	warmupLen := len(deposit.Warmups())
+	rewards := make([]Reward, warmupLen)
+	for i := 0; i < warmupLen; i++ {
+		rewards[i] = Reward{
+			Internal:        calculatedInternalRewards[i],
+			InternalPenalty: calculatedInternalPenalties[i],
+			External:        make(map[string]int64),
+			ExternalPenalty: make(map[string]int64),
+		}
+	}
+	rewardState.reset()
+
+	lastExternalIncentiveUpdatedAt := depositResolver.LastExternalIncentiveUpdatedAt()
+
+	// update deposit's incentive list with new incentives created since last update
+	if lastExternalIncentiveUpdatedAt < param.CurrentTime {
+		// get new incentives created since last update
+		currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, lastExternalIncentiveUpdatedAt, param.CurrentTime)
+
+		// add new created incentives to deposit
+		for _, incentiveId := range currentIncentiveIds {
+			deposit.AddExternalIncentiveId(incentiveId)
+		}
+
+		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
 	}
 
-	// Get all incentives using a wide time range to ensure we get all possible incentives
-	// We'll filter them individually based on their specific lastCollectTime
-	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(0, param.CurrentTime*2)
+	incentivesResolver := poolResolver.IncentivesResolver()
 
-	// Process each external incentive with lazy initialization:
-	// When a new incentive is created, we don't iterate through all deposits for performance.
-	//
-	// Instead, we determine the appropriate lastCollectTime here:
-	// - If a deposit already has a lastCollectTime for an incentive, use it
-	// - If not (first time collecting), use max(deposit.stakeTime, incentive.startTimestamp)
-	//
-	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
-	for incentiveId, incentive := range allIncentives {
-		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
+	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
+		incentive, ok := incentivesResolver.Get(incentiveId)
+		if !ok {
+			return false
+		}
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
-			continue
+		if !incentiveResolver.IsStarted(param.CurrentTime) {
+			return false
 		}
 
 		// External incentivized pool.
 		// Calculate reward for each warmup using per-incentive lastCollectTime
-		externalReward, externalPenalty := poolResolver.RewardStateOf(deposit).calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
+		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
-			externalRewards[i][incentiveId] = externalReward[i]
-			externalPenalties[i][incentiveId] = externalPenalty[i]
+			if externalReward[i] > 0 || externalPenalty[i] > 0 {
+				rewards[i].External[incentiveId] = externalReward[i]
+				rewards[i].ExternalPenalty[incentiveId] = externalPenalty[i]
+			}
 		}
-	}
 
-	rewards := make([]Reward, len(internalRewards))
-	for i := range internalRewards {
-		rewards[i] = Reward{
-			Internal:        internalRewards[i],
-			InternalPenalty: internalPenalties[i],
-			External:        externalRewards[i],
-			ExternalPenalty: externalPenalties[i],
-		}
-	}
+		rewardState.reset()
+
+		return false
+	})
 
 	return rewards
 }
@@ -164,7 +164,38 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 		return 0
 	}
 	poolResolver := NewPoolResolver(pool)
-	return poolResolver.processUnclaimableReward(s.getPoolTier(), endTimestamp)
+	return poolResolver.processUnclaimableReward(endTimestamp)
+}
+
+// update deposit's incentive list with new incentives created since last update
+func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
+	currentIncentiveIds := make([]string, 0)
+
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
+		// Value is a slice of incentive IDs (handles timestamp collisions)
+		poolIncentiveIds, ok := value.(*avl.Tree)
+		if !ok {
+			return false
+		}
+
+		incentiveIdsValue, exists := poolIncentiveIds.Get(poolPath)
+		if !exists {
+			return false
+		}
+
+		incentiveIds, ok := incentiveIdsValue.([]string)
+		if !ok {
+			return false
+		}
+
+		currentIncentiveIds = append(currentIncentiveIds, incentiveIds...)
+
+		return false
+	})
+
+	return currentIncentiveIds
 }
 
 // getInitialCollectTime determines the initial collection time for an incentive

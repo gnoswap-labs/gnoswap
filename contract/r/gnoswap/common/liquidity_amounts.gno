@@ -19,7 +19,6 @@ var (
 	q96Uint    = u256.MustFromDecimal(Q96)
 	q128Mask   = u256.MustFromDecimal(MAX_UINT128)
 	// only used for return value
-	zero = u256.Zero()
 	zeroI256 = i256.Zero()
 )
 
@@ -150,7 +149,7 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return zero
+		return u256.Zero()
 	}
 
 	val1 := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
@@ -185,7 +184,7 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return zero
+		return u256.Zero()
 	}
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
@@ -238,9 +237,9 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 // // Output:
 // Token0: 500000, Token1: 250000
 // ```
-func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (string, string) {
+func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if liquidity.IsZero() {
-		return "0", "0"
+		return u256.Zero(), u256.Zero()
 	}
 
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
@@ -257,7 +256,7 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 		amount1 = computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 	}
 
-	return amount0.ToString(), amount1.ToString()
+	return amount0, amount1
 }
 
 // LiquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
@@ -354,7 +353,7 @@ func safeConvertToUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(maxUint128) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 	return value
 }

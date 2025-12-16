@@ -21,7 +21,7 @@ func initialSetup(t *testing.T) {
 }
 
 func TestLiquidityManagement_addLiquidity(t *testing.T) {
-	poolKey := computePoolPath(gnsPath, barPath, fee3000)
+	poolKey := pl.GetPoolPath(gnsPath, barPath, fee3000)
 
 	tests := []struct {
 		name            string
@@ -80,7 +80,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			errorType:       "abort",
 			expectedAmount0: "0",
 			expectedAmount1: "0",
-			expectedMessage: "[GNOSWAP-POOL-010] zero liquidity",
+			expectedMessage: "[GNOSWAP-POOL-008] zero liquidity",
 		},
 		{
 			name: "add liquidity is failed by invalid tick range",
@@ -96,7 +96,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(-600)",
+			expectedMessage: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(-600)",
 		},
 		{
 			name: "add liquidity is failed by non-existent pool",
@@ -112,7 +112,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(invalid/pool/path) to exist",
+			expectedMessage: "[GNOSWAP-POOL-006] requested data not found || expected poolPath(invalid/pool/path) to exist",
 		},
 		{
 			name: "add liquidity is failed by insufficient balance",
@@ -144,7 +144,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "panic",
-			expectedMessage: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+			expectedMessage: "[GNOSWAP-COMMON-005] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 		{
 			name: "add liquidity with exact minimum amounts",
@@ -305,7 +305,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			expectedAmount0: "100",
 			expectedAmount1: "100",
 			expectError:     true,
-			expectedMessage: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(60) != 0(1)",
+			expectedMessage: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(60) != 0(1)",
 		},
 	}
 

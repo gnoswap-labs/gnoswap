@@ -26,10 +26,9 @@ import (
 // Parameters:
 //   - token0Path, token1Path: Token contract paths
 //   - fee: Fee tier (100, 500, 3000, 10000 = 0.01%, 0.05%, 0.3%, 1%)
-//   - recipient: Position owner address
 //   - tickLower, tickUpper: Price range boundaries (must be tick-aligned)
-//   - liquidityAmount: Liquidity to add (Q128 format)
-//   - positionCaller: Original caller for token transfers
+//   - liquidityAmount: Liquidity to add (decimal string)
+//   - positionCaller: Address that provides tokens for the mint operation
 //
 // Returns:
 //   - amount0: Token0 amount consumed (decimal string)
@@ -107,8 +106,8 @@ func (i *poolV1) Mint(
 //   - positionCaller: Position owner for validation
 //
 // Returns:
-//   - amount0: Token0 owed to position (uint256)
-//   - amount1: Token1 owed to position (uint256)
+//   - amount0: Token0 owed to position (decimal string)
+//   - amount1: Token1 owed to position (decimal string)
 //
 // Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
@@ -144,13 +143,13 @@ func (i *poolV1) Burn(
 
 		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 		position.SetTokensOwed0(tokensOwed0)
 
 		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 		position.SetTokensOwed1(tokensOwed1)
 	}
@@ -176,7 +175,6 @@ func (i *poolV1) Burn(
 // Collect transfers owed tokens from a position to recipient.
 //
 // Claims tokens from burned liquidity and accumulated fees.
-// Applies protocol withdrawal fee (1% default) before transfer.
 // Supports partial collection via amount limits.
 //
 // Parameters:
@@ -187,10 +185,10 @@ func (i *poolV1) Burn(
 //   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
 //
 // Returns:
-//   - amount0: Token0 actually collected (after fees)
-//   - amount1: Token1 actually collected (after fees)
+//   - amount0: Token0 amount transferred (before any withdrawal fees)
+//   - amount1: Token1 amount transferred (before any withdrawal fees)
 //
-// Protocol fees: 1% on collected amounts.
+// Note: Withdrawal fees are applied by the position contract, not here.
 // Only callable by position contract.
 func (i *poolV1) Collect(
 	token0Path string,
@@ -231,30 +229,30 @@ func (i *poolV1) Collect(
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
-	if amount0.Gt(u256.Zero()) {
+	if amount0.Gt(zero) {
 		tokenOwed0, overflow := u256.Zero().SubOverflow(position.TokensOwed0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		token0Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
 		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, safeConvertToInt64(amount0))
 	}
-	if amount1.Gt(u256.Zero()) {
+	if amount1.Gt(zero) {
 		tokenOwed1, overflow := u256.Zero().SubOverflow(position.TokensOwed1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		token1Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		position.SetTokensOwed1(tokenOwed1)
@@ -381,7 +379,7 @@ func (i *poolV1) collectProtocol(
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	token0Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken0(), amount0)
 	if underflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 	pool.SetProtocolFeesToken0(token0Fees)
 

@@ -16,7 +16,7 @@ import (
 )
 
 type mockPoolStore struct {
-	pools                map[string]*pool.Pool
+	pools                *avl.Tree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -32,12 +32,12 @@ func (s *mockPoolStore) HasPools() bool {
 
 // GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *mockPoolStore) GetPools() map[string]*pool.Pool {
+func (s *mockPoolStore) GetPools() *avl.Tree {
 	return s.pools
 }
 
 // SetPools stores the map containing all pool data.
-func (s *mockPoolStore) SetPools(pools map[string]*pool.Pool) error {
+func (s *mockPoolStore) SetPools(pools *avl.Tree) error {
 	s.pools = pools
 	return nil
 }
@@ -164,7 +164,7 @@ func NewMockPoolStoreWithHook(
 	}
 
 	return &mockPoolStore{
-		pools:                make(map[string]*pool.Pool),
+		pools:                avl.NewTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
@@ -336,6 +336,7 @@ type MockStakerStore struct {
 	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
+	externalIncentivesByCreationTime *sr.UintTree
 }
 
 // DepositGnsAmount
@@ -637,6 +638,20 @@ func (s *MockStakerStore) SetCurrentSwapBatch(batch *sr.SwapBatchProcessor) erro
 	return nil
 }
 
+// ExternalIncentivesByCreationTime
+func (s *MockStakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
+	return s.externalIncentivesByCreationTime != nil
+}
+
+func (s *MockStakerStore) GetExternalIncentivesByCreationTime() *sr.UintTree {
+	return s.externalIncentivesByCreationTime
+}
+
+func (s *MockStakerStore) SetExternalIncentivesByCreationTime(tree *sr.UintTree) error {
+	s.externalIncentivesByCreationTime = tree
+	return nil
+}
+
 func newMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            0,
@@ -664,8 +679,9 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
 			return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 		},
-		warmupTemplate:   sr.DefaultWarmupTemplate(),
-		currentSwapBatch: &sr.SwapBatchProcessor{},
+		warmupTemplate:                   sr.DefaultWarmupTemplate(),
+		currentSwapBatch:                 &sr.SwapBatchProcessor{},
+		externalIncentivesByCreationTime: sr.NewUintTree(),
 	}
 }
 
@@ -695,22 +711,22 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	}(cross)
 }
 
-func (p *mockPoolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	func(cur realm) {
-		pool.SetTickCrossHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	pool.SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(poolPath, tickId, zeroForOne, timestamp)
+	})
 }
 
-func (p *mockPoolAccessor) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
-	func(cur realm) {
-		pool.SetSwapStartHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
+	pool.SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {
+		hook(poolPath, timestamp)
+	})
 }
 
-func (p *mockPoolAccessor) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
-	func(cur realm) {
-		pool.SetSwapEndHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetSwapEndHook(hook func(poolPath string) error) {
+	pool.SetSwapEndHook(cross, func(cur realm, poolPath string) error {
+		return hook(poolPath)
+	})
 }
 
 func newMockPoolAccessor() sr.PoolAccessor {
@@ -719,10 +735,15 @@ func newMockPoolAccessor() sr.PoolAccessor {
 
 type mockEmissionAccessor struct{}
 
-func (e *mockEmissionAccessor) MintAndDistributeGns() {
+var _ sr.EmissionAccessor = (*mockEmissionAccessor)(nil)
+
+func (e *mockEmissionAccessor) MintAndDistributeGns() (int64, bool) {
+	var amount int64
+	var ok bool
 	func(cur realm) {
-		emission.MintAndDistributeGns(cross)
+		amount, ok = emission.MintAndDistributeGns(cross)
 	}(cross)
+	return amount, ok
 }
 
 func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {

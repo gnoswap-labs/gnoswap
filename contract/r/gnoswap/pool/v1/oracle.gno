@@ -53,6 +53,9 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, error) {
 	// Calculate TWAP: (tickCumulative_now - tickCumulative_before) / timeDelta
 	tickDelta := tickCumulatives[1] - tickCumulatives[0]
 	twapTick := int32(tickDelta / int64(secondsAgo))
+	if tickDelta < 0 && (tickDelta%int64(secondsAgo) != 0) {
+		twapTick--
+	}
 
 	return twapTick, nil
 }
@@ -116,7 +119,7 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 	// calculate liquidity cumulative
 	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
 	if overflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	liquidityCumulative := u256.Zero().Add(lastObservation.LiquidityCumulative(), liquidityDelta)

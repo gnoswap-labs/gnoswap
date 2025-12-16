@@ -2,9 +2,9 @@ package v1
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"strings"
-	"time"
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
@@ -19,6 +19,25 @@ var (
 	errTxExpired    = "transaction too old, now(%d) > deadline(%d)"
 )
 
+// calculateSwapAmountByQuote calculates swap amount based on quote percentage.
+func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
+	quoteInt, err := strconv.ParseInt(quote, 10, 64)
+	if err != nil {
+		return 0, ufmt.Errorf("invalid quote(%s)", quote)
+	}
+
+	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
+		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
+	}
+
+	toSwap := safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
+	if toSwap == 0 {
+		return 0, errInvalidSwapAmount
+	}
+
+	return toSwap, nil
+}
+
 // assertHopsInRange ensures the number of hops is within the valid range of 1-3.
 func assertHopsInRange(hops int) {
 	switch hops {
@@ -26,14 +45,6 @@ func assertHopsInRange(hops int) {
 		return
 	default:
 		panic(errHopsOutOfRange)
-	}
-}
-
-// assertIsNotPassedDeadline ensures the transaction deadline has not expired.
-func assertIsNotPassedDeadline(deadline int64) {
-	if err := checkDeadline(deadline); err != nil {
-		errMsg := addDetailToError(errExpired, err.Error())
-		panic(errMsg)
 	}
 }
 
@@ -60,14 +71,6 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		)
 	}
 
-	f, err := strconv.Atoi(poolPathSplit[2])
-	if err != nil {
-		return "", "", 0, makeErrorWithDetails(
-			errInvalidPoolPath,
-			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
-		)
-	}
-
 	poolPathSplit[0] = strings.TrimSpace(poolPathSplit[0])
 	poolPathSplit[1] = strings.TrimSpace(poolPathSplit[1])
 
@@ -75,6 +78,14 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		return "", "", 0, makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("token addresses cannot be empty: %s", poolPath),
+		)
+	}
+
+	f, err := strconv.Atoi(poolPathSplit[2])
+	if err != nil {
+		return "", "", 0, makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
 		)
 	}
 
@@ -216,16 +227,6 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 	return nil
 }
 
-// checkDeadline verifies that the transaction deadline has not passed.
-func checkDeadline(deadline int64) error {
-	now := time.Now().Unix()
-	if now <= deadline {
-		return nil
-	}
-
-	return ufmt.Errorf(errTxExpired, now, deadline)
-}
-
 // splitSingleChar splits a string by a single character separator.
 // This function is optimized for splitting strings with a single-byte separator
 // and is more memory efficient than strings.Split for this use case.
@@ -292,17 +293,24 @@ func formatInt64(v any) string {
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
 
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
+			"amount(%s) overflows int64 range (max 9223372036854775807)",
 			value.ToString(),
-			MAX_INT64,
 		))
 	}
 	return int64(res)
+}
+
+func safeParseInt64(value string) int64 {
+	amountInt64, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return amountInt64
 }
 
 // parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
@@ -371,7 +379,7 @@ func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 		panic("tokenA and tokenB cannot be the same")
 	}
 
-	return ufmt.Sprintf("%s:%s:%s", tokenA, tokenB, formatUint(fee))
+	return tokenA + ":" + tokenB + ":" + formatUint(fee)
 }
 
 // BuildMultiHopPath creates a multi-hop route path string by connecting multiple single hops.
@@ -396,4 +404,61 @@ func BuildMultiHopRoutePath(hops ...string) string {
 	}
 
 	return strings.Join(hops, POOL_SEPARATOR)
+}
+
+// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
+func safeAddInt64(a, b int64) int64 {
+	if a > 0 && b > math.MaxInt64-a {
+		panic("int64 addition overflow")
+	}
+	if a < 0 && b < math.MinInt64-a {
+		panic("int64 addition underflow")
+	}
+	return a + b
+}
+
+// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
+func safeSubInt64(a, b int64) int64 {
+	if b > 0 && a < math.MinInt64+b {
+		panic("int64 subtraction underflow")
+	}
+	if b < 0 && a > math.MaxInt64+b {
+		panic("int64 subtraction overflow")
+	}
+	return a - b
+}
+
+func safeMulDivInt64(a, b, c int64) int64 {
+	if c == 0 {
+		panic("division by zero in safeMulDivInt64")
+	}
+
+	if a == 0 || b == 0 {
+		return 0
+	}
+
+	// calculate amount to swap for this route
+	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
+	if overflow {
+		panic(errOverflow)
+	}
+
+	result = i256.Zero().Div(result, i256.NewInt(c))
+	if !result.IsInt64() {
+		panic(errOverflow)
+	}
+
+	return result.Int64()
+}
+
+func safeAbsInt64(a int64) int64 {
+	if a == math.MinInt64 {
+		panic(errOverflow)
+	}
+
+	if a < 0 {
+		return -a
+	}
+
+	return a
 }

@@ -101,7 +101,7 @@ func testScenario4EmissionAfterStartHeight() {
 
 	// Try to mint
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
-	distributedAmount := emission.MintAndDistributeGns(cross)
+	distributedAmount, _ := emission.MintAndDistributeGns(cross)
 	ufmt.Printf("[INFO] Distributed amount: %d\n", distributedAmount)
 	ufmt.Printf("[EXPECTED] Should be > 0 (distribution started)\n")
 

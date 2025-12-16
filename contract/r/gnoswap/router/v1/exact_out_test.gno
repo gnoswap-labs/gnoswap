@@ -31,8 +31,8 @@ func TestExactOutSwapOperation(t *testing.T) {
 				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
 				QuoteArr:    "100",
 			},
-			AmountOut:   "100",
-			AmountInMax: "150",
+			AmountOut:   100,
+			AmountInMax: 150,
 		})
 
 		err := op.Validate()
@@ -46,8 +46,8 @@ func TestExactOutSwapOperation(t *testing.T) {
 				RouteArr:    "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
 				QuoteArr:    "100",
 			},
-			AmountOut:   "-100", // negative amount
-			AmountInMax: "150",
+			AmountOut:   -100, // negative amount
+			AmountInMax: 150,
 		})
 
 		err = invalidOp.Validate()
@@ -74,7 +74,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 	t.Run("exact out swap with expired deadline", func(t *testing.T) {
 		router := mockRouter()
 
-		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
 			router.ExactOutSwapRoute(
 				fooPath,
 				barPath,
@@ -282,8 +282,8 @@ func TestExactOutAmountValidation(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		resultAmount    uint64
-		specifiedAmount uint64
+		resultAmount    int64
+		specifiedAmount int64
 		swapCount       int64
 		shouldFail      bool
 		errorContains   string
@@ -345,10 +345,7 @@ func TestExactOutAmountValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resultAmount := u256.NewUint(tt.resultAmount)
-			specifiedAmount := u256.NewUint(tt.specifiedAmount)
-
-			err := validator.exactOutAmount(resultAmount, specifiedAmount, tt.swapCount)
+			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
 
 			if tt.shouldFail {
 				uassert.Error(t, err, "expected error for %s", tt.name)
@@ -369,43 +366,43 @@ func TestExactOutAmountValidationEdgeCases(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		resultAmount    string
-		specifiedAmount string
+		resultAmount    int64
+		specifiedAmount int64
 		swapCount       int64
 		shouldFail      bool
 	}{
 		{
 			name:            "zero result, zero specified",
-			resultAmount:    "0",
-			specifiedAmount: "0",
+			resultAmount:    0,
+			specifiedAmount: 0,
 			swapCount:       1,
 			shouldFail:      false,
 		},
 		{
 			name:            "zero result, non-zero specified",
-			resultAmount:    "0",
-			specifiedAmount: "100",
+			resultAmount:    0,
+			specifiedAmount: 100,
 			swapCount:       1,
 			shouldFail:      true,
 		},
 		{
 			name:            "large numbers exact match",
-			resultAmount:    "1000000000000000000",
-			specifiedAmount: "1000000000000000000",
+			resultAmount:    1000000000000000000,
+			specifiedAmount: 1000000000000000000,
 			swapCount:       1,
 			shouldFail:      false,
 		},
 		{
 			name:            "large numbers 1 ugnot diff",
-			resultAmount:    "1000000000000000001",
-			specifiedAmount: "1000000000000000000",
+			resultAmount:    1000000000000000001,
+			specifiedAmount: 1000000000000000000,
 			swapCount:       1,
 			shouldFail:      false,
 		},
 		{
 			name:            "large numbers 2 ugnot diff",
-			resultAmount:    "1000000000000000002",
-			specifiedAmount: "1000000000000000000",
+			resultAmount:    1000000000000000002,
+			specifiedAmount: 1000000000000000000,
 			swapCount:       1,
 			shouldFail:      true,
 		},
@@ -413,10 +410,7 @@ func TestExactOutAmountValidationEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resultAmount := u256.MustFromDecimal(tt.resultAmount)
-			specifiedAmount := u256.MustFromDecimal(tt.specifiedAmount)
-
-			err := validator.exactOutAmount(resultAmount, specifiedAmount, tt.swapCount)
+			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
 
 			if tt.shouldFail {
 				uassert.Error(t, err, "expected error for %s", tt.name)

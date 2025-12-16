@@ -1,9 +1,9 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -68,7 +68,7 @@ func TestSingleSwap(t *testing.T) {
 				tt.setupFn(env)
 			}
 			router := mockRouter()
-			singleSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+			singleSwapFn := func(cur realm) (int64, int64) {
 				return router.singleSwap(&tt.params)
 			}
 
@@ -79,8 +79,8 @@ func TestSingleSwap(t *testing.T) {
 
 			amountIn, amountOut := singleSwapFn(cross)
 
-			uassert.Equal(t, amountIn.ToString(), tt.expectedIn)
-			uassert.Equal(t, amountOut.ToString(), tt.expectedOut)
+			uassert.Equal(t, strconv.FormatInt(amountIn, 10), tt.expectedIn)
+			uassert.Equal(t, strconv.FormatInt(amountOut, 10), tt.expectedOut)
 		})
 	}
 }
@@ -109,7 +109,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-ROUTER-014] cannot swap same token",
+			errorMessage: "[GNOSWAP-ROUTER-011] cannot swap same token",
 		},
 		{
 			name: "Fail: Unregistered input token",
@@ -125,7 +125,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
+			errorMessage: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Unregistered output token",
@@ -140,7 +140,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
+			errorMessage: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Invalid fee tier 1",
@@ -155,7 +155,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(0)",
+			errorMessage: "[GNOSWAP-ROUTER-005] invalid pool fee tier || unknown fee(0)",
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
@@ -170,7 +170,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(1000000)",
+			errorMessage: "[GNOSWAP-ROUTER-005] invalid pool fee tier || unknown fee(1000000)",
 		},
 		{
 			name: "Fail: Zero amount specified",
@@ -185,7 +185,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "abort",
-			errorMessage: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+			errorMessage: "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
 		},
 		{
 			name: "Success: Valid parameters",
@@ -228,13 +228,10 @@ func TestSingleSwapInputValidation(t *testing.T) {
 			} else {
 				amountIn, amountOut := router.singleSwap(&tt.params)
 
-				if amountIn == nil || amountOut == nil {
-					t.Error("Expected non-nil amounts for successful swap")
-				}
-				if amountIn.IsZero() {
+				if amountIn == 0 {
 					t.Error("Expected non-zero input amount")
 				}
-				if amountOut.IsZero() {
+				if amountOut == 0 {
 					t.Error("Expected non-zero output amount")
 				}
 			}

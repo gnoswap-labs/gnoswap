@@ -5,10 +5,10 @@ import (
 	"chain/runtime"
 	"errors"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -98,7 +98,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		name            string
 		inputToken      string
 		outputToken     string
-		specifiedAmount *i256.Int
+		specifiedAmount int64
 		sentAmount      int64
 		expectError     bool
 		expectedError   string
@@ -107,7 +107,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: non-GNOT token swap",
 			inputToken:      "token1",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(100),
+			specifiedAmount: 100,
 			sentAmount:      0,
 			expectError:     false,
 		},
@@ -115,7 +115,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: WUGNOT input token",
 			inputToken:      "gno.land/r/gnoland/wugnot",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(100),
+			specifiedAmount: 100,
 			sentAmount:      0,
 			expectError:     false,
 		},
@@ -123,7 +123,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: WUGNOT output token",
 			inputToken:      "token1",
 			outputToken:     "gno.land/r/gnoland/wugnot",
-			specifiedAmount: i256.NewInt(100),
+			specifiedAmount: 100,
 			sentAmount:      0,
 			expectError:     false,
 		},
@@ -131,7 +131,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Fail: GNOT input with insufficient sent amount",
 			inputToken:      "ugnot",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(1000),
+			specifiedAmount: 1000,
 			sentAmount:      500,
 			expectError:     true,
 			expectedError:   "ugnot sent by user(500) is not equal to amountSpecified(1000)",
@@ -140,7 +140,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Fail: GNOT input with excess sent amount",
 			inputToken:      "ugnot",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(1000),
+			specifiedAmount: 1000,
 			sentAmount:      1500,
 			expectError:     true,
 			expectedError:   "ugnot sent by user(1500) is not equal to amountSpecified(1000)",
@@ -149,7 +149,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Fail: GNOT input with zero sent amount",
 			inputToken:      "ugnot",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(1000),
+			specifiedAmount: 1000,
 			sentAmount:      0,
 			expectError:     true,
 			expectedError:   "ugnot sent by user(0) is not equal to amountSpecified(1000)",
@@ -158,7 +158,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: GNOT input with zero specified amount",
 			inputToken:      "ugnot",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(0),
+			specifiedAmount: 0,
 			sentAmount:      0,
 			expectError:     false,
 		},
@@ -166,7 +166,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 			name:            "Pass: non-GNOT input with non-zero sent amount",
 			inputToken:      "token1",
 			outputToken:     "token2",
-			specifiedAmount: i256.NewInt(100),
+			specifiedAmount: 100,
 			sentAmount:      1000,
 			expectError:     false,
 		},
@@ -204,65 +204,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 	}
 }
 
-func TestValidateRouteQuote(t *testing.T) {
-	op := &baseSwapOperation{
-		amountSpecified: i256.NewInt(1000),
-	}
-
-	tests := []struct {
-		name        string
-		quote       string
-		index       int
-		expectError bool
-		expected    *i256.Int
-	}{
-		{
-			name:        "Pass: valid quote - 100%",
-			quote:       "100",
-			index:       0,
-			expectError: false,
-			expected:    i256.NewInt(1000), // 1000 * 100 / 100 = 1000
-		},
-		{
-			name:        "Pass: valid quote - 50%",
-			quote:       "50",
-			index:       0,
-			expectError: false,
-			expected:    i256.NewInt(500), // 1000 * 50 / 100 = 500
-		},
-		{
-			name:        "Fail: invalid quote - string",
-			quote:       "invalid",
-			index:       0,
-			expectError: true,
-			expected:    nil,
-		},
-		{
-			name:        "Fail: invalid quote - empty string",
-			quote:       "",
-			index:       0,
-			expectError: true,
-			expected:    nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				if result.Cmp(tt.expected) != 0 {
-					t.Errorf("expected %v but got %v", tt.expected, result)
-				}
-			}
-		})
-	}
-}
-
 func TestProcessRoute(t *testing.T) {
 	op := &baseSwapOperation{}
 
@@ -272,22 +213,22 @@ func TestProcessRoute(t *testing.T) {
 		MakeThirdMintPositionWithoutFee(t)
 		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
 		route := foobar500
-		toSwap := i256.NewInt(1000)
+		toSwap := int64(1000)
 		swapType := ExactIn
 
 		router := mockRouter()
 		func(cur realm) {
 			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType)
 			uassert.Equal(t, err, nil)
-			uassert.Equal(t, amountIn.ToString(), "1000")
-			uassert.Equal(t, amountOut.ToString(), "979")
+			uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
+			uassert.Equal(t, strconv.FormatInt(amountOut, 10), "979")
 		}(cross)
 	})
 }
 
 // Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
 func TestProcessRoutesWithRemainder(t *testing.T) {
-	oddAmount := i256.NewInt(101)
+	oddAmount := int64(101)
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
 		amountSpecified: oddAmount,
@@ -298,13 +239,15 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(t)
 	MakeThirdMintPositionWithoutFee(t)
+	MakeForthMintPositionWithoutFee(t)
 
 	// expected amounts for each route
-	expectedAmounts := []*i256.Int{
-		i256.NewInt(50), // 101 * 50 / 100 = 50
-		i256.NewInt(50), // 101 * 50 / 100 = 50
+	expectedAmounts := []int64{
+		50, // 101 * 50 / 100 = 50
+		50, // 101 * 50 / 100 = 50
 	}
 
 	func(cur realm) {
@@ -313,81 +256,81 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if amountOut.Cmp(u256.Zero()) == 0 {
+		if amountOut == 0 {
 			t.Error("expected non-zero amountOut")
 		}
 	}(cross)
 
 	// check actual swapped amounts for each route
 	for i := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
+		toSwap, err := calculateSwapAmountByQuote(op.amountSpecified, op.quotes[i])
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
 		}
 
-		if toSwap.Cmp(expectedAmounts[i]) != 0 {
-			t.Errorf("route %d: expected amount %s, got %s", i, expectedAmounts[i].ToString(), toSwap.ToString())
+		if toSwap != expectedAmounts[i] {
+			t.Errorf("route %d: expected amount %d, got %d", i, expectedAmounts[i], toSwap)
 		}
 	}
 
 	// check total input amount
 	totalExpected := oddAmount
-	if op.amountSpecified.Cmp(totalExpected) != 0 {
-		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
+	if op.amountSpecified != totalExpected {
+		t.Errorf("total expected amount %d, got %d", totalExpected, op.amountSpecified)
 	}
 
 	// check remainder
-	usedAmount := i256.NewInt(0)
+	usedAmount := int64(0)
 	for _, amount := range expectedAmounts {
-		usedAmount = usedAmount.Add(usedAmount, amount)
+		usedAmount = usedAmount + amount
 	}
 	// Currently, this test succeeds.
 	// That is, we can observe that there is indeed a remainder.
-	remainder := totalExpected.Sub(totalExpected, usedAmount)
-	if remainder.Cmp(i256.NewInt(1)) != 0 {
-		t.Errorf("expected remainder of 1, got %s", remainder.ToString())
+	remainder := totalExpected - usedAmount
+	if remainder != 1 {
+		t.Errorf("expected remainder of 1, got %d", remainder)
 	}
 }
 
 func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 	tests := []struct {
 		name            string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		routes          []string
 		quotes          []string
-		expectedAmounts []string // expected amount for each route
+		expectedAmounts []int64 // expected amount for each route
 		description     string
 	}{
 		{
 			// 50% + 50% = 100% (no remainder)
 			name:            "two routes with perfect split",
-			amountSpecified: i256.NewInt(100),
+			amountSpecified: 100,
 			routes:          []string{foobar500, barbaz500},
 			quotes:          []string{"50", "50"},
-			expectedAmounts: []string{"50", "50"},
+			expectedAmounts: []int64{50, 50},
 		},
 		{
 			// 33% + 33% + remainder(34%) = 100%
 			name:            "three routes with remainder",
-			amountSpecified: i256.NewInt(100),
+			amountSpecified: 100,
 			routes:          []string{foobar500, barbaz500, foobar500},
 			quotes:          []string{"33", "33", "34"},
-			expectedAmounts: []string{"33", "33", "34"}, // last route gets remainder
+			expectedAmounts: []int64{33, 33, 34}, // last route gets remainder
 		},
 		{
 			name:            "odd amount with two routes",
-			amountSpecified: i256.NewInt(101),
+			amountSpecified: 101,
 			routes:          []string{foobar500, barbaz500},
 			quotes:          []string{"50", "50"},
-			expectedAmounts: []string{"50", "51"}, // last route gets 50 + remainder(1)
+			expectedAmounts: []int64{50, 51}, // last route gets 50 + remainder(1)
 		},
 		{
 			// 24% + 25% + 25% + remainder(26%) = 100%
 			name:            "large amount with multiple routes",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			routes:          []string{foobar500, barbaz500, foobar500, barbaz500},
 			quotes:          []string{"24", "25", "25", "26"},
-			expectedAmounts: []string{"240", "250", "250", "260"}, // last route gets remainder
+			expectedAmounts: []int64{240, 250, 250, 260}, // last route gets remainder
 		},
 	}
 
@@ -398,46 +341,43 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 			MakeThirdMintPositionWithoutFee(t)
 
 			// Track the amounts used for each route
-			totalUsed := i256.NewInt(0)
+			totalUsed := int64(0)
 
 			// Calculate expected amounts based on the new logic
-			calculatedAmounts := make([]*i256.Int, len(tt.routes))
+			calculatedAmounts := make([]int64, len(tt.routes))
 
 			for i := range tt.routes {
 				if i < len(tt.routes)-1 {
 					// For non-last routes, calculate based on quote
 					quote := tt.quotes[i]
-					quoteInt, err := i256.FromDecimal(quote)
-					uassert.NoError(t, err)
+					quoteInt := safeParseInt64(quote)
 
-					amount := new(i256.Int).Mul(tt.amountSpecified, quoteInt)
-					amount = new(i256.Int).Div(amount, i256.NewInt(100))
+					amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 
 					calculatedAmounts[i] = amount
-					totalUsed = new(i256.Int).Add(totalUsed, amount)
+					totalUsed = totalUsed + amount
 				} else {
 					// Last route gets the remaining amount
-					calculatedAmounts[i] = new(i256.Int).Sub(tt.amountSpecified, totalUsed)
+					calculatedAmounts[i] = tt.amountSpecified - totalUsed
 				}
 			}
 
 			// Verify each calculated amount matches expected
 			for i, expectedAmount := range tt.expectedAmounts {
-				expected := i256.MustFromDecimal(expectedAmount)
-				if calculatedAmounts[i].Cmp(expected) != 0 {
-					t.Errorf("route %d: expected %s, got %s",
-						i, expected.ToString(), calculatedAmounts[i].ToString())
+				if calculatedAmounts[i] != expectedAmount {
+					t.Errorf("route %d: expected %d, got %d",
+						i, expectedAmount, calculatedAmounts[i])
 				}
 			}
 
 			// Verify total equals amountSpecified
-			total := i256.NewInt(0)
+			total := int64(0)
 			for _, amount := range calculatedAmounts {
-				total = total.Add(total, amount)
+				total = total + amount
 			}
-			if total.Cmp(tt.amountSpecified) != 0 {
-				t.Errorf("total amount mismatch: expected %s, got %s",
-					tt.amountSpecified.ToString(), total.ToString())
+			if total != tt.amountSpecified {
+				t.Errorf("total amount mismatch: expected %d, got %d",
+					tt.amountSpecified, total)
 			}
 		})
 	}
@@ -447,28 +387,23 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 func TestSwapRouteParams_ExactAmount(t *testing.T) {
 	tests := []struct {
 		name        string
-		exactAmount string
-		expected    string
+		exactAmount int64
+		expected    int64
 	}{
 		{
 			name:        "positive amount",
-			exactAmount: "1000",
-			expected:    "1000",
+			exactAmount: 1000,
+			expected:    1000,
 		},
 		{
 			name:        "zero amount",
-			exactAmount: "0",
-			expected:    "0",
+			exactAmount: 0,
+			expected:    0,
 		},
 		{
 			name:        "large amount",
-			exactAmount: "999999999999999",
-			expected:    "999999999999999",
-		},
-		{
-			name:        "amount with leading zeros",
-			exactAmount: "00001000",
-			expected:    "00001000",
+			exactAmount: 999999999999999,
+			expected:    999999999999999,
 		},
 	}
 
@@ -488,57 +423,57 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 	tests := []struct {
 		name        string
 		typ         SwapType
-		exactAmount string
+		exactAmount int64
 		feeBps      uint64
-		expected    string
+		expected    int64
 		description string
 	}{
 		{
 			name:        "ExactIn returns exact amount unchanged",
 			typ:         ExactIn,
-			exactAmount: "1000",
+			exactAmount: 1000,
 			feeBps:      15,
-			expected:    "1000",
+			expected:    1000,
 			description: "ExactIn should return exactAmount without fee calculation",
 		},
 		{
 			name:        "ExactOut calculates with 0.15% fee",
 			typ:         ExactOut,
-			exactAmount: "1000",
+			exactAmount: 1000,
 			feeBps:      15,
-			expected:    "1001", // 1000 * 10000 / (10000 - 15) = 1001.50... rounded down to 1001
+			expected:    1001, // 1000 * 10000 / (10000 - 15) = 1001.50... rounded down to 1001
 			description: "ExactOut should add router fee",
 		},
 		{
 			name:        "ExactOut calculates with 0% fee",
 			typ:         ExactOut,
-			exactAmount: "1000",
+			exactAmount: 1000,
 			feeBps:      0,
-			expected:    "1000",
+			expected:    1000,
 			description: "ExactOut with 0% fee should return unchanged amount",
 		},
 		{
 			name:        "ExactOut calculates with 1% fee",
 			typ:         ExactOut,
-			exactAmount: "1000",
+			exactAmount: 1000,
 			feeBps:      100,
-			expected:    "1010", // 1000 * 10000 / (10000 - 100) = 1010.10... rounded down to 1010
+			expected:    1010, // 1000 * 10000 / (10000 - 100) = 1010.10... rounded down to 1010
 			description: "ExactOut should add 1% fee",
 		},
 		{
 			name:        "ExactOut with large amount",
 			typ:         ExactOut,
-			exactAmount: "1000000000",
+			exactAmount: 1000000000,
 			feeBps:      15,
-			expected:    "1001502253", // 1000000000 * 10000 / (10000 - 15) = 1001502253.xxx
+			expected:    1001502253, // 1000000000 * 10000 / (10000 - 15) = 1001502253.xxx
 			description: "ExactOut should handle large amounts correctly",
 		},
 		{
 			name:        "ExactOut with zero amount",
 			typ:         ExactOut,
-			exactAmount: "0",
+			exactAmount: 0,
 			feeBps:      15,
-			expected:    "0",
+			expected:    0,
 			description: "ExactOut with zero amount should return 0",
 		},
 	}
@@ -659,37 +594,32 @@ func TestSwapRouteParams_SwapCount(t *testing.T) {
 func TestSwapRouteParams_IsSetSqrtPriceLimitX96(t *testing.T) {
 	tests := []struct {
 		name              string
-		sqrtPriceLimitX96 string
+		sqrtPriceLimitX96 *u256.Uint
 		expected          bool
 	}{
 		{
 			name:              "valid positive number",
-			sqrtPriceLimitX96: "79228162514264337593543950336",
+			sqrtPriceLimitX96: u256.MustFromDecimal("79228162514264337593543950336"),
 			expected:          true,
 		},
 		{
 			name:              "valid small number",
-			sqrtPriceLimitX96: "1",
+			sqrtPriceLimitX96: u256.NewUint(1),
 			expected:          true,
 		},
 		{
-			name:              "empty string",
-			sqrtPriceLimitX96: "",
+			name:              "nil value",
+			sqrtPriceLimitX96: nil,
 			expected:          false,
 		},
 		{
-			name:              "zero string",
-			sqrtPriceLimitX96: "0",
+			name:              "zero value",
+			sqrtPriceLimitX96: u256.Zero(),
 			expected:          false,
-		},
-		{
-			name:              "zero string with leading zeros",
-			sqrtPriceLimitX96: "00000",
-			expected:          true, // not equal to "0"
 		},
 		{
 			name:              "large number",
-			sqrtPriceLimitX96: "999999999999999999999999999",
+			sqrtPriceLimitX96: u256.MustFromDecimal("999999999999999999999999999"),
 			expected:          true,
 		},
 	}
@@ -723,8 +653,8 @@ func TestCreateSwapOperation(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    9999999999,
 				typ:         ExactIn,
-				exactAmount: "1000",
-				limitAmount: "900",
+				exactAmount: 1000,
+				limitAmount: 900,
 			},
 			expectError: false,
 			opType:      "*v1.ExactInSwapOperation",
@@ -738,8 +668,8 @@ func TestCreateSwapOperation(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    9999999999,
 				typ:         ExactOut,
-				exactAmount: "1000",
-				limitAmount: "1100",
+				exactAmount: 1000,
+				limitAmount: 1100,
 			},
 			expectError: false,
 			opType:      "*v1.ExactOutSwapOperation",
@@ -753,8 +683,8 @@ func TestCreateSwapOperation(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    9999999999,
 				typ:         SwapType(999),
-				exactAmount: "1000",
-				limitAmount: "900",
+				exactAmount: 1000,
+				limitAmount: 900,
 			},
 			expectError: true,
 			errorMsg:    "unknown swap type",
@@ -850,7 +780,7 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 	tests := []struct {
 		name        string
 		route       string
-		toSwap      *i256.Int
+		toSwap      int64
 		swapType    SwapType
 		expectPanic bool
 		panicMsg    string
@@ -858,7 +788,7 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 		{
 			name:        "invalid hops count - 4 hops",
 			route:       "tokenA:tokenB:500*POOL*tokenB:tokenC:3000*POOL*tokenC:tokenD:10000*POOL*tokenD:tokenE:500",
-			toSwap:      i256.NewInt(1000),
+			toSwap:      1000,
 			swapType:    ExactIn,
 			expectPanic: true,
 			panicMsg:    "number of hops must be 1~3",
@@ -884,68 +814,69 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name            string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		quote           string
 		index           int
 		expectError     bool
-		expectedResult  string
+		expectedResult  int64
 		description     string
 	}{
 		{
 			name:            "zero amount specified",
-			amountSpecified: i256.NewInt(0),
+			amountSpecified: 0,
 			quote:           "50",
 			index:           0,
 			expectError:     true,
-			description:     "0 * 50 / 100 = 0, should error",
+			expectedResult:  0,
+			description:     "0 * 50 / 100 = 0",
 		},
 		{
 			name:            "zero quote percentage",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "0",
 			index:           0,
 			expectError:     true,
-			description:     "1000 * 0 / 100 = 0, should error",
+			expectedResult:  0,
+			description:     "1000 * 0 / 100 = 0",
 		},
 		{
 			name:            "100% quote",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "100",
 			index:           0,
 			expectError:     false,
-			expectedResult:  "1000",
+			expectedResult:  1000,
 			description:     "1000 * 100 / 100 = 1000",
 		},
 		{
 			name:            "1% quote",
-			amountSpecified: i256.NewInt(10000),
+			amountSpecified: 10000,
 			quote:           "1",
 			index:           0,
 			expectError:     false,
-			expectedResult:  "100",
+			expectedResult:  100,
 			description:     "10000 * 1 / 100 = 100",
 		},
 		{
 			name:            "negative quote",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "-50",
 			index:           0,
-			expectError:     false,
-			expectedResult:  "-500",
-			description:     "negative quote results in negative amount",
+			expectError:     true,
+			description:     "negative quote should fail range check (0-100)",
 		},
 		{
 			name:            "quote with leading zeros",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "050",
 			index:           0,
 			expectError:     false,
-			expectedResult:  "500",
+			expectedResult:  500,
 			description:     "leading zeros should be handled correctly",
 		},
 		{
 			name:            "invalid quote - decimal",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "50.5",
 			index:           0,
 			expectError:     true,
@@ -953,30 +884,24 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 		},
 		{
 			name:            "quote greater than 100",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "150",
 			index:           0,
-			expectError:     false,
-			expectedResult:  "1500",
-			description:     "quotes over 100% are technically valid",
+			expectError:     true,
+			description:     "quotes over 100% should fail range check (0-100)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			op := &baseSwapOperation{
-				amountSpecified: tt.amountSpecified,
-			}
-
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
+			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err, tt.description)
-				if result != nil && tt.expectedResult != "" {
-					expected := i256.MustFromDecimal(tt.expectedResult)
-					uassert.Equal(t, result.ToString(), expected.ToString(), tt.description)
+				if tt.expectedResult != 0 {
+					uassert.Equal(t, result, tt.expectedResult, tt.description)
 				}
 			}
 		})
@@ -994,21 +919,11 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 		{
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
-				amountSpecified: i256.NewInt(1000),
+				amountSpecified: 1000,
 				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
 				quotes:          []string{"100"},
 			},
 			expectPanic: false,
-		},
-		{
-			name: "overflow amounts - MaxInt64 + 1",
-			op: &baseSwapOperation{
-				amountSpecified: i256.MustFromDecimal("9223372036854775808"), // MaxInt64 + 1
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
-				quotes:          []string{"100"},
-			},
-			expectPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-026] overflow",
 		},
 	}
 
@@ -1028,7 +943,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			router := mockRouter()
 
 			processRoutesFn := func(cur realm) error {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+				testing.SetRealm(routerRealm)
 				_, _, err := tt.op.processRoutes(router, ExactIn)
 				return err
 			}
@@ -1050,7 +965,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 	tests := []struct {
 		name                 string
 		route                string
-		amountSpecified      *i256.Int
+		amountSpecified      int64
 		withUnwrap           bool
 		sqrtPriceLimitX96    string
 		shouldParseCorrectly bool
@@ -1058,7 +973,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 		{
 			name:                 "valid single hop route",
 			route:                "tokenA:tokenB:500",
-			amountSpecified:      i256.NewInt(1000),
+			amountSpecified:      1000,
 			withUnwrap:           false,
 			sqrtPriceLimitX96:    "",
 			shouldParseCorrectly: true,
@@ -1066,7 +981,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 		{
 			name:                 "single hop with unwrap",
 			route:                "tokenA:ugnot:500",
-			amountSpecified:      i256.NewInt(1000),
+			amountSpecified:      1000,
 			withUnwrap:           true,
 			sqrtPriceLimitX96:    "",
 			shouldParseCorrectly: true,
@@ -1074,7 +989,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 		{
 			name:                 "single hop with price limit",
 			route:                "tokenA:tokenB:500",
-			amountSpecified:      i256.NewInt(1000),
+			amountSpecified:      1000,
 			withUnwrap:           false,
 			sqrtPriceLimitX96:    "79228162514264337593543950336",
 			shouldParseCorrectly: true,
@@ -1084,8 +999,8 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify the parameters are properly structured
-			uassert.NotNil(t, tt.route)
-			uassert.NotNil(t, tt.amountSpecified)
+			uassert.NotEmpty(t, tt.route)
+			uassert.True(t, tt.amountSpecified > 0)
 		})
 	}
 }
@@ -1097,7 +1012,7 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 		swapType        SwapType
 		route           string
 		numHops         int
-		amountSpecified *i256.Int
+		amountSpecified int64
 		withUnwrap      bool
 		expectPanic     bool
 		panicMsg        string
@@ -1108,7 +1023,7 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 			swapType:        SwapType(999),
 			route:           "tokenA:tokenB:500*POOL*tokenB:tokenC:3000",
 			numHops:         2,
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			withUnwrap:      false,
 			expectPanic:     true,
 			panicMsg:        "invalid swap type",
@@ -1135,34 +1050,34 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 	tests := []struct {
 		name               string
-		amountSpecified    *i256.Int
+		amountSpecified    int64
 		routes             []string
 		quotes             []string
-		expectedLastAmount string
+		expectedLastAmount int64
 		description        string
 	}{
 		{
 			name:               "even split - no remainder",
-			amountSpecified:    i256.NewInt(100),
+			amountSpecified:    100,
 			routes:             []string{"route1", "route2"},
 			quotes:             []string{"50", "50"},
-			expectedLastAmount: "50",
+			expectedLastAmount: 50,
 			description:        "Last route should get exact split amount",
 		},
 		{
 			name:               "odd amount - remainder goes to last",
-			amountSpecified:    i256.NewInt(101),
+			amountSpecified:    101,
 			routes:             []string{"route1", "route2"},
 			quotes:             []string{"50", "50"},
-			expectedLastAmount: "51",
+			expectedLastAmount: 51,
 			description:        "Last route should get 50 + remainder(1)",
 		},
 		{
 			name:               "three routes with remainder",
-			amountSpecified:    i256.NewInt(100),
+			amountSpecified:    100,
 			routes:             []string{"route1", "route2", "route3"},
 			quotes:             []string{"33", "33", "34"},
-			expectedLastAmount: "34",
+			expectedLastAmount: 34,
 			description:        "Last route should get remaining amount",
 		},
 	}
@@ -1172,17 +1087,12 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 			// Calculate what the last route should receive
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt, err := i256.FromDecimal(tt.quotes[i])
-				uassert.NoError(t, err)
-
-				amount := i256.Zero().Mul(tt.amountSpecified, quoteInt)
-				amount = i256.Zero().Div(amount, i256.NewInt(100))
-
-				remainingAmount = i256.Zero().Sub(remainingAmount, amount)
+				quoteInt := safeParseInt64(tt.quotes[i])
+				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				remainingAmount = remainingAmount - amount
 			}
 
-			expected := i256.MustFromDecimal(tt.expectedLastAmount)
-			uassert.Equal(t, remainingAmount.ToString(), expected.ToString(), tt.description)
+			uassert.Equal(t, remainingAmount, tt.expectedLastAmount, tt.description)
 		})
 	}
 }
@@ -1191,50 +1101,45 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 func TestBaseSwapOperation_Initialization(t *testing.T) {
 	tests := []struct {
 		name                    string
-		sqrtPriceLimitX96       string
 		withUnwrap              bool
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
 		routes                  []string
 		quotes                  []string
-		amountSpecified         *i256.Int
+		amountSpecified         int64
 	}{
 		{
 			name:                    "default initialization",
-			sqrtPriceLimitX96:       "",
 			withUnwrap:              false,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			routes:                  []string{},
 			quotes:                  []string{},
-			amountSpecified:         i256.Zero(),
+			amountSpecified:         0,
 		},
 		{
 			name:                    "with price limit",
-			sqrtPriceLimitX96:       "79228162514264337593543950336",
 			withUnwrap:              false,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			routes:                  []string{"route1"},
 			quotes:                  []string{"100"},
-			amountSpecified:         i256.NewInt(1000),
+			amountSpecified:         1000,
 		},
 		{
 			name:                    "with unwrap",
-			sqrtPriceLimitX96:       "",
 			withUnwrap:              true,
 			userBeforeWugnotBalance: 1000,
 			userWrappedWugnot:       500,
 			routes:                  []string{"route1"},
 			quotes:                  []string{"100"},
-			amountSpecified:         i256.NewInt(1000),
+			amountSpecified:         1000,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			op := &baseSwapOperation{
-				sqrtPriceLimitX96:       tt.sqrtPriceLimitX96,
 				withUnwrap:              tt.withUnwrap,
 				userBeforeWugnotBalance: tt.userBeforeWugnotBalance,
 				userWrappedWugnot:       tt.userWrappedWugnot,
@@ -1243,13 +1148,12 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 				amountSpecified:         tt.amountSpecified,
 			}
 
-			uassert.Equal(t, op.sqrtPriceLimitX96, tt.sqrtPriceLimitX96)
 			uassert.Equal(t, op.withUnwrap, tt.withUnwrap)
 			uassert.Equal(t, op.userBeforeWugnotBalance, tt.userBeforeWugnotBalance)
 			uassert.Equal(t, op.userWrappedWugnot, tt.userWrappedWugnot)
 			uassert.Equal(t, len(op.routes), len(tt.routes))
 			uassert.Equal(t, len(op.quotes), len(tt.quotes))
-			uassert.Equal(t, op.amountSpecified.ToString(), tt.amountSpecified.ToString())
+			uassert.Equal(t, op.amountSpecified, tt.amountSpecified)
 		})
 	}
 }
@@ -1269,20 +1173,20 @@ func TestBaseSwapParams_Structure(t *testing.T) {
 				OutputToken:       "tokenB",
 				RouteArr:          "tokenA:tokenB:500",
 				QuoteArr:          "100",
-				SqrtPriceLimitX96: "79228162514264337593543950336",
+				SqrtPriceLimitX96: u256.MustFromDecimal("79228162514264337593543950336"),
 				Deadline:          9999999999,
 			},
 			expectedInputLen:  6,
 			expectedOutputLen: 6,
 		},
 		{
-			name: "params with empty sqrt price limit",
+			name: "params with nil sqrt price limit",
 			params: BaseSwapParams{
 				InputToken:        "tokenA",
 				OutputToken:       "tokenB",
 				RouteArr:          "tokenA:tokenB:500",
 				QuoteArr:          "100",
-				SqrtPriceLimitX96: "",
+				SqrtPriceLimitX96: nil,
 				Deadline:          9999999999,
 			},
 			expectedInputLen:  6,
@@ -1295,7 +1199,7 @@ func TestBaseSwapParams_Structure(t *testing.T) {
 				OutputToken:       "tokenB",
 				RouteArr:          "tokenA:tokenB:500,tokenA:tokenC:3000",
 				QuoteArr:          "50,50",
-				SqrtPriceLimitX96: "",
+				SqrtPriceLimitX96: nil,
 				Deadline:          9999999999,
 			},
 			expectedInputLen:  6,
@@ -1317,38 +1221,38 @@ func TestBaseSwapParams_Structure(t *testing.T) {
 func TestSwapResult_Structure(t *testing.T) {
 	tests := []struct {
 		name            string
-		amountIn        *u256.Uint
-		amountOut       *u256.Uint
+		amountIn        int64
+		amountOut       int64
 		routes          []string
 		quotes          []string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		withUnwrap      bool
 	}{
 		{
 			name:            "single route result",
-			amountIn:        u256.NewUint(1000),
-			amountOut:       u256.NewUint(980),
+			amountIn:        1000,
+			amountOut:       980,
 			routes:          []string{"route1"},
 			quotes:          []string{"100"},
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			withUnwrap:      false,
 		},
 		{
 			name:            "multi-route result",
-			amountIn:        u256.NewUint(1000),
-			amountOut:       u256.NewUint(980),
+			amountIn:        1000,
+			amountOut:       980,
 			routes:          []string{"route1", "route2"},
 			quotes:          []string{"50", "50"},
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			withUnwrap:      false,
 		},
 		{
 			name:            "result with unwrap",
-			amountIn:        u256.NewUint(1000),
-			amountOut:       u256.NewUint(980),
+			amountIn:        1000,
+			amountOut:       980,
 			routes:          []string{"route1"},
 			quotes:          []string{"100"},
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			withUnwrap:      true,
 		},
 	}
@@ -1364,11 +1268,11 @@ func TestSwapResult_Structure(t *testing.T) {
 				WithUnwrap:      tt.withUnwrap,
 			}
 
-			uassert.NotNil(t, result.AmountIn)
-			uassert.NotNil(t, result.AmountOut)
+			uassert.True(t, result.AmountIn > 0)
+			uassert.True(t, result.AmountOut > 0)
 			uassert.Equal(t, len(result.Routes), len(tt.routes))
 			uassert.Equal(t, len(result.Quotes), len(tt.quotes))
-			uassert.NotNil(t, result.AmountSpecified)
+			uassert.True(t, result.AmountSpecified > 0)
 			uassert.Equal(t, result.WithUnwrap, tt.withUnwrap)
 		})
 	}
@@ -1380,7 +1284,7 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 		name            string
 		inputToken      string
 		outputToken     string
-		specifiedAmount *i256.Int
+		specifiedAmount int64
 		expectError     bool
 		description     string
 	}{
@@ -1388,7 +1292,7 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 			name:            "both input and output are ugnot (invalid)",
 			inputToken:      "ugnot",
 			outputToken:     "ugnot",
-			specifiedAmount: i256.NewInt(1000),
+			specifiedAmount: 1000,
 			expectError:     true,
 			description:     "Cannot swap ugnot to ugnot",
 		},
@@ -1396,7 +1300,7 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 			name:            "input ugnot, output wugnot",
 			inputToken:      "ugnot",
 			outputToken:     "gno.land/r/gnoland/wugnot",
-			specifiedAmount: i256.NewInt(1000),
+			specifiedAmount: 1000,
 			expectError:     false,
 			description:     "Valid: wrapping ugnot to wugnot",
 		},
@@ -1407,7 +1311,7 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 			// This test structure verifies the parameters are correct
 			uassert.NotEmpty(t, tt.inputToken)
 			uassert.NotEmpty(t, tt.outputToken)
-			uassert.NotNil(t, tt.specifiedAmount)
+			uassert.True(t, tt.specifiedAmount > 0)
 		})
 	}
 }
@@ -1415,52 +1319,53 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 // Test validateRouteQuote with extreme values
 func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 	tests := []struct {
-		name            string
-		amountSpecified *i256.Int
-		quote           string
-		index           int
-		expectError     bool
-		description     string
+		name             string
+		amountSpecified  int64
+		quote            string
+		index            int
+		expectError      bool
+		expectedResult   int64
+		expectedHasPanic bool
+		expectedPanicMsg string
+		description      string
 	}{
 		{
 			name:            "max int64 amount",
-			amountSpecified: i256.NewInt(9223372036854775807), // max int64
+			amountSpecified: 9223372036854775807, // max int64
 			quote:           "1",
 			index:           0,
 			expectError:     false,
+			expectedResult:  92233720368547758, // max int64 * 1 / 100
 			description:     "Should handle max int64",
 		},
 		{
-			name:            "very large amount",
-			amountSpecified: i256.MustFromDecimal("999999999999999999999"),
-			quote:           "1",
-			index:           0,
-			expectError:     false,
-			description:     "Should handle very large amounts",
-		},
-		{
-			name:            "amount 1 with quote 1",
-			amountSpecified: i256.NewInt(1),
-			quote:           "1",
-			index:           0,
-			expectError:     true,
-			description:     "1 * 1 / 100 = 0, should error",
+			name:             "amount 1 with quote 1",
+			amountSpecified:  1,
+			quote:            "1",
+			index:            0,
+			expectError:      true,
+			expectedHasPanic: false,
+			expectedPanicMsg: "invalid swap amount",
+			expectedResult:   0,
+			description:      "1 * 1 / 100 = 0, should error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			op := &baseSwapOperation{
-				amountSpecified: tt.amountSpecified,
-			}
-
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
-
-			if tt.expectError {
-				uassert.Error(t, err)
+			if tt.expectedHasPanic {
+				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+					calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
+				})
 			} else {
-				uassert.NoError(t, err, tt.description)
-				uassert.NotNil(t, result)
+				result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
+
+				if tt.expectError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err, tt.description)
+					uassert.Equal(t, result, tt.expectedResult, tt.description)
+				}
 			}
 		})
 	}
@@ -1470,21 +1375,21 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 func TestProcessRoutes_SingleRoute(t *testing.T) {
 	tests := []struct {
 		name            string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		routes          []string
 		quotes          []string
 		description     string
 	}{
 		{
 			name:            "single route 100%",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			routes:          []string{"route1"},
 			quotes:          []string{"100"},
 			description:     "Single route should use full amount",
 		},
 		{
 			name:            "single route with odd amount",
-			amountSpecified: i256.NewInt(999),
+			amountSpecified: 999,
 			routes:          []string{"route1"},
 			quotes:          []string{"100"},
 			description:     "Single route should use full odd amount",
@@ -1496,17 +1401,13 @@ func TestProcessRoutes_SingleRoute(t *testing.T) {
 			// Verify the last route gets all remaining amount
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt, err := i256.FromDecimal(tt.quotes[i])
-				uassert.NoError(t, err)
-
-				amount := i256.Zero().Mul(tt.amountSpecified, quoteInt)
-				amount = i256.Zero().Div(amount, i256.NewInt(100))
-
-				remainingAmount = i256.Zero().Sub(remainingAmount, amount)
+				quoteInt := safeParseInt64(tt.quotes[i])
+				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				remainingAmount = remainingAmount - amount
 			}
 
 			// For single route, remaining amount equals specified amount
-			uassert.Equal(t, remainingAmount.ToString(), tt.amountSpecified.ToString(), tt.description)
+			uassert.Equal(t, remainingAmount, tt.amountSpecified, tt.description)
 		})
 	}
 }
@@ -1527,7 +1428,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    0,
 				typ:         ExactIn,
-				exactAmount: "1",
+				exactAmount: 1,
 			},
 			description: "Deadline can be 0",
 		},
@@ -1540,7 +1441,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    9223372036854775807, // max int64
 				typ:         ExactIn,
-				exactAmount: "1",
+				exactAmount: 1,
 			},
 			description: "Deadline can be max int64",
 		},
@@ -1553,7 +1454,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    9999999999,
 				typ:         ExactIn,
-				exactAmount: "1",
+				exactAmount: 1,
 			},
 			description: "Exact amount can be 1",
 		},
@@ -1563,7 +1464,7 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			uassert.NotEmpty(t, tt.params.inputToken, tt.description)
 			uassert.NotEmpty(t, tt.params.outputToken, tt.description)
-			uassert.NotEmpty(t, tt.params.exactAmount, tt.description)
+			uassert.True(t, tt.params.exactAmount > 0, tt.description)
 		})
 	}
 }
@@ -1572,27 +1473,27 @@ func TestSwapRouteParams_BoundaryValues(t *testing.T) {
 func TestSwapRouteParams_ExactAmount_Formats(t *testing.T) {
 	tests := []struct {
 		name        string
-		exactAmount string
-		expected    string
+		exactAmount int64
+		expected    int64
 		description string
 	}{
 		{
 			name:        "amount with trailing zeros",
-			exactAmount: "1000000",
-			expected:    "1000000",
+			exactAmount: 1000000,
+			expected:    1000000,
 			description: "Should preserve trailing zeros",
 		},
 		{
-			name:        "amount as string '1'",
-			exactAmount: "1",
-			expected:    "1",
+			name:        "amount as 1",
+			exactAmount: 1,
+			expected:    1,
 			description: "Should handle single digit",
 		},
 		{
-			name:        "very large amount string",
-			exactAmount: "999999999999999999999999",
-			expected:    "999999999999999999999999",
-			description: "Should handle very large amounts",
+			name:        "large amount",
+			exactAmount: 999999999999999,
+			expected:    999999999999999,
+			description: "Should handle large amounts",
 		},
 	}
 
@@ -1663,8 +1564,8 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    1,
 				typ:         ExactIn,
-				exactAmount: "1",
-				limitAmount: "0",
+				exactAmount: 1,
+				limitAmount: 0,
 			},
 			expectError: false,
 			description: "Should handle minimum values",
@@ -1678,8 +1579,8 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 				quoteArr:    "100",
 				deadline:    1,
 				typ:         ExactOut,
-				exactAmount: "1",
-				limitAmount: "999999999",
+				exactAmount: 1,
+				limitAmount: 999999999,
 			},
 			expectError: false,
 			description: "Should handle minimum values for ExactOut",
@@ -1757,21 +1658,21 @@ func TestExtractSwapOperationData_NilHandling(t *testing.T) {
 func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 	tests := []struct {
 		name                 string
-		amountSpecified      *i256.Int
+		amountSpecified      int64
 		quotes               []string
 		expectedRemainderPct float64
 		description          string
 	}{
 		{
 			name:                 "three-way split with large remainder",
-			amountSpecified:      i256.NewInt(1000),
+			amountSpecified:      1000,
 			quotes:               []string{"33", "33", "34"},
 			expectedRemainderPct: 0.01, // 1% remainder
 			description:          "Remainder should be minimal",
 		},
 		{
 			name:                 "five-way split",
-			amountSpecified:      i256.NewInt(1000),
+			amountSpecified:      1000,
 			quotes:               []string{"20", "20", "20", "20", "20"},
 			expectedRemainderPct: 0.0, // no remainder
 			description:          "Perfect split should have no remainder",
@@ -1780,22 +1681,18 @@ func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			totalUsed := i256.Zero()
+			totalUsed := int64(0)
 			for i := 0; i < len(tt.quotes)-1; i++ {
-				quoteInt, err := i256.FromDecimal(tt.quotes[i])
-				uassert.NoError(t, err)
-
-				amount := i256.Zero().Mul(tt.amountSpecified, quoteInt)
-				amount = i256.Zero().Div(amount, i256.NewInt(100))
-
-				totalUsed = i256.Zero().Add(totalUsed, amount)
+				quoteInt := safeParseInt64(tt.quotes[i])
+				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				totalUsed = totalUsed + amount
 			}
 
-			remainder := i256.Zero().Sub(tt.amountSpecified, totalUsed)
+			remainder := tt.amountSpecified - totalUsed
 
 			// Verify remainder is within expected range
-			uassert.True(t, remainder.Cmp(i256.Zero()) >= 0, "remainder should be non-negative")
-			uassert.True(t, remainder.Cmp(tt.amountSpecified) <= 0, "remainder should not exceed total")
+			uassert.True(t, remainder >= 0, "remainder should be non-negative")
+			uassert.True(t, remainder <= tt.amountSpecified, "remainder should not exceed total")
 		})
 	}
 }
@@ -1808,9 +1705,9 @@ func TestSwapRouteParams_EmptyValues(t *testing.T) {
 		method string
 	}{
 		{
-			name: "empty exact amount",
+			name: "zero exact amount",
 			params: SwapRouteParams{
-				exactAmount: "",
+				exactAmount: 0,
 			},
 			method: "ExactAmount",
 		},
@@ -1835,7 +1732,7 @@ func TestSwapRouteParams_EmptyValues(t *testing.T) {
 			switch tt.method {
 			case "ExactAmount":
 				result := tt.params.ExactAmount()
-				uassert.Equal(t, result, "")
+				uassert.Equal(t, result, int64(0))
 			case "SwapCount":
 				result := tt.params.SwapCount()
 				// Empty string results in 1 after split

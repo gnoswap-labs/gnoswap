@@ -320,14 +320,6 @@ func (m *MockStaker) GetPoolTierRatio(poolPath string) uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockStaker) GetPrintExternalInfo() string {
-	res, ok := m.Response.Get("GetPrintExternalInfo")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
 func (m *MockStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	res, ok := m.Response.Get("GetSpecificTokenMinimumRewardAmount")
 	if !ok {
@@ -350,14 +342,6 @@ func (m *MockStaker) GetUnstakingFee() int64 {
 		return 0
 	}
 	return res[0].(int64)
-}
-
-func (m *MockStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	res, ok := m.Response.Get("IsArchivedExternalIncentive")
-	if !ok {
-		return false
-	}
-	return res[0].(bool)
 }
 
 func (m *MockStaker) IsStaked(positionId uint64) bool {

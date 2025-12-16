@@ -1,6 +1,7 @@
 package gns
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -516,6 +517,231 @@ func TestEmissionStateTimestampEdgeCases(t *testing.T) {
 			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
 			year := es.getCurrentYear(tt.testTimestamp)
 			uassert.Equal(t, tt.expectedYear, year, "Year mismatch for "+tt.name)
+		})
+	}
+}
+
+// TestAddHalvingYearAccumulatedAmountOverflow tests overflow protection in addHalvingYearAccumulatedAmount
+func TestAddHalvingYearAccumulatedAmountOverflow(t *testing.T) {
+	resetObject(t)
+	InitGnsTest(t)
+
+	es := getEmissionState()
+
+	tests := []struct {
+		name         string
+		year         int64
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "normal addition",
+			year:         1,
+			initialValue: 1000,
+			addAmount:    2000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "overflow - MaxInt64 + 1",
+			year:         2,
+			initialValue: math.MaxInt64,
+			addAmount:    1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - large values",
+			year:         3,
+			initialValue: math.MaxInt64 - 100,
+			addAmount:    200,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - half MaxInt64 each",
+			year:         4,
+			initialValue: math.MaxInt64/2 + 1,
+			addAmount:    math.MaxInt64/2 + 1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "boundary - exactly at MaxInt64",
+			year:         5,
+			initialValue: math.MaxInt64 - 1000,
+			addAmount:    1000,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set initial accumulated amount
+			es.halvingData.setAccumAmount(tt.year, tt.initialValue)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					es.addHalvingYearAccumulatedAmount(tt.year, tt.addAmount)
+				})
+			} else {
+				err := es.addHalvingYearAccumulatedAmount(tt.year, tt.addAmount)
+				uassert.NoError(t, err)
+
+				// Verify the result
+				expected := tt.initialValue + tt.addAmount
+				actual := es.getHalvingYearAccumulatedAmount(tt.year)
+				uassert.Equal(t, expected, actual)
+			}
+		})
+	}
+}
+
+// TestSubHalvingYearLeftAmountUnderflow tests underflow protection in subHalvingYearLeftAmount
+func TestSubHalvingYearLeftAmountUnderflow(t *testing.T) {
+	resetObject(t)
+	InitGnsTest(t)
+
+	es := getEmissionState()
+
+	tests := []struct {
+		name         string
+		year         int64
+		initialValue int64
+		subAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "normal subtraction",
+			year:         1,
+			initialValue: 5000,
+			subAmount:    2000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "underflow - MinInt64 - 1",
+			year:         2,
+			initialValue: math.MinInt64,
+			subAmount:    1,
+			shouldPanic:  true,
+			panicMsg:     "int64 subtraction underflow",
+		},
+		{
+			name:         "underflow - large negative result",
+			year:         3,
+			initialValue: math.MinInt64 + 100,
+			subAmount:    200,
+			shouldPanic:  true,
+			panicMsg:     "int64 subtraction underflow",
+		},
+		{
+			name:         "underflow - small value minus large positive",
+			year:         4,
+			initialValue: -math.MaxInt64/2 - 2,
+			subAmount:    math.MaxInt64/2 + 1,
+			shouldPanic:  true,
+			panicMsg:     "int64 subtraction underflow",
+		},
+		{
+			name:         "boundary - exactly at MinInt64",
+			year:         5,
+			initialValue: math.MinInt64 + 1000,
+			subAmount:    1000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "zero minus positive",
+			year:         6,
+			initialValue: 0,
+			subAmount:    1000,
+			shouldPanic:  false, // Result is negative but not underflow
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set initial left amount
+			es.halvingData.setLeftAmount(tt.year, tt.initialValue)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					es.subHalvingYearLeftAmount(tt.year, tt.subAmount)
+				})
+			} else {
+				err := es.subHalvingYearLeftAmount(tt.year, tt.subAmount)
+				uassert.NoError(t, err)
+
+				// Verify the result
+				expected := tt.initialValue - tt.subAmount
+				actual := es.getHalvingYearLeftAmount(tt.year)
+				uassert.Equal(t, expected, actual)
+			}
+		})
+	}
+}
+
+// TestNewEmissionStateOverflow tests overflow protection in NewEmissionState
+func TestNewEmissionStateOverflow(t *testing.T) {
+	tests := []struct {
+		name           string
+		startHeight    int64
+		startTimestamp int64
+		shouldPanic    bool
+		panicMsg       string
+	}{
+		{
+			name:           "normal timestamp",
+			startHeight:    1,
+			startTimestamp: 1000,
+			shouldPanic:    false,
+		},
+		{
+			name:           "zero timestamp",
+			startHeight:    1,
+			startTimestamp: 0,
+			shouldPanic:    false,
+		},
+		{
+			name:           "large but safe timestamp",
+			startHeight:    1,
+			startTimestamp: 9999999999,
+			shouldPanic:    false,
+		},
+		{
+			name:           "overflow - timestamp near MaxInt64",
+			startHeight:    1,
+			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR) + 2,
+			shouldPanic:    true,
+			panicMsg:       "int64 addition overflow",
+		},
+		{
+			name:           "overflow - MaxInt64 timestamp",
+			startHeight:    1,
+			startTimestamp: math.MaxInt64,
+			shouldPanic:    true,
+			panicMsg:       "int64 addition overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					NewEmissionState(tt.startHeight, tt.startTimestamp)
+				})
+			} else {
+				es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+
+				// Verify basic properties
+				uassert.Equal(t, tt.startHeight, es.getStartHeight())
+				uassert.Equal(t, tt.startTimestamp, es.getStartTimestamp())
+
+				// Verify end timestamp calculation
+				expectedEnd := tt.startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
+				uassert.Equal(t, expectedEnd, es.getEndTimestamp())
+			}
 		})
 	}
 }

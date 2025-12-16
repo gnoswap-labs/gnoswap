@@ -4,7 +4,8 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 )
@@ -24,9 +25,7 @@ func assertIsNotExpired(deadline int64) {
 // assertValidNumberString panics if the input string does not represent a valid integer.
 func assertValidNumberString(input string) {
 	if len(input) == 0 {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			ufmt.Sprintf("input is empty")))
+		panic(newErrorWithDetail(errInvalidInput, "input is empty"))
 	}
 
 	bytes := []byte(input)

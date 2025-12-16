@@ -597,17 +597,10 @@ func TestProcessUnclaimableReward(t *testing.T) {
 			pools := NewPools()
 			pools.set(tt.poolPath, pool)
 
-			poolTier := &PoolTier{
-				getEmission: func() int64 { return 1000 },
-				getHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
-					return nil, nil
-				},
-			}
-
 			// Set up some unclaimable accumulation
 			poolResolver.Pool.SetUnclaimableAcc(500)
 
-			unclaimable := poolResolver.processUnclaimableReward(poolTier, tt.currentTime)
+			unclaimable := poolResolver.processUnclaimableReward(tt.currentTime)
 
 			uassert.True(t, unclaimable >= 0)
 			uassert.Equal(t, int64(0), poolResolver.Pool.UnclaimableAcc())
@@ -733,6 +726,118 @@ func TestRewardStateApplyWarmup(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test RewardState reset
+func TestRewardStateReset(t *testing.T) {
+	currentTime := time.Now().Unix()
+	pool := sr.NewPool("test_pool", currentTime)
+	poolResolver := NewPoolResolver(pool)
+
+	warmups := []sr.Warmup{
+		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},
+		{WarmupRatio: 50, NextWarmupTime: currentTime + 172800},
+		{WarmupRatio: 70, NextWarmupTime: currentTime + 259200},
+	}
+
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"),
+		"test_pool",
+		u256.NewUint(1000),
+		currentTime,
+		int32(-100),
+		int32(100),
+		warmups,
+	)
+
+	rewardState := poolResolver.RewardStateOf(deposit)
+
+	// Set some values
+	rewardState.rewards[0] = 1000
+	rewardState.rewards[1] = 2000
+	rewardState.rewards[2] = 3000
+	rewardState.penalties[0] = 100
+	rewardState.penalties[1] = 200
+	rewardState.penalties[2] = 300
+
+	// Reset
+	rewardState.reset()
+
+	// Verify all values are zero
+	for i := range rewardState.rewards {
+		uassert.Equal(t, int64(0), rewardState.rewards[i])
+		uassert.Equal(t, int64(0), rewardState.penalties[i])
+	}
+}
+
+func TestRewardStateReset_MultipleResets(t *testing.T) {
+	currentTime := time.Now().Unix()
+	pool := sr.NewPool("test_pool", currentTime)
+	poolResolver := NewPoolResolver(pool)
+
+	warmups := []sr.Warmup{
+		{WarmupRatio: 50, NextWarmupTime: currentTime + 86400},
+	}
+
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"),
+		"test_pool",
+		u256.NewUint(1000),
+		currentTime,
+		int32(-100),
+		int32(100),
+		warmups,
+	)
+
+	rewardState := poolResolver.RewardStateOf(deposit)
+
+	// First round: set values and reset
+	rewardState.rewards[0] = 5000
+	rewardState.penalties[0] = 500
+	rewardState.reset()
+
+	uassert.Equal(t, int64(0), rewardState.rewards[0])
+	uassert.Equal(t, int64(0), rewardState.penalties[0])
+
+	// Second round: set different values and reset
+	rewardState.rewards[0] = 9999
+	rewardState.penalties[0] = 1111
+	rewardState.reset()
+
+	uassert.Equal(t, int64(0), rewardState.rewards[0])
+	uassert.Equal(t, int64(0), rewardState.penalties[0])
+}
+
+func TestRewardStateReset_PreservesSliceLength(t *testing.T) {
+	currentTime := time.Now().Unix()
+	pool := sr.NewPool("test_pool", currentTime)
+	poolResolver := NewPoolResolver(pool)
+
+	warmups := []sr.Warmup{
+		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},
+		{WarmupRatio: 50, NextWarmupTime: currentTime + 172800},
+		{WarmupRatio: 70, NextWarmupTime: currentTime + 259200},
+		{WarmupRatio: 100, NextWarmupTime: currentTime + 345600},
+	}
+
+	deposit := sr.NewDeposit(
+		testutils.TestAddress("owner"),
+		"test_pool",
+		u256.NewUint(1000),
+		currentTime,
+		int32(-100),
+		int32(100),
+		warmups,
+	)
+
+	rewardState := poolResolver.RewardStateOf(deposit)
+	originalLen := len(rewardState.rewards)
+
+	rewardState.reset()
+
+	// Length should be preserved
+	uassert.Equal(t, originalLen, len(rewardState.rewards))
+	uassert.Equal(t, originalLen, len(rewardState.penalties))
 }
 
 // Test Pools IterateAll

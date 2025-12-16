@@ -196,6 +196,33 @@ func TestAndNot(t *testing.T) {
 	}
 }
 
+func TestSRsh(t *testing.T) {
+	type tc struct {
+		name string
+		x    string
+		n    uint
+		want string
+	}
+	tests := []tc{
+		{name: "positive behaves like Rsh", x: "1024", n: 4, want: "64"},
+		{name: "positive large shift clears", x: "42", n: 256, want: "0"},
+		{name: "negative (two's complement) sign extend small shift", x: MAX_UINT256, n: 4, want: MAX_UINT256},
+		{name: "negative >>255 becomes all ones", x: MAX_UINT256, n: 255, want: MAX_UINT256},
+		{name: "negative >>256 stays all ones", x: MAX_UINT256, n: 300, want: MAX_UINT256},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			x := parseUint(tc.x)
+			got := new(Uint).SRsh(x, tc.n)
+			want := parseUint(tc.want)
+			if got.Neq(want) {
+				t.Errorf("SRsh(%s, %d) = %s, want %s", tc.x, tc.n, got.ToString(), want.ToString())
+			}
+		})
+	}
+}
+
 func TestXor(t *testing.T) {
 	tests := []logicOpTest{
 		{

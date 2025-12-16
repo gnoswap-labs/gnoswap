@@ -16,6 +16,7 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -669,9 +670,9 @@ type createMockPoolParams struct {
 	feeGrowthGlobal0X128 *u256.Uint
 	feeGrowthGlobal1X128 *u256.Uint
 	liquidity            *u256.Uint
-	ticks                map[int32]pl.TickInfo
-	tickBitmaps          map[int16]*u256.Uint
-	positions            map[string]pl.PositionInfo
+	ticks                *avl.Tree
+	tickBitmaps          *avl.Tree
+	positions            *avl.Tree
 	observationState     *pl.ObservationState
 }
 
@@ -776,7 +777,7 @@ func mockInstanceCollectProtocol(token0Path string, token1Path string, fee uint3
 	}(cross)
 }
 
-func mockInstanceSwap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64) error) (string, string) {
+func mockInstanceSwap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
 	return func(cur realm) (string, string) {
 		const currentPoolPath = "gno.land/r/gnoswap/pool"
 		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))

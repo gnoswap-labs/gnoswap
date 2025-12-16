@@ -3,8 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-
-	"gno.land/p/nt/ufmt"
+	"errors"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -12,8 +11,6 @@ import (
 
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
-
-const FEE_PRECISION = 10000
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func (s *stakerV1) GetUnstakingFee() int64 { return s.store.GetUnstakingFee() }
@@ -30,9 +27,9 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := (amount * unstakingFee) / FEE_PRECISION
+	feeAmount := safeMulDivInt64(amount, unstakingFee, 10000)
 	if feeAmount < 0 {
-		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
+		return 0, 0, errors.New("fee amount cannot be negative")
 	}
 
 	if feeAmount == 0 {
@@ -55,7 +52,8 @@ func (s *stakerV1) handleStakingRewardFee(
 func (s *stakerV1) SetUnStakingFee(fee int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidFeeRate(fee)
@@ -67,10 +65,9 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetUnStakingFee",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatAnyInt(prevUnStakingFee),
 		"newFee", formatAnyInt(fee),

@@ -63,6 +63,9 @@ func (z *Int) IsInt64() bool {
 }
 
 func (z *Int) Int64() int64 {
+	if !z.IsInt64() {
+		panic("int256: int64 overflow")
+	}
 	s := z.Sign()
 	if s == 0 {
 		return 0
@@ -85,15 +88,15 @@ func (z *Int) IsUint64() bool {
 }
 
 func (z *Int) Uint64() uint64 {
+	if !z.IsUint64() {
+		panic("int256: uint64 overflow")
+	}
 	return z[0]
 }
 
 func (z *Int) Abs() *u256.Uint {
 	if z.IsNeg() {
-		if z[3] == 0x8000000000000000 && z[2] == 0 && z[1] == 0 && z[0] == 0 {
-			panic("int256: overflow")
-		}
-		neg := new(Int).Neg(z)
+		neg := new(Int).NegOverflow(z)
 		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
 	}
 	return &u256.Uint{z[0], z[1], z[2], z[3]}
@@ -127,6 +130,14 @@ func (z *Int) IsPositive() bool {
 
 func (z *Int) IsMinI256() bool {
 	return (z[3] == 0x8000000000000000) && ((z[2] | z[1] | z[0]) == 0)
+}
+
+func (z *Int) NegOverflow(x *Int) *Int {
+	if x[3] == 0x8000000000000000 && x[2] == 0 && x[1] == 0 && x[0] == 0 {
+		panic("int256: overflow")
+	}
+
+	return z.Neg(x)
 }
 
 func (z *Int) Neg(x *Int) *Int {
@@ -242,8 +253,14 @@ func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	z[0], z[1], z[2], z[3] = p[0], p[1], p[2], p[3]
 
 	var overflow bool
-	if ((p[4] | p[5] | p[6] | p[7]) != 0) || z.IsNeg() {
+	if (p[4] | p[5] | p[6] | p[7]) != 0 {
 		overflow = true
+	} else if z.IsNeg() {
+		// The 256th bit is set, which means the absolute value is >= 2^255
+		// This is only valid if the result should be exactly -2^255
+		if !flipSign || !z.IsMinI256() {
+			overflow = true
+		}
 	}
 
 	if flipSign {

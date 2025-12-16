@@ -7,6 +7,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -86,7 +87,7 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	if liquidityDelta.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 	return liquidityDelta
 }
@@ -152,7 +153,7 @@ func checkOverFlowInt128(value *i256.Int) {
 	if value.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 }
 
@@ -201,21 +202,32 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-func tickTreeToString(tickMap map[int32]pl.TickInfo) string {
-	if tickMap == nil {
+func tickTreeToString(tickTree *avl.Tree) string {
+	if tickTree == nil {
 		return "[]"
 	}
 
-	tickInfoStrings := make([]string, 0, len(tickMap))
+	tickInfoStrings := make([]string, 0, tickTree.Size())
 
-	for tick, tickInfo := range tickMap {
+	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tick, err := strconv.ParseInt(tickKey, 10, 32)
+		if err != nil {
+			panic(err)
+		}
+		tickInfo, ok := tickValue.(pl.TickInfo)
+		if !ok {
+			panic("failed to cast tick info to TickInfo")
+		}
+
 		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
 			tick,
 			tickInfo.FeeGrowthOutside0X128().ToString(),
 			tickInfo.FeeGrowthOutside1X128().ToString(),
 		))
-	}
+
+		return false
+	})
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }

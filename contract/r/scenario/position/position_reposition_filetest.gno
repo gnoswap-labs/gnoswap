@@ -158,7 +158,7 @@ func executeSwap() {
 		"20000000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta int64) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -203,6 +203,7 @@ func repositionToNewRange() {
 		"50000000",
 		"0",
 		"0",
+		9999999999,
 	)
 
 	ufmt.Printf("[EXPECTED] New liquidity should be %s\n", liquidity)
@@ -241,7 +242,7 @@ func executeSwapInNewRange() {
 		"20000000",
 		MAX_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta int64) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)

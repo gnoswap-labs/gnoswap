@@ -324,13 +324,6 @@ func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
 	return t.instance.GetPoolTierRatio(poolPath)
 }
 
-func (t *TestStaker) GetPrintExternalInfo() string {
-	if !t.isActive("GetPrintExternalInfo") {
-		panic("test implementation: GetPrintExternalInfo not supported")
-	}
-	return t.instance.GetPrintExternalInfo()
-}
-
 func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	if !t.isActive("GetSpecificTokenMinimumRewardAmount") {
 		panic("test implementation: GetSpecificTokenMinimumRewardAmount not supported")
@@ -350,13 +343,6 @@ func (t *TestStaker) GetUnstakingFee() int64 {
 		panic("test implementation: GetUnstakingFee not supported")
 	}
 	return t.instance.GetUnstakingFee()
-}
-
-func (t *TestStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	if !t.isActive("IsArchivedExternalIncentive") {
-		panic("test implementation: IsArchivedExternalIncentive not supported")
-	}
-	return t.instance.IsArchivedExternalIncentive(incentiveId)
 }
 
 func (t *TestStaker) IsStaked(positionId uint64) bool {

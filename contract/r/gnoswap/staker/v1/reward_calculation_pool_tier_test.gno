@@ -442,3 +442,315 @@ func TestApplyCacheToAllPools(t *testing.T) {
 		})
 	}
 }
+
+// Test calculatePoolReward function with various edge cases
+func TestCalculatePoolReward(t *testing.T) {
+	tests := []struct {
+		name        string
+		emission    int64
+		tierRatio   int64
+		tierCount   int64
+		expected    int64
+		shouldPanic bool
+	}{
+		// Normal cases
+		{
+			name:      "basic calculation",
+			emission:  1000000,
+			tierRatio: 50,
+			tierCount: 1,
+			expected:  500000, // 1000000 * 50 / 100 / 1
+		},
+		{
+			name:      "multiple pools in tier",
+			emission:  1000000,
+			tierRatio: 50,
+			tierCount: 2,
+			expected:  250000, // 1000000 * 50 / 100 / 2
+		},
+		{
+			name:      "tier ratio 100 percent",
+			emission:  1000000,
+			tierRatio: 100,
+			tierCount: 1,
+			expected:  1000000, // 1000000 * 100 / 100 / 1
+		},
+		{
+			name:      "tier ratio 30 percent with 3 pools",
+			emission:  900000,
+			tierRatio: 30,
+			tierCount: 3,
+			expected:  90000, // 900000 * 30 / 100 / 3
+		},
+		{
+			name:      "tier ratio 20 percent",
+			emission:  1000000,
+			tierRatio: 20,
+			tierCount: 5,
+			expected:  40000, // 1000000 * 20 / 100 / 5
+		},
+
+		// Zero value cases
+		{
+			name:      "zero emission",
+			emission:  0,
+			tierRatio: 50,
+			tierCount: 1,
+			expected:  0, // safeMulDivInt64 returns 0 when a == 0
+		},
+		{
+			name:      "zero tier ratio",
+			emission:  1000000,
+			tierRatio: 0,
+			tierCount: 1,
+			expected:  0, // safeMulDivInt64 returns 0 when b == 0
+		},
+		{
+			name:      "zero tier count",
+			emission:  1000000,
+			tierRatio: 50,
+			tierCount: 0,
+			expected:  0, // function returns 0 for tierCount == 0
+		},
+		{
+			name:      "all zeros",
+			emission:  0,
+			tierRatio: 0,
+			tierCount: 0,
+			expected:  0,
+		},
+
+		// Division truncation cases
+		{
+			name:      "truncation due to integer division",
+			emission:  100,
+			tierRatio: 33,
+			tierCount: 1,
+			expected:  33, // 100 * 33 / 100 = 33
+		},
+		{
+			name:      "truncation with tier count",
+			emission:  1000,
+			tierRatio: 50,
+			tierCount: 3,
+			expected:  166, // 1000 * 50 / 100 / 3 = 500 / 3 = 166
+		},
+		{
+			name:      "small result truncated to zero",
+			emission:  10,
+			tierRatio: 1,
+			tierCount: 100,
+			expected:  0, // 10 * 1 / 100 / 100 = 0 / 100 = 0
+		},
+
+		// Large value cases (boundary tests)
+		{
+			name:      "large emission value",
+			emission:  9223372036854775807, // max int64
+			tierRatio: 1,
+			tierCount: 100,
+			expected:  922337203685477, // max int64 * 1 / 100 / 100 (using i256 safe math)
+		},
+		{
+			name:      "large emission with moderate ratio",
+			emission:  1000000000000000,
+			tierRatio: 70,
+			tierCount: 10,
+			expected:  70000000000000, // 1000000000000000 * 70 / 100 / 10
+		},
+		{
+			name:      "large tier count",
+			emission:  1000000000,
+			tierRatio: 50,
+			tierCount: 1000000,
+			expected:  500, // 1000000000 * 50 / 100 / 1000000
+		},
+
+		// Single pool scenarios
+		{
+			name:      "single pool tier 1",
+			emission:  1000000,
+			tierRatio: 100,
+			tierCount: 1,
+			expected:  1000000,
+		},
+		{
+			name:      "single pool tier 2 with tier1 exists",
+			emission:  1000000,
+			tierRatio: 30,
+			tierCount: 1,
+			expected:  300000,
+		},
+
+		// Realistic protocol scenarios
+		{
+			name:      "realistic tier 1 scenario",
+			emission:  14269406392694063, // realistic emission per block
+			tierRatio: 50,
+			tierCount: 3,
+			expected:  2378234398782343, // emission * 50 / 100 / 3
+		},
+		{
+			name:      "realistic tier 3 scenario with many pools",
+			emission:  14269406392694063,
+			tierRatio: 20,
+			tierCount: 10,
+			expected:  285388127853881, // emission * 20 / 100 / 10
+		},
+		{
+			name:        "negative emission",
+			emission:    -1000000,
+			tierRatio:   50,
+			tierCount:   1,
+			shouldPanic: true,
+		},
+		{
+			name:        "negative tier ratio",
+			emission:    1000000,
+			tierRatio:   -50,
+			tierCount:   1,
+			shouldPanic: true,
+		},
+		{
+			name:        "negative tier count",
+			emission:    1000000,
+			tierRatio:   50,
+			tierCount:   -1,
+			shouldPanic: true,
+		},
+		{
+			name:        "both emission and ratio negative",
+			emission:    -1000000,
+			tierRatio:   -50,
+			tierCount:   1,
+			shouldPanic: true,
+		},
+		{
+			name:        "all negative",
+			emission:    -1000000,
+			tierRatio:   -50,
+			tierCount:   -1,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "unexpected calculation error", func() {
+					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				})
+			} else {
+				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestCalculatePoolReward_Boundary(t *testing.T) {
+	tests := []struct {
+		name        string
+		emission    int64
+		tierRatio   int64
+		tierCount   int64
+		expected    int64
+		shouldPanic bool
+	}{
+		{
+			name:        "max int64 with ratio 1 should not overflow",
+			emission:    9223372036854775807,
+			tierRatio:   1,
+			tierCount:   1,
+			expected:    92233720368547758,
+			shouldPanic: false,
+		},
+		{
+			name:        "large values within safe range",
+			emission:    1000000000000000000,
+			tierRatio:   50,
+			tierCount:   1,
+			expected:    500000000000000000,
+			shouldPanic: false,
+		},
+		{
+			name:        "max int64 with ratio 100 - safe due to i256",
+			emission:    9223372036854775807,
+			tierRatio:   100,
+			tierCount:   1,
+			expected:    9223372036854775807,
+			shouldPanic: false, // i256 handles the intermediate multiplication
+		},
+		{
+			name:        "large emission with large ratio - safe due to i256",
+			emission:    9223372036854775807,
+			tierRatio:   50,
+			tierCount:   1,
+			expected:    4611686018427387903,
+			shouldPanic: false, // i256 handles the intermediate multiplication
+		},
+		{
+			name:        "division by zero in tierCount handled by function",
+			emission:    1000000,
+			tierRatio:   50,
+			tierCount:   0,
+			shouldPanic: false, // function returns 0 before calling safeMulDivInt64
+			expected:    0,
+		},
+		{
+			name:        "max int64 with ratio 101 - should panic",
+			emission:    9223372036854775807,
+			tierRatio:   101,
+			tierCount:   1,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "overflow", func() {
+					result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+					t.Logf("result: %d", result)
+				})
+			} else {
+				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// Test calculatePoolReward with i256 overflow scenarios
+// These tests verify behavior when the intermediate i256 multiplication overflows
+func TestCalculatePoolReward_I256Overflow(t *testing.T) {
+	tests := []struct {
+		name        string
+		emission    int64
+		tierRatio   int64
+		tierCount   int64
+		shouldPanic bool
+	}{
+		{
+			// This should cause i256 overflow: max_int64 * max_int64
+			name:        "both max int64 should cause i256 overflow",
+			emission:    9223372036854775807,
+			tierRatio:   9223372036854775807,
+			tierCount:   1,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "overflow", func() {
+					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				})
+			} else {
+				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				t.Logf("result: %d", result)
+			}
+		})
+	}
+}

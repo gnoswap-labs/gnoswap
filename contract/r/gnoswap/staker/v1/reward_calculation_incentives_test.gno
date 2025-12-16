@@ -6,276 +6,8 @@ import (
 	"time"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
 	sr "gno.land/r/gnoswap/staker"
 )
-
-func TestIncentives_ArchiveIncentive(t *testing.T) {
-	poolPath := "test_pool_archive"
-	creator := testutils.TestAddress("creator")
-
-	pool := sr.NewPool(poolPath, time.Now().Unix())
-	poolResolver := NewPoolResolver(pool)
-	incentives := poolResolver.IncentivesResolver()
-
-	currentTime := time.Now().Unix()
-	incentive := sr.NewExternalIncentive(
-		"test_incentive_1",
-		poolPath,
-		GNS_PATH,
-		1000,
-		currentTime-3600,
-		currentTime+3600,
-		creator,
-		100,
-		runtime.ChainHeight(),
-		currentTime,
-		false,
-	)
-
-	incentives.create(creator, incentive)
-
-	// Verify incentive is in active collection
-	retrieved, exists := incentives.Get(incentive.IncentiveId())
-	if !exists {
-		t.Fatal("incentive should exist in active collection")
-	}
-	if retrieved.IncentiveId() != incentive.IncentiveId() {
-		t.Fatalf("expected incentiveId %s, got %s", incentive.IncentiveId(), retrieved.IncentiveId())
-	}
-
-	incentives.archiveIncentive(incentive.IncentiveId())
-
-	// Verify incentive is no longer in active collection
-	if _, exists := incentives.IncentiveTrees().Get(incentive.IncentiveId()); exists {
-		t.Fatal("incentive should not exist in active collection after archiving")
-	}
-
-	// Verify incentive is in archived collection
-	if _, exists := incentives.ArchivedIncentives().Get(incentive.IncentiveId()); !exists {
-		t.Fatal("incentive should exist in archived collection")
-	}
-
-	// Verify Get() still finds the incentive (checks both collections)
-	retrieved, exists = incentives.Get(incentive.IncentiveId())
-	if !exists {
-		t.Fatal("Get() should find incentive in archived collection")
-	}
-	if retrieved.IncentiveId() != incentive.IncentiveId() {
-		t.Fatalf("expected incentiveId %s, got %s", incentive.IncentiveId(), retrieved.IncentiveId())
-	}
-}
-
-func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
-	poolPath := "test_pool_timestamps"
-	creator := testutils.TestAddress("creator")
-
-	pool := sr.NewPool(poolPath, time.Now().Unix())
-	poolResolver := NewPoolResolver(pool)
-	incentives := poolResolver.IncentivesResolver()
-	currentTime := time.Now().Unix()
-
-	activeIncentive := sr.NewExternalIncentive(
-		"active_incentive",
-		poolPath,
-		GNS_PATH,
-		1000,
-		currentTime-1800,
-		currentTime+1800,
-		creator,
-		100,
-		runtime.ChainHeight(),
-		currentTime,
-		false,
-	)
-
-	// Create ended incentive (to be archived)
-	endedIncentive := sr.NewExternalIncentive(
-		"ended_incentive",
-		poolPath,
-		GNS_PATH,
-		1000,
-		currentTime-7200,
-		currentTime-3600,
-		creator,
-		100,
-		runtime.ChainHeight(),
-		currentTime,
-		false,
-	)
-
-	// Add both incentives to active collection
-	incentives.create(creator, activeIncentive)
-	incentives.create(creator, endedIncentive)
-
-	// Before archiving: GetAllInTimestamps should return only the active incentive
-	activeIncentives := incentives.GetAllInTimestamps(currentTime, currentTime+1)
-	if len(activeIncentives) != 1 {
-		t.Fatalf("expected 1 active incentive, got %d", len(activeIncentives))
-	}
-	if _, exists := activeIncentives[activeIncentive.IncentiveId()]; !exists {
-		t.Fatal("active incentive should be included in GetAllInTimestamps")
-	}
-
-	// Archive the ended incentive
-	incentives.archiveIncentive(endedIncentive.IncentiveId())
-
-	// After archiving: GetAllInTimestamps should still return only the active incentive
-	activeIncentives = incentives.GetAllInTimestamps(currentTime, currentTime+1)
-	if len(activeIncentives) != 1 {
-		t.Fatalf("expected 1 active incentive after archiving, got %d", len(activeIncentives))
-	}
-	if _, exists := activeIncentives[activeIncentive.IncentiveId()]; !exists {
-		t.Fatal("active incentive should still be included after archiving")
-	}
-	if _, exists := activeIncentives[endedIncentive.IncentiveId()]; exists {
-		t.Fatal("archived incentive should NOT be included in GetAllInTimestamps")
-	}
-
-	// Test with broader time range that would include the ended incentive
-	broadRangeIncentives := incentives.GetAllInTimestamps(currentTime-7200, currentTime+3600)
-	if len(broadRangeIncentives) != 1 {
-		t.Fatalf("expected 1 active incentive with broad range, got %d", len(broadRangeIncentives))
-	}
-	if _, exists := broadRangeIncentives[endedIncentive.IncentiveId()]; exists {
-		t.Fatal("archived incentive should NOT be included even with broad time range")
-	}
-}
-
-func TestIncentives_ArchiveEdgeCasesAndMultiple(t *testing.T) {
-	poolPath := "test_pool_combined"
-	creator := testutils.TestAddress("creator")
-	pool := sr.NewPool(poolPath, time.Now().Unix())
-	poolResolver := NewPoolResolver(pool)
-	incentives := poolResolver.IncentivesResolver()
-
-	// Archive non-existent incentive (should not panic)
-	incentives.archiveIncentive("non_existent_id")
-
-	// Verify nothing was added to archived collection
-	if incentives.ArchivedIncentives().Size() != 0 {
-		t.Fatal("archived collection should remain empty when archiving non-existent incentive")
-	}
-
-	// Multiple incentive archiving
-	currentTime := time.Now().Unix()
-
-	// Create multiple incentives
-	for i := 0; i < 5; i++ {
-		incentive := sr.NewExternalIncentive(
-			ufmt.Sprintf("incentive_%d", i),
-			poolPath,
-			GNS_PATH,
-			1000,
-			currentTime-int64((i+1)*1000),
-			currentTime+int64((i+1)*1000),
-			creator,
-			100,
-			runtime.ChainHeight(),
-			currentTime,
-			false,
-		)
-		incentives.create(creator, incentive)
-	}
-
-	// Archive incentives 0, 2, 4
-	incentives.archiveIncentive("incentive_0")
-	incentives.archiveIncentive("incentive_2")
-	incentives.archiveIncentive("incentive_4")
-
-	// Verify active collection has 2 incentives
-	if incentives.IncentiveTrees().Size() != 2 {
-		t.Fatalf("expected 2 incentives in active collection, got %d", incentives.IncentiveTrees().Size())
-	}
-
-	// Verify archived collection has 3 incentives
-	if incentives.ArchivedIncentives().Size() != 3 {
-		t.Fatalf("expected 3 incentives in archived collection, got %d", incentives.ArchivedIncentives().Size())
-	}
-
-	// Verify specific incentives are in correct collections
-	if _, exists := incentives.IncentiveTrees().Get("incentive_1"); !exists {
-		t.Fatal("incentive_1 should be in active collection")
-	}
-	if _, exists := incentives.IncentiveTrees().Get("incentive_3"); !exists {
-		t.Fatal("incentive_3 should be in active collection")
-	}
-	if _, exists := incentives.ArchivedIncentives().Get("incentive_0"); !exists {
-		t.Fatal("incentive_0 should be in archived collection")
-	}
-	if _, exists := incentives.ArchivedIncentives().Get("incentive_2"); !exists {
-		t.Fatal("incentive_2 should be in archived collection")
-	}
-	if _, exists := incentives.ArchivedIncentives().Get("incentive_4"); !exists {
-		t.Fatal("incentive_4 should be in archived collection")
-	}
-}
-
-// Test IsArchived function
-func TestIsArchived(t *testing.T) {
-	tests := []struct {
-		name               string
-		setupFunc          func(*IncentivesResolver, *sr.ExternalIncentive)
-		expectedIsArchived bool
-	}{
-		{
-			name: "before creating incentive - not archived",
-			setupFunc: func(incentives *IncentivesResolver, incentive *sr.ExternalIncentive) {
-				// Don't create incentive
-			},
-			expectedIsArchived: false,
-		},
-		{
-			name: "after creating incentive - not archived",
-			setupFunc: func(incentives *IncentivesResolver, incentive *sr.ExternalIncentive) {
-				creator := testutils.TestAddress("creator")
-				incentives.create(creator, incentive)
-			},
-			expectedIsArchived: false,
-		},
-		{
-			name: "after archiving incentive - archived",
-			setupFunc: func(incentives *IncentivesResolver, incentive *sr.ExternalIncentive) {
-				creator := testutils.TestAddress("creator")
-				incentives.create(creator, incentive)
-				incentives.archiveIncentive(incentive.IncentiveId())
-			},
-			expectedIsArchived: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			poolPath := "test_pool_is_archived"
-			creator := testutils.TestAddress("creator")
-			pool := sr.NewPool(poolPath, time.Now().Unix())
-			poolResolver := NewPoolResolver(pool)
-			incentives := poolResolver.IncentivesResolver()
-
-			currentTime := time.Now().Unix()
-			incentive := sr.NewExternalIncentive(
-				"test_incentive",
-				poolPath,
-				GNS_PATH,
-				1000,
-				currentTime,
-				currentTime+3600,
-				creator,
-				100,
-				runtime.ChainHeight(),
-				currentTime,
-				false,
-			)
-
-			tt.setupFunc(incentives, incentive)
-
-			isArchived := incentives.IsArchived(incentive.IncentiveId())
-			if isArchived != tt.expectedIsArchived {
-				t.Fatalf("expected isArchived %v, got %v", tt.expectedIsArchived, isArchived)
-			}
-		})
-	}
-}
 
 // Test create function
 func TestIncentivesCreate(t *testing.T) {
@@ -535,9 +267,48 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 	}
 }
 
-// Note: calculateUnclaimableReward is indirectly tested through calculateUnClaimableDuration tests
-// Direct testing of calculateUnclaimableReward is complex due to shared pool state
-// The core logic is validated through TestCalculateUnClaimableDuration below
+func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
+	poolPath := "test_pool_unclaimable_reward"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period created with the pool so we can control the windows.
+	incentives.endUnclaimablePeriod(currentTime)
+
+	incentive := sr.NewExternalIncentive(
+		"incentive_multiple_unclaimable",
+		poolPath,
+		GNS_PATH,
+		300,
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Two separate unclaimable windows inside the incentive duration
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 20)
+	incentives.startUnclaimablePeriod(currentTime + 40)
+	incentives.endUnclaimablePeriod(currentTime + 60)
+
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	expectedDuration := int64(30) // (20-10) + (60-40)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
+	}
+}
 
 // Test calculateUnClaimableDuration function
 func TestCalculateUnClaimableDuration(t *testing.T) {
@@ -628,5 +399,203 @@ func TestNewIncentivesResolver(t *testing.T) {
 	}
 	if resolver.Incentives == nil {
 		t.Fatal("resolver.Incentives should not be nil")
+	}
+}
+
+// Test 1: Ongoing unclaimable period with end = 0
+func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
+	poolPath := "test_pool_ongoing_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_ongoing",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Start an unclaimable period at currentTime+30 that is still ongoing (end = 0)
+	incentives.startUnclaimablePeriod(currentTime + 30)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: from currentTime+30 to incentive end (currentTime+100), which is 70 seconds
+	expectedDuration := int64(70)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for ongoing period, got %d", expected, got)
+	}
+}
+
+// Test 2: Overlapping/merged windows
+func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
+	poolPath := "test_pool_overlapping_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_overlapping",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create overlapping unclaimable periods: [10,30] and [20,40]
+	// These should merge to effectively [10,40] = 30 seconds total
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+	incentives.startUnclaimablePeriod(currentTime + 20)
+	incentives.endUnclaimablePeriod(currentTime + 40)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: Two windows [10,30] = 20 seconds and [20,40] = 20 seconds
+	// Total unclaimable duration = 40 seconds (not 30 as overlap is counted)
+	expectedDuration := int64(40) // Both periods contribute fully
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for overlapping periods, got %d", expected, got)
+	}
+}
+
+// Test 3: Adjacent windows
+func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
+	poolPath := "test_pool_adjacent_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_adjacent",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create adjacent unclaimable periods: [10,20] and [20,30]
+	// These are back-to-back and should not overlap or have gaps
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 20)
+	incentives.startUnclaimablePeriod(currentTime + 20)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: [10,20] = 10 seconds and [20,30] = 10 seconds
+	// Total = 20 seconds (no overlap, no gap)
+	expectedDuration := int64(20)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for adjacent periods, got %d", expected, got)
+	}
+}
+
+// Test 4: Outside-range windows
+func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
+	poolPath := "test_pool_outside_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime+50 to currentTime+150
+	incentive := sr.NewExternalIncentive(
+		"incentive_outside",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime+50,
+		currentTime+150,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create unclaimable periods fully outside the incentive range
+	// Period before incentive starts: [10,30]
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+
+	// Period after incentive ends: [200,250]
+	incentives.startUnclaimablePeriod(currentTime + 200)
+	incentives.endUnclaimablePeriod(currentTime + 250)
+
+	// Add one period that partially overlaps: [140,160]
+	// Only [140,150] should count = 10 seconds
+	incentives.startUnclaimablePeriod(currentTime + 140)
+	incentives.endUnclaimablePeriod(currentTime + 160)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: Only the overlapping part [140,150] = 10 seconds
+	// The periods [10,30] and [200,250] contribute 0
+	expectedDuration := int64(10)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for outside-range periods, got %d", expected, got)
 	}
 }

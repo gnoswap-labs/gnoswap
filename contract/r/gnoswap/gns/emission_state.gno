@@ -117,7 +117,7 @@ func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64
 	}
 
 	accumulatedAmount := e.halvingData.getAccumAmount(year)
-	accumulatedAmount += amount
+	accumulatedAmount = safeAddInt64(accumulatedAmount, amount)
 
 	e.halvingData.setAccumAmount(year, accumulatedAmount)
 	return nil
@@ -131,7 +131,7 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	}
 
 	leftAmount := e.halvingData.getLeftAmount(year)
-	leftAmount -= amount
+	leftAmount = safeSubInt64(leftAmount, amount)
 
 	e.halvingData.setLeftAmount(year, leftAmount)
 	return nil
@@ -145,7 +145,7 @@ func (e *EmissionState) updateHalvingData(startTimestamp int64) {
 // NewEmissionState creates a new EmissionState with specified start height and timestamp.
 // Calculates emission end time based on 12-year schedule and initializes halving data.
 func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
-	emissionEndTime := startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
+	emissionEndTime := safeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
 
 	return &EmissionState{
 		startHeight:    startHeight,
