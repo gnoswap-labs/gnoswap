@@ -300,16 +300,23 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		externalPenalties[i] = make(map[string]int64)
 	}
 
-	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(lastCollectTimestamp, currentTimestamp)
+	// Use deposit-indexed incentive IDs instead of GetAllInTimestamps
+	incentivesResolver := poolResolver.IncentivesResolver()
 
-	for _, incentive := range allIncentives {
+	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
+		incentive, ok := incentivesResolver.Get(incentiveId)
+		if !ok {
+			return false
+		}
+
 		externalReward, externalPenalty := poolResolver.RewardStateOf(deposit).calculateExternalReward(lastCollectTimestamp, currentTimestamp, incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentive.IncentiveId()] = externalReward[i]
 			externalPenalties[i][incentive.IncentiveId()] = externalPenalty[i]
 		}
-	}
+		return false
+	})
 
 	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
@@ -395,6 +402,23 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 		return errors.New("pool has no tier or incentive")
 	}
 
+	// Add active incentive IDs to deposit
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, value any) bool {
+		incentive, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			return false
+		}
+
+		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+		// Only add active or upcoming incentives (skip ended/refunded)
+		if !incentiveResolver.Refunded() && incentiveResolver.EndTimestamp() >= currentTimestamp {
+			deposit.AddExternalIncentiveId(incentiveId)
+		}
+		return false
+	})
+
 	// update global state
 	self.global.deposits.set(positionId, deposit)
 
@@ -402,7 +426,6 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	getMockInstance().updatePoolTier(self.global.poolTier)
 
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
-	poolResolver := NewPoolResolver(pool)
 	if self.isInRange(deposit) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}

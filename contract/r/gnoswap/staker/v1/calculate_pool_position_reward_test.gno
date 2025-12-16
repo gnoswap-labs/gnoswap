@@ -649,6 +649,8 @@ func TestCalcPositionReward(t *testing.T) {
 					100,
 					warmups,
 				)
+				// Add incentive ID to deposit (required for reward calculation)
+				deposit.AddExternalIncentiveId(incentiveId)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
@@ -681,7 +683,19 @@ func TestCalcPositionReward(t *testing.T) {
 
 				poolResolver := NewPoolResolver(pool)
 
-				// Create multiple external incentives
+				// Create deposit first
+				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
+				deposit := sr.NewDeposit(
+					testutils.TestAddress("owner5"),
+					poolPath,
+					u256.NewUint(1000000),
+					baseTime-50,
+					-100,
+					100,
+					warmups,
+				)
+
+				// Create multiple external incentives and add to deposit
 				for i := 0; i < 3; i++ {
 					incentiveStartTime := baseTime - 50
 					incentiveEndTime := baseTime + 1000
@@ -703,19 +717,11 @@ func TestCalcPositionReward(t *testing.T) {
 					)
 					incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 					poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+
+					// Add incentive ID to deposit (required for reward calculation)
+					deposit.AddExternalIncentiveId(incentiveId)
 				}
 
-				// Create deposit
-				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
-				deposit := sr.NewDeposit(
-					testutils.TestAddress("owner5"),
-					poolPath,
-					u256.NewUint(1000000),
-					baseTime-50,
-					-100,
-					100,
-					warmups,
-				)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
@@ -1007,6 +1013,8 @@ func TestCalcPositionReward(t *testing.T) {
 					100,
 					warmups,
 				)
+				// Add incentive ID to deposit (required for reward calculation)
+				deposit.AddExternalIncentiveId(incentiveId)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
@@ -1533,4 +1541,492 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 
 	_, hasModifiedPenalty := reward2.ExternalPenalty["modified-key"]
 	uassert.False(t, hasModifiedPenalty, "penalty maps should be independent")
+}
+
+// TestDepositRemoveExternalIncentiveId tests the RemoveExternalIncentiveId method
+func TestDepositRemoveExternalIncentiveId(t *testing.T) {
+	t.Run("remove existing incentive id", func(t *testing.T) {
+		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
+		deposit := sr.NewDeposit(
+			testutils.TestAddress("owner"),
+			"test_pool",
+			u256.NewUint(1000),
+			1000,
+			-100,
+			100,
+			warmups,
+		)
+
+		// Add incentive IDs
+		deposit.AddExternalIncentiveId("incentive1")
+		deposit.AddExternalIncentiveId("incentive2")
+		deposit.AddExternalIncentiveId("incentive3")
+
+		// Verify all exist
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive1"))
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive2"))
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive3"))
+
+		// Remove one
+		deposit.RemoveExternalIncentiveId("incentive2")
+
+		// Verify only incentive2 was removed
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive1"))
+		uassert.False(t, deposit.HasExternalIncentiveId("incentive2"))
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive3"))
+	})
+
+	t.Run("remove non-existing incentive id", func(t *testing.T) {
+		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
+		deposit := sr.NewDeposit(
+			testutils.TestAddress("owner"),
+			"test_pool",
+			u256.NewUint(1000),
+			1000,
+			-100,
+			100,
+			warmups,
+		)
+
+		deposit.AddExternalIncentiveId("incentive1")
+
+		// Remove non-existing - should not panic
+		deposit.RemoveExternalIncentiveId("non_existing")
+
+		// Original should still exist
+		uassert.True(t, deposit.HasExternalIncentiveId("incentive1"))
+	})
+
+	t.Run("remove from nil tree", func(t *testing.T) {
+		warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), 1000)
+		deposit := sr.NewDeposit(
+			testutils.TestAddress("owner"),
+			"test_pool",
+			u256.NewUint(1000),
+			1000,
+			-100,
+			100,
+			warmups,
+		)
+
+		// Remove without adding any - should not panic
+		deposit.RemoveExternalIncentiveId("any_incentive")
+
+		// Verify it doesn't have any
+		uassert.False(t, deposit.HasExternalIncentiveId("any_incentive"))
+	})
+}
+
+// TestCollectReward_LazyRemoval tests that incentives are removed from
+// deposit's list after they end and user collects rewards.
+func TestCollectReward_LazyRemoval(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	baseTime := time.Now().Unix()
+
+	// Create deposit
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		baseTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	depositResolver := NewDepositResolver(deposit)
+
+	// Create 3 incentives with different end times
+	creator := testutils.TestAddress("creator")
+
+	// Incentive 1: ends at baseTime + 1000
+	incentive1Id := "incentive-1"
+	incentive1 := sr.NewExternalIncentive(
+		incentive1Id,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		baseTime,
+		baseTime+1000,
+		creator,
+		100_000_000,
+		1000,
+		baseTime,
+		false,
+	)
+
+	// Incentive 2: ends at baseTime + 2000
+	incentive2Id := "incentive-2"
+	incentive2 := sr.NewExternalIncentive(
+		incentive2Id,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		baseTime,
+		baseTime+2000,
+		creator,
+		100_000_000,
+		1000,
+		baseTime,
+		false,
+	)
+
+	// Incentive 3: ends at baseTime + 3000
+	incentive3Id := "incentive-3"
+	incentive3 := sr.NewExternalIncentive(
+		incentive3Id,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		baseTime,
+		baseTime+3000,
+		creator,
+		100_000_000,
+		1000,
+		baseTime,
+		false,
+	)
+
+	// Manually add all 3 incentives to deposit (simulating lazy sync)
+	deposit.AddExternalIncentiveId(incentive1Id)
+	deposit.AddExternalIncentiveId(incentive2Id)
+	deposit.AddExternalIncentiveId(incentive3Id)
+
+	initialCount := len(deposit.GetExternalIncentiveIdList())
+	if initialCount != 3 {
+		t.Fatalf("Expected 3 incentives initially, got %d", initialCount)
+	}
+
+	// Scenario 1: Collect at baseTime + 1500
+	// - Incentive 1 ended (baseTime + 1000)
+	// - User last collected at baseTime + 1500 (after end)
+	// - Should be removed from list
+	collectTime1 := baseTime + 1500
+	depositResolver.updateExternalRewardLastCollectTime(incentive1Id, collectTime1)
+	depositResolver.updateExternalRewardLastCollectTime(incentive2Id, collectTime1)
+	depositResolver.updateExternalRewardLastCollectTime(incentive3Id, collectTime1)
+
+	// Simulate lazy removal logic from calculatePositionReward
+	incentive1Resolver := NewExternalIncentiveResolver(incentive1)
+	externalLastCollectTime1 := depositResolver.ExternalRewardLastCollectTime(incentive1Id)
+
+	// endTimestamp (1000) < externalLastCollectTime (1500) -> should be removed
+	if incentive1Resolver.EndTimestamp() < externalLastCollectTime1 {
+		deposit.RemoveExternalIncentiveId(incentive1Id)
+	}
+
+	// Verify incentive 1 is removed
+	remainingIds := deposit.GetExternalIncentiveIdList()
+	if len(remainingIds) != 2 {
+		t.Errorf("Expected 2 incentives after removing ended incentive 1, got %d", len(remainingIds))
+	}
+
+	// Verify incentive 1 is not in the list
+	for _, id := range remainingIds {
+		if id == incentive1Id {
+			t.Error("Incentive 1 should have been removed from deposit")
+		}
+	}
+
+	// Scenario 2: Collect at baseTime + 2500
+	// - Incentive 2 ended (baseTime + 2000)
+	// - Should be removed
+	collectTime2 := baseTime + 2500
+	depositResolver.updateExternalRewardLastCollectTime(incentive2Id, collectTime2)
+	depositResolver.updateExternalRewardLastCollectTime(incentive3Id, collectTime2)
+
+	incentive2Resolver := NewExternalIncentiveResolver(incentive2)
+	externalLastCollectTime2 := depositResolver.ExternalRewardLastCollectTime(incentive2Id)
+
+	if incentive2Resolver.EndTimestamp() < externalLastCollectTime2 {
+		deposit.RemoveExternalIncentiveId(incentive2Id)
+	}
+
+	remainingIds = deposit.GetExternalIncentiveIdList()
+	if len(remainingIds) != 1 {
+		t.Errorf("Expected 1 incentive after removing ended incentive 2, got %d", len(remainingIds))
+	}
+
+	// Verify only incentive 3 remains
+	if remainingIds[0] != incentive3Id {
+		t.Errorf("Expected only incentive 3 to remain, got %s", remainingIds[0])
+	}
+
+	// Scenario 3: Collect at baseTime + 3500
+	// - Incentive 3 ended (baseTime + 3000)
+	// - Should be removed, deposit list becomes empty
+	collectTime3 := baseTime + 3500
+	depositResolver.updateExternalRewardLastCollectTime(incentive3Id, collectTime3)
+
+	incentive3Resolver := NewExternalIncentiveResolver(incentive3)
+	externalLastCollectTime3 := depositResolver.ExternalRewardLastCollectTime(incentive3Id)
+
+	if incentive3Resolver.EndTimestamp() < externalLastCollectTime3 {
+		deposit.RemoveExternalIncentiveId(incentive3Id)
+	}
+
+	finalIds := deposit.GetExternalIncentiveIdList()
+	if len(finalIds) != 0 {
+		t.Errorf("Expected empty incentive list after all incentives ended, got %d", len(finalIds))
+	}
+}
+
+// TestCollectReward_LazyRemovalBeforeEnd tests that incentives are NOT removed
+// if user hasn't collected after the end time.
+func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	baseTime := time.Now().Unix()
+
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		baseTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	depositResolver := NewDepositResolver(deposit)
+
+	creator := testutils.TestAddress("creator")
+	incentiveId := "incentive-1"
+
+	// Incentive ends at baseTime + 1000
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		baseTime,
+		baseTime+1000, // End time
+		creator,
+		100_000_000,
+		1000,
+		baseTime,
+		false,
+	)
+
+	deposit.AddExternalIncentiveId(incentiveId)
+
+	// User collects at baseTime + 500 (BEFORE end time)
+	collectTime := baseTime + 500
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, collectTime)
+
+	// Simulate lazy removal logic
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+
+	// endTimestamp (1000) > externalLastCollectTime (500) -> should NOT be removed
+	shouldRemove := incentiveResolver.EndTimestamp() < externalLastCollectTime
+	if shouldRemove {
+		t.Error("Incentive should NOT be removed when last collect time is before end time")
+	}
+
+	// Verify incentive is still in the list
+	remainingIds := deposit.GetExternalIncentiveIdList()
+	if len(remainingIds) != 1 {
+		t.Errorf("Expected 1 incentive to remain, got %d", len(remainingIds))
+	}
+
+	if remainingIds[0] != incentiveId {
+		t.Errorf("Expected incentive %s to remain, got %s", incentiveId, remainingIds[0])
+	}
+}
+
+// TestCollectReward_LazySync_IterationBounds tests that lazy sync
+// uses correct iteration bounds (lastUpdate, currentTime).
+func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	baseTime := int64(1000)
+
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		baseTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	// Set lastUpdate to 100
+	deposit.SetLastExternalIncentiveUpdatedAt(100)
+
+	// Current time is 500
+	currentTime := int64(500)
+
+	// Verify iteration should happen
+	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+	if lastUpdate >= currentTime {
+		t.Errorf("Expected lastUpdate (%d) < currentTime (%d)", lastUpdate, currentTime)
+	}
+
+	// Verify iteration bounds are correct
+	expectedStart := formatInt(lastUpdate) // formatInt(100)
+	expectedEnd := formatInt(currentTime)  // formatInt(500)
+
+	// This simulates the Iterate call in calculatePositionReward
+	// Iterate(formatInt(lastUpdate), formatInt(currentTime), ...)
+	if expectedStart >= expectedEnd {
+		t.Errorf("Invalid iteration range: [%s, %s]", expectedStart, expectedEnd)
+	}
+
+	// After lazy sync, lastUpdate should be updated to currentTime
+	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
+
+	newLastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+	if newLastUpdate != currentTime {
+		t.Errorf("Expected lastUpdate to be updated to %d, got %d", currentTime, newLastUpdate)
+	}
+
+	// Next collection at same time should NOT trigger sync
+	if newLastUpdate < currentTime {
+		t.Error("Should not sync when lastUpdate == currentTime")
+	}
+}
+
+// TestLazyRemoval_DeletedIncentive tests that deleted/refunded incentives
+// are properly removed from deposit's incentive list.
+func TestLazyRemoval_DeletedIncentive(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	baseTime := time.Now().Unix()
+
+	// Create pool WITHOUT any incentives (simulates deleted/refunded incentive)
+	pool := sr.NewPool(poolPath, baseTime)
+	poolResolver := NewPoolResolver(pool)
+
+	// Create deposit with an incentive ID that doesn't exist in pool
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		baseTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	// Add a non-existent incentive ID (simulates incentive that was deleted/refunded)
+	nonExistentIncentiveId := "deleted-incentive-1"
+	deposit.AddExternalIncentiveId(nonExistentIncentiveId)
+
+	// Verify incentive ID is in deposit
+	if !deposit.HasExternalIncentiveId(nonExistentIncentiveId) {
+		t.Fatal("Incentive ID should be in deposit")
+	}
+
+	initialCount := len(deposit.GetExternalIncentiveIdList())
+	if initialCount != 1 {
+		t.Fatalf("Expected 1 incentive ID, got %d", initialCount)
+	}
+
+	// Simulate lazy removal logic from calculatePositionReward line 151-154
+	deposit.IterateExternalIncentiveIds(func(id string) bool {
+		_, ok := poolResolver.IncentivesResolver().Get(id)
+		if !ok {
+			// Incentive not found - remove from deposit index
+			deposit.RemoveExternalIncentiveId(id)
+			return false
+		}
+		return false
+	})
+
+	// Verify incentive ID was removed from deposit
+	if deposit.HasExternalIncentiveId(nonExistentIncentiveId) {
+		t.Error("Deleted incentive should have been removed from deposit")
+	}
+
+	finalCount := len(deposit.GetExternalIncentiveIdList())
+	if finalCount != 0 {
+		t.Errorf("Expected 0 incentives after removal, got %d", finalCount)
+	}
+}
+
+// TestLazySync_NotStartedIncentive tests that not-yet-started incentives
+// are added to deposit but don't yield rewards until they start.
+func TestLazySync_NotStartedIncentive(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	creator := testutils.TestAddress("creator")
+	baseTime := time.Now().Unix()
+
+	// Create deposit
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		baseTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	// Create incentive that starts in the future
+	futureStart := baseTime + 1000
+	futureEnd := baseTime + 2000
+	incentiveId := "future-incentive"
+
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		futureStart, // Starts in future
+		futureEnd,
+		creator,
+		100_000_000,
+		1000,
+		baseTime,
+		false,
+	)
+
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// Add incentive to deposit (lazy sync would do this)
+	deposit.AddExternalIncentiveId(incentiveId)
+
+	// Verify incentive is in deposit
+	if !deposit.HasExternalIncentiveId(incentiveId) {
+		t.Fatal("Future incentive should be in deposit")
+	}
+
+	// Verify it's not started yet at baseTime
+	currentTime := baseTime
+	if incentiveResolver.IsStarted(currentTime) {
+		t.Error("Incentive should not be started at baseTime")
+	}
+
+	// Simulate check from calculatePositionReward line 169-171
+	// If not started, should return false (skip reward calculation)
+	shouldCalculateReward := incentiveResolver.IsStarted(currentTime)
+	if shouldCalculateReward {
+		t.Error("Should not calculate reward for not-yet-started incentive")
+	}
+
+	// Verify it IS started after start time
+	futureTime := futureStart + 100
+	if !incentiveResolver.IsStarted(futureTime) {
+		t.Error("Incentive should be started after start time")
+	}
+
+	// Now reward should be calculated
+	shouldCalculateReward = incentiveResolver.IsStarted(futureTime)
+	if !shouldCalculateReward {
+		t.Error("Should calculate reward after incentive starts")
+	}
+
+	// Verify incentive is still in deposit (not removed)
+	if !deposit.HasExternalIncentiveId(incentiveId) {
+		t.Error("Future incentive should remain in deposit")
+	}
 }
