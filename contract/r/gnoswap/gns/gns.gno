@@ -13,6 +13,9 @@ import (
 	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 const (
@@ -22,7 +25,7 @@ const (
 )
 
 var (
-	adminAddr            = getAdminAddress()
+	adminAddr            = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller           = token.CallerTeller()
 	owner                = ownable.NewWithAddress(adminAddr)
