@@ -171,41 +171,42 @@ func TestLastMintedTimestampInitialization(t *testing.T) {
 		fn   func(t *testing.T)
 	}{
 		{
-			name: "lastMintedTimestamp should be initialized with Unix timestamp, not block height",
+			name: "lastMintedTimestamp should be initialized to 0 (never minted)",
 			fn: func(t *testing.T) {
 				InitGnsTest(t)
 
 				timestamp := LastMintedTimestamp()
-				blockHeight := runtime.ChainHeight()
 
-				uassert.NotEqual(t, blockHeight, timestamp)
+				uassert.Equal(t, int64(0), timestamp)
 			},
 		},
 		{
-			name: "lastMintedTimestamp should be in valid Unix timestamp range",
+			name: "lastMintedTimestamp should update to current time after first mint",
 			fn: func(t *testing.T) {
 				InitGnsTest(t)
 
+				testing.SetRealm(emissionRealm)
+
+				beforeMint := time.Now().Unix()
+				MintGns(cross, adminAddr)
+				afterMint := time.Now().Unix()
+
 				timestamp := LastMintedTimestamp()
 
-				uassert.True(t, timestamp > 1_000_000_000)
-				uassert.True(t, timestamp < 10_000_000_000)
+				uassert.True(t, timestamp >= beforeMint)
+				uassert.True(t, timestamp <= afterMint)
 			},
 		},
 		{
-			name: "lastMintedTimestamp should match current time",
+			name: "MintGns should mint tokens on first call when emission is active",
 			fn: func(t *testing.T) {
 				InitGnsTest(t)
 
-				currentTime := time.Now().Unix()
-				timestamp := LastMintedTimestamp()
+				testing.SetRealm(emissionRealm)
 
-				timeDiff := currentTime - timestamp
-				if timeDiff < 0 {
-					timeDiff = -timeDiff
-				}
+				amount := MintGns(cross, adminAddr)
 
-				uassert.True(t, timeDiff < 5)
+				uassert.True(t, amount > 0)
 			},
 		},
 		{
@@ -215,9 +216,11 @@ func TestLastMintedTimestampInitialization(t *testing.T) {
 
 				testing.SetRealm(emissionRealm)
 
-				amount := MintGns(cross, adminAddr)
+				firstAmount := MintGns(cross, adminAddr)
+				uassert.True(t, firstAmount > 0)
 
-				uassert.Equal(t, int64(0), amount)
+				secondAmount := MintGns(cross, adminAddr)
+				uassert.Equal(t, int64(0), secondAmount)
 			},
 		},
 		{
@@ -228,7 +231,7 @@ func TestLastMintedTimestampInitialization(t *testing.T) {
 				testing.SetRealm(emissionRealm)
 
 				firstAmount := MintGns(cross, adminAddr)
-				uassert.Equal(t, int64(0), firstAmount)
+				uassert.True(t, firstAmount > 0)
 
 				testing.SkipHeights(1)
 
@@ -569,11 +572,9 @@ func TestMintGns(t *testing.T) {
 			mintGnsFn := func() {
 				testing.SetRealm(tt.inputRealm)
 
-				firstMintedAmount := MintGns(cross, adminAddr)
+				MintGns(cross, adminAddr)
 				testing.SkipHeights(tt.inputSkipHeight)
-				secondMintedAmount := MintGns(cross, adminAddr)
-
-				mintedAmount = firstMintedAmount + secondMintedAmount
+				mintedAmount = MintGns(cross, adminAddr)
 			}
 
 			if tt.expectedHasAbort {
