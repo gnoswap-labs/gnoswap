@@ -11,16 +11,11 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 func getPositionAddress() address {
-	addr, exists := access.GetAddress(prabc.ROLE_POSITION.String())
-	if !exists {
-		return rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
-	}
-
-	return addr
+	return access.MustGetAddress(prabc.ROLE_POSITION.String())
 }
 
 // tid converts uint64 to grc721.TokenID.

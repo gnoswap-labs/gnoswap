@@ -9,7 +9,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 // validBlockTime validates that block time is within acceptable range.
@@ -48,12 +48,7 @@ func validEmissionAmount(amount int64) error {
 
 // getAdminAddress returns the admin address from access control or default role address.
 func getAdminAddress() address {
-	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
-	if !exists {
-		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
-	}
-
-	return addr
+	return access.MustGetAddress(prabc.ROLE_ADMIN.String())
 }
 
 // i64Min returns the smaller of two int64 values.
