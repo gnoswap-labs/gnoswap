@@ -198,14 +198,14 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	currentTimestamp := time.Now().Unix()
 
-	// Cannot change after distribution started.
-	if distributionStartTimestamp != 0 && distributionStartTimestamp <= currentTimestamp {
-		panic("distribution has already started, cannot change start timestamp")
-	}
-
 	// Must be in the future.
 	if startTimestamp <= currentTimestamp {
 		panic("distribution start timestamp must be greater than current timestamp")
+	}
+
+	// Cannot change after distribution started.
+	if distributionStartTimestamp != 0 && distributionStartTimestamp <= currentTimestamp {
+		panic("distribution has already started, cannot change start timestamp")
 	}
 
 	prevStartTimestamp := distributionStartTimestamp
