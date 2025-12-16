@@ -51,9 +51,9 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 ### Execution
 
-- Requires quorum[^1] and majority (>50%)
-- Quorum is fulfilled by YES votes only; NO votes do not count towards quorum
-- Proposals can pass with low participation if YES votes meet the quorum threshold
+- Requires quorum[^1] based solely on YES votes; NO votes do not block execution once quorum is met
+- Quorum is fulfilled by YES votes only; NO votes do not count towards quorum or passing
+- Proposals can pass with low participation or even if NO votes exceed YES, as long as YES votes meet the quorum threshold
 - 1 day timelock after voting
 - 30 day execution window
 - Anyone can trigger execution
