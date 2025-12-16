@@ -7,8 +7,6 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoswap/halt"
 )
 
 const (
@@ -426,7 +424,6 @@ func TestCalculateAmountToMint(t *testing.T) {
 func TestMintGns(t *testing.T) {
 	tests := []struct {
 		name                 string
-		halted               bool
 		inputRealm           runtime.Realm
 		inputSkipHeight      int64
 		expectedMintedAmount int64
@@ -435,7 +432,6 @@ func TestMintGns(t *testing.T) {
 	}{
 		{
 			name:                 "mint gns is success by emission realm",
-			halted:               false,
 			inputRealm:           emissionRealm,
 			inputSkipHeight:      1,
 			expectedMintedAmount: 35673515, // 5 seconds worth of emission (7134 * 5)
@@ -444,7 +440,6 @@ func TestMintGns(t *testing.T) {
 		},
 		{
 			name:                 "mint gns is failed by caller is not emission realm",
-			halted:               false,
 			inputRealm:           testing.NewUserRealm(testutils.TestAddress("user")),
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
@@ -453,7 +448,6 @@ func TestMintGns(t *testing.T) {
 		},
 		{
 			name:                 "mint gns is failed by not allowed to mint same timestamp",
-			halted:               false,
 			inputRealm:           emissionRealm,
 			inputSkipHeight:      0,
 			expectedMintedAmount: 0,
@@ -465,14 +459,6 @@ func TestMintGns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			InitGnsTest(t)
-
-			testing.SetOriginCaller(adminAddr)
-
-			if tt.halted {
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency) // set halt
-			} else {
-				halt.SetHaltLevel(cross, halt.HaltLevelNone) // set halt
-			}
 
 			var mintedAmount int64
 
@@ -493,7 +479,6 @@ func TestMintGns(t *testing.T) {
 			}
 
 			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
-			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 		})
 	}
 }
