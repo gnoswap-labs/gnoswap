@@ -10,6 +10,8 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
@@ -805,4 +807,100 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits tests that claimable rewards
+// are correctly calculated for active deposits.
+func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.T) {
+	t.Run("calculate claimable rewards with active deposits", func(t *testing.T) {
+		// Create reward manager with accumulated rewards
+		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+
+		// Add reward state for deposit with priceDebt = 0.5
+		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
+		rewardState := newRewardState(
+			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			100_000, // deposit amount
+			1000,    // start time
+			2000,    // end time
+			1100,    // claimable time
+		)
+		rm.Rewards().Set("deposit1", rewardState)
+
+		// Calculate claimable rewards
+		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
+
+		// Expected: (1.0 - 0.5) * 100,000 = 50,000
+		uassert.True(t, claimableRewards > 0, "claimable rewards should be positive")
+		uassert.Equal(t, int64(50_000), claimableRewards)
+	})
+
+	t.Run("no active deposits returns zero", func(t *testing.T) {
+		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+
+		// No reward states added
+		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
+
+		uassert.Equal(t, int64(0), claimableRewards)
+	})
+
+	t.Run("multiple deposits with different claimable rewards", func(t *testing.T) {
+		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
+
+		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
+		rewardState1 := newRewardState(
+			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
+			100_000, 1000, 2000, 1100,
+		)
+		rm.Rewards().Set("deposit1", rewardState1)
+
+		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
+		rewardState2 := newRewardState(
+			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
+			200_000, 1000, 2000, 1100,
+		)
+		rm.Rewards().Set("deposit2", rewardState2)
+
+		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
+
+		// Expected: 50,000 + 150,000 = 200,000
+		uassert.Equal(t, int64(200_000), claimableRewards)
+	})
+}
+
+// TestLaunchpadProject_calculateTierClaimableRewards tests that tier claimable rewards
+// are correctly calculated.
+func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
+	t.Run("calculate tier claimable rewards", func(t *testing.T) {
+		initLaunchpadProjectTest(t)
+		lp := getTestImplementation()
+
+		projectID := "gno.land/r/onbloc/obl:123"
+		tierID := projectID + ":30"
+
+		// Create tier
+		tier := launchpad.NewProjectTier(projectID, 30, 100_000, 1000, 2000)
+		tier.SetID(tierID)
+
+		// Setup reward manager with claimable rewards
+		projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+
+		rewardState := newRewardState(
+			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
+			100_000, 1000, 2000, 1100,
+		)
+		rm.Rewards().Set("deposit1", rewardState)
+		projectTierRewardManagers.Set(tierID, rm)
+		lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+
+		// Calculate claimable rewards
+		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(50_000), claimableRewards)
+	})
 }

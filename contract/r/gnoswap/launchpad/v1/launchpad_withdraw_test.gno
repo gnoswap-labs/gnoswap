@@ -324,6 +324,75 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	})
 }
 
+// TestLaunchpadWithdraw_RewardStateRemoval tests that reward state is removed
+func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
+	tests := []struct {
+		name                         string
+		depositID                    string
+		skipHeight                   int64
+		expectedRewardStateSizeAfter int
+		expectedRewardStateError     bool
+	}{
+		{
+			name:                         "reward state is removed after withdrawal",
+			depositID:                    "1",
+			skipHeight:                   60*60*24*180/5 + 2,
+			expectedRewardStateSizeAfter: 0,
+			expectedRewardStateError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userAddr := testutils.TestAddress("user5")
+			initLaunchpadWithdrawTest(t, userAddr)
+			lp := getTestImplementation()
+
+			// Get deposit first to retrieve project info
+			deposit, _ := getDeposit(tt.depositID)
+			projectID := deposit.ProjectID()
+			tierDuration := deposit.Tier()
+
+			// Get project and tier using deposit info
+			project, _ := lp.getProject(projectID)
+			projectTier, _ := getProjectTier(project, tierDuration)
+			tierID := projectTier.ID()
+
+			// Get reward manager before withdrawal
+			rewardManager, err := lp.getProjectTierRewardManager(tierID)
+			uassert.NoError(t, err)
+
+			// Verify reward state exists before withdrawal
+			initialRewardsSize := rewardManager.Rewards().Size()
+			uassert.True(t, initialRewardsSize > 0, "reward state should exist before withdrawal")
+
+			// Verify reward state is accessible before withdrawal
+			_, err = getDepositRewardState(rewardManager, tt.depositID)
+			uassert.NoError(t, err)
+
+			// Perform withdrawal
+			testing.SkipHeights(tt.skipHeight)
+			currentTime := time.Now().Unix()
+			_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			uassert.NoError(t, err)
+
+			// Verify reward state is removed after withdrawal
+			rewardManagerAfter, _ := lp.getProjectTierRewardManager(tierID)
+			afterRewardsSize := rewardManagerAfter.Rewards().Size()
+			uassert.Equal(t, tt.expectedRewardStateSizeAfter, afterRewardsSize,
+				"reward state size should match expected value after withdrawal")
+
+			// Verify getDepositRewardState returns error after withdrawal
+			_, err = getDepositRewardState(rewardManagerAfter, tt.depositID)
+			if tt.expectedRewardStateError {
+				uassert.Error(t, err, "getDepositRewardState should return error after withdrawal")
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	testing.SetHeight(123)
 
