@@ -68,15 +68,9 @@ class PathConfig:
             workdir=workdir,
             # If the gno repository name is different, change only `gno` in this path to the appropriate one.
             # For example, if the cloned repository is `gno-core/...`, replace it with `gno-core`.
-            gno_examples_dir=workdir / "gno" / "examples" / "gno.land",
-            gno_root_dir=workdir / "gno" / "gno.land",
+            gno_examples_dir=workdir / "gno-core" / "examples" / "gno.land",
+            gno_root_dir=workdir / "gno-core" / "gno.land",
         )
-
-
-def parse_module_from_toml(data: dict) -> Optional[str]:
-    """Parse module path from toml data"""
-    return data.get("module")
-
 
 def convert_txtar_name(file_path: Path, base_dir: Path) -> str:
     rel_path = file_path.relative_to(base_dir)
@@ -112,14 +106,16 @@ def build_module_destination(
 
 def read_module_path(file_path: Path) -> Optional[str]:
     """Read and parse module path from toml file"""
+    if not file_path.exists():
+        raise ModuleFileError(f"File not found: {file_path}")
 
     try:
         content = file_path.read_bytes()
         data = tomllib.loads(content.decode("utf-8"))
-        return parse_module_from_toml(data)
+        return data.get("module")
+
     except (IOError, tomllib.TOMLDecodeError, KeyError) as e:
-        print(f"Error reading TOML file {file_path}: {e}")
-        return None
+        raise ModuleFileError(f"Error reading TOML file {file_path}: {e}")
 
 
 def load_skip_tests(skip_file: Path = INTEGRATION_SKIP_FILE) -> FrozenSet[str]:
@@ -167,18 +163,6 @@ def find_module_file(dir: Path) -> Optional[Path]:
     if toml_file.exists():
         return toml_file
     return None
-
-
-def find_parent_module(dir: Path) -> Tuple[Optional[str], Optional[Path]]:
-    """Find the nearest parent module path and directory"""
-    current = dir.resolve()
-
-    while current != current.parent:
-        toml_file = current / "gnomod.toml"
-        if toml_file.exists():
-            return read_module_path(toml_file), current
-        current = current.parent
-    return None, None
 
 
 def discover_modules(
@@ -359,8 +343,7 @@ def list_integration_tests(skip: bool = False) -> None:
     tests = get_integration_tests(skip=skip)
 
     if not tests:
-        print("Error: Test directory not found", file=sys.stderr)
-        sys.exit(1)
+        raise SetupError("No integration tests found")
 
     for test in sorted(tests, key=lambda t: t.converted_name):
         print(test.converted_name)
