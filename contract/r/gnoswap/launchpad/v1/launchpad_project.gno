@@ -498,7 +498,7 @@ func (p *createProjectParams) validateConditions() error {
 	minimumAmounts := strings.Split(p.conditionAmounts, stringSplitterPad)
 
 	if len(tokenPaths) != len(minimumAmounts) {
-		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("conditionTokens and conditionAmounts are not matched"))
+		return makeErrorWithDetails(errInvalidInput, "conditionTokens and conditionAmounts are not matched")
 	}
 
 	tokenPathMap := make(map[string]bool)
