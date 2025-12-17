@@ -211,7 +211,8 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	prevStartTimestamp := distributionStartTimestamp
 
 	if gns.MintedEmissionAmount() == 0 {
-		gns.InitEmissionState(cross, startTimestamp, startTimestamp)
+		currentHeight := runtime.ChainHeight()
+		gns.InitEmissionState(cross, currentHeight, startTimestamp)
 	}
 
 	distributionStartTimestamp = startTimestamp
