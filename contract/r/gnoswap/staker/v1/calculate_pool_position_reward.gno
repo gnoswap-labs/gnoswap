@@ -1,6 +1,9 @@
 package v1
 
-import sr "gno.land/r/gnoswap/staker"
+import (
+	"gno.land/p/nt/avl"
+	sr "gno.land/r/gnoswap/staker"
+)
 
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.
@@ -103,28 +106,40 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	}
 	rewardState.reset()
 
-	// Query incentives only for the time window this position could actually earn rewards.
-	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(0, param.CurrentTime)
+	lastExternalIncentiveUpdatedAt := depositResolver.LastExternalIncentiveUpdatedAt()
 
-	// Process each external incentive with lazy initialization:
-	// When a new incentive is created, we don't iterate through all deposits for performance.
-	//
-	// Instead, we determine the appropriate lastCollectTime here:
-	// - If a deposit already has a lastCollectTime for an incentive, use it
-	// - If not (first time collecting), use max(deposit.stakeTime, incentive.startTimestamp)
-	//
-	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
-	for incentiveId, incentive := range allIncentives {
-		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+	// update deposit's incentive list with new incentives created since last update
+	if lastExternalIncentiveUpdatedAt < param.CurrentTime {
+		// get new incentives created since last update
+		currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, lastExternalIncentiveUpdatedAt, param.CurrentTime)
+
+		// add new created incentives to deposit
+		for _, incentiveId := range currentIncentiveIds {
+			deposit.AddExternalIncentiveId(incentiveId)
+		}
+
+		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
+	}
+
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
+	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
+		incentive, ok := incentivesResolver.Get(incentiveId)
+		if !ok {
+			return false
+		}
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
-			continue
+		if !incentiveResolver.IsStarted(param.CurrentTime) {
+			return false
 		}
 
 		// External incentivized pool.
 		// Calculate reward for each warmup using per-incentive lastCollectTime
+		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
@@ -135,7 +150,9 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		}
 
 		rewardState.reset()
-	}
+
+		return false
+	})
 
 	return rewards
 }
@@ -148,6 +165,37 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 	}
 	poolResolver := NewPoolResolver(pool)
 	return poolResolver.processUnclaimableReward(endTimestamp)
+}
+
+// update deposit's incentive list with new incentives created since last update
+func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
+	currentIncentiveIds := make([]string, 0)
+
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
+		// Value is a slice of incentive IDs (handles timestamp collisions)
+		poolIncentiveIds, ok := value.(*avl.Tree)
+		if !ok {
+			return false
+		}
+
+		incentiveIdsValue, exists := poolIncentiveIds.Get(poolPath)
+		if !exists {
+			return false
+		}
+
+		incentiveIds, ok := incentiveIdsValue.([]string)
+		if !ok {
+			return false
+		}
+
+		currentIncentiveIds = append(currentIncentiveIds, incentiveIds...)
+
+		return false
+	})
+
+	return currentIncentiveIds
 }
 
 // getInitialCollectTime determines the initial collection time for an incentive
