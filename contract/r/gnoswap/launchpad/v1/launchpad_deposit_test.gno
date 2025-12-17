@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 
 	_ "gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -696,6 +697,191 @@ func initLaunchpadDepositTest(t *testing.T) {
 	lp.store.SetProjects(projects)
 
 	testing.SkipHeights(10)
+}
+
+// TestLaunchpadDeposit_xGNSMintedOnce verifies that xGNS is minted exactly once
+// during deposit (not twice as was the bug before the fix).
+// This test ensures the fix for the double-minting issue is working correctly.
+func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	t.Run("xGNS should be minted exactly once per deposit", func(t *testing.T) {
+		// Reset test store
+		initTestStore()
+
+		userAddr := testutils.TestAddress("xgns_test_user")
+		projectAddr := testutils.TestAddress("xgns_test_project")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project as admin
+		testing.SetOriginCaller(launchpadAddr)
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600 // 1 hour from now
+
+		obl.Approve(cross, launchpadAddr, 10000)
+
+		lp := getTestImplementation()
+
+		// Create project
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"xGNS Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				10000,
+				"", // no conditions
+				"",
+				30,
+				30,
+				40,
+				startTime,
+			)
+		}(cross)
+
+		// Skip blocks to activate the project
+		testing.SkipHeights(3600)
+
+		// Setup user with GNS tokens
+		testing.SetRealm(adminRealm)
+		depositAmount := int64(1000000)
+		gns.Transfer(cross, userAddr, depositAmount*2)
+
+		// User approves launchpad to spend GNS
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, depositAmount*2)
+
+		// Record xGNS state before deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		initialLaunchpadXGNSBalance := xgns.BalanceOf(launchpadAddr)
+		initialXGNSTotalSupply := xgns.TotalSupply()
+
+		// Perform deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":30", depositAmount, "")
+		}(cross)
+
+		// Record xGNS state after deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		finalLaunchpadXGNSBalance := xgns.BalanceOf(launchpadAddr)
+		finalXGNSTotalSupply := xgns.TotalSupply()
+
+		// Verify xGNS was minted exactly once (not twice)
+		// The launchpad balance should increase by exactly depositAmount
+		actualBalanceIncrease := finalLaunchpadXGNSBalance - initialLaunchpadXGNSBalance
+		uassert.Equal(t, depositAmount, actualBalanceIncrease,
+			"xGNS balance should increase by exactly depositAmount (single mint)")
+
+		// Total supply should also increase by exactly depositAmount
+		actualSupplyIncrease := finalXGNSTotalSupply - initialXGNSTotalSupply
+		uassert.Equal(t, depositAmount, actualSupplyIncrease,
+			"xGNS total supply should increase by exactly depositAmount (single mint)")
+
+		// If double-minting was occurring, these values would be 2*depositAmount
+		uassert.True(t, actualBalanceIncrease != depositAmount*2,
+			"xGNS should NOT be minted twice")
+	})
+
+	t.Run("multiple deposits should each mint xGNS once", func(t *testing.T) {
+		// Reset test store
+		initTestStore()
+
+		userAddr := testutils.TestAddress("xgns_multi_user")
+		projectAddr := testutils.TestAddress("xgns_multi_project")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project as admin
+		testing.SetOriginCaller(launchpadAddr)
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600
+
+		obl.Approve(cross, launchpadAddr, 10000)
+
+		lp := getTestImplementation()
+
+		// Create project
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"xGNS Multi Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				10000,
+				"",
+				"",
+				30,
+				30,
+				40,
+				startTime,
+			)
+		}(cross)
+
+		// Skip blocks to activate the project
+		testing.SkipHeights(3600)
+
+		// Setup user with enough GNS tokens for multiple deposits
+		testing.SetRealm(adminRealm)
+		deposit1Amount := int64(1000000)
+		deposit2Amount := int64(2000000)
+		totalDepositAmount := deposit1Amount + deposit2Amount
+		gns.Transfer(cross, userAddr, totalDepositAmount*2)
+
+		// User approves launchpad
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, totalDepositAmount*2)
+
+		// Record initial xGNS state
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		initialXGNSTotalSupply := xgns.TotalSupply()
+
+		// First deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":30", deposit1Amount, "")
+		}(cross)
+
+		// Check after first deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		afterFirstDepositSupply := xgns.TotalSupply()
+		firstDepositIncrease := afterFirstDepositSupply - initialXGNSTotalSupply
+		uassert.Equal(t, deposit1Amount, firstDepositIncrease,
+			"First deposit should mint exactly deposit1Amount of xGNS")
+
+		// Second deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":90", deposit2Amount, "")
+		}(cross)
+
+		// Check after second deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		finalXGNSTotalSupply := xgns.TotalSupply()
+		totalIncrease := finalXGNSTotalSupply - initialXGNSTotalSupply
+
+		// Total xGNS minted should equal total deposits (not 2x)
+		uassert.Equal(t, totalDepositAmount, totalIncrease,
+			"Total xGNS minted should equal sum of all deposits")
+	})
 }
 
 // TestDepositGns_RewardDistributionOrder verifies that the reward distribution
