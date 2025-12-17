@@ -49,7 +49,7 @@ func testConsecutiveChangesWithoutMinting() {
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 5000, // 50%
-		emission.DEVOPS, 5000,           // 50%
+		emission.DEVOPS, 5000, // 50%
 		emission.COMMUNITY_POOL, 0,
 		emission.GOV_STAKER, 0,
 	)
@@ -60,7 +60,7 @@ func testConsecutiveChangesWithoutMinting() {
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 7000, // 70%
-		emission.DEVOPS, 3000,           // 30%
+		emission.DEVOPS, 3000, // 30%
 		emission.COMMUNITY_POOL, 0,
 		emission.GOV_STAKER, 0,
 	)
@@ -71,7 +71,7 @@ func testConsecutiveChangesWithoutMinting() {
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 8000, // 80%
-		emission.DEVOPS, 2000,           // 20%
+		emission.DEVOPS, 2000, // 20%
 		emission.COMMUNITY_POOL, 0,
 		emission.GOV_STAKER, 0,
 	)
@@ -113,7 +113,8 @@ func testConsecutiveChangesWithoutMinting() {
 	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~4.0 (80/20), got %.2f", ratio))
 
 	uassert.True(t, ratio > expectedRatio*0.9 && ratio < expectedRatio*1.1)
-	println()}
+	println()
+}
 
 // Output:
 // [SCENARIO] 1. Set distribution start time
