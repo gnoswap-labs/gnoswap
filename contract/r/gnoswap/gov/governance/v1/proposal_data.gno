@@ -154,7 +154,6 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 		)
 	}
 
-	// common.MustRegistered(communityPoolSpend.TokenPath())
 	if err := common.IsRegistered(tokenPath); err != nil {
 		return makeErrorWithDetails(
 			errInvalidInput,
