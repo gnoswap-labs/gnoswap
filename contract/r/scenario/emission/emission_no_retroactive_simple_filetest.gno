@@ -35,137 +35,89 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] Emission Distribution Ratio Change - No Retroactive Application")
-	println("==============================================================================")
-	println()
-
 	testNoRetroactiveApplication()
 }
 
 func testNoRetroactiveApplication() {
-	println("[STEP 1] Setup initial 50/50 distribution ratio")
+	println("[SCENARIO] 1. Setup initial 50/50 distribution ratio")
 	testing.SetRealm(adminRealm)
-
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 5000, // 50%
-		emission.DEVOPS, 5000,           // 50%
-		emission.COMMUNITY_POOL, 0,      // 0%
-		emission.GOV_STAKER, 0,          // 0%
+		emission.LIQUIDITY_STAKER, 5000,
+		emission.DEVOPS, 5000,
+		emission.COMMUNITY_POOL, 0,
+		emission.GOV_STAKER, 0,
 	)
-	println("[INFO] Distribution ratio set to 50/50 (Staker/DevOps)")
-
+	println("[INFO] distribution ratio set to 50/50 (Staker/DevOps)")
 	println()
-	println("[STEP 2] Set distribution start time and verify initial state")
+
+	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	emission.SetDistributionStartTime(cross, now+100)
-
 	stakerBefore := emission.GetDistributedToStaker()
 	devopsBefore := emission.GetDistributedToDevOps()
-
 	uassert.Equal(t, int64(0), stakerBefore)
 	uassert.Equal(t, int64(0), devopsBefore)
-	println("[INFO] Initial distribution: Staker=0, DevOps=0")
-
+	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
-	println("[STEP 3] Skip 10 days to accumulate emissions (no minting)")
-	println("[INFO] Skipping 864,000 seconds (10 days)...")
+
+	println("[SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)")
 	testing.SkipHeights(864000)
-	println("[INFO] Emissions accumulated for 10 days at 50/50 ratio")
-
+	println("[INFO] emissions accumulated without distribution")
 	println()
-	println("[STEP 4] Change distribution ratio to 80/20")
-	println("[INFO] This should distribute accumulated emissions at OLD ratio (50/50)")
-	testing.SetRealm(adminRealm)
 
+	println("[SCENARIO] 4. Change distribution ratio to 80/20")
+	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 8000, // 80%
-		emission.DEVOPS, 2000,           // 20%
-		emission.COMMUNITY_POOL, 0,      // 0%
-		emission.GOV_STAKER, 0,          // 0%
+		emission.LIQUIDITY_STAKER, 8000,
+		emission.DEVOPS, 2000,
+		emission.COMMUNITY_POOL, 0,
+		emission.GOV_STAKER, 0,
 	)
-	println("[INFO] Distribution ratio changed to 80/20")
-
-	println()
-	println("[STEP 5] Verify accumulated emissions were distributed at OLD ratio")
 	stakerAfterRatioChange := emission.GetDistributedToStaker()
 	devopsAfterRatioChange := emission.GetDistributedToDevOps()
-
-	println(ufmt.Sprintf("[INFO] Distributed: Staker=%d, DevOps=%d",
+	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d",
 		stakerAfterRatioChange, devopsAfterRatioChange))
-
+	ratio := float64(stakerAfterRatioChange) / float64(devopsAfterRatioChange)
+	println(ufmt.Sprintf("[INFO] ratio: %.2f", ratio))
+	println("[EXPECTED] accumulated emissions distributed at OLD ratio (50/50)")
 	uassert.True(t, stakerAfterRatioChange > 0)
 	uassert.True(t, devopsAfterRatioChange > 0)
-
-	ratio := float64(stakerAfterRatioChange) / float64(devopsAfterRatioChange)
-	println(ufmt.Sprintf("[INFO] Distribution ratio: %.2f", ratio))
-	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~1.0 (50/50), got %.2f", ratio))
-
 	uassert.True(t, ratio > 0.9 && ratio < 1.1)
-	println("[SUCCESS] Accumulated emissions distributed at OLD ratio (50/50)")
-
 	println()
-	println("[STEP 6] Skip 1 day and mint new emissions")
+
+	println("[SCENARIO] 5. Accumulate 1 more day and distribute")
 	testing.SkipHeights(86400)
 	emission.MintAndDistributeGns(cross)
-
-	println()
-	println("[STEP 7] Verify new emissions use NEW ratio (80/20)")
 	stakerAfterNew := emission.GetDistributedToStaker()
 	devopsAfterNew := emission.GetDistributedToDevOps()
-
 	stakerIncrement := stakerAfterNew - stakerAfterRatioChange
 	devopsIncrement := devopsAfterNew - devopsAfterRatioChange
-
-	println(ufmt.Sprintf("[INFO] New emissions: Staker=%d, DevOps=%d",
+	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d",
 		stakerIncrement, devopsIncrement))
-
-	if stakerIncrement > 0 && devopsIncrement > 0 {
-		newRatio := float64(stakerIncrement) / float64(devopsIncrement)
-		println(ufmt.Sprintf("[INFO] New emission ratio: %.2f", newRatio))
-		println(ufmt.Sprintf("[EXPECTED] Ratio should be ~4.0 (80/20), got %.2f", newRatio))
-
-		uassert.True(t, newRatio > 3.5 && newRatio < 4.5)
-		println("[SUCCESS] New emissions use NEW ratio (80/20)")
-	}
-
-	println()
-	println("[SCENARIO COMPLETE] No retroactive application verified")
-	println("==========================================================")
+	newRatio := float64(stakerIncrement) / float64(devopsIncrement)
+	println(ufmt.Sprintf("[INFO] ratio: %.2f", newRatio))
+	println("[EXPECTED] new emissions use NEW ratio (80/20)")
+	uassert.True(t, newRatio > 3.5 && newRatio < 4.5)
 }
 
 // Output:
-// [SCENARIO] Emission Distribution Ratio Change - No Retroactive Application
-// ==============================================================================
+// [SCENARIO] 1. Setup initial 50/50 distribution ratio
+// [INFO] distribution ratio set to 50/50 (Staker/DevOps)
 //
-// [STEP 1] Setup initial 50/50 distribution ratio
-// [INFO] Distribution ratio set to 50/50 (Staker/DevOps)
+// [SCENARIO] 2. Set distribution start time
+// [INFO] initial distribution: Staker=0, DevOps=0
 //
-// [STEP 2] Set distribution start time and verify initial state
-// [INFO] Initial distribution: Staker=0, DevOps=0
+// [SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)
+// [INFO] emissions accumulated without distribution
 //
-// [STEP 3] Skip 10 days to accumulate emissions (no minting)
-// [INFO] Skipping 864,000 seconds (10 days)...
-// [INFO] Emissions accumulated for 10 days at 50/50 ratio
+// [SCENARIO] 4. Change distribution ratio to 80/20
+// [INFO] distributed: Staker=15410605312201, DevOps=15410605312201
+// [INFO] ratio: 1.00
+// [EXPECTED] accumulated emissions distributed at OLD ratio (50/50)
 //
-// [STEP 4] Change distribution ratio to 80/20
-// [INFO] This should distribute accumulated emissions at OLD ratio (50/50)
-// [INFO] Distribution ratio changed to 80/20
-//
-// [STEP 5] Verify accumulated emissions were distributed at OLD ratio
-// [INFO] Distributed: Staker=15410605312201, DevOps=15410605312201
-// [INFO] Distribution ratio: 1.00
-// [EXPECTED] Ratio should be ~1.0 (50/50), got 1.00
-// [SUCCESS] Accumulated emissions distributed at OLD ratio (50/50)
-//
-// [STEP 6] Skip 1 day and mint new emissions
-//
-// [STEP 7] Verify new emissions use NEW ratio (80/20)
-// [INFO] New emissions: Staker=2465753356800, DevOps=616438339200
-// [INFO] New emission ratio: 4.00
-// [EXPECTED] Ratio should be ~4.0 (80/20), got 4.00
-// [SUCCESS] New emissions use NEW ratio (80/20)
-//
-// [SCENARIO COMPLETE] No retroactive application verified
-// ==========================================================
+// [SCENARIO] 5. Accumulate 1 more day and distribute
+// [INFO] new emissions: Staker=2465753356800, DevOps=616438339200
+// [INFO] ratio: 4.00
+// [EXPECTED] new emissions use NEW ratio (80/20)

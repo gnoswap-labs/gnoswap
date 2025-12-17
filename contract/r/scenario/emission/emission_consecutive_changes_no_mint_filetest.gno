@@ -33,23 +33,19 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] Emission Distribution - Consecutive Ratio Changes Without Minting")
-	println("==============================================================================")
-	println()
-
 	testConsecutiveChangesWithoutMinting()
 }
 
 func testConsecutiveChangesWithoutMinting() {
 	testing.SetRealm(adminRealm)
 
-	println("[STEP 1] Set distribution start time")
+	println("[SCENARIO] 1. Set distribution start time")
 	now := time.Now().Unix()
 	emission.SetDistributionStartTime(cross, now+100)
 	println("[INFO] Distribution start time set")
 
 	println()
-	println("[STEP 2] Set initial ratio to 50/50")
+	println("[SCENARIO] 2. Set initial ratio to 50/50")
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 5000, // 50%
@@ -60,7 +56,7 @@ func testConsecutiveChangesWithoutMinting() {
 	println("[INFO] Initial ratio: 50/50")
 
 	println()
-	println("[STEP 3] Immediately change to 70/30 (no emissions accumulated)")
+	println("[SCENARIO] 3. Immediately change to 70/30 (no emissions accumulated)")
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 7000, // 70%
@@ -71,7 +67,7 @@ func testConsecutiveChangesWithoutMinting() {
 	println("[INFO] Changed to 70/30 without minting")
 
 	println()
-	println("[STEP 4] Immediately change to 80/20 (still no emissions accumulated)")
+	println("[SCENARIO] 4. Immediately change to 80/20 (still no emissions accumulated)")
 	emission.ChangeDistributionPct(
 		cross,
 		emission.LIQUIDITY_STAKER, 8000, // 80%
@@ -82,7 +78,7 @@ func testConsecutiveChangesWithoutMinting() {
 	println("[INFO] Changed to 80/20 without minting")
 
 	println()
-	println("[STEP 5] Verify no distributions yet")
+	println("[SCENARIO] 5. Verify no distributions yet")
 	stakerBefore := emission.GetDistributedToStaker()
 	devopsBefore := emission.GetDistributedToDevOps()
 
@@ -91,17 +87,17 @@ func testConsecutiveChangesWithoutMinting() {
 	println("[INFO] Confirmed: No distributions yet (Staker=0, DevOps=0)")
 
 	println()
-	println("[STEP 6] Skip 30 days to accumulate emissions")
+	println("[SCENARIO] 6. Skip 30 days to accumulate emissions")
 	testing.SkipHeights(2592000) // 30 days
 	println("[INFO] Accumulated emissions for 30 days")
 
 	println()
-	println("[STEP 7] Mint accumulated emissions")
+	println("[SCENARIO] 7. Mint accumulated emissions")
 	emission.MintAndDistributeGns(cross)
 	println("[INFO] MintAndDistributeGns called")
 
 	println()
-	println("[STEP 8] Verify all emissions use FINAL ratio (80/20)")
+	println("[SCENARIO] 8. Verify all emissions use FINAL ratio (80/20)")
 	stakerAfter := emission.GetDistributedToStaker()
 	devopsAfter := emission.GetDistributedToDevOps()
 
@@ -117,45 +113,32 @@ func testConsecutiveChangesWithoutMinting() {
 	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~4.0 (80/20), got %.2f", ratio))
 
 	uassert.True(t, ratio > expectedRatio*0.9 && ratio < expectedRatio*1.1)
-	println("[SUCCESS] All emissions distributed at final ratio (80/20)")
-	println("[SUCCESS] Intermediate ratios (50/50, 70/30) had no effect")
-
-	println()
-	println("[SCENARIO COMPLETE] Consecutive changes without minting verified")
-	println("===================================================================")
-}
+	println()}
 
 // Output:
-// [SCENARIO] Emission Distribution - Consecutive Ratio Changes Without Minting
-// ==============================================================================
-//
-// [STEP 1] Set distribution start time
+// [SCENARIO] 1. Set distribution start time
 // [INFO] Distribution start time set
 //
-// [STEP 2] Set initial ratio to 50/50
+// [SCENARIO] 2. Set initial ratio to 50/50
 // [INFO] Initial ratio: 50/50
 //
-// [STEP 3] Immediately change to 70/30 (no emissions accumulated)
+// [SCENARIO] 3. Immediately change to 70/30 (no emissions accumulated)
 // [INFO] Changed to 70/30 without minting
 //
-// [STEP 4] Immediately change to 80/20 (still no emissions accumulated)
+// [SCENARIO] 4. Immediately change to 80/20 (still no emissions accumulated)
 // [INFO] Changed to 80/20 without minting
 //
-// [STEP 5] Verify no distributions yet
+// [SCENARIO] 5. Verify no distributions yet
 // [INFO] Confirmed: No distributions yet (Staker=0, DevOps=0)
 //
-// [STEP 6] Skip 30 days to accumulate emissions
+// [SCENARIO] 6. Skip 30 days to accumulate emissions
 // [INFO] Accumulated emissions for 30 days
 //
-// [STEP 7] Mint accumulated emissions
+// [SCENARIO] 7. Mint accumulated emissions
 // [INFO] MintAndDistributeGns called
 //
-// [STEP 8] Verify all emissions use FINAL ratio (80/20)
+// [SCENARIO] 8. Verify all emissions use FINAL ratio (80/20)
 // [INFO] Distributed: Staker=73972035635522, DevOps=18493008908880
 // [INFO] Distribution ratio: 4.00
 // [EXPECTED] Ratio should be ~4.0 (80/20), got 4.00
-// [SUCCESS] All emissions distributed at final ratio (80/20)
-// [SUCCESS] Intermediate ratios (50/50, 70/30) had no effect
 //
-// [SCENARIO COMPLETE] Consecutive changes without minting verified
-// ===================================================================
