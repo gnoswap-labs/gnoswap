@@ -344,14 +344,6 @@ func (m *MockStaker) GetUnstakingFee() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	res, ok := m.Response.Get("IsArchivedExternalIncentive")
-	if !ok {
-		return false
-	}
-	return res[0].(bool)
-}
-
 func (m *MockStaker) IsStaked(positionId uint64) bool {
 	res, ok := m.Response.Get("IsStaked")
 	if !ok {
