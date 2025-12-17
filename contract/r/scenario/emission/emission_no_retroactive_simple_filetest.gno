@@ -77,14 +77,30 @@ func testNoRetroactiveApplication() {
 	)
 	stakerAfterRatioChange := emission.GetDistributedToStaker()
 	devopsAfterRatioChange := emission.GetDistributedToDevOps()
-	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d",
-		stakerAfterRatioChange, devopsAfterRatioChange))
+	communityAfterRatioChange := emission.GetDistributedToCommunityPool()
+	govAfterRatioChange := emission.GetDistributedToGovStaker()
+
+	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		stakerAfterRatioChange, devopsAfterRatioChange, communityAfterRatioChange, govAfterRatioChange))
+
+	// Verify exact amounts for 10 days at 50/50
+	expectedStaker1 := int64(15410605312201)
+	expectedDevops1 := int64(15410605312201)
+	totalPeriod1 := stakerAfterRatioChange + devopsAfterRatioChange + communityAfterRatioChange + govAfterRatioChange
+
+	println(ufmt.Sprintf("[EXPECTED] Period 1 (10 days at 50/50) - Staker should be %d, got %d", expectedStaker1, stakerAfterRatioChange))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 (10 days at 50/50) - DevOps should be %d, got %d", expectedDevops1, devopsAfterRatioChange))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
+
+	uassert.Equal(t, expectedStaker1, stakerAfterRatioChange)
+	uassert.Equal(t, expectedDevops1, devopsAfterRatioChange)
+	uassert.Equal(t, int64(0), communityAfterRatioChange)
+	uassert.Equal(t, int64(0), govAfterRatioChange)
+
+	// Verify ratio
 	ratio := float64(stakerAfterRatioChange) / float64(devopsAfterRatioChange)
-	println(ufmt.Sprintf("[INFO] ratio: %.2f", ratio))
-	println("[EXPECTED] accumulated emissions distributed at OLD ratio (50/50)")
-	uassert.True(t, stakerAfterRatioChange > 0)
-	uassert.True(t, devopsAfterRatioChange > 0)
-	uassert.True(t, ratio > 0.9 && ratio < 1.1)
+	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~1.00 (50/50), got %.2f", ratio))
+	uassert.True(t, ratio > 0.99 && ratio < 1.01)
 	println()
 
 	println("[SCENARIO] 5. Accumulate 1 more day and distribute")
@@ -92,14 +108,37 @@ func testNoRetroactiveApplication() {
 	emission.MintAndDistributeGns(cross)
 	stakerAfterNew := emission.GetDistributedToStaker()
 	devopsAfterNew := emission.GetDistributedToDevOps()
+	communityAfterNew := emission.GetDistributedToCommunityPool()
+	govAfterNew := emission.GetDistributedToGovStaker()
+
 	stakerIncrement := stakerAfterNew - stakerAfterRatioChange
 	devopsIncrement := devopsAfterNew - devopsAfterRatioChange
-	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d",
-		stakerIncrement, devopsIncrement))
+
+	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d", stakerIncrement, devopsIncrement))
+
+	// Verify exact amounts for 1 day at 80/20
+	expectedStakerIncrement := int64(2465753356800)
+	expectedDevopsIncrement := int64(616438339200)
+	totalPeriod2 := stakerIncrement + devopsIncrement
+
+	println(ufmt.Sprintf("[EXPECTED] Period 2 (1 day at 80/20) - Staker increment should be %d, got %d", expectedStakerIncrement, stakerIncrement))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 (1 day at 80/20) - DevOps increment should be %d, got %d", expectedDevopsIncrement, devopsIncrement))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
+
+	uassert.Equal(t, expectedStakerIncrement, stakerIncrement)
+	uassert.Equal(t, expectedDevopsIncrement, devopsIncrement)
+
+	// Verify new ratio
 	newRatio := float64(stakerIncrement) / float64(devopsIncrement)
-	println(ufmt.Sprintf("[INFO] ratio: %.2f", newRatio))
-	println("[EXPECTED] new emissions use NEW ratio (80/20)")
-	uassert.True(t, newRatio > 3.5 && newRatio < 4.5)
+	println(ufmt.Sprintf("[EXPECTED] New ratio should be ~4.00 (80/20), got %.2f", newRatio))
+	uassert.True(t, newRatio > 3.99 && newRatio < 4.01)
+
+	// Verify overall totals
+	totalDistributed := stakerAfterNew + devopsAfterNew + communityAfterNew + govAfterNew
+	expectedTotalDistributed := expectedStaker1 + expectedDevops1 + expectedStakerIncrement + expectedDevopsIncrement
+
+	println(ufmt.Sprintf("[EXPECTED] Total distributed should be %d, got %d", expectedTotalDistributed, totalDistributed))
+	uassert.Equal(t, expectedTotalDistributed, totalDistributed)
 }
 
 // Output:
@@ -113,11 +152,16 @@ func testNoRetroactiveApplication() {
 // [INFO] emissions accumulated without distribution
 //
 // [SCENARIO] 4. Change distribution ratio to 80/20
-// [INFO] distributed: Staker=15410605312201, DevOps=15410605312201
-// [INFO] ratio: 1.00
-// [EXPECTED] accumulated emissions distributed at OLD ratio (50/50)
+// [INFO] distributed: Staker=15410605312201, DevOps=15410605312201, Community=0, Gov=0
+// [EXPECTED] Period 1 (10 days at 50/50) - Staker should be 15410605312201, got 15410605312201
+// [EXPECTED] Period 1 (10 days at 50/50) - DevOps should be 15410605312201, got 15410605312201
+// [EXPECTED] Period 1 total: 30821210624402
+// [EXPECTED] Ratio should be ~1.00 (50/50), got 1.00
 //
 // [SCENARIO] 5. Accumulate 1 more day and distribute
 // [INFO] new emissions: Staker=2465753356800, DevOps=616438339200
-// [INFO] ratio: 4.00
-// [EXPECTED] new emissions use NEW ratio (80/20)
+// [EXPECTED] Period 2 (1 day at 80/20) - Staker increment should be 2465753356800, got 2465753356800
+// [EXPECTED] Period 2 (1 day at 80/20) - DevOps increment should be 616438339200, got 616438339200
+// [EXPECTED] Period 2 total: 3082191696000
+// [EXPECTED] New ratio should be ~4.00 (80/20), got 4.00
+// [EXPECTED] Total distributed should be 33903402320402, got 33903402320402

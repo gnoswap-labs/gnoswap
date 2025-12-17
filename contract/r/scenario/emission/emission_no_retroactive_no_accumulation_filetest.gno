@@ -50,10 +50,23 @@ func testRatioChangeWithoutAccumulation() {
 		emission.COMMUNITY_POOL, 0,
 		emission.GOV_STAKER, 0,
 	)
+
+	// Get all recipients before accumulation
 	stakerBefore := emission.GetDistributedToStaker()
 	devopsBefore := emission.GetDistributedToDevOps()
+	communityBefore := emission.GetDistributedToCommunityPool()
+	govBefore := emission.GetDistributedToGovStaker()
+
+	println(ufmt.Sprintf("[INFO] Before accumulation: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		stakerBefore, devopsBefore, communityBefore, govBefore))
+
+	// All should be zero before accumulation
+	println("[EXPECTED] All recipients should be 0 before accumulation")
 	uassert.Equal(t, int64(0), stakerBefore)
 	uassert.Equal(t, int64(0), devopsBefore)
+	uassert.Equal(t, int64(0), communityBefore)
+	uassert.Equal(t, int64(0), govBefore)
+
 	println("[INFO] ratio set to 80/20 without accumulated emissions")
 	println("[EXPECTED] no errors when changing ratio without accumulation")
 	println()
@@ -65,23 +78,57 @@ func testRatioChangeWithoutAccumulation() {
 
 	println("[SCENARIO] 4. Distribute accumulated emissions")
 	emission.MintAndDistributeGns(cross)
+
+	// Get all recipients after distribution
 	stakerAfter := emission.GetDistributedToStaker()
 	devopsAfter := emission.GetDistributedToDevOps()
-	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d",
-		stakerAfter, devopsAfter))
+	communityAfter := emission.GetDistributedToCommunityPool()
+	govAfter := emission.GetDistributedToGovStaker()
+
+	println(ufmt.Sprintf("[INFO] Distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		stakerAfter, devopsAfter, communityAfter, govAfter))
+
+	// Calculate total
+	totalDistributed := stakerAfter + devopsAfter + communityAfter + govAfter
+	println(ufmt.Sprintf("[INFO] Total distributed: %d", totalDistributed))
+
+	// Pre-calculated expected values (from Output section)
+	expectedStaker := int64(147944636339522)
+	expectedDevops := int64(36986159084880)
+	expectedCommunity := int64(0)
+	expectedGov := int64(0)
+	expectedTotal := expectedStaker + expectedDevops + expectedCommunity + expectedGov
+
+	// Exact assertions
+	println(ufmt.Sprintf("[EXPECTED] Staker should be %d, got %d", expectedStaker, stakerAfter))
+	uassert.Equal(t, expectedStaker, stakerAfter)
+
+	println(ufmt.Sprintf("[EXPECTED] DevOps should be %d, got %d", expectedDevops, devopsAfter))
+	uassert.Equal(t, expectedDevops, devopsAfter)
+
+	println(ufmt.Sprintf("[EXPECTED] Community should be %d, got %d", expectedCommunity, communityAfter))
+	uassert.Equal(t, expectedCommunity, communityAfter)
+
+	println(ufmt.Sprintf("[EXPECTED] Gov should be %d, got %d", expectedGov, govAfter))
+	uassert.Equal(t, expectedGov, govAfter)
+
+	// Ratio verification (tighter tolerance)
 	ratio := float64(stakerAfter) / float64(devopsAfter)
 	expectedRatio := 8000.0 / 2000.0
-	println(ufmt.Sprintf("[INFO] ratio: %.2f", ratio))
-	println("[EXPECTED] all emissions use 80/20 ratio")
-	uassert.True(t, stakerAfter > 0)
-	uassert.True(t, devopsAfter > 0)
-	uassert.True(t, ratio > expectedRatio*0.9 && ratio < expectedRatio*1.1)
+	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~%.2f (80/20), got %.2f", expectedRatio, ratio))
+	uassert.True(t, ratio > expectedRatio*0.99 && ratio < expectedRatio*1.01)
+
+	// Sum verification
+	println(ufmt.Sprintf("[EXPECTED] Sum should equal total: %d == %d", totalDistributed, expectedTotal))
+	uassert.Equal(t, expectedTotal, totalDistributed)
 }
 
 // Output:
 // [SCENARIO] 1. Set distribution start time
 //
 // [SCENARIO] 2. Change ratio to 80/20 without accumulation
+// [INFO] Before accumulation: Staker=0, DevOps=0, Community=0, Gov=0
+// [EXPECTED] All recipients should be 0 before accumulation
 // [INFO] ratio set to 80/20 without accumulated emissions
 // [EXPECTED] no errors when changing ratio without accumulation
 //
@@ -89,6 +136,11 @@ func testRatioChangeWithoutAccumulation() {
 // [INFO] 60 days elapsed
 //
 // [SCENARIO] 4. Distribute accumulated emissions
-// [INFO] distributed: Staker=147944636339522, DevOps=36986159084880
-// [INFO] ratio: 4.00
-// [EXPECTED] all emissions use 80/20 ratio
+// [INFO] Distributed: Staker=147944636339522, DevOps=36986159084880, Community=0, Gov=0
+// [INFO] Total distributed: 184930795424402
+// [EXPECTED] Staker should be 147944636339522, got 147944636339522
+// [EXPECTED] DevOps should be 36986159084880, got 36986159084880
+// [EXPECTED] Community should be 0, got 0
+// [EXPECTED] Gov should be 0, got 0
+// [EXPECTED] Ratio should be ~4.00 (80/20), got 4.00
+// [EXPECTED] Sum should equal total: 184930795424402 == 184930795424402

@@ -76,19 +76,44 @@ func testZeroRecipientScenario() {
 	period1Staker := emission.GetDistributedToStaker()
 	period1Devops := emission.GetDistributedToDevOps()
 	period1Community := emission.GetDistributedToCommunityPool()
+	period1Gov := emission.GetDistributedToGovStaker()
 
-	println(ufmt.Sprintf("[INFO] Period 1: Staker=%d, DevOps=%d, Community=%d",
-		period1Staker, period1Devops, period1Community))
+	println(ufmt.Sprintf("[INFO] Period 1: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		period1Staker, period1Devops, period1Community, period1Gov))
 
-	uassert.True(t, period1Staker > 0)
-	uassert.True(t, period1Devops > 0)
-	uassert.True(t, period1Community > 0)
+	// Calculate total
+	totalPeriod1 := period1Staker + period1Devops + period1Community + period1Gov
+	println(ufmt.Sprintf("[INFO] Period 1 total distributed: %d", totalPeriod1))
 
+	// Pre-calculated expected values (from Output section)
+	expectedStaker1 := int64(18492867641761)
+	expectedDevops1 := int64(13869650731320)
+	expectedCommunity1 := int64(13869650731320)
+	expectedGov1 := int64(0)
+	expectedTotal1 := expectedStaker1 + expectedDevops1 + expectedCommunity1 + expectedGov1
+
+	// Exact assertions
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker should be %d, got %d", expectedStaker1, period1Staker))
+	uassert.Equal(t, expectedStaker1, period1Staker)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps should be %d, got %d", expectedDevops1, period1Devops))
+	uassert.Equal(t, expectedDevops1, period1Devops)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Community should be %d, got %d", expectedCommunity1, period1Community))
+	uassert.Equal(t, expectedCommunity1, period1Community)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Gov should be %d, got %d", expectedGov1, period1Gov))
+	uassert.Equal(t, expectedGov1, period1Gov)
+
+	// Ratio verification (tighter tolerance)
 	stakerDevopsRatio := float64(period1Staker) / float64(period1Devops)
-	println(ufmt.Sprintf("[INFO] Period 1 Staker/DevOps ratio: %.2f", stakerDevopsRatio))
-	println(ufmt.Sprintf("[EXPECTED] Should be ~1.33 (40/30), got %.2f", stakerDevopsRatio))
+	expectedRatio := 4000.0 / 3000.0
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker/DevOps ratio should be ~%.2f (40/30), got %.2f", expectedRatio, stakerDevopsRatio))
+	uassert.True(t, stakerDevopsRatio > expectedRatio*0.99 && stakerDevopsRatio < expectedRatio*1.01)
 
-	uassert.True(t, stakerDevopsRatio > 1.2 && stakerDevopsRatio < 1.5)
+	// Sum verification
+	println(ufmt.Sprintf("[EXPECTED] Period 1 sum should equal total: %d == %d", totalPeriod1, expectedTotal1))
+	uassert.Equal(t, expectedTotal1, totalPeriod1)
 	println()
 	println("[SCENARIO] 6. Skip 15 days (Period 2)")
 	testing.SkipHeights(1296000) // 15 days
@@ -101,16 +126,46 @@ func testZeroRecipientScenario() {
 
 	println()
 	println("[SCENARIO] 8. Verify Period 2 distributions (only Staker)")
-	period2Staker := emission.GetDistributedToStaker() - period1Staker
-	period2Devops := emission.GetDistributedToDevOps() - period1Devops
-	period2Community := emission.GetDistributedToCommunityPool() - period1Community
+	totalStaker := emission.GetDistributedToStaker()
+	totalDevops := emission.GetDistributedToDevOps()
+	totalCommunity := emission.GetDistributedToCommunityPool()
+	totalGov := emission.GetDistributedToGovStaker()
 
-	println(ufmt.Sprintf("[INFO] Period 2: Staker=%d, DevOps=%d, Community=%d",
-		period2Staker, period2Devops, period2Community))
+	period2Staker := totalStaker - period1Staker
+	period2Devops := totalDevops - period1Devops
+	period2Community := totalCommunity - period1Community
+	period2Gov := totalGov - period1Gov
 
-	uassert.True(t, period2Staker > 0)
-	uassert.Equal(t, int64(0), period2Devops)
-	uassert.Equal(t, int64(0), period2Community)
+	println(ufmt.Sprintf("[INFO] Period 2: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		period2Staker, period2Devops, period2Community, period2Gov))
+
+	// Calculate total
+	totalPeriod2 := period2Staker + period2Devops + period2Community + period2Gov
+	println(ufmt.Sprintf("[INFO] Period 2 total distributed: %d", totalPeriod2))
+
+	// Pre-calculated expected values (from Output section)
+	expectedStaker2 := int64(46232875440002)
+	expectedDevops2 := int64(0)
+	expectedCommunity2 := int64(0)
+	expectedGov2 := int64(0)
+	expectedTotal2 := expectedStaker2 + expectedDevops2 + expectedCommunity2 + expectedGov2
+
+	// Exact assertions
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker should be %d, got %d", expectedStaker2, period2Staker))
+	uassert.Equal(t, expectedStaker2, period2Staker)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps should be %d, got %d", expectedDevops2, period2Devops))
+	uassert.Equal(t, expectedDevops2, period2Devops)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Community should be %d, got %d", expectedCommunity2, period2Community))
+	uassert.Equal(t, expectedCommunity2, period2Community)
+
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Gov should be %d, got %d", expectedGov2, period2Gov))
+	uassert.Equal(t, expectedGov2, period2Gov)
+
+	// Sum verification
+	println(ufmt.Sprintf("[EXPECTED] Period 2 sum should equal total: %d == %d", totalPeriod2, expectedTotal2))
+	uassert.Equal(t, expectedTotal2, totalPeriod2)
 	println()
 }
 
@@ -128,9 +183,14 @@ func testZeroRecipientScenario() {
 // [INFO] Period 2 ratios: Staker=100%, DevOps=0%, Community=0%
 //
 // [SCENARIO] 5. Verify Period 1 distributions (all recipients)
-// [INFO] Period 1: Staker=18492867641761, DevOps=13869650731320, Community=13869650731320
-// [INFO] Period 1 Staker/DevOps ratio: 1.33
-// [EXPECTED] Should be ~1.33 (40/30), got 1.33
+// [INFO] Period 1: Staker=18492867641761, DevOps=13869650731320, Community=13869650731320, Gov=0
+// [INFO] Period 1 total distributed: 46232169104401
+// [EXPECTED] Period 1 Staker should be 18492867641761, got 18492867641761
+// [EXPECTED] Period 1 DevOps should be 13869650731320, got 13869650731320
+// [EXPECTED] Period 1 Community should be 13869650731320, got 13869650731320
+// [EXPECTED] Period 1 Gov should be 0, got 0
+// [EXPECTED] Period 1 Staker/DevOps ratio should be ~1.33 (40/30), got 1.33
+// [EXPECTED] Period 1 sum should equal total: 46232169104401 == 46232169104401
 //
 // [SCENARIO] 6. Skip 15 days (Period 2)
 // [INFO] Period 2: 15 days elapsed
@@ -139,5 +199,11 @@ func testZeroRecipientScenario() {
 // [INFO] MintAndDistributeGns called
 //
 // [SCENARIO] 8. Verify Period 2 distributions (only Staker)
-// [INFO] Period 2: Staker=46232875440002, DevOps=0, Community=0
+// [INFO] Period 2: Staker=46232875440002, DevOps=0, Community=0, Gov=0
+// [INFO] Period 2 total distributed: 46232875440002
+// [EXPECTED] Period 2 Staker should be 46232875440002, got 46232875440002
+// [EXPECTED] Period 2 DevOps should be 0, got 0
+// [EXPECTED] Period 2 Community should be 0, got 0
+// [EXPECTED] Period 2 Gov should be 0, got 0
+// [EXPECTED] Period 2 sum should equal total: 46232875440002 == 46232875440002
 //

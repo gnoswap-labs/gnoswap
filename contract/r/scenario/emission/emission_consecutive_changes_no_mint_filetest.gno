@@ -100,19 +100,47 @@ func testConsecutiveChangesWithoutMinting() {
 	println("[SCENARIO] 8. Verify all emissions use FINAL ratio (80/20)")
 	stakerAfter := emission.GetDistributedToStaker()
 	devopsAfter := emission.GetDistributedToDevOps()
+	communityAfter := emission.GetDistributedToCommunityPool()
+	govAfter := emission.GetDistributedToGovStaker()
 
-	println(ufmt.Sprintf("[INFO] Distributed: Staker=%d, DevOps=%d", stakerAfter, devopsAfter))
+	println(ufmt.Sprintf("[INFO] Distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
+		stakerAfter, devopsAfter, communityAfter, govAfter))
 
+	// Verify all recipients have values
 	uassert.True(t, stakerAfter > 0)
 	uassert.True(t, devopsAfter > 0)
+	uassert.Equal(t, int64(0), communityAfter)
+	uassert.Equal(t, int64(0), govAfter)
 
+	// Calculate total distributed
+	totalDistributed := stakerAfter + devopsAfter + communityAfter + govAfter
+	println(ufmt.Sprintf("[INFO] Total distributed: %d", totalDistributed))
+
+	// Verify exact amounts using pre-calculated expected values
+	// Expected values from output: Staker=73972035635522, DevOps=18493008908880
+	expectedStaker := int64(73972035635522)
+	expectedDevops := int64(18493008908880)
+	expectedTotal := expectedStaker + expectedDevops
+
+	println(ufmt.Sprintf("[EXPECTED] Staker should be %d, got %d", expectedStaker, stakerAfter))
+	println(ufmt.Sprintf("[EXPECTED] DevOps should be %d, got %d", expectedDevops, devopsAfter))
+	println(ufmt.Sprintf("[EXPECTED] Total should be %d, got %d", expectedTotal, totalDistributed))
+
+	uassert.Equal(t, expectedStaker, stakerAfter)
+	uassert.Equal(t, expectedDevops, devopsAfter)
+	uassert.Equal(t, expectedTotal, totalDistributed)
+
+	// Verify distribution ratio as additional check
 	ratio := float64(stakerAfter) / float64(devopsAfter)
-	expectedRatio := 8000.0 / 2000.0 // 4.0
+	expectedRatio := 4.0 // 80/20
 
-	println(ufmt.Sprintf("[INFO] Distribution ratio: %.2f", ratio))
-	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~4.0 (80/20), got %.2f", ratio))
+	println(ufmt.Sprintf("[EXPECTED] Ratio should be ~%.2f (80/20), got %.2f", expectedRatio, ratio))
+	uassert.True(t, ratio > expectedRatio*0.99 && ratio < expectedRatio*1.01)
 
-	uassert.True(t, ratio > expectedRatio*0.9 && ratio < expectedRatio*1.1)
+	// Verify sum equals total
+	sum := stakerAfter + devopsAfter
+	println(ufmt.Sprintf("[EXPECTED] Sum of distributions should equal total: %d == %d", sum, totalDistributed))
+	uassert.Equal(t, totalDistributed, sum)
 	println()
 }
 
@@ -139,7 +167,11 @@ func testConsecutiveChangesWithoutMinting() {
 // [INFO] MintAndDistributeGns called
 //
 // [SCENARIO] 8. Verify all emissions use FINAL ratio (80/20)
-// [INFO] Distributed: Staker=73972035635522, DevOps=18493008908880
-// [INFO] Distribution ratio: 4.00
-// [EXPECTED] Ratio should be ~4.0 (80/20), got 4.00
+// [INFO] Distributed: Staker=73972035635522, DevOps=18493008908880, Community=0, Gov=0
+// [INFO] Total distributed: 92465044544402
+// [EXPECTED] Staker should be 73972035635522, got 73972035635522
+// [EXPECTED] DevOps should be 18493008908880, got 18493008908880
+// [EXPECTED] Total should be 92465044544402, got 92465044544402
+// [EXPECTED] Ratio should be ~4.00 (80/20), got 4.00
+// [EXPECTED] Sum of distributions should equal total: 92465044544402 == 92465044544402
 //
