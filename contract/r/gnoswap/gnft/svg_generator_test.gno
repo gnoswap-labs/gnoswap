@@ -734,3 +734,141 @@ func extractIntValue(t *testing.T, text, prefix string) int {
 
 	return result
 }
+
+// TestSvgGenerator_isImageParams tests the isImageParams function
+// which validates the expected parameter format.
+func TestSvgGenerator_isImageParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		// Valid cases
+		{
+			name:     "valid params - standard format",
+			input:    "10,12,125,123,#FF0000,#00FF00",
+			expected: true,
+		},
+		{
+			name:     "valid params - boundary min values",
+			input:    "7,7,121,121,#000000,#FFFFFF",
+			expected: true,
+		},
+		{
+			name:     "valid params - boundary max values",
+			input:    "13,13,126,126,#ABCDEF,#123456",
+			expected: true,
+		},
+		{
+			name:     "valid params - lowercase hex colors",
+			input:    "10,10,125,125,#aabbcc,#ddeeff",
+			expected: true,
+		},
+		{
+			name:     "valid params - mixed case hex colors",
+			input:    "10,10,125,125,#AaBbCc,#DdEeFf",
+			expected: true,
+		},
+		// Invalid cases - wrong comma count
+		{
+			name:     "invalid - no commas (plain URI)",
+			input:    "https://example.com/token/1",
+			expected: false,
+		},
+		{
+			name:     "invalid - too few commas (4 commas)",
+			input:    "10,12,125,123,#FF0000",
+			expected: false,
+		},
+		{
+			name:     "invalid - too many commas (6 commas)",
+			input:    "10,12,125,123,#FF0000,#00FF00,extra",
+			expected: false,
+		},
+		// Invalid cases - non-numeric coordinates
+		{
+			name:     "invalid - first param not numeric",
+			input:    "abc,12,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - second param not numeric",
+			input:    "10,xyz,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - third param not numeric",
+			input:    "10,12,foo,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - fourth param not numeric",
+			input:    "10,12,125,bar,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - empty first param",
+			input:    ",12,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		// Invalid cases - invalid color format
+		{
+			name:     "invalid - color1 missing hash",
+			input:    "10,12,125,123,FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - color2 missing hash",
+			input:    "10,12,125,123,#FF0000,00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - color1 too short",
+			input:    "10,12,125,123,#FF00,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - color2 too long",
+			input:    "10,12,125,123,#FF0000,#00FF00FF",
+			expected: false,
+		},
+		{
+			name:     "invalid - color with invalid hex chars",
+			input:    "10,12,125,123,#GGGGGG,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - empty color",
+			input:    "10,12,125,123,,#00FF00",
+			expected: false,
+		},
+		// Edge cases
+		{
+			name:     "invalid - empty string",
+			input:    "",
+			expected: false,
+		},
+		{
+			name:     "invalid - only commas",
+			input:    ",,,,,",
+			expected: false,
+		},
+		{
+			name:     "invalid - spaces in params",
+			input:    "10, 12, 125, 123, #FF0000, #00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - negative numbers",
+			input:    "-10,12,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := isImageParams(tc.input)
+			uassert.Equal(t, tc.expected, result)
+		})
+	}
+}
