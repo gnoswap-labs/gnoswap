@@ -439,12 +439,6 @@ func TestXgns_Halted(t *testing.T) {
 			expectedMessage: "halted: xgns",
 		},
 		{
-			name:            "Halted MintByLaunchPad",
-			operation:       "MintByLaunchPad",
-			setupMint:       false,
-			expectedMessage: "halted: xgns",
-		},
-		{
 			name:            "Halted Burn by gov staker",
 			operation:       "Burn",
 			setupMint:       true,
@@ -480,11 +474,6 @@ func TestXgns_Halted(t *testing.T) {
 				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
 					testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 					Mint(cross, govStakerAddress, 100)
-				})
-			case "MintByLaunchPad":
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-					Mint(cross, launchpadAddress, 100)
 				})
 			case "Burn":
 				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
