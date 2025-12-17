@@ -8,6 +8,8 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/halt"
 )
 
 var alice = testutils.TestAddress("alice")
@@ -272,6 +274,26 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				// Should have some leftover due to rounding
 				finalLeft := GetLeftGNSAmount()
 				uassert.True(t, finalLeft >= initialLeft)
+			},
+		},
+		{
+			name: "success - no distribution when halted (halt check in emission layer)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// Set halt to emergency level
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			verify: func(t *testing.T) {
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+				uassert.False(t, ok)
+				// Reset halt for other tests
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 		},
 	}
