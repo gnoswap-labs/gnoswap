@@ -132,7 +132,8 @@ func testRapidChangeAndRevert() {
 		println(ufmt.Sprintf("[INFO] Period 2 ratio: %.2f", ratio2))
 		println(ufmt.Sprintf("[EXPECTED] Should be ~1.0 (50/50), got %.2f", ratio2))
 
-		uassert.True(t, ratio2 > 0.9 && ratio2 < 1.1)	}
+		uassert.True(t, ratio2 > 0.9 && ratio2 < 1.1)
+	}
 
 	println()
 	println("[SCENARIO] 11. Verify overall distribution")
@@ -141,7 +142,8 @@ func testRapidChangeAndRevert() {
 	println(ufmt.Sprintf("[EXPECTED] Should be ~1.0 (50/50), got %.2f", overallRatio))
 
 	uassert.True(t, overallRatio > 0.9 && overallRatio < 1.1)
-	println()}
+	println()
+}
 
 // Output:
 // [SCENARIO] 1. Set distribution start time

@@ -111,7 +111,8 @@ func testZeroRecipientScenario() {
 	uassert.True(t, period2Staker > 0)
 	uassert.Equal(t, int64(0), period2Devops)
 	uassert.Equal(t, int64(0), period2Community)
-	println()}
+	println()
+}
 
 // Output:
 // [SCENARIO] 1. Set distribution start time
