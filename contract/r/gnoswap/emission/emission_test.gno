@@ -47,7 +47,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 			timestamp:   -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution start timestamp cannot be negative",
+			panicMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name: "update existing distribution start time",
@@ -344,10 +344,11 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 			errMsg:    "distribution start timestamp must be greater than current timestamp",
 		},
 		{
-			name:      "success - zero timestamp is valid (resets to default)",
+			name:      "panic - zero timestamp must be positive",
 			timestamp: 0,
 			caller:    adminAddr,
-			wantErr:   false,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name:      "panic - max int64 timestamp",
@@ -368,6 +369,34 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 			caller:    adminAddr,
 			wantErr:   true,
 			errMsg:    "distribution end timestamp must be before max int64 timestamp",
+		},
+		{
+			name: "panic - set to past time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix() - 100, // past time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
+		},
+		{
+			name: "panic - set to current time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix(), // current time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
 		},
 	}
 
