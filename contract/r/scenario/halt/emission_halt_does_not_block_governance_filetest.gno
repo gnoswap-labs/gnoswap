@@ -157,8 +157,12 @@ func setEmissionHalt() {
 }
 
 func createProposalWithEmissionHalted() {
-	// Build a no-op reconfigure execution to test executable proposals during emission halt
+	// Build a reconfigure execution with modified values to test parameter changes during emission halt
 	config := governance.GetLatestConfig()
+
+	// Modify ExecutionWindow to verify the parameter change actually takes effect
+	newExecutionWindow := config.ExecutionWindow + 100
+
 	executions := ufmt.Sprintf(
 		"gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*%d,%d,%d,%d,%d,%d,%d",
 		config.VotingStartDelay,
@@ -167,8 +171,11 @@ func createProposalWithEmissionHalted() {
 		config.Quorum,
 		config.ProposalCreationThreshold,
 		config.ExecutionDelay,
-		config.ExecutionWindow,
+		newExecutionWindow,
 	)
+
+	ufmt.Printf("[INFO] Current ExecutionWindow: %d\n", config.ExecutionWindow)
+	ufmt.Printf("[INFO] New ExecutionWindow (after Execute): %d\n", newExecutionWindow)
 
 	// Create another proposal while emission is halted
 	testing.SetRealm(aliceRealm)
@@ -218,13 +225,25 @@ func executeProposalWithEmissionHalted() {
 
 	ufmt.Println("[INFO] Executing proposal with emission HALTED...")
 
+	// Log config BEFORE Execute
+	configBefore := governance.GetLatestConfig()
+	ufmt.Printf("[INFO] Config BEFORE Execute - ExecutionWindow: %d\n", configBefore.ExecutionWindow)
+
 	testing.SetRealm(adminRealm)
 	// Execute should work even with emission halted
 	governance.Execute(cross, proposalId)
 
-	// Check proposal status
-	proposalInfo := governance.GetProposalById(proposalId)
-	ufmt.Printf("[INFO] Proposal info: %s\n", proposalInfo)
+	// Log config AFTER Execute
+	configAfter := governance.GetLatestConfig()
+	ufmt.Printf("[INFO] Config AFTER Execute - ExecutionWindow: %d\n", configAfter.ExecutionWindow)
+
+	// Verify the parameter change took effect
+	if configAfter.ExecutionWindow != configBefore.ExecutionWindow {
+		ufmt.Printf("[SUCCESS] ExecutionWindow changed from %d to %d\n", configBefore.ExecutionWindow, configAfter.ExecutionWindow)
+	} else {
+		println("[WARNING] ExecutionWindow did not change")
+	}
+
 	println("[SUCCESS] Governance execution not blocked by emission halt")
 }
 
@@ -275,6 +294,8 @@ func resetProposalVotesWithEmissionHalted() {
 // [EXPECTED] Governance halted: false (should be false)
 //
 // [SCENARIO] 5. Create new proposal with emission halted
+// [INFO] Current ExecutionWindow: 2592000
+// [INFO] New ExecutionWindow (after Execute): 2592100
 // [INFO] Creating executable proposal with emission HALTED...
 // [EXPECTED] Proposal created successfully despite emission halt! ID: 2
 // [SUCCESS] Governance proposal creation not blocked by emission halt
@@ -288,7 +309,9 @@ func resetProposalVotesWithEmissionHalted() {
 //
 // [SCENARIO] 7. Execute proposal with emission halted
 // [INFO] Executing proposal with emission HALTED...
-// [INFO] Proposal info: {"height":"734523","now":"1238239890","proposals":[{"id":"2","configVersion":"1","proposer":"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh","status":"eyJzdGF0dXMiOiJleGVjdXRlZCIsImNyZWF0ZVRpbWUiOiIxMjM2NTExODkwIiwiYWN0aXZlVGltZSI6IjEyMzY1OTgyOTAiLCJ2b3RpbmdFbmRUaW1lIjoiMTIzNzIwMzA5MCIsImV4ZWN1dGFibGVUaW1lIjoiMTIzNzI4OTQ5MCIsImV4cGlyZWRUaW1lIjoiMTIzOTg4MTQ5MCIsImV4ZWN1dGVkIjoidHJ1ZSIsImV4ZWN1dGVkQXQiOiIxMjM4MjM5ODkwIiwiZXhlY3V0ZWRCeSI6Imcxamc4bXR1dHU5a2hoZndjNG54bXVoY3BmdGYwcGFqZGhmdnNxZjUifQ==","type":"ParameterChange","title":"Reconfigure while Emission Halted","description":"Execute governance reconfigure to prove execution works while emission is halted","vote":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNTAwMDAwMDAwIiwibm8iOiI1MDAwMDAwMDAifQ==","extra":"Z25vLmxhbmQvci9nbm9zd2FwL2dvdi9nb3Zlcm5hbmNlKkVYRSpSZWNvbmZpZ3VyZSpFWEUqODY0MDAsNjA0ODAwLDg2NDAwLDUwLDEwMDAwMDAwMDAsODY0MDAsMjU5MjAwMA=="}]}
+// [INFO] Config BEFORE Execute - ExecutionWindow: 2592000
+// [INFO] Config AFTER Execute - ExecutionWindow: 2592100
+// [SUCCESS] ExecutionWindow changed from 2592000 to 2592100
 // [SUCCESS] Governance execution not blocked by emission halt
 //
 // [SCENARIO] 8. Test vote integrity with emission halted
