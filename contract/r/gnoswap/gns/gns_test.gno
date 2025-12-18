@@ -423,36 +423,40 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 func TestMintGns(t *testing.T) {
 	tests := []struct {
-		name                 string
-		inputRealm           runtime.Realm
-		inputSkipHeight      int64
-		expectedMintedAmount int64
-		expectedHasAbort     bool
-		expectedAbortMessage string
+		name                  string
+		inputRealm            runtime.Realm
+		inputSkipHeight       int64
+		expectedMintedAmount1 int64
+		expectedMintedAmount2 int64
+		expectedHasAbort      bool
+		expectedAbortMessage  string
 	}{
 		{
-			name:                 "mint gns is success by emission realm",
-			inputRealm:           emissionRealm,
-			inputSkipHeight:      1,
-			expectedMintedAmount: 35673515, // 5 seconds worth of emission (7134 * 5)
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
+			name:                  "mint gns is success by emission realm",
+			inputRealm:            emissionRealm,
+			inputSkipHeight:       1,
+			expectedMintedAmount1: 7134703,  // 1 second worth of emission (includes +1 in calculation)
+			expectedMintedAmount2: 35673515, // 5 seconds worth of emission (7134703 * 5)
+			expectedHasAbort:      false,
+			expectedAbortMessage:  "",
 		},
 		{
-			name:                 "mint gns is failed by caller is not emission realm",
-			inputRealm:           testing.NewUserRealm(testutils.TestAddress("user")),
-			inputSkipHeight:      1,
-			expectedMintedAmount: 0,
-			expectedHasAbort:     true,
-			expectedAbortMessage: "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not emission",
+			name:                  "mint gns is failed by caller is not emission realm",
+			inputRealm:            testing.NewUserRealm(testutils.TestAddress("user")),
+			inputSkipHeight:       1,
+			expectedMintedAmount1: 0,
+			expectedMintedAmount2: 0,
+			expectedHasAbort:      true,
+			expectedAbortMessage:  "unauthorized: caller g1w4ek2ujlta047h6lta047h6lta047h6lkvk347 is not emission",
 		},
 		{
-			name:                 "mint gns is failed by not allowed to mint same timestamp",
-			inputRealm:           emissionRealm,
-			inputSkipHeight:      0,
-			expectedMintedAmount: 0,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
+			name:                  "mint gns is failed by not allowed to mint same timestamp",
+			inputRealm:            emissionRealm,
+			inputSkipHeight:       0,
+			expectedMintedAmount1: 7134703, // 1 second worth of emission (includes +1 in calculation)
+			expectedMintedAmount2: 0,       // same timestamp, returns 0
+			expectedHasAbort:      false,
+			expectedAbortMessage:  "",
 		},
 	}
 
@@ -479,13 +483,9 @@ func TestMintGns(t *testing.T) {
 
 			// Validate individual minted amounts
 			if !tt.expectedHasAbort {
-				uassert.Equal(t, int64(0), firstMintedAmount, "first mint should return 0 (same timestamp as initialization)")
-				uassert.Equal(t, tt.expectedMintedAmount, secondMintedAmount, "second mint should return the expected amount")
+				uassert.Equal(t, tt.expectedMintedAmount1, firstMintedAmount, "first mint should return the expected amount")
+				uassert.Equal(t, tt.expectedMintedAmount2, secondMintedAmount, "second mint should return the expected amount")
 			}
-
-			// Validate total minted amount
-			mintedAmount := firstMintedAmount + secondMintedAmount
-			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
 		})
 	}
 }
