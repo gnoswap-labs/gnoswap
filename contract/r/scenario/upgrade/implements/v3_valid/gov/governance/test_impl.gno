@@ -6,15 +6,15 @@ import (
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
 
-func NewV3ValidGovernance(store governance.IGovernanceStore) governance.IGovernance {
+func NewV3ValidGovernance(store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
 	return &TestGovernance{
-		instance: v1.NewGovernanceV1(store),
+		instance: v1.NewGovernanceV1(store, stakerAccessor),
 	}
 }
 
 func init() {
-	governance.RegisterInitializer(cross, func(store governance.IGovernanceStore) governance.IGovernance {
-		return NewV3ValidGovernance(store)
+	governance.RegisterInitializer(cross, func(store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+		return NewV3ValidGovernance(store, stakerAccessor)
 	})
 }
 
