@@ -9,6 +9,10 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
@@ -27,13 +31,13 @@ import (
 const ZERO_ADDRESS = address("")
 
 var (
-	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
-	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
-	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
-	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
-	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
-	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
+	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	positionAddr      = access.MustGetAddress(prbac.ROLE_POSITION.String())
 )
 
 // Deposits manages all staked positions.

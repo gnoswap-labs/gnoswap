@@ -7,12 +7,8 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	i256 "gno.land/p/gnoswap/int256"
-	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/rbac"
 )
 
 // poolPathDivide splits a pool path into token addresses and fee tier.
@@ -111,16 +107,6 @@ func formatAnyInt(v any) string {
 // formatBool formats a boolean to string.
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
-}
-
-// getRoleAddress retrieves the address for a system role.
-func getRoleAddress(role prbac.SystemRole) address {
-	addr, exists := access.GetAddress(role.String())
-	if !exists {
-		return rbac.DefaultRoleAddresses[role]
-	}
-
-	return addr
 }
 
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
