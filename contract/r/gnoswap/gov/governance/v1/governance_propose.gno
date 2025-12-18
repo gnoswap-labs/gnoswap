@@ -5,12 +5,9 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -143,17 +140,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	if tokenPath == "" {
-		panic(makeErrorWithDetails(
-			errInvalidInput, "tokenPath is empty"))
-	}
-
-	if err := common.IsRegistered(tokenPath); err != nil {
-		panic(makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("token(%s) is not registered", tokenPath),
-		))
-	}
+	assertIsValidToken(tokenPath)
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
