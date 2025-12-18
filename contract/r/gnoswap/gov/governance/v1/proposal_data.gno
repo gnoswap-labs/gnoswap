@@ -139,17 +139,13 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("to is invalid address"),
-		)
+			errInvalidInput, "to is invalid address")
 	}
 
 	// Validate amount is greater than 0
 	if communityPoolSpend.Amount() <= 0 {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("amount is not positive"),
-		)
+			errInvalidInput, "amount is not positive")
 	}
 
 	return nil
