@@ -104,13 +104,6 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 		},
 		{
-			name:                 "Failure - CommunityPoolSpend with empty tokenPath",
-			proposalType:         governance.CommunityPoolSpend,
-			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "", 1000),
-			expectedError:        true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
-		},
-		{
 			name:                 "Failure - CommunityPoolSpend with zero amount",
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, 0),

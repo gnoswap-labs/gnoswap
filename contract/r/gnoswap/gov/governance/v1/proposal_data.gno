@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -142,22 +141,6 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("to is invalid address"),
-		)
-	}
-
-	// Validate token path is provided
-	tokenPath := communityPoolSpend.TokenPath()
-	if tokenPath == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("tokenPath is empty"),
-		)
-	}
-
-	if err := common.IsRegistered(tokenPath); err != nil {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("token(%s) is not registered", tokenPath),
 		)
 	}
 
