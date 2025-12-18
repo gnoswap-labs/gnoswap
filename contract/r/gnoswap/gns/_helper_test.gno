@@ -42,7 +42,6 @@ func resetEmissionState(t *testing.T) {
 	emissionState = NewEmissionState(blockHeight, startTimestamp)
 }
 
-
 // InitGnsTest initializes GNS state for testing by resetting emission amounts and state.
 // Matches init() function: lastMintedTimestamp starts at 0 (never minted).
 func InitGnsTest(t *testing.T) {
@@ -53,5 +52,5 @@ func InitGnsTest(t *testing.T) {
 	setLastMintedTimestamp(0)
 	burnAmount = 0
 
-	emissionState = NewEmissionState(runtime.ChainHeight(), time.Now().Unix())
+	emissionState = NewEmissionState(0, 0)
 }

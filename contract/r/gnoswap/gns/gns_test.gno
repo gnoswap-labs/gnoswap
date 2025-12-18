@@ -424,6 +424,7 @@ func TestCalculateAmountToMint(t *testing.T) {
 
 func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
 	InitGnsTest(t)
+	resetEmissionState(t)
 
 	// Verify lastMintedTimestamp is initialized to 0
 	uassert.Equal(t, int64(0), LastMintedTimestamp())
@@ -484,6 +485,7 @@ func TestMintGns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			InitGnsTest(t)
+			resetEmissionState(t)
 
 			var firstMintedAmount int64
 			var secondMintedAmount int64

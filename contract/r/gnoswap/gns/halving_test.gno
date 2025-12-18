@@ -39,6 +39,7 @@ var FIRST_TIMESTAMP_OF_HALVING_YEAR = []int64{
 func TestGetHalvingYear(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
+	resetEmissionState(t)
 
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
@@ -55,6 +56,7 @@ func TestGetHalvingYear(t *testing.T) {
 func TestHalvingYearStartTimestamp(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
+	resetEmissionState(t)
 
 	// Test that we can get the start timestamp for a valid year
 	startTimestamp := GetHalvingYearStartTimestamp(1)
@@ -132,6 +134,7 @@ func TestEmissionState(t *testing.T) {
 	*/
 	resetObject(t)
 	InitGnsTest(t)
+	resetEmissionState(t)
 
 	// Test emission state basic functions
 	uassert.True(t, IsEmissionInitialized())
