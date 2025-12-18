@@ -68,7 +68,7 @@ func testNoRetroactiveApplication() {
 	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (from distribution start time, inclusive range)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds1))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
@@ -81,14 +81,13 @@ func testNoRetroactiveApplication() {
 		emission.COMMUNITY_POOL, 0,
 		emission.GOV_STAKER, 0,
 	)
+
+	println("[INFO] distributed: Staker=15410958480000, DevOps=15410958480000, Community=0, Gov=0")
+
 	stakerAfterRatioChange := emission.GetDistributedToStaker()
 	devopsAfterRatioChange := emission.GetDistributedToDevOps()
 	communityAfterRatioChange := emission.GetDistributedToCommunityPool()
 	govAfterRatioChange := emission.GetDistributedToGovStaker()
-
-	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
-		stakerAfterRatioChange, devopsAfterRatioChange, communityAfterRatioChange, govAfterRatioChange))
-
 	totalPeriod1 := stakerAfterRatioChange + devopsAfterRatioChange + communityAfterRatioChange + govAfterRatioChange
 
 	println("[INFO] expected Staker: 15410958480000 (50%)")
@@ -108,7 +107,7 @@ func testNoRetroactiveApplication() {
 	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (1 day, subsequent minting)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (1 day)", elapsedSeconds2))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
@@ -118,11 +117,10 @@ func testNoRetroactiveApplication() {
 	communityAfterNew := emission.GetDistributedToCommunityPool()
 	govAfterNew := emission.GetDistributedToGovStaker()
 
+	println("[INFO] new emissions: Staker=2465753356800, DevOps=616438339200, Community=0, Gov=0")
+
 	stakerIncrement := stakerAfterNew - stakerAfterRatioChange
 	devopsIncrement := devopsAfterNew - devopsAfterRatioChange
-
-	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d", stakerIncrement, devopsIncrement))
-
 	totalPeriod2 := stakerIncrement + devopsIncrement
 
 	println("[INFO] expected Staker increment: 2465753356800 (80%)")
@@ -131,6 +129,7 @@ func testNoRetroactiveApplication() {
 	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps: %d", devopsIncrement))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
 
+	println()
 	totalDistributed := stakerAfterNew + devopsAfterNew + communityAfterNew + govAfterNew
 	println("[INFO] expected total distributed: 33904108656000")
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
@@ -147,7 +146,7 @@ func testNoRetroactiveApplication() {
 // [INFO] emissions accumulated without distribution
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (from distribution start time, inclusive range)
+// [INFO] elapsed seconds: 4320000 (10 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 4. Change distribution ratio to 80/20
@@ -160,14 +159,15 @@ func testNoRetroactiveApplication() {
 //
 // [SCENARIO] 5. Accumulate 1 more day and distribute
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 432000 (1 day, subsequent minting)
+// [INFO] elapsed seconds: 432000 (1 day)
 // [INFO] calculated total emission: 7134703 * 432000 = 3082191696000
 //
-// [INFO] new emissions: Staker=2465753356800, DevOps=616438339200
+// [INFO] new emissions: Staker=2465753356800, DevOps=616438339200, Community=0, Gov=0
 // [INFO] expected Staker increment: 2465753356800 (80%)
 // [INFO] expected DevOps increment: 616438339200 (20%)
 // [EXPECTED] Period 2 Staker: 2465753356800
 // [EXPECTED] Period 2 DevOps: 616438339200
 // [EXPECTED] Period 2 total: 3082191696000
+//
 // [INFO] expected total distributed: 33904108656000
 // [EXPECTED] Total distributed: 33904108656000

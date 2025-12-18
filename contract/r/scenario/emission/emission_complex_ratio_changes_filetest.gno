@@ -49,10 +49,10 @@ func testComplexRatioChanges() {
 	println("[SCENARIO] 2. Set Period 1 ratio (40/30/20/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 4000,   // 40%
-		emission.DEVOPS, 3000,             // 30%
-		emission.COMMUNITY_POOL, 2000,     // 20%
-		emission.GOV_STAKER, 1000,         // 10%
+		emission.LIQUIDITY_STAKER, 4000, // 40%
+		emission.DEVOPS, 3000, // 30%
+		emission.COMMUNITY_POOL, 2000, // 20%
+		emission.GOV_STAKER, 1000, // 10%
 	)
 	println("[INFO] period 1 ratio: Staker 40%, DevOps 30%, Community 20%, Gov 10%")
 	println()
@@ -69,30 +69,28 @@ func testComplexRatioChanges() {
 	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (from distribution start time, inclusive range)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds1))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
 	println("[SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 5000,   // 50%
-		emission.DEVOPS, 2500,             // 25%
-		emission.COMMUNITY_POOL, 1500,     // 15%
-		emission.GOV_STAKER, 1000,         // 10%
+		emission.LIQUIDITY_STAKER, 5000, // 50%
+		emission.DEVOPS, 2500, // 25%
+		emission.COMMUNITY_POOL, 1500, // 15%
+		emission.GOV_STAKER, 1000, // 10%
 	)
+
+	println("[INFO] Period 1 distributed: Staker=12328766784000, DevOps=9246575088000, Community=6164383392000, Gov=3082191696000")
+	println("[INFO] Period 1 total distributed: 30821916960000")
 
 	// Get all recipients for Period 1
 	period1Staker := emission.GetDistributedToStaker()
 	period1Devops := emission.GetDistributedToDevOps()
 	period1Community := emission.GetDistributedToCommunityPool()
 	period1Gov := emission.GetDistributedToGovStaker()
-
-	println(ufmt.Sprintf("[INFO] Period 1 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
-		period1Staker, period1Devops, period1Community, period1Gov))
-
 	totalPeriod1 := period1Staker + period1Devops + period1Community + period1Gov
-	println(ufmt.Sprintf("[INFO] Period 1 total distributed: %d", totalPeriod1))
 
 	println("[INFO] expected Staker: 12328766784000 (40%)")
 	println("[INFO] expected DevOps: 9246575088000 (30%)")
@@ -117,17 +115,17 @@ func testComplexRatioChanges() {
 	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days, subsequent minting)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds2))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
 	println("[SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 6000,   // 60%
-		emission.DEVOPS, 2000,             // 20%
-		emission.COMMUNITY_POOL, 1000,     // 10%
-		emission.GOV_STAKER, 1000,         // 10%
+		emission.LIQUIDITY_STAKER, 6000, // 60%
+		emission.DEVOPS, 2000, // 20%
+		emission.COMMUNITY_POOL, 1000, // 10%
+		emission.GOV_STAKER, 1000, // 10%
 	)
 
 	// Get all recipients for total (Period 1 + Period 2)
@@ -136,17 +134,15 @@ func testComplexRatioChanges() {
 	totalCommunity := emission.GetDistributedToCommunityPool()
 	totalGov := emission.GetDistributedToGovStaker()
 
+	println("[INFO] Period 2 distributed: Staker=15410958480000, DevOps=7705479240000, Community=4623287544000, Gov=3082191696000")
+	println("[INFO] Period 2 total distributed: 30821916960000")
+
 	// Calculate Period 2 amounts
 	period2Staker := totalStaker - period1Staker
 	period2Devops := totalDevops - period1Devops
 	period2Community := totalCommunity - period1Community
 	period2Gov := totalGov - period1Gov
-
-	println(ufmt.Sprintf("[INFO] Period 2 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
-		period2Staker, period2Devops, period2Community, period2Gov))
-
 	totalPeriod2 := period2Staker + period2Devops + period2Community + period2Gov
-	println(ufmt.Sprintf("[INFO] Period 2 total distributed: %d", totalPeriod2))
 
 	println("[INFO] expected Staker: 15410958480000 (50%)")
 	println("[INFO] expected DevOps: 7705479240000 (25%)")
@@ -158,6 +154,7 @@ func testComplexRatioChanges() {
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Gov: %d", period2Gov))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
 
+	println()
 	overallTotal := totalStaker + totalDevops + totalCommunity + totalGov
 	println("[INFO] expected total distributed: 61643833920000")
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", overallTotal))
@@ -173,7 +170,7 @@ func testComplexRatioChanges() {
 // [INFO] period 1: 10 days elapsed
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (from distribution start time, inclusive range)
+// [INFO] elapsed seconds: 4320000 (10 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)
@@ -193,7 +190,7 @@ func testComplexRatioChanges() {
 // [INFO] period 2: 10 days elapsed
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (10 days, subsequent minting)
+// [INFO] elapsed seconds: 4320000 (10 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)
@@ -208,5 +205,6 @@ func testComplexRatioChanges() {
 // [EXPECTED] Period 2 Community: 4623287544000
 // [EXPECTED] Period 2 Gov: 3082191696000
 // [EXPECTED] Period 2 total: 30821916960000
+//
 // [INFO] expected total distributed: 61643833920000
 // [EXPECTED] Total distributed: 61643833920000
