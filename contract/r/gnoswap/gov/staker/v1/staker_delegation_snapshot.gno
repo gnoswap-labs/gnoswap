@@ -3,8 +3,8 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"math"
 
-	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/halt"
@@ -81,36 +81,36 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 // Keeps the most recent entry before cutoff to preserve state continuity.
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
-	newHistory := staker.NewUintTree()
+
+	toTimestamp := cutoffTimestamp
+	if cutoffTimestamp < math.MaxInt64 {
+		toTimestamp += 1
+	}
 
 	// First, find the most recent entry before cutoff to preserve state
-	var lastBeforeCutoff int64
-	var lastValueBeforeCutoff any
+	var lastValue any
 
-	foundBeforeCutoff := false
+	hasLastValue := false
 
-	history.ReverseIterate(0, cutoffTimestamp, func(key int64, value any) bool {
-		lastBeforeCutoff = key
-		lastValueBeforeCutoff = value
-		foundBeforeCutoff = true
+	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
+		lastValue = value
+		hasLastValue = true
 
 		return true // stop after first (most recent)
 	})
 
 	// If there was a value before cutoff, set it at cutoff time to preserve continuity
-	if foundBeforeCutoff {
-		newHistory.Set(cutoffTimestamp, lastValueBeforeCutoff)
+	if hasLastValue {
+		history.Set(cutoffTimestamp, lastValue)
 	}
 
-	// Copy all entries at or after cutoff time
-	history.Iterate(cutoffTimestamp, int64(^uint64(0)>>1), func(key int64, value any) bool {
-		if key > lastBeforeCutoff { // Don't duplicate if we already added the cutoff entry
-			newHistory.Set(key, value)
-		}
+	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
+		history.Remove(timestamp)
+
 		return false // continue
 	})
 
-	if err := gs.store.SetTotalDelegationHistory(newHistory); err != nil {
+	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
 	}
 }
@@ -120,50 +120,49 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 // Keeps the most recent entry before cutoff for each user to preserve state continuity.
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetUserDelegationHistory()
-	newHistory := avl.NewTree()
 
 	// Iterate over all users and clean each user's history
 	history.Iterate("", "", func(addrStr string, value any) bool {
 		userHistory := value.(*staker.UintTree)
-		newUserHistory := staker.NewUintTree()
+
+		toTimestamp := cutoffTimestamp
+		if cutoffTimestamp < math.MaxInt64 {
+			toTimestamp += 1
+		}
 
 		// Find the most recent entry before cutoff to preserve state
-		var lastBeforeCutoff int64
-		var lastValueBeforeCutoff any
+		var lastValue any
 
-		foundBeforeCutoff := false
+		hasLastValue := false
 
-		userHistory.ReverseIterate(0, cutoffTimestamp, func(key int64, val any) bool {
-			lastBeforeCutoff = key
-			lastValueBeforeCutoff = val
-			foundBeforeCutoff = true
+		userHistory.ReverseIterate(0, toTimestamp, func(_ int64, val any) bool {
+			lastValue = val
+			hasLastValue = true
 
 			return true // stop after first (most recent)
 		})
 
 		// If there was a value before cutoff, set it at cutoff time to preserve continuity
-		if foundBeforeCutoff {
-			newUserHistory.Set(cutoffTimestamp, lastValueBeforeCutoff)
+		if hasLastValue {
+			userHistory.Set(cutoffTimestamp, lastValue)
 		}
 
 		// Copy all entries at or after cutoff time
-		userHistory.Iterate(cutoffTimestamp, int64(^uint64(0)>>1), func(key int64, val any) bool {
-			if key > lastBeforeCutoff { // Don't duplicate if we already added the cutoff entry
-				newUserHistory.Set(key, val)
-			}
+		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
+			userHistory.Remove(key)
 
 			return false // continue
 		})
 
 		// Only keep users with history entries
-		if newUserHistory.Size() > 0 {
-			newHistory.Set(addrStr, newUserHistory)
+		if userHistory.Size() > 0 {
+			history.Set(addrStr, userHistory)
 		}
 
 		return false // continue to next user
 	})
 
-	if err := gs.store.SetUserDelegationHistory(newHistory); err != nil {
+	if err := gs.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)
 	}
 }
