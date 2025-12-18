@@ -215,6 +215,9 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 }
 
 func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
+	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	invalidTokenPath := "gno.land/r/not/registered"
+
 	tests := []struct {
 		name string
 		// given
@@ -239,7 +242,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -265,7 +268,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            address("invalid"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -291,7 +294,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        0,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -338,6 +341,32 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
 		},
+		{
+			name:          "fail - token path is not registered in grc20 registry",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     invalidTokenPath,
+			amount:        5_000_000_000,
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "token(gno.land/r/not/registered) is not registered",
+		},
 	}
 
 	for _, tt := range tests {
@@ -357,7 +386,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 					}(cross)
@@ -999,6 +1028,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 
 // Test comprehensive community pool spend validation
 func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
+	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	invalidTokenPath := "gno.land/r/not/registered"
+
 	tests := []struct {
 		name          string
 		to            address
@@ -1010,14 +1042,14 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:       "success - valid parameters",
 			to:         testutils.TestAddress("recipient"),
-			tokenPath:  "gno.land/r/demo/gns",
+			tokenPath:  gnsPath,
 			amount:     1_000_000_000,
 			shouldFail: false,
 		},
 		{
 			name:          "fail - empty recipient address",
 			to:            address(""),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 			shouldFail:    true,
@@ -1025,7 +1057,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:          "fail - invalid recipient address format",
 			to:            address("invalid_address_format"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 			shouldFail:    true,
@@ -1033,7 +1065,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:          "fail - zero amount",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        0,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 			shouldFail:    true,
@@ -1041,7 +1073,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:       "success - max int64 amount",
 			to:         testutils.TestAddress("recipient"),
-			tokenPath:  "gno.land/r/demo/gns",
+			tokenPath:  gnsPath,
 			amount:     9223372036854775807, // MAX_INT64
 			shouldFail: false,
 		},
@@ -1051,6 +1083,14 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			tokenPath:     "",
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - token path is not registered in grc20 registry",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     invalidTokenPath,
+			amount:        1_000_000_000,
+			expectedError: "token(gno.land/r/not/registered) is not registered",
 			shouldFail:    true,
 		},
 	}
@@ -1080,7 +1120,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+				uassert.AbortsContains(t, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)

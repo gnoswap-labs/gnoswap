@@ -56,18 +56,25 @@ func main() {
 	createOBLProject()
 	projectId := "gno.land/r/onbloc/obl:123"
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println("[INFO] Project tier 30 Total Distribute Amount: 100,000,000")
+	println("[INFO] Project tier 30 Distribute Amount Per Second: 38.5802469136")
 	println()
 
 	println("[SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1")
 	depositGnsTo(aliceAddr, projectId, projectTier30Id, int64(1_000_000))
+	println("[INFO] Alice second distribute amount: 38.5802469136")
 	println()
 
 	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2")
+	println("[INFO] Alice second distribute amount: 19.2901234568")
+	println("[INFO] Bob second distribute amount: 19.2901234568")
 	depositGnsTo(bobAddr, projectId, projectTier30Id, int64(1_000_000))
 	println()
 
 	println("[SCENARIO] 4. Skip blocks after deposit")
 	testing.SkipHeights(1)
+	println("[INFO] Alice second distribute amount: 385.802469136 (38.5802469136 * 5 sec + 19.2901234568 * 10 sec)")
+	println("[INFO] Bob second distribute amount: 192.901234568 (19.2901234568 * 10 sec)")
 	println()
 
 	println("[SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward")
@@ -118,7 +125,7 @@ func createOBLProject() {
 	)
 
 	println("[INFO] Skipping 3600 blocks")
-	testing.SkipHeights(3600)
+	testing.SkipHeights(3600 / 5)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 
@@ -154,14 +161,11 @@ func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmo
 
 	println("[INFO] Admin transferring GNS to depositor for deposit")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, toAddress, depositAmount*2) // to deposit
+	gns.Transfer(cross, toAddress, depositAmount) // to deposit
 
-	// delegate gns to gov staker
-	println("[INFO] Depositor delegating GNS to gov staker")
+	// approve launchpad to spend GNS
+	println("[INFO] Depositor approving launchpad to spend GNS")
 	testing.SetRealm(testing.NewUserRealm(toAddress))
-	gns.Approve(cross, govStakerAddr, depositAmount)
-
-	println("[INFO] Skipping blocks to make project active")
 	gns.Approve(cross, launchpadAddr, depositAmount)
 	depositId := launchpad.DepositGns(
 		cross,
@@ -238,39 +242,44 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Tier 90 collect wait duration: 129600
 // [EXPECTED] Tier 180 amount: 100000000
 // [EXPECTED] Tier 180 collect wait duration: 129600
+// [INFO] Project tier 30 Total Distribute Amount: 100,000,000
+// [INFO] Project tier 30 Distribute Amount Per Second: 38.5802469136
 //
 // [SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1
 // [INFO] Depositing GNS to OBL project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
-// [INFO] Depositor delegating GNS to gov staker
-// [INFO] Skipping blocks to make project active
+// [INFO] Depositor approving launchpad to spend GNS
 // [EXPECTED] Deposit created with ID: 1
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
+// [INFO] Alice second distribute amount: 38.5802469136
 //
 // [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2
+// [INFO] Alice second distribute amount: 19.2901234568
+// [INFO] Bob second distribute amount: 19.2901234568
 // [INFO] Depositing GNS to OBL project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
-// [INFO] Depositor delegating GNS to gov staker
-// [INFO] Skipping blocks to make project active
+// [INFO] Depositor approving launchpad to spend GNS
 // [EXPECTED] Deposit created with ID: 2
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
 //
 // [SCENARIO] 4. Skip blocks after deposit
+// [INFO] Alice second distribute amount: 385.802469136 (38.5802469136 * 5 sec + 19.2901234568 * 10 sec)
+// [INFO] Bob second distribute amount: 192.901234568 (19.2901234568 * 10 sec)
 //
 // [SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward
 // [INFO] Collecting launchpad reward for Deposit ID: 1
-// [EXPECTED] Obl balance after collection: 555844
+// [EXPECTED] Obl balance after collection: 385
 //
 // [SCENARIO] 6. Collect launchpad reward for second Deposit
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 289
+// [EXPECTED] Obl balance after collection: 192
 //
 // [SCENARIO] 7. Skip blocks after reward collection
 // [INFO] Collecting launchpad reward for Deposit ID: 1
 // [EXPECTED] Obl balance after collection: 97
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 96
+// [EXPECTED] Obl balance after collection: 97
