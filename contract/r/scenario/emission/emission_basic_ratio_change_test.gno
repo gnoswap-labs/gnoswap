@@ -1,17 +1,17 @@
-// Emission retroactive distribution scenario test
-// Scenario: Change distribution ratio after emissions have accumulated
+// Emission basic ratio change scenario test
+// Scenario: Basic non-retroactive distribution when ratio changes
 //
 // Setup:
-// - Days 1-10: Ratios are 50% Liquidity Staker, 50% DevOps
-// - No minting occurs during this period -> emissions accumulate
-// - Day 11: Ratios change to 80% Liquidity Staker, 20% DevOps
+// - Period 1: Set 50/50 ratio and accumulate for 10 days
+// - Change ratio to 80/20 (automatically distributes Period 1 at 50/50)
+// - Period 2: Accumulate for 1 more day
 //
 // Expected Behavior:
-// - The accumulated 10-day emissions should be distributed with OLD ratios (50/50)
-// - Only new emissions after Day 11 use new ratios (80/20)
+// - Period 1 emissions (10 days) distributed at OLD ratio (50/50)
+// - Period 2 emissions (1 day) distributed at NEW ratio (80/20)
 //
-// This test verifies that changing distribution percentages does NOT retroactively
-// affect accumulated emissions from previous periods.
+// This is the fundamental test verifying that ratio changes do NOT
+// retroactively affect previously accumulated emissions.
 
 package main
 
