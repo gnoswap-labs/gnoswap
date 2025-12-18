@@ -266,11 +266,12 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 // makeExternalPositionsNode creates JSON nodes for external position data.
 func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
 	externalPositions := make([]*json.Node, 0)
+	currentTime := time.Now().Unix()
 
 	for _, externalPosition := range positions {
 		incentives := make([]*json.Node, 0)
 		for _, incentive := range externalPosition.Incentive {
-			stakedOrExternalDuration := runtime.ChainHeight() - max(incentive.StartHeight, externalPosition.StakedTime)
+			stakedOrExternalDuration := currentTime - max(incentive.StartTimestamp, externalPosition.StakedTime)
 
 			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
 				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
