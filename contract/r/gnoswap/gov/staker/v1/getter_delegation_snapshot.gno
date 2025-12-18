@@ -1,50 +1,97 @@
 package v1
 
 import (
+	"math"
+
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
+// HasDelegationSnapshotsKey returns true if delegation history exists.
 func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
-	return gs.store.HasDelegationSnapshotStoreKey()
+	return gs.store.HasTotalDelegationHistoryStoreKey()
 }
 
-// GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.
-// This function reconstructs historical delegation states by taking the current snapshot
-// and reversing the effects of delegation records that occurred after the specified time.
-//
-// The algorithm works by:
-// 1. Cloning the current delegation snapshot
-// 2. Getting all delegation records that occurred at or after the snapshot time
-// 3. Subtracting each record in reverse chronological order to restore the historical state
+// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a specific snapshot time.
+// Uses ReverseIterate to find the most recent entry at or before the snapshot time.
 //
 // Parameters:
 //   - snapshotTime: timestamp to retrieve the snapshot for
 //
 // Returns:
-//   - DelegationSnapshot: delegation state at the specified time
-//   - bool: true if snapshot was successfully calculated, false otherwise
-func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
-	// Get current delegation snapshots and create a working copy
-	delegationSnapshots := gs.getDelegationSnapshots()
-	resolver := NewDelegationSnapshotResolver(delegationSnapshots)
-	currentDelegationSnapshot := resolver.Clone()
-
-	// Get delegation history and filter for records after snapshot time
-	delegationHistory := gs.getDelegationHistory()
-	historyResolver := NewDelegationHistoryResolver(delegationHistory)
-	historyRecords := historyResolver.getRecordsBy(snapshotTime)
-
-	// Apply records in reverse order to reconstruct historical state
-	for i := len(historyRecords) - 1; i >= 0; i-- {
-		currentResolver := NewDelegationSnapshotResolver(currentDelegationSnapshot)
-		currentDelegationSnapshot = currentResolver.SubRecord(historyRecords[i])
+//   - int64: total delegation amount at the specified time
+//   - bool: true if snapshot was found, false otherwise
+func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	history := gs.store.GetTotalDelegationHistory()
+	if history.Size() == 0 {
+		return 0, false
 	}
 
-	// Convert internal DelegationSnapshot to staker.DelegationSnapshot
-	result := make(staker.DelegationSnapshot)
-	for delegatee, item := range currentDelegationSnapshot {
-		result[delegatee] = staker.NewDelegationSnapshotItem(item.DelegationAmount(), item.DelegatorAddress())
+	toTimestamp := snapshotTime
+	if snapshotTime < math.MaxInt64 {
+		toTimestamp += 1
 	}
 
-	return result, true
+	var totalAmount int64
+
+	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
+	history.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
+		amountInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid amount type: %T", value))
+		}
+
+		totalAmount = amountInt
+
+		return true // stop after first (most recent) entry
+	})
+
+	return totalAmount, true
+}
+
+// GetUserDelegationAmountAtSnapshot returns the delegation amount for a specific user at a specific snapshot time.
+// Structure: address -> *UintTree[timestamp -> int64]
+// Uses ReverseIterate to find the most recent entry at or before the snapshot time.
+//
+// Parameters:
+//   - userAddr: address of the user to get delegation amount for
+//   - snapshotTime: timestamp to retrieve the snapshot for
+//
+// Returns:
+//   - int64: user delegation amount at the specified time
+//   - bool: true if snapshot was found, false otherwise
+func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	history := gs.store.GetUserDelegationHistory()
+
+	// Get user's history tree
+	userHistoryRaw, exists := history.Get(userAddr.String())
+	if !exists {
+		return 0, false
+	}
+
+	userHistory := userHistoryRaw.(*staker.UintTree)
+	if userHistory.Size() == 0 {
+		return 0, false
+	}
+
+	toTimestamp := snapshotTime
+	if snapshotTime < math.MaxInt64 {
+		toTimestamp += 1
+	}
+
+	var userAmount int64
+
+	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
+	userHistory.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
+		amountInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid amount type: %T", value))
+		}
+
+		userAmount = amountInt
+
+		return true // stop after first (most recent) entry
+	})
+
+	return userAmount, true
 }

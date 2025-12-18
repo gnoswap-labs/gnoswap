@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"math"
+
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
@@ -159,65 +161,124 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 	return delegations
 }
 
-// getDelegationHistory returns the current delegation history.
-//
-// Returns:
-//   - DelegationHistory: chronological list of delegation records
-func (g *govStakerV1) getDelegationHistory() staker.DelegationHistory {
-	history := g.store.GetDelegationHistory()
-
-	return history
-}
-
-// addDelegationRecord adds a new delegation record to history and updates snapshots.
+// addDelegationRecord records a delegation change in the history.
+// Updates both total and user delegation histories with cumulative values.
 //
 // Parameters:
-//   - delegationRecord: delegation record to add
-func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRecord) {
-	// Add to history
-	if err := g.store.AddDelegationRecord(delegationRecord); err != nil {
-		panic(err)
-	}
+//   - delegateeAddr: address of the delegatee
+//   - amount: amount change (positive for delegate, negative for undelegate)
+//   - timestamp: timestamp of the delegation change
+func (g *govStakerV1) addDelegationRecord(delegateeAddr address, amount int64, timestamp int64) {
+	// Update total delegation history
+	g.updateTotalDelegationHistory(amount, timestamp)
 
-	snapshot := g.store.GetDelegationSnapshot()
-	resolver := NewDelegationSnapshotResolver(snapshot)
-	snapshot = resolver.AddRecord(delegationRecord)
-	if err := g.store.SetDelegationSnapshot(snapshot); err != nil {
-		panic(err)
-	}
+	// Update user delegation history
+	g.updateUserDelegationHistory(delegateeAddr, amount, timestamp)
 }
 
-// setDelegationHistory replaces the current delegation history.
+// updateTotalDelegationHistory updates the total delegation history with cumulative value.
 //
 // Parameters:
-//   - history: new delegation history to set
-func (g *govStakerV1) setDelegationHistory(history staker.DelegationHistory) {
-	if err := g.store.SetDelegationHistory(history); err != nil {
+//   - amount: amount change (positive for delegate, negative for undelegate)
+//   - timestamp: timestamp of the change
+func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64) {
+	history := g.store.GetTotalDelegationHistory()
+
+	// Get current total from the most recent entry
+	currentTotal := g.getLatestTotalDelegation(history)
+	newTotal := safeAddInt64(currentTotal, amount)
+
+	if newTotal < 0 {
+		newTotal = 0
+	}
+
+	history.Set(timestamp, newTotal)
+
+	if err := g.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
 	}
 }
 
-// getDelegationSnapshots returns the current delegation snapshots.
-//
-// Returns:
-//   - DelegationSnapshot: current delegation state for all delegatees
-func (g *govStakerV1) getDelegationSnapshots() staker.DelegationSnapshot {
-	// Get the latest snapshot
-	snapshot := g.store.GetDelegationSnapshot()
-
-	return snapshot
-}
-
-// setDelegationSnapshots replaces the current delegation snapshots.
+// updateUserDelegationHistory updates the user delegation history with cumulative values.
+// Structure: address -> *UintTree[timestamp -> int64]
 //
 // Parameters:
-//   - snapshot: new delegation snapshot to set
-func (g *govStakerV1) setDelegationSnapshots(snapshot staker.DelegationSnapshot) {
-	// Set with current timestamp
-	err := g.store.SetDelegationSnapshot(snapshot)
-	if err != nil {
+//   - delegateeAddr: address of the delegatee
+//   - amount: amount change (positive for delegate, negative for undelegate)
+//   - timestamp: timestamp of the change
+func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount int64, timestamp int64) {
+	history := g.store.GetUserDelegationHistory()
+	addrStr := delegateeAddr.String()
+
+	// Get or create user's timestamp tree
+	var userHistory *staker.UintTree
+
+	if existingHistory, exists := history.Get(addrStr); exists {
+		userHistoryInt, ok := existingHistory.(*staker.UintTree)
+		if !ok {
+			panic(ufmt.Sprintf("invalid user history type: %T", existingHistory))
+		}
+
+		userHistory = userHistoryInt
+	} else {
+		userHistory = staker.NewUintTree()
+	}
+
+	// Get current amount from the most recent entry
+	currentAmount := g.getLatestUserDelegation(userHistory)
+	newAmount := safeAddInt64(currentAmount, amount)
+
+	// Store new cumulative value at this timestamp
+	userHistory.Set(timestamp, newAmount)
+	history.Set(addrStr, userHistory)
+
+	if err := g.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)
 	}
+}
+
+// getLatestTotalDelegation gets the latest total delegation amount from history.
+func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
+	if history.Size() == 0 {
+		return 0
+	}
+
+	latestTotal := int64(0)
+
+	history.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
+		totalInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid total type: %T", value))
+		}
+
+		latestTotal = totalInt
+
+		return true // stop after first (most recent) entry
+	})
+
+	return latestTotal
+}
+
+// getLatestUserDelegation gets the latest delegation amount for a user from their history.
+func (g *govStakerV1) getLatestUserDelegation(userHistory *staker.UintTree) int64 {
+	if userHistory.Size() == 0 {
+		return 0
+	}
+
+	latestAmount := int64(0)
+
+	userHistory.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
+		amountInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid amount type: %T", value))
+		}
+
+		latestAmount = amountInt
+
+		return true // stop after first (most recent) entry
+	})
+
+	return latestAmount
 }
 
 // addStakeEmissionReward adds stake to emission reward tracking for an address.
