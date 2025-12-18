@@ -140,10 +140,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	assertIsValidToken(tokenPath)
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
+
+	callerAddress := runtime.PreviousRealm().Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
