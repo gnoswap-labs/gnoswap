@@ -36,7 +36,8 @@ func TestGetterProposal_All(t *testing.T) {
 				governance.NewProposalMetadata("TestTitle", "TestDesc"),
 				governance.NewProposalData(governance.Text, nil, nil),
 				address("g1proposer"),
-				42,
+				42, // configVersion
+				time.Now().Unix(),
 				time.Now().Unix(),
 				runtime.ChainHeight(),
 			),
@@ -60,7 +61,8 @@ func TestGetterProposal_All(t *testing.T) {
 				governance.NewProposalMetadata("TestTitle", "TestDesc"),
 				governance.NewProposalData(governance.Text, nil, nil),
 				address("g1proposer"),
-				42,
+				42, // configVersion
+				time.Now().Unix(),
 				time.Now().Unix(),
 				runtime.ChainHeight(),
 			),

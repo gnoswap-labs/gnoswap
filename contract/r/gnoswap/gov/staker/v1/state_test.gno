@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/uassert"
+
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -13,8 +15,6 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 
 	"gno.land/r/gnoswap/gov/staker"
-
-	"gno.land/p/nt/uassert"
 )
 
 // Test lockup period management
@@ -235,13 +235,13 @@ func TestRemoveDelegation(t *testing.T) {
 	}
 }
 
-// Test delegation history management
-func TestDelegationHistoryManagement(t *testing.T) {
+// Test delegation history management with new structure
+func TestAddDelegationRecord(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "Add delegation record to history",
+			name: "Record delegation updates history",
 		},
 	}
 
@@ -249,37 +249,48 @@ func TestDelegationHistoryManagement(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
+			delegatee := address("g1validator1234567890abcdefghijklmno")
+			timestamp := int64(100)
 
-			// Given: Initial history state
-			initialHistory := gs.getDelegationHistory()
-			initialLength := len(initialHistory)
+			// When: Record delegation
+			gs.addDelegationRecord(delegatee, 1000, timestamp)
 
-			// Create delegation record
-			record := staker.NewDelegationRecord(
-				staker.DelegateType,
-				1000,
-				address("g1user1234567890abcdefghijklmnopqrst"),
-				address("g1validator1234567890abcdefghijklmno"),
-				100,
-			)
+			// Then: Should update total delegation history
+			totalHistory := gs.store.GetTotalDelegationHistory()
+			var totalAmount int64
+			totalHistory.ReverseIterate(0, timestamp+1, func(key int64, value any) bool {
+				if amount, ok := value.(int64); ok {
+					totalAmount = amount
+				}
+				return true
+			})
+			uassert.Equal(t, totalAmount, int64(1000))
 
-			// When: Add delegation record
-			gs.addDelegationRecord(record)
-
-			// Then: Should increase history length
-			updatedHistory := gs.getDelegationHistory()
-			uassert.Equal(t, len(updatedHistory), initialLength+1)
+			// Then: Should update user delegation history
+			userHistoryTree := gs.store.GetUserDelegationHistory()
+			var userAmount int64
+			// New structure: address -> *UintTree[timestamp -> int64]
+			if userHistoryRaw, exists := userHistoryTree.Get(delegatee.String()); exists {
+				userHistory := userHistoryRaw.(*staker.UintTree)
+				userHistory.ReverseIterate(0, timestamp+1, func(key int64, value any) bool {
+					if amount, ok := value.(int64); ok {
+						userAmount = amount
+					}
+					return true
+				})
+			}
+			uassert.Equal(t, userAmount, int64(1000))
 		})
 	}
 }
 
-// Test delegation snapshots management
-func TestDelegationSnapshotsManagement(t *testing.T) {
+// Test GetTotalDelegationAmountAtSnapshot with new structure
+func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "Set and get delegation snapshots",
+			name: "Get total delegation at snapshot time",
 		},
 	}
 
@@ -287,24 +298,63 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
+			delegatee := address("g1validator1234567890abcdefghijklmno")
 
-			// Given: Create new snapshot
-			newSnapshot := make(staker.DelegationSnapshot)
-			newSnapshot["user1"] = staker.NewDelegationSnapshotItem(int64(1000), address("user1"))
+			// Record delegations at different times
+			gs.addDelegationRecord(delegatee, 1000, 100) // total: 1000
+			gs.addDelegationRecord(delegatee, 500, 200)  // total: 1500
+			gs.addDelegationRecord(delegatee, -300, 300) // total: 1200
 
-			// When: Set delegation snapshots
-			gs.setDelegationSnapshots(newSnapshot)
+			// When: Get snapshot at time 150
+			amount, found := gs.GetTotalDelegationAmountAtSnapshot(150)
 
-			// Then: Should retrieve the same snapshot
-			retrievedSnapshot := gs.getDelegationSnapshots()
-			uassert.Equal(t, len(retrievedSnapshot), len(newSnapshot))
+			// Then: Should return value at or before time 150
+			uassert.True(t, found)
+			uassert.Equal(t, amount, int64(1000))
 
-			if item, exists := retrievedSnapshot["user1"]; exists {
-				uassert.Equal(t, item.DelegationAmount(), int64(1000))
-				uassert.Equal(t, item.DelegatorAddress(), address("user1"))
-			} else {
-				t.Errorf("Expected snapshot item for user1 not found")
-			}
+			// When: Get snapshot at time 250
+			amount2, found2 := gs.GetTotalDelegationAmountAtSnapshot(250)
+
+			// Then: Should return value at or before time 250
+			uassert.True(t, found2)
+			uassert.Equal(t, amount2, int64(1500))
+		})
+	}
+}
+
+// Test GetUserDelegationAmountAtSnapshot with new structure
+func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "Get user delegation at snapshot time",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+			delegatee := address("g1validator1234567890abcdefghijklmno")
+
+			// Record delegations at different times
+			gs.addDelegationRecord(delegatee, 1000, 100)
+			gs.addDelegationRecord(delegatee, 500, 200)
+
+			// When: Get user snapshot at time 150
+			amount, found := gs.GetUserDelegationAmountAtSnapshot(delegatee, 150)
+
+			// Then: Should return value at or before time 150
+			uassert.True(t, found)
+			uassert.Equal(t, amount, int64(1000))
+
+			// When: Get user snapshot at time 250
+			amount2, found2 := gs.GetUserDelegationAmountAtSnapshot(delegatee, 250)
+
+			// Then: Should return value at or before time 250
+			uassert.True(t, found2)
+			uassert.Equal(t, amount2, int64(1500))
 		})
 	}
 }

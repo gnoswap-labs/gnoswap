@@ -257,3 +257,23 @@ func newMockGovernance(version string) *MockGovernance {
 		Response: NewMockResponse(),
 	}
 }
+
+type mockGovStakerAccessor struct {
+	totalDelegation int64
+	userDelegations map[string]int64
+}
+
+func (m *mockGovStakerAccessor) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	return m.totalDelegation, true
+}
+
+func (m *mockGovStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	return m.userDelegations[userAddr.String()], true
+}
+
+func newMockGovStakerAccessor() *mockGovStakerAccessor {
+	return &mockGovStakerAccessor{
+		totalDelegation: 0,
+		userDelegations: make(map[string]int64),
+	}
+}

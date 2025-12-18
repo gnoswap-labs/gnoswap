@@ -29,8 +29,8 @@ func resetTestState(t *testing.T) {
 	implementation = nil
 }
 
-func makeMockInitializer(version string) func(_ IGovernanceStore) IGovernance {
-	return func(_ IGovernanceStore) IGovernance {
+func makeMockInitializer(version string) func(_ IGovernanceStore, _ GovStakerAccessor) IGovernance {
+	return func(_ IGovernanceStore, _ GovStakerAccessor) IGovernance {
 		return newMockGovernance(version)
 	}
 }

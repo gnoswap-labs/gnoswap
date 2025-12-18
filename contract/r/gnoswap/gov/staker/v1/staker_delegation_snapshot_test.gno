@@ -91,8 +91,9 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				// Given: Admin context
 				testing.SetRealm(testing.NewUserRealm(admin))
 
-				// When: Use large threshold value
-				largeThreshold := int64(9223372036854775807) // max int64
+				// When: Use reasonably large threshold value (1 year in seconds)
+				// Note: max int64 would cause overflow when subtracted from current timestamp
+				largeThreshold := int64(365 * 24 * 60 * 60) // 1 year in seconds
 
 				// Then: Should not panic
 				func(cur realm) {

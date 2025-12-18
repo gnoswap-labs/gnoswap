@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gov/governance"
 
+	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
