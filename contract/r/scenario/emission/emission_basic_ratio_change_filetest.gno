@@ -25,6 +25,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T
@@ -53,7 +54,8 @@ func testNoRetroactiveApplication() {
 
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
-	emission.SetDistributionStartTime(cross, now+100)
+	distributionStartTime := now + 1
+	emission.SetDistributionStartTime(cross, distributionStartTime)
 	stakerBefore := emission.GetDistributedToStaker()
 	devopsBefore := emission.GetDistributedToDevOps()
 	uassert.Equal(t, int64(0), stakerBefore)
@@ -63,7 +65,18 @@ func testNoRetroactiveApplication() {
 
 	println("[SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)")
 	testing.SkipHeights(864000)
+	timestampAfterPeriod1 := time.Now().Unix()
 	println("[INFO] emissions accumulated without distribution")
+	println()
+
+	// Calculate emission details for Period 1
+	emissionPerSecond1 := gns.GetEmissionAmountPerSecondByTimestamp(timestampAfterPeriod1)
+	elapsedSeconds1 := timestampAfterPeriod1 - distributionStartTime + 1
+	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
+
+	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (from distribution start time, inclusive range)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
 	println("[SCENARIO] 4. Change distribution ratio to 80/20")
@@ -83,9 +96,8 @@ func testNoRetroactiveApplication() {
 	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		stakerAfterRatioChange, devopsAfterRatioChange, communityAfterRatioChange, govAfterRatioChange))
 
-	// Verify exact amounts for 10 days at 50/50
-	expectedStaker1 := int64(15410605312201)
-	expectedDevops1 := int64(15410605312201)
+	expectedStaker1 := int64(15410958480000)
+	expectedDevops1 := int64(15410958480000)
 	totalPeriod1 := stakerAfterRatioChange + devopsAfterRatioChange + communityAfterRatioChange + govAfterRatioChange
 
 	println(ufmt.Sprintf("[EXPECTED] Period 1 (10 days at 50/50) - Staker should be %d, got %d", expectedStaker1, stakerAfterRatioChange))
@@ -105,6 +117,18 @@ func testNoRetroactiveApplication() {
 
 	println("[SCENARIO] 5. Accumulate 1 more day and distribute")
 	testing.SkipHeights(86400)
+	timestampAfterPeriod2 := time.Now().Unix()
+
+	// Calculate emission details for Period 2
+	emissionPerSecond2 := gns.GetEmissionAmountPerSecondByTimestamp(timestampAfterPeriod2)
+	elapsedSeconds2 := timestampAfterPeriod2 - timestampAfterPeriod1
+	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
+
+	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (1 day, subsequent minting)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
+	println()
+
 	emission.MintAndDistributeGns(cross)
 	stakerAfterNew := emission.GetDistributedToStaker()
 	devopsAfterNew := emission.GetDistributedToDevOps()
@@ -116,7 +140,6 @@ func testNoRetroactiveApplication() {
 
 	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d", stakerIncrement, devopsIncrement))
 
-	// Verify exact amounts for 1 day at 80/20
 	expectedStakerIncrement := int64(2465753356800)
 	expectedDevopsIncrement := int64(616438339200)
 	totalPeriod2 := stakerIncrement + devopsIncrement
@@ -135,7 +158,7 @@ func testNoRetroactiveApplication() {
 
 	// Verify overall totals
 	totalDistributed := stakerAfterNew + devopsAfterNew + communityAfterNew + govAfterNew
-	expectedTotalDistributed := expectedStaker1 + expectedDevops1 + expectedStakerIncrement + expectedDevopsIncrement
+	expectedTotalDistributed := int64(33904108656000)
 
 	println(ufmt.Sprintf("[EXPECTED] Total distributed should be %d, got %d", expectedTotalDistributed, totalDistributed))
 	uassert.Equal(t, expectedTotalDistributed, totalDistributed)
@@ -151,17 +174,25 @@ func testNoRetroactiveApplication() {
 // [SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)
 // [INFO] emissions accumulated without distribution
 //
+// [INFO] emission per second: 7134703
+// [INFO] elapsed seconds: 4320000 (from distribution start time, inclusive range)
+// [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
+//
 // [SCENARIO] 4. Change distribution ratio to 80/20
-// [INFO] distributed: Staker=15410605312201, DevOps=15410605312201, Community=0, Gov=0
-// [EXPECTED] Period 1 (10 days at 50/50) - Staker should be 15410605312201, got 15410605312201
-// [EXPECTED] Period 1 (10 days at 50/50) - DevOps should be 15410605312201, got 15410605312201
-// [EXPECTED] Period 1 total: 30821210624402
+// [INFO] distributed: Staker=15410958480000, DevOps=15410958480000, Community=0, Gov=0
+// [EXPECTED] Period 1 (10 days at 50/50) - Staker should be 15410958480000, got 15410958480000
+// [EXPECTED] Period 1 (10 days at 50/50) - DevOps should be 15410958480000, got 15410958480000
+// [EXPECTED] Period 1 total: 30821916960000
 // [EXPECTED] Ratio should be ~1.00 (50/50), got 1.00
 //
 // [SCENARIO] 5. Accumulate 1 more day and distribute
+// [INFO] emission per second: 7134703
+// [INFO] elapsed seconds: 432000 (1 day, subsequent minting)
+// [INFO] calculated total emission: 7134703 * 432000 = 3082191696000
+//
 // [INFO] new emissions: Staker=2465753356800, DevOps=616438339200
 // [EXPECTED] Period 2 (1 day at 80/20) - Staker increment should be 2465753356800, got 2465753356800
 // [EXPECTED] Period 2 (1 day at 80/20) - DevOps increment should be 616438339200, got 616438339200
 // [EXPECTED] Period 2 total: 3082191696000
 // [EXPECTED] New ratio should be ~4.00 (80/20), got 4.00
-// [EXPECTED] Total distributed should be 33903402320402, got 33903402320402
+// [EXPECTED] Total distributed should be 33904108656000, got 33904108656000

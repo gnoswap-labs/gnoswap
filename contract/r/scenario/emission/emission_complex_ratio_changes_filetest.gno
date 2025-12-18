@@ -26,6 +26,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T
@@ -44,7 +45,8 @@ func testComplexRatioChanges() {
 
 	println("[SCENARIO] 1. Set distribution start time")
 	now := time.Now().Unix()
-	emission.SetDistributionStartTime(cross, now+100)
+	distributionStartTime := now + 1
+	emission.SetDistributionStartTime(cross, distributionStartTime)
 	println()
 
 	println("[SCENARIO] 2. Set Period 1 ratio (40/30/20/10)")
@@ -60,7 +62,18 @@ func testComplexRatioChanges() {
 
 	println("[SCENARIO] 3. Accumulate emissions for 10 days (Period 1)")
 	testing.SkipHeights(864000)
+	timestampAfterPeriod1 := time.Now().Unix()
 	println("[INFO] period 1: 10 days elapsed")
+	println()
+
+	// Calculate emission details for Period 1
+	emissionPerSecond1 := gns.GetEmissionAmountPerSecondByTimestamp(timestampAfterPeriod1)
+	elapsedSeconds1 := timestampAfterPeriod1 - distributionStartTime + 1
+	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
+
+	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (from distribution start time, inclusive range)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
 	println("[SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)")
@@ -81,15 +94,13 @@ func testComplexRatioChanges() {
 	println(ufmt.Sprintf("[INFO] Period 1 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		period1Staker, period1Devops, period1Community, period1Gov))
 
-	// Calculate total
 	totalPeriod1 := period1Staker + period1Devops + period1Community + period1Gov
 	println(ufmt.Sprintf("[INFO] Period 1 total distributed: %d", totalPeriod1))
 
-	// Pre-calculated expected values (from emission formula: amount * bptPct / 10000)
-	expectedStaker1 := int64(12328484249760)
-	expectedDevops1 := int64(9246363187320)
-	expectedCommunity1 := int64(6164242124880)
-	expectedGov1 := int64(3082121062440)
+	expectedStaker1 := int64(12328766784000)
+	expectedDevops1 := int64(9246575088000)
+	expectedCommunity1 := int64(6164383392000)
+	expectedGov1 := int64(3082191696000)
 	expectedTotal1 := expectedStaker1 + expectedDevops1 + expectedCommunity1 + expectedGov1
 
 	// Exact assertions
@@ -129,7 +140,18 @@ func testComplexRatioChanges() {
 
 	println("[SCENARIO] 5. Accumulate emissions for 10 days (Period 2)")
 	testing.SkipHeights(864000)
+	timestampAfterPeriod2 := time.Now().Unix()
 	println("[INFO] period 2: 10 days elapsed")
+	println()
+
+	// Calculate emission details for Period 2
+	emissionPerSecond2 := gns.GetEmissionAmountPerSecondByTimestamp(timestampAfterPeriod2)
+	elapsedSeconds2 := timestampAfterPeriod2 - timestampAfterPeriod1
+	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
+
+	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days, subsequent minting)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
 	println("[SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)")
@@ -156,15 +178,13 @@ func testComplexRatioChanges() {
 	println(ufmt.Sprintf("[INFO] Period 2 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		period2Staker, period2Devops, period2Community, period2Gov))
 
-	// Calculate Period 2 total
 	totalPeriod2 := period2Staker + period2Devops + period2Community + period2Gov
 	println(ufmt.Sprintf("[INFO] Period 2 total distributed: %d", totalPeriod2))
 
-	// Pre-calculated expected values for Period 2
-	expectedStaker2 := int64(15410605312201)
-	expectedDevops2 := int64(7705302656100)
-	expectedCommunity2 := int64(4623181593660)
-	expectedGov2 := int64(3082121062440)
+	expectedStaker2 := int64(15410958480000)
+	expectedDevops2 := int64(7705479240000)
+	expectedCommunity2 := int64(4623287544000)
+	expectedGov2 := int64(3082191696000)
 	expectedTotal2 := expectedStaker2 + expectedDevops2 + expectedCommunity2 + expectedGov2
 
 	// Exact assertions
@@ -217,30 +237,38 @@ func testComplexRatioChanges() {
 // [SCENARIO] 3. Accumulate emissions for 10 days (Period 1)
 // [INFO] period 1: 10 days elapsed
 //
+// [INFO] emission per second: 7134703
+// [INFO] elapsed seconds: 4320000 (from distribution start time, inclusive range)
+// [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
+//
 // [SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)
-// [INFO] Period 1 distributed: Staker=12328484249760, DevOps=9246363187320, Community=6164242124880, Gov=3082121062440
-// [INFO] Period 1 total distributed: 30821210624400
-// [EXPECTED] Period 1 Staker should be 12328484249760, got 12328484249760
-// [EXPECTED] Period 1 DevOps should be 9246363187320, got 9246363187320
-// [EXPECTED] Period 1 Community should be 6164242124880, got 6164242124880
-// [EXPECTED] Period 1 Gov should be 3082121062440, got 3082121062440
+// [INFO] Period 1 distributed: Staker=12328766784000, DevOps=9246575088000, Community=6164383392000, Gov=3082191696000
+// [INFO] Period 1 total distributed: 30821916960000
+// [EXPECTED] Period 1 Staker should be 12328766784000, got 12328766784000
+// [EXPECTED] Period 1 DevOps should be 9246575088000, got 9246575088000
+// [EXPECTED] Period 1 Community should be 6164383392000, got 6164383392000
+// [EXPECTED] Period 1 Gov should be 3082191696000, got 3082191696000
 // [EXPECTED] Period 1 Staker/DevOps ratio should be ~1.33 (40/30), got 1.33
 // [EXPECTED] Period 1 Staker/Community ratio should be ~2.00 (40/20), got 2.00
 // [EXPECTED] Period 1 Staker/Gov ratio should be ~4.00 (40/10), got 4.00
-// [EXPECTED] Period 1 sum should equal total: 30821210624400 == 30821210624400
+// [EXPECTED] Period 1 sum should equal total: 30821916960000 == 30821916960000
 //
 // [SCENARIO] 5. Accumulate emissions for 10 days (Period 2)
 // [INFO] period 2: 10 days elapsed
 //
+// [INFO] emission per second: 7134703
+// [INFO] elapsed seconds: 4320000 (10 days, subsequent minting)
+// [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
+//
 // [SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)
-// [INFO] Period 2 distributed: Staker=15410605312201, DevOps=7705302656100, Community=4623181593660, Gov=3082121062440
-// [INFO] Period 2 total distributed: 30821210624401
-// [EXPECTED] Period 2 Staker should be 15410605312201, got 15410605312201
-// [EXPECTED] Period 2 DevOps should be 7705302656100, got 7705302656100
-// [EXPECTED] Period 2 Community should be 4623181593660, got 4623181593660
-// [EXPECTED] Period 2 Gov should be 3082121062440, got 3082121062440
+// [INFO] Period 2 distributed: Staker=15410958480000, DevOps=7705479240000, Community=4623287544000, Gov=3082191696000
+// [INFO] Period 2 total distributed: 30821916960000
+// [EXPECTED] Period 2 Staker should be 15410958480000, got 15410958480000
+// [EXPECTED] Period 2 DevOps should be 7705479240000, got 7705479240000
+// [EXPECTED] Period 2 Community should be 4623287544000, got 4623287544000
+// [EXPECTED] Period 2 Gov should be 3082191696000, got 3082191696000
 // [EXPECTED] Period 2 Staker/DevOps ratio should be ~2.00 (50/25), got 2.00
 // [EXPECTED] Period 2 Staker/Community ratio should be ~3.33 (50/15), got 3.33
 // [EXPECTED] Period 2 Staker/Gov ratio should be ~5.00 (50/10), got 5.00
-// [EXPECTED] Period 2 sum should equal total: 30821210624401 == 30821210624401
-// [EXPECTED] Overall total should be 61642421248801, got 61642421248801
+// [EXPECTED] Period 2 sum should equal total: 30821916960000 == 30821916960000
+// [EXPECTED] Overall total should be 61643833920000, got 61643833920000
