@@ -106,6 +106,14 @@ func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewa
 	return rewardState
 }
 
+// removeRewardState removes a reward state from the reward manager when a deposit is withdrawn.
+// This improves iteration performance and ensures accurate pending reward calculations.
+func removeRewardState(r *launchpad.RewardManager, depositId string) {
+	rewards := r.Rewards()
+	rewards.Remove(depositId)
+	r.SetRewards(rewards)
+}
+
 func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) error {
 	if rewardPerDepositX128.IsZero() {
 		return nil
@@ -251,4 +259,27 @@ func newRewardManager(
 	updateRewardPerDepositX128(manager, 0, currentHeight, currentTime)
 
 	return manager
+}
+
+// calculateClaimableRewardsForActiveDeposits calculates the total claimable rewards
+// for all active deposits in the reward manager.
+// This is used when admin wants to reclaim undistributed rewards while some deposits remain.
+func calculateClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
+	totalClaimable := int64(0)
+	accumulatedReward := r.AccumulatedRewardPerDepositX128()
+
+	r.Rewards().Iterate("", "", func(depositId string, value any) bool {
+		rewardState, ok := value.(*launchpad.RewardState)
+		if !ok {
+			return false
+		}
+
+		// Calculate claimable reward for this deposit
+		claimable := calculateClaimableReward(rewardState, accumulatedReward)
+		totalClaimable = safeAddInt64(totalClaimable, claimable)
+
+		return false
+	})
+
+	return totalClaimable
 }
