@@ -20,7 +20,7 @@ func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 //
 // Returns:
 //   - int64: total delegation amount at the specified time
-//   - bool: true if snapshot was found, false otherwise
+//   - bool: true if snapshot was exists, false otherwise
 func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	history := gs.store.GetTotalDelegationHistory()
 	if history.Size() == 0 {
@@ -32,7 +32,10 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 		toTimestamp += 1
 	}
 
-	var totalAmount int64
+	var (
+		totalAmount int64
+		exists      bool
+	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
 	history.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
@@ -42,11 +45,12 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 		}
 
 		totalAmount = amountInt
+		exists = true
 
 		return true // stop after first (most recent) entry
 	})
 
-	return totalAmount, true
+	return totalAmount, exists
 }
 
 // GetUserDelegationAmountAtSnapshot returns the delegation amount for a specific user at a specific snapshot time.
@@ -59,13 +63,13 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 //
 // Returns:
 //   - int64: user delegation amount at the specified time
-//   - bool: true if snapshot was found, false otherwise
+//   - bool: true if snapshot was exists, false otherwise
 func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	history := gs.store.GetUserDelegationHistory()
 
 	// Get user's history tree
-	userHistoryRaw, exists := history.Get(userAddr.String())
-	if !exists {
+	userHistoryRaw, userHistoryExists := history.Get(userAddr.String())
+	if !userHistoryExists {
 		return 0, false
 	}
 
@@ -79,7 +83,10 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 		toTimestamp += 1
 	}
 
-	var userAmount int64
+	var (
+		userAmount int64
+		exists     bool
+	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
 	userHistory.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
@@ -89,9 +96,10 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 		}
 
 		userAmount = amountInt
+		exists = true
 
 		return true // stop after first (most recent) entry
 	})
 
-	return userAmount, true
+	return userAmount, exists
 }

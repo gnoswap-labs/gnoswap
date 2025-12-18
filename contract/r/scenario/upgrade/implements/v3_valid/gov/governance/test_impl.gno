@@ -121,3 +121,11 @@ func (t *TestGovernance) GetVotedHeight(proposalID int64, address address) int64
 func (t *TestGovernance) GetVotedAt(proposalID int64, address address) int64 {
 	return t.instance.GetVotedAt(proposalID, address)
 }
+
+func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
+	return t.instance.GetMaxSmoothingPeriod()
+}
+
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	return t.instance.GetOldestActiveProposalSnapshotTime()
+}

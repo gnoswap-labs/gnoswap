@@ -84,6 +84,12 @@ type IVoteApi interface {
 	GetVoteWeight(proposalID int64, address address) int64
 	GetVotedHeight(proposalID int64, address address) int64
 	GetVotedAt(proposalID int64, address address) int64
+
+	// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+	GetMaxSmoothingPeriod() int64
+
+	// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
+	GetOldestActiveProposalSnapshotTime() (int64, bool)
 }
 
 type IGovernanceStore interface {

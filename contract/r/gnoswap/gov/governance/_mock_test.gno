@@ -251,6 +251,22 @@ func (m *MockGovernance) GetVotedAt(proposalID int64, address address) int64 {
 	return res[0].(int64)
 }
 
+func (m *MockGovernance) GetMaxSmoothingPeriod() int64 {
+	res, ok := m.Response.Get("GetMaxSmoothingPeriod")
+	if !ok {
+		return 30 * 24 * 60 * 60 // default 30 days
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	res, ok := m.Response.Get("GetOldestActiveProposalSnapshotTime")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
+}
+
 func newMockGovernance(version string) *MockGovernance {
 	return &MockGovernance{
 		Version:  version,

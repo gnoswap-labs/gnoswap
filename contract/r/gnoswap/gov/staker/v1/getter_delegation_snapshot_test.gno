@@ -50,7 +50,7 @@ func TestGetTotalDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
 			expectedFound:  true,
 		},
 		{
-			name: "snapshot time before all entries returns zero amount",
+			name: "snapshot time before all entries returns false",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
 				h.Set(int64(100), int64(1000))
@@ -59,7 +59,7 @@ func TestGetTotalDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
 			},
 			snapshotTime:   50,
 			expectedAmount: 0,
-			expectedFound:  true,
+			expectedFound:  false,
 		},
 		{
 			name: "snapshot time between entries returns earlier entry",
@@ -191,7 +191,7 @@ func TestGetUserDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
 			expectedFound:  true,
 		},
 		{
-			name: "snapshot time before all user entries",
+			name: "snapshot time before all user entries returns false",
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
@@ -202,7 +202,7 @@ func TestGetUserDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
 			userAddr:       user1,
 			snapshotTime:   50,
 			expectedAmount: 0,
-			expectedFound:  true,
+			expectedFound:  false,
 		},
 		{
 			name: "snapshot time between user entries",

@@ -11,3 +11,13 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 		panic(errNotProposer)
 	}
 }
+
+func assertIsValidSmoothingPeriod(smoothingPeriod int64) {
+	if smoothingPeriod < 0 {
+		panic(errInvalidSmoothingPeriod)
+	}
+
+	if smoothingPeriod > maxSmoothingPeriod {
+		panic(errInvalidSmoothingPeriod)
+	}
+}

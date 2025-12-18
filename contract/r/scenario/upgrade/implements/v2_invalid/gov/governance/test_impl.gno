@@ -206,3 +206,17 @@ func (t *TestGovernance) GetVotedAt(proposalID int64, address address) int64 {
 	}
 	return t.instance.GetVotedAt(proposalID, address)
 }
+
+func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
+	if !t.isActive("GetMaxSmoothingPeriod") {
+		panic("test implementation: GetMaxSmoothingPeriod not supported")
+	}
+	return t.instance.GetMaxSmoothingPeriod()
+}
+
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	if !t.isActive("GetOldestActiveProposalSnapshotTime") {
+		panic("test implementation: GetOldestActiveProposalSnapshotTime not supported")
+	}
+	return t.instance.GetOldestActiveProposalSnapshotTime()
+}

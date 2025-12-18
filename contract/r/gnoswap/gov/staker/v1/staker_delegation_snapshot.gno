@@ -53,15 +53,18 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 // to prevent unlimited growth of historical data and optimize storage usage.
 //
 // The cleanup process:
-// 1. Calculates cutoff time by subtracting threshold from current time
-// 2. Filters delegation history to keep only records after cutoff time
-// 3. Updates the delegation history with filtered records
+// 1. Validates the snapshot time is within allowed range
+// 2. Checks that no active proposals need data older than the cleanup threshold
+// 3. Filters delegation history to keep only records after cutoff time
+// 4. Updates the delegation history with filtered records
 //
 // Parameters:
-//   - threshold: time threshold in seconds (records older than this will be removed)
+//   - snapshotTime: cutoff timestamp (records older than this will be removed)
 //
 // Panics:
 //   - if caller is not admin
+//   - if snapshotTime is invalid (negative or too recent)
+//   - if active proposals have snapshotTime older than the cleanup threshold
 //
 // Note: This operation is irreversible and will permanently remove historical data
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
@@ -69,6 +72,9 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidSnapshotTime(snapshotTime)
+	assertIsAvailableCleanupSnapshotTime(snapshotTime)
 
 	// Clean total delegation history
 	gs.cleanTotalDelegationHistory(snapshotTime)
