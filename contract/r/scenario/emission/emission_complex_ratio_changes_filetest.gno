@@ -2,8 +2,8 @@
 // Scenario: Complex governance adjustments with all 4 recipients active
 //
 // Setup:
-// - Period 1: Staker 40%, DevOps 30%, Community 20%, Gov 10% - accumulate 10 days
-// - Period 2: Staker 50%, DevOps 25%, Community 15%, Gov 10% - accumulate 10 days
+// - Period 1: Staker 40%, DevOps 30%, Community 20%, Gov 10% - accumulate 50 days
+// - Period 2: Staker 50%, DevOps 25%, Community 15%, Gov 10% - accumulate 50 days
 // - Period 3: Staker 60%, DevOps 20%, Community 10%, Gov 10%
 //
 // Expected Behavior:

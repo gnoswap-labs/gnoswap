@@ -2,13 +2,13 @@
 // Scenario: Basic non-retroactive distribution when ratio changes
 //
 // Setup:
-// - Period 1: Set 50/50 ratio and accumulate for 10 days
+// - Period 1: Set 50/50 ratio and accumulate for 50 days
 // - Change ratio to 80/20 (automatically distributes Period 1 at 50/50)
-// - Period 2: Accumulate for 1 more day
+// - Period 2: Accumulate for 5 more days
 //
 // Expected Behavior:
-// - Period 1 emissions (10 days) distributed at OLD ratio (50/50)
-// - Period 2 emissions (1 day) distributed at NEW ratio (80/20)
+// - Period 1 emissions (50 days) distributed at OLD ratio (50/50)
+// - Period 2 emissions (5 days) distributed at NEW ratio (80/20)
 //
 // This is the fundamental test verifying that ratio changes do NOT
 // retroactively affect previously accumulated emissions.
