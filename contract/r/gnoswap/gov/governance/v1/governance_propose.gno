@@ -143,7 +143,6 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	// Validate token path is provided
 	if tokenPath == "" {
 		panic(makeErrorWithDetails(
 			errInvalidInput, "tokenPath is empty"))
@@ -156,10 +155,10 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		))
 	}
 
-	callerAddress := runtime.PreviousRealm().Address()
-
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
+
+	callerAddress := runtime.PreviousRealm().Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
