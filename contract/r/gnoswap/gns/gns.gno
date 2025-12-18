@@ -77,9 +77,11 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 //
 // Returns amount minted.
 // Only callable by emission contract.
+//
+// Note: Halt check is performed by the caller (emission.MintAndDistributeGns)
+// to allow graceful handling. This function assumes caller has already verified
+// halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	halt.AssertIsNotHaltedEmission()
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 

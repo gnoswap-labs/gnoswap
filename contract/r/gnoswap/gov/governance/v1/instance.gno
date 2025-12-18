@@ -17,7 +17,7 @@ func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGo
 
 	// Set default voting info snapshot function
 	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
-		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+		return getUserVotingInfoWithDelegationSnapshots(snapshotTime)
 	}
 
 	return gv
