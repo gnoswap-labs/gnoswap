@@ -146,9 +146,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	// Validate token path is provided
 	if tokenPath == "" {
 		panic(makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("tokenPath is empty"),
-		))
+			errInvalidInput, "tokenPath is empty"))
 	}
 
 	if err := common.IsRegistered(tokenPath); err != nil {
