@@ -8,11 +8,11 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/gnoswap/referral"
-	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
 // DepositGns deposits GNS tokens to a launchpad project tier.
@@ -191,8 +191,6 @@ func (lp *launchpadV1) stakeGovernance(projectID string, depositAmount int64, la
 		launchpadAddress,
 		depositAmount,
 	)
-
-	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
 
 	return nil
 }

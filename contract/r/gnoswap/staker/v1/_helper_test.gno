@@ -10,6 +10,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
@@ -57,10 +58,10 @@ var (
 
 	alice = testutils.TestAddress("alice")
 
-	govGovernanceAddr = getRoleAddress(prbac.ROLE_GOVERNANCE)
-	poolAddr          = getRoleAddress(prbac.ROLE_POOL)
-	routerAddr        = getRoleAddress(prbac.ROLE_ROUTER)
-	emissionAddr      = getRoleAddress(prbac.ROLE_EMISSION)
+	govGovernanceAddr = access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
+	poolAddr          = access.MustGetAddress(prbac.ROLE_POOL.String())
+	routerAddr        = access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	emissionAddr      = access.MustGetAddress(prbac.ROLE_EMISSION.String())
 
 	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
 	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")

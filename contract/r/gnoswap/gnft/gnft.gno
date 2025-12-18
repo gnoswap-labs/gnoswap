@@ -9,11 +9,15 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 var (
 	nft   = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	owner = ownable.NewWithAddress(getPositionAddress())
+	positionAddr = access.MustGetAddress(prabc.ROLE_POSITION.String())
+	owner = ownable.NewWithAddress(positionAddr)
 )
 
 // Name returns the NFT collection name.
@@ -42,7 +46,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 
 	storedStr := string(stored)
 
-	// Check if it looks like SVG parameters format (has exactly 5 commas for 6 fields)
+	// Check if it looks like SVG parameters format (x1,y1,x2,y2,color1,color2)
 	if isImageParams(storedStr) {
 		return paramsToImageURI(storedStr), nil
 	}
@@ -272,13 +276,18 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
 	}
 
+	tokenURI, err := TokenURI(tid)
+	if err != nil {
+		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
+	}
+
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetTokenURI",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenId", string(tid),
-		"tokenURI", string(tURI),
+		"tokenURI", tokenURI,
 	)
 
 	return nil

@@ -8,6 +8,9 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 )
 
 var alice = testutils.TestAddress("alice")
@@ -45,7 +48,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 			timestamp:   -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution start timestamp cannot be negative",
+			panicMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name: "update existing distribution start time",
@@ -274,6 +277,26 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				uassert.True(t, finalLeft >= initialLeft)
 			},
 		},
+		{
+			name: "success - no distribution when halted (halt check in emission layer)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// Set halt to emergency level
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			verify: func(t *testing.T) {
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+				uassert.False(t, ok)
+				// Reset halt for other tests
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -322,10 +345,11 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 			errMsg:    "distribution start timestamp must be greater than current timestamp",
 		},
 		{
-			name:      "success - zero timestamp is valid (resets to default)",
+			name:      "panic - zero timestamp must be positive",
 			timestamp: 0,
 			caller:    adminAddr,
-			wantErr:   false,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name:      "panic - max int64 timestamp",
@@ -346,6 +370,34 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 			caller:    adminAddr,
 			wantErr:   true,
 			errMsg:    "distribution end timestamp must be before max int64 timestamp",
+		},
+		{
+			name: "panic - set to past time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix() - 100, // past time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
+		},
+		{
+			name: "panic - set to current time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix(), // current time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
 		},
 	}
 
@@ -499,6 +551,91 @@ func TestEmission_GetDistributionStartTimestamp(t *testing.T) {
 				// Allow small time difference for test execution
 				uassert.True(t, got >= time.Now().Unix()+999)
 			}
+		})
+	}
+}
+
+func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T) {
+	// This test verifies that InitEmissionState is called with actual block height,
+	// not timestamp value, fixing the semantic inconsistency issue.
+	tests := []struct {
+		name         string
+		blockHeight  int64
+		setup        func() int64
+		wantCheck    func(t *testing.T, startTimestamp, startHeight, expectedHeight int64)
+	}{
+		{
+			name:        "emission start height should be block height not timestamp",
+			blockHeight: 150,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 10000
+
+				// Call SetDistributionStartTime which internally calls InitEmissionState
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
+				// startHeight should be the block height, not timestamp
+				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match current block height")
+
+				// startHeight should NOT equal startTimestamp (they should be very different)
+				uassert.NotEqual(t, startTimestamp, startHeight, "startHeight should not be timestamp")
+
+				// startTimestamp should be much larger than startHeight
+				// (timestamps are in Unix epoch seconds ~1700000000+, block heights are small numbers)
+				uassert.True(t, startTimestamp > 1000000000, "startTimestamp should be Unix epoch timestamp")
+				uassert.True(t, startHeight < 1000, "startHeight should be block height (small number)")
+			},
+		},
+		{
+			name:        "emission start height tracks blockchain height correctly",
+			blockHeight: 500,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 20000
+
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
+				// Should capture the exact block height at initialization
+				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match expected height")
+
+				// Verify it's not the timestamp
+				uassert.NotEqual(t, startTimestamp, startHeight)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset state before each test
+			resetObject(t)
+
+			// Set block height BEFORE any initialization
+			testing.SetHeight(tt.blockHeight)
+
+			// Manually reset GNS emission state with the correct height
+			// This ensures the emission state is initialized with the test's block height
+			testing.SetOriginCaller(adminAddr)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
+				gns.InitEmissionState(cross, tt.blockHeight, time.Now().Unix())
+			}(cross)
+
+			// Setup and get the start timestamp used
+			startTimestamp := tt.setup()
+
+			// Get the emission start height from GNS
+			startHeight := gns.GetEmissionStartHeight()
+
+			// Verify expectations
+			tt.wantCheck(t, startTimestamp, startHeight, tt.blockHeight)
 		})
 	}
 }

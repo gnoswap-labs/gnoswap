@@ -724,6 +724,11 @@ func TestMint(t *testing.T) {
 				mintedTokenId := Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
 				uassert.Equal(t, tt.expected, string(mintedTokenId))
 				tt.verifyTokenList()
+
+				// Verify URI was set correctly
+				uri, err := TokenURI(mintedTokenId)
+				uassert.NoError(t, err)
+				uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
 			}
 		})
 	}
@@ -1294,6 +1299,7 @@ func Test_setTokenURI(t *testing.T) {
 		tokenURI      string
 		expectedError bool
 		errorContains string
+		verifyURI     func(t *testing.T, tokenId uint64)
 	}{
 		{
 			name: "successfully sets URI for token owned by caller",
@@ -1348,6 +1354,61 @@ func Test_setTokenURI(t *testing.T) {
 			expectedError: true,
 			errorContains: "caller is not token owner",
 		},
+		{
+			name: "sets image params URI and verifies conversion to base64 SVG",
+			setup: func() {
+				// Mint token to position owner
+				ownerAddr := owner.Owner()
+				nft.Mint(ownerAddr, tid(400))
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       400,
+			tokenURI:      "10,12,125,123,#FF0000,#00FF00", // (x1,y1,x2,y2,color1,color2)
+			expectedError: false,
+			verifyURI: func(t *testing.T, tokenId uint64) {
+				uri, err := TokenURI(tid(tokenId))
+				uassert.NoError(t, err)
+
+				// Image params should be converted to base64 SVG
+				uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
+			},
+		},
+		{
+			name: "sets plain URI and verifies it returns unchanged",
+			setup: func() {
+				// Mint token to position owner
+				ownerAddr := owner.Owner()
+				nft.Mint(ownerAddr, tid(500))
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       500,
+			tokenURI:      "https://xxx.xxx", // plain URI
+			expectedError: false,
+			verifyURI: func(t *testing.T, tokenId uint64) {
+				uri, err := TokenURI(tid(tokenId))
+				uassert.NoError(t, err)
+				// Plain URI should be returned unchanged
+				uassert.Equal(t, "https://xxx.xxx", uri)
+			},
+		},
+		{
+			name: "sets invalid image params URI and verifies it returns error",
+			setup: func() {
+				// Mint token to position owner
+				ownerAddr := owner.Owner()
+				nft.Mint(ownerAddr, tid(500))
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       500,
+			tokenURI:      "10,12,125,123,#FF000,#00FF00", // invalid image params URI
+			expectedError: false,
+			verifyURI: func(t *testing.T, tokenId uint64) {
+				uri, err := TokenURI(tid(tokenId))
+				uassert.NoError(t, err)
+				// Plain URI should be returned unchanged
+				uassert.Equal(t, "10,12,125,123,#FF000,#00FF00", uri)
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -1376,10 +1437,15 @@ func Test_setTokenURI(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 
-				// Verify URI was set correctly
-				uri, err := TokenURI(tid(tc.tokenId))
-				uassert.NoError(t, err)
-				uassert.Equal(t, tc.tokenURI, uri)
+				// Use custom verifyURI if provided, otherwise default verification
+				if tc.verifyURI != nil {
+					tc.verifyURI(t, tc.tokenId)
+				} else {
+					// Verify URI was set correctly (for plain URIs without conversion)
+					uri, err := TokenURI(tid(tc.tokenId))
+					uassert.NoError(t, err)
+					uassert.Equal(t, tc.tokenURI, uri)
+				}
 			}
 		})
 	}
