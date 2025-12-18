@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -27,8 +26,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 )
-
-var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -56,10 +53,6 @@ func testNoRetroactiveApplication() {
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
 	emission.SetDistributionStartTime(cross, distributionStartTime)
-	stakerBefore := emission.GetDistributedToStaker()
-	devopsBefore := emission.GetDistributedToDevOps()
-	uassert.Equal(t, int64(0), stakerBefore)
-	uassert.Equal(t, int64(0), devopsBefore)
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
 
@@ -96,18 +89,13 @@ func testNoRetroactiveApplication() {
 	println(ufmt.Sprintf("[INFO] distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		stakerAfterRatioChange, devopsAfterRatioChange, communityAfterRatioChange, govAfterRatioChange))
 
-	expectedStaker1 := int64(15410958480000)
-	expectedDevops1 := int64(15410958480000)
 	totalPeriod1 := stakerAfterRatioChange + devopsAfterRatioChange + communityAfterRatioChange + govAfterRatioChange
 
-	println(ufmt.Sprintf("[EXPECTED] Period 1 (10 days at 50/50) - Staker should be %d, got %d", expectedStaker1, stakerAfterRatioChange))
-	println(ufmt.Sprintf("[EXPECTED] Period 1 (10 days at 50/50) - DevOps should be %d, got %d", expectedDevops1, devopsAfterRatioChange))
+	println("[INFO] expected Staker: 15410958480000 (50%)")
+	println("[INFO] expected DevOps: 15410958480000 (50%)")
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker: %d", stakerAfterRatioChange))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps: %d", devopsAfterRatioChange))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
-
-	uassert.Equal(t, expectedStaker1, stakerAfterRatioChange)
-	uassert.Equal(t, expectedDevops1, devopsAfterRatioChange)
-	uassert.Equal(t, int64(0), communityAfterRatioChange)
-	uassert.Equal(t, int64(0), govAfterRatioChange)
 	println()
 
 	println("[SCENARIO] 5. Accumulate 1 more day and distribute")
@@ -135,23 +123,17 @@ func testNoRetroactiveApplication() {
 
 	println(ufmt.Sprintf("[INFO] new emissions: Staker=%d, DevOps=%d", stakerIncrement, devopsIncrement))
 
-	expectedStakerIncrement := int64(2465753356800)
-	expectedDevopsIncrement := int64(616438339200)
 	totalPeriod2 := stakerIncrement + devopsIncrement
 
-	println(ufmt.Sprintf("[EXPECTED] Period 2 (1 day at 80/20) - Staker increment should be %d, got %d", expectedStakerIncrement, stakerIncrement))
-	println(ufmt.Sprintf("[EXPECTED] Period 2 (1 day at 80/20) - DevOps increment should be %d, got %d", expectedDevopsIncrement, devopsIncrement))
+	println("[INFO] expected Staker increment: 2465753356800 (80%)")
+	println("[INFO] expected DevOps increment: 616438339200 (20%)")
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker: %d", stakerIncrement))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps: %d", devopsIncrement))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
 
-	uassert.Equal(t, expectedStakerIncrement, stakerIncrement)
-	uassert.Equal(t, expectedDevopsIncrement, devopsIncrement)
-
-	// Verify overall totals
 	totalDistributed := stakerAfterNew + devopsAfterNew + communityAfterNew + govAfterNew
-	expectedTotalDistributed := int64(33904108656000)
-
-	println(ufmt.Sprintf("[EXPECTED] Total distributed should be %d, got %d", expectedTotalDistributed, totalDistributed))
-	uassert.Equal(t, expectedTotalDistributed, totalDistributed)
+	println("[INFO] expected total distributed: 33904108656000")
+	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
 }
 
 // Output:
@@ -170,8 +152,10 @@ func testNoRetroactiveApplication() {
 //
 // [SCENARIO] 4. Change distribution ratio to 80/20
 // [INFO] distributed: Staker=15410958480000, DevOps=15410958480000, Community=0, Gov=0
-// [EXPECTED] Period 1 (10 days at 50/50) - Staker should be 15410958480000, got 15410958480000
-// [EXPECTED] Period 1 (10 days at 50/50) - DevOps should be 15410958480000, got 15410958480000
+// [INFO] expected Staker: 15410958480000 (50%)
+// [INFO] expected DevOps: 15410958480000 (50%)
+// [EXPECTED] Period 1 Staker: 15410958480000
+// [EXPECTED] Period 1 DevOps: 15410958480000
 // [EXPECTED] Period 1 total: 30821916960000
 //
 // [SCENARIO] 5. Accumulate 1 more day and distribute
@@ -180,7 +164,10 @@ func testNoRetroactiveApplication() {
 // [INFO] calculated total emission: 7134703 * 432000 = 3082191696000
 //
 // [INFO] new emissions: Staker=2465753356800, DevOps=616438339200
-// [EXPECTED] Period 2 (1 day at 80/20) - Staker increment should be 2465753356800, got 2465753356800
-// [EXPECTED] Period 2 (1 day at 80/20) - DevOps increment should be 616438339200, got 616438339200
+// [INFO] expected Staker increment: 2465753356800 (80%)
+// [INFO] expected DevOps increment: 616438339200 (20%)
+// [EXPECTED] Period 2 Staker: 2465753356800
+// [EXPECTED] Period 2 DevOps: 616438339200
 // [EXPECTED] Period 2 total: 3082191696000
-// [EXPECTED] Total distributed should be 33904108656000, got 33904108656000
+// [INFO] expected total distributed: 33904108656000
+// [EXPECTED] Total distributed: 33904108656000

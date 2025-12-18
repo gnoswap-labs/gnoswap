@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -28,8 +27,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 )
-
-var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -97,28 +94,15 @@ func testComplexRatioChanges() {
 	totalPeriod1 := period1Staker + period1Devops + period1Community + period1Gov
 	println(ufmt.Sprintf("[INFO] Period 1 total distributed: %d", totalPeriod1))
 
-	expectedStaker1 := int64(12328766784000)
-	expectedDevops1 := int64(9246575088000)
-	expectedCommunity1 := int64(6164383392000)
-	expectedGov1 := int64(3082191696000)
-	expectedTotal1 := expectedStaker1 + expectedDevops1 + expectedCommunity1 + expectedGov1
-
-	// Exact assertions
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker should be %d, got %d", expectedStaker1, period1Staker))
-	uassert.Equal(t, expectedStaker1, period1Staker)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps should be %d, got %d", expectedDevops1, period1Devops))
-	uassert.Equal(t, expectedDevops1, period1Devops)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Community should be %d, got %d", expectedCommunity1, period1Community))
-	uassert.Equal(t, expectedCommunity1, period1Community)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Gov should be %d, got %d", expectedGov1, period1Gov))
-	uassert.Equal(t, expectedGov1, period1Gov)
-
-	// Verify sum equals total
-	println(ufmt.Sprintf("[EXPECTED] Period 1 sum should equal total: %d == %d", totalPeriod1, expectedTotal1))
-	uassert.Equal(t, expectedTotal1, totalPeriod1)
+	println("[INFO] expected Staker: 12328766784000 (40%)")
+	println("[INFO] expected DevOps: 9246575088000 (30%)")
+	println("[INFO] expected Community: 6164383392000 (20%)")
+	println("[INFO] expected Gov: 3082191696000 (10%)")
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker: %d", period1Staker))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps: %d", period1Devops))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Community: %d", period1Community))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 Gov: %d", period1Gov))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
 	println()
 
 	println("[SCENARIO] 5. Accumulate emissions for 10 days (Period 2)")
@@ -164,33 +148,19 @@ func testComplexRatioChanges() {
 	totalPeriod2 := period2Staker + period2Devops + period2Community + period2Gov
 	println(ufmt.Sprintf("[INFO] Period 2 total distributed: %d", totalPeriod2))
 
-	expectedStaker2 := int64(15410958480000)
-	expectedDevops2 := int64(7705479240000)
-	expectedCommunity2 := int64(4623287544000)
-	expectedGov2 := int64(3082191696000)
-	expectedTotal2 := expectedStaker2 + expectedDevops2 + expectedCommunity2 + expectedGov2
+	println("[INFO] expected Staker: 15410958480000 (50%)")
+	println("[INFO] expected DevOps: 7705479240000 (25%)")
+	println("[INFO] expected Community: 4623287544000 (15%)")
+	println("[INFO] expected Gov: 3082191696000 (10%)")
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker: %d", period2Staker))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps: %d", period2Devops))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Community: %d", period2Community))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 Gov: %d", period2Gov))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
 
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker should be %d, got %d", expectedStaker2, period2Staker))
-	uassert.Equal(t, expectedStaker2, period2Staker)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps should be %d, got %d", expectedDevops2, period2Devops))
-	uassert.Equal(t, expectedDevops2, period2Devops)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Community should be %d, got %d", expectedCommunity2, period2Community))
-	uassert.Equal(t, expectedCommunity2, period2Community)
-
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Gov should be %d, got %d", expectedGov2, period2Gov))
-	uassert.Equal(t, expectedGov2, period2Gov)
-
-	// Verify sum equals total
-	println(ufmt.Sprintf("[EXPECTED] Period 2 sum should equal total: %d == %d", totalPeriod2, expectedTotal2))
-	uassert.Equal(t, expectedTotal2, totalPeriod2)
-
-	// Verify overall distribution across both periods
 	overallTotal := totalStaker + totalDevops + totalCommunity + totalGov
-	expectedOverallTotal := expectedTotal1 + expectedTotal2
-	println(ufmt.Sprintf("[EXPECTED] Overall total should be %d, got %d", expectedOverallTotal, overallTotal))
-	uassert.Equal(t, expectedOverallTotal, overallTotal)
+	println("[INFO] expected total distributed: 61643833920000")
+	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", overallTotal))
 }
 
 // Output:
@@ -209,11 +179,15 @@ func testComplexRatioChanges() {
 // [SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)
 // [INFO] Period 1 distributed: Staker=12328766784000, DevOps=9246575088000, Community=6164383392000, Gov=3082191696000
 // [INFO] Period 1 total distributed: 30821916960000
-// [EXPECTED] Period 1 Staker should be 12328766784000, got 12328766784000
-// [EXPECTED] Period 1 DevOps should be 9246575088000, got 9246575088000
-// [EXPECTED] Period 1 Community should be 6164383392000, got 6164383392000
-// [EXPECTED] Period 1 Gov should be 3082191696000, got 3082191696000
-// [EXPECTED] Period 1 sum should equal total: 30821916960000 == 30821916960000
+// [INFO] expected Staker: 12328766784000 (40%)
+// [INFO] expected DevOps: 9246575088000 (30%)
+// [INFO] expected Community: 6164383392000 (20%)
+// [INFO] expected Gov: 3082191696000 (10%)
+// [EXPECTED] Period 1 Staker: 12328766784000
+// [EXPECTED] Period 1 DevOps: 9246575088000
+// [EXPECTED] Period 1 Community: 6164383392000
+// [EXPECTED] Period 1 Gov: 3082191696000
+// [EXPECTED] Period 1 total: 30821916960000
 //
 // [SCENARIO] 5. Accumulate emissions for 10 days (Period 2)
 // [INFO] period 2: 10 days elapsed
@@ -225,9 +199,14 @@ func testComplexRatioChanges() {
 // [SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)
 // [INFO] Period 2 distributed: Staker=15410958480000, DevOps=7705479240000, Community=4623287544000, Gov=3082191696000
 // [INFO] Period 2 total distributed: 30821916960000
-// [EXPECTED] Period 2 Staker should be 15410958480000, got 15410958480000
-// [EXPECTED] Period 2 DevOps should be 7705479240000, got 7705479240000
-// [EXPECTED] Period 2 Community should be 4623287544000, got 4623287544000
-// [EXPECTED] Period 2 Gov should be 3082191696000, got 3082191696000
-// [EXPECTED] Period 2 sum should equal total: 30821916960000 == 30821916960000
-// [EXPECTED] Overall total should be 61643833920000, got 61643833920000
+// [INFO] expected Staker: 15410958480000 (50%)
+// [INFO] expected DevOps: 7705479240000 (25%)
+// [INFO] expected Community: 4623287544000 (15%)
+// [INFO] expected Gov: 3082191696000 (10%)
+// [EXPECTED] Period 2 Staker: 15410958480000
+// [EXPECTED] Period 2 DevOps: 7705479240000
+// [EXPECTED] Period 2 Community: 4623287544000
+// [EXPECTED] Period 2 Gov: 3082191696000
+// [EXPECTED] Period 2 total: 30821916960000
+// [INFO] expected total distributed: 61643833920000
+// [EXPECTED] Total distributed: 61643833920000
