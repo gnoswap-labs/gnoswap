@@ -398,6 +398,9 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 ) (int64, int64, error) {
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
+	if snapshotTime < 0 {
+		snapshotTime = 0
+	}
 
 	// Get total delegation amount at snapshot time from staker contract via accessor
 	totalVotingWeight, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)

@@ -227,6 +227,9 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	// Get current amount from the most recent entry
 	currentAmount := g.getLatestUserDelegation(userHistory)
 	newAmount := safeAddInt64(currentAmount, amount)
+	if newAmount < 0 {
+		newAmount = 0
+	}
 
 	// Store new cumulative value at this timestamp
 	userHistory.Set(timestamp, newAmount)
