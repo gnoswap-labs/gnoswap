@@ -24,8 +24,9 @@ type mockGovStakerStore struct {
 	userDelegations  map[string]map[string][]int64
 
 	// New delegation history structures
-	totalDelegationHistory *staker.UintTree // timestamp -> int64
-	userDelegationHistory  *avl.Tree        // address -> *staker.UintTree[timestamp -> int64]
+	totalDelegationHistory       *staker.UintTree // timestamp -> int64
+	userDelegationHistory        *avl.Tree        // address -> *staker.UintTree[timestamp -> int64]
+	hasTotalDelegationHistoryKey bool             // for testing HasTotalDelegationHistoryStoreKey
 
 	// Manager states
 	emissionRewardManager    *staker.EmissionRewardManager
@@ -38,11 +39,12 @@ var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
 
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
-		delegations:            avl.NewTree(),
-		userDelegations:        make(map[string]map[string][]int64),
-		delegationNextID:       staker.NewCounter(),
-		totalDelegationHistory: staker.NewUintTree(),
-		userDelegationHistory:  avl.NewTree(),
+		delegations:                  avl.NewTree(),
+		userDelegations:              make(map[string]map[string][]int64),
+		delegationNextID:             staker.NewCounter(),
+		totalDelegationHistory:       staker.NewUintTree(),
+		userDelegationHistory:        avl.NewTree(),
+		hasTotalDelegationHistoryKey: true,
 	}
 }
 
@@ -155,7 +157,7 @@ func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error
 
 // Total delegation history methods (timestamp -> int64)
 func (m *mockGovStakerStore) HasTotalDelegationHistoryStoreKey() bool {
-	return true // Always available in mock
+	return m.hasTotalDelegationHistoryKey
 }
 
 func (m *mockGovStakerStore) GetTotalDelegationHistory() *staker.UintTree {
