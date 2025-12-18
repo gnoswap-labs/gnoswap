@@ -1,10 +1,219 @@
 package v1
 
 import (
+	"chain"
+	"chain/runtime"
 	"strconv"
+	"testing"
+	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
+	"gno.land/r/onbloc/obl"
+)
+
+const (
+	testLaunchpadPkgPath = "gno.land/r/gnoswap/launchpad"
+	testOblTokenPath     = "gno.land/r/onbloc/obl"
+)
+
+// testEnvConfig holds environment configuration for test setup
+type testEnvConfig struct {
+	height      int64 // initial block height
+	initialTime int64 // initial unix timestamp
+}
+
+// testProjectConfig holds project configuration for test setup
+type testProjectConfig struct {
+	name            string
+	tokenPath       string
+	rewardAmount    int64
+	recipientSuffix string
+	tier30Pct       int64
+	tier90Pct       int64
+	tier180Pct      int64
+}
+
+// testDepositConfig holds depositor configuration for test setup
+type testDepositConfig struct {
+	userSuffix    string
+	depositAmount int64
+	tier          int64
+	depositDelay  int64 // heights to skip before this deposit
+}
+
+// =============================================================================
+// Test Environment Setup Functions
+// =============================================================================
+
+// setupTestEnvironment initializes test environment with given config
+// Returns launchpad address and admin realm
+func setupTestEnvironment(t *testing.T, cfg testEnvConfig) (address, runtime.Realm) {
+	resetTestStore()
+	initTestStore()
+
+	ctx := testing.GetContext()
+	if cfg.height > 0 {
+		ctx.Height = cfg.height
+	} else {
+		ctx.Height = 100
+	}
+	if cfg.initialTime > 0 {
+		ctx.Time = time.Unix(cfg.initialTime, 0)
+	}
+	testing.SetContext(ctx)
+
+	launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+
+	return launchpadAddr, adminRealm
+}
+
+// =============================================================================
+// Test Project Functions
+// =============================================================================
+
+// createTestProject creates a project with given config and returns project ID
+func createTestProject(
+	t *testing.T,
+	lp *launchpadV1,
+	launchpadAddr address,
+	adminRealm runtime.Realm,
+	cfg testProjectConfig,
+) string {
+	testing.SetRealm(adminRealm)
+
+	tokenPath := cfg.tokenPath
+	if tokenPath == "" {
+		tokenPath = testOblTokenPath
+	}
+
+	if tokenPath == testOblTokenPath {
+		obl.Approve(cross, launchpadAddr, cfg.rewardAmount)
+	}
+
+	startTime := time.Now().Unix() + 3700
+
+	var projectID string
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+
+		name := cfg.name
+		if name == "" {
+			name = "Test Project"
+		}
+
+		projectID = lp.CreateProject(
+			name,
+			tokenPath,
+			testutils.TestAddress(cfg.recipientSuffix),
+			cfg.rewardAmount,
+			"", "",
+			cfg.tier30Pct, cfg.tier90Pct, cfg.tier180Pct,
+			startTime,
+		)
+	}(cross)
+
+	// Activate project by skipping to start time
+	testing.SkipHeights(3700)
+
+	return projectID
+}
+
+// createTestDeposit creates a deposit for given user and returns user address and deposit ID
+func createTestDeposit(
+	t *testing.T,
+	lp *launchpadV1,
+	launchpadAddr address,
+	adminRealm runtime.Realm,
+	projectID string,
+	cfg testDepositConfig,
+) (address, string) {
+	if cfg.depositDelay > 0 {
+		testing.SkipHeights(cfg.depositDelay)
+	}
+
+	userAddr := testutils.TestAddress(cfg.userSuffix)
+
+	// Transfer GNS to user
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, userAddr, cfg.depositAmount*2)
+
+	// User approves and deposits
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	gns.Approve(cross, launchpadAddr, cfg.depositAmount)
+
+	tier := cfg.tier
+	if tier == 0 {
+		tier = 30
+	}
+
+	var depositID string
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		depositID = lp.DepositGns(projectID+":"+formatInt(tier), cfg.depositAmount, "")
+	}(cross)
+
+	return userAddr, depositID
+}
+
+// createTestDeposits creates multiple deposits and returns user addresses and deposit IDs
+func createTestDeposits(
+	t *testing.T,
+	lp *launchpadV1,
+	launchpadAddr address,
+	adminRealm runtime.Realm,
+	projectID string,
+	configs []testDepositConfig,
+) ([]address, []string) {
+	userAddrs := make([]address, len(configs))
+	depositIDs := make([]string, len(configs))
+
+	for i, cfg := range configs {
+		userAddrs[i], depositIDs[i] = createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, cfg)
+	}
+
+	return userAddrs, depositIDs
+}
+
+// =============================================================================
+// Test Reward Collection Functions
+// =============================================================================
+
+// collectTestReward collects reward for given user and deposit
+// Returns the reward amount
+func collectTestReward(t *testing.T, lp *launchpadV1, userAddr address, depositID string) int64 {
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	var rewardAmount int64
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		rewardAmount = lp.CollectRewardByDepositId(depositID)
+	}(cross)
+
+	return rewardAmount
+}
+
+// =============================================================================
+// Test Constants
+// =============================================================================
+
+// Common skip heights for different tiers (claimable duration + buffer)
+const (
+	testSkipTier30Claimable  = 260200  // 3 days + buffer
+	testSkipTier90Claimable  = 778600  // 9 days + buffer
+	testSkipTier180Claimable = 1556200 // 18 days + buffer
+	testSkipTier30End        = 2692000 // 30 days + buffer (distribution end)
 )
 
 // Test helper functions to access and manipulate state for testing purposes
