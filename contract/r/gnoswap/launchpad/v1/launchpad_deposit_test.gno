@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 
 	_ "gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -696,4 +697,409 @@ func initLaunchpadDepositTest(t *testing.T) {
 	lp.store.SetProjects(projects)
 
 	testing.SkipHeights(10)
+}
+
+// TestLaunchpadDeposit_xGNSMintedOnce verifies that xGNS is minted exactly once
+// during deposit (not twice as was the bug before the fix).
+// This test ensures the fix for the double-minting issue is working correctly.
+func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	t.Run("xGNS should be minted exactly once per deposit", func(t *testing.T) {
+		// Reset test store
+		initTestStore()
+
+		userAddr := testutils.TestAddress("xgns_test_user")
+		projectAddr := testutils.TestAddress("xgns_test_project")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project as admin
+		testing.SetOriginCaller(launchpadAddr)
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600 // 1 hour from now
+
+		obl.Approve(cross, launchpadAddr, 10000)
+
+		lp := getTestImplementation()
+
+		// Create project
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"xGNS Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				10000,
+				"", // no conditions
+				"",
+				30,
+				30,
+				40,
+				startTime,
+			)
+		}(cross)
+
+		// Skip blocks to activate the project
+		testing.SkipHeights(3600)
+
+		// Setup user with GNS tokens
+		testing.SetRealm(adminRealm)
+		depositAmount := int64(1000000)
+		gns.Transfer(cross, userAddr, depositAmount*2)
+
+		// User approves launchpad to spend GNS
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, depositAmount*2)
+
+		// Record xGNS state before deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		initialLaunchpadXGNSBalance := xgns.BalanceOf(launchpadAddr)
+		initialXGNSTotalSupply := xgns.TotalSupply()
+
+		// Perform deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":30", depositAmount, "")
+		}(cross)
+
+		// Record xGNS state after deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		finalLaunchpadXGNSBalance := xgns.BalanceOf(launchpadAddr)
+		finalXGNSTotalSupply := xgns.TotalSupply()
+
+		// Verify xGNS was minted exactly once (not twice)
+		// The launchpad balance should increase by exactly depositAmount
+		actualBalanceIncrease := finalLaunchpadXGNSBalance - initialLaunchpadXGNSBalance
+		uassert.Equal(t, depositAmount, actualBalanceIncrease,
+			"xGNS balance should increase by exactly depositAmount (single mint)")
+
+		// Total supply should also increase by exactly depositAmount
+		actualSupplyIncrease := finalXGNSTotalSupply - initialXGNSTotalSupply
+		uassert.Equal(t, depositAmount, actualSupplyIncrease,
+			"xGNS total supply should increase by exactly depositAmount (single mint)")
+
+		// If double-minting was occurring, these values would be 2*depositAmount
+		uassert.True(t, actualBalanceIncrease != depositAmount*2,
+			"xGNS should NOT be minted twice")
+	})
+
+	t.Run("multiple deposits should each mint xGNS once", func(t *testing.T) {
+		// Reset test store
+		initTestStore()
+
+		userAddr := testutils.TestAddress("xgns_multi_user")
+		projectAddr := testutils.TestAddress("xgns_multi_project")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project as admin
+		testing.SetOriginCaller(launchpadAddr)
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600
+
+		obl.Approve(cross, launchpadAddr, 10000)
+
+		lp := getTestImplementation()
+
+		// Create project
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"xGNS Multi Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				10000,
+				"",
+				"",
+				30,
+				30,
+				40,
+				startTime,
+			)
+		}(cross)
+
+		// Skip blocks to activate the project
+		testing.SkipHeights(3600)
+
+		// Setup user with enough GNS tokens for multiple deposits
+		testing.SetRealm(adminRealm)
+		deposit1Amount := int64(1000000)
+		deposit2Amount := int64(2000000)
+		totalDepositAmount := deposit1Amount + deposit2Amount
+		gns.Transfer(cross, userAddr, totalDepositAmount*2)
+
+		// User approves launchpad
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, totalDepositAmount*2)
+
+		// Record initial xGNS state
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		initialXGNSTotalSupply := xgns.TotalSupply()
+
+		// First deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":30", deposit1Amount, "")
+		}(cross)
+
+		// Check after first deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		afterFirstDepositSupply := xgns.TotalSupply()
+		firstDepositIncrease := afterFirstDepositSupply - initialXGNSTotalSupply
+		uassert.Equal(t, deposit1Amount, firstDepositIncrease,
+			"First deposit should mint exactly deposit1Amount of xGNS")
+
+		// Second deposit
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.DepositGns(projectID+":90", deposit2Amount, "")
+		}(cross)
+
+		// Check after second deposit
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		finalXGNSTotalSupply := xgns.TotalSupply()
+		totalIncrease := finalXGNSTotalSupply - initialXGNSTotalSupply
+
+		// Total xGNS minted should equal total deposits (not 2x)
+		uassert.Equal(t, totalDepositAmount, totalIncrease,
+			"Total xGNS minted should equal sum of all deposits")
+	})
+}
+
+// TestDepositGns_RewardDistributionOrder verifies that the reward distribution
+// order is correct: update reward-per-deposit before adding new deposit.
+// This prevents:
+// 1. Dilution of existing depositor rewards
+// 2. New depositors claiming rewards from periods they didn't participate in
+func TestDepositGns_RewardDistributionOrder(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	t.Run("existing depositor should not have rewards diluted by new deposit", func(t *testing.T) {
+		// Reset state
+		resetTestStore()
+		lp := getTestImplementation()
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		user1Addr := testutils.TestAddress("user1")
+		user2Addr := testutils.TestAddress("user2")
+		projectAddr := testutils.TestAddress("projectRD")
+
+		// Create project as admin
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600 // 1 hour from now
+
+		obl.Approve(cross, launchpadAddr, 1000000)
+
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"Reward Distribution Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				1000000, // total reward amount
+				"",
+				"",
+				100, // all to tier 30
+				0,
+				0,
+				startTime,
+			)
+		}(cross)
+
+		// Skip blocks to activate the project
+		testing.SkipHeights(3600)
+
+		// Setup user1 with GNS tokens
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, user1Addr, 10000000)
+
+		// User1 deposits first
+		testing.SetRealm(testing.NewUserRealm(user1Addr))
+		gns.Approve(cross, launchpadAddr, 10000000)
+
+		var deposit1ID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			deposit1ID = lp.DepositGns(projectID+":30", 1000000, "")
+		}(cross)
+
+		// Get reward state for user1 right after deposit
+		deposit1, err := lp.getDeposit(deposit1ID)
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(1000000), deposit1.DepositAmount())
+
+		project, err := lp.getProject(projectID)
+		uassert.NoError(t, err)
+
+		tier30, err := getProjectTier(project, 30)
+		uassert.NoError(t, err)
+
+		rewardManager1, err := lp.getProjectTierRewardManager(tier30.ID())
+		uassert.NoError(t, err)
+
+		// Record initial accumulated reward per deposit for user1
+		user1InitialDebt, err := getDepositRewardState(rewardManager1, deposit1ID)
+		uassert.NoError(t, err)
+
+		// Skip time to accumulate some rewards (e.g., 10 seconds)
+		testing.SkipHeights(10)
+
+		// Setup user2 with GNS tokens
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, user2Addr, 10000000)
+
+		// User2 deposits same amount
+		testing.SetRealm(testing.NewUserRealm(user2Addr))
+		gns.Approve(cross, launchpadAddr, 10000000)
+
+		var deposit2ID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			deposit2ID = lp.DepositGns(projectID+":30", 1000000, "")
+		}(cross)
+
+		// Verify deposit2 was created
+		deposit2, err := lp.getDeposit(deposit2ID)
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(1000000), deposit2.DepositAmount())
+
+		// Get updated reward manager
+		rewardManager2, err := lp.getProjectTierRewardManager(tier30.ID())
+		uassert.NoError(t, err)
+
+		// Get reward state for user2
+		user2Debt, err := getDepositRewardState(rewardManager2, deposit2ID)
+		uassert.NoError(t, err)
+
+		uassert.True(t, user2Debt.PriceDebtX128().Gt(user1InitialDebt.PriceDebtX128()),
+			"User2's price debt should be greater than User1's initial debt")
+	})
+
+	t.Run("new depositor should not claim rewards from period before deposit", func(t *testing.T) {
+		// Reset state
+		resetTestStore()
+		lp := getTestImplementation()
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		user1Addr := testutils.TestAddress("userA")
+		user2Addr := testutils.TestAddress("userB")
+		projectAddr := testutils.TestAddress("projectRD2")
+
+		// Create project as admin
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600
+
+		obl.Approve(cross, launchpadAddr, 1000000)
+
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"No Prior Claim Test",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				1000000,
+				"",
+				"",
+				100,
+				0,
+				0,
+				startTime,
+			)
+		}(cross)
+
+		// Activate project
+		testing.SkipHeights(3600)
+
+		// User1 deposits
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, user1Addr, 10000000)
+
+		testing.SetRealm(testing.NewUserRealm(user1Addr))
+		gns.Approve(cross, launchpadAddr, 10000000)
+
+		var deposit1ID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			deposit1ID = lp.DepositGns(projectID+":30", 1000000, "")
+		}(cross)
+
+		// Skip significant time to accumulate rewards
+		testing.SkipHeights(100)
+
+		// User2 deposits
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, user2Addr, 10000000)
+
+		testing.SetRealm(testing.NewUserRealm(user2Addr))
+		gns.Approve(cross, launchpadAddr, 10000000)
+
+		var deposit2ID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			deposit2ID = lp.DepositGns(projectID+":30", 1000000, "")
+		}(cross)
+
+		// Get project and tier
+		project, err := lp.getProject(projectID)
+		uassert.NoError(t, err)
+
+		tier30, err := getProjectTier(project, 30)
+		uassert.NoError(t, err)
+
+		rewardManager, err := lp.getProjectTierRewardManager(tier30.ID())
+		uassert.NoError(t, err)
+
+		// Get reward states
+		user1State, err := getDepositRewardState(rewardManager, deposit1ID)
+		uassert.NoError(t, err)
+
+		user2State, err := getDepositRewardState(rewardManager, deposit2ID)
+		uassert.NoError(t, err)
+
+		// Calculate claimable rewards for both users at this point
+		accumulatedReward := rewardManager.AccumulatedRewardPerDepositX128()
+
+		user1Claimable := calculateClaimableReward(user1State, accumulatedReward)
+		user2Claimable := calculateClaimableReward(user2State, accumulatedReward)
+
+		uassert.True(t, user1Claimable >= 0,
+			"User1 should have non-negative claimable rewards")
+
+		uassert.Equal(t, int64(0), user2Claimable,
+			"User2 should have 0 claimable rewards immediately after deposit")
+	})
 }
