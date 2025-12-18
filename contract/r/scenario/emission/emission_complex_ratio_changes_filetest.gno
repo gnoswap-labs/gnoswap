@@ -57,10 +57,10 @@ func testComplexRatioChanges() {
 	println("[INFO] period 1 ratio: Staker 40%, DevOps 30%, Community 20%, Gov 10%")
 	println()
 
-	println("[SCENARIO] 3. Accumulate emissions for 10 days (Period 1)")
+	println("[SCENARIO] 3. Accumulate emissions for 50 days (Period 1)")
 	testing.SkipHeights(864000)
 	timestampAfterPeriod1 := time.Now().Unix()
-	println("[INFO] period 1: 10 days elapsed")
+	println("[INFO] period 1: 50 days elapsed")
 	println()
 
 	// Calculate emission details for Period 1
@@ -69,7 +69,7 @@ func testComplexRatioChanges() {
 	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (50 days)", elapsedSeconds1))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
@@ -103,10 +103,10 @@ func testComplexRatioChanges() {
 	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
 	println()
 
-	println("[SCENARIO] 5. Accumulate emissions for 10 days (Period 2)")
+	println("[SCENARIO] 5. Accumulate emissions for 50 days (Period 2)")
 	testing.SkipHeights(864000)
 	timestampAfterPeriod2 := time.Now().Unix()
-	println("[INFO] period 2: 10 days elapsed")
+	println("[INFO] period 2: 50 days elapsed")
 	println()
 
 	// Calculate emission details for Period 2
@@ -115,7 +115,7 @@ func testComplexRatioChanges() {
 	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (50 days)", elapsedSeconds2))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
@@ -166,11 +166,11 @@ func testComplexRatioChanges() {
 // [SCENARIO] 2. Set Period 1 ratio (40/30/20/10)
 // [INFO] period 1 ratio: Staker 40%, DevOps 30%, Community 20%, Gov 10%
 //
-// [SCENARIO] 3. Accumulate emissions for 10 days (Period 1)
-// [INFO] period 1: 10 days elapsed
+// [SCENARIO] 3. Accumulate emissions for 50 days (Period 1)
+// [INFO] period 1: 50 days elapsed
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (10 days)
+// [INFO] elapsed seconds: 4320000 (50 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)
@@ -186,11 +186,11 @@ func testComplexRatioChanges() {
 // [EXPECTED] Period 1 Gov: 3082191696000
 // [EXPECTED] Period 1 total: 30821916960000
 //
-// [SCENARIO] 5. Accumulate emissions for 10 days (Period 2)
-// [INFO] period 2: 10 days elapsed
+// [SCENARIO] 5. Accumulate emissions for 50 days (Period 2)
+// [INFO] period 2: 50 days elapsed
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (10 days)
+// [INFO] elapsed seconds: 4320000 (50 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)

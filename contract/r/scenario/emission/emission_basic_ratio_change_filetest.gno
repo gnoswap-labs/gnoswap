@@ -56,7 +56,7 @@ func testNoRetroactiveApplication() {
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
 
-	println("[SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)")
+	println("[SCENARIO] 3. Accumulate emissions for 50 days (864,000 heights)")
 	testing.SkipHeights(864000)
 	timestampAfterPeriod1 := time.Now().Unix()
 	println("[INFO] emissions accumulated without distribution")
@@ -68,7 +68,7 @@ func testNoRetroactiveApplication() {
 	expectedTotalEmission1 := emissionPerSecond1 * elapsedSeconds1
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond1))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (10 days)", elapsedSeconds1))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (50 days)", elapsedSeconds1))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
@@ -97,7 +97,7 @@ func testNoRetroactiveApplication() {
 	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
 	println()
 
-	println("[SCENARIO] 5. Accumulate 1 more day and distribute")
+	println("[SCENARIO] 5. Accumulate 5 more days and distribute")
 	testing.SkipHeights(86400)
 	timestampAfterPeriod2 := time.Now().Unix()
 
@@ -107,7 +107,7 @@ func testNoRetroactiveApplication() {
 	expectedTotalEmission2 := emissionPerSecond2 * elapsedSeconds2
 
 	println(ufmt.Sprintf("[INFO] emission per second: %d", emissionPerSecond2))
-	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (1 day)", elapsedSeconds2))
+	println(ufmt.Sprintf("[INFO] elapsed seconds: %d (5 days)", elapsedSeconds2))
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
@@ -142,11 +142,11 @@ func testNoRetroactiveApplication() {
 // [SCENARIO] 2. Set distribution start time
 // [INFO] initial distribution: Staker=0, DevOps=0
 //
-// [SCENARIO] 3. Accumulate emissions for 10 days (864,000 heights)
+// [SCENARIO] 3. Accumulate emissions for 50 days (864,000 heights)
 // [INFO] emissions accumulated without distribution
 //
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 4320000 (10 days)
+// [INFO] elapsed seconds: 4320000 (50 days)
 // [INFO] calculated total emission: 7134703 * 4320000 = 30821916960000
 //
 // [SCENARIO] 4. Change distribution ratio to 80/20
@@ -157,9 +157,9 @@ func testNoRetroactiveApplication() {
 // [EXPECTED] Period 1 DevOps: 15410958480000
 // [EXPECTED] Period 1 total: 30821916960000
 //
-// [SCENARIO] 5. Accumulate 1 more day and distribute
+// [SCENARIO] 5. Accumulate 5 more days and distribute
 // [INFO] emission per second: 7134703
-// [INFO] elapsed seconds: 432000 (1 day)
+// [INFO] elapsed seconds: 432000 (5 days)
 // [INFO] calculated total emission: 7134703 * 432000 = 3082191696000
 //
 // [INFO] new emissions: Staker=2465753356800, DevOps=616438339200, Community=0, Gov=0
