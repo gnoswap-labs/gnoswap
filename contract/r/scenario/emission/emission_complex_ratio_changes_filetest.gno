@@ -116,23 +116,6 @@ func testComplexRatioChanges() {
 	println(ufmt.Sprintf("[EXPECTED] Period 1 Gov should be %d, got %d", expectedGov1, period1Gov))
 	uassert.Equal(t, expectedGov1, period1Gov)
 
-	// Verify ratios between recipients
-	stakerDevopsRatio := float64(period1Staker) / float64(period1Devops)
-	stakerCommunityRatio := float64(period1Staker) / float64(period1Community)
-	stakerGovRatio := float64(period1Staker) / float64(period1Gov)
-
-	expectedStakerDevops := 4000.0 / 3000.0       // 1.33
-	expectedStakerCommunity := 4000.0 / 2000.0    // 2.00
-	expectedStakerGov := 4000.0 / 1000.0          // 4.00
-
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker/DevOps ratio should be ~%.2f (40/30), got %.2f", expectedStakerDevops, stakerDevopsRatio))
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker/Community ratio should be ~%.2f (40/20), got %.2f", expectedStakerCommunity, stakerCommunityRatio))
-	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker/Gov ratio should be ~%.2f (40/10), got %.2f", expectedStakerGov, stakerGovRatio))
-
-	uassert.True(t, stakerDevopsRatio > expectedStakerDevops*0.99 && stakerDevopsRatio < expectedStakerDevops*1.01)
-	uassert.True(t, stakerCommunityRatio > expectedStakerCommunity*0.99 && stakerCommunityRatio < expectedStakerCommunity*1.01)
-	uassert.True(t, stakerGovRatio > expectedStakerGov*0.99 && stakerGovRatio < expectedStakerGov*1.01)
-
 	// Verify sum equals total
 	println(ufmt.Sprintf("[EXPECTED] Period 1 sum should equal total: %d == %d", totalPeriod1, expectedTotal1))
 	uassert.Equal(t, expectedTotal1, totalPeriod1)
@@ -187,7 +170,6 @@ func testComplexRatioChanges() {
 	expectedGov2 := int64(3082191696000)
 	expectedTotal2 := expectedStaker2 + expectedDevops2 + expectedCommunity2 + expectedGov2
 
-	// Exact assertions
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker should be %d, got %d", expectedStaker2, period2Staker))
 	uassert.Equal(t, expectedStaker2, period2Staker)
 
@@ -199,23 +181,6 @@ func testComplexRatioChanges() {
 
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Gov should be %d, got %d", expectedGov2, period2Gov))
 	uassert.Equal(t, expectedGov2, period2Gov)
-
-	// Verify ratios between recipients for Period 2
-	staker2DevopsRatio := float64(period2Staker) / float64(period2Devops)
-	staker2CommunityRatio := float64(period2Staker) / float64(period2Community)
-	staker2GovRatio := float64(period2Staker) / float64(period2Gov)
-
-	expectedStaker2Devops := 5000.0 / 2500.0      // 2.00
-	expectedStaker2Community := 5000.0 / 1500.0   // 3.33
-	expectedStaker2Gov := 5000.0 / 1000.0         // 5.00
-
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker/DevOps ratio should be ~%.2f (50/25), got %.2f", expectedStaker2Devops, staker2DevopsRatio))
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker/Community ratio should be ~%.2f (50/15), got %.2f", expectedStaker2Community, staker2CommunityRatio))
-	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker/Gov ratio should be ~%.2f (50/10), got %.2f", expectedStaker2Gov, staker2GovRatio))
-
-	uassert.True(t, staker2DevopsRatio > expectedStaker2Devops*0.99 && staker2DevopsRatio < expectedStaker2Devops*1.01)
-	uassert.True(t, staker2CommunityRatio > expectedStaker2Community*0.99 && staker2CommunityRatio < expectedStaker2Community*1.01)
-	uassert.True(t, staker2GovRatio > expectedStaker2Gov*0.99 && staker2GovRatio < expectedStaker2Gov*1.01)
 
 	// Verify sum equals total
 	println(ufmt.Sprintf("[EXPECTED] Period 2 sum should equal total: %d == %d", totalPeriod2, expectedTotal2))
@@ -248,9 +213,6 @@ func testComplexRatioChanges() {
 // [EXPECTED] Period 1 DevOps should be 9246575088000, got 9246575088000
 // [EXPECTED] Period 1 Community should be 6164383392000, got 6164383392000
 // [EXPECTED] Period 1 Gov should be 3082191696000, got 3082191696000
-// [EXPECTED] Period 1 Staker/DevOps ratio should be ~1.33 (40/30), got 1.33
-// [EXPECTED] Period 1 Staker/Community ratio should be ~2.00 (40/20), got 2.00
-// [EXPECTED] Period 1 Staker/Gov ratio should be ~4.00 (40/10), got 4.00
 // [EXPECTED] Period 1 sum should equal total: 30821916960000 == 30821916960000
 //
 // [SCENARIO] 5. Accumulate emissions for 10 days (Period 2)
@@ -267,8 +229,5 @@ func testComplexRatioChanges() {
 // [EXPECTED] Period 2 DevOps should be 7705479240000, got 7705479240000
 // [EXPECTED] Period 2 Community should be 4623287544000, got 4623287544000
 // [EXPECTED] Period 2 Gov should be 3082191696000, got 3082191696000
-// [EXPECTED] Period 2 Staker/DevOps ratio should be ~2.00 (50/25), got 2.00
-// [EXPECTED] Period 2 Staker/Community ratio should be ~3.33 (50/15), got 3.33
-// [EXPECTED] Period 2 Staker/Gov ratio should be ~5.00 (50/10), got 5.00
 // [EXPECTED] Period 2 sum should equal total: 30821916960000 == 30821916960000
 // [EXPECTED] Overall total should be 61643833920000, got 61643833920000
