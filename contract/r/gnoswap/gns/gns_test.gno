@@ -3,6 +3,7 @@ package gns
 import (
 	"chain/runtime"
 	"testing"
+	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -419,6 +420,26 @@ func TestCalculateAmountToMint(t *testing.T) {
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
+}
+
+func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
+	InitGnsTest(t)
+
+	// Verify lastMintedTimestamp is initialized to 0
+	uassert.Equal(t, int64(0), LastMintedTimestamp())
+
+	// First mint with lastMintedTimestamp = 0
+	// calculateAmountToMint(0+1, currentTime) is called
+	// Since fromTimestamp(1) < emissionState.startTimestamp, it gets adjusted to startTimestamp
+	// Result: 1 second worth of emission (due to +1 in seconds calculation)
+	testing.SetRealm(emissionRealm)
+	currentTime := time.Now().Unix()
+	firstMintAmount := MintGns(cross, adminAddr)
+
+	uassert.Equal(t, int64(7134703), firstMintAmount)
+
+	// Verify lastMintedTimestamp was updated to currentTime
+	uassert.Equal(t, currentTime, LastMintedTimestamp())
 }
 
 func TestMintGns(t *testing.T) {
