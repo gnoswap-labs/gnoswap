@@ -904,3 +904,320 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		uassert.Equal(t, int64(50_000), claimableRewards)
 	})
 }
+
+// TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals tests that
+// TransferLeftFromProjectByAdmin works correctly when users have pending withdrawals.
+// The refundable amount should exclude claimable rewards for remaining depositors.
+func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testing.T) {
+	tests := []struct {
+		name                   string
+		totalDistributeAmount  int64
+		depositAmount          int64
+		accumulatedRewardRatio int64 // 1 = full reward (Q128), 2 = half reward (Q128/2)
+		priceDebtRatio         int64 // divisor for Q128 to get priceDebt
+		expectedClaimable      int64
+		expectedRefundable     int64
+		expectError            bool
+		expectedBalanceChange  int64
+		expectedErrorContains  string
+	}{
+		{
+			name:                   "refund with one pending deposit - half rewards claimable",
+			totalDistributeAmount:  1_000_000,
+			depositAmount:          100_000,
+			accumulatedRewardRatio: 1, // 1.0 accumulated reward per deposit
+			priceDebtRatio:         2, // priceDebt = 0.5
+			expectedClaimable:      50_000,
+			expectedRefundable:     950_000, // 1_000_000 - 50_000
+			expectedBalanceChange:  950_000,
+			expectError:            false,
+		},
+		{
+			name:                   "refund with one pending deposit - quarter rewards claimable",
+			totalDistributeAmount:  1_000_000,
+			depositAmount:          100_000,
+			accumulatedRewardRatio: 1, // 1.0 accumulated reward per deposit
+			priceDebtRatio:         4, // priceDebt = 0.25
+			expectedClaimable:      75_000,
+			expectedRefundable:     925_000, // 1_000_000 - 75_000
+			expectedBalanceChange:  925_000,
+			expectError:            false,
+		},
+		{
+			name:                   "refund with one pending deposit - nearly full rewards claimable",
+			totalDistributeAmount:  1_000_000,
+			depositAmount:          100_000,
+			accumulatedRewardRatio: 1,       // 1.0 accumulated reward per deposit
+			priceDebtRatio:         1000000, // priceDebt (very small due to rounding)
+			expectedClaimable:      99_999,  // 100_000 - 1 (rounding)
+			expectedRefundable:     900_001, // 1_000_000 - 99_999
+			expectedBalanceChange:  900_001,
+			expectError:            false,
+		},
+		{
+			name:                   "refund with zero claimable - priceDebt equals accumulated",
+			totalDistributeAmount:  1_000_000,
+			depositAmount:          100_000,
+			accumulatedRewardRatio: 1, // 1.0 accumulated reward per deposit
+			priceDebtRatio:         1, // priceDebt = 1.0 (same as accumulated)
+			expectedClaimable:      0,
+			expectedRefundable:     1_000_000, // full refund since no claimable
+			expectedBalanceChange:  1_000_000,
+			expectError:            false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initLaunchpadProjectTest(t)
+			lp := getTestImplementation()
+
+			adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+			recipient := testutils.TestAddress("recipient")
+			projectID := "gno.land/r/onbloc/obl:123"
+			tierID := projectID + ":180"
+
+			// Create project with single tier (180 days for simplicity)
+			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier.SetID(tierID)
+			tier.SetTotalDepositCount(1)    // One active depositor
+			tier.SetTotalWithdrawCount(0)   // No withdrawals yet
+			tier.SetTotalCollectedAmount(0) // No rewards collected yet
+
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project.SetID(projectID)
+
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
+
+			projects := lp.store.GetProjects()
+			projects.Set(projectID, project)
+			lp.store.SetProjects(projects)
+
+			// Setup reward manager with pending claimable rewards
+			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+
+			// Set accumulated reward: Q128 / accumulatedRewardRatio
+			accumulatedReward := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
+			rm.SetAccumulatedRewardPerDepositX128(accumulatedReward)
+
+			// Set price debt: Q128 / priceDebtRatio
+			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
+			rewardState := newRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
+			rm.Rewards().Set("deposit1", rewardState)
+
+			projectTierRewardManagers.Set(tierID, rm)
+			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+
+			// Transfer OBL tokens from admin to launchpad for refund
+			adminRealm := testing.NewUserRealm(adminAddr)
+			testing.SetRealm(adminRealm)
+			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+
+			// Execute transfer
+			currentTime := int64(2001) // After tier end
+			beforeOblBalance := obl.BalanceOf(recipient)
+			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			afterOblBalance := obl.BalanceOf(recipient)
+			balanceChange := afterOblBalance - beforeOblBalance
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				if tt.expectedErrorContains != "" {
+					uassert.ErrorContains(t, err, tt.expectedErrorContains)
+				}
+				return
+			}
+
+			uassert.NoError(t, err)
+
+			// Verify claimable amount calculation
+			claimable := calculateClaimableRewardsForActiveDeposits(rm)
+			uassert.Equal(t, tt.expectedClaimable, claimable)
+
+			// Verify refundable amount
+			uassert.Equal(t, tt.expectedRefundable, refundedAmount)
+			uassert.Equal(t, tt.expectedBalanceChange, balanceChange)
+		})
+	}
+}
+
+// TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits tests
+// TransferLeftFromProjectByAdmin with multiple users having pending withdrawals.
+func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *testing.T) {
+	tests := []struct {
+		name                  string
+		totalDistributeAmount int64
+		deposits              []struct {
+			amount         int64
+			priceDebtRatio int64
+		}
+		expectedTotalClaimable int64
+		expectedRefundable     int64
+	}{
+		{
+			name:                  "two deposits with different claimable amounts",
+			totalDistributeAmount: 1_000_000,
+			deposits: []struct {
+				amount         int64
+				priceDebtRatio int64
+			}{
+				{amount: 100_000, priceDebtRatio: 2}, // claimable = 50_000
+				{amount: 200_000, priceDebtRatio: 4}, // claimable = 150_000
+			},
+			expectedTotalClaimable: 200_000, // 50_000 + 150_000
+			expectedRefundable:     800_000, // 1_000_000 - 200_000
+		},
+		{
+			name:                  "three deposits with varying claimable",
+			totalDistributeAmount: 1_000_000,
+			deposits: []struct {
+				amount         int64
+				priceDebtRatio int64
+			}{
+				{amount: 50_000, priceDebtRatio: 2},  // claimable = 25_000
+				{amount: 100_000, priceDebtRatio: 4}, // claimable = 75_000
+				{amount: 150_000, priceDebtRatio: 1}, // claimable = 0 (priceDebt == accumulated)
+			},
+			expectedTotalClaimable: 100_000, // 25_000 + 75_000 + 0
+			expectedRefundable:     900_000, // 1_000_000 - 100_000
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initLaunchpadProjectTest(t)
+			lp := getTestImplementation()
+
+			adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+			recipient := testutils.TestAddress("recipient")
+			projectID := "gno.land/r/onbloc/obl:123"
+			tierID := projectID + ":180"
+
+			// Create project with tier
+			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier.SetID(tierID)
+			tier.SetTotalDepositCount(int64(len(tt.deposits)))
+			tier.SetTotalWithdrawCount(0)
+			tier.SetTotalCollectedAmount(0)
+
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project.SetID(projectID)
+
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
+
+			projects := lp.store.GetProjects()
+			projects.Set(projectID, project)
+			lp.store.SetProjects(projects)
+
+			// Setup reward manager with multiple deposits
+			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+			rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 accumulated
+
+			for i, dep := range tt.deposits {
+				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
+				rewardState := newRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
+				rm.Rewards().Set("deposit"+formatInt(int64(i)), rewardState)
+			}
+
+			projectTierRewardManagers.Set(tierID, rm)
+			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+
+			// Transfer OBL tokens from admin to launchpad for refund
+			adminRealm := testing.NewUserRealm(adminAddr)
+			testing.SetRealm(adminRealm)
+			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+
+			// Execute transfer
+			currentTime := int64(2001)
+			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+
+			uassert.NoError(t, err)
+
+			// Verify total claimable
+			totalClaimable := calculateClaimableRewardsForActiveDeposits(rm)
+			uassert.Equal(t, tt.expectedTotalClaimable, totalClaimable)
+
+			// Verify refundable amount
+			uassert.Equal(t, tt.expectedRefundable, refundedAmount)
+		})
+	}
+}
+
+// TestLaunchpadProject_TransferLeftFromProjectNoDepositors tests that
+// TransferLeftFromProjectByAdmin returns full remaining amount when no depositors exist.
+func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
+	tests := []struct {
+		name                  string
+		totalDistributeAmount int64
+		expectedRefundable    int64
+	}{
+		{
+			name:                  "no depositors - full refund",
+			totalDistributeAmount: 1_000_000,
+			expectedRefundable:    1_000_000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initLaunchpadProjectTest(t)
+			lp := getTestImplementation()
+
+			adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+			recipient := testutils.TestAddress("recipient")
+			projectID := "gno.land/r/onbloc/obl:123"
+			tierID := projectID + ":180"
+
+			// Create project with tier - no depositors
+			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier.SetID(tierID)
+			tier.SetTotalDepositCount(0)  // No depositors
+			tier.SetTotalWithdrawCount(0) // No withdrawals
+			tier.SetTotalCollectedAmount(0)
+
+			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+			project.SetID(projectID)
+
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
+
+			projects := lp.store.GetProjects()
+			projects.Set(projectID, project)
+			lp.store.SetProjects(projects)
+
+			// Setup empty reward manager
+			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+			rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
+			// No reward states added
+
+			projectTierRewardManagers.Set(tierID, rm)
+			lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+
+			// Transfer OBL tokens from admin to launchpad for refund
+			adminRealm := testing.NewUserRealm(adminAddr)
+			testing.SetRealm(adminRealm)
+			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
+
+			// Execute transfer
+			currentTime := int64(2001)
+			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedRefundable, refundedAmount)
+		})
+	}
+}

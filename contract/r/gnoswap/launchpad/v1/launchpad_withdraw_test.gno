@@ -324,21 +324,23 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	})
 }
 
-// TestLaunchpadWithdraw_RewardStateRemoval tests that reward state is removed
+// TestLaunchpadWithdraw_RewardStateRemoval tests that reward state is removed after withdrawal
 func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 	tests := []struct {
-		name                         string
-		depositID                    string
-		skipHeight                   int64
-		expectedRewardStateSizeAfter int
-		expectedRewardStateError     bool
+		name                          string
+		depositID                     string
+		tierDuration                  int64
+		skipHeight                    int64
+		expectedRewardStateSizeAfter  int
+		expectedRewardStateAccessible bool
 	}{
 		{
-			name:                         "reward state is removed after withdrawal",
-			depositID:                    "1",
-			skipHeight:                   60*60*24*180/5 + 2,
-			expectedRewardStateSizeAfter: 0,
-			expectedRewardStateError:     true,
+			name:                          "single deposit - reward state removed after withdrawal",
+			depositID:                     "1",
+			tierDuration:                  30,
+			skipHeight:                    60*60*24*180/5 + 2,
+			expectedRewardStateSizeAfter:  0,
+			expectedRewardStateAccessible: false,
 		},
 	}
 
@@ -348,27 +350,25 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 			initLaunchpadWithdrawTest(t, userAddr)
 			lp := getTestImplementation()
 
-			// Get deposit first to retrieve project info
+			// Get deposit to retrieve project info
 			deposit, _ := getDeposit(tt.depositID)
 			projectID := deposit.ProjectID()
 			tierDuration := deposit.Tier()
 
-			// Get project and tier using deposit info
+			// Get project and tier
 			project, _ := lp.getProject(projectID)
 			projectTier, _ := getProjectTier(project, tierDuration)
 			tierID := projectTier.ID()
 
-			// Get reward manager before withdrawal
-			rewardManager, err := lp.getProjectTierRewardManager(tierID)
-			uassert.NoError(t, err)
-
 			// Verify reward state exists before withdrawal
-			initialRewardsSize := rewardManager.Rewards().Size()
+			rewardManagerBefore, err := lp.getProjectTierRewardManager(tierID)
+			uassert.NoError(t, err)
+			initialRewardsSize := rewardManagerBefore.Rewards().Size()
 			uassert.True(t, initialRewardsSize > 0, "reward state should exist before withdrawal")
 
 			// Verify reward state is accessible before withdrawal
-			_, err = getDepositRewardState(rewardManager, tt.depositID)
-			uassert.NoError(t, err)
+			_, err = getDepositRewardState(rewardManagerBefore, tt.depositID)
+			uassert.NoError(t, err, "reward state should be accessible before withdrawal")
 
 			// Perform withdrawal
 			testing.SkipHeights(tt.skipHeight)
@@ -379,15 +379,124 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 			// Verify reward state is removed after withdrawal
 			rewardManagerAfter, _ := lp.getProjectTierRewardManager(tierID)
 			afterRewardsSize := rewardManagerAfter.Rewards().Size()
-			uassert.Equal(t, tt.expectedRewardStateSizeAfter, afterRewardsSize,
-				"reward state size should match expected value after withdrawal")
+			uassert.Equal(t, tt.expectedRewardStateSizeAfter, afterRewardsSize)
 
-			// Verify getDepositRewardState returns error after withdrawal
+			// Verify reward state accessibility after withdrawal
 			_, err = getDepositRewardState(rewardManagerAfter, tt.depositID)
-			if tt.expectedRewardStateError {
-				uassert.Error(t, err, "getDepositRewardState should return error after withdrawal")
-			} else {
+			if tt.expectedRewardStateAccessible {
 				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err, "reward state should not be accessible after withdrawal")
+			}
+		})
+	}
+}
+
+// TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits tests reward state removal
+// when multiple deposits exist in the same tier
+func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) {
+	tests := []struct {
+		name                         string
+		numDeposits                  int
+		withdrawDepositIndex         int
+		skipHeight                   int64
+		expectedRewardStateSizeAfter int
+	}{
+		{
+			name:                         "withdraw first deposit - second deposit reward state remains",
+			numDeposits:                  2,
+			withdrawDepositIndex:         0,
+			skipHeight:                   60*60*24*180/5 + 2,
+			expectedRewardStateSizeAfter: 1,
+		},
+		{
+			name:                         "withdraw second deposit - first deposit reward state remains",
+			numDeposits:                  2,
+			withdrawDepositIndex:         1,
+			skipHeight:                   60*60*24*180/5 + 2,
+			expectedRewardStateSizeAfter: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetHeight(123)
+			resetTestStore()
+			lp := getTestImplementation()
+
+			// Setup project
+			currentTime := time.Now().Unix()
+			currentHeight := runtime.ChainHeight()
+
+			project, _ := lp.createProject(&createProjectParams{
+				name:          "Test Project",
+				tokenPath:     "gno.land/r/onbloc/obl",
+				depositAmount: 1000000,
+				tier30Ratio:   30,
+				tier90Ratio:   30,
+				tier180Ratio:  40,
+				recipient:     testutils.TestAddress("project"),
+				startTime:     currentTime + 10,
+				currentTime:   currentTime,
+				currentHeight: currentHeight,
+			})
+			projects := lp.store.GetProjects()
+			projects.Set(project.ID(), project)
+			lp.store.SetProjects(projects)
+
+			testing.SkipHeights(10)
+
+			// Create multiple deposits
+			depositIDs := make([]string, tt.numDeposits)
+			depositAmount := int64(1000000000)
+
+			for i := 0; i < tt.numDeposits; i++ {
+				userAddr := testutils.TestAddress("multiuser" + formatInt(int64(i)))
+				testing.SetOriginCaller(userAddr)
+				deposit, _, _, _, _ := lp.depositGns(project.ID(), 30, depositAmount, userAddr)
+				depositIDs[i] = deposit.ID()
+			}
+
+			// Setup xgns for each deposit
+			govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+			govStakerRealm := testing.NewUserRealm(govStakerAddr)
+			testing.SetRealm(govStakerRealm)
+			xgns.Mint(cross, launchpadAddr, depositAmount*int64(tt.numDeposits))
+
+			// Skip to end of tier
+			projectTier, _ := getProjectTier(project, 30)
+			testing.SetHeight(projectTier.EndTime() + 1)
+			testing.SkipHeights(tt.skipHeight)
+
+			// Get tier ID
+			tierID := projectTier.ID()
+
+			// Verify initial reward state count
+			rewardManagerBefore, _ := lp.getProjectTierRewardManager(tierID)
+			uassert.Equal(t, tt.numDeposits, rewardManagerBefore.Rewards().Size())
+
+			// Withdraw specific deposit
+			withdrawDepositID := depositIDs[tt.withdrawDepositIndex]
+			deposit, _ := getDeposit(withdrawDepositID)
+			currentTime = time.Now().Unix()
+			_, _, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			uassert.NoError(t, err)
+
+			// Verify reward state count after withdrawal
+			rewardManagerAfter, _ := lp.getProjectTierRewardManager(tierID)
+			uassert.Equal(t, tt.expectedRewardStateSizeAfter, rewardManagerAfter.Rewards().Size())
+
+			// Verify withdrawn deposit's reward state is removed
+			_, err = getDepositRewardState(rewardManagerAfter, withdrawDepositID)
+			uassert.Error(t, err, "withdrawn deposit reward state should be removed")
+
+			// Verify other deposits' reward states still exist
+			for i, id := range depositIDs {
+				if i != tt.withdrawDepositIndex {
+					_, err = getDepositRewardState(rewardManagerAfter, id)
+					uassert.NoError(t, err, "non-withdrawn deposit reward state should remain")
+				}
 			}
 		})
 	}
