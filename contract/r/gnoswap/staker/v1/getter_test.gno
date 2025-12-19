@@ -68,6 +68,16 @@ func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
 
 			nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
 			uassert.True(t, len(nodes) > 0, "must return nodes")
+
+			incentiveArray := nodes[0].MustKey("incentive").MustArray()
+			uassert.True(t, len(incentiveArray) > 0, "must have incentive")
+
+			actualDuration := int64(incentiveArray[0].MustKey("stakedOrExternalDuration").MustNumeric())
+			diff := actualDuration - calculatedDuration
+			if diff < 0 {
+				diff = -diff
+			}
+			uassert.True(t, diff <= 1, "JSON duration must match calculated duration")
 		})
 	}
 }
@@ -105,4 +115,12 @@ func TestMakeExternalPositionsNode_HeightVsTimestamp(t *testing.T) {
 
 	nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
 	uassert.True(t, len(nodes) > 0, "must not panic")
+
+	incentiveArray := nodes[0].MustKey("incentive").MustArray()
+	actualDuration := int64(incentiveArray[0].MustKey("stakedOrExternalDuration").MustNumeric())
+	diff := actualDuration - duration
+	if diff < 0 {
+		diff = -diff
+	}
+	uassert.True(t, diff <= 1, "JSON duration must match calculated duration")
 }

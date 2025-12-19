@@ -65,10 +65,11 @@ func TestNewApiStake_StakeDurationCalculation(t *testing.T) {
 				uassert.Equal(t, tt.expectedDuration, apiStake.StakeDuration)
 			}
 
-			// Verify other fields are set correctly
 			uassert.Equal(t, uint64(1), apiStake.PositionId)
+			uassert.Equal(t, "g1test", apiStake.Owner.String())
 			uassert.Equal(t, tt.stakeTime, apiStake.StakeTimestamp)
 			uassert.Equal(t, tt.stakeTime, apiStake.StakeTime)
+			uassert.Equal(t, "gno.land/r/test/pool", apiStake.TargetPoolPath)
 		})
 	}
 }
