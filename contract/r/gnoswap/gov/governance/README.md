@@ -69,7 +69,7 @@ snapshot2 = getDelegationAt(proposalTime)
 voteWeight = (snapshot1 + snapshot2) / 2
 ```
 
-### Dynamic Quorum
+### Quorum Calculation
 
 > Note: Only YES votes count towards quorum fulfillment
 > NO votes do not contribute to meeting the quorum threshold
@@ -79,7 +79,7 @@ activeXGNS = totalXGNS - launchpadXGNS
 requiredVotes = activeXGNS * 0.5
 ```
 
-The quorum is calculated as 50% of active xGNS supply at the time of proposal creation. Quorum fulfillment is determined solely by YES votes - NO votes do not count towards meeting the quorum threshold. For example, if the quorum requirement is 1000 votes, a proposal with 1000 YES votes and 100 NO votes meets quorum, as does a proposal with 1000 YES votes and 900 NO votes.
+The quorum threshold is calculted as 50% of the total xGNS supply at the time of proposal creation. A proposal meets the quorum requirement when the total votes cast reach or exceed this threshold.
 
 ### Rewards Distribution
 
