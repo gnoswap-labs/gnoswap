@@ -55,15 +55,11 @@ func TestNewApiStake_StakeDurationCalculation(t *testing.T) {
 			apiStake := newApiStake(1, deposit)
 
 			// Allow 1 second tolerance for test execution time
-			if apiStake.StakeDuration > 0 {
-				diff := int64(apiStake.StakeDuration) - int64(tt.expectedDuration)
-				if diff < 0 {
-					diff = -diff
-				}
-				uassert.True(t, diff <= 1, "stake duration should be within 1 second tolerance")
-			} else {
-				uassert.Equal(t, tt.expectedDuration, apiStake.StakeDuration)
+			diff := int64(apiStake.StakeDuration) - int64(tt.expectedDuration)
+			if diff < 0 {
+				diff = -diff
 			}
+			uassert.True(t, diff <= 1, "stake duration should be within 1 second tolerance")
 
 			uassert.Equal(t, uint64(1), apiStake.PositionId)
 			uassert.Equal(t, "g1test", apiStake.Owner.String())
