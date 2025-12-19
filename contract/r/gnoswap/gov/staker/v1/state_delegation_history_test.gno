@@ -11,14 +11,14 @@ import (
 
 func TestAddDelegationRecord_Comprehensive(t *testing.T) {
 	tests := []struct {
-		name                    string
-		delegations             []struct {
+		name        string
+		delegations []struct {
 			delegatee address
 			amount    int64
 			timestamp int64
 		}
-		expectedTotalAtTime     map[int64]int64
-		expectedUserAtTime      map[int64]int64
+		expectedTotalAtTime map[int64]int64
+		expectedUserAtTime  map[int64]int64
 	}{
 		{
 			name: "single delegation record",
@@ -97,7 +97,7 @@ func TestAddDelegationRecord_Comprehensive(t *testing.T) {
 			},
 			expectedUserAtTime: map[int64]int64{
 				100: 1000,
-				200: -1000,
+				200: 0,
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			expectedAmount: 300,
 		},
 		{
-			name: "negative user amount allowed",
+			name: "negative result clamps to zero",
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
@@ -291,7 +291,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			delegatee:      user1,
 			amount:         -1000,
 			timestamp:      100,
-			expectedAmount: -500,
+			expectedAmount: 0, // Clamped to 0, not negative
 		},
 	}
 
