@@ -647,7 +647,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)

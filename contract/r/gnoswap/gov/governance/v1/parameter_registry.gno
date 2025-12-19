@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"strings"
 
 	"gno.land/p/nt/avl"
@@ -718,7 +719,7 @@ func runValidator(fn func()) (err error) {
 var (
 	nonEmptyValidator = func(s string) error {
 		if len(strings.TrimSpace(s)) == 0 {
-			return ufmt.Errorf("empty value")
+			return errors.New("empty value")
 		}
 		return nil
 	}
@@ -776,7 +777,7 @@ func validateExecutions(numToExecute int64, executions string) error {
 	if numToExecute <= 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("numToExecute is less than or equal to 0"),
+			"numToExecute is less than or equal to 0",
 		)
 	}
 
@@ -784,7 +785,7 @@ func validateExecutions(numToExecute int64, executions string) error {
 	if executions == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("executions is empty"),
+			"executions is empty",
 		)
 	}
 
