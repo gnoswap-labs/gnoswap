@@ -7,8 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestMakeExternalPositionsNode_TimestampCalculation is a regression test for a bug
-// where runtime.ChainHeight() (block height) was incorrectly used with timestamps.
 func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
 	baseTime := time.Now().Unix()
 
