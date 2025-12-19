@@ -301,7 +301,7 @@ func TestValidateExecutions(t *testing.T) {
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*param1,param2",
 			expectedError:         true,
-			expectedErrorContains: "function 'gno.land/r/gnoswap/halt:SetHaltLevel' expects 1 parameter(s), but got 2",
+			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt:SetHaltLevel",
 		},
 		{
 			name:                  "Failure - Empty executions",
@@ -329,21 +329,21 @@ func TestValidateExecutions(t *testing.T) {
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/halt*SetHaltLevel",
 			expectedError:         true,
-			expectedErrorContains: "invalid format 'gno.land/r/gnoswap/halt*SetHaltLevel'. Expected format: <package>*EXE*<function>*EXE*<params>",
+			expectedErrorContains: "expected 3 parts (pkgPath, function, params)",
 		},
 		{
 			name:                  "Failure - Empty package path",
 			numToExecute:          1,
 			executions:            "*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
-			expectedErrorContains: "package path is empty in '*EXE*SetHaltLevel*EXE*NONE'",
+			expectedErrorContains: "package path is empty",
 		},
 		{
 			name:                  "Failure - Empty function name",
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/halt*EXE**EXE*NONE",
 			expectedError:         true,
-			expectedErrorContains: "function name is empty in 'gno.land/r/gnoswap/halt*EXE**EXE*NONE'",
+			expectedErrorContains: "function name is empty",
 		},
 		{
 			name:         "Failure - Exceeds max executions",
@@ -374,7 +374,7 @@ func TestValidateExecutions(t *testing.T) {
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",
 			expectedError:         true,
-			expectedErrorContains: "function 'gno.land/r/gnoswap/community_pool:TransferToken' expects 3 parameter(s), but got 2",
+			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
 		},
 		{
 			name:          "Success - Governance reconfigure with all params",
@@ -394,6 +394,20 @@ func TestValidateExecutions(t *testing.T) {
 			numToExecute:  1,
 			executions:    "gno.land/r/gnoswap/staker*EXE*RemovePoolTier*EXE*poolId",
 			expectedError: false,
+		},
+		{
+			name:                  "Failure - Invalid number type for SetWarmUp percent",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/staker*EXE*SetWarmUp*EXE*invalid,1000",
+			expectedError:         true,
+			expectedErrorContains: "invalid int64 value: invalid",
+		},
+		{
+			name:                  "Failure - Invalid bool type for SetOperationStatus",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,not_bool",
+			expectedError:         true,
+			expectedErrorContains: "invalid bool value: not_bool",
 		},
 	}
 

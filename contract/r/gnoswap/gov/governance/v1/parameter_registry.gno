@@ -53,11 +53,15 @@ type ParameterHandler interface {
 // ParameterHandlerOptions contains the configuration and execution logic for a parameter handler.
 // This struct encapsulates all information needed to identify and execute a parameter change.
 type ParameterHandlerOptions struct {
-	pkgPath     string               // Package path of the target contract
-	function    string               // Function name to be called
-	paramCount  int                  // Expected number of parameters
-	handlerFunc func([]string) error // Function that executes the parameter change
+	pkgPath         string               // Package path of the target contract
+	function        string               // Function name to be called
+	paramCount      int                  // Expected number of parameters
+	handlerFunc     func([]string) error // Function that executes the parameter change
+	paramValidators []paramValidator     // Optional per-parameter validators for proposal-time checks
 }
+
+// paramValidator validates a single parameter value and returns an error on failure.
+type paramValidator func(string) error
 
 // NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
 //
@@ -66,6 +70,7 @@ type ParameterHandlerOptions struct {
 //   - function: function name to be called
 //   - paramCount: expected number of parameters
 //   - handlerFunc: function that executes the parameter change
+//   - paramValidators: optional validators for each parameter (must match paramCount if provided)
 //
 // Returns:
 //   - ParameterHandler: configured parameter handler interface
@@ -74,12 +79,14 @@ func NewParameterHandlerOptions(
 	function string,
 	paramCount int,
 	handlerFunc func([]string) error,
+	paramValidators ...paramValidator,
 ) ParameterHandler {
 	return &ParameterHandlerOptions{
-		pkgPath:     pkgPath,
-		function:    function,
-		paramCount:  paramCount,
-		handlerFunc: handlerFunc,
+		pkgPath:         pkgPath,
+		function:        function,
+		paramCount:      paramCount,
+		handlerFunc:     handlerFunc,
+		paramValidators: paramValidators,
 	}
 }
 
@@ -112,6 +119,36 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 
 	// return fn(cross)
 	return h.handlerFunc(params)
+}
+
+// ValidateParams runs parameter count and per-parameter validation without executing the handler.
+func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
+	if len(params) != h.paramCount {
+		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
+	}
+
+	if len(h.paramValidators) == 0 {
+		return nil
+	}
+
+	if len(h.paramValidators) != len(params) {
+		return ufmt.Errorf(
+			"validator count mismatch for %s: expected %d validator(s), got %d",
+			h.HandlerKey(), len(params), len(h.paramValidators),
+		)
+	}
+
+	for i, validator := range h.paramValidators {
+		if validator == nil {
+			continue
+		}
+
+		if err := validator(params[i]); err != nil {
+			return ufmt.Errorf("param[%d]: %v", i, err)
+		}
+	}
+
+	return nil
 }
 
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
@@ -191,6 +228,11 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    COMMUNITY_POOL_PATH,
 			function:   "TransferToken",
 			paramCount: 3,
+			paramValidators: []paramValidator{
+				nonEmptyValidator,          // pkgPath
+				addressValidator,           // to
+				numberValidator(kindInt64), // amount
+			},
 			handlerFunc: func(params []string) error {
 				// Transfer tokens from community pool to specified address
 				cp.TransferToken(
@@ -208,6 +250,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    EMISSION_PATH,
 			function:   "SetDistributionStartTime",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // start time
+			},
 			handlerFunc: func(params []string) error {
 				// Set distribution start time
 				en.SetDistributionStartTime(cross, parseInt64(params[0]))
@@ -219,6 +264,16 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    EMISSION_PATH,
 			function:   "ChangeDistributionPct",
 			paramCount: 8,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt),   // target01
+				numberValidator(kindInt64), // pct01
+				numberValidator(kindInt),   // target02
+				numberValidator(kindInt64), // pct02
+				numberValidator(kindInt),   // target03
+				numberValidator(kindInt64), // pct03
+				numberValidator(kindInt),   // target04
+				numberValidator(kindInt64), // pct04
+			},
 			handlerFunc: func(params []string) error {
 				// Parse distribution targets and percentages
 				target01 := parseNumber(params[0], kindInt).(int)  // target01
@@ -251,6 +306,15 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    GOV_GOVERNANCE_PATH,
 			function:   "Reconfigure",
 			paramCount: 7,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // votingStartDelay
+				numberValidator(kindInt64), // votingPeriod
+				numberValidator(kindInt64), // votingWeightSmoothingDuration
+				numberValidator(kindInt64), // quorum
+				numberValidator(kindInt64), // proposalCreationThreshold
+				numberValidator(kindInt64), // executionDelay
+				numberValidator(kindInt64), // executionWindow
+			},
 			handlerFunc: func(params []string) error {
 				// Parse governance configuration parameters
 				votingStartDelay := parseInt64(params[0])
@@ -282,6 +346,14 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    POOL_PATH,
 			function:   "CollectProtocol",
 			paramCount: 6,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // token0Path
+				nonEmptyValidator, // token1Path
+				uint64Validator,   // fee
+				addressValidator,  // recipient
+				nil,               // amount0Requested (validated in pool logic)
+				nil,               // amount1Requested (validated in pool logic)
+			},
 			handlerFunc: func(params []string) error {
 				pl.CollectProtocol(
 					cross,
@@ -300,6 +372,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    POOL_PATH,
 			function:   "SetFeeProtocol",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				uint8RangeValidator("feeProtocol0"),
+				uint8RangeValidator("feeProtocol1"),
+			},
 			handlerFunc: func(params []string) error {
 				// Parse and validate fee protocol values
 				feeProtocol0 := parseInt64(params[0])
@@ -329,6 +405,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    POOL_PATH,
 			function:   "SetPoolCreationFee",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // fee
+			},
 			handlerFunc: func(params []string) error {
 				// Set fee required to create new pools
 				pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
@@ -340,6 +419,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    POOL_PATH,
 			function:   "SetWithdrawalFee",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				uint64Validator, // fee
+			},
 			handlerFunc: func(params []string) error {
 				// Set fee for withdrawing from pools
 				pl.SetWithdrawalFee(cross, parseUint64(params[0])) // fee
@@ -352,6 +434,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    PROTOCOL_FEE_PATH,
 			function:   "SetDevOpsPct",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // pct
+			},
 			handlerFunc: func(params []string) error {
 				// Set percentage of protocol fees going to development operations
 				pf.SetDevOpsPct(cross, parseInt64(params[0])) // pct
@@ -364,6 +449,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    ROUTER_PATH,
 			function:   "SetSwapFee",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				uint64Validator, // fee
+			},
 			handlerFunc: func(params []string) error {
 				// Set fee charged for token swaps
 				rr.SetSwapFee(cross, parseUint64(params[0])) // fee
@@ -376,6 +464,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetDepositGnsAmount",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // amount
+			},
 			handlerFunc: func(params []string) error {
 				// Set minimum GNS amount required for staking deposits
 				sr.SetDepositGnsAmount(cross, parseInt64(params[0])) // amount
@@ -386,6 +477,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetMinimumRewardAmount",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // amount
+			},
 			handlerFunc: func(params []string) error {
 				// Set minimum GNS amount required for staking deposits
 				sr.SetMinimumRewardAmount(cross, parseInt64(params[0])) // amount
@@ -396,6 +490,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetTokenMinimumRewardAmount",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // tokenPath:amount
+			},
 			handlerFunc: func(params []string) error {
 				// Set minimum GNS amount required for staking deposits
 				// params[0] is a string in the format "tokenPath:amount"
@@ -407,6 +504,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetPoolTier",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // pool
+				uint64Validator,   // tier
+			},
 			handlerFunc: func(params []string) error {
 				// Assign tier level to a specific pool
 				sr.SetPoolTier(
@@ -421,6 +522,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "ChangePoolTier",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // pool
+				uint64Validator,   // tier
+			},
 			handlerFunc: func(params []string) error {
 				// Change existing pool's tier level
 				sr.ChangePoolTier(
@@ -435,6 +540,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "RemovePoolTier",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // pool
+			},
 			handlerFunc: func(params []string) error {
 				// Remove tier assignment from a pool
 				sr.RemovePoolTier(cross, params[0]) // pool
@@ -445,6 +553,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetUnStakingFee",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // fee
+			},
 			handlerFunc: func(params []string) error {
 				// Set fee charged for unstaking operations
 				fee := parseInt64(params[0])
@@ -456,6 +567,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    STAKER_PATH,
 			function:   "SetWarmUp",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // percent
+				numberValidator(kindInt64), // block
+			},
 			handlerFunc: func(params []string) error {
 				// Set warm-up period configuration for staking
 				percent := parseInt64(params[0])
@@ -471,6 +586,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    HALT_PATH,
 			function:   "SetHaltLevel",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // halt level string
+			},
 			handlerFunc: func(params []string) error {
 				// Set system-wide halt status
 				halt.SetHaltLevel(cross, halt.HaltLevel(params[0])) // true = halt, false = no halt
@@ -482,6 +600,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    HALT_PATH,
 			function:   "SetOperationStatus",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // opType
+				boolValidator,     // allowed
+			},
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
 				opType := halt.OpType(params[0])
@@ -498,6 +620,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    RBAC_PATH,
 			function:   "RegisterRole",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // roleName
+				addressValidator,  // roleAddress
+			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
 				roleAddress := address(params[1])
@@ -512,6 +638,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    RBAC_PATH,
 			function:   "UpdateRoleAddress",
 			paramCount: 2,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // roleName
+				addressValidator,  // roleAddress
+			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
 				roleAddress := address(params[1])
@@ -526,6 +656,9 @@ func CreateParameterHandlers() *ParameterRegistry {
 			pkgPath:    RBAC_PATH,
 			function:   "RemoveRole",
 			paramCount: 1,
+			paramValidators: []paramValidator{
+				nonEmptyValidator, // roleName
+			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
 
@@ -552,6 +685,66 @@ func CreateParameterHandlers() *ParameterRegistry {
 func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHandlerOptions) {
 	for _, handlerOption := range handlerOptions {
 		registry.Register(*handlerOption)
+	}
+}
+
+// runValidator executes a validator function and converts panics to errors.
+func runValidator(fn func()) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+				return
+			}
+			err = ufmt.Errorf("%v", r)
+		}
+	}()
+
+	fn()
+	return nil
+}
+
+// Basic reusable validators for proposal-time type checking.
+var (
+	nonEmptyValidator = func(s string) error {
+		if len(strings.TrimSpace(s)) == 0 {
+			return ufmt.Errorf("empty value")
+		}
+		return nil
+	}
+	boolValidator = func(s string) error {
+		return runValidator(func() {
+			parseBool(s)
+		})
+	}
+	uint64Validator = func(s string) error {
+		return runValidator(func() {
+			parseUint64(s)
+		})
+	}
+	addressValidator = func(s string) error {
+		return runValidator(func() {
+			_ = address(s)
+		})
+	}
+)
+
+func numberValidator(kind numberKind) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			parseNumber(s, kind)
+		})
+	}
+}
+
+func uint8RangeValidator(name string) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseInt64(s)
+			if value > 255 {
+				panic(ufmt.Sprintf("%s out of range: %d", name, value))
+			}
+		})
 	}
 }
 
@@ -611,14 +804,7 @@ func validateExecutions(numToExecute int64, executions string) error {
 		parts := strings.Split(msg, parameterSeparator)
 		if len(parts) != 3 {
 			// Provide more helpful error message based on what's wrong
-			var detail string
-			if len(parts) == 1 {
-				detail = ufmt.Sprintf("execution[%d]: invalid format '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
-			} else if len(parts) == 2 {
-				detail = ufmt.Sprintf("execution[%d]: missing parameters in '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
-			} else {
-				detail = ufmt.Sprintf("execution[%d]: too many parts in '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
-			}
+			detail := ufmt.Sprintf("execution[%d]: expected 3 parts (pkgPath, function, params), got %d", i, len(parts))
 			return makeErrorWithDetails(
 				errInvalidMessageFormat,
 				detail,
@@ -633,14 +819,14 @@ func validateExecutions(numToExecute int64, executions string) error {
 		if pkgPath == "" {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: package path is empty in '%s'", i, msg),
+				ufmt.Sprintf("execution[%d]: package path is empty", i),
 			)
 		}
 
 		if function == "" {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: function name is empty in '%s'", i, msg),
+				ufmt.Sprintf("execution[%d]: function name is empty", i),
 			)
 		}
 
@@ -672,8 +858,16 @@ func validateExecutions(numToExecute int64, executions string) error {
 		if len(params) != handlerOpts.paramCount {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: function '%s:%s' expects %d parameter(s), but got %d",
-					i, pkgPath, function, handlerOpts.paramCount, len(params)),
+				ufmt.Sprintf("execution[%d]: expected %d parameters for %s:%s, got %d",
+					i, handlerOpts.paramCount, pkgPath, function, len(params)),
+			)
+		}
+
+		// Validate parameter types/format ahead of proposal creation
+		if err := handlerOpts.ValidateParams(params); err != nil {
+			return makeErrorWithDetails(
+				errInvalidInput,
+				ufmt.Sprintf("execution[%d]: %v", i, err),
 			)
 		}
 	}
