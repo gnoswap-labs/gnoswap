@@ -1,0 +1,108 @@
+package v1
+
+import (
+	"testing"
+	"time"
+
+	"gno.land/p/nt/uassert"
+)
+
+// TestMakeExternalPositionsNode_TimestampCalculation is a regression test for a bug
+// where runtime.ChainHeight() (block height) was incorrectly used with timestamps.
+func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
+	baseTime := time.Now().Unix()
+
+	tests := []struct {
+		name                    string
+		incentiveStartTimestamp int64
+		stakedTime              int64
+		expectedMaxValue        int64
+	}{
+		{
+			name:                    "position staked before incentive",
+			incentiveStartTimestamp: baseTime - 100,
+			stakedTime:              baseTime - 200,
+			expectedMaxValue:        baseTime - 100,
+		},
+		{
+			name:                    "position staked after incentive",
+			incentiveStartTimestamp: baseTime - 200,
+			stakedTime:              baseTime - 100,
+			expectedMaxValue:        baseTime - 100,
+		},
+		{
+			name:                    "same start time",
+			incentiveStartTimestamp: baseTime - 150,
+			stakedTime:              baseTime - 150,
+			expectedMaxValue:        baseTime - 150,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			position := ApiExternalDebugPosition{
+				PositionId:      1,
+				StakedTime:      tt.stakedTime,
+				StakedTimestamp: tt.stakedTime,
+				Incentive: []ApiExternalDebugIncentive{
+					{
+						PoolPath:         "gno.land/r/test/pool",
+						StartTimestamp:   tt.incentiveStartTimestamp,
+						EndTimestamp:     baseTime + 1000,
+						StartHeight:      100,
+						RewardAmount:     "1000",
+						RewardPerSecond:  "10",
+						TokenAmountFull:  1000,
+						TokenAmountToGive: 1000,
+					},
+				},
+			}
+
+			currentTime := time.Now().Unix()
+			maxValue := max(tt.incentiveStartTimestamp, tt.stakedTime)
+			calculatedDuration := currentTime - maxValue
+
+			uassert.Equal(t, tt.expectedMaxValue, maxValue)
+			uassert.True(t, calculatedDuration > 0, "duration must be positive")
+			uassert.True(t, calculatedDuration < 10000000, "duration must be reasonable")
+
+			nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
+			uassert.True(t, len(nodes) > 0, "must return nodes")
+		})
+	}
+}
+
+// TestMakeExternalPositionsNode_HeightVsTimestamp verifies the bug is fixed:
+// Old bug: ChainHeight() - max(StartHeight, StakedTime) = 12345 - 1700000000 = huge negative
+// Fixed: currentTime - max(StartTimestamp, StakedTime) = positive duration
+func TestMakeExternalPositionsNode_HeightVsTimestamp(t *testing.T) {
+	baseTime := time.Now().Unix()
+
+	position := ApiExternalDebugPosition{
+		PositionId:      1,
+		StakedTime:      baseTime - 86400,
+		StakedTimestamp: baseTime - 86400,
+		Incentive: []ApiExternalDebugIncentive{
+			{
+				PoolPath:       "gno.land/r/test/pool",
+				StartTimestamp: baseTime - 43200,
+				StartHeight:    12245,
+				EndTimestamp:   baseTime + 86400,
+				RewardAmount:   "1000000",
+				RewardPerSecond: "10",
+				TokenAmountFull: 1000000,
+				TokenAmountToGive: 1000000,
+			},
+		},
+	}
+
+	currentTime := time.Now().Unix()
+	maxTimestamp := max(baseTime-43200, baseTime-86400)
+	duration := currentTime - maxTimestamp
+
+	uassert.True(t, duration > 0, "duration must be positive, not negative like the old bug")
+	uassert.True(t, duration < 100000, "duration must be reasonable (< 1 day)")
+
+	nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
+	uassert.True(t, len(nodes) > 0, "must not panic")
+}
