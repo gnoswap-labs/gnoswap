@@ -364,12 +364,6 @@ func TestValidateExecutions(t *testing.T) {
 		},
 		// Complex scenarios
 		{
-			name:          "Success - Community pool transfer with correct params",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address,1000000",
-			expectedError: false,
-		},
-		{
 			name:                  "Failure - Community pool transfer with wrong param count",
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",

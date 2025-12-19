@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"errors"
 	"strings"
 
 	"gno.land/p/nt/avl"
@@ -240,7 +239,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "TransferToken",
 			paramCount: 3,
 			paramValidators: []paramValidator{
-				nonEmptyValidator,          // pkgPath
+				stringValidator,          // pkgPath
 				addressValidator,           // to
 				numberValidator(kindInt64), // amount
 			},
@@ -358,8 +357,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "CollectProtocol",
 			paramCount: 6,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // token0Path
-				nonEmptyValidator, // token1Path
+				stringValidator, // token0Path
+				stringValidator, // token1Path
 				uint64Validator,   // fee
 				addressValidator,  // recipient
 				nil,               // amount0Requested (validated in pool logic)
@@ -502,7 +501,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetTokenMinimumRewardAmount",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // tokenPath:amount
+				stringValidator, // tokenPath:amount
 			},
 			handlerFunc: func(params []string) error {
 				// Set minimum GNS amount required for staking deposits
@@ -516,7 +515,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetPoolTier",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // pool
+				stringValidator, // pool
 				uint64Validator,   // tier
 			},
 			handlerFunc: func(params []string) error {
@@ -534,7 +533,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "ChangePoolTier",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // pool
+				stringValidator, // pool
 				uint64Validator,   // tier
 			},
 			handlerFunc: func(params []string) error {
@@ -552,7 +551,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RemovePoolTier",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // pool
+				stringValidator, // pool
 			},
 			handlerFunc: func(params []string) error {
 				// Remove tier assignment from a pool
@@ -598,7 +597,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetHaltLevel",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // halt level string
+				stringValidator, // halt level string
 			},
 			handlerFunc: func(params []string) error {
 				// Set system-wide halt status
@@ -612,7 +611,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetOperationStatus",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // opType
+				stringValidator, // opType
 				boolValidator,     // allowed
 			},
 			handlerFunc: func(params []string) error {
@@ -632,7 +631,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RegisterRole",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // roleName
+				stringValidator, // roleName
 				addressValidator,  // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -650,7 +649,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "UpdateRoleAddress",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // roleName
+				stringValidator, // roleName
 				addressValidator,  // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -668,7 +667,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RemoveRole",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				nonEmptyValidator, // roleName
+				stringValidator, // roleName
 			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
@@ -717,10 +716,7 @@ func runValidator(fn func()) (err error) {
 
 // Basic reusable validators for proposal-time type checking.
 var (
-	nonEmptyValidator = func(s string) error {
-		if len(strings.TrimSpace(s)) == 0 {
-			return errors.New("empty value")
-		}
+	stringValidator = func(s string) error {
 		return nil
 	}
 	boolValidator = func(s string) error {
@@ -736,7 +732,7 @@ var (
 	addressValidator = func(s string) error {
 		return runValidator(func() {
 			addr := address(s)
-			if addr.IsValid() {
+			if !addr.IsValid() {
 				panic(ufmt.Sprintf("invalid address: %s", addr))
 			}
 		})
