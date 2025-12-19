@@ -71,8 +71,6 @@ voteWeight = (snapshot1 + snapshot2) / 2
 
 ### Quorum Calculation
 
-> Note: Only YES votes count towards quorum fulfillment
-> NO votes do not contribute to meeting the quorum threshold
 
 ```go
 activeXGNS = totalXGNS - launchpadXGNS
