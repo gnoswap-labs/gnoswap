@@ -59,7 +59,7 @@ func NewProposalVoteStatus(
 	maxVotingWeight int64,
 	quorum int64,
 ) *ProposalVoteStatus {
-	// Calculate the absolute YES vote weight needed to meet quorum
+	// Calculate the absolute vote weight needed to meet quorum
 	quorumAmount := maxVotingWeight * quorum / 100
 
 	return &ProposalVoteStatus{
