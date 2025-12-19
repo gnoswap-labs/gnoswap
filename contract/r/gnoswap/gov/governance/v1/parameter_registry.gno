@@ -81,6 +81,13 @@ func NewParameterHandlerOptions(
 	handlerFunc func([]string) error,
 	paramValidators ...paramValidator,
 ) ParameterHandler {
+	if len(paramValidators) > 0 && len(paramValidators) != paramCount {
+		panic(ufmt.Sprintf(
+			"invalid validator count for %s:%s: expected %d, got %d",
+			pkgPath, function, paramCount, len(paramValidators),
+		))
+	}
+
 	return &ParameterHandlerOptions{
 		pkgPath:         pkgPath,
 		function:        function,
@@ -124,7 +131,10 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 // ValidateParams runs parameter count and per-parameter validation without executing the handler.
 func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 	if len(params) != h.paramCount {
-		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
+		return ufmt.Errorf(
+			"expected %d parameters for %s, got %d",
+			h.paramCount, h.HandlerKey(), len(params),
+		)
 	}
 
 	if len(h.paramValidators) == 0 {
@@ -741,7 +751,7 @@ func uint8RangeValidator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
 			value := parseInt64(s)
-			if value > 255 {
+			if value < 0 || value > 255 {
 				panic(ufmt.Sprintf("%s out of range: %d", name, value))
 			}
 		})
@@ -840,32 +850,24 @@ func validateExecutions(numToExecute int64, executions string) error {
 			)
 		}
 
-		// Validate parameter count matches handler's expected count
-		params := []string{}
-		if paramStr != "" {
-			params = strings.Split(paramStr, ",")
-		}
+	// Validate parameter count matches handler's expected count
+	params := []string{}
+	if paramStr != "" {
+		params = strings.Split(paramStr, ",")
+	}
 
-		// Get expected parameter count from handler
-		handlerOpts, ok := handler.(*ParameterHandlerOptions)
-		if !ok {
-			return makeErrorWithDetails(
-				errInvalidExecution,
-				ufmt.Sprintf("execution[%d]: failed to get handler options", i),
-			)
-		}
+	// Get expected parameter count from handler
+	handlerOpts, ok := handler.(*ParameterHandlerOptions)
+	if !ok {
+		return makeErrorWithDetails(
+			errInvalidExecution,
+			ufmt.Sprintf("execution[%d]: failed to get handler options", i),
+		)
+	}
 
-		if len(params) != handlerOpts.paramCount {
-			return makeErrorWithDetails(
-				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: expected %d parameters for %s:%s, got %d",
-					i, handlerOpts.paramCount, pkgPath, function, len(params)),
-			)
-		}
-
-		// Validate parameter types/format ahead of proposal creation
-		if err := handlerOpts.ValidateParams(params); err != nil {
-			return makeErrorWithDetails(
+	// Validate parameter types/format ahead of proposal creation
+	if err := handlerOpts.ValidateParams(params); err != nil {
+		return makeErrorWithDetails(
 				errInvalidInput,
 				ufmt.Sprintf("execution[%d]: %v", i, err),
 			)
