@@ -1,10 +1,10 @@
 package v1
 
 import (
+    "errors"
 	"testing"
 
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 )
 
 // TestRegistryHandler_NewRegistryHandler tests the creation of registry handler
@@ -26,7 +26,7 @@ func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
 		{
 			name: "create handler with failing function",
 			handlerFn: func(params []string) error {
-				return ufmt.Errorf("handler error")
+				return errors.New("handler error")
 			},
 			testParams:    []string{"param1"},
 			expectedError: true,
@@ -35,7 +35,7 @@ func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
 			name: "create handler with nil params",
 			handlerFn: func(params []string) error {
 				if len(params) == 0 {
-					return ufmt.Errorf("no params")
+					return errors.New("no params")
 				}
 				return nil
 			},
@@ -114,7 +114,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"testFunc",
 					2,
 					func([]string) error {
-						return ufmt.Errorf("test error")
+						return errors.New("test error")
 					},
 				)
 			},
@@ -130,7 +130,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 					"testFunc",
 					1,
 					func([]string) error {
-						return ufmt.Errorf("test error")
+						return errors.New("test error")
 					},
 				)
 			},
