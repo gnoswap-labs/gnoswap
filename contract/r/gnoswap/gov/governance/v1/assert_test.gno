@@ -30,7 +30,8 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
-					1,
+					1, // configVersion
+					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -61,7 +62,8 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposer,
-					1,
+					1, // configVersion
+					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -83,7 +85,8 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					governance.NewProposalMetadata("Test Title 2", "Test Description 2"),
 					NewProposalTextData(),
 					proposer,
-					1,
+					1, // configVersion
+					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)

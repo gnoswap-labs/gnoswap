@@ -25,9 +25,14 @@ func GetLockedAmount() int64 {
 	return getImplementation().GetLockedAmount()
 }
 
-// GetDelegationSnapshots returns delegation snapshot at a specific time.
-func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
-	return getImplementation().GetDelegationSnapshots(snapshotTime)
+// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a specific snapshot time.
+func GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	return getImplementation().GetTotalDelegationAmountAtSnapshot(snapshotTime)
+}
+
+// GetUserDelegationAmountAtSnapshot returns the user delegation amount at a specific snapshot time.
+func GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	return getImplementation().GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
 // GetClaimableRewardByAddress returns claimable rewards for an address.

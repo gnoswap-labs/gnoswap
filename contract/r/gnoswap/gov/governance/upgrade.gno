@@ -6,13 +6,13 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func RegisterInitializer(cur realm, initializer func(governanceStore IGovernanceStore) IGovernance) {
+func RegisterInitializer(cur realm, initializer func(governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance) {
 	initializerFunc := func(domainStore any) any {
 		currentGovernanceStore, ok := domainStore.(IGovernanceStore)
 		if !ok {
 			panic("domainStore is not an IGovernanceStore")
 		}
-		return initializer(currentGovernanceStore)
+		return initializer(currentGovernanceStore, newGovStakerAccessor())
 	}
 
 	err := versionManager.RegisterInitializer(initializerFunc)

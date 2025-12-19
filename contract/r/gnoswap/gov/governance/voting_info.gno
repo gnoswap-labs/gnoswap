@@ -121,10 +121,30 @@ func (v *VotingInfo) VotedAt() int64 {
 }
 
 /* Setter methods */
-func (v *VotingInfo) SetAvailableVoteWeight(availableVoteWeight int64) { v.availableVoteWeight = availableVoteWeight }
-func (v *VotingInfo) SetVoterAddress(voterAddress address) { v.voterAddress = voterAddress }
-func (v *VotingInfo) SetVotedWeight(votedWeight int64) { v.votedWeight = votedWeight }
-func (v *VotingInfo) SetVotedHeight(votedHeight int64) { v.votedHeight = votedHeight }
-func (v *VotingInfo) SetVotedAt(votedAt int64) { v.votedAt = votedAt }
-func (v *VotingInfo) SetVotedYes(votedYes bool) { v.votedYes = votedYes }
-func (v *VotingInfo) SetVoted(voted bool) { v.voted = voted }
+func (v *VotingInfo) SetAvailableVoteWeight(availableVoteWeight int64) {
+	v.availableVoteWeight = availableVoteWeight
+}
+
+func (v *VotingInfo) SetVoterAddress(voterAddress address) {
+	v.voterAddress = voterAddress
+}
+
+func (v *VotingInfo) SetVotedWeight(votedWeight int64) {
+	v.votedWeight = votedWeight
+}
+
+func (v *VotingInfo) SetVotedHeight(votedHeight int64) {
+	v.votedHeight = votedHeight
+}
+
+func (v *VotingInfo) SetVotedAt(votedAt int64) {
+	v.votedAt = votedAt
+}
+
+func (v *VotingInfo) SetVotedYes(votedYes bool) {
+	v.votedYes = votedYes
+}
+
+func (v *VotingInfo) SetVoted(voted bool) {
+	v.voted = voted
+}
