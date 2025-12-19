@@ -272,6 +272,9 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 		incentives := make([]*json.Node, 0)
 		for _, incentive := range externalPosition.Incentive {
 			stakedOrExternalDuration := currentTime - max(incentive.StartTimestamp, externalPosition.StakedTime)
+			if stakedOrExternalDuration < 0 {
+				stakedOrExternalDuration = 0
+			}
 
 			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
 				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),

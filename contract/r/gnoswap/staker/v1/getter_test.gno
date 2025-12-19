@@ -36,6 +36,12 @@ func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
 			stakedTime:              baseTime - 150,
 			expectedMaxValue:        baseTime - 150,
 		},
+		{
+			name:                    "future incentive start (not started yet)",
+			incentiveStartTimestamp: baseTime + 1000,
+			stakedTime:              baseTime - 100,
+			expectedMaxValue:        baseTime + 1000,
+		},
 	}
 
 	for _, tt := range tests {
@@ -63,8 +69,6 @@ func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
 			calculatedDuration := currentTime - maxValue
 
 			uassert.Equal(t, tt.expectedMaxValue, maxValue)
-			uassert.True(t, calculatedDuration > 0, "duration must be positive")
-			uassert.True(t, calculatedDuration < 10000000, "duration must be reasonable")
 
 			nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
 			uassert.True(t, len(nodes) > 0, "must return nodes")
@@ -73,11 +77,18 @@ func TestMakeExternalPositionsNode_TimestampCalculation(t *testing.T) {
 			uassert.True(t, len(incentiveArray) > 0, "must have incentive")
 
 			actualDuration := int64(incentiveArray[0].MustKey("stakedOrExternalDuration").MustNumeric())
-			diff := actualDuration - calculatedDuration
-			if diff < 0 {
-				diff = -diff
+
+			if calculatedDuration < 0 {
+				uassert.Equal(t, int64(0), actualDuration, "negative duration must be clamped to 0")
+			} else {
+				uassert.True(t, calculatedDuration > 0, "duration must be positive")
+				uassert.True(t, calculatedDuration < 10000000, "duration must be reasonable")
+				diff := actualDuration - calculatedDuration
+				if diff < 0 {
+					diff = -diff
+				}
+				uassert.True(t, diff <= 1, "JSON duration must match calculated duration")
 			}
-			uassert.True(t, diff <= 1, "JSON duration must match calculated duration")
 		})
 	}
 }
