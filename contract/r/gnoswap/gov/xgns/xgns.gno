@@ -78,22 +78,6 @@ func Mint(cur realm, to address, amount int64) {
 	checkErr(ledger.Mint(to, amount))
 }
 
-// MintByLaunchPad mints tokens to address.
-//
-// Parameters:
-//   - to: recipient address
-//   - amount: amount to mint
-//
-// Only callable by launchpad contract.
-func MintByLaunchPad(cur realm, to address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
-
-	checkErr(ledger.Mint(to, amount))
-}
-
 // Burn burns tokens from address.
 //
 // Parameters:

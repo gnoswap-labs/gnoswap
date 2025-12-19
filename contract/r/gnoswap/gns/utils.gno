@@ -5,11 +5,6 @@ import (
 	"strconv"
 
 	"gno.land/p/nt/ufmt"
-
-	prabc "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/rbac"
 )
 
 // validBlockTime validates that block time is within acceptable range.
@@ -39,21 +34,11 @@ func validEmissionAmount(amount int64) error {
 		return makeErrorWithDetails(errInvalidEmissionAmount, ufmt.Sprintf("emission amount cannot be negative: %d", amount))
 	}
 
-	if (safeAddInt64(amount, MintedEmissionAmount())) > MAX_EMISSION_AMOUNT {
+	if safeAddInt64(amount, MintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
 		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("too many emission amount: %d", amount))
 	}
 
 	return nil
-}
-
-// getAdminAddress returns the admin address from access control or default role address.
-func getAdminAddress() address {
-	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
-	if !exists {
-		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
-	}
-
-	return addr
 }
 
 // i64Min returns the smaller of two int64 values.

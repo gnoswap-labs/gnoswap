@@ -140,10 +140,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	assertIsValidToken(tokenPath)
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
+
+	callerAddress := runtime.PreviousRealm().Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
@@ -402,7 +404,7 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	if gv.getUserVotingInfoSnapshotFn != nil {
 		votingInfos, maxVotingWeight, ok = gv.getUserVotingInfoSnapshotFn(snapshotTime)
 	} else {
-		votingInfos, maxVotingWeight, ok = getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+		votingInfos, maxVotingWeight, ok = getUserVotingInfoWithDelegationSnapshots(snapshotTime)
 	}
 
 	if !ok || maxVotingWeight <= 0 {
@@ -412,9 +414,9 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	return votingInfos, maxVotingWeight, nil
 }
 
-// getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
+// getUserVotingInfoWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
 // Integrates with staker contract to get actual delegation amounts.
-func getUserVotingInfotWithDelegationSnapshots(
+func getUserVotingInfoWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*governance.VotingInfo, int64, bool) {
 	// Get delegation snapshots from staker contract

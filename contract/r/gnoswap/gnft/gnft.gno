@@ -9,11 +9,15 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 var (
 	nft   = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	owner = ownable.NewWithAddress(getPositionAddress())
+	positionAddr = access.MustGetAddress(prabc.ROLE_POSITION.String())
+	owner = ownable.NewWithAddress(positionAddr)
 )
 
 // Name returns the NFT collection name.
