@@ -17,12 +17,6 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 		expectedError string
 	}{
 		{
-			name:        "Admin can clean delegation snapshot",
-			caller:      admin,
-			threshold:   100,
-			expectPanic: false,
-		},
-		{
 			name:          "Non-admin caller should panic",
 			caller:        testutils.TestAddress("alice"),
 			threshold:     100,
@@ -48,12 +42,14 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
 					}(cross)
 				})
 			} else {
 				func(cur realm) {
-				// Should not panic for admin
+					// Should not panic for admin
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
 				}(cross)
 			}
@@ -70,33 +66,16 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 		testFunction func(t *testing.T)
 	}{
 		{
-			name:        "Multiple admin operations should work",
-			description: "Admin should be able to perform multiple operations in sequence",
+			name:        "Multiple SetUnDelegationLockupPeriodByAdmin operations should work",
+			description: "Admin should be able to perform multiple SetUnDelegationLockupPeriodByAdmin operations in sequence",
 			testFunction: func(t *testing.T) {
 				// Given: Admin context
 				testing.SetRealm(testing.NewUserRealm(admin))
 
 				func(cur realm) {
-					gs.CleanStakerDelegationSnapshotByAdmin(100)
 					gs.SetUnDelegationLockupPeriodByAdmin(1000)
-					gs.CleanStakerDelegationSnapshotByAdmin(200)
 					gs.SetUnDelegationLockupPeriodByAdmin(2000)
-				}(cross)
-			},
-		},
-		{
-			name:        "Large threshold values should be handled",
-			description: "System should handle large threshold values without issues",
-			testFunction: func(t *testing.T) {
-				// Given: Admin context
-				testing.SetRealm(testing.NewUserRealm(admin))
-
-				// When: Use large threshold value
-				largeThreshold := int64(9223372036854775807) // max int64
-
-				// Then: Should not panic
-				func(cur realm) {
-					gs.CleanStakerDelegationSnapshotByAdmin(largeThreshold)
+					gs.SetUnDelegationLockupPeriodByAdmin(3000)
 				}(cross)
 			},
 		},

@@ -9,6 +9,10 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
@@ -27,13 +31,13 @@ import (
 const ZERO_ADDRESS = address("")
 
 var (
-	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
-	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
-	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
-	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
-	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
-	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
+	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	positionAddr      = access.MustGetAddress(prbac.ROLE_POSITION.String())
 )
 
 // Deposits manages all staked positions.
@@ -315,6 +319,22 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
+	// when staking, add new created incentives to deposit
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, 0, currentTime)
+
+	for _, incentiveId := range currentIncentiveIds {
+		incentive := s.getExternalIncentives().get(incentiveId)
+		// If incentive is ended, not available to collect reward
+		if currentTime > incentive.EndTimestamp() {
+			continue
+		}
+
+		deposit.AddExternalIncentiveId(incentiveId)
+	}
+
+	// set last external incentive ids updated at
+	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
+
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
@@ -517,12 +537,19 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
+		incentiveResolver.addDistributedRewardAmount(totalDistributedRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
 		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
 		if err != nil {
 			panic(err)
+		}
+
+		// If incentive ended and user already collected after end, remove from index
+		// This ensures deposit's incentive list shrinks over time as incentives complete
+		if depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
+			deposit.RemoveExternalIncentiveId(incentiveId)
 		}
 
 		// update
@@ -748,40 +775,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick := poolResolver.TickResolver(depositResolver.TickLower())
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
-
-	incentivesResolver := poolResolver.IncentivesResolver()
-	deposit.CollectedExternalRewards().Iterate("", "", func(incentiveId string, value any) bool {
-		collectedExternalReward, ok := value.(int64)
-		if !ok {
-			panic("failed to cast value to int64")
-		}
-
-		// if incentive is archived, no need to add distributed and archive
-		if incentivesResolver.IsArchived(incentiveId) {
-			return false // continue iteration
-		}
-
-		externalIncentive, ok := incentivesResolver.Get(incentiveId)
-		if !ok {
-			panic(makeErrorWithDetails(
-				errDataNotFound,
-				ufmt.Sprintf("incentive(%s) not found", incentiveId),
-			))
-		}
-
-		externalIncentiveResolver := NewExternalIncentiveResolver(externalIncentive)
-		externalIncentiveResolver.addDistributedRewardAmount(collectedExternalReward)
-
-		// archive incentive if it is finished (all rewards distributed)
-		// this is to prevent re-claiming GNS or rewards after the incentive is finished
-		if externalIncentiveResolver.IsFinished() {
-			if err := s.archiveEndedExternalIncentive(incentivesResolver, externalIncentive); err != nil {
-				panic(err)
-			}
-		}
-
-		return false // continue iteration
-	})
 
 	s.getDeposits().remove(positionId)
 	s.getStakers().removeDeposit(deposit.Owner(), positionId)

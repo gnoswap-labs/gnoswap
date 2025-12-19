@@ -515,14 +515,14 @@ func TestGetLockedAmount(t *testing.T) {
 	}
 }
 
-// TestGetDelegationSnapshots tests the GetDelegationSnapshots getter function
-func TestGetDelegationSnapshots(t *testing.T) {
+// TestGetTotalDelegationAmountAtSnapshot tests the GetTotalDelegationAmountAtSnapshot getter function
+func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 	tests := []struct {
 		name         string
 		snapshotTime int64
 	}{
 		{
-			name:         "get delegation snapshots is success",
+			name:         "get total delegation amount at snapshot is success",
 			snapshotTime: 1234567890,
 		},
 	}
@@ -534,12 +534,44 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			// Action
-			GetDelegationSnapshots(tt.snapshotTime)
+			GetTotalDelegationAmountAtSnapshot(tt.snapshotTime)
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetDelegationSnapshots") != 1 {
-				t.Error("GetDelegationSnapshots was not called on the implementation")
+			if mockGovStaker.Response.CallCount("GetTotalDelegationAmountAtSnapshot") != 1 {
+				t.Error("GetTotalDelegationAmountAtSnapshot was not called on the implementation")
+			}
+		})
+	}
+}
+
+// TestGetUserDelegationAmountAtSnapshot tests the GetUserDelegationAmountAtSnapshot getter function
+func TestGetUserDelegationAmountAtSnapshot(t *testing.T) {
+	tests := []struct {
+		name         string
+		snapshotTime int64
+		user         address
+	}{
+		{
+			name:         "get user delegation amount at snapshot is success",
+			snapshotTime: 1234567890,
+			user:         adminAddr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			// Action
+			GetUserDelegationAmountAtSnapshot(tt.user, tt.snapshotTime)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetUserDelegationAmountAtSnapshot") != 1 {
+				t.Error("GetUserDelegationAmountAtSnapshot was not called on the implementation")
 			}
 		})
 	}

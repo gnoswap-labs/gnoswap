@@ -74,8 +74,12 @@ func (t *TestGovStaker) GetLockedAmount() int64 {
 	return t.instance.GetLockedAmount()
 }
 
-func (t *TestGovStaker) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
-	return t.instance.GetDelegationSnapshots(snapshotTime)
+func (t *TestGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	return t.instance.GetTotalDelegationAmountAtSnapshot(snapshotTime)
+}
+
+func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
 func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) string {

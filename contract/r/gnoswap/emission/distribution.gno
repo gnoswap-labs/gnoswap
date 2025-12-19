@@ -59,8 +59,10 @@ func init() {
 // ChangeDistributionPct changes distribution percentages for emission targets.
 //
 // This function redistributes how newly minted GNS tokens are allocated across
-// protocol components. Changes take effect immediately for future emissions.
-// Historical distributions are not affected.
+// protocol components. Before applying new ratios, it distributes any accumulated
+// emissions using the current ratios, ensuring emissions are distributed according
+// to the ratios in effect when they were generated. This prevents retroactive
+// application of new ratios to past emissions.
 //
 // Parameters:
 //   - target01-04: Target identifiers (1=LIQUIDITY_STAKER, 2=DEVOPS, 3=COMMUNITY_POOL, 4=GOV_STAKER)
@@ -96,6 +98,11 @@ func ChangeDistributionPct(
 
 	assertValidDistributionTargets(target01, target02, target03, target04)
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
+
+	// Distribute accumulated emissions with current ratios before changing ratios.
+	// This prevents retroactive application of new ratios to emissions that occurred
+	// under previous ratio configurations.
+	MintAndDistributeGns(cross)
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()

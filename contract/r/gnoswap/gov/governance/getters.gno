@@ -84,3 +84,13 @@ func GetVotedHeight(proposalID int64, address address) int64 {
 func GetVotedAt(proposalID int64, address address) int64 {
 	return getImplementation().GetVotedAt(proposalID, address)
 }
+
+// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+func GetMaxSmoothingPeriod() int64 {
+	return getImplementation().GetMaxSmoothingPeriod()
+}
+
+// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
+func GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	return getImplementation().GetOldestActiveProposalSnapshotTime()
+}

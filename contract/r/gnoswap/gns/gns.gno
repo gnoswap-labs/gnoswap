@@ -12,7 +12,9 @@ import (
 
 	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 const (
@@ -22,7 +24,7 @@ const (
 )
 
 var (
-	adminAddr            = getAdminAddress()
+	adminAddr            = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller           = token.CallerTeller()
 	owner                = ownable.NewWithAddress(adminAddr)
@@ -42,7 +44,7 @@ func init() {
 	// leftEmissionAmount will decrease as tokens are minted.
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
-	setLastMintedTimestamp(runtime.ChainHeight())
+	setLastMintedTimestamp(0)
 	burnAmount = 0
 }
 
@@ -74,9 +76,11 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 //
 // Returns amount minted.
 // Only callable by emission contract.
+//
+// Note: Halt check is performed by the caller (emission.MintAndDistributeGns)
+// to allow graceful handling. This function assumes caller has already verified
+// halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	halt.AssertIsNotHaltedEmission()
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 

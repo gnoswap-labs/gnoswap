@@ -17,6 +17,8 @@ type Deposit struct {
 	collectedInternalReward        int64      // collected internal reward
 	collectedExternalRewards       *avl.Tree  // collected external reward by incentive id (incentiveID -> int64)
 	externalRewardLastCollectTimes *avl.Tree  // last collect time for external rewards by incentive id (incentiveID -> int64)
+	externalIncentiveIds           *avl.Tree  // external incentive ids for this deposit (incentiveID -> bool)
+	lastExternalIncentiveUpdatedAt int64      // last time when external incentive ids were synced
 	tickLower                      int32      // tick lower
 	tickUpper                      int32      // tick upper
 }
@@ -153,12 +155,79 @@ func (d *Deposit) SetTickUpper(tickUpper int32) {
 	d.tickUpper = tickUpper
 }
 
+func (d *Deposit) ExternalIncentiveIds() *avl.Tree {
+	return d.externalIncentiveIds
+}
+
+func (d *Deposit) SetExternalIncentiveIds(externalIncentiveIds *avl.Tree) {
+	d.externalIncentiveIds = externalIncentiveIds
+}
+
+// AddExternalIncentiveId adds an external incentive id to the deposit.
+func (d *Deposit) AddExternalIncentiveId(incentiveId string) {
+	if d.externalIncentiveIds == nil {
+		d.externalIncentiveIds = avl.NewTree()
+	}
+	d.externalIncentiveIds.Set(incentiveId, true)
+}
+
+// HasExternalIncentiveId checks if the deposit has the given external incentive id.
+func (d *Deposit) HasExternalIncentiveId(incentiveId string) bool {
+	if d.externalIncentiveIds == nil {
+		return false
+	}
+	return d.externalIncentiveIds.Has(incentiveId)
+}
+
+// RemoveExternalIncentiveId removes an external incentive id from the deposit.
+func (d *Deposit) RemoveExternalIncentiveId(incentiveId string) {
+	if d.externalIncentiveIds == nil {
+		return
+	}
+	d.externalIncentiveIds.Remove(incentiveId)
+}
+
+// GetExternalIncentiveIdList returns a list of external incentive ids for the deposit.
+func (d *Deposit) GetExternalIncentiveIdList() []string {
+	if d.externalIncentiveIds == nil {
+		return []string{}
+	}
+
+	ids := make([]string, 0, d.externalIncentiveIds.Size())
+	d.externalIncentiveIds.Iterate("", "", func(key string, _ any) bool {
+		ids = append(ids, key)
+		return false
+	})
+	return ids
+}
+
+// IterateExternalIncentiveIds iterates over external incentive IDs without allocating a slice.
+// The callback function receives each incentive ID and should return false to continue iteration,
+// or true to stop early. This method is more memory-efficient than GetExternalIncentiveIdList
+// for cases where you only need to process IDs sequentially.
+func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) {
+	if d.externalIncentiveIds == nil {
+		return
+	}
+	d.externalIncentiveIds.Iterate("", "", func(key string, _ any) bool {
+		return fn(key)
+	})
+}
+
 func (d *Deposit) Warmups() []Warmup {
 	return d.warmups
 }
 
 func (d *Deposit) SetWarmups(warmups []Warmup) {
 	d.warmups = warmups
+}
+
+func (d *Deposit) LastExternalIncentiveUpdatedAt() int64 {
+	return d.lastExternalIncentiveUpdatedAt
+}
+
+func (d *Deposit) SetLastExternalIncentiveUpdatedAt(timestamp int64) {
+	d.lastExternalIncentiveUpdatedAt = timestamp
 }
 
 func NewDeposit(
@@ -181,6 +250,8 @@ func NewDeposit(
 		externalRewardLastCollectTimes: avl.NewTree(),
 		collectedInternalReward:        0,
 		collectedExternalRewards:       avl.NewTree(),
+		externalIncentiveIds:           avl.NewTree(),
+		lastExternalIncentiveUpdatedAt: 0,
 	}
 }
 

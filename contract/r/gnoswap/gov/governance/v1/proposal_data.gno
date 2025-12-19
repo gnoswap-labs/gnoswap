@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"gno.land/p/nt/ufmt"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -135,27 +136,16 @@ func (r *ProposalDataResolver) validateText() error {
 func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	// Validate recipient address
 	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
+
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("to is invalid address"),
-		)
-	}
-
-	// Validate token path is provided
-	if communityPoolSpend.TokenPath() == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("tokenPath is empty"),
-		)
+			errInvalidInput, "to is invalid address")
 	}
 
 	// Validate amount is greater than 0
 	if communityPoolSpend.Amount() <= 0 {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("amount is not positive"),
-		)
+			errInvalidInput, "amount is not positive")
 	}
 
 	return nil
