@@ -156,7 +156,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || votingWeightSmoothingDuration cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-025] invalid smoothing period",
 		},
 		{
 			name:                          "Fail: negative proposal creation threshold",

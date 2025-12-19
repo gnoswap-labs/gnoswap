@@ -13,7 +13,7 @@ func TestInstance_NewGovernanceV1(t *testing.T) {
 	store := createMockGovernanceStore()
 
 	// when
-	impl := NewGovernanceV1(store)
+	impl := NewGovernanceV1(store, newMockGovStakerAccessor())
 
 	// then
 	uassert.NotNil(t, impl)
@@ -26,7 +26,6 @@ func TestInstance_NewGovernanceV1(t *testing.T) {
 	gv, ok := impl.(*governanceV1)
 	uassert.True(t, ok)
 	uassert.NotNil(t, gv.store)
-	uassert.NotNil(t, gv.getUserVotingInfoSnapshotFn)
 
 	// Verify store methods are accessible
 	counter := gv.store.GetProposalCounter()

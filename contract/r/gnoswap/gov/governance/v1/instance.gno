@@ -1,25 +1,18 @@
 package v1
 
 import (
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
 type governanceV1 struct {
-	store governance.IGovernanceStore
-
-	// Function to retrieve user voting snapshots (can be overridden for testing)
-	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool)
+	store          governance.IGovernanceStore
+	stakerAccessor governance.GovStakerAccessor
 }
 
-func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGovernance {
-	gv := &governanceV1{store: governanceStore}
-
-	// Set default voting info snapshot function
-	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
-		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
-	}
-
+func NewGovernanceV1(governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+	gv := &governanceV1{store: governanceStore, stakerAccessor: stakerAccessor}
 	return gv
 }
 
@@ -114,11 +107,11 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64)
 }
 
 // Proposal voting info methods
-func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (map[string]*governance.VotingInfo, bool) {
+func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*avl.Tree, bool) {
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos map[string]*governance.VotingInfo) bool {
+func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *avl.Tree) bool {
 	err := g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
 	return err == nil
 }
@@ -135,11 +128,20 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 }
 
 func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
-	votingInfosRaw, exists := g.getProposalUserVotingInfos(proposalID)
+	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil, false
 	}
 
-	votingInfo, exists := votingInfosRaw[addr.String()]
-	return votingInfo, exists
+	votingInfoRaw, exists := votingInfosTree.Get(addr.String())
+	if !exists {
+		return nil, false
+	}
+
+	votingInfo, ok := votingInfoRaw.(*governance.VotingInfo)
+	if !ok {
+		return nil, false
+	}
+
+	return votingInfo, true
 }

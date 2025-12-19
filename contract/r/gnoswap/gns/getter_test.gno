@@ -215,6 +215,7 @@ func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
 	resetEmissionState(t)
 	InitGnsTest(t)
+	resetEmissionState(t)
 
 	tests := []struct {
 		name      string

@@ -58,14 +58,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	// Initialize delegation snapshots
-	if !store.HasDelegationSnapshotStoreKey() {
-		err := store.SetDelegationSnapshot(make(staker.DelegationSnapshot, 0))
-		if err != nil {
-			return err
-		}
-	}
-
 	if !store.HasDelegationsStoreKey() {
 		err := store.SetDelegations(avl.NewTree())
 		if err != nil {
@@ -73,8 +65,17 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	if !store.HasDelegationHistoryStoreKey() {
-		err := store.SetDelegationHistory(make(staker.DelegationHistory, 0))
+	// Initialize total delegation history (timestamp -> int64)
+	if !store.HasTotalDelegationHistoryStoreKey() {
+		err := store.SetTotalDelegationHistory(staker.NewUintTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize user delegation history (address -> *UintTree[timestamp -> int64])
+	if !store.HasUserDelegationHistoryStoreKey() {
+		err := store.SetUserDelegationHistory(avl.NewTree())
 		if err != nil {
 			return err
 		}

@@ -251,9 +251,45 @@ func (m *MockGovernance) GetVotedAt(proposalID int64, address address) int64 {
 	return res[0].(int64)
 }
 
+func (m *MockGovernance) GetMaxSmoothingPeriod() int64 {
+	res, ok := m.Response.Get("GetMaxSmoothingPeriod")
+	if !ok {
+		return 30 * 24 * 60 * 60 // default 30 days
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	res, ok := m.Response.Get("GetOldestActiveProposalSnapshotTime")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
+}
+
 func newMockGovernance(version string) *MockGovernance {
 	return &MockGovernance{
 		Version:  version,
 		Response: NewMockResponse(),
+	}
+}
+
+type mockGovStakerAccessor struct {
+	totalDelegation int64
+	userDelegations map[string]int64
+}
+
+func (m *mockGovStakerAccessor) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	return m.totalDelegation, true
+}
+
+func (m *mockGovStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	return m.userDelegations[userAddr.String()], true
+}
+
+func newMockGovStakerAccessor() *mockGovStakerAccessor {
+	return &mockGovStakerAccessor{
+		totalDelegation: 0,
+		userDelegations: make(map[string]int64),
 	}
 }

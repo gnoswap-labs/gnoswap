@@ -137,9 +137,6 @@ func (lp *launchpadV1) depositGns(
 	deposits := lp.store.GetDeposits()
 	deposits.Set(depositID, deposit)
 
-	depositToTier(projectTier, deposit)
-	project.SetTier(tierDuration, projectTier)
-
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
 		return nil, nil, false, "", err
@@ -147,12 +144,18 @@ func (lp *launchpadV1) depositGns(
 
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
 
-	rewardState := addRewardStateByDeposit(rewardManager, deposit)
-
+	// update rewards before adding deposit to reward manager
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
+
+	// add reward state to reward manager
+	rewardState := addRewardStateByDeposit(rewardManager, deposit)
+
+	// update tier data after adding reward state to reward manager
+	depositToTier(projectTier, deposit)
+	project.SetTier(tierDuration, projectTier)
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(deposits); err != nil {
@@ -192,8 +195,6 @@ func (lp *launchpadV1) stakeGovernance(projectID string, depositAmount int64, la
 		launchpadAddress,
 		depositAmount,
 	)
-
-	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
 
 	return nil
 }
