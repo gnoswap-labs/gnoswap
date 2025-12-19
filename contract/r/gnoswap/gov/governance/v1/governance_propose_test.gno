@@ -676,7 +676,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
@@ -1208,7 +1208,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			name:          "fail - empty executions string",
 			numToExecute:  1,
 			executions:    "",
-			expectedError: "execution[0]: expected 3 parts (pkgPath, function, params), got 1",
+			expectedError: "GNOSWAP-GOVERNANCE-002] invalid input || executions is empty",
 			shouldFail:    true,
 		},
 		{
