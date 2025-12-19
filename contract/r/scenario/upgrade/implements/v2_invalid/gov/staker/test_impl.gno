@@ -123,11 +123,18 @@ func (t *TestGovStaker) GetLockedAmount() int64 {
 	return t.instance.GetLockedAmount()
 }
 
-func (t *TestGovStaker) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
-	if !t.isActive("GetDelegationSnapshots") {
+func (t *TestGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	if !t.isActive("GetTotalDelegationAmountAtSnapshot") {
+		panic("test implementation: GetTotalDelegationAmountAtSnapshot not supported")
+	}
+	return t.instance.GetTotalDelegationAmountAtSnapshot(snapshotTime)
+}
+
+func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	if !t.isActive("GetUserDelegationAmountAtSnapshot") {
 		panic("test implementation: GetDelegationSnapshots not supported")
 	}
-	return t.instance.GetDelegationSnapshots(snapshotTime)
+	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
 func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) string {

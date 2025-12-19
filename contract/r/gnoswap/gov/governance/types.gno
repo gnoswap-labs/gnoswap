@@ -84,6 +84,12 @@ type IVoteApi interface {
 	GetVoteWeight(proposalID int64, address address) int64
 	GetVotedHeight(proposalID int64, address address) int64
 	GetVotedAt(proposalID int64, address address) int64
+
+	// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+	GetMaxSmoothingPeriod() int64
+
+	// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
+	GetOldestActiveProposalSnapshotTime() (int64, bool)
 }
 
 type IGovernanceStore interface {
@@ -109,17 +115,25 @@ type IGovernanceStore interface {
 	SetProposals(proposals *avl.Tree) error
 
 	// Proposal voting info methods
-	HasProposalVotingInfosStoreKey() bool
-	GetProposalVotingInfos(proposalID int64) (map[string]*VotingInfo, bool)
-	SetProposalVotingInfos(proposalID int64, votingInfos map[string]*VotingInfo) error
-
 	HasProposalUserVotingInfosStoreKey() bool
 	GetProposalUserVotingInfos() *avl.Tree
 	SetProposalUserVotingInfos(votingInfos *avl.Tree) error
+	GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool)
+	SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
 	AddUserProposal(user string, proposalID int64) error
 	SetUserProposals(userProposals *avl.Tree) error
+}
+
+// GovStakerAccessor provides an interface for accessing gov staker functionality.
+// This abstraction allows for easier testing by enabling mock implementations.
+type GovStakerAccessor interface {
+	// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a specific snapshot time.
+	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
+
+	// GetUserDelegationAmountAtSnapshot returns the user delegation amount at a specific snapshot time.
+	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 }

@@ -31,6 +31,7 @@ var (
 	errNotProposer                                    = errors.New("[GNOSWAP-GOVERNANCE-022] not proposer")
 	errInvalidConfiguration                           = errors.New("[GNOSWAP-GOVERNANCE-023] invalid configuration")
 	errInvalidExecution                               = errors.New("[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found")
+	errInvalidSmoothingPeriod                         = errors.New("[GNOSWAP-GOVERNANCE-025] invalid smoothing period")
 )
 
 // makeErrorWithDetails creates an error with additional context.

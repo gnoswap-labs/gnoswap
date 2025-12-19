@@ -54,6 +54,8 @@ func (gv *governanceV1) Reconfigure(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
+	assertIsValidSmoothingPeriod(votingWeightSmoothingDuration)
+
 	// Create and validate new configuration
 	newCfg := makeConfig(
 		votingStartDelay,

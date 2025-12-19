@@ -304,10 +304,8 @@ func (gs *govStakerV1) delegate(
 		return nil, errors.New("delegated amount cannot be negative")
 	}
 
-	delegationRecord := staker.NewDelegationDelegateRecordBy(delegation, delegatedAmount, currentTimestamp)
-
 	gs.addDelegation(delegationID, delegation)
-	gs.addDelegationRecord(delegationRecord)
+	gs.addDelegationRecord(to, delegatedAmount, currentTimestamp)
 	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
 	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
@@ -371,10 +369,8 @@ func (gs *govStakerV1) unDelegate(
 			lockupPeriod,
 		)
 
-		delegationRecord := staker.NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
-
 		gs.setDelegation(delegation.ID(), delegation)
-		gs.addDelegationRecord(delegationRecord)
+		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTimestamp)
 		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
@@ -433,6 +429,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentHeight,
 			currentTime,
 		)
+
+		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {

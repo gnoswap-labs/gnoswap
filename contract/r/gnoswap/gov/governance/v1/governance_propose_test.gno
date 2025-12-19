@@ -832,6 +832,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Unix(),
 					100,
 				)
@@ -843,14 +844,16 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		{
 			name: "fail - active proposal exists",
 			setupActiveProposal: func() *governance.Proposal {
+				createTime := time.Now().Add(-time.Hour * 25).Unix()
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, createTime),
 					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*25).Unix(),
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime,
 					100,
 				)
 			},
@@ -861,14 +864,16 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		{
 			name: "fail - passed proposal exists",
 			setupActiveProposal: func() *governance.Proposal {
+				createTime := time.Now().Add(-time.Hour * 24 * 10).Unix()
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, createTime),
 					governance.NewProposalMetadata("Passed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*10).Unix(),
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime,
 					100,
 				)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -889,6 +894,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*12).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*12).Unix(),
 					100,
 				)
@@ -910,6 +916,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*20).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*20).Unix(),
 					100,
 				)
@@ -931,6 +938,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Unix(),
 					100,
 				)
@@ -951,6 +959,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*40).Unix(),
 					100,
 				)
@@ -968,6 +977,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
@@ -1356,13 +1366,18 @@ func setupTestGnsBalance(t *testing.T, address address, balance int64) {
 }
 
 func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
-	// Mock delegation snapshots setup
-	// In actual implementation, this would set up staker delegation snapshots
-	testing.SetRealm(adminRealm)
-
-	gov.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
-		return userVotes, maxVotingWeight, true
+	// Set up mock accessor to return the expected delegation amounts
+	mockAccessor := &mockGovStakerAccessor{
+		totalDelegation: maxVotingWeight,
+		userDelegations: make(map[string]int64),
 	}
+
+	// Set up user delegations from votingInfo
+	for voter, votingInfo := range userVotes {
+		mockAccessor.userDelegations[voter] = votingInfo.AvailableVoteWeight()
+	}
+
+	gov.stakerAccessor = mockAccessor
 }
 
 func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress address) {
@@ -1381,6 +1396,7 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 		NewProposalTextData(),
 		proposerAddress,
 		gov.getCurrentConfigVersion(),
+		time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 		time.Now().Unix(),
 		100,
 	)

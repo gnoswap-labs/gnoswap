@@ -1,8 +1,8 @@
 package v1
 
 import (
-    "gno.land/p/nt/ufmt"
-    "gno.land/r/gnoswap/common"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/common"
 )
 
 // assertCallerIsProposer panics if the caller is not the proposer of the given proposal.
@@ -17,8 +17,18 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 	}
 }
 
+func assertIsValidSmoothingPeriod(smoothingPeriod int64) {
+	if smoothingPeriod < 0 {
+		panic(errInvalidSmoothingPeriod)
+	}
+
+	if smoothingPeriod > maxSmoothingPeriod {
+		panic(errInvalidSmoothingPeriod)
+	}
+}
+
 func assertIsValidToken(tokenPath string) {
-    if tokenPath == "" {
+	if tokenPath == "" {
 		panic(makeErrorWithDetails(
 			errInvalidInput, "tokenPath is empty"))
 	}

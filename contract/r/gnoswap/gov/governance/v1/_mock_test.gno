@@ -109,7 +109,7 @@ func (m *mockGovernanceStore) GetProposalUserVotingInfos() *avl.Tree {
 	return m.proposalUserVotingInfos
 }
 
-func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (map[string]*governance.VotingInfo, bool) {
+func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
@@ -117,10 +117,10 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (map[stri
 	if !exists {
 		return nil, false
 	}
-	return result.(map[string]*governance.VotingInfo), true
+	return result.(*avl.Tree), true
 }
 
-func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos map[string]*governance.VotingInfo) error {
+func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
 	if m.proposalUserVotingInfos == nil {
 		m.proposalUserVotingInfos = avl.NewTree()
 	}
@@ -175,7 +175,8 @@ func (m *mockGovernanceStore) SetUserProposals(userProposals *avl.Tree) error {
 func newMockGovernance() *governanceV1 {
 	store := newMockGovernanceStore()
 	return &governanceV1{
-		store: store,
+		store:          store,
+		stakerAccessor: newMockGovStakerAccessor(),
 	}
 }
 
@@ -187,5 +188,49 @@ func newMockGovernanceStore() *mockGovernanceStore {
 		proposals:               avl.NewTree(),
 		proposalUserVotingInfos: avl.NewTree(),
 		userProposals:           avl.NewTree(),
+	}
+}
+
+// mockGovStakerAccessor provides a mock implementation of GovStakerAccessor for testing.
+type mockGovStakerAccessor struct {
+	totalDelegation int64
+	userDelegations map[string]int64
+}
+
+func (m *mockGovStakerAccessor) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	if m.totalDelegation <= 0 {
+		return 0, false
+	}
+	return m.totalDelegation, true
+}
+
+func (m *mockGovStakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	if m.userDelegations == nil {
+		return 0, false
+	}
+	amount, exists := m.userDelegations[userAddr.String()]
+	if !exists || amount <= 0 {
+		return 0, false
+	}
+	return amount, true
+}
+
+// SetTotalDelegation sets the total delegation amount for the mock
+func (m *mockGovStakerAccessor) SetTotalDelegation(amount int64) {
+	m.totalDelegation = amount
+}
+
+// SetUserDelegation sets the delegation amount for a specific user
+func (m *mockGovStakerAccessor) SetUserDelegation(userAddr address, amount int64) {
+	if m.userDelegations == nil {
+		m.userDelegations = make(map[string]int64)
+	}
+	m.userDelegations[userAddr.String()] = amount
+}
+
+func newMockGovStakerAccessor() *mockGovStakerAccessor {
+	return &mockGovStakerAccessor{
+		totalDelegation: 0,
+		userDelegations: make(map[string]int64),
 	}
 }
