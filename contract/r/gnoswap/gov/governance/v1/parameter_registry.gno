@@ -723,6 +723,10 @@ var (
 		})
 	}
 	addressValidator = func(s string) error {
+	    // allow zero address
+		if s == "" {
+		    return nil
+		}
 		return runValidator(func() {
 			addr := address(s)
 			if !addr.IsValid() {

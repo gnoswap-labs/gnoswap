@@ -279,6 +279,12 @@ func TestValidateExecutions(t *testing.T) {
 			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
+		{
+			name:          "Success - community_pool TransferToken empty address",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + address("").String() + ",1000000",
+			expectedError: false,
+		},
 		// emission
 		{
 			name:          "Success - emission SetDistributionStartTime",
