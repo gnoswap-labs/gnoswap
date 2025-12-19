@@ -146,8 +146,8 @@ type ApiStake struct {
 
 func newApiStake(tokenId uint64, deposit *sr.Deposit) ApiStake {
 	stakeDuration := uint64(0)
-	if runtime.ChainHeight() > deposit.StakeTime() {
-		now := time.Now().Unix()
+	now := time.Now().Unix()
+	if now > deposit.StakeTime() {
 		stakeDuration = uint64(safeSubInt64(now, deposit.StakeTime()))
 	}
 
