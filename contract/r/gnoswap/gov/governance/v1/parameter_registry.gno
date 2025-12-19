@@ -134,10 +134,10 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 		return nil
 	}
 
-	if len(h.paramValidators) != len(params) {
+	if len(h.paramValidators) != h.paramCount {
 		return ufmt.Errorf(
 			"validator count mismatch for %s: expected %d validator(s), got %d",
-			h.HandlerKey(), len(params), len(h.paramValidators),
+			h.HandlerKey(), h.paramCount, len(h.paramValidators),
 		)
 	}
 
@@ -232,7 +232,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "TransferToken",
 			paramCount: 3,
 			paramValidators: []paramValidator{
-				stringValidator,          // pkgPath
+				stringValidator,            // pkgPath
 				addressValidator,           // to
 				numberValidator(kindInt64), // amount
 			},
@@ -350,12 +350,12 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "CollectProtocol",
 			paramCount: 6,
 			paramValidators: []paramValidator{
-				stringValidator, // token0Path
-				stringValidator, // token1Path
-				uint64Validator,   // fee
-				addressValidator,  // recipient
-				nil,               // amount0Requested (validated in pool logic)
-				nil,               // amount1Requested (validated in pool logic)
+				stringValidator,  // token0Path
+				stringValidator,  // token1Path
+				uint64Validator,  // fee
+				addressValidator, // recipient
+				nil,              // amount0Requested (validated in pool logic)
+				nil,              // amount1Requested (validated in pool logic)
 			},
 			handlerFunc: func(params []string) error {
 				pl.CollectProtocol(
@@ -509,7 +509,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			paramValidators: []paramValidator{
 				stringValidator, // pool
-				uint64Validator,   // tier
+				uint64Validator, // tier
 			},
 			handlerFunc: func(params []string) error {
 				// Assign tier level to a specific pool
@@ -527,7 +527,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			paramValidators: []paramValidator{
 				stringValidator, // pool
-				uint64Validator,   // tier
+				uint64Validator, // tier
 			},
 			handlerFunc: func(params []string) error {
 				// Change existing pool's tier level
@@ -605,7 +605,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			paramValidators: []paramValidator{
 				stringValidator, // opType
-				boolValidator,     // allowed
+				boolValidator,   // allowed
 			},
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
@@ -624,8 +624,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RegisterRole",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator, // roleName
-				addressValidator,  // roleAddress
+				stringValidator,  // roleName
+				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
@@ -642,8 +642,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "UpdateRoleAddress",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator, // roleName
-				addressValidator,  // roleAddress
+				stringValidator,  // roleName
+				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
@@ -723,9 +723,9 @@ var (
 		})
 	}
 	addressValidator = func(s string) error {
-	    // allow zero address
+		// allow zero address
 		if s == "" {
-		    return nil
+			return nil
 		}
 		return runValidator(func() {
 			addr := address(s)
@@ -847,24 +847,24 @@ func validateExecutions(numToExecute int64, executions string) error {
 			)
 		}
 
-	// Validate parameter count matches handler's expected count
-	params := []string{}
-	if paramStr != "" {
-		params = strings.Split(paramStr, ",")
-	}
+		// Validate parameter count matches handler's expected count
+		params := []string{}
+		if paramStr != "" {
+			params = strings.Split(paramStr, ",")
+		}
 
-	// Get expected parameter count from handler
-	handlerOpts, ok := handler.(*ParameterHandlerOptions)
-	if !ok {
-		return makeErrorWithDetails(
-			errInvalidExecution,
-			ufmt.Sprintf("execution[%d]: failed to get handler options", i),
-		)
-	}
+		// Get expected parameter count from handler
+		handlerOpts, ok := handler.(*ParameterHandlerOptions)
+		if !ok {
+			return makeErrorWithDetails(
+				errInvalidExecution,
+				ufmt.Sprintf("execution[%d]: failed to get handler options", i),
+			)
+		}
 
-	// Validate parameter types/format ahead of proposal creation
-	if err := handlerOpts.ValidateParams(params); err != nil {
-		return makeErrorWithDetails(
+		// Validate parameter types/format ahead of proposal creation
+		if err := handlerOpts.ValidateParams(params); err != nil {
+			return makeErrorWithDetails(
 				errInvalidInput,
 				ufmt.Sprintf("execution[%d]: %v", i, err),
 			)
