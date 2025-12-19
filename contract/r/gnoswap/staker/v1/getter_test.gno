@@ -121,7 +121,7 @@ func TestMakeExternalPositionsNode_HeightVsTimestamp(t *testing.T) {
 	maxTimestamp := max(baseTime-43200, baseTime-86400)
 	duration := currentTime - maxTimestamp
 
-	uassert.True(t, duration > 0, "duration must be positive, not negative like the old bug")
+	uassert.True(t, duration > 0, "duration must be positive")
 	uassert.True(t, duration < 100000, "duration must be reasonable (< 100000 seconds)")
 
 	nodes := makeExternalPositionsNode([]ApiExternalDebugPosition{position})
