@@ -9,7 +9,7 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 ## Configuration
 
 - **Voting Period**: 7 days
-- **Quorum**: 50% of active xGNS supply (based on YES votes only)
+- **Quorum**: 50% of xGNS total supply
 - **Proposal Threshold**: 1,000 GNS
 - **Execution Delay**: 1 day timelock
 - **Execution Window**: 30 days
@@ -51,12 +51,12 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 ### Execution
 
-- Requires quorum[^1] based solely on YES votes; NO votes do not block execution once quorum is met
-- Quorum is fulfilled by YES votes only; NO votes do not count towards quorum or passing
-- Proposals can pass with low participation or even if NO votes exceed YES, as long as YES votes meet the quorum threshold
-- 1 day timelock after voting
-- 30 day execution window
-- Anyone can trigger execution
+A proposal is considered valid and executable when:
+- The voting period has ended
+- Total votes meet the quorum threshold (50% of xGNS total supply)
+- 1 day timelock has passed after voting ends
+- Within the 30 day execution window
+- Anyone can trigger execution once conditions are met
 
 ## Technical Details
 
@@ -118,5 +118,3 @@ Undelegate()
 - Timelock prevents rushed execution
 - Single proposal limit per address
 - Dynamic quorum excludes inactive xGNS
-
-- [^1]: YES votes ≥ 50% of active xGNS
