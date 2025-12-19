@@ -735,7 +735,10 @@ var (
 	}
 	addressValidator = func(s string) error {
 		return runValidator(func() {
-			_ = address(s)
+			addr := address(s)
+			if addr.IsValid() {
+				panic(ufmt.Sprintf("invalid address: %s", addr))
+			}
 		})
 	}
 )
