@@ -73,11 +73,6 @@ func (p *ProposalVoteStatusResolver) IsRejected() bool {
 
 // IsPassed determines if the proposal has passed the voting requirements.
 // A proposal passes if it receives at least the quorum amount of "yes" votes.
-// 
-// Important: Only YES votes count towards quorum fulfillment. NO votes do not
-// contribute to meeting the quorum threshold. This means a proposal can pass
-// with relatively low overall participation as long as YES votes meet the
-// required quorum percentage of active voting weight.
 //
 // Returns:
 //   - bool: true if proposal has passed
