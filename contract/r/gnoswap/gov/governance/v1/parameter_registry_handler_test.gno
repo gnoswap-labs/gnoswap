@@ -1,7 +1,7 @@
 package v1
 
 import (
-    "errors"
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/uassert"

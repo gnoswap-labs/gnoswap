@@ -118,13 +118,6 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
 	}
-
-	// Create realm context function and execute handler
-	// fn := func(cur realm) error {
-	// 	return h.handlerFunc(params)
-	// }
-
-	// return fn(cross)
 	return h.handlerFunc(params)
 }
 

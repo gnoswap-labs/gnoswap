@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/testutils"
+
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 )
@@ -377,6 +379,32 @@ func TestValidateExecutions(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name:          "Success - Community pool transfer",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - SetFeeProtocol with proper uint8 params",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,2",
+			expectedError: false,
+		},
+		{
+			name:                  "Success - SetFeeProtocol with invalid uint8 params (negative)",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,-2",
+			expectedError:         true,
+			expectedErrorContains: "out of range: -2",
+		},
+		{
+			name:                  "Success - SetFeeProtocol with invalid uint8 params (too large)",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,256",
+			expectedError:         true,
+			expectedErrorContains: "out of range: 256",
+		},
+		{
 			name:                  "Failure - Mixed valid and invalid executions",
 			numToExecute:          2,
 			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
@@ -402,6 +430,13 @@ func TestValidateExecutions(t *testing.T) {
 			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,not_bool",
 			expectedError:         true,
 			expectedErrorContains: "invalid bool value: not_bool",
+		},
+		{
+			name:                  "Failue - Community pool transfer with invalid address",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,invalidAddress,1000000",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
 		},
 	}
 
