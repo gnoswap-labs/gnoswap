@@ -4,8 +4,8 @@ import (
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/halt"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.
