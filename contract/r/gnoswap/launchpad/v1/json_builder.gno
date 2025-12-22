@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-	"strings"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -49,15 +48,21 @@ func projectBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeB
 	b.WriteString("depositAmount", ufmt.Sprintf("%d", project.DepositAmount()))
 	b.WriteString("recipient", project.Recipient().String())
 
-	tokenPaths := []string{}
-	amounts := []string{}
+	conditionsToken := ""
+	conditionsAmount := ""
 
+	idx := 0
 	for _, condition := range project.Conditions() {
-		tokenPaths = append(tokenPaths, condition.TokenPath())
-		amounts = append(amounts, ufmt.Sprintf("%d", condition.MinimumAmount()))
+		if idx > 0 {
+			conditionsToken += ","
+			conditionsAmount += ","
+		}
+		conditionsToken += condition.TokenPath()
+		conditionsAmount += ufmt.Sprintf("%d", condition.MinimumAmount())
+		idx++
 	}
-	b.WriteString("conditionsToken", strings.Join(tokenPaths, ","))
-	b.WriteString("conditionsAmount", strings.Join(amounts, ","))
+	b.WriteString("conditionsToken", conditionsToken)
+	b.WriteString("conditionsAmount", conditionsAmount)
 
 	// Add time info
 	b.WriteString("createdTime", ufmt.Sprintf("%d", project.CreatedAt()))
