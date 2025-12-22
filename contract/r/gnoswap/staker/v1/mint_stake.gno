@@ -67,6 +67,8 @@ func (s *stakerV1) MintAndStake(
 		}
 
 		// send it over to position to wrap
+		stakerAddr, _ := access.GetAddress(prbac.ROLE_STAKER.String())
+		positionAddr, _ := access.GetAddress(prbac.ROLE_POSITION.String())
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: GNOT_DENOM, Amount: ugnotSent}})
 	}
