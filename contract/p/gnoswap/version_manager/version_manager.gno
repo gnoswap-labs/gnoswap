@@ -193,7 +193,7 @@ func (vm *versionManager) isContainDomainPath() bool {
 		return false
 	}
 
-	prefix := ufmt.Sprintf("%s/", vm.domainPath)
+	prefix := vm.domainPath + "/"
 
 	return strings.HasPrefix(previousRealm.PkgPath(), prefix)
 }
