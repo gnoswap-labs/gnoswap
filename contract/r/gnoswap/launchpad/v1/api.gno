@@ -6,7 +6,32 @@ import (
 	"time"
 
 	"gno.land/p/nt/ufmt"
+
+	gs "gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/launchpad"
 )
+
+/* Deposits */
+
+// ApiGetDepositByDepositId retrieves deposit information by deposit ID.
+func (lp *launchpadV1) ApiGetDepositByDepositId(depositId string) string {
+	deposits := lp.store.GetDeposits()
+	deposit, exist := deposits.Get(depositId)
+	if !exist {
+		return ""
+	}
+
+	builder := metaBuilder()
+	d, ok := deposit.(*launchpad.Deposit)
+	if !ok {
+		panic("failed to cast deposit to *launchpad.Deposit")
+	}
+	depositBuilder(builder, d)
+
+	return marshal(builder.Node())
+}
+
+/* Project */
 
 // ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.
 func (lp *launchpadV1) ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
@@ -91,4 +116,30 @@ func (lp *launchpadV1) ApiGetProjectActiveOf(projectId string) string {
 		WriteString("currentHeight", strconv.FormatInt(runtime.ChainHeight(), 10))).
 		WriteString("startTime", strconv.FormatInt(getStandardTier(project).StartTime(), 10))
 	return marshal(builder.Node())
+}
+
+/* Rewards */
+
+// ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
+func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string) string {
+	projects := lp.store.GetProjects()
+	project, exist := projects.Get(projectId)
+	if !exist {
+		return "0"
+	}
+
+	proj, ok := project.(*launchpad.Project)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast project to *launchpad.Project: %T", project))
+	}
+	return gs.GetClaimableRewardByAddress(proj.Recipient())
+}
+
+// ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.
+func (lp *launchpadV1) ApiGetProjectRecipientRewardByAddress(address address) string {
+	if !address.IsValid() {
+		return "0"
+	}
+
+	return gs.GetClaimableRewardByAddress(address)
 }
