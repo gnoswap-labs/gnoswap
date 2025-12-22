@@ -40,14 +40,14 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			state := NewProtocolFeeRewardState(tc.accumulatedProtocolFeeX128PerStake)
+			state := NewProtocolFeeRewardState(mapToAvlTreeUint256(tc.accumulatedProtocolFeeX128PerStake))
 
 			// then
 			uassert.NotNil(t, state)
 			uassert.NotNil(t, state.GetRewardDebtX128())
 			uassert.NotNil(t, state.GetAccumulatedRewards())
 			uassert.NotNil(t, state.GetClaimedRewards())
-			uassert.Equal(t, len(state.GetRewardDebtX128()), tc.expectedMapSize)
+			uassert.Equal(t, state.GetRewardDebtX128().Size(), tc.expectedMapSize)
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetStakedAmount(), int64(0))
@@ -105,20 +105,20 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(mapToAvlTreeUint256(make(map[string]*u256.Uint)))
 
 			// when
-			state.SetRewardDebtX128(tc.rewardDebtX128)
-			state.SetAccumulatedRewards(tc.accumulatedRewards)
-			state.SetClaimedRewards(tc.claimedRewards)
+			state.SetRewardDebtX128(mapToAvlTreeUint256(tc.rewardDebtX128))
+			state.SetAccumulatedRewards(mapToAvlTreeInt64(tc.accumulatedRewards))
+			state.SetClaimedRewards(mapToAvlTreeInt64(tc.claimedRewards))
 			state.SetAccumulatedTimestamp(tc.accumulatedTimestamp)
 			state.SetClaimedTimestamp(tc.claimedTimestamp)
 			state.SetStakedAmount(tc.stakedAmount)
 
 			// then
-			uassert.Equal(t, len(state.GetRewardDebtX128()), len(tc.rewardDebtX128))
-			uassert.Equal(t, len(state.GetAccumulatedRewards()), len(tc.accumulatedRewards))
-			uassert.Equal(t, len(state.GetClaimedRewards()), len(tc.claimedRewards))
+			uassert.Equal(t, state.GetRewardDebtX128().Size(), len(tc.rewardDebtX128))
+			uassert.Equal(t, state.GetAccumulatedRewards().Size(), len(tc.accumulatedRewards))
+			uassert.Equal(t, state.GetClaimedRewards().Size(), len(tc.claimedRewards))
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), tc.accumulatedTimestamp)
 			uassert.Equal(t, state.GetClaimedTimestamp(), tc.claimedTimestamp)
 			uassert.Equal(t, state.GetStakedAmount(), tc.stakedAmount)
@@ -147,9 +147,9 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(map[string]*u256.Uint{
+			state := NewProtocolFeeRewardState(mapToAvlTreeUint256(map[string]*u256.Uint{
 				tc.token: tc.rewardDebtX128,
-			})
+			}))
 			state.SetAccumulatedRewardForToken(tc.token, tc.accumulatedReward)
 			state.SetClaimedRewardForToken(tc.token, tc.claimedReward)
 
@@ -184,7 +184,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(mapToAvlTreeUint256(make(map[string]*u256.Uint)))
 
 			// when
 			state.SetRewardDebtX128ForToken(tc.token, tc.rewardDebtX128)
@@ -258,7 +258,7 @@ func TestProtocolFeeRewardState_Clone(t *testing.T) {
 			}
 
 			// when
-			state := NewProtocolFeeRewardState(original)
+			state := NewProtocolFeeRewardState(mapToAvlTreeUint256(original))
 			original[tc.token] = tc.modifiedValue // Try to modify original
 
 			// then - state should still have the original value

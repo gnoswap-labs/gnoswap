@@ -5,6 +5,8 @@ import (
 	"chain/banker"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/onbloc/json"
 
@@ -128,4 +130,24 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
+}
+
+// AVL tree test utilities
+
+// mapToAvlTreeUint256 converts map[string]*u256.Uint to AVL tree
+func mapToAvlTreeUint256(m map[string]*u256.Uint) *avl.Tree {
+	tree := avl.NewTree()
+	for k, v := range m {
+		tree.Set(k, v)
+	}
+	return tree
+}
+
+// mapToAvlTreeInt64 converts map[string]int64 to AVL tree
+func mapToAvlTreeInt64(m map[string]int64) *avl.Tree {
+	tree := avl.NewTree()
+	for k, v := range m {
+		tree.Set(k, v)
+	}
+	return tree
 }

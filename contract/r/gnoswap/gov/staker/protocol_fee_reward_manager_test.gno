@@ -60,14 +60,14 @@ func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 			manager := NewProtocolFeeRewardManager()
 
 			// when
-			manager.SetAccumulatedProtocolFeeX128PerStake(tc.accumulatedProtocolFeeX128PerStake)
-			manager.SetProtocolFeeAmounts(tc.protocolFeeAmounts)
+			manager.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(tc.accumulatedProtocolFeeX128PerStake))
+			manager.SetProtocolFeeAmounts(mapToAvlTreeInt64(tc.protocolFeeAmounts))
 			manager.SetAccumulatedTimestamp(tc.accumulatedTimestamp)
 			manager.SetTotalStakedAmount(tc.totalStakedAmount)
 
 			// then
-			uassert.Equal(t, len(manager.GetAllAccumulatedProtocolFeeX128PerStake()), len(tc.accumulatedProtocolFeeX128PerStake))
-			uassert.Equal(t, len(manager.GetProtocolFeeAmounts()), len(tc.protocolFeeAmounts))
+			uassert.Equal(t, manager.GetAllAccumulatedProtocolFeeX128PerStake().Size(), len(tc.accumulatedProtocolFeeX128PerStake))
+			uassert.Equal(t, manager.GetProtocolFeeAmounts().Size(), len(tc.protocolFeeAmounts))
 			uassert.Equal(t, manager.GetAccumulatedTimestamp(), tc.accumulatedTimestamp)
 			uassert.Equal(t, manager.GetTotalStakedAmount(), tc.totalStakedAmount)
 
@@ -101,7 +101,7 @@ func TestProtocolFeeRewardManager_RewardState(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
-			rewardState := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			rewardState := NewProtocolFeeRewardState(mapToAvlTreeUint256(make(map[string]*u256.Uint)))
 
 			// when
 			manager.SetRewardState(tc.address, rewardState)
@@ -160,7 +160,7 @@ func TestProtocolFeeRewardManager_SetRewardStates(t *testing.T) {
 			manager := NewProtocolFeeRewardManager()
 			newTree := avl.NewTree()
 			for _, addr := range tc.addresses {
-				newTree.Set(addr, NewProtocolFeeRewardState(make(map[string]*u256.Uint)))
+				newTree.Set(addr, NewProtocolFeeRewardState(mapToAvlTreeUint256(make(map[string]*u256.Uint))))
 			}
 
 			// when

@@ -3,6 +3,7 @@ package staker
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 )
 
@@ -15,7 +16,7 @@ func TestDelegationManager_NewDelegationManager(t *testing.T) {
 		// then
 		uassert.NotNil(t, dm)
 		uassert.NotNil(t, dm.GetUserDelegations())
-		uassert.Equal(t, len(dm.GetUserDelegations()), 0)
+		uassert.Equal(t, dm.GetUserDelegations().Size(), 0)
 	})
 }
 
@@ -163,9 +164,12 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 			} else {
 				uassert.True(t, exists)
 				totalCount := 0
-				for _, ids := range delegations {
-					totalCount += len(ids)
-				}
+				delegations.Iterate("", "", func(key string, value interface{}) bool {
+					if ids, ok := value.([]int64); ok {
+						totalCount += len(ids)
+					}
+					return false
+				})
 				uassert.Equal(t, totalCount, tc.expectedTotalCount)
 			}
 		})
@@ -202,15 +206,17 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			dm := NewDelegationManager()
 
 			// when
-			dm.SetUserDelegations(tc.delegations)
+			dm.SetUserDelegations(mapToAvlTreeUserDelegations(tc.delegations))
 
 			// then
 			result := dm.GetUserDelegations()
-			uassert.Equal(t, len(result), len(tc.delegations))
+			uassert.Equal(t, result.Size(), len(tc.delegations))
 			for delegator, delegatees := range tc.delegations {
-				resultDelegatees, exists := result[delegator]
+				val, exists := result.Get(delegator)
 				uassert.True(t, exists)
-				uassert.Equal(t, len(resultDelegatees), len(delegatees))
+				resultDelegatees, ok := val.(*avl.Tree)
+				uassert.True(t, ok)
+				uassert.Equal(t, resultDelegatees.Size(), len(delegatees))
 			}
 		})
 	}
