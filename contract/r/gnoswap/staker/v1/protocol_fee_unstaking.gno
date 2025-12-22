@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"errors"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -41,6 +42,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// external contract has fee
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 

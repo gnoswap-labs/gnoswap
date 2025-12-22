@@ -243,6 +243,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	// only refundee or admin can end incentive
 	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Refundee() {
+		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
 			ufmt.Sprintf(
