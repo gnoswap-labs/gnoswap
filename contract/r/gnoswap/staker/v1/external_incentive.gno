@@ -36,6 +36,8 @@ func (s *stakerV1) CreateExternalIncentive(
 ) {
 	halt.AssertIsNotHaltedStaker()
 
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+
 	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	access.AssertIsUser(prevRealm)
@@ -145,6 +147,8 @@ func (s *stakerV1) CreateExternalIncentive(
 func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
+
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 	// checks pool registry
 	assertIsPoolExists(s, targetPoolPath)
