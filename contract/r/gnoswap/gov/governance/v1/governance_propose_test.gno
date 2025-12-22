@@ -215,6 +215,9 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 }
 
 func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
+	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	invalidTokenPath := "gno.land/r/not/registered"
+
 	tests := []struct {
 		name string
 		// given
@@ -239,7 +242,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -265,7 +268,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            address("invalid"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -291,7 +294,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        0,
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
@@ -338,6 +341,32 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
 		},
+		{
+			name:          "fail - token path is not registered in grc20 registry",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     invalidTokenPath,
+			amount:        5_000_000_000,
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "token(gno.land/r/not/registered) is not registered",
+		},
 	}
 
 	for _, tt := range tests {
@@ -357,7 +386,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 					}(cross)
@@ -647,7 +676,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
@@ -803,6 +832,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Unix(),
 					100,
 				)
@@ -814,14 +844,16 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		{
 			name: "fail - active proposal exists",
 			setupActiveProposal: func() *governance.Proposal {
+				createTime := time.Now().Add(-time.Hour * 25).Unix()
 				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, createTime),
 					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*25).Unix(),
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime,
 					100,
 				)
 			},
@@ -832,14 +864,16 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		{
 			name: "fail - passed proposal exists",
 			setupActiveProposal: func() *governance.Proposal {
+				createTime := time.Now().Add(-time.Hour * 24 * 10).Unix()
 				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, createTime),
 					governance.NewProposalMetadata("Passed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*10).Unix(),
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime,
 					100,
 				)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -860,6 +894,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*12).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*12).Unix(),
 					100,
 				)
@@ -881,6 +916,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*20).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*20).Unix(),
 					100,
 				)
@@ -902,6 +938,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Unix(),
 					100,
 				)
@@ -922,6 +959,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*40).Unix(),
 					100,
 				)
@@ -939,6 +977,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
+					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
@@ -999,6 +1038,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 
 // Test comprehensive community pool spend validation
 func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
+	gnsPath := "gno.land/r/gnoswap/gns" // registered in grc20 registry
+	invalidTokenPath := "gno.land/r/not/registered"
+
 	tests := []struct {
 		name          string
 		to            address
@@ -1010,14 +1052,14 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:       "success - valid parameters",
 			to:         testutils.TestAddress("recipient"),
-			tokenPath:  "gno.land/r/demo/gns",
+			tokenPath:  gnsPath,
 			amount:     1_000_000_000,
 			shouldFail: false,
 		},
 		{
 			name:          "fail - empty recipient address",
 			to:            address(""),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 			shouldFail:    true,
@@ -1025,7 +1067,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:          "fail - invalid recipient address format",
 			to:            address("invalid_address_format"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 			shouldFail:    true,
@@ -1033,7 +1075,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:          "fail - zero amount",
 			to:            testutils.TestAddress("recipient"),
-			tokenPath:     "gno.land/r/demo/gns",
+			tokenPath:     gnsPath,
 			amount:        0,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 			shouldFail:    true,
@@ -1041,7 +1083,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		{
 			name:       "success - max int64 amount",
 			to:         testutils.TestAddress("recipient"),
-			tokenPath:  "gno.land/r/demo/gns",
+			tokenPath:  gnsPath,
 			amount:     9223372036854775807, // MAX_INT64
 			shouldFail: false,
 		},
@@ -1051,6 +1093,14 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			tokenPath:     "",
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - token path is not registered in grc20 registry",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     invalidTokenPath,
+			amount:        1_000_000_000,
+			expectedError: "token(gno.land/r/not/registered) is not registered",
 			shouldFail:    true,
 		},
 	}
@@ -1080,7 +1130,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+				uassert.AbortsContains(t, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
@@ -1158,7 +1208,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			name:          "fail - empty executions string",
 			numToExecute:  1,
 			executions:    "",
-			expectedError: "execution[0]: expected 3 parts (pkgPath, function, params), got 1",
+			expectedError: "GNOSWAP-GOVERNANCE-002] invalid input || executions is empty",
 			shouldFail:    true,
 		},
 		{
@@ -1316,13 +1366,18 @@ func setupTestGnsBalance(t *testing.T, address address, balance int64) {
 }
 
 func setupTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
-	// Mock delegation snapshots setup
-	// In actual implementation, this would set up staker delegation snapshots
-	testing.SetRealm(adminRealm)
-
-	gov.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
-		return userVotes, maxVotingWeight, true
+	// Set up mock accessor to return the expected delegation amounts
+	mockAccessor := &mockGovStakerAccessor{
+		totalDelegation: maxVotingWeight,
+		userDelegations: make(map[string]int64),
 	}
+
+	// Set up user delegations from votingInfo
+	for voter, votingInfo := range userVotes {
+		mockAccessor.userDelegations[voter] = votingInfo.AvailableVoteWeight()
+	}
+
+	gov.stakerAccessor = mockAccessor
 }
 
 func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress address) {
@@ -1341,6 +1396,7 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 		NewProposalTextData(),
 		proposerAddress,
 		gov.getCurrentConfigVersion(),
+		time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 		time.Now().Unix(),
 		100,
 	)

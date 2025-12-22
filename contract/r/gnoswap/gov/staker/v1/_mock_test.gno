@@ -19,13 +19,14 @@ type mockGovStakerStore struct {
 	totalLockedAmount              int64
 
 	// Delegation data
-	delegations       *avl.Tree // map[int64]*staker.Delegation
-	delegationNextID  *staker.Counter
-	delegationHistory staker.DelegationHistory
-	userDelegations   map[string]map[string][]int64
+	delegations      *avl.Tree // map[int64]*staker.Delegation
+	delegationNextID *staker.Counter
+	userDelegations  map[string]map[string][]int64
 
-	// Snapshots
-	delegationSnapshots staker.DelegationSnapshot
+	// New delegation history structures
+	totalDelegationHistory       *staker.UintTree // timestamp -> int64
+	userDelegationHistory        *avl.Tree        // address -> *staker.UintTree[timestamp -> int64]
+	hasTotalDelegationHistoryKey bool             // for testing HasTotalDelegationHistoryStoreKey
 
 	// Manager states
 	emissionRewardManager    *staker.EmissionRewardManager
@@ -38,11 +39,12 @@ var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
 
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
-		delegations:         avl.NewTree(),
-		delegationSnapshots: make(staker.DelegationSnapshot, 0),
-		userDelegations:     make(map[string]map[string][]int64),
-		delegationHistory:   make(staker.DelegationHistory, 0),
-		delegationNextID:    staker.NewCounter(),
+		delegations:                  avl.NewTree(),
+		userDelegations:              make(map[string]map[string][]int64),
+		delegationNextID:             staker.NewCounter(),
+		totalDelegationHistory:       staker.NewUintTree(),
+		userDelegationHistory:        avl.NewTree(),
+		hasTotalDelegationHistoryKey: true,
 	}
 }
 
@@ -153,26 +155,35 @@ func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error
 	return nil
 }
 
-// Delegation history methods
-func (m *mockGovStakerStore) HasDelegationHistoryStoreKey() bool {
+// Total delegation history methods (timestamp -> int64)
+func (m *mockGovStakerStore) HasTotalDelegationHistoryStoreKey() bool {
+	return m.hasTotalDelegationHistoryKey
+}
+
+func (m *mockGovStakerStore) GetTotalDelegationHistory() *staker.UintTree {
+	return m.totalDelegationHistory
+}
+
+func (m *mockGovStakerStore) SetTotalDelegationHistory(history *staker.UintTree) error {
+	m.totalDelegationHistory = history
+	return nil
+}
+
+// User delegation history methods (address -> *UintTree[timestamp -> int64])
+func (m *mockGovStakerStore) HasUserDelegationHistoryStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) AddDelegationRecord(record *staker.DelegationRecord) error {
-	m.delegationHistory = append(m.delegationHistory, record)
+func (m *mockGovStakerStore) GetUserDelegationHistory() *avl.Tree {
+	return m.userDelegationHistory
+}
+
+func (m *mockGovStakerStore) SetUserDelegationHistory(history *avl.Tree) error {
+	m.userDelegationHistory = history
 	return nil
 }
 
-func (m *mockGovStakerStore) GetDelegationHistory() staker.DelegationHistory {
-	return m.delegationHistory
-}
-
-func (m *mockGovStakerStore) SetDelegationHistory(history staker.DelegationHistory) error {
-	m.delegationHistory = history
-	return nil
-}
-
-// User delegation mapping methods
+// User delegation mapping methods (legacy, kept for compatibility)
 func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
 	return true // Always available in mock
 }
@@ -214,20 +225,6 @@ func (m *mockGovStakerStore) RemoveUserDelegation(from, to string, delegationID 
 			}
 		}
 	}
-	return nil
-}
-
-// Delegation snapshot methods
-func (m *mockGovStakerStore) HasDelegationSnapshotStoreKey() bool {
-	return true // Always available in mock
-}
-
-func (m *mockGovStakerStore) GetDelegationSnapshot() staker.DelegationSnapshot {
-	return m.delegationSnapshots
-}
-
-func (m *mockGovStakerStore) SetDelegationSnapshot(snapshot staker.DelegationSnapshot) error {
-	m.delegationSnapshots = snapshot
 	return nil
 }
 

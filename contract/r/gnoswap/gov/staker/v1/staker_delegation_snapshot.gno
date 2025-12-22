@@ -3,46 +3,12 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"time"
+	"math"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/halt"
 )
-
-// CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
-// This administrative function removes delegation history records older than the specified threshold
-// to prevent unlimited growth of historical data and optimize storage usage.
-//
-// The cleanup process:
-// 1. Calculates cutoff time by subtracting threshold from current time
-// 2. Filters delegation history to keep only records after cutoff time
-// 3. Updates the delegation history with filtered records
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - threshold: time threshold in seconds (records older than this will be removed)
-//
-// Panics:
-//   - if caller is not admin
-//
-// Note: This operation is irreversible and will permanently remove historical data
-func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
-	halt.AssertIsNotHaltedGovStaker()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
-	// Calculate cutoff time by subtracting threshold from current time
-	cutoffTimestamp := safeSubInt64(time.Now().Unix(), threshold)
-
-	// Filter records after cutoff time
-	delegationHistory := gs.getDelegationHistory()
-	historyResolver := NewDelegationHistoryResolver(delegationHistory)
-	recentDelegationHistory := historyResolver.getRecordsBy(cutoffTimestamp)
-
-	// Update delegation history with filtered records
-	gs.setDelegationHistory(recentDelegationHistory)
-}
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.
 // This administrative function configures the time period that undelegated tokens
@@ -54,7 +20,6 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 // - Maintain system stability during volatile periods
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
 //   - period: lockup period in seconds (must be non-negative)
 //
 // Panics:
@@ -81,4 +46,129 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"period", formatInt(period),
 	)
+}
+
+// CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
+// This administrative function removes delegation history records older than the specified threshold
+// to prevent unlimited growth of historical data and optimize storage usage.
+//
+// The cleanup process:
+// 1. Validates the snapshot time is within allowed range
+// 2. Checks that no active proposals need data older than the cleanup threshold
+// 3. Filters delegation history to keep only records after cutoff time
+// 4. Updates the delegation history with filtered records
+//
+// Parameters:
+//   - snapshotTime: cutoff timestamp (records older than this will be removed)
+//
+// Panics:
+//   - if caller is not admin
+//   - if snapshotTime is invalid (negative or too recent)
+//   - if active proposals have snapshotTime older than the cleanup threshold
+//
+// Note: This operation is irreversible and will permanently remove historical data
+func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
+	halt.AssertIsNotHaltedGovStaker()
+
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidSnapshotTime(snapshotTime)
+	assertIsAvailableCleanupSnapshotTime(snapshotTime)
+
+	// Clean total delegation history
+	gs.cleanTotalDelegationHistory(snapshotTime)
+
+	// Clean user delegation history
+	gs.cleanUserDelegationHistory(snapshotTime)
+}
+
+// cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.
+// Keeps the most recent entry before cutoff to preserve state continuity.
+func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
+	history := gs.store.GetTotalDelegationHistory()
+
+	toTimestamp := cutoffTimestamp
+	if cutoffTimestamp < math.MaxInt64 {
+		toTimestamp += 1
+	}
+
+	// First, find the most recent entry before cutoff to preserve state
+	var lastValue any
+
+	hasLastValue := false
+
+	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
+		lastValue = value
+		hasLastValue = true
+
+		return true // stop after first (most recent)
+	})
+
+	// If there was a value before cutoff, set it at cutoff time to preserve continuity
+	if hasLastValue {
+		history.Set(cutoffTimestamp, lastValue)
+	}
+
+	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
+		history.Remove(timestamp)
+
+		return false // continue
+	})
+
+	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
+		panic(err)
+	}
+}
+
+// cleanUserDelegationHistory removes user delegation history entries older than cutoff time.
+// Structure: address -> *UintTree[timestamp -> int64]
+// Keeps the most recent entry before cutoff for each user to preserve state continuity.
+func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
+	history := gs.store.GetUserDelegationHistory()
+
+	// Iterate over all users and clean each user's history
+	history.Iterate("", "", func(addrStr string, value any) bool {
+		userHistory := value.(*staker.UintTree)
+
+		toTimestamp := cutoffTimestamp
+		if cutoffTimestamp < math.MaxInt64 {
+			toTimestamp += 1
+		}
+
+		// Find the most recent entry before cutoff to preserve state
+		var lastValue any
+
+		hasLastValue := false
+
+		userHistory.ReverseIterate(0, toTimestamp, func(_ int64, val any) bool {
+			lastValue = val
+			hasLastValue = true
+
+			return true // stop after first (most recent)
+		})
+
+		// If there was a value before cutoff, set it at cutoff time to preserve continuity
+		if hasLastValue {
+			userHistory.Set(cutoffTimestamp, lastValue)
+		}
+
+		// Copy all entries at or after cutoff time
+		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
+			userHistory.Remove(key)
+
+			return false // continue
+		})
+
+		// Only keep users with history entries
+		if userHistory.Size() > 0 {
+			history.Set(addrStr, userHistory)
+		}
+
+		return false // continue to next user
+	})
+
+	if err := gs.store.SetUserDelegationHistory(history); err != nil {
+		panic(err)
+	}
 }

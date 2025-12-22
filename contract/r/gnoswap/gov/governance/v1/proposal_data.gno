@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"gno.land/p/nt/ufmt"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -135,37 +136,28 @@ func (r *ProposalDataResolver) validateText() error {
 func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	// Validate recipient address
 	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
+
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("to is invalid address"),
-		)
-	}
-
-	// Validate token path is provided
-	if communityPoolSpend.TokenPath() == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("tokenPath is empty"),
-		)
+			errInvalidInput, "to is invalid address")
 	}
 
 	// Validate amount is greater than 0
 	if communityPoolSpend.Amount() <= 0 {
 		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("amount is not positive"),
-		)
+			errInvalidInput, "amount is not positive")
 	}
 
 	return nil
 }
 
 // validateParameterChange validates parameter change proposal data.
-// Checks execution count, message format, and parameter validity.
+// Performs basic structural validation of the parameter change data.
+// Note: Handler existence validation is performed separately by validateExecutions
+// during proposal creation to ensure the target functions are registered.
 //
 // Returns:
-//   - error: validation error if parameter change data is invalid
+//   - error: validation error if parameter change data structure is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
 	num := execution.Num()

@@ -8,19 +8,23 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 
 ## Configuration
 
-- **Voting Period**: 7 days
-- **Quorum**: 50% of xGNS supply
-- **Proposal Threshold**: 1,000 GNS
-- **Execution Delay**: 1 day timelock
-- **Execution Window**: 30 days
-- **Undelegation Lockup**: 7 days
-- **Vote Weight Smoothing**: 24 hours
+The `governance.Config` type defines the core governance parameters. All values can be modified through governance proposals. This type can be found in the [config.gno](../contract/r/gnoswap/gov/governance/config.gno) file.
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| `VotingStartDelay` | Delay before voting starts after proposal creation | 1 day |
+| `VotingPeriod` | Duration for collecting votes | 7 days |
+| `VotingWeightSmoothingDuration` | Period for averaging voting weight (prevents flash loans) | 1 day |
+| `Quorum` | Percentage of active xGNS required for proposal passage | 50% |
+| `ProposalCreationThreshold` | Minimum GNS balance required to create a proposal | 1,000 GNS |
+| `ExecutionDelay` | Waiting period after voting ends before execution | 1 day |
+| `ExecutionWindow` | Time window during which an approved proposal can be executed | 30 days |
 
 ## Core Mechanics
 
 ### Staking Flow
 
-```
+```plain
 GNS → Stake → xGNS (voting power) → Delegate → Vote
 ```
 
@@ -51,10 +55,13 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 ### Execution
 
-- Requires quorum (50%) and majority (>50%)
-- 1 day timelock after voting
-- 30 day execution window
-- Anyone can trigger execution
+A proposal is considered valid and executable when:
+- The voting period has ended
+- Total votes meet the quorum threshold (50% of xGNS total supply)
+- The execution delay period (configured via `ExecutionDelay` default: 24 hours) has passed after voting ends
+- Within the execution window period (configured via `ExecutionWindow` default: 30 days)
+  - `ExecutionDelay` and `ExecutionWindow` are configured through the `governance.Config` type.
+- Anyone can trigger execution once conditions are met
 
 ## Technical Details
 
@@ -67,18 +74,20 @@ snapshot2 = getDelegationAt(proposalTime)
 voteWeight = (snapshot1 + snapshot2) / 2
 ```
 
-### Dynamic Quorum
+### Quorum Calculation
 
 ```go
 activeXGNS = totalXGNS - launchpadXGNS
-requiredVotes = activeXGNS * 0.5
+quorumAmount = activeXGNS * quorumPercent / 100  // quorumPercent defaults to 50
 ```
+
+The quorum threshold is calculated based on the `Quorum` percentage (default: 50%) of the active xGNS supply at the time of proposal creation. A proposal passes when either the accumulated `YES` or `NO` votes reach or exceed this quorum amount.
 
 ### Rewards Distribution
 
 xGNS holders earn protocol fees:
 
-```
+```go
 userShare = (userXGNS / totalXGNS) * protocolFees
 ```
 

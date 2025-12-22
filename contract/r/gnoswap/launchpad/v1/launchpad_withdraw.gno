@@ -114,6 +114,11 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	// Finalize withdrawal
 	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 
+	// Remove reward state from AVL tree after withdrawal
+	// This improves iteration performance for calculateClaimableRewardsForActiveDeposits
+	// and prevents accessing reward state for already withdrawn deposits
+	removeRewardState(rewardManager, deposit.ID())
+
 	// Store updated deposit in state
 	deposits := lp.store.GetDeposits()
 	deposits.Set(deposit.ID(), deposit)

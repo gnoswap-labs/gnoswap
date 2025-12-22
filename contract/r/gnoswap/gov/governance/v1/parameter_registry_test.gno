@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/testutils"
+
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 )
@@ -162,7 +164,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 	}
 }
 
-
 // TestParseNumber tests number parsing
 func TestParseNumber(t *testing.T) {
 	tests := []struct {
@@ -257,6 +258,328 @@ func TestParseBool(t *testing.T) {
 			} else {
 				result := parseBool(tc.input)
 				uassert.Equal(t, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestValidateExecutions(t *testing.T) {
+	tests := []struct {
+		name                  string
+		numToExecute          int64
+		executions            string
+		expectedError         bool
+		expectedErrorContains string
+	}{
+		/* Success cases for all handler functions */
+		// community_pool
+		{
+			name:          "Success - community_pool TransferToken",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - community_pool TransferToken empty address",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + address("").String() + ",1000000",
+			expectedError: false,
+		},
+		// emission
+		{
+			name:          "Success - emission SetDistributionStartTime",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/emission*EXE*SetDistributionStartTime*EXE*1234567890",
+			expectedError: false,
+		},
+		{
+			name:          "Success - emission ChangeDistributionPct",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*1,2500,2,2500,3,2500,4,2500",
+			expectedError: false,
+		},
+		// gov/governance
+		{
+			name:          "Success - gov/governance Reconfigure",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,3600,500000,1000,86400,259200",
+			expectedError: false,
+		},
+		// halt
+		{
+			name:          "Success - halt SetHaltLevel",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError: false,
+		},
+		{
+			name:          "Success - halt SetOperationStatus",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,true",
+			expectedError: false,
+		},
+		// pool
+		{
+			name:          "Success - pool CollectProtocol",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",1000000,1000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - pool SetFeeProtocol",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,2",
+			expectedError: false,
+		},
+		{
+			name:          "Success - pool SetPoolCreationFee",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - pool SetWithdrawalFee",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetWithdrawalFee*EXE*100",
+			expectedError: false,
+		},
+		// protocol_fee
+		{
+			name:          "Success - protocol_fee SetDevOpsPct",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/protocol_fee*EXE*SetDevOpsPct*EXE*5000",
+			expectedError: false,
+		},
+		// rbac
+		{
+			name:          "Success - rbac RegisterRole",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*newRole," + testutils.TestAddress("roleAddr").String(),
+			expectedError: false,
+		},
+		{
+			name:          "Success - rbac UpdateRoleAddress",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*existingRole," + testutils.TestAddress("newRoleAddr").String(),
+			expectedError: false,
+		},
+		{
+			name:          "Success - rbac RemoveRole",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*roleToRemove",
+			expectedError: false,
+		},
+		// router
+		{
+			name:          "Success - router SetSwapFee",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/router*EXE*SetSwapFee*EXE*15",
+			expectedError: false,
+		},
+		// staker
+		{
+			name:          "Success - staker SetDepositGnsAmount",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetDepositGnsAmount*EXE*1000000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetMinimumRewardAmount",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetMinimumRewardAmount*EXE*1000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetTokenMinimumRewardAmount",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetTokenMinimumRewardAmount*EXE*gno.land/r/gnoswap/gns:1000000",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetPoolTier",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,1",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker ChangePoolTier",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*ChangePoolTier*EXE*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000,2",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker RemovePoolTier",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*RemovePoolTier*EXE*poolId",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetUnStakingFee",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetWarmUp",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetWarmUp*EXE*100,1000",
+			expectedError: false,
+		},
+		// Multiple executions
+		{
+			name:          "Success - multiple valid executions",
+			numToExecute:  2,
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
+			expectedError: false,
+		},
+
+		/* Failure cases - Basic validation */
+		{
+			name:                  "Failure - empty executions",
+			numToExecute:          1,
+			executions:            "",
+			expectedError:         true,
+			expectedErrorContains: "executions is empty",
+		},
+		{
+			name:                  "Failure - invalid execution count (zero)",
+			numToExecute:          0,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is less than or equal to 0",
+		},
+		{
+			name:                  "Failure - execution count mismatch",
+			numToExecute:          2,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "executions count (1) does not match numToExecute (2)",
+		},
+		{
+			name:                  "Failure - malformed execution format",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*SetHaltLevel",
+			expectedError:         true,
+			expectedErrorContains: "expected 3 parts (pkgPath, function, params)",
+		},
+		{
+			name:                  "Failure - empty package path",
+			numToExecute:          1,
+			executions:            "*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "package path is empty",
+		},
+		{
+			name:                  "Failure - empty function name",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE**EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "function name is empty",
+		},
+		{
+			name:         "Failure - exceeds max executions",
+			numToExecute: 11,
+			executions: "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is greater than 10",
+		},
+
+		/* Failure cases - Handler is not exists */
+		{
+			name:                  "Failure - non-existent package path",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/nonexistent*EXE*SomeFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/nonexistent:SomeFunction",
+		},
+		{
+			name:                  "Failure - non-existent function in valid package",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*NonExistentFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt:NonExistentFunction",
+		},
+		{
+			name:                  "Failure - mixed valid and invalid executions",
+			numToExecute:          2,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/fake:FakeFunction",
+		},
+
+		/* Failure cases - Parameter count validation */
+		{
+			name:                  "Failure - halt SetHaltLevel wrong param count",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*param1,param2",
+			expectedError:         true,
+			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt:SetHaltLevel",
+		},
+		{
+			name:                  "Failure - community_pool TransferToken wrong param count",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",
+			expectedError:         true,
+			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
+		},
+
+		/* Failure cases - Parameter type validation */
+		{
+			name:                  "Failure - pool SetFeeProtocol invalid uint8 (negative)",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,-2",
+			expectedError:         true,
+			expectedErrorContains: "out of range: -2",
+		},
+		{
+			name:                  "Failure - pool SetFeeProtocol invalid uint8 (too large)",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,256",
+			expectedError:         true,
+			expectedErrorContains: "out of range: 256",
+		},
+		{
+			name:                  "Failure - staker SetWarmUp invalid number type",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/staker*EXE*SetWarmUp*EXE*invalid,1000",
+			expectedError:         true,
+			expectedErrorContains: "invalid int64 value: invalid",
+		},
+		{
+			name:                  "Failure - halt SetOperationStatus invalid bool type",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,not_bool",
+			expectedError:         true,
+			expectedErrorContains: "invalid bool value: not_bool",
+		},
+		{
+			name:                  "Failure - community_pool TransferToken invalid address",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,invalidAddress,1000000",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateExecutions(tc.numToExecute, tc.executions)
+
+			if tc.expectedError {
+				uassert.NotNil(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorContains)
+			} else {
+				uassert.Nil(t, err)
 			}
 		})
 	}

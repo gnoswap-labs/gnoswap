@@ -13,4 +13,5 @@ const (
 	maxTitleLength       = 255
 	maxDescriptionLength = 10_000
 	maxNumberOfExecution = 10
+	maxSmoothingPeriod   = 30 * 60 * 60 * 24 // 30 days
 )

@@ -6,8 +6,8 @@ import (
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
 
-func NewV2InvalidGovernance(store governance.IGovernanceStore) governance.IGovernance {
-	instance := v1.NewGovernanceV1(store)
+func NewV2InvalidGovernance(store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+	instance := v1.NewGovernanceV1(store, stakerAccessor)
 
 	return &TestGovernance{
 		instance:      instance,
@@ -16,8 +16,8 @@ func NewV2InvalidGovernance(store governance.IGovernanceStore) governance.IGover
 }
 
 func init() {
-	governance.RegisterInitializer(cross, func(store governance.IGovernanceStore) governance.IGovernance {
-		return NewV2InvalidGovernance(store)
+	governance.RegisterInitializer(cross, func(store governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
+		return NewV2InvalidGovernance(store, stakerAccessor)
 	})
 }
 
@@ -205,4 +205,18 @@ func (t *TestGovernance) GetVotedAt(proposalID int64, address address) int64 {
 		panic("test implementation: GetVotedAt not supported")
 	}
 	return t.instance.GetVotedAt(proposalID, address)
+}
+
+func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
+	if !t.isActive("GetMaxSmoothingPeriod") {
+		panic("test implementation: GetMaxSmoothingPeriod not supported")
+	}
+	return t.instance.GetMaxSmoothingPeriod()
+}
+
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	if !t.isActive("GetOldestActiveProposalSnapshotTime") {
+		panic("test implementation: GetOldestActiveProposalSnapshotTime not supported")
+	}
+	return t.instance.GetOldestActiveProposalSnapshotTime()
 }

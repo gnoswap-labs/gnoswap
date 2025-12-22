@@ -304,33 +304,60 @@ func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient addre
 	accumTotalDistributeAmount := int64(0)
 	accumLeftReward := int64(0)
 	accumCollectedReward := int64(0)
+	accumCollectableReward := int64(0)
 
 	for _, tier := range project.Tiers() {
 		if !tier.IsEnded(currentTime) {
 			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
 		}
 
-		if getTierCurrentDepositCount(tier) > 0 {
-			return 0, errors.New(ufmt.Sprintf("tier(%d) has (%d) participants", tier.ID(), getTierCurrentDepositCount(tier)))
+		// Calculate pending rewards for remaining depositors
+		currentDepositCount := getTierCurrentDepositCount(tier)
+
+		if currentDepositCount > 0 {
+			claimableReward, err := lp.calculateTierClaimableRewards(tier)
+			if err != nil {
+				return 0, err
+			}
+
+			accumCollectableReward = safeAddInt64(accumCollectableReward, claimableReward)
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
-		accumLeftReward += leftReward
-		accumCollectedReward += tier.TotalCollectedAmount()
-		accumTotalDistributeAmount += tier.TotalDistributeAmount()
+		accumLeftReward = safeAddInt64(accumLeftReward, leftReward)
+		accumCollectedReward = safeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
+		accumTotalDistributeAmount = safeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
 	}
 
-	if accumTotalDistributeAmount != accumCollectedReward+accumLeftReward {
+	actualTotalDistributeAmount := safeAddInt64(accumCollectedReward, accumLeftReward)
+	if accumTotalDistributeAmount != actualTotalDistributeAmount {
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
+	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
 	projectLeftReward := getProjectRemainingAmount(project)
+	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
 
-	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(cross, project.TokenPath(), recipient, projectLeftReward)
+	if refundableAmount < 0 {
+		return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))
 	}
 
-	return projectLeftReward, nil
+	if refundableAmount > 0 {
+		common.SafeGRC20Transfer(cross, project.TokenPath(), recipient, refundableAmount)
+	}
+
+	return refundableAmount, nil
+}
+
+// calculateTierClaimableRewards calculates the total claimable rewards
+// for all active deposits in a specific tier.
+func (lp *launchpadV1) calculateTierClaimableRewards(tier *launchpad.ProjectTier) (int64, error) {
+	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
+	if err != nil {
+		return 0, err
+	}
+
+	return calculateClaimableRewardsForActiveDeposits(rewardManager), nil
 }
 
 // validateTransferLeft validates the transfer of remaining tokens

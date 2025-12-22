@@ -2,6 +2,7 @@ package v1
 
 import (
 	"strconv"
+
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -21,13 +22,13 @@ func init() {
 }
 
 func registerGovernanceV1() {
-	governance.RegisterInitializer(cross, func(governanceStore governance.IGovernanceStore) governance.IGovernance {
+	governance.RegisterInitializer(cross, func(governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
 		err := initStoreData(governanceStore)
 		if err != nil {
 			panic(err)
 		}
 
-		return NewGovernanceV1(governanceStore)
+		return NewGovernanceV1(governanceStore, stakerAccessor)
 	})
 }
 

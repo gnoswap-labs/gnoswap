@@ -37,7 +37,8 @@ type IGovStakerGetter interface {
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
-	GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
+	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
+	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// Reward getters
 	GetClaimableRewardByAddress(addr address) string
@@ -47,7 +48,7 @@ type IGovStakerGetter interface {
 
 // Admin interface for administrative functions
 type IGovStakerAdmin interface {
-	CleanStakerDelegationSnapshotByAdmin(threshold int64)
+	CleanStakerDelegationSnapshotByAdmin(snapshotTime int64)
 	SetUnDelegationLockupPeriodByAdmin(period int64)
 }
 
@@ -83,16 +84,15 @@ type IGovStakerStore interface {
 	GetDelegationCounter() *Counter
 	SetDelegationCounter(counter *Counter) error
 
-	// Delegation history
-	HasDelegationHistoryStoreKey() bool
-	AddDelegationRecord(delegationRecord *DelegationRecord) error
-	GetDelegationHistory() DelegationHistory
-	SetDelegationHistory(delegationHistory DelegationHistory) error
+	// Total delegation history (timestamp -> int64)
+	HasTotalDelegationHistoryStoreKey() bool
+	GetTotalDelegationHistory() *UintTree
+	SetTotalDelegationHistory(history *UintTree) error
 
-	// Delegation snapshots
-	HasDelegationSnapshotStoreKey() bool
-	SetDelegationSnapshot(snapshot DelegationSnapshot) error
-	GetDelegationSnapshot() DelegationSnapshot
+	// User delegation history (address -> *UintTree[timestamp -> int64])
+	HasUserDelegationHistoryStoreKey() bool
+	GetUserDelegationHistory() *avl.Tree
+	SetUserDelegationHistory(history *avl.Tree) error
 
 	// Manager states
 	HasEmissionRewardManagerStoreKey() bool
