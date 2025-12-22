@@ -235,7 +235,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	totalAmountToMint := int64(0)
 
 	for year := fromYear; year <= toYear; year++ {
-		yearEndTimestamp := GetHalvingYearEndTimestamp(year)
+		yearEndTimestamp := state.getHalvingYearEndTimestamp(year)
 		currentToTimestamp := i64Min(toTimestamp, yearEndTimestamp)
 
 		seconds := currentToTimestamp - fromTimestamp + 1
@@ -243,12 +243,12 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 			break
 		}
 
-		amountPerSecond := GetAmountPerSecondPerHalvingYear(year)
+		amountPerSecond := state.getHalvingYearAmountPerSecond(year)
 
 		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
-			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
+			leftover := safeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
 			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
 		}
 
@@ -281,11 +281,6 @@ func isLastSecondOfHalvingYear(timestamp int64) bool {
 	lastSecond := GetHalvingYearEndTimestamp(year)
 
 	return timestamp == lastSecond
-}
-
-// handleLeftEmissionAmount returns the remaining emission amount for a halving year.
-func handleLeftEmissionAmount(year, amount int64) int64 {
-	return safeSubInt64(GetHalvingYearLeftAmount(year), amount)
 }
 
 // skipIfSameHeight returns true if last minted height equals current height,
