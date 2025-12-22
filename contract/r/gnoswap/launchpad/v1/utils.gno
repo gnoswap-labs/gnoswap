@@ -26,7 +26,7 @@ func parseProjectTierID(projectTierID string) (string, int64) {
 		))
 	}
 
-	projectID := ufmt.Sprintf("%s:%s", parts[0], parts[1])
+	projectID := parts[0] + ":" + parts[1]
 
 	tierDuration, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {

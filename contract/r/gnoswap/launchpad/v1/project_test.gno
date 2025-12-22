@@ -235,7 +235,7 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectRemainingAmount(project)
+			result := getProjectStats(project).RemainingAmount
 
 			// Verify
 			uassert.Equal(t, tt.expectedRemaining, result)
@@ -305,7 +305,7 @@ func TestProject_GetProjectTotalDepositCount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectTotalDepositCount(project)
+			result := getProjectStats(project).TotalDepositCount
 
 			// Verify
 			uassert.Equal(t, tt.expectedTotalCount, result)
@@ -370,7 +370,7 @@ func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectCurrentDepositCount(project)
+			result := getProjectStats(project).CurrentDepositCount
 
 			// Verify
 			uassert.Equal(t, tt.expectedCurrentCount, result)
@@ -440,7 +440,7 @@ func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectTotalDepositAmount(project)
+			result := getProjectStats(project).TotalDepositAmount
 
 			// Verify
 			uassert.Equal(t, tt.expectedTotalAmount, result)
@@ -505,7 +505,7 @@ func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectCurrentDepositAmount(project)
+			result := getProjectStats(project).CurrentDepositAmount
 
 			// Verify
 			uassert.Equal(t, tt.expectedCurrentAmount, result)
@@ -570,7 +570,7 @@ func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectTotalCollectedAmount(project)
+			result := getProjectStats(project).TotalCollectedAmount
 
 			// Verify
 			uassert.Equal(t, tt.expectedCollectedAmount, result)

@@ -7,22 +7,40 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
+// ProjectStats holds aggregated statistics for a project across all tiers.
+// This struct is used to collect all stats in a single iteration over tiers.
+type ProjectStats struct {
+	TotalDepositCount    int64
+	TotalDepositAmount   int64
+	CurrentDepositCount  int64
+	CurrentDepositAmount int64
+	TotalCollectedAmount int64
+	RemainingAmount      int64
+}
+
+// getProjectStats calculates all project statistics in a single iteration over tiers.
+// This is more efficient than calling individual getter functions separately.
+func getProjectStats(p *launchpad.Project) ProjectStats {
+	var stats ProjectStats
+
+	for _, tier := range p.Tiers() {
+		stats.TotalDepositCount = safeAddInt64(stats.TotalDepositCount, tier.TotalDepositCount())
+		stats.TotalDepositAmount = safeAddInt64(stats.TotalDepositAmount, tier.TotalDepositAmount())
+		stats.CurrentDepositCount = safeAddInt64(stats.CurrentDepositCount, getTierCurrentDepositCount(tier))
+		stats.CurrentDepositAmount = safeAddInt64(stats.CurrentDepositAmount, getTierCurrentDepositAmount(tier))
+		stats.TotalCollectedAmount = safeAddInt64(stats.TotalCollectedAmount, tier.TotalCollectedAmount())
+		stats.RemainingAmount = safeAddInt64(stats.RemainingAmount, getCalculatedLeftReward(tier))
+	}
+
+	return stats
+}
+
 func isProjectActive(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsActivated(currentTime)
 }
 
 func isProjectEnded(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsEnded(currentTime)
-}
-
-func getProjectRemainingAmount(p *launchpad.Project) int64 {
-	remainingAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		remainingAmount = safeAddInt64(remainingAmount, getCalculatedLeftReward(tier))
-	}
-
-	return remainingAmount
 }
 
 func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
@@ -46,56 +64,6 @@ func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc 
 	}
 
 	return nil
-}
-
-func getProjectTotalDepositCount(p *launchpad.Project) int64 {
-	totalRecipient := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalRecipient = safeAddInt64(totalRecipient, tier.TotalDepositCount())
-	}
-
-	return totalRecipient
-}
-
-func getProjectTotalDepositAmount(p *launchpad.Project) int64 {
-	totalDepositAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositAmount = safeAddInt64(totalDepositAmount, tier.TotalDepositAmount())
-	}
-
-	return totalDepositAmount
-}
-
-func getProjectCurrentDepositCount(p *launchpad.Project) int64 {
-	totalDepositCount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositCount = safeAddInt64(totalDepositCount, getTierCurrentDepositCount(tier))
-	}
-
-	return totalDepositCount
-}
-
-func getProjectCurrentDepositAmount(p *launchpad.Project) int64 {
-	totalDepositAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositAmount = safeAddInt64(totalDepositAmount, getTierCurrentDepositAmount(tier))
-	}
-
-	return totalDepositAmount
-}
-
-func getProjectTotalCollectedAmount(p *launchpad.Project) int64 {
-	totalCollectedAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalCollectedAmount = safeAddInt64(totalCollectedAmount, tier.TotalCollectedAmount())
-	}
-
-	return totalCollectedAmount
 }
 
 func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
@@ -123,7 +91,7 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 		)
 	}
 
-	if getProjectRemainingAmount(p) == 0 {
+	if getProjectStats(p).RemainingAmount == 0 {
 		return errors.New(
 			"project has no remaining amount",
 		)

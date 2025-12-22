@@ -8,20 +8,21 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// projectStatsBuilder adds ProjectStats fields to JSON
-func projectStatsBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeBuilder {
+// projectStatsBuilder adds ProjectStats fields to JSON using pre-calculated stats.
+// This avoids multiple iterations over tiers by using the aggregated ProjectStats.
+func projectStatsBuilder(b *json.NodeBuilder, stats ProjectStats) *json.NodeBuilder {
 	return b.
-		WriteString("totalDeposit", formatInt(getProjectTotalDepositAmount(project))).
-		WriteString("actualDeposit", formatInt(getProjectCurrentDepositAmount(project))).
-		WriteString("totalParticipant", formatInt(getProjectTotalDepositCount(project))).
-		WriteString("actualParticipant", formatInt(getProjectCurrentDepositCount(project))).
-		WriteString("totalCollected", formatInt(getProjectTotalCollectedAmount(project)))
+		WriteString("totalDeposit", formatInt(stats.TotalDepositAmount)).
+		WriteString("actualDeposit", formatInt(stats.CurrentDepositAmount)).
+		WriteString("totalParticipant", formatInt(stats.TotalDepositCount)).
+		WriteString("actualParticipant", formatInt(stats.CurrentDepositCount)).
+		WriteString("totalCollected", formatInt(stats.TotalCollectedAmount))
 }
 
-// refundInfoBuilder adds RefundInfo fields to JSON
-func refundInfoBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeBuilder {
+// refundInfoBuilder adds RefundInfo fields to JSON using pre-calculated stats.
+func refundInfoBuilder(b *json.NodeBuilder, stats ProjectStats) *json.NodeBuilder {
 	return b.
-		WriteString("refundedAmount", formatInt(getProjectRemainingAmount(project)))
+		WriteString("refundedAmount", formatInt(stats.RemainingAmount))
 }
 
 // TierBuilder adds Tier fields to JSON
@@ -68,8 +69,9 @@ func projectBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeB
 	b.WriteString("startedTime", formatInt(getStandardTier(project).StartTime()))
 	b.WriteString("endedTime", formatInt(getStandardTier(project).EndTime()))
 
-	// Add refund info
-	refundInfoBuilder(b, project)
+	// Calculate stats once and use for refund info
+	stats := getProjectStats(project)
+	refundInfoBuilder(b, stats)
 
 	return b
 }
