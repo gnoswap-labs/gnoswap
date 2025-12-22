@@ -133,7 +133,9 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 	delegationManager := g.store.GetDelegationManager()
 
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	for _, delegationID := range resolvedManager.GetUserDelegationIDs(user) {
+	delegationIDs := resolvedManager.GetUserDelegationIDs(user)
+	delegations = make([]*staker.Delegation, 0, len(delegationIDs))
+	for _, delegationID := range delegationIDs {
 		if delegation := g.getDelegation(delegationID); delegation != nil {
 			delegations = append(delegations, delegation)
 		}
@@ -153,7 +155,9 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
 	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
+	delegationIDs := resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee)
+	delegations = make([]*staker.Delegation, 0, len(delegationIDs))
+	for _, delegationID := range delegationIDs {
 		if delegation := g.getDelegation(delegationID); delegation != nil {
 			delegations = append(delegations, delegation)
 		}
@@ -578,5 +582,5 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 // Returns:
 //   - string: formatted launchpad reward ID
 func (g *govStakerV1) makeLaunchpadRewardID(address string) string {
-	return ufmt.Sprintf("launchpad:%s", address)
+	return "launchpad:" + address
 }
