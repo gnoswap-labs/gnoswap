@@ -60,22 +60,25 @@ func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64
 // GetEmissionAmountPerSecondByTimestamp returns the emission rate per second for a given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionAmountPerSecondByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearAmountPerSecond(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearAmountPerSecond(year)
 }
 
 // GetEmissionLeftAmountByTimestamp returns the remaining emission amount for the halving year at given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionLeftAmountByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearLeftAmount(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearLeftAmount(year)
 }
 
 // GetEmissionAccumulatedAmountByTimestamp returns the accumulated emission amount for the halving year at given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearAccumulatedAmount(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearAccumulatedAmount(year)
 }
 
 // GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
