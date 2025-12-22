@@ -148,7 +148,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				user := testutils.TestAddress("user" + formatInt(int64(i)))
 				testing.SetOriginCaller(user)
 
-				_, _, isFirstDeposit, _, _ := lp.depositGns(project.ID(), tt.tierType, 1000000, user)
+				_, _, isFirstDeposit, _, _ := lp.depositGns(project, project.ID(), tt.tierType, 1000000, user)
 
 				if i == 0 {
 					uassert.True(t, isFirstDeposit, "First deposit should be marked as such")

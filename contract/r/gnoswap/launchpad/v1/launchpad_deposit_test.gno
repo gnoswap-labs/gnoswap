@@ -572,7 +572,13 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 			lp := getTestImplementation()
 			testing.SetOriginCaller(tt.callerAddress)
 
-			_, _, _, _, err := lp.depositGns(tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			project, err := lp.getProject(tt.projectID)
+			if tt.expectedHasError && err != nil {
+				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
+				return
+			}
+
+			_, _, _, _, err = lp.depositGns(project, tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -587,10 +593,11 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	projectRecipient := testutils.TestAddress("project")
 
 	tests := []struct {
 		name                 string
-		projectID            string
+		recipient            address
 		depositAmount        int64
 		callerAddress        address
 		userAddress          address
@@ -600,7 +607,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	}{
 		{
 			name:                 "stake governance successfully",
-			projectID:            "gno.land/r/onbloc/obl:123",
+			recipient:            projectRecipient,
 			depositAmount:        1000000,
 			callerAddress:        launchpadAddr,
 			userAddress:          adminAddr,
@@ -610,23 +617,13 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 		},
 		{
 			name:                 "stake governance failed by caller is not launchpad",
-			projectID:            "gno.land/r/onbloc/obl:123",
+			recipient:            projectRecipient,
 			depositAmount:        1000000,
 			callerAddress:        adminAddr,
 			userAddress:          adminAddr,
 			expectedError:        false,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not launchpad",
-		},
-		{
-			name:                 "stake governance failed by invalid project id",
-			projectID:            "invalid",
-			depositAmount:        1000000,
-			callerAddress:        launchpadAddr,
-			userAddress:          adminAddr,
-			expectedError:        true,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
 		},
 	}
 
@@ -644,7 +641,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 			var err error
 
 			stakeGovernanceFn := func() {
-				err = lp.stakeGovernance(tt.projectID, tt.depositAmount, tt.callerAddress, tt.userAddress)
+				err = lp.stakeGovernance(tt.recipient, tt.depositAmount, tt.callerAddress, tt.userAddress)
 			}
 
 			if tt.expectedHasAbort {
