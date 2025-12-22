@@ -36,7 +36,7 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 
 	project, err := lp.getProject(projectID)
 	if err != nil {
-		return err.Error()
+		panic(err.Error())
 	}
 
 	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := lp.depositGns(
