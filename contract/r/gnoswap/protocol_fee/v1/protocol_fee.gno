@@ -30,7 +30,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
 
-	protocolFeeAddr, _ := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)

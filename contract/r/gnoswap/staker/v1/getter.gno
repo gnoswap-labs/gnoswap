@@ -360,12 +360,12 @@ type currentInfo struct {
 
 // getCurrentInfo returns current GNS balance information for system addresses.
 func getCurrentInfo() currentInfo {
-	stakerAddr, _ := access.GetAddress(prbac.ROLE_STAKER.String())
-	devOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
-	communityPoolAddr, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	devOpsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 
 	return currentInfo{
 		height:           runtime.ChainHeight(),

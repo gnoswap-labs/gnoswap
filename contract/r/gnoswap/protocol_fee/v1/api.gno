@@ -55,7 +55,7 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
-	protocolFeeAddr, _ := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	tokenMap := make(map[string]int64)
 
 	// get all recorded tokens
@@ -98,7 +98,7 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 
 // ApiGetUnrecordedBalance returns tokens with unrecorded balances
 func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
-	protocolFeeAddr, _ := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies

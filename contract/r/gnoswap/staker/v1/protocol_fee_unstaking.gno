@@ -42,7 +42,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// external contract has fee
-	protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
