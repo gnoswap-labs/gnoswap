@@ -237,12 +237,12 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	projectLeftReward, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+	project, err := lp.getProject(projectID)
 	if err != nil {
 		panic(err)
 	}
 
-	project, err := lp.getProject(projectID)
+	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -289,12 +289,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient address, currentTime int64) (int64, error) {
-	project, err := lp.getProject(projectID)
-	if err != nil {
-		return 0, err
-	}
-
+func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}

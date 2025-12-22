@@ -1021,7 +1021,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			// Execute transfer
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1139,7 +1139,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1214,7 +1214,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedRefundable, refundedAmount)
