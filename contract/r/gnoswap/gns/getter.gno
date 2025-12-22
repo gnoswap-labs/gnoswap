@@ -130,7 +130,11 @@ func GetAmountPerSecondPerHalvingYear(year int64) int64 {
 }
 
 // GetHalvingAmountsPerYear returns the total emission amount allocated for the specified year.
+// Returns 0 if year is outside the valid range (1-12).
 func GetHalvingAmountsPerYear(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
 	return halvingAmountsPerYear[year-1]
 }
 
