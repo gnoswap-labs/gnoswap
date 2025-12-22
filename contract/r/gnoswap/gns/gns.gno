@@ -180,19 +180,16 @@ func TransferFrom(cur realm, from, to address, amount int64) {
 
 // Render returns token information for web interface.
 func Render(path string) string {
-	parts := strings.Split(path, "/")
-	c := len(parts)
-
-	switch {
-	case path == "":
+	if path == "" {
 		return token.RenderHome()
-	case c == 2 && parts[0] == "balance":
-		owner := address(parts[1])
-		balance := token.BalanceOf(owner)
-		return ufmt.Sprintf("%d\n", balance)
-	default:
-		return "404\n"
 	}
+
+	if addr := strings.TrimPrefix(path, "balance/"); addr != path {
+		balance := token.BalanceOf(address(addr))
+		return ufmt.Sprintf("%d\n", balance)
+	}
+
+	return "404\n"
 }
 
 // checkErr panics if error is not nil.

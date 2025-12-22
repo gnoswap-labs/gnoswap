@@ -37,8 +37,8 @@ func GetCurrentYear() int64 {
 // Returns two slices: timestamps when halving periods start and corresponding emission rates per second.
 func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
 	halvingData := getEmissionState().getHalvingData()
-	halvingTimes := make([]int64, 0)
-	halvingEmissions := make([]int64, 0)
+	halvingTimes := make([]int64, 0, HALVING_END_YEAR)
+	halvingEmissions := make([]int64, 0, HALVING_END_YEAR)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startTimestamp := halvingData.getStartTimestamp(year)
@@ -161,11 +161,9 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 		return 0, 0, 0
 	}
 
-	// Calculate year-specific start and end timestamps
-	yearStartTimestamp := state.getStartTimestamp() + (SECONDS_IN_YEAR * (year - 1))
-	yearEndTimestamp := yearStartTimestamp + SECONDS_IN_YEAR - 1
-
-	return year, yearStartTimestamp, yearEndTimestamp
+	// Use cached timestamps from HalvingData
+	halvingData := state.getHalvingData()
+	return year, halvingData.getStartTimestamp(year), halvingData.getEndTimestamp(year)
 }
 
 // GetHalvingInfo returns comprehensive halving information as JSON string.
@@ -173,14 +171,15 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 func GetHalvingInfo() string {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
+	halvingData := getEmissionState().getHalvingData()
 
-	halvings := make([]*json.Node, 0)
+	halvings := make([]*json.Node, 0, HALVING_END_YEAR)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
 			"year":      json.StringNode("year", strconv.FormatInt(year, 10)),
-			"timestamp": json.NumberNode("timestamp", float64(GetHalvingYearTimestamp(year))),
-			"amount":    json.NumberNode("amount", float64(GetAmountPerSecondPerHalvingYear(year))),
+			"timestamp": json.NumberNode("timestamp", float64(halvingData.getStartTimestamp(year))),
+			"amount":    json.NumberNode("amount", float64(halvingData.getAmountPerSecond(year))),
 		}))
 	}
 
