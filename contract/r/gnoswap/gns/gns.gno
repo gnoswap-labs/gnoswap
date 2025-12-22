@@ -288,7 +288,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 // isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
 func isLastSecondOfHalvingYear(timestamp int64) bool {
 	year := getEmissionState().getCurrentYear(timestamp)
-	lastSecond := GetHalvingYearEndTimestamp(year)
+	lastSecond := getEmissionState().getHalvingYearEndTimestamp(year)
 
 	return timestamp == lastSecond
 }
