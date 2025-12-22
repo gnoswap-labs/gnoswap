@@ -414,7 +414,8 @@ func TestCalculateAmountToMint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			InitGnsTest(t)
 
-			amount := calculateAmountToMint(tt.inputFromTimestamp, tt.inputToTimestamp)
+			amount, err := calculateAmountToMint(tt.inputFromTimestamp, tt.inputToTimestamp)
+			uassert.NoError(t, err)
 
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})

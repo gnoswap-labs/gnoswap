@@ -92,8 +92,12 @@ func MintGns(cur realm, address address) int64 {
 		return 0
 	}
 
-	amountToMint := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
-	err := validEmissionAmount(amountToMint)
+	amountToMint, err := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	err = validEmissionAmount(amountToMint)
 	if err != nil {
 		panic(err)
 	}
@@ -203,7 +207,7 @@ func checkErr(err error) {
 }
 
 // calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
-func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
+func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
 	state := getEmissionState()
 
@@ -213,7 +217,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	}
 
 	if fromTimestamp > toTimestamp {
-		return 0
+		return 0, nil
 	}
 
 	startTimestamp := state.getStartTimestamp()
@@ -222,14 +226,14 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	}
 
 	if toTimestamp < startTimestamp {
-		return 0
+		return 0, nil
 	}
 
 	fromYear := state.getCurrentYear(fromTimestamp)
 	toYear := state.getCurrentYear(toTimestamp)
 
 	if fromYear == 0 || toYear == 0 {
-		return 0
+		return 0, nil
 	}
 
 	totalAmountToMint := int64(0)
@@ -254,8 +258,14 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 
 		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
-		state.subHalvingYearLeftAmount(year, yearAmountToMint)
+		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
+		}
+		err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
+		}
 
 		chain.Emit(
 			"CalculateAmountToMint",
@@ -272,7 +282,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		}
 	}
 
-	return totalAmountToMint
+	return totalAmountToMint, nil
 }
 
 // isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
