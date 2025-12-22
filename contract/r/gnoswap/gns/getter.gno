@@ -157,7 +157,6 @@ func GetEmissionEndTimestamp() int64 {
 // Returns (year, startTimestamp, endTimestamp). Year is 0 if outside emission period.
 func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	state := getEmissionState()
-
 	year := state.getCurrentYear(timestamp)
 
 	// If outside emission period, return 0 values

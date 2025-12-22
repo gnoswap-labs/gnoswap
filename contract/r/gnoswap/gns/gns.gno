@@ -81,7 +81,8 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // to allow graceful handling. This function assumes caller has already verified
 // halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
 	lastGNSMintedTimestamp := LastMintedTimestamp()
@@ -111,10 +112,9 @@ func MintGns(cur realm, address address) int64 {
 		panic(err.Error())
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"MintGNS",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"mintedBlockTime", formatInt(currentTime),
 		"mintedGNSAmount", formatInt(amountToMint),
