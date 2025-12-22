@@ -204,7 +204,10 @@ func checkErr(err error) {
 
 // calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
-	endTimestamp := GetEmissionEndTimestamp()
+	// Cache state to avoid repeated lookups
+	state := getEmissionState()
+
+	endTimestamp := state.getEndTimestamp()
 	if toTimestamp > endTimestamp {
 		toTimestamp = endTimestamp
 	}
@@ -213,7 +216,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		return 0
 	}
 
-	startTimestamp := getEmissionState().getStartTimestamp()
+	startTimestamp := state.getStartTimestamp()
 	if fromTimestamp < startTimestamp {
 		fromTimestamp = startTimestamp
 	}
@@ -222,8 +225,8 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		return 0
 	}
 
-	fromYear := getEmissionState().getCurrentYear(fromTimestamp)
-	toYear := getEmissionState().getCurrentYear(toTimestamp)
+	fromYear := state.getCurrentYear(fromTimestamp)
+	toYear := state.getCurrentYear(toTimestamp)
 
 	if fromYear == 0 || toYear == 0 {
 		return 0
@@ -251,8 +254,8 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 
 		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		getEmissionState().addHalvingYearAccumulatedAmount(year, yearAmountToMint)
-		getEmissionState().subHalvingYearLeftAmount(year, yearAmountToMint)
+		state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		state.subHalvingYearLeftAmount(year, yearAmountToMint)
 
 		chain.Emit(
 			"CalculateAmountToMint",
