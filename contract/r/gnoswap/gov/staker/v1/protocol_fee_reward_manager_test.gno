@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 
@@ -44,7 +45,13 @@ func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testi
 			setup: func(m *ProtocolFeeRewardManagerResolver) {
 				accumulatedMap := make(map[string]*u256.Uint)
 				accumulatedMap["token1"] = u256.NewUintFromInt64(1000)
-				m.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(accumulatedMap))
+				m.SetAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range accumulatedMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 			},
 			token:    "token1",
 			expected: "1000",
@@ -332,7 +339,13 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 				// Simulate some protocol fees
 				accumulatedMap := make(map[string]*u256.Uint)
 				accumulatedMap["token1"] = u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128)
-				m.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(accumulatedMap))
+				m.SetAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range accumulatedMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 			},
 			address:          "user1",
 			currentTimestamp: 100,
@@ -421,10 +434,22 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				m.SetTotalStakedAmount(1000)
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 500
-				m.SetProtocolFeeAmounts(mapToAvlTreeInt64(protocolFeeMap))
+				m.SetProtocolFeeAmounts(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range protocolFeeMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 				accumulatedMap := make(map[string]*u256.Uint)
 				accumulatedMap["token1"] = u256.NewUint(0)
-				m.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(accumulatedMap))
+				m.SetAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range accumulatedMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // Increase from 500 to 1000
@@ -441,10 +466,22 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				m.SetTotalStakedAmount(1000)
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 1000
-				m.SetProtocolFeeAmounts(mapToAvlTreeInt64(protocolFeeMap))
+				m.SetProtocolFeeAmounts(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range protocolFeeMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 				accumulatedMap := make(map[string]*u256.Uint)
 				accumulatedMap["token1"] = u256.NewUint(500)
-				m.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(accumulatedMap))
+				m.SetAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range accumulatedMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // No change
@@ -461,7 +498,13 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				m.SetTotalStakedAmount(0)
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 500
-				m.SetProtocolFeeAmounts(mapToAvlTreeInt64(protocolFeeMap))
+				m.SetProtocolFeeAmounts(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range protocolFeeMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
@@ -499,9 +542,11 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			name: "Calculate with max int64 delta",
 			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
 				m.SetTotalStakedAmount(1)
-				m.SetProtocolFeeAmounts(mapToAvlTreeInt64(map[string]int64{
-					"token1": 0,
-				}))
+				m.SetProtocolFeeAmounts(func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", int64(0))
+				return tree
+			}())
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 9223372036854775807, // max int64
@@ -711,10 +756,22 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 				m.SetTotalStakedAmount(1000)
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 1000
-				m.SetProtocolFeeAmounts(mapToAvlTreeInt64(protocolFeeMap))
+				m.SetProtocolFeeAmounts(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range protocolFeeMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 				accumulatedMap := make(map[string]*u256.Uint)
 				accumulatedMap["token1"] = u256.NewUintFromInt64(500)
-				m.SetAccumulatedProtocolFeeX128PerStake(mapToAvlTreeUint256(accumulatedMap))
+				m.SetAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
+				tree := avl.NewTree()
+				for k, v := range accumulatedMap {
+					tree.Set(k, v)
+				}
+				return tree
+			}())
 
 				// Try with smaller amount (negative delta)
 				protocolFeeAmounts := map[string]int64{
