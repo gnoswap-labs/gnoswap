@@ -4,6 +4,8 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/protocol_fee"
 )
@@ -49,6 +51,8 @@ func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
+	devOpsAddr := access.MustGetAddress(prabc.ROLE_DEVOPS.String())
+
 	if err := pfs.addAccuToDevOps(token, amount); err != nil {
 		return err
 	}
@@ -65,6 +69,8 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 // distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
+	govStakerAddr := access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
+
 	if err := pfs.addAccuToGovStaker(token, amount); err != nil {
 		return err
 	}
