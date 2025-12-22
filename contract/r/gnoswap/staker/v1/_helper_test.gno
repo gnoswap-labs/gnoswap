@@ -582,3 +582,9 @@ func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
 	return pn.GetPositionOperator(positionId)
 }
+
+var (
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+)
