@@ -17,7 +17,7 @@ func NewProposalVoteStatusResolver(voteStatus *governance.ProposalVoteStatus) *P
 // Returns:
 //   - int64: combined weight of all votes
 func (p *ProposalVoteStatusResolver) TotalVoteWeight() int64 {
-	return p.YesWeight() + p.NoWeight()
+	return safeAddInt64(p.YesWeight(), p.NoWeight())
 }
 
 // DiffVoteWeight returns the absolute difference between yes and no votes.
@@ -29,10 +29,10 @@ func (p *ProposalVoteStatusResolver) DiffVoteWeight() int64 {
 	yes := p.YesWeight()
 	no := p.NoWeight()
 	if yes > no {
-		return yes - no
+		return safeSubInt64(yes, no)
 	}
 
-	return no - yes
+	return safeSubInt64(no, yes)
 }
 
 // IsVotingFinished determines if voting has effectively ended due to mathematical impossibility
@@ -49,11 +49,11 @@ func (p *ProposalVoteStatusResolver) IsVotingFinished() bool {
 	}
 
 	// Calculate remaining votes that could still be cast
-	remainingVotes := p.MaxVotingWeight() - totalVotes
+	remainingVotes := safeSubInt64(p.MaxVotingWeight(), totalVotes)
 
 	// If the difference between yes/no is greater than remaining votes,
 	// the outcome cannot change, so voting is effectively finished
-	return remainingVotes-p.DiffVoteWeight() <= 0
+	return safeSubInt64(remainingVotes, p.DiffVoteWeight()) <= 0
 }
 
 // IsRejected determines if the proposal has been rejected by voting.
@@ -89,7 +89,7 @@ func (p *ProposalVoteStatusResolver) IsPassed() bool {
 // Returns:
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) error {
-	p.SetYesWeight(p.YesWeight() + yea)
+	p.SetYesWeight(safeAddInt64(p.YesWeight(), yea))
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (p *ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) error {
 // Returns:
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) error {
-	p.SetNoWeight(p.NoWeight() + nay)
+	p.SetNoWeight(safeAddInt64(p.NoWeight(), nay))
 	return nil
 }
 
