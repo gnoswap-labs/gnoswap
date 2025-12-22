@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
@@ -339,12 +338,12 @@ func sliceToFourUint64(t *testing.T, slice []uint64) (uint64, uint64, uint64, ui
 }
 
 func setupTestEnv(t *testing.T) {
-	distributionBpsPct = avl.NewTree()
+	distributionBpsPct = make(map[int]int64)
 
-	distributionBpsPct.Set("1", int64(7500)) // LIQUIDITY_STAKER
-	distributionBpsPct.Set("2", int64(2000)) // DEVOPS
-	distributionBpsPct.Set("3", int64(500))  // COMMUNITY_POOL
-	distributionBpsPct.Set("4", int64(0))    // GOV_STAKER
+	distributionBpsPct[LIQUIDITY_STAKER] = 7500
+	distributionBpsPct[DEVOPS] = 2000
+	distributionBpsPct[COMMUNITY_POOL] = 500
+	distributionBpsPct[GOV_STAKER] = 0
 
 	distributedToStaker = 0
 	distributedToDevOps = 0
