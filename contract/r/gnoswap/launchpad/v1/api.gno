@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-	"strconv"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -43,10 +42,8 @@ func (lp *launchpadV1) ApiGetProjectAndTierStatisticsByProjectId(projectId strin
 	builder := metaBuilder().WriteString("projectId", projectId)
 	projectBuilder(builder, project)
 
-	for _, duration := range []int64{30, 90, 180} {
-		if tier, err := getProjectTier(project, duration); err == nil {
-			tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
-		}
+	for duration, tier := range project.Tiers() {
+		tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
 	}
 
 	return marshal(builder.Node())
@@ -74,10 +71,8 @@ func (lp *launchpadV1) ApiGetTierStatisticsByProjectId(projectId string) string 
 
 	builder := metaBuilder().WriteString("projectId", projectId)
 
-	for _, duration := range []int64{30, 90, 180} {
-		if tier, err := getProjectTier(project, duration); err == nil {
-			tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
-		}
+	for duration, tier := range project.Tiers() {
+		tierBuilder(builder, ufmt.Sprintf("tier%d", duration), tier)
 	}
 
 	return marshal(builder.Node())
@@ -112,9 +107,9 @@ func (lp *launchpadV1) ApiGetProjectActiveOf(projectId string) string {
 	projectActiveResult := isProjectActive(project, currentTime)
 	builder := (metaBuilder().
 		WriteString("projectId", project.ID()).
-		WriteString("isActive", strconv.FormatBool(projectActiveResult)).
-		WriteString("currentHeight", strconv.FormatInt(runtime.ChainHeight(), 10))).
-		WriteString("startTime", strconv.FormatInt(getStandardTier(project).StartTime(), 10))
+		WriteString("isActive", formatBool(projectActiveResult)).
+		WriteString("currentHeight", formatInt(runtime.ChainHeight()))).
+		WriteString("startTime", formatInt(getStandardTier(project).StartTime()))
 	return marshal(builder.Node())
 }
 

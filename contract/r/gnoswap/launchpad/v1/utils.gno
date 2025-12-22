@@ -10,6 +10,13 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+func formatBool(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
+}
+
 // formatInt returns the string representation of the int64 value.
 func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
