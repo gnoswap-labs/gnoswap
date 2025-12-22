@@ -11,9 +11,11 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-
 // Helper functions for testing
+func getAdminAddr() address {
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	return adminAddr
+}
 func resetTestState(t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
 

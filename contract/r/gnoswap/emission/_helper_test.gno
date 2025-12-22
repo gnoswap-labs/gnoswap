@@ -11,19 +11,51 @@ import (
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
-var (
-	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
-	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
-	govAddr, _           = access.GetAddress(prbac.ROLE_GOVERNANCE.String())
-	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
-	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+func getAdminAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	return addr
+}
 
-	adminRealm     = testing.NewUserRealm(adminAddr)
-	stakerRealm    = testing.NewUserRealm(stakerAddr)
-	govRealm       = testing.NewUserRealm(govAddr)
-	govStakerRealm = testing.NewUserRealm(govStakerAddr)
-)
+func getStakerAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_STAKER.String())
+	return addr
+}
+
+func getGovAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	return addr
+}
+
+func getGovStakerAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	return addr
+}
+
+func getDevOpsAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
+	return addr
+}
+
+func getCommunityPoolAddr() address {
+	addr, _ := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	return addr
+}
+
+func getAdminRealm() testing.Realm {
+	return testing.NewUserRealm(getAdminAddr())
+}
+
+func getStakerRealm() testing.Realm {
+	return testing.NewUserRealm(getStakerAddr())
+}
+
+func getGovRealm() testing.Realm {
+	return testing.NewUserRealm(getGovAddr())
+}
+
+func getGovStakerRealm() testing.Realm {
+	return testing.NewUserRealm(getGovStakerAddr())
+}
 
 func resetObject(t *testing.T) {
 	t.Helper()

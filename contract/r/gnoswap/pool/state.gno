@@ -37,7 +37,7 @@ var (
 func init() {
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
-	initRegisterReadableContract()
+	RegisterReadableContracts()
 
 	// Initialize the initializers map to store implementation registration functions
 	versionManager = version_manager.NewVersionManager(
@@ -49,7 +49,9 @@ func init() {
 	implementation = nil
 }
 
-func initRegisterReadableContract() {
+// RegisterReadableContracts registers authorized callers for read-only access to the pool store.
+// This function should be called when RBAC addresses are changed to update the authorized callers.
+func RegisterReadableContracts() {
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())

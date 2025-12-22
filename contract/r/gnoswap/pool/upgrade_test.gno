@@ -100,7 +100,7 @@ func TestUpgradeImpl(t *testing.T) {
 				RegisterInitializer(cross, makeMockInitializer("new_version"))
 			},
 			packagePath:     "gno.land/r/gnoswap/pool/new_version",
-			callerRealm:     testing.NewUserRealm(adminAddr),
+			callerRealm:     testing.NewUserRealm(getAdminAddr()),
 			expectedVersion: "new_version",
 		},
 		{
@@ -125,7 +125,7 @@ func TestUpgradeImpl(t *testing.T) {
 				RegisterInitializer(cross, makeMockInitializer("v1"))
 			},
 			packagePath:          "gno.land/r/gnoswap/pool/nonexistent",
-			callerRealm:          testing.NewUserRealm(adminAddr),
+			callerRealm:          testing.NewUserRealm(getAdminAddr()),
 			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/pool/nonexistent",
@@ -169,7 +169,7 @@ func TestGetImplementation(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 		},
@@ -218,7 +218,7 @@ func TestCreatePool(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:   "gno.land/r/gnoswap/test_token/token0",
@@ -271,7 +271,7 @@ func TestMint(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:      "gno.land/r/gnoswap/test_token/token0",
@@ -329,7 +329,7 @@ func TestBurn(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:      "gno.land/r/gnoswap/test_token/token0",
@@ -388,7 +388,7 @@ func TestCollect(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:       "gno.land/r/gnoswap/test_token/token0",
@@ -446,7 +446,7 @@ func TestCollectProtocol(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:       "gno.land/r/gnoswap/test_token/token0",
@@ -504,7 +504,7 @@ func TestSwap(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:        "gno.land/r/gnoswap/test_token/token0",
@@ -564,7 +564,7 @@ func TestDrySwap(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:        "gno.land/r/gnoswap/test_token/token0",
@@ -614,7 +614,7 @@ func TestSetFeeProtocol(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			feeProtocol0: 10,
@@ -658,7 +658,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -705,7 +705,7 @@ func TestGetSlot0Tick(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -753,7 +753,7 @@ func TestGetLiquidity(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:          "mock_pool_path",
@@ -802,7 +802,7 @@ func TestGetBalanceToken0(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:        "mock_pool_path",
@@ -851,7 +851,7 @@ func TestGetBalanceToken1(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:        "mock_pool_path",
@@ -901,7 +901,7 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -953,7 +953,7 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -1008,7 +1008,7 @@ func TestGetObservation(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:          "mock_pool_path",
@@ -1070,7 +1070,7 @@ func TestExistsPoolPath(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:       "mock_pool_path",
@@ -1119,7 +1119,7 @@ func TestApiGetPool(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -1169,7 +1169,7 @@ func TestApiGetTWAP(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -1218,7 +1218,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			fee:         1000000,
@@ -1263,7 +1263,7 @@ func TestIncreaseObservationCardinalityLimit(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			token0Path:      "gno.land/r/gnoswap/test_token/token0",
@@ -1308,7 +1308,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			fee:         100,
@@ -1358,7 +1358,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			positionId:      1,
@@ -1415,7 +1415,7 @@ func TestSetSwapEndHook(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
@@ -1457,7 +1457,7 @@ func TestSetSwapStartHook(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
@@ -1497,7 +1497,7 @@ func TestSetTickCrossHook(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
@@ -1537,7 +1537,7 @@ func TestGetPoolCreationFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			expectedFee: 1000000,
@@ -1580,7 +1580,7 @@ func TestGetWithdrawalFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			expectedFee: 100,
@@ -1624,7 +1624,7 @@ func TestGetFee(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
@@ -1669,7 +1669,7 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			fee:             3000,
@@ -1714,7 +1714,7 @@ func TestGetMaxLiquidityPerTick(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:          "mock_pool_path",
@@ -1759,7 +1759,7 @@ func TestGetSlot0FeeProtocol(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:            "mock_pool_path",
@@ -1804,7 +1804,7 @@ func TestGetSlot0Unlocked(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:         "mock_pool_path",
@@ -1849,7 +1849,7 @@ func TestGetToken0Path(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -1894,7 +1894,7 @@ func TestGetToken1Path(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:     "mock_pool_path",
@@ -1939,7 +1939,7 @@ func TestGetTickSpacing(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:        "mock_pool_path",
@@ -1984,7 +1984,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
@@ -2029,7 +2029,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
@@ -2075,7 +2075,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(getAdminAddr()))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:          "mock_pool_path",

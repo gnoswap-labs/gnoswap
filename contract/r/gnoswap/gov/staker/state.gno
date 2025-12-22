@@ -26,14 +26,16 @@ var (
 func init() {
 	// Initialize KVStore
 	kvStore = store.NewKVStore(currentAddress)
-	initRegisterReadableContract()
+	RegisterReadableContracts()
 
 	// Create VersionManager
 	versionManager = version_manager.NewVersionManager(domainPath, kvStore, initializeDomainStore)
 	implementation = nil
 }
 
-func initRegisterReadableContract() {
+// RegisterReadableContracts registers authorized callers for read-only access to the gov staker store.
+// This function should be called when RBAC addresses are changed to update the authorized callers.
+func RegisterReadableContracts() {
 	governanceAddress := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	err := kvStore.AddAuthorizedCaller(governanceAddress, store.ReadOnly)

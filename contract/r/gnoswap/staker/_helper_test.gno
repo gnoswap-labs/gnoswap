@@ -4,14 +4,10 @@ import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
-	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/rbac"
 )
-
-var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 
 // Helper functions for testing
 func resetTestState(t *testing.T) {
