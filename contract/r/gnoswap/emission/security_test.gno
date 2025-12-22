@@ -1,6 +1,7 @@
 package emission
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -715,6 +716,284 @@ func TestFormatInt(t *testing.T) {
 			} else {
 				result := formatInt(tt.value)
 				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestSafeAddInt64 tests the safeAddInt64 function for overflow and underflow protection
+func TestSafeAddInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "positive + positive",
+			a:        100,
+			b:        200,
+			expected: 300,
+		},
+		{
+			name:     "negative + negative",
+			a:        -100,
+			b:        -200,
+			expected: -300,
+		},
+		{
+			name:     "positive + negative",
+			a:        100,
+			b:        -50,
+			expected: 50,
+		},
+		{
+			name:     "negative + positive",
+			a:        -100,
+			b:        150,
+			expected: 50,
+		},
+		{
+			name:     "zero + positive",
+			a:        0,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "zero + negative",
+			a:        0,
+			b:        -100,
+			expected: -100,
+		},
+		{
+			name:     "zero + zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:     "max int64 + 0",
+			a:        math.MaxInt64,
+			b:        0,
+			expected: math.MaxInt64,
+		},
+		{
+			name:     "min int64 + 0",
+			a:        math.MinInt64,
+			b:        0,
+			expected: math.MinInt64,
+		},
+		{
+			name:        "overflow: max int64 + 1",
+			a:           math.MaxInt64,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "overflow: max int64 + max int64",
+			a:           math.MaxInt64,
+			b:           math.MaxInt64,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "overflow: large positive + large positive",
+			a:           math.MaxInt64 - 100,
+			b:           200,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "underflow: min int64 + (-1)",
+			a:           math.MinInt64,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "underflow: min int64 + min int64",
+			a:           math.MinInt64,
+			b:           math.MinInt64,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "underflow: large negative + large negative",
+			a:           math.MinInt64 + 100,
+			b:           -200,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:     "boundary: max int64 - 1 + 1",
+			a:        math.MaxInt64 - 1,
+			b:        1,
+			expected: math.MaxInt64,
+		},
+		{
+			name:     "boundary: min int64 + 1 + (-1)",
+			a:        math.MinInt64 + 1,
+			b:        -1,
+			expected: math.MinInt64,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeAddInt64(tt.a, tt.b)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					result := safeAddInt64(tt.a, tt.b)
+					uassert.Equal(t, tt.expected, result)
+				})
+			}
+		})
+	}
+}
+
+// TestSafeSubInt64 tests the safeSubInt64 function for overflow and underflow protection
+func TestSafeSubInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "positive - positive (positive result)",
+			a:        200,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "positive - positive (negative result)",
+			a:        100,
+			b:        200,
+			expected: -100,
+		},
+		{
+			name:     "negative - negative",
+			a:        -100,
+			b:        -200,
+			expected: 100,
+		},
+		{
+			name:     "positive - negative",
+			a:        100,
+			b:        -50,
+			expected: 150,
+		},
+		{
+			name:     "negative - positive",
+			a:        -100,
+			b:        50,
+			expected: -150,
+		},
+		{
+			name:     "zero - positive",
+			a:        0,
+			b:        100,
+			expected: -100,
+		},
+		{
+			name:     "zero - negative",
+			a:        0,
+			b:        -100,
+			expected: 100,
+		},
+		{
+			name:     "zero - zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:     "max int64 - 0",
+			a:        math.MaxInt64,
+			b:        0,
+			expected: math.MaxInt64,
+		},
+		{
+			name:     "min int64 - 0",
+			a:        math.MinInt64,
+			b:        0,
+			expected: math.MinInt64,
+		},
+		{
+			name:        "underflow: min int64 - 1",
+			a:           math.MinInt64,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "underflow: min int64 - max int64",
+			a:           math.MinInt64,
+			b:           math.MaxInt64,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "underflow: large negative - large positive",
+			a:           math.MinInt64 + 100,
+			b:           200,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "overflow: max int64 - (-1)",
+			a:           math.MaxInt64,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "overflow: max int64 - min int64",
+			a:           math.MaxInt64,
+			b:           math.MinInt64,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "overflow: large positive - large negative",
+			a:           math.MaxInt64 - 100,
+			b:           -200,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:     "boundary: min int64 + 1 - 1",
+			a:        math.MinInt64 + 1,
+			b:        1,
+			expected: math.MinInt64,
+		},
+		{
+			name:     "boundary: max int64 - 1 - (-1)",
+			a:        math.MaxInt64 - 1,
+			b:        -1,
+			expected: math.MaxInt64,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeSubInt64(tt.a, tt.b)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					result := safeSubInt64(tt.a, tt.b)
+					uassert.Equal(t, tt.expected, result)
+				})
 			}
 		})
 	}
