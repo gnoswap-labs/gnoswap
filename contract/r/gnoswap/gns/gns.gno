@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ownable"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/demo/defi/grc20reg"
@@ -24,10 +23,8 @@ const (
 )
 
 var (
-	adminAddr            = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 	UserTeller           = token.CallerTeller()
-	owner                = ownable.NewWithAddress(adminAddr)
 
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
@@ -37,7 +34,8 @@ var (
 )
 
 func init() {
-	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
+	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
+	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 	grc20reg.Register(cross, token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
