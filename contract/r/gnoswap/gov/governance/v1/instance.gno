@@ -74,17 +74,21 @@ func (g *governanceV1) addProposal(proposal *governance.Proposal) bool {
 }
 
 // User proposals methods
-func (g *governanceV1) getUserProposals(user string) []interface{} {
+func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 	proposalIDs, exists := g.store.GetUserProposalIDs(user)
 	if !exists {
-		return []interface{}{}
+		return []*governance.Proposal{}
 	}
 
-	var proposals []interface{}
+	proposals := make([]*governance.Proposal, 0)
+
 	for _, id := range proposalIDs {
-		if proposal, exists := g.store.GetProposal(id); exists {
-			proposals = append(proposals, proposal)
+		proposal, exists := g.store.GetProposal(id)
+		if !exists {
+			continue
 		}
+
+		proposals = append(proposals, proposal)
 	}
 
 	return proposals
@@ -93,17 +97,33 @@ func (g *governanceV1) getUserProposals(user string) []interface{} {
 func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64) bool {
 	proposals := g.getUserProposals(proposerAddress.String())
 
-	// Check if any proposal is still active
-	for _, proposalRaw := range proposals {
-		if proposal, ok := proposalRaw.(*governance.Proposal); ok {
-			proposalResolver := NewProposalResolver(proposal)
-			if proposalResolver.IsActive(current) {
-				return true
-			}
+	// Check if any proposal is still active and remove in-active proposals
+	for _, proposal := range proposals {
+		proposalResolver := NewProposalResolver(proposal)
+
+		if proposalResolver.IsActive(current) {
+			return true
 		}
 	}
 
 	return false
+}
+
+func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, current int64) error {
+	proposals := g.getUserProposals(proposerAddress.String())
+
+	for _, proposal := range proposals {
+		proposalResolver := NewProposalResolver(proposal)
+
+		if !proposalResolver.IsActive(current) {
+			err := g.store.RemoveUserProposal(proposerAddress.String(), proposal.ID())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // Proposal voting info methods
@@ -111,18 +131,15 @@ func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*avl.Tree, 
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *avl.Tree) bool {
-	err := g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
-	return err == nil
+func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *avl.Tree) error {
+	return g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
 }
 
 // Helper methods for API
 func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	proposal, exists := g.getProposal(id)
 	if !exists {
-		detail := ufmt.Sprintf("proposal(%d) not found", id)
-		msg := makeErrorWithDetails(errProposalNotFound, detail)
-		panic(msg)
+		panic(makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposal(%d) not found", id)))
 	}
 	return proposal
 }

@@ -83,9 +83,15 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
+	}
+
+	// Remove inactive user proposals
+	err = gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
@@ -186,9 +192,15 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
+	}
+
+	// Remove inactive user proposals
+	err = gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
@@ -298,9 +310,15 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
+	}
+
+	// Remove inactive user proposals
+	err = gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
