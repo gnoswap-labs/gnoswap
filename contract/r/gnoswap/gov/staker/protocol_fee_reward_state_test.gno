@@ -3,8 +3,9 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/uassert"
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
