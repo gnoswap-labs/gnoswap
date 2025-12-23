@@ -5,7 +5,6 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ownable"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -92,10 +91,8 @@ func MustOwnerOf(tid grc721.TokenID) address {
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
 
-	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
-	owner := ownable.NewWithAddress(positionAddr)
-
-	owner.AssertOwnedByPrevious()
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
 
 	assertIsValidTokenURI(tid)
 
@@ -218,12 +215,10 @@ func IsApprovedForAll(owner, operator address) bool {
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPosition()
 
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
+
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
-	owner := ownable.NewWithAddress(positionAddr)
-	owner.AssertOwnedByPrevious()
-
-	ownerAddress := owner.Owner()
-
 	checkErr(nft.Mint(positionAddr, tid))
 
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
@@ -234,7 +229,7 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 		panic(err)
 	}
 
-	checkErr(nft.TransferFrom(ownerAddress, to, tid))
+	checkErr(nft.TransferFrom(positionAddr, to, tid))
 
 	return tid
 }
@@ -254,14 +249,12 @@ func Exists(tid grc721.TokenID) bool {
 // Parameters:
 //   - tid: token ID to burn
 //
-// Only callable by owner.
+// Only callable by position.
 func Burn(cur realm, tid grc721.TokenID) {
 	halt.AssertIsNotHaltedPosition()
 
-	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
-	owner := ownable.NewWithAddress(positionAddr)
-
-	owner.AssertOwnedByPrevious()
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
 
 	checkErr(nft.Burn(tid))
 }
