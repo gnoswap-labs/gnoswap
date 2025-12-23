@@ -340,6 +340,7 @@ func (gs *govStakerV1) unDelegate(
 	}
 
 	unDelegationAmount := amount
+	lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
 
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
@@ -358,9 +359,6 @@ func (gs *govStakerV1) unDelegate(
 		if currentUnDelegationAmount < 0 {
 			return 0, errors.New("undelegation amount cannot be negative")
 		}
-
-		// Get lockup period from store
-		lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
 
 		resolver.UnDelegate(
 			currentUnDelegationAmount,
