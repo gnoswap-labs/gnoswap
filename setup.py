@@ -225,6 +225,7 @@ def get_integration_tests(
     skip: bool = False,
     testdata_dir: Path = INTEGRATION_TESTDATA_DIR,
     skip_file: Path = INTEGRATION_SKIP_FILE,
+    categories: Optional[List[str]] = None,
 ) -> List[IntegrationTest]:
     """Get integration tests, optionally excluding those in skip list.
 
@@ -232,11 +233,28 @@ def get_integration_tests(
         skip: If True, exclude tests listed in skip file.
         testdata_dir: Directory containing test files.
         skip_file: Path to skip list file.
+        categories: If provided, only include tests from these categories (subdirectories).
 
     Returns:
         List of IntegrationTest objects.
     """
     tests = list(discover_integration_tests(testdata_dir))
+
+    if categories:
+        filtered_tests = []
+        for test in tests:
+            rel_path = test.source_path.relative_to(testdata_dir.resolve())
+            # Check if test is in one of the specified categories
+            if rel_path.parent == Path("."):
+                # Root level file (e.g., deploy.txtar) - include if "root" category specified
+                if "root" in categories:
+                    filtered_tests.append(test)
+            else:
+                # File in subdirectory - check if category matches
+                category = rel_path.parts[0]
+                if category in categories:
+                    filtered_tests.append(test)
+        tests = filtered_tests
 
     if not skip:
         return tests
@@ -345,19 +363,43 @@ def copy_integration_tests(config: PathConfig, skip: bool = False) -> None:
     link_bless_directory(config)
 
 
-def list_integration_tests(skip: bool = False) -> None:
+def list_integration_tests(
+    skip: bool = False, categories: Optional[List[str]] = None
+) -> None:
     """Print all integration tests with their converted names.
 
     Args:
         skip: If True, exclude tests in skip list.
+        categories: If provided, only include tests from these categories.
     """
-    tests = get_integration_tests(skip=skip)
+    tests = get_integration_tests(skip=skip, categories=categories)
 
     if not tests:
         raise SetupError("No integration tests found")
 
     for test in sorted(tests, key=lambda t: t.converted_name):
         print(test.converted_name)
+
+
+def list_categories() -> None:
+    """Print all available integration test categories."""
+    testdata_dir = INTEGRATION_TESTDATA_DIR.resolve()
+    if not testdata_dir.exists():
+        raise SetupError("Integration testdata directory not found")
+
+    categories = set()
+    has_root_files = False
+
+    for item in testdata_dir.iterdir():
+        if item.is_dir():
+            categories.add(item.name)
+        elif item.suffix == ".txtar":
+            has_root_files = True
+
+    for category in sorted(categories):
+        print(category)
+    if has_root_files:
+        print("root")
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -402,6 +444,16 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Exclude tests listed in testdata-skip.txt",
     )
+    parser.add_argument(
+        "--category",
+        type=str,
+        help="Filter integration tests by category (comma-separated, e.g., 'base,gov')",
+    )
+    parser.add_argument(
+        "--list-categories",
+        action="store_true",
+        help="List all available integration test categories and exit",
+    )
 
     return parser.parse_args(argv)
 
@@ -417,8 +469,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     """
     args = parse_args(argv)
 
+    # Parse categories if provided
+    categories = None
+    if args.category:
+        categories = [c.strip() for c in args.category.split(",")]
+
+    if args.list_categories:
+        list_categories()
+        return 0
+
     if args.list_tests:
-        list_integration_tests(skip=args.skip)
+        list_integration_tests(skip=args.skip, categories=categories)
         return 0
 
     if args.clone:
