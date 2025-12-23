@@ -4,8 +4,8 @@ import (
 	"errors"
 	"math"
 
-	"gno.land/p/nt/avl"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -80,13 +80,14 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		protocolFeeDelta := safeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
 
+		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
+
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
-			existingFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
-			if existingFee == nil {
+			if existingAccumulatedFee == nil {
 				accumulatedProtocolFeesX128PerStake.Set(token, u256.NewUint(0))
 			} else {
-				accumulatedProtocolFeesX128PerStake.Set(token, existingFee)
+				accumulatedProtocolFeesX128PerStake.Set(token, existingAccumulatedFee)
 			}
 		}
 
@@ -104,7 +105,6 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		// Get current accumulated fee per stake for this token
 		accumulatedProtocolFeeX128PerStake := u256.Zero()
-		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
 		if existingAccumulatedFee != nil {
 			accumulatedProtocolFeeX128PerStake = existingAccumulatedFee
 		}
