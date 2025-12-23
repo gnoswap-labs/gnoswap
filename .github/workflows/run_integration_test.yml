@@ -6,7 +6,39 @@ on:
   pull_request:
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out gnoswap repo
+        uses: actions/checkout@v4
+
+      - name: Check out gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnoswap-labs/gno
+          ref: master
+          path: ./gno
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Build gno
+        run: |
+          cd gno
+          make build.gno
+
+      - name: Upload gno artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gno-integration-build
+          path: |
+            gno/
+          retention-days: 1
+
   run-integration-test:
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -24,27 +56,28 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno
-        uses: actions/checkout@v4
+      - name: Download gno artifacts
+        uses: actions/download-artifact@v4
         with:
-          repository: gnoswap-labs/gno
-          ref: master
+          name: gno-integration-build
           path: ./gno
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.24"
+          cache: true
+          cache-dependency-path: gno/go.sum
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install gno
+      - name: Install gno from artifacts
         run: |
           cd gno
-          make install.gno
+          go install ./gnovm/cmd/gno
 
       - name: Run setup.py
         run: python3 setup.py --exclude-tests -w .
