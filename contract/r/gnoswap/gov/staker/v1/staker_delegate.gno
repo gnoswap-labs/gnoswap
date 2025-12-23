@@ -312,13 +312,13 @@ func (gs *govStakerV1) delegate(
 	// Update total amounts directly in store
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
 		panic(err)
 	}
 
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
+	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
 		panic(err)
 	}
 
@@ -454,7 +454,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
+func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) { // performance optimization
 	collectedAmount := int64(0)
 
 	delegations := gs.getUserDelegations(user)
