@@ -62,6 +62,9 @@ var (
 	poolAddr          = access.MustGetAddress(prbac.ROLE_POOL.String())
 	routerAddr        = access.MustGetAddress(prbac.ROLE_ROUTER.String())
 	emissionAddr      = access.MustGetAddress(prbac.ROLE_EMISSION.String())
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
 	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
@@ -582,9 +585,3 @@ func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
 	return pn.GetPositionOperator(positionId)
 }
-
-var (
-	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
-	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-)
