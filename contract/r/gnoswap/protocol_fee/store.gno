@@ -259,24 +259,19 @@ func (s *protocolFeeStore) HasTokenListWithAmountsStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeTokenListWithAmount() error {
-	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), make(map[string]int64))
+	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), avl.NewTree())
 }
 
-func (s *protocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
+func (s *protocolFeeStore) GetTokenListWithAmounts() *avl.Tree {
+	result, err := s.kvStore.GetTree(StoreKeyTokenListWithAmounts.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tokenListWithAmounts, ok := result.(map[string]int64)
-	if !ok {
-		panic(ufmt.Errorf("failed to cast result to map[string]int64: %T", result))
-	}
-
-	return tokenListWithAmounts
+	return result
 }
 
-func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {
+func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts *avl.Tree) error {
 	if tokenListWithAmounts == nil {
 		return errors.New("tokenListWithAmounts is nil")
 	}
@@ -285,38 +280,33 @@ func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[stri
 }
 
 func (s *protocolFeeStore) GetTokenListWithAmountItem(tokenPath string) (int64, bool) {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
+	result, err := s.kvStore.GetTree(StoreKeyTokenListWithAmounts.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tokenListWithAmounts, ok := result.(map[string]int64)
-	if !ok {
-		panic(ufmt.Errorf("failed to cast result to map[string]int64: %T", result))
-	}
-
-	amount, ok := tokenListWithAmounts[tokenPath]
+	amountAny, ok := result.Get(tokenPath)
 	if !ok {
 		return 0, false
+	}
+
+	amount, ok := amountAny.(int64)
+	if !ok {
+		panic(ufmt.Errorf("failed to cast result to int64: %T", amountAny))
 	}
 
 	return amount, true
 }
 
 func (s *protocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amount int64) error {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
+	result, err := s.kvStore.GetTree(StoreKeyTokenListWithAmounts.String())
 	if err != nil {
 		return err
 	}
 
-	tokenListWithAmounts, ok := result.(map[string]int64)
-	if !ok {
-		return ufmt.Errorf("failed to cast result to map[string]int64: %T", result)
-	}
+	result.Set(tokenPath, amount)
 
-	tokenListWithAmounts[tokenPath] = amount
-
-	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), tokenListWithAmounts)
+	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), result)
 }
 
 // NewprotocolFeeStore creates a new protocol fee store instance with the provided KV store.

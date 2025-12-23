@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
@@ -238,7 +239,9 @@ func TestAddToProtocolFee(t *testing.T) {
 			}(cross)
 
 			tokenListWithAmount := pf.store.GetTokenListWithAmounts()
-			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
+			amountAny, ok := tokenListWithAmount.Get(test.tokenPath)
+			uassert.True(t, ok)
+			uassert.Equal(t, amountAny.(int64), test.want)
 		})
 	}
 }
@@ -268,10 +271,10 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Reset and setup test data for each test case
 			pf := createTestProtocolFee(t)
-			pf.store.SetTokenListWithAmounts(map[string]int64{
-				"gno.land/r/foo": 100,
-				"gno.land/r/baz": 200,
-			})
+			tokenList := avl.NewTree()
+			tokenList.Set("gno.land/r/foo", int64(100))
+			tokenList.Set("gno.land/r/baz", int64(200))
+			pf.store.SetTokenListWithAmounts(tokenList)
 
 			testing.SetRealm(test.prevRealm)
 
@@ -287,7 +290,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 				}(cross)
 
 				tokenListWithAmount := pf.store.GetTokenListWithAmounts()
-				uassert.Equal(t, len(tokenListWithAmount), len(test.want))
+				uassert.Equal(t, tokenListWithAmount.Size(), len(test.want))
 			}
 		})
 	}
@@ -350,7 +353,9 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(t *testing.T) {
 					pf.AddToProtocolFee(tt.tokenPath, tt.amount)
 				}(cross)
 				if tt.amount > 0 {
-					uassert.Equal(t, pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath], tt.amount)
+					value, ok := pf.getProtocolFeeState().TokenListWithAmounts().Get(tt.tokenPath)
+					uassert.True(t, ok)
+					uassert.Equal(t, value.(int64), tt.amount)
 				}
 			}
 		})
@@ -402,7 +407,7 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given
 			pf := createTestProtocolFee(t)
-			pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath] = tt.initialValue
+			pf.getProtocolFeeState().TokenListWithAmounts().Set(tt.tokenPath, tt.initialValue)
 			testing.SetRealm(testing.NewCodeRealm(poolPath))
 
 			// When & Then
@@ -417,7 +422,9 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 					pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
 				}(cross)
 				expectedTotal := tt.initialValue + tt.addAmount
-				uassert.Equal(t, pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath], expectedTotal)
+				value, ok := pf.getProtocolFeeState().TokenListWithAmounts().Get(tt.tokenPath)
+				uassert.True(t, ok)
+				uassert.Equal(t, value.(int64), expectedTotal)
 			}
 		})
 	}

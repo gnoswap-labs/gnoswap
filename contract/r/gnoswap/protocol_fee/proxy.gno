@@ -1,5 +1,7 @@
 package protocol_fee
 
+import "gno.land/p/nt/avl"
+
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
 //
 // Returns:
@@ -54,7 +56,7 @@ func GetGovStakerPct() int64 {
 }
 
 // GetTokenListWithAmount returns the list of tokens with their amounts.
-func GetTokenListWithAmount() map[string]int64 {
+func GetTokenListWithAmount() *avl.Tree {
 	return getImplementation().GetTokenListWithAmount()
 }
 

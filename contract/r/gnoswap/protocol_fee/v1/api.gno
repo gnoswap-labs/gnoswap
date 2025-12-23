@@ -54,7 +54,7 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
 	tokenList := pf.store.GetTokenListWithAmounts()
-	if tokenList == nil || len(tokenList) == 0 {
+	if tokenList == nil {
 		return ""
 	}
 
@@ -62,10 +62,14 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	for token := range tokenList {
+	// only include tokens that are already recorded.
+	// check for any tokens that have balance will requires
+	// iterating through known tokens or having a registry.
+	tokenList.Iterate("", "", func(token string, value any) bool {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
-		data.WriteString(token, formatInt(actualBalance))
-	}
+		data.WriteString(token, formatInt64(actualBalance))
+		return false
+	})
 
 	return marshal(data.Node())
 }
@@ -81,9 +85,14 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	for token, amount := range tokenList {
-		data.WriteString(token, formatInt(amount))
-	}
+	tokenList.Iterate("", "", func(token string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast amount to int64: %T", value))
+		}
+		data.WriteString(token, formatInt64(amount))
+		return false
+	})
 
 	return marshal(data.Node())
 }
@@ -98,13 +107,18 @@ func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
 	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies
-	for token, recordedAmount := range tokenList {
+	pf.store.GetTokenListWithAmounts().Iterate("", "", func(token string, value any) bool {
+		recordedAmount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast recordedAmount to int64: %T", value))
+		}
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		if actualBalance > recordedAmount {
 			unrecordedAmount := actualBalance - recordedAmount
 			unrecordedMap[token] = unrecordedAmount
 		}
-	}
+		return false
+	})
 
 	data := json.Builder().
 		WriteString("height", formatInt(runtime.ChainHeight())).

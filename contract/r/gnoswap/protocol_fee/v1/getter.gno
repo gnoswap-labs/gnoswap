@@ -1,5 +1,7 @@
 package v1
 
+import "gno.land/p/nt/avl"
+
 // GetDevOpsPct returns the percentage allocated to devOps.
 func (pf *protocolFeeV1) GetDevOpsPct() int64 {
 	return pf.getProtocolFeeState().DevOpsPct()
@@ -11,17 +13,13 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 }
 
 // GetTokenListWithAmount returns the token path and amount.
-func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
+func (pf *protocolFeeV1) GetTokenListWithAmount() *avl.Tree {
 	return pf.getProtocolFeeState().TokenListWithAmounts()
 }
 
 // GetAmountOfToken returns the amount of token.
 func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
-	amount, exists := pf.getProtocolFeeState().TokenListWithAmounts()[tokenPath]
-	if !exists {
-		return 0
-	}
-	return amount
+	return pf.getProtocolFeeState().TokenAmountOfTokenPath(tokenPath)
 }
 
 // GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.

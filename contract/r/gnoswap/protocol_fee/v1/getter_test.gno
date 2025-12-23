@@ -133,9 +133,11 @@ func TestGetTokenListWithAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pf := tt.setupFn()
 			result := pf.GetTokenListWithAmount()
-			uassert.Equal(t, len(result), len(tt.expected))
+			uassert.Equal(t, result.Size(), len(tt.expected))
 			for k, v := range tt.expected {
-				uassert.Equal(t, result[k], v)
+				value, ok := result.Get(k)
+				uassert.True(t, ok)
+				uassert.Equal(t, value.(int64), v)
 			}
 		})
 	}

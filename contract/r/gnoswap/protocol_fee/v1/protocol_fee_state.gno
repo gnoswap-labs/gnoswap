@@ -33,7 +33,7 @@ func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
 	return pfs.store.GetAccuToDevOps()
 }
 
-func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
+func (pfs *protocolFeeState) TokenListWithAmounts() *avl.Tree {
 	return pfs.store.GetTokenListWithAmounts()
 }
 
@@ -198,7 +198,7 @@ func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, 
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
 func (pfs *protocolFeeState) clearTokenListWithAmount() error {
-	if err := pfs.store.SetTokenListWithAmounts(make(map[string]int64)); err != nil {
+	if err := pfs.store.SetTokenListWithAmounts(avl.NewTree()); err != nil {
 		return err
 	}
 	return nil

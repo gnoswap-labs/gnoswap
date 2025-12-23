@@ -12,7 +12,7 @@ type mockProtocolFeeStore struct {
 	accuToDevOps                  *avl.Tree
 	distributedToGovStakerHistory *avl.Tree
 	distributedToDevOpsHistory    *avl.Tree
-	tokenListWithAmounts          map[string]int64
+	tokenListWithAmounts          *avl.Tree
 }
 
 // handle devOpsPct store data
@@ -176,21 +176,26 @@ func (s *mockProtocolFeeStore) HasTokenListWithAmountsStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeTokenListWithAmount() error {
-	s.tokenListWithAmounts = make(map[string]int64)
+	s.tokenListWithAmounts = avl.NewTree()
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
+func (s *mockProtocolFeeStore) GetTokenListWithAmounts() *avl.Tree {
 	return s.tokenListWithAmounts
 }
 
-func (s *mockProtocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {
+func (s *mockProtocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts *avl.Tree) error {
 	s.tokenListWithAmounts = tokenListWithAmounts
 	return nil
 }
 
 func (s *mockProtocolFeeStore) GetTokenListWithAmountItem(tokenPath string) (int64, bool) {
-	amount, ok := s.tokenListWithAmounts[tokenPath]
+	amountAny, ok := s.tokenListWithAmounts.Get(tokenPath)
+	if !ok {
+		return 0, false
+	}
+
+	amount, ok := amountAny.(int64)
 	if !ok {
 		return 0, false
 	}
@@ -199,7 +204,7 @@ func (s *mockProtocolFeeStore) GetTokenListWithAmountItem(tokenPath string) (int
 }
 
 func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amount int64) error {
-	s.tokenListWithAmounts[tokenPath] = amount
+	s.tokenListWithAmounts.Set(tokenPath, amount)
 
 	return nil
 }
@@ -211,6 +216,6 @@ func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 		accuToDevOps:                  avl.NewTree(),
 		distributedToGovStakerHistory: avl.NewTree(),
 		distributedToDevOpsHistory:    avl.NewTree(),
-		tokenListWithAmounts:          make(map[string]int64),
+		tokenListWithAmounts:          avl.NewTree(),
 	}
 }

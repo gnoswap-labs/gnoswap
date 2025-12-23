@@ -34,12 +34,10 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
 
-	state := pf.getProtocolFeeState()
-	devOpsPct := state.DevOpsPct()
-
-	for token, amount := range pf.store.GetTokenListWithAmounts() {
-		if amount <= 0 {
-			continue
+	pf.store.GetTokenListWithAmounts().Iterate("", "", func(token string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Errorf("failed to cast amount to int64: %T", value))
 		}
 
 		balance := common.BalanceOf(token, protocolFeeAddr)
@@ -52,6 +50,11 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			))
 		}
 
+		if amount <= 0 {
+			return false
+		}
+
+		// Distribute only the recorded amount, not the entire balance
 		distributeAmount := amount
 
 		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
@@ -73,7 +76,8 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
 			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
-	}
+		return false
+	})
 
 	if err := state.clearTokenListWithAmount(); err != nil {
 		panic(err)
