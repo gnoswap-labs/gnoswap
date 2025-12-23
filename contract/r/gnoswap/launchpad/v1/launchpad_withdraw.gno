@@ -49,7 +49,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 
 	chain.Emit(
 		"CollectDepositGns",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", formatInt(withdrawalAmount),

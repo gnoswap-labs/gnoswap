@@ -47,7 +47,8 @@ func (lp *launchpadV1) CreateProject(
 ) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	launchpadAddr := runtime.CurrentRealm().Address()
@@ -108,10 +109,9 @@ func (lp *launchpadV1) CreateProject(
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateProject",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
@@ -231,7 +231,8 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	currentHeight := runtime.ChainHeight()
@@ -246,8 +247,6 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 	if err != nil {
 		panic(err)
 	}
-
-	previousRealm := runtime.PreviousRealm()
 
 	tier30, err := getProjectTier(project, projectTier30)
 	if err != nil {
@@ -266,7 +265,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 
 	chain.Emit(
 		"TransferLeftFromProjectByAdmin",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"projectId", projectID,
 		"recipient", recipient.String(),
