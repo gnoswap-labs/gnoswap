@@ -187,19 +187,18 @@ func NewHalvingData(startTimestamp int64) *HalvingData {
 	}
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		idx := year - 1 // convert 1-based year to 0-based index
-		yearStartTimestamp := startTimestamp + (SECONDS_IN_YEAR * int64(idx))
+		yearStartTimestamp := startTimestamp + (SECONDS_IN_YEAR * (year - 1))
 		yearEndTimestamp := yearStartTimestamp + SECONDS_IN_YEAR - 1
 		yearDistributionAmount := GetHalvingAmountsPerYear(year)
 		yearAmountPerSecond := yearDistributionAmount / SECONDS_IN_YEAR
 
-		halvingData.startTimestamps[idx] = yearStartTimestamp
-		halvingData.endTimestamps[idx] = yearEndTimestamp
-		halvingData.maxAmount[idx] = yearDistributionAmount
-		halvingData.mintedAmount[idx] = 0
-		halvingData.accumAmount[idx] = 0
-		halvingData.amountPerSecond[idx] = yearAmountPerSecond
-		halvingData.leftAmount[idx] = yearDistributionAmount
+		halvingData.setStartTimestamp(year, yearStartTimestamp)
+		halvingData.setEndTimestamp(year, yearEndTimestamp)
+		halvingData.setMaxAmount(year, yearDistributionAmount)
+		halvingData.setMintedAmount(year, 0)
+		halvingData.setAccumAmount(year, 0)
+		halvingData.setAmountPerSecond(year, yearAmountPerSecond)
+		halvingData.setLeftAmount(year, yearDistributionAmount)
 	}
 
 	return halvingData
