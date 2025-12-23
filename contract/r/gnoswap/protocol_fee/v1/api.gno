@@ -53,23 +53,13 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
-	tokenMap := make(map[string]int64)
-
-	// get all recorded tokens
-	for token := range pf.store.GetTokenListWithAmounts() {
-		actualBalance := common.BalanceOf(token, protocolFeeAddr)
-		tokenMap[token] = actualBalance
-	}
-
-	// only include tokens that are already recorded.
-	// check for any tokens that have balance will requires
-	// iterating through known tokens or having a registry.
 	data := json.Builder().
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	for token, balance := range tokenMap {
-		data.WriteString(token, formatInt64(balance))
+	for token := range pf.store.GetTokenListWithAmounts() {
+		actualBalance := common.BalanceOf(token, protocolFeeAddr)
+		data.WriteString(token, formatInt64(actualBalance))
 	}
 
 	return marshal(data.Node())
@@ -133,11 +123,6 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 	})
 
 	return data.Node()
-}
-
-// formatUint formats uint64 to string.
-func formatUint(v uint64) string {
-	return strconv.FormatUint(v, 10)
 }
 
 // formatInt64 formats int64 to string.
