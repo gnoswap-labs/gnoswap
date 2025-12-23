@@ -362,7 +362,7 @@ func generateInRangeTick(f *fuzz.T, currentTick int32, feeTier uint32) (int32, i
 	currentTick = currentTick - (currentTick % tickSpacing)
 
 	tickLowerDiff := fuzz.Int32Range(1, 1000).Draw(f, "tickLowerDiff").(int32) * tickSpacing
-	tickUpperDiff := fuzz.Int32Range(1, 1000).Draw(f, "tickLowerDiff").(int32) * tickSpacing
+	tickUpperDiff := fuzz.Int32Range(1, 1000).Draw(f, "tickUpperDiff").(int32) * tickSpacing
 
 	tickLower := currentTick - tickLowerDiff
 	tickUpper := currentTick + tickUpperDiff
