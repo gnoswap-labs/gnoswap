@@ -53,11 +53,16 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
+	tokenList := pf.store.GetTokenListWithAmounts()
+	if tokenList == nil || len(tokenList) == 0 {
+		return ""
+	}
+
 	data := json.Builder().
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	for token := range pf.store.GetTokenListWithAmounts() {
+	for token := range tokenList {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		data.WriteString(token, formatInt64(actualBalance))
 	}
@@ -85,10 +90,15 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 
 // ApiGetUnrecordedBalance returns tokens with unrecorded balances
 func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
+	tokenList := pf.store.GetTokenListWithAmounts()
+	if tokenList == nil || len(tokenList) == 0 {
+		return ""
+	}
+
 	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies
-	for token, recordedAmount := range pf.store.GetTokenListWithAmounts() {
+	for token, recordedAmount := range tokenList {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		if actualBalance > recordedAmount {
 			unrecordedAmount := actualBalance - recordedAmount
