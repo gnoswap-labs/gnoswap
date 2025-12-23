@@ -10,6 +10,11 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const(
+	MAX_INT64 = math.MaxInt64
+	MIN_INT64 = math.MinInt64
+)
+
 func formatBool(value bool) string {
 	if value {
 		return "true"
@@ -69,15 +74,11 @@ func parseProjectTierID(projectTierID string) (string, int64) {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
-
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
+	if overflow || res > uint64(MAX_INT64) {
 		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
+			"amount(%s) overflows int64 range (max 9223372036854775807)",
 			value.ToString(),
-			MAX_INT64,
 		))
 	}
 	return int64(res)
@@ -85,11 +86,11 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 
 // safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
 func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
+	if a > 0 && b > MAX_INT64-a {
 		panic("int64 addition overflow")
 	}
 
-	if a < 0 && b < math.MinInt64-a {
+	if a < 0 && b < MAX_INT64-a {
 		panic("int64 addition underflow")
 	}
 
@@ -98,11 +99,11 @@ func safeAddInt64(a, b int64) int64 {
 
 // safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
 func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
+	if b > 0 && a < MIN_INT64+b {
 		panic("int64 subtraction underflow")
 	}
 
-	if b < 0 && a > math.MaxInt64+b {
+	if b < 0 && a > MIN_INT64+b {
 		panic("int64 subtraction overflow")
 	}
 
