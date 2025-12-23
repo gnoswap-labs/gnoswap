@@ -97,18 +97,12 @@ func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64) bool {
 	proposals := g.getUserProposals(proposerAddress.String())
 
-	// Check if any proposal is still active and remove in-active proposals
-	for _, proposal := range proposals {
-		proposalResolver := NewProposalResolver(proposal)
-
-		if proposalResolver.IsActive(current) {
-			return true
-		}
-	}
-
-	return false
+	return len(proposals) > 0
 }
 
+// Remove inactive user proposals
+// This function is used to remove inactive proposals from the user proposals list.
+// It is used to clean up user's active proposal list when creating a new proposal.
 func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, current int64) error {
 	proposals := g.getUserProposals(proposerAddress.String())
 
