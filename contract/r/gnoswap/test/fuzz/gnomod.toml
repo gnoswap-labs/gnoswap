@@ -1,2 +1,0 @@
-module = "gno.land/r/gnoswap/test/fuzz"
-gno = "0.9"
