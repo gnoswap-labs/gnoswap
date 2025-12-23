@@ -105,22 +105,3 @@ func (p *ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) error {
 	p.SetNoWeight(safeAddInt64(p.NoWeight(), nay))
 	return nil
 }
-
-// UpdateVoteStatus updates the voting parameters and recalculates the quorum requirement.
-// This can be used if voting parameters change dynamically.
-//
-// Parameters:
-//   - maxVotingWeight: updated maximum voting weight
-//   - quorum: updated quorum percentage
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatusResolver) UpdateVoteStatus(maxVotingWeight, quorum int64) error {
-	// Update maximum voting weight
-	p.SetMaxVotingWeight(maxVotingWeight)
-
-	// Recalculate quorum amount based on new parameters
-	p.SetQuorumAmount(maxVotingWeight * quorum / 100)
-
-	return nil
-}

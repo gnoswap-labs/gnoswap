@@ -65,7 +65,8 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
 			// when
@@ -83,58 +84,6 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			uassert.Equal(t, resolver.IsVotingFinished(), tc.expectedFinished)
 			uassert.Equal(t, resolver.IsRejected(), tc.expectedRejected)
 			uassert.Equal(t, resolver.IsPassed(), tc.expectedPassed)
-		})
-	}
-}
-
-// TestProposalVoteStatus_UpdateVoteStatus tests vote status updates
-func TestProposalVoteStatus_UpdateVoteStatus(t *testing.T) {
-	tests := []struct {
-		name           string
-		initialMax     int64
-		initialQuorum  int64
-		newMax         int64
-		newQuorum      int64
-		expectedQuorum int64
-	}{
-		{
-			name:           "Update with higher values",
-			initialMax:     1000,
-			initialQuorum:  50,
-			newMax:         2000,
-			newQuorum:      60,
-			expectedQuorum: 1200,
-		},
-		{
-			name:           "Update with lower values",
-			initialMax:     1000,
-			initialQuorum:  50,
-			newMax:         500,
-			newQuorum:      40,
-			expectedQuorum: 200,
-		},
-		{
-			name:           "Update with same values",
-			initialMax:     1000,
-			initialQuorum:  50,
-			newMax:         1000,
-			newQuorum:      50,
-			expectedQuorum: 500,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			status := governance.NewProposalVoteStatus(tc.initialMax, tc.initialQuorum)
-			resolver := NewProposalVoteStatusResolver(status)
-
-			// when
-			_ = resolver.UpdateVoteStatus(tc.newMax, tc.newQuorum)
-
-			// then
-			uassert.Equal(t, resolver.MaxVotingWeight(), tc.newMax)
-			uassert.Equal(t, resolver.QuorumAmount(), tc.expectedQuorum)
 		})
 	}
 }
@@ -170,7 +119,8 @@ func TestNewProposalVoteStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
 			// then

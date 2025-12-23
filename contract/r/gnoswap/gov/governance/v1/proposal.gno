@@ -107,12 +107,6 @@ func (r *ProposalResolver) Vote(votedYes bool, weight int64) error {
 	return r.statusResolver.vote(votedYes, weight)
 }
 
-// updateVoteStatus updates the voting status with new parameters.
-// This is used for dynamic voting requirement adjustments.
-func (r *ProposalResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return r.statusResolver.updateVoteStatus(maxVotingWeight, quorum)
-}
-
 // execute marks the proposal as executed and records execution details.
 // This method validates execution conditions before proceeding.
 func (r *ProposalResolver) execute(
