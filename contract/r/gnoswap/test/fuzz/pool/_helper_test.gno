@@ -187,6 +187,34 @@ func initStakerState(t *testing.T) {
 	staker.UpgradeImpl(cross, mockStakerPath)
 }
 
+// setupRouterMintPositionByRoutePath sets up a router pool and position for each route path.
+func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
+	routePaths := strings.Split(routePathArr, ",")
+	for _, routePath := range routePaths {
+		for _, routePool := range strings.Split(routePath, "*POOL*") {
+			token0Path, token1Path, feeTier := parsePoolPathAlign(routePool)
+
+			setupCreatePool(ft, token0Path, token1Path, feeTier)
+
+			// generate parameters for position
+			poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
+			tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+			amountDesired := int64(1_000_000_000_000)
+
+			// setup position
+			setupMintPosition(
+				ft,
+				token0Path,
+				token1Path,
+				feeTier,
+				tickLower,
+				tickUpper,
+				amountDesired,
+			)
+		}
+	}
+}
+
 func mintTestToken(tokenPath string, amount int64) {
 	if amount > MAX_TEST_MINT_AMOUNT {
 		panic("mint amount exceeds fuzz test limit")

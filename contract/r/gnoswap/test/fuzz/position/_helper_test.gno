@@ -47,6 +47,10 @@ const (
 	BAZ_PATH = "gno.land/r/onbloc/baz"
 
 	MAX_TEST_MINT_AMOUNT = math.MaxInt64 / 1000
+
+	// Price limits for swap
+	MIN_PRICE_LIMIT_ZERO_FOR_ONE     = "39614081257132168796771975168"  // ~50% of INITIAL_POOL_PRICE
+	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "158456325028528675187087900674" // ~200% of INITIAL_POOL_PRICE
 )
 
 var (
@@ -285,4 +289,88 @@ func randomFutureDeadline(ft *fuzz.T) int64 {
 // defaultFutureDeadline provides a deterministic future deadline when fuzz context is unavailable
 func defaultFutureDeadline() int64 {
 	return time.Now().Add(24 * time.Hour).Unix()
+}
+
+// generateTokenPath generates a random token path from the default token paths
+func generateTokenPath(f *fuzz.T) string {
+	return generateTokenPathByList(f, defaultTokenPaths)
+}
+
+// generateTokenPair generates a random pair of different token paths
+func generateTokenPair(f *fuzz.T) (string, string) {
+	token0Path := generateTokenPath(f)
+
+	currentTokenPaths := make(map[string]bool)
+	for tokenPath := range defaultTokenPaths {
+		if tokenPath != token0Path {
+			currentTokenPaths[tokenPath] = true
+		}
+	}
+
+	token1Path := generateTokenPathByList(f, currentTokenPaths)
+
+	return token0Path, token1Path
+}
+
+// generateTokenPathByList generates a random token path from the given list
+func generateTokenPathByList(f *fuzz.T, tokenPaths map[string]bool) string {
+	tokenPathIndex := fuzz.IntRange(0, len(tokenPaths)-1).Draw(f, "tokenPath").(int)
+
+	currentIndex := 0
+	for tokenPath := range tokenPaths {
+		if currentIndex == tokenPathIndex {
+			return tokenPath
+		}
+		currentIndex++
+	}
+
+	return ""
+}
+
+// generateFeeTier generates a random fee tier from the default fee tiers
+func generateFeeTier(f *fuzz.T) uint32 {
+	feeTierIndex := fuzz.IntRange(0, len(defaultFeeTiers)-1).Draw(f, "feeTier").(int)
+	return defaultFeeTiers[feeTierIndex]
+}
+
+// generateRandomTicks generates random tick lower and upper values
+func generateRandomTicks(f *fuzz.T, currentTick int32, feeTier uint32) (int32, int32) {
+	tickSpacing := defaultTickSpacings[feeTier]
+
+	tickLower := currentTick - (currentTick % tickSpacing)
+	tickUpper := currentTick + (currentTick % tickSpacing)
+
+	inRangeType := fuzz.IntRange(0, 2).Draw(f, "inRangeType").(int)
+
+	migrateTick := func(tick int32, tickSpacing int32) int32 {
+		left := tick % tickSpacing
+		if tick >= 0 {
+			return tick - left
+		} else {
+			return tick + tickSpacing - left
+		}
+	}
+
+	maxTick := migrateTick(MAX_TICK, tickSpacing)
+	minTick := migrateTick(MIN_TICK, tickSpacing)
+
+	switch inRangeType {
+	case 0:
+		tickLower = fuzz.Int32Range(minTick, currentTick-tickSpacing).Draw(f, "tickLower").(int32)
+		tickUpper = fuzz.Int32Range(tickLower, currentTick-tickSpacing).Draw(f, "tickUpper").(int32)
+	case 1:
+		tickLower = fuzz.Int32Range(minTick, currentTick-tickSpacing).Draw(f, "tickLower").(int32)
+		tickUpper = fuzz.Int32Range(currentTick+tickSpacing, maxTick).Draw(f, "tickUpper").(int32)
+	case 2:
+		tickUpper = fuzz.Int32Range(currentTick+tickSpacing, maxTick).Draw(f, "tickUpper").(int32)
+		tickLower = fuzz.Int32Range(currentTick+tickSpacing, tickUpper-tickSpacing).Draw(f, "tickLower").(int32)
+	}
+	tickLower = migrateTick(tickLower, tickSpacing)
+	tickUpper = migrateTick(tickUpper, tickSpacing)
+
+	if tickLower == tickUpper {
+		tickUpper = tickLower + tickSpacing
+	}
+
+	return tickLower, tickUpper
 }
