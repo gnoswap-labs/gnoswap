@@ -73,7 +73,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 // ApiGetRecordedBalance returns the recorded tokens and their amounts
 func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 	tokenList := pf.store.GetTokenListWithAmounts()
-	if tokenList == nil {
+	if tokenList == nil || len(tokenList) == 0 {
 		return ""
 	}
 
