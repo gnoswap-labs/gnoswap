@@ -24,10 +24,10 @@ jobs:
         with:
           go-version: "1.24"
 
-      - name: Build gno
+      - name: Build gno binary
         run: |
           cd gno
-          make build.gno
+          go build -o gno-binary ./gnovm/cmd/gno
 
       - name: Upload gno artifacts
         uses: actions/upload-artifact@v4
@@ -76,8 +76,8 @@ jobs:
 
       - name: Install gno from artifacts
         run: |
-          cd gno
-          go install ./gnovm/cmd/gno
+          chmod +x gno/gno-binary
+          sudo mv gno/gno-binary /usr/local/bin/gno
 
       - name: Run setup.py
         run: python3 setup.py --exclude-tests -w .
