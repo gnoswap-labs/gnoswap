@@ -34,6 +34,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
 
+	state := pf.getProtocolFeeState()
+	devOpsPct := state.DevOpsPct()
+
 	pf.store.GetTokenListWithAmounts().Iterate("", "", func(token string, value any) bool {
 		amount, ok := value.(int64)
 		if !ok {

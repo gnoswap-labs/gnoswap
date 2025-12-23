@@ -67,7 +67,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 	// iterating through known tokens or having a registry.
 	tokenList.Iterate("", "", func(token string, value any) bool {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
-		data.WriteString(token, formatInt64(actualBalance))
+		data.WriteString(token, formatInt(actualBalance))
 		return false
 	})
 
@@ -77,7 +77,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 // ApiGetRecordedBalance returns the recorded tokens and their amounts
 func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 	tokenList := pf.store.GetTokenListWithAmounts()
-	if tokenList == nil || len(tokenList) == 0 {
+	if tokenList.Size() == 0 {
 		return ""
 	}
 
@@ -90,7 +90,7 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast amount to int64: %T", value))
 		}
-		data.WriteString(token, formatInt64(amount))
+		data.WriteString(token, formatInt(amount))
 		return false
 	})
 
@@ -100,7 +100,7 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 // ApiGetUnrecordedBalance returns tokens with unrecorded balances
 func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
 	tokenList := pf.store.GetTokenListWithAmounts()
-	if tokenList == nil || len(tokenList) == 0 {
+	if tokenList.Size() == 0 {
 		return ""
 	}
 
