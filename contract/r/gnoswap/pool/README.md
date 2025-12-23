@@ -106,6 +106,14 @@ For `zeroForOne = false` (token1 → token0):
 
 ```go
 func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
+    caller := runtime.PreviousRealm().Address()
+    poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
+
+    // Security check: ensure this callback is invoked by the legitimate pool
+    if caller != poolAddr {
+        panic("unauthorized caller")
+    }
+
     if amount0Delta > 0 {
         // Transfer token0 to pool
         token0.Transfer(poolAddr, amount0Delta)
@@ -120,6 +128,7 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 
 **Important Notes**:
 
+- It is recommended that the callback verify the caller is the legitimate pool to prevent unauthorized invocations
 - The callback MUST transfer at least the positive delta amount to the pool
 - Return `nil` on success, or an error to revert the swap
 - Pool validates balance increase after callback execution

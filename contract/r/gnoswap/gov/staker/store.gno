@@ -20,9 +20,9 @@ const (
 	StoreKeyDelegationNextID = "delegationNextID"
 
 	// Complex data structures
-	StoreKeyDelegations         = "delegations"         // AVL tree of delegations
-	StoreKeyDelegationHistory   = "delegationHistory"   // List of delegation records
-	StoreKeyDelegationSnapshots = "delegationSnapshots" // AVL tree of snapshots by timestamp
+	StoreKeyDelegations            = "delegations"            // AVL tree of delegations
+	StoreKeyTotalDelegationHistory = "totalDelegationHistory" // UintTree: timestamp -> int64 (cumulative total)
+	StoreKeyUserDelegationHistory  = "userDelegationHistory"  // avl.Tree: address -> *UintTree[timestamp -> int64]
 
 	// Manager states
 	StoreKeyEmissionRewardManager    = "emissionRewardManager"
@@ -215,57 +215,50 @@ func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyDelegationNextID, counter)
 }
 
-// Delegation history methods
-func (s *govStakerStore) HasDelegationHistoryStoreKey() bool {
-	return s.kvStore.Has(StoreKeyDelegationHistory)
+// Total delegation history methods (timestamp -> int64)
+func (s *govStakerStore) HasTotalDelegationHistoryStoreKey() bool {
+	return s.kvStore.Has(StoreKeyTotalDelegationHistory)
 }
 
-func (s *govStakerStore) AddDelegationRecord(record *DelegationRecord) error {
-	history := s.GetDelegationHistory()
-
-	history = append(history, record)
-	return s.kvStore.Set(StoreKeyDelegationHistory, history)
-}
-
-func (s *govStakerStore) GetDelegationHistory() DelegationHistory {
-	result, err := s.kvStore.Get(StoreKeyDelegationHistory)
+func (s *govStakerStore) GetTotalDelegationHistory() *UintTree {
+	result, err := s.kvStore.Get(StoreKeyTotalDelegationHistory)
 	if err != nil {
 		panic(err)
 	}
 
-	history, ok := result.(DelegationHistory)
+	history, ok := result.(*UintTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to []*DelegationRecord: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *UintTree: %T", result))
 	}
 
 	return history
 }
 
-func (s *govStakerStore) SetDelegationHistory(history DelegationHistory) error {
-	return s.kvStore.Set(StoreKeyDelegationHistory, history)
+func (s *govStakerStore) SetTotalDelegationHistory(history *UintTree) error {
+	return s.kvStore.Set(StoreKeyTotalDelegationHistory, history)
 }
 
-// Delegation snapshot methods
-func (s *govStakerStore) HasDelegationSnapshotStoreKey() bool {
-	return s.kvStore.Has(StoreKeyDelegationSnapshots)
+// User delegation history methods (address -> *UintTree[timestamp -> int64])
+func (s *govStakerStore) HasUserDelegationHistoryStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUserDelegationHistory)
 }
 
-func (s *govStakerStore) SetDelegationSnapshot(snapshot DelegationSnapshot) error {
-	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshot)
-}
-
-func (s *govStakerStore) GetDelegationSnapshot() DelegationSnapshot {
-	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
+func (s *govStakerStore) GetUserDelegationHistory() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyUserDelegationHistory)
 	if err != nil {
 		panic(err)
 	}
 
-	snapshot, ok := result.(DelegationSnapshot)
+	history, ok := result.(*avl.Tree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to DelegationSnapshot: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
 	}
 
-	return snapshot
+	return history
+}
+
+func (s *govStakerStore) SetUserDelegationHistory(history *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyUserDelegationHistory, history)
 }
 
 func (s *govStakerStore) HasEmissionRewardManagerStoreKey() bool {

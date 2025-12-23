@@ -101,17 +101,25 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "cannot vote out of voting period")
 	}
 
-	// Get user's voting information for this proposal
-	userVote, ok := gv.getProposalUserVotingInfo(proposalID, voterAddress)
-	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found user's voting info")
+	// Check if user has already voted on this proposal
+	userVote, hasVoted := gv.getProposalUserVotingInfo(proposalID, voterAddress)
+	if hasVoted && userVote.IsVoted() {
+		return nil, 0, 0, makeErrorWithDetails(errAlreadyVoted, "user has already voted")
 	}
 
-	// Check if user has voting weight available
-	votingWeight := userVote.AvailableVoteWeight()
-	if votingWeight <= 0 {
-		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight")
+	// Get user's voting weight at the proposal's snapshot time (lazy lookup)
+	snapshotTime := proposal.SnapshotTime()
+
+	votingWeight, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, snapshotTime)
+	if !ok || votingWeight <= 0 {
+		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
+
+	// Create or update voting info for this user
+	if userVote == nil {
+		userVote = governance.NewVotingInfo(votingWeight, voterAddress)
+	}
+
 	userVoteResolver := NewVotingInfoResolver(userVote)
 	// Record the vote in user's voting info (this also prevents double voting)
 	err := userVoteResolver.vote(votedYes, votingWeight, votedHeight, votedAt)
@@ -119,14 +127,19 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, err
 	}
 
-	resolver := NewProposalResolver(proposal)
+	// Store the user's vote in the proposal voting infos
+	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
+	if votingInfosTree != nil {
+		votingInfosTree.Set(voterAddress.String(), userVote)
+		gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	}
 
 	// Update proposal vote tallies
-	err = resolver.Vote(votedYes, votingWeight)
+	err = proposalResolver.Vote(votedYes, votingWeight)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 
 	// Return updated vote information and current tallies
-	return userVote, resolver.VotingYesWeight(), resolver.VotingNoWeight(), nil
+	return userVote, proposal.VotingYesWeight(), proposal.VotingNoWeight(), nil
 }
