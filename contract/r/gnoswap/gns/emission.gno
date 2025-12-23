@@ -1,7 +1,7 @@
 package gns
 
 import (
-    "chain"
+	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
