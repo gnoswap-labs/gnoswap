@@ -187,12 +187,12 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
 		tierDurationTime := projectTierDurationTimes[duration]
 		tierDistributeAmount := params.depositAmount * projectTierRatios[duration] / 100
-		accumulatedTierDistributeAmount += tierDistributeAmount
+		accumulatedTierDistributeAmount = safeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
 
 		// if the last tier, distribute the remaining amount
 		if duration == projectTier180 {
 			remainTierDistributeAmount := params.depositAmount - accumulatedTierDistributeAmount
-			tierDistributeAmount += remainTierDistributeAmount
+			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
 		projectTier := newProjectTier(
