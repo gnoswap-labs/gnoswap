@@ -9,6 +9,8 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/p/onbloc/json"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 )
 
@@ -53,6 +55,7 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	tokenMap := make(map[string]int64)
 
 	// get all recorded tokens
@@ -95,6 +98,7 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 
 // ApiGetUnrecordedBalance returns tokens with unrecorded balances
 func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies
