@@ -68,16 +68,19 @@ func (p *int256AddOverflowParams) IsValid() bool {
 	// - Both positive and sum > MaxInt256
 	// - Both negative and sum < MinInt256
 	if x.Sign() >= 0 && y.Sign() >= 0 {
-		// Both non-negative: check if x + y > MaxInt256
+	    // Both non-negative: check if x + y > MaxInt256
 		maxInt := i256.MaxInt256()
 		remain := new(i256.Int).Sub(maxInt, y)
 		return x.Lte(remain)
-	} else if x.Sign() < 0 && y.Sign() < 0 {
-		// Both negative: check if x + y < MinInt256
+	}
+
+	if x.Sign() < 0 && y.Sign() < 0 {
+	    // Both negative: check if x + y < MinInt256
 		minInt := i256.MinInt256()
 		remain := new(i256.Int).Sub(minInt, y)
 		return x.Gte(remain)
 	}
+
 	// Different signs: no overflow possible
 	return true
 }
@@ -164,17 +167,20 @@ func (p *int256SubOverflowParams) IsValid() bool {
 	// - x positive, y negative, and x - y > MaxInt256
 	// - x negative, y positive, and x - y < MinInt256
 	if x.Sign() >= 0 && y.Sign() < 0 {
-		// x - (-|y|) = x + |y|, check if > MaxInt256
+	    // x - (-|y|) = x + |y|, check if > MaxInt256
 		maxInt := i256.MaxInt256()
 		negY := new(i256.Int).Neg(y)
 		remain := new(i256.Int).Sub(maxInt, negY)
 		return x.Lte(remain)
-	} else if x.Sign() < 0 && y.Sign() > 0 {
-		// x - y where x < 0, y > 0, check if < MinInt256
+	}
+
+	if x.Sign() < 0 && y.Sign() > 0 {
+	    // x - y where x < 0, y > 0, check if < MinInt256
 		minInt := i256.MinInt256()
 		remain := new(i256.Int).Add(minInt, y)
 		return x.Gte(remain)
 	}
+
 	// Same signs: no overflow possible
 	return true
 }

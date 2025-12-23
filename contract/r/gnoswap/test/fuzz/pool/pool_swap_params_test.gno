@@ -47,15 +47,15 @@ func (p *poolSwapParams) SwapAmount() int64 {
 
 	if amountInt > 0 {
 		return amountInt
-	} else {
-		if p.zeroForOne {
-			expectedAmount0Int, _ := strconv.ParseInt(p.expectedAmount0, 10, 64)
-			return expectedAmount0Int
-		}
-
-		expectedAmount1Int, _ := strconv.ParseInt(p.expectedAmount1, 10, 64)
-		return expectedAmount1Int
 	}
+
+	if p.zeroForOne {
+		expectedAmount0Int, _ := strconv.ParseInt(p.expectedAmount0, 10, 64)
+		return expectedAmount0Int
+	}
+
+	expectedAmount1Int, _ := strconv.ParseInt(p.expectedAmount1, 10, 64)
+	return expectedAmount1Int
 }
 
 func (p *poolSwapParams) ToString() string {
