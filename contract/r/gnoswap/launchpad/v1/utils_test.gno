@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"testing"
 	"math"
+	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 func TestUtils_parseProjectTierID(t *testing.T) {

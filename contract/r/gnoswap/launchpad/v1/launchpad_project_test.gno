@@ -698,7 +698,6 @@ func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	setTestProjects(projects)
 }
 
-// TestLaunchpadProject_isGovernanceToken tests isGovernanceToken private function
 func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -735,7 +734,6 @@ func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	}
 }
 
-// TestLaunchpadProject_validateRefundProject tests validateRefundProject private function
 func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 	testAddr := testutils.TestAddress("recipient")
 
@@ -751,7 +749,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		expectedError         string
 	}{
 		{
-			name:                  "valid refund - project ended and has remaining amount",
+			name:                  "valid refund - project ended with remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
@@ -761,15 +759,25 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			expectedHasError:      false,
 		},
 		{
-			name:                  "error when project has no remaining amount",
+			name:                  "valid refund - project ended without remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
 			totalCollectedAmount:  100_000_000,
 			recipient:             testAddr,
 			currentTime:           2001,
+			expectedHasError:      false,
+		},
+		{
+			name:                  "error when recipient is invalid",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  50_000_000,
+			recipient:             address("invalid"),
+			currentTime:           2001,
 			expectedHasError:      true,
-			expectedError:         "no remaining amount",
+			expectedError:         "invalid recipient address",
 		},
 		{
 			name:                  "error when project not ended yet",
@@ -1021,7 +1029,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			// Execute transfer
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1139,7 +1147,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1159,12 +1167,23 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
+		totalCollectedAmount  int64
 		expectedRefundable    int64
+		expectError           bool
+		expectedErrorContains string
 	}{
 		{
 			name:                  "no depositors - full refund",
 			totalDistributeAmount: 1_000_000,
+			totalCollectedAmount:  0,
 			expectedRefundable:    1_000_000,
+		},
+		{
+			name:                  "no depositors - no remaining amount",
+			totalDistributeAmount: 1_000_000,
+			totalCollectedAmount:  1_000_000,
+			expectError:           true,
+			expectedErrorContains: "project has no remaining amount",
 		},
 	}
 
@@ -1185,7 +1204,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			tier.SetID(tierID)
 			tier.SetTotalDepositCount(0)  // No depositors
 			tier.SetTotalWithdrawCount(0) // No withdrawals
-			tier.SetTotalCollectedAmount(0)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
 			project.SetID(projectID)
@@ -1214,7 +1233,13 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedErrorContains)
+				return
+			}
 
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedRefundable, refundedAmount)

@@ -4,7 +4,10 @@ import (
 	"chain/runtime"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/access"
 )
 
 func TestRegisterInitializer(t *testing.T) {
@@ -61,6 +64,8 @@ func TestRegisterInitializer(t *testing.T) {
 }
 
 func TestUpgradeImpl(t *testing.T) {
+	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
+
 	tests := []struct {
 		name                 string
 		setup                func(t *testing.T)
@@ -70,13 +75,22 @@ func TestUpgradeImpl(t *testing.T) {
 		expectedAbortMessage string
 	}{
 		{
-			name: "upgrade impl is success",
+			name: "upgrade impl is success with admin",
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
 			},
 			packagePath: "gno.land/r/gnoswap/launchpad/v1",
 			callerRealm: testing.NewUserRealm(adminAddr),
+		},
+		{
+			name: "upgrade impl is success with governance",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			packagePath: "gno.land/r/gnoswap/launchpad/v1",
+			callerRealm: testing.NewUserRealm(govAddr),
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
@@ -89,24 +103,38 @@ func TestUpgradeImpl(t *testing.T) {
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized",
 		},
+		{
+			name: "upgrade impl fails with non-registered package path",
+			setup: func(t *testing.T) {
+				// Register v1 but try to upgrade to v2 which is not registered
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			packagePath:          "gno.land/r/gnoswap/launchpad/v2",
+			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedHasAbort:     true,
+			expectedAbortMessage: "version_manager: initializer not found",
+		},
 	}
 
 	for _, tt := range tests {
-		resetTestState(t)
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
 
-		if tt.setup != nil {
-			tt.setup(t)
-		}
+			if tt.setup != nil {
+				tt.setup(t)
+			}
 
-		testing.SetRealm(tt.callerRealm)
+			testing.SetRealm(tt.callerRealm)
 
-		if tt.expectedHasAbort {
-			uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
+					UpgradeImpl(cross, tt.packagePath)
+				})
+			} else {
 				UpgradeImpl(cross, tt.packagePath)
-			})
-		} else {
-			UpgradeImpl(cross, tt.packagePath)
-		}
+			}
+		})
 	}
 }
 

@@ -572,7 +572,13 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 			lp := getTestImplementation()
 			testing.SetOriginCaller(tt.callerAddress)
 
-			_, _, _, _, err := lp.depositGns(tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			project, err := lp.getProject(tt.projectID)
+			if tt.expectedHasError && err != nil {
+				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
+				return
+			}
+
+			_, _, _, _, err = lp.depositGns(project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -587,10 +593,11 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	projectRecipient := testutils.TestAddress("project")
 
 	tests := []struct {
 		name                 string
-		projectID            string
+		recipient            address
 		depositAmount        int64
 		callerAddress        address
 		userAddress          address
@@ -600,7 +607,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	}{
 		{
 			name:                 "stake governance successfully",
-			projectID:            "gno.land/r/onbloc/obl:123",
+			recipient:            projectRecipient,
 			depositAmount:        1000000,
 			callerAddress:        launchpadAddr,
 			userAddress:          adminAddr,
@@ -610,23 +617,13 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 		},
 		{
 			name:                 "stake governance failed by caller is not launchpad",
-			projectID:            "gno.land/r/onbloc/obl:123",
+			recipient:            projectRecipient,
 			depositAmount:        1000000,
 			callerAddress:        adminAddr,
 			userAddress:          adminAddr,
 			expectedError:        false,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not launchpad",
-		},
-		{
-			name:                 "stake governance failed by invalid project id",
-			projectID:            "invalid",
-			depositAmount:        1000000,
-			callerAddress:        launchpadAddr,
-			userAddress:          adminAddr,
-			expectedError:        true,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
 		},
 	}
 
@@ -644,7 +641,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 			var err error
 
 			stakeGovernanceFn := func() {
-				err = lp.stakeGovernance(tt.projectID, tt.depositAmount, tt.callerAddress, tt.userAddress)
+				err = lp.stakeGovernance(tt.recipient, tt.depositAmount, tt.callerAddress, tt.userAddress)
 			}
 
 			if tt.expectedHasAbort {
@@ -1101,5 +1098,150 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 
 		uassert.Equal(t, int64(0), user2Claimable,
 			"User2 should have 0 claimable rewards immediately after deposit")
+	})
+}
+
+// TestDepositGns_TierEndTimeBoundary tests that deposits fail when attempted
+// at exactly the tier's endTime (tier is inactive at endTime per IsActivated semantics).
+func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm := testing.NewUserRealm(adminAddr)
+
+	t.Run("deposit fails at exactly tier endTime (tier inactive)", func(t *testing.T) {
+		// Reset state
+		resetTestStore()
+		lp := getTestImplementation()
+
+		userAddr := testutils.TestAddress("boundary_user")
+		projectAddr := testutils.TestAddress("boundary_project")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600 // 1 hour from now
+
+		obl.Approve(cross, launchpadAddr, 1000000)
+
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"Boundary Test Project",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				1000000,
+				"", "",
+				100, 0, 0, // All allocation to tier 30
+				startTime,
+			)
+		}(cross)
+
+		// Get the project and tier to find the exact endTime
+		project, err := lp.getProject(projectID)
+		uassert.NoError(t, err)
+
+		tier30, err := getProjectTier(project, 30)
+		uassert.NoError(t, err)
+
+		tierEndTime := tier30.EndTime()
+
+		// Skip to exactly the tier's endTime
+		// At endTime, tier.IsActivated() returns false because currentTime < endTime is false
+		secondsToSkip := tierEndTime - time.Now().Unix()
+		if secondsToSkip > 0 {
+			testing.SkipHeights(secondsToSkip)
+		}
+
+		// Setup user with GNS tokens
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, userAddr, 2000000)
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, 2000000)
+
+		// Attempt to deposit - should fail because tier is inactive at endTime
+		uassert.AbortsContains(t, "project is inactive", func() {
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+				lp.DepositGns(projectID+":30", 1000000, "")
+			}(cross)
+		})
+	})
+
+	t.Run("deposit succeeds when tier is active (before endTime)", func(t *testing.T) {
+		// Reset state
+		resetTestStore()
+		lp := getTestImplementation()
+
+		userAddr := testutils.TestAddress("boundary_user2")
+		projectAddr := testutils.TestAddress("boundary_project2")
+
+		// Set initial block height
+		ctx := testing.GetContext()
+		ctx.Height = 123
+		ctx.Time = time.Unix(1234567890, 0)
+		testing.SetContext(ctx)
+
+		// Create project
+		testing.SetRealm(adminRealm)
+		startTime := time.Now().Unix() + 3600
+
+		obl.Approve(cross, launchpadAddr, 1000000)
+
+		var projectID string
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			projectID = lp.CreateProject(
+				"Boundary Test Project 2",
+				"gno.land/r/onbloc/obl",
+				projectAddr,
+				1000000,
+				"", "",
+				100, 0, 0,
+				startTime,
+			)
+		}(cross)
+
+		// Skip to just after project starts (tier is now active)
+		testing.SkipHeights(3600)
+
+		// Setup user with GNS tokens
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, userAddr, 2000000)
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		gns.Approve(cross, launchpadAddr, 2000000)
+
+		// Attempt to deposit - should succeed because tier is active
+		var depositID string
+		uassert.NotPanics(t, func() {
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+				depositID = lp.DepositGns(projectID+":30", 1000000, "")
+			}(cross)
+		})
+
+		uassert.NotEmpty(t, depositID)
+
+		// Verify the tier was actually active when we deposited
+		project, err := lp.getProject(projectID)
+		uassert.NoError(t, err)
+
+		tier30, err := getProjectTier(project, 30)
+		uassert.NoError(t, err)
+
+		currentTime := time.Now().Unix()
+		uassert.True(t, tier30.IsActivated(currentTime),
+			"Tier should be activated at current time")
+		uassert.False(t, tier30.IsEnded(currentTime),
+			"Tier should not be ended at current time")
 	})
 }

@@ -94,7 +94,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 			)
 			uassert.NoError(t, err)
 			uassert.NotNil(t, project, "project should not be nil")
-			
+
 			projects := lp.store.GetProjects()
 			projects.Set(project.ID(), project)
 			lp.store.SetProjects(projects)
@@ -158,7 +158,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 	)
 	uassert.NoError(t, err)
 	uassert.NotNil(t, project, "project should not be nil")
-	
+
 	projects := lp.store.GetProjects()
 	projects.Set(project.ID(), project)
 	lp.store.SetProjects(projects)

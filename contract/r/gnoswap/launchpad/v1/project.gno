@@ -7,6 +7,17 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
+func newProject(
+	name string,
+	tokenPath string,
+	depositAmount int64,
+	recipient address,
+	createdHeight int64,
+	createdAt int64,
+) *launchpad.Project {
+	return launchpad.NewProject(name, tokenPath, depositAmount, recipient, createdHeight, createdAt)
+}
+
 func isProjectActive(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsActivated(currentTime)
 }
@@ -48,56 +59,6 @@ func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc 
 	return nil
 }
 
-func getProjectTotalDepositCount(p *launchpad.Project) int64 {
-	totalRecipient := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalRecipient = safeAddInt64(totalRecipient, tier.TotalDepositCount())
-	}
-
-	return totalRecipient
-}
-
-func getProjectTotalDepositAmount(p *launchpad.Project) int64 {
-	totalDepositAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositAmount = safeAddInt64(totalDepositAmount, tier.TotalDepositAmount())
-	}
-
-	return totalDepositAmount
-}
-
-func getProjectCurrentDepositCount(p *launchpad.Project) int64 {
-	totalDepositCount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositCount = safeAddInt64(totalDepositCount, getTierCurrentDepositCount(tier))
-	}
-
-	return totalDepositCount
-}
-
-func getProjectCurrentDepositAmount(p *launchpad.Project) int64 {
-	totalDepositAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalDepositAmount = safeAddInt64(totalDepositAmount, getTierCurrentDepositAmount(tier))
-	}
-
-	return totalDepositAmount
-}
-
-func getProjectTotalCollectedAmount(p *launchpad.Project) int64 {
-	totalCollectedAmount := int64(0)
-
-	for _, tier := range p.Tiers() {
-		totalCollectedAmount = safeAddInt64(totalCollectedAmount, tier.TotalCollectedAmount())
-	}
-
-	return totalCollectedAmount
-}
-
 func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
 	tier, err := p.GetTier(duration)
 	if err != nil {
@@ -123,12 +84,6 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 		)
 	}
 
-	if getProjectRemainingAmount(p) == 0 {
-		return errors.New(
-			ufmt.Sprintf("project has no remaining amount"),
-		)
-	}
-
 	return nil
 }
 
@@ -144,15 +99,4 @@ func addProjectCondition(p *launchpad.Project, tokenPath string, condition *laun
 	conditions[tokenPath] = condition
 
 	p.SetConditions(conditions)
-}
-
-func newProject(
-	name string,
-	tokenPath string,
-	depositAmount int64,
-	recipient address,
-	createdHeight int64,
-	createdAt int64,
-) *launchpad.Project {
-	return launchpad.NewProject(name, tokenPath, depositAmount, recipient, createdHeight, createdAt)
 }

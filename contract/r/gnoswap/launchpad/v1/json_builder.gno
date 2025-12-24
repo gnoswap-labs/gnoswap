@@ -2,43 +2,42 @@ package v1
 
 import (
 	"chain/runtime"
-	"strings"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	"gno.land/p/onbloc/json"
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// projectStatsBuilder adds ProjectStats fields to JSON
-func projectStatsBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeBuilder {
+// projectStatsBuilder adds ProjectStats fields to JSON using pre-calculated stats.
+// This avoids multiple iterations over tiers by using the aggregated ProjectStats.
+func projectStatsBuilder(b *json.NodeBuilder, stats ProjectStats) *json.NodeBuilder {
 	return b.
-		WriteString("totalDeposit", ufmt.Sprintf("%d", getProjectTotalDepositAmount(project))).
-		WriteString("actualDeposit", ufmt.Sprintf("%d", getProjectCurrentDepositAmount(project))).
-		WriteString("totalParticipant", ufmt.Sprintf("%d", getProjectTotalDepositCount(project))).
-		WriteString("actualParticipant", ufmt.Sprintf("%d", getProjectCurrentDepositCount(project))).
-		WriteString("totalCollected", ufmt.Sprintf("%d", getProjectTotalCollectedAmount(project)))
+		WriteString("totalDeposit", formatInt(stats.TotalDepositAmount)).
+		WriteString("actualDeposit", formatInt(stats.CurrentDepositAmount)).
+		WriteString("totalParticipant", formatInt(stats.TotalDepositCount)).
+		WriteString("actualParticipant", formatInt(stats.CurrentDepositCount)).
+		WriteString("totalCollected", formatInt(stats.TotalCollectedAmount))
 }
 
-// refundInfoBuilder adds RefundInfo fields to JSON
-func refundInfoBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeBuilder {
+// refundInfoBuilder adds RefundInfo fields to JSON using pre-calculated stats.
+func refundInfoBuilder(b *json.NodeBuilder, stats ProjectStats) *json.NodeBuilder {
 	return b.
-		WriteString("refundedAmount", ufmt.Sprintf("%d", getProjectRemainingAmount(project)))
+		WriteString("refundedAmount", formatInt(stats.RemainingAmount))
 }
 
 // TierBuilder adds Tier fields to JSON
 func tierBuilder(b *json.NodeBuilder, prefix string, tier *launchpad.ProjectTier) *json.NodeBuilder {
 	// Add tiers info
 	b.WriteString(prefix+"Id", tier.ID())
-	b.WriteString(prefix+"TierAmount", ufmt.Sprintf("%d", tier.TotalDistributeAmount()))
+	b.WriteString(prefix+"TierAmount", formatInt(tier.TotalDistributeAmount()))
 	b.WriteString(prefix+"TierAmountPerSecondX128", tier.DistributeAmountPerSecondX128().ToString())
-	b.WriteString(prefix+"Started", ufmt.Sprintf("%d", tier.StartTime()))
-	b.WriteString(prefix+"Ended", ufmt.Sprintf("%d", tier.EndTime()))
-	b.WriteString(prefix+"TotalDepositAmount", ufmt.Sprintf("%d", tier.TotalDepositAmount()))
-	b.WriteString(prefix+"ActualDepositAmount", ufmt.Sprintf("%d", getTierCurrentDepositAmount(tier)))
-	b.WriteString(prefix+"TotalParticipant", ufmt.Sprintf("%d", tier.TotalDepositCount()))
-	b.WriteString(prefix+"ActualParticipant", ufmt.Sprintf("%d", getTierCurrentDepositCount(tier)))
-	b.WriteString(prefix+"UserCollectedAmount", ufmt.Sprintf("%d", tier.TotalCollectedAmount()))
+	b.WriteString(prefix+"Started", formatInt(tier.StartTime()))
+	b.WriteString(prefix+"Ended", formatInt(tier.EndTime()))
+	b.WriteString(prefix+"TotalDepositAmount", formatInt(tier.TotalDepositAmount()))
+	b.WriteString(prefix+"ActualDepositAmount", formatInt(getTierCurrentDepositAmount(tier)))
+	b.WriteString(prefix+"TotalParticipant", formatInt(tier.TotalDepositCount()))
+	b.WriteString(prefix+"ActualParticipant", formatInt(getTierCurrentDepositCount(tier)))
+	b.WriteString(prefix+"UserCollectedAmount", formatInt(tier.TotalCollectedAmount()))
 	return b
 }
 
@@ -46,26 +45,33 @@ func tierBuilder(b *json.NodeBuilder, prefix string, tier *launchpad.ProjectTier
 func projectBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeBuilder {
 	b.WriteString("name", project.Name())
 	b.WriteString("tokenPath", project.TokenPath())
-	b.WriteString("depositAmount", ufmt.Sprintf("%d", project.DepositAmount()))
+	b.WriteString("depositAmount", formatInt(project.DepositAmount()))
 	b.WriteString("recipient", project.Recipient().String())
 
-	tokenPaths := []string{}
-	amounts := []string{}
+	conditionsToken := ""
+	conditionsAmount := ""
 
+	idx := 0
 	for _, condition := range project.Conditions() {
-		tokenPaths = append(tokenPaths, condition.TokenPath())
-		amounts = append(amounts, ufmt.Sprintf("%d", condition.MinimumAmount()))
+		if idx > 0 {
+			conditionsToken += ","
+			conditionsAmount += ","
+		}
+		conditionsToken += condition.TokenPath()
+		conditionsAmount += formatInt(condition.MinimumAmount())
+		idx++
 	}
-	b.WriteString("conditionsToken", strings.Join(tokenPaths, ","))
-	b.WriteString("conditionsAmount", strings.Join(amounts, ","))
+	b.WriteString("conditionsToken", conditionsToken)
+	b.WriteString("conditionsAmount", conditionsAmount)
 
 	// Add time info
-	b.WriteString("createdTime", ufmt.Sprintf("%d", project.CreatedAt()))
-	b.WriteString("startedTime", ufmt.Sprintf("%d", getStandardTier(project).StartTime()))
-	b.WriteString("endedTime", ufmt.Sprintf("%d", getStandardTier(project).EndTime()))
+	b.WriteString("createdTime", formatInt(project.CreatedAt()))
+	b.WriteString("startedTime", formatInt(getStandardTier(project).StartTime()))
+	b.WriteString("endedTime", formatInt(getStandardTier(project).EndTime()))
 
-	// Add refund info
-	refundInfoBuilder(b, project)
+	// Calculate stats once and use for refund info
+	stats := getProjectStats(project)
+	refundInfoBuilder(b, stats)
 
 	return b
 }
@@ -75,11 +81,11 @@ func depositBuilder(b *json.NodeBuilder, deposit *launchpad.Deposit) *json.NodeB
 	return b.
 		WriteString("depositId", deposit.ID()).
 		WriteString("projectId", deposit.ProjectID()).
-		WriteString("tier", ufmt.Sprintf("%d", deposit.Tier())).
+		WriteString("tier", formatInt(deposit.Tier())).
 		WriteString("depositor", deposit.Depositor().String()).
-		WriteString("amount", ufmt.Sprintf("%d", deposit.DepositAmount())).
-		WriteString("depositHeight", ufmt.Sprintf("%d", deposit.CreatedHeight())).
-		WriteString("depositTime", ufmt.Sprintf("%d", deposit.CreatedAt()))
+		WriteString("amount", formatInt(deposit.DepositAmount())).
+		WriteString("depositHeight", formatInt(deposit.CreatedHeight())).
+		WriteString("depositTime", formatInt(deposit.CreatedAt()))
 }
 
 // MetaBuilder adds metadata fields to JSON
@@ -88,8 +94,8 @@ func metaBuilder() *json.NodeBuilder {
 	now := time.Now().Unix()
 
 	return json.Builder().
-		WriteString("height", ufmt.Sprintf("%d", height)).
-		WriteString("now", ufmt.Sprintf("%d", now))
+		WriteString("height", formatInt(height)).
+		WriteString("now", formatInt(now))
 }
 
 // Marshals a JSON node to a string, panics if marshalling fails
