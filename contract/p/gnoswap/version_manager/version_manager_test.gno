@@ -1102,6 +1102,11 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 }
 
 // TestRegisterInitializer_DomainPathBranch tests the domain path validation branch
+//
+// Note: The previousRealm.IsUser() == false branch is tested in the integration test:
+// tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
+//
+// Unit tests cannot test this branch because they cannot simulate cross-realm calls.
 func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
 	tests := []struct {
 		name          string
