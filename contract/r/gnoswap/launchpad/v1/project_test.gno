@@ -190,6 +190,17 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 			expectedRemaining: 4400, // (1000-300) + (2000-500) + (3000-800)
 		},
 		{
+			name: "calculate remaining amount with single tier",
+			tiers: map[int64]*launchpad.ProjectTier{
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 1500, 100, 200)
+					tier.SetTotalCollectedAmount(200)
+					return tier
+				}(),
+			},
+			expectedRemaining: 1300,
+		},
+		{
 			name: "calculate remaining amount with zero collected",
 			tiers: map[int64]*launchpad.ProjectTier{
 				30: func() *launchpad.ProjectTier {
@@ -235,10 +246,13 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := getProjectStats(project).RemainingAmount
+			result := getProjectRemainingAmount(project)
 
 			// Verify
 			uassert.Equal(t, tt.expectedRemaining, result)
+
+			resultFromState := getProjectStats(project).RemainingAmount
+			uassert.Equal(t, result, resultFromState)
 		})
 	}
 }
