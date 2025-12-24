@@ -450,6 +450,128 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		// then - should have remaining amount minus what was collected
 		uassert.Equal(t, remainingCollectable, int64(70))
 	})
+
+	t.Run("Partial collection - IsCollected should be false", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+		currentTime := int64(2000)
+
+		// when - collect only partial amount (50 out of 100)
+		err := resolver.Collect(50, currentTime)
+
+		// then - should succeed but IsCollected should be false
+		uassert.NoError(t, err)
+		uassert.False(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(50))
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), int64(50))
+	})
+
+	t.Run("Multiple partial collections then full collection", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+		currentTime := int64(2000)
+
+		// when - first partial collection (30)
+		err1 := resolver.Collect(30, currentTime)
+		uassert.NoError(t, err1)
+		uassert.False(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(30))
+
+		// when - second partial collection (40, total 70)
+		err2 := resolver.Collect(40, currentTime)
+		uassert.NoError(t, err2)
+		uassert.False(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(70))
+
+		// when - final collection (30, total 100)
+		err3 := resolver.Collect(30, currentTime)
+		uassert.NoError(t, err3)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(100))
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), int64(0))
+	})
+
+	t.Run("Collect exactly total amount - IsCollected should be true", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+		currentTime := int64(2000)
+
+		// when - collect exactly the total amount
+		err := resolver.Collect(100, currentTime)
+
+		// then - IsCollected should be true
+		uassert.NoError(t, err)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(100))
+		uassert.Equal(t, withdraw.CollectedAt(), currentTime)
+	})
+
+	t.Run("Collect amount > total should set IsCollected true", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+		currentTime := int64(2000)
+
+		// when - collect more than total (edge case, should not happen in practice)
+		err := resolver.Collect(150, currentTime)
+
+		// then - IsCollected should be true since collected >= total
+		uassert.NoError(t, err)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(150))
+	})
+
+	t.Run("Boundary: collect exactly UnDelegateAmount-1, then collect 1", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+		currentTime := int64(2000)
+
+		// when - collect 99 (just 1 short of total)
+		err1 := resolver.Collect(99, currentTime)
+		uassert.NoError(t, err1)
+		uassert.False(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(99))
+
+		// when - collect the final 1
+		err2 := resolver.Collect(1, currentTime)
+		uassert.NoError(t, err2)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(100))
+	})
 }
 
 // Test boundary conditions for safe arithmetic in delegation withdraw operations
