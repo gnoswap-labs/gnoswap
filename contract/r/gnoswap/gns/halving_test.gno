@@ -42,7 +42,7 @@ func TestGetHalvingYear(t *testing.T) {
 
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-			firstTimestampOfYear := FIRST_TIMESTAMP_OF_HALVING_YEAR[year-1]
+			firstTimestampOfYear := GetHalvingYearStartTimestamp(year)
 			uassert.Equal(t, year, GetHalvingYear(firstTimestampOfYear))
 		}
 	})
