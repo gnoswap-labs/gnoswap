@@ -962,106 +962,25 @@ func TestIsContainDomainPath_Boundaries(t *testing.T) {
 }
 
 // TestRegisterInitializer_CallerValidation tests caller validation in RegisterInitializer
-func TestRegisterInitializer_CallerValidation(t *testing.T) {
-	tests := []struct {
-		name          string
-		description   string
-		domainPath    string
-		shouldSucceed bool
-	}{
-		{
-			name:          "non-user realm caller",
-			description:   "RegisterInitializer should accept calls from realm (non-user) contexts",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			shouldSucceed: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vm := NewVersionManager(
-				tt.domainPath,
-				kvStore,
-				mockInitializeDomainStoreFn,
-			)
-
-			if vm == nil {
-				t.Fatal("NewVersionManager should not return nil")
-			}
-
-			t.Logf("✓ %s", tt.description)
-		})
-	}
-}
-
-// TestRegisterInitializer_DuplicateRegistration tests duplicate registration prevention
-func TestRegisterInitializer_DuplicateRegistration(t *testing.T) {
-	tests := []struct {
-		name          string
-		domainPath    string
-		packagePath   string
-		expectError   bool
-		errorContains string
-	}{
-		{
-			name:          "duplicate registration should fail",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			packagePath:   "gno.land/r/gnoswap/protocol_fee/v1",
-			expectError:   true,
-			errorContains: "initializer already registered",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vmInternal := &versionManager{
-				domainPath:              tt.domainPath,
-				domainKVStore:           kvStore,
-				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
-				currentPackagePath:      "",
-				currentImplementation:   nil,
-			}
-
-			// First registration
-			vmInternal.initializers.Set(tt.packagePath, mockInitializer(tt.packagePath))
-
-			// Attempt duplicate registration - simulate by checking Has()
-			if vmInternal.initializers.Has(tt.packagePath) {
-				// This would be caught by RegisterInitializer
-				if !tt.expectError {
-					t.Error("duplicate check should have prevented registration")
-				}
-			} else {
-				if tt.expectError {
-					t.Error("duplicate check should have detected existing registration")
-				}
-			}
-		})
-	}
-}
-
 // TestVersionManager_NilHandling tests nil value handling
 func TestVersionManager_NilHandling(t *testing.T) {
 	tests := []struct {
-		name         string
-		domainPath   string
-		checkNilImpl bool
-		checkNilInit bool
+		name              string
+		domainPath        string
+		wantNilImpl       bool
+		wantNonNilIniters bool
 	}{
 		{
-			name:         "nil implementation before any registration",
-			domainPath:   "gno.land/r/gnoswap/protocol_fee",
-			checkNilImpl: true,
-			checkNilInit: false,
+			name:              "implementation is nil before registration",
+			domainPath:        "gno.land/r/gnoswap/protocol_fee",
+			wantNilImpl:       true,
+			wantNonNilIniters: true,
 		},
 		{
-			name:         "initializers tree is never nil",
-			domainPath:   "gno.land/r/gnoswap/pool",
-			checkNilImpl: false,
-			checkNilInit: true,
+			name:              "initializers tree is never nil",
+			domainPath:        "gno.land/r/gnoswap/pool",
+			wantNilImpl:       true,
+			wantNonNilIniters: true,
 		},
 	}
 
@@ -1074,16 +993,20 @@ func TestVersionManager_NilHandling(t *testing.T) {
 				mockInitializeDomainStoreFn,
 			)
 
-			if tt.checkNilImpl {
-				if impl := vm.GetCurrentImplementation(); impl != nil {
-					t.Error("implementation should be nil before registration")
-				}
+			impl := vm.GetCurrentImplementation()
+			if tt.wantNilImpl && impl != nil {
+				t.Error("implementation should be nil before registration")
+			}
+			if !tt.wantNilImpl && impl == nil {
+				t.Error("implementation should not be nil")
 			}
 
-			if tt.checkNilInit {
-				if init := vm.GetInitializers(); init == nil {
-					t.Error("initializers tree should never be nil")
-				}
+			init := vm.GetInitializers()
+			if tt.wantNonNilIniters && init == nil {
+				t.Error("initializers tree should never be nil")
+			}
+			if !tt.wantNonNilIniters && init != nil {
+				t.Error("initializers tree should be nil")
 			}
 		})
 	}
