@@ -114,36 +114,43 @@ func TestIsLastSecondOfHalvingYear(t *testing.T) {
 }
 
 func TestHandleLeftEmissionAmount(t *testing.T) {
-	tests := make([]struct {
-		name   string
-		year   int64
-		amount int64
-		want   int64
-	}, 0, 24)
+	type testdata struct {
+		name      string
+		year      int64
+		subAmount int64
+		want      int64
+	}
+
+	tests := make([]testdata, 0, 24)
 
 	for i := int64(1); i <= 12; i++ {
-		tests = append(tests, struct {
-			name   string
-			year   int64
-			amount int64
-			want   int64
-		}{
-			name:   ufmt.Sprintf("handle left emission amount for year %d, non minted", i),
-			year:   i,
-			amount: 0,
-			want:   GetHalvingYearMaxAmount(i),
+		tests = append(tests, testdata {
+			name:      ufmt.Sprintf("handle left emission amount for year %d, non minted", i),
+			year:      i,
+			subAmount: 0,
+			want:      GetHalvingYearMaxAmount(i),
 		})
 
-		tests = append(tests, struct {
-			name   string
-			year   int64
-			amount int64
-			want   int64
-		}{
-			name:   ufmt.Sprintf("handle left emission amount for year %d, minted", i),
-			year:   i,
-			amount: int64(123456),
-			want:   GetHalvingYearMaxAmount(i) - int64(123456),
+		tests = append(tests, testdata {
+			name:      ufmt.Sprintf("handle left emission amount for year %d, minted", i),
+			year:      i,
+			subAmount: int64(123456),
+			want:      GetHalvingYearMaxAmount(i) - int64(123456),
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetEmissionState(t)
+
+			if tt.subAmount > 0 {
+				es := getEmissionState()
+				es.subHalvingYearLeftAmount(tt.year, tt.subAmount)
+			}
+
+			actual := GetHalvingYearLeftAmount(tt.year)
+			uassert.Equal(t, tt.want, actual,
+				ufmt.Sprintf("year %d: expected left amount %d, got %d", tt.year, tt.want, actual))
 		})
 	}
 }
