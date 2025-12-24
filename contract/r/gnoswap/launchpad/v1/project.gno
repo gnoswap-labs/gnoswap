@@ -26,6 +26,16 @@ func isProjectEnded(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsEnded(currentTime)
 }
 
+func getProjectRemainingAmount(p *launchpad.Project) int64 {
+	remainingAmount := int64(0)
+
+	for _, tier := range p.Tiers() {
+		remainingAmount = safeAddInt64(remainingAmount, getCalculatedLeftReward(tier))
+	}
+
+	return remainingAmount
+}
+
 func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
 	conditions := p.Conditions()
 	if conditions == nil {
@@ -74,7 +84,7 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 		)
 	}
 
-	if getProjectStats(p).RemainingAmount == 0 {
+	if getProjectRemainingAmount(p) == 0 {
 		return errors.New(
 			"project has no remaining amount",
 		)

@@ -329,7 +329,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	}
 
 	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
-	projectLeftReward := getProjectStats(project).RemainingAmount
+	projectLeftReward := getProjectRemainingAmount(project)
 	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
 
 	if refundableAmount < 0 {
