@@ -41,7 +41,6 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 
 	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := lp.depositGns(
 		project,
-		projectID,
 		tierDuration,
 		depositAmount,
 		caller,
@@ -93,7 +92,6 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 // depositGns deposits GNS to a project tier.
 func (lp *launchpadV1) depositGns(
 	project *launchpad.Project,
-	projectID string,
 	tierDuration int64,
 	depositAmount int64,
 	callerAddress address,
@@ -120,13 +118,13 @@ func (lp *launchpadV1) depositGns(
 	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
-		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
+		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
 	}
 
 	depositID := lp.nextDepositID()
 	deposit := launchpad.NewDeposit(
 		depositID,
-		projectID,
+		project.ID(),
 		tierDuration,
 		callerAddress,
 		depositAmount,

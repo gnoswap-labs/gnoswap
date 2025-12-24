@@ -572,7 +572,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			for i := 0; i < tt.numDeposits; i++ {
 				userAddr := testutils.TestAddress("multiuser" + formatInt(int64(i)))
 				testing.SetOriginCaller(userAddr)
-				deposit, _, _, _, _ := lp.depositGns(project, project.ID(), 30, depositAmount, userAddr)
+				deposit, _, _, _, _ := lp.depositGns(project, 30, depositAmount, userAddr)
 				depositIDs[i] = deposit.ID()
 			}
 
@@ -666,7 +666,7 @@ func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDura
 	depositAmount := int64(1000000000)
 
 	testing.SetOriginCaller(depositor)
-	lp.depositGns(project, project.ID(), tierDuration, depositAmount, depositor)
+	lp.depositGns(project, tierDuration, depositAmount, depositor)
 
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := testing.NewUserRealm(govStakerAddr)

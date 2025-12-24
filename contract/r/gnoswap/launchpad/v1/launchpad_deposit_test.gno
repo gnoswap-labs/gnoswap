@@ -578,7 +578,7 @@ func TestLaunchpadDeposit_depositGns(t *testing.T) {
 				return
 			}
 
-			_, _, _, _, err = lp.depositGns(project, tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			_, _, _, _, err = lp.depositGns(project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
