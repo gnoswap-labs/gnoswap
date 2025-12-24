@@ -3,7 +3,6 @@ package emission
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gns"
@@ -19,7 +18,7 @@ func TestLeftAmountFix(t *testing.T) {
 		name               string
 		initialLeftAmount  int64
 		distributionAmount int64
-		distributions      map[string]int64 // target -> bps
+		distributions      map[int]int64 // target -> bps
 		expectedTotalSent  int64
 		expectedLeftAmount int64
 		setupFunc          func()
@@ -31,11 +30,11 @@ func TestLeftAmountFix(t *testing.T) {
 			name:               "Verify leftAmount is correctly tracked when rounding occurs",
 			initialLeftAmount:  0,
 			distributionAmount: 10001,
-			distributions: map[string]int64{
-				"1": 3333, // 33.33%
-				"2": 3333, // 33.33%
-				"3": 3333, // 33.33%
-				"4": 0,    // 0%
+			distributions: map[int]int64{
+				LIQUIDITY_STAKER: 3333, // 33.33%
+				DEVOPS:           3333, // 33.33%
+				COMMUNITY_POOL:   3333, // 33.33%
+				GOV_STAKER:       0,    // 0%
 			},
 			expectedTotalSent:  9999, // 3333 * 3
 			expectedLeftAmount: 2,    // 10001 - 9999
@@ -43,18 +42,18 @@ func TestLeftAmountFix(t *testing.T) {
 			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
-				distributionBpsPct = avl.NewTree()
+				distributionBpsPct = make(map[int]int64)
 			},
 		},
 		{
 			name:               "Verify fix works with zero initial leftGNSAmount",
 			initialLeftAmount:  0,
 			distributionAmount: 10001,
-			distributions: map[string]int64{
-				"1": 3333,
-				"2": 3333,
-				"3": 3333,
-				"4": 0,
+			distributions: map[int]int64{
+				LIQUIDITY_STAKER: 3333,
+				DEVOPS:           3333,
+				COMMUNITY_POOL:   3333,
+				GOV_STAKER:       0,
 			},
 			expectedTotalSent:  9999,
 			expectedLeftAmount: 2,
@@ -62,18 +61,18 @@ func TestLeftAmountFix(t *testing.T) {
 			errorMessage:       "",
 			setupFunc: func() {
 				leftGNSAmount = 0
-				distributionBpsPct = avl.NewTree()
+				distributionBpsPct = make(map[int]int64)
 			},
 		},
 		{
 			name:               "Integration test with different percentages",
 			initialLeftAmount:  0,
 			distributionAmount: 123456,
-			distributions: map[string]int64{
-				"1": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
-				"2": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
-				"3": 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
-				"4": 1,    // 0.01% to make total 9999 bps, 123456 * 1 / 10000 = 12
+			distributions: map[int]int64{
+				LIQUIDITY_STAKER: 3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				DEVOPS:           3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				COMMUNITY_POOL:   3333, // 33.33%, 123456 * 3333 / 10000 = 41147
+				GOV_STAKER:       1,    // 0.01% to make total 9999 bps, 123456 * 1 / 10000 = 12
 			},
 			expectedTotalSent:  123453, // 41147 +  41147 +  41147 +  12
 			expectedLeftAmount: 3,      // 123456 - 123453
@@ -82,7 +81,7 @@ func TestLeftAmountFix(t *testing.T) {
 			setupFunc: func() {
 				leftGNSAmount = 0
 				lastExecutedTimestamp = 0
-				distributionBpsPct = avl.NewTree()
+				distributionBpsPct = make(map[int]int64)
 			},
 			verifyFunc: func(t *testing.T, actualLeft int64) {
 				// Custom verification for integration test
@@ -93,15 +92,15 @@ func TestLeftAmountFix(t *testing.T) {
 			name:               "Test with exact division (no remainder)",
 			initialLeftAmount:  0,
 			distributionAmount: 10000,
-			distributions: map[string]int64{
-				"1": 5000, // 50%
-				"2": 5000, // 50%
+			distributions: map[int]int64{
+				LIQUIDITY_STAKER: 5000, // 50%
+				DEVOPS:           5000, // 50%
 			},
 			expectedTotalSent:  10000, // 5000 + 5000
 			expectedLeftAmount: 0,     // No remainder
 			setupFunc: func() {
 				leftGNSAmount = 0
-				distributionBpsPct = avl.NewTree()
+				distributionBpsPct = make(map[int]int64)
 			},
 		},
 	}
@@ -115,7 +114,7 @@ func TestLeftAmountFix(t *testing.T) {
 
 			// Set distribution percentages
 			for target, bps := range tt.distributions {
-				distributionBpsPct.Set(target, bps)
+				distributionBpsPct[target] = bps
 			}
 
 			// Execute distribution
