@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/uassert"
 )
 
 // Mock domain address for testing
@@ -259,26 +260,9 @@ func TestVersionManager_ChangeImplementation_Errors(t *testing.T) {
 			err := vm.ChangeImplementation(tt.targetPackage)
 
 			if tt.expectError {
-				if err == nil {
-					t.Error("ChangeImplementation() should return error")
-				} else if tt.errorContains != "" {
-					// Simple substring check
-					errStr := err.Error()
-					found := false
-					for i := 0; i <= len(errStr)-len(tt.errorContains); i++ {
-						if errStr[i:i+len(tt.errorContains)] == tt.errorContains {
-							found = true
-							break
-						}
-					}
-					if !found {
-						t.Errorf("error message should contain %q, got %q", tt.errorContains, errStr)
-					}
-				}
+				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
-				if err != nil {
-					t.Errorf("ChangeImplementation() should not return error, got %v", err)
-				}
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -773,25 +757,9 @@ func TestChangeImplementation_InvalidInitializerType(t *testing.T) {
 			err := vmInternal.ChangeImplementation(tt.packagePath)
 
 			if tt.expectError {
-				if err == nil {
-					t.Error("ChangeImplementation() should return error")
-				} else if tt.errorContains != "" {
-					errStr := err.Error()
-					found := false
-					for i := 0; i <= len(errStr)-len(tt.errorContains); i++ {
-						if errStr[i:i+len(tt.errorContains)] == tt.errorContains {
-							found = true
-							break
-						}
-					}
-					if !found {
-						t.Errorf("error message should contain %q, got %q", tt.errorContains, errStr)
-					}
-				}
+				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
-				if err != nil {
-					t.Errorf("ChangeImplementation() should not return error, got %v", err)
-				}
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -943,19 +911,18 @@ func TestIsContainDomainPath_Boundaries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prefix := tt.domainPath + "/"
-			
-			// Test HasPrefix logic (mimics isContainDomainPath implementation)
-			var result bool
-			if len(tt.testPath) >= len(prefix) {
-				result = tt.testPath[:len(prefix)] == prefix
-			} else {
-				result = false
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vm := &versionManager{
+				domainPath:              tt.domainPath,
+				domainKVStore:           kvStore,
+				initializeDomainStoreFn: mockInitializeDomainStoreFn,
+				initializers:            avl.NewTree(),
 			}
 
+			result := vm.isContainDomainPath(tt.testPath)
+
 			if result != tt.expected {
-				t.Errorf("HasPrefix check failed: got %v, want %v for path %q with prefix %q", 
-					result, tt.expected, tt.testPath, prefix)
+				t.Errorf("isContainDomainPath(%q) = %v, want %v", tt.testPath, result, tt.expected)
 			}
 		})
 	}
@@ -1130,24 +1097,7 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := tt.setupFunc()
-			
-			if err == nil {
-				t.Errorf("%s: expected error but got nil", tt.description)
-				return
-			}
-			
-			errStr := err.Error()
-			found := false
-			for i := 0; i <= len(errStr)-len(tt.errorContains); i++ {
-				if errStr[i:i+len(tt.errorContains)] == tt.errorContains {
-					found = true
-					break
-				}
-			}
-			
-			if !found {
-				t.Errorf("%s: error should contain %q, got %q", tt.description, tt.errorContains, errStr)
-			}
+			uassert.ErrorContains(t, err, tt.errorContains)
 		})
 	}
 }
@@ -1274,24 +1224,7 @@ func TestChangeImplementation_AllBranches(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			vm, packagePath := tt.setupFunc()
 			err := vm.ChangeImplementation(packagePath)
-			
-			if err == nil {
-				t.Errorf("%s: expected error but got nil", tt.description)
-				return
-			}
-			
-			errStr := err.Error()
-			found := false
-			for i := 0; i <= len(errStr)-len(tt.errorContains); i++ {
-				if errStr[i:i+len(tt.errorContains)] == tt.errorContains {
-					found = true
-					break
-				}
-			}
-			
-			if !found {
-				t.Errorf("%s: error should contain %q, got %q", tt.description, tt.errorContains, errStr)
-			}
+			uassert.ErrorContains(t, err, tt.errorContains)
 		})
 	}
 }
