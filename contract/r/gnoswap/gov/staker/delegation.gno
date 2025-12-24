@@ -67,6 +67,10 @@ func (d *Delegation) SetCollectedAmount(amount int64) {
 	d.collectedAmount = amount
 }
 
+func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
+	d.withdraws = withdraws
+}
+
 func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
 	d.withdraws = append(d.withdraws, withdraw)
 }
