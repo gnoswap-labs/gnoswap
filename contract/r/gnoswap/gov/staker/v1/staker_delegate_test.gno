@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -1332,6 +1333,254 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
 			// Then: Should return 0
 			uassert.NoError(t, err)
 			uassert.Equal(t, collected, int64(0))
+		})
+	}
+}
+
+// Test boundary conditions where safe arithmetic is used in delegation store operations
+func TestStakerDelegate_BoundaryConditions_TotalDelegatedAmount(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialAmount  int64
+		addAmount      int64
+		expectPanic    bool
+		description    string
+	}{
+		{
+			name:           "add to total delegated near max int64",
+			initialAmount:  math.MaxInt64 - 10000000,
+			addAmount:      5000000,
+			expectPanic:    false,
+			description:    "Should handle adding when total is near max",
+		},
+		{
+			name:           "add causing overflow in total delegated",
+			initialAmount:  math.MaxInt64 - 1000,
+			addAmount:      2000,
+			expectPanic:    true,
+			description:    "Should panic when addition would overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+
+			// Given: Set initial total delegated amount
+			err := gs.store.SetTotalDelegatedAmount(tt.initialAmount)
+			uassert.NoError(t, err)
+
+			if tt.expectPanic {
+				// When & Then: Should panic on overflow
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					// This simulates the safe arithmetic used in delegate()
+					current := gs.store.GetTotalDelegatedAmount()
+					newTotal := safeAddInt64(current, tt.addAmount)
+					_ = gs.store.SetTotalDelegatedAmount(newTotal)
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				// When: Add amount near boundary
+				current := gs.store.GetTotalDelegatedAmount()
+				newTotal := safeAddInt64(current, tt.addAmount)
+				err = gs.store.SetTotalDelegatedAmount(newTotal)
+
+				// Then: Should succeed
+				uassert.NoError(t, err)
+				result := gs.store.GetTotalDelegatedAmount()
+				uassert.Equal(t, result, tt.initialAmount+tt.addAmount)
+			}
+		})
+	}
+}
+
+// Test boundary conditions where safe arithmetic is used for subtraction in store operations
+func TestStakerDelegate_BoundaryConditions_Undelegate(t *testing.T) {
+	tests := []struct {
+		name           string
+		totalDelegated int64
+		subAmount      int64
+		expectPanic    bool
+		description    string
+	}{
+		{
+			name:           "subtract large amount from large total",
+			totalDelegated: math.MaxInt64 / 2,
+			subAmount:      math.MaxInt64 / 4,
+			expectPanic:    false,
+			description:    "Should handle large subtraction",
+		},
+		{
+			name:           "subtract causing underflow in total delegated",
+			totalDelegated: math.MinInt64 + 1000,
+			subAmount:      2000,
+			expectPanic:    true,
+			description:    "Should panic when subtraction would underflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+
+			// Given: Set initial total delegated amount
+			err := gs.store.SetTotalDelegatedAmount(tt.totalDelegated)
+			uassert.NoError(t, err)
+
+			if tt.expectPanic {
+				// When & Then: Should panic on underflow
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					// This simulates the safe arithmetic used in unDelegate()
+					current := gs.store.GetTotalDelegatedAmount()
+					newTotal := safeSubInt64(current, tt.subAmount)
+					_ = gs.store.SetTotalDelegatedAmount(newTotal)
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				// When: Subtract amount
+				current := gs.store.GetTotalDelegatedAmount()
+				newTotal := safeSubInt64(current, tt.subAmount)
+				err = gs.store.SetTotalDelegatedAmount(newTotal)
+
+				// Then: Should succeed
+				uassert.NoError(t, err)
+				result := gs.store.GetTotalDelegatedAmount()
+				uassert.Equal(t, result, tt.totalDelegated-tt.subAmount)
+			}
+		})
+	}
+}
+
+// Test boundary conditions in collect operations
+func TestStakerDelegate_BoundaryConditions_CollectDelegations(t *testing.T) {
+	tests := []struct {
+		name             string
+		initialLocked    int64
+		collectAmount    int64
+		expectUnderflow  bool
+		description      string
+	}{
+		{
+			name:            "collect with locked amount at boundary",
+			initialLocked:   1000000,
+			collectAmount:   1000000,
+			expectUnderflow: false,
+			description:     "Should handle collecting exactly locked amount",
+		},
+		{
+			name:            "collect more than locked (should clamp to zero)",
+			initialLocked:   500000,
+			collectAmount:   1000000,
+			expectUnderflow: false,
+			description:     "Should clamp to zero when collecting more than locked",
+		},
+		{
+			name:            "collect with large locked amount",
+			initialLocked:   math.MaxInt64 / 2,
+			collectAmount:   math.MaxInt64 / 4,
+			expectUnderflow: false,
+			description:     "Should handle large collection amounts",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			// Given: Set initial locked amount
+			err := gs.store.SetTotalLockedAmount(tt.initialLocked)
+			uassert.NoError(t, err)
+
+			// When: Simulate collection logic
+			currentLocked := gs.store.GetTotalLockedAmount()
+			newLocked := safeSubInt64(currentLocked, tt.collectAmount)
+			if newLocked < 0 {
+				newLocked = 0
+			}
+
+			// Then: Should succeed and clamp to valid range
+			uassert.True(t, newLocked >= 0)
+			uassert.True(t, newLocked <= tt.initialLocked)
+
+			err = gs.store.SetTotalLockedAmount(newLocked)
+			uassert.NoError(t, err)
+
+			result := gs.store.GetTotalLockedAmount()
+			uassert.Equal(t, result, newLocked)
+		})
+	}
+}
+
+// Test accumulation of collected amounts from multiple delegations
+func TestStakerDelegate_BoundaryConditions_AccumulateCollected(t *testing.T) {
+	tests := []struct {
+		name        string
+		amounts     []int64
+		expectPanic bool
+		description string
+	}{
+		{
+			name:        "accumulate normal amounts",
+			amounts:     []int64{100000, 200000, 300000, 400000, 500000},
+			expectPanic: false,
+			description: "Should accumulate multiple normal amounts",
+		},
+		{
+			name:        "accumulate large amounts",
+			amounts:     []int64{math.MaxInt64 / 10, math.MaxInt64 / 10, math.MaxInt64 / 10},
+			expectPanic: false,
+			description: "Should accumulate large amounts without overflow",
+		},
+		{
+			name:        "accumulate causing overflow",
+			amounts:     []int64{math.MaxInt64 / 2, math.MaxInt64 / 2, math.MaxInt64 / 2},
+			expectPanic: true,
+			description: "Should panic when accumulation would overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					collected := int64(0)
+					for _, amt := range tt.amounts {
+						collected = safeAddInt64(collected, amt)
+					}
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				collected := int64(0)
+				for _, amt := range tt.amounts {
+					collected = safeAddInt64(collected, amt)
+				}
+
+				// Then: Should have accumulated all amounts
+				expectedTotal := int64(0)
+				for _, amt := range tt.amounts {
+					expectedTotal += amt
+				}
+				uassert.Equal(t, collected, expectedTotal)
+			}
 		})
 	}
 }
