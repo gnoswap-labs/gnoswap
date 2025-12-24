@@ -21,21 +21,6 @@ var (
 	startTimestamp int64 = time.Now().Unix() + 2 // blockTime in seconds
 )
 
-var FIRST_TIMESTAMP_OF_HALVING_YEAR = []int64{
-	startTimestamp + (SECONDS_IN_YEAR * 0),
-	startTimestamp + (SECONDS_IN_YEAR * 1),
-	startTimestamp + (SECONDS_IN_YEAR * 2),
-	startTimestamp + (SECONDS_IN_YEAR * 3),
-	startTimestamp + (SECONDS_IN_YEAR * 4),
-	startTimestamp + (SECONDS_IN_YEAR * 5),
-	startTimestamp + (SECONDS_IN_YEAR * 6),
-	startTimestamp + (SECONDS_IN_YEAR * 7),
-	startTimestamp + (SECONDS_IN_YEAR * 8),
-	startTimestamp + (SECONDS_IN_YEAR * 9),
-	startTimestamp + (SECONDS_IN_YEAR * 10),
-	startTimestamp + (SECONDS_IN_YEAR * 11),
-}
-
 func TestGetHalvingYear(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
