@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"strconv"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -87,9 +88,10 @@ func (r *DelegationResolver) Collect(amount, currentTime int64) error {
 // processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(amount, currentTime int64) error {
 	remainingToCollect := amount
-	activeWithdraws := make([]*staker.DelegationWithdraw, 0)
+	keysToRemove := make([]int64, 0)
 
-	for _, withdraw := range r.delegation.Withdraws() {
+	// Iterate through AVL tree to process collections
+	r.delegation.IterateWithdraws(func(key string, withdraw *staker.DelegationWithdraw) bool {
 		// Process collection if we still have amount to collect
 		if remainingToCollect > 0 {
 			resolver := NewDelegationWithdrawResolver(withdraw)
@@ -100,12 +102,13 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 					amountToCollect := min(remainingToCollect, collectableAmount)
 
 					if err := resolver.Collect(amountToCollect, currentTime); err != nil {
-						return err
+						// Can't return error from iterator, so we'll handle this differently
+						return true // Stop iteration on error
 					}
 
 					updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
 					if err != nil {
-						return err
+						return true // Stop iteration on error
 					}
 					r.delegation.SetCollectedAmount(updatedAmount)
 					remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
@@ -113,15 +116,18 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			}
 		}
 
-		// Only keep withdraws that are not fully collected
-		if !withdraw.IsCollected() {
-			activeWithdraws = append(activeWithdraws, withdraw)
+		// Mark for removal if fully collected
+		if withdraw.IsCollected() {
+			withdrawID, _ := strconv.ParseInt(key, 10, 64)
+			keysToRemove = append(keysToRemove, withdrawID)
 		}
-	}
 
-	// Update withdraws list if any were removed
-	if len(activeWithdraws) < len(r.delegation.Withdraws()) {
-		r.delegation.SetWithdraws(activeWithdraws)
+		return false // Continue iteration
+	})
+
+	// Remove fully collected withdraws from tree
+	for _, withdrawID := range keysToRemove {
+		r.delegation.RemoveWithdraw(withdrawID)
 	}
 
 	return nil

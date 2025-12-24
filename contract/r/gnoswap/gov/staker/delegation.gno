@@ -1,5 +1,11 @@
 package staker
 
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl"
+)
+
 // DelegationType represents the type of delegation operation
 type DelegationType string
 
@@ -22,7 +28,8 @@ type Delegation struct {
 	delegateTo       address
 	createdHeight    int64
 	createdAt        int64
-	withdraws        []*DelegationWithdraw
+	withdraws        *avl.Tree
+	nextWithdrawID   int64
 }
 
 // NewDelegation creates a new delegation
@@ -40,7 +47,8 @@ func NewDelegation(
 		createdAt:        createdAt,
 		unDelegateAmount: 0,
 		collectedAmount:  0,
-		withdraws:        make([]*DelegationWithdraw, 0),
+		withdraws:        avl.NewTree(),
+		nextWithdrawID:   0,
 	}
 }
 
@@ -56,7 +64,26 @@ func (d *Delegation) UnDelegatedAmount() int64    { return d.unDelegateAmount }
 func (d *Delegation) CollectedAmount() int64      { return d.collectedAmount }
 
 // Withdraws getters
-func (d *Delegation) Withdraws() []*DelegationWithdraw { return d.withdraws }
+func (d *Delegation) Withdraws() []*DelegationWithdraw {
+	result := make([]*DelegationWithdraw, 0)
+	d.withdraws.Iterate("", "", func(key string, value interface{}) bool {
+		if withdraw, ok := value.(*DelegationWithdraw); ok {
+			result = append(result, withdraw)
+		}
+		return false
+	})
+	return result
+}
+
+// IterateWithdraws iterates through all withdraws with their keys
+func (d *Delegation) IterateWithdraws(fn func(key string, withdraw *DelegationWithdraw) bool) {
+	d.withdraws.Iterate("", "", func(key string, value interface{}) bool {
+		if withdraw, ok := value.(*DelegationWithdraw); ok {
+			return fn(key, withdraw)
+		}
+		return false
+	})
+}
 
 // Setters
 func (d *Delegation) SetUnDelegateAmount(amount int64) {
@@ -67,10 +94,13 @@ func (d *Delegation) SetCollectedAmount(amount int64) {
 	d.collectedAmount = amount
 }
 
-func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
-	d.withdraws = withdraws
+func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
+	key := strconv.FormatInt(d.nextWithdrawID, 10)
+	d.withdraws.Set(key, withdraw)
+	d.nextWithdrawID++
 }
 
-func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
-	d.withdraws = append(d.withdraws, withdraw)
+func (d *Delegation) RemoveWithdraw(withdrawID int64) {
+	key := strconv.FormatInt(withdrawID, 10)
+	d.withdraws.Remove(key)
 }
