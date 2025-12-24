@@ -1,5 +1,9 @@
 package staker
 
+import (
+	"math"
+)
+
 // DelegationType represents the type of delegation operation
 type DelegationType string
 
@@ -22,7 +26,7 @@ type Delegation struct {
 	delegateTo       address
 	createdHeight    int64
 	createdAt        int64
-	withdraws        []*DelegationWithdraw
+	withdraws        *UintTree // key: collectableTime, value: []*DelegationWithdraw
 }
 
 // NewDelegation creates a new delegation
@@ -40,7 +44,7 @@ func NewDelegation(
 		createdAt:        createdAt,
 		unDelegateAmount: 0,
 		collectedAmount:  0,
-		withdraws:        make([]*DelegationWithdraw, 0),
+		withdraws:        NewUintTree(),
 	}
 }
 
@@ -55,8 +59,28 @@ func (d *Delegation) TotalDelegatedAmount() int64 { return d.delegateAmount }
 func (d *Delegation) UnDelegatedAmount() int64    { return d.unDelegateAmount }
 func (d *Delegation) CollectedAmount() int64      { return d.collectedAmount }
 
-// Withdraws getters
-func (d *Delegation) Withdraws() []*DelegationWithdraw { return d.withdraws }
+// Withdraws returns all withdraws across all time buckets
+func (d *Delegation) Withdraws() []*DelegationWithdraw {
+	result := make([]*DelegationWithdraw, 0)
+	d.withdraws.Iterate(0, math.MaxInt64, func(time int64, value any) bool {
+		if slice, ok := value.([]*DelegationWithdraw); ok {
+			result = append(result, slice...)
+		}
+		return false
+	})
+	return result
+}
+
+// IterateWithdrawsByTime iterates through withdraws grouped by collectableTime
+// Only iterates over time range [start, end]
+func (d *Delegation) IterateWithdrawsByTime(start, end int64, fn func(time int64, withdraws []*DelegationWithdraw) bool) {
+	d.withdraws.Iterate(start, end, func(time int64, value any) bool {
+		if slice, ok := value.([]*DelegationWithdraw); ok {
+			return fn(time, slice)
+		}
+		return false
+	})
+}
 
 // Setters
 func (d *Delegation) SetUnDelegateAmount(amount int64) {
@@ -67,10 +91,33 @@ func (d *Delegation) SetCollectedAmount(amount int64) {
 	d.collectedAmount = amount
 }
 
-func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
-	d.withdraws = withdraws
+func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
+	collectableTime := withdraw.CollectableTime()
+
+	// Get existing slice for this time, or create new one
+	var withdraws []*DelegationWithdraw
+	if value, exists := d.withdraws.Get(collectableTime); exists {
+		withdraws = value.([]*DelegationWithdraw)
+	} else {
+		withdraws = make([]*DelegationWithdraw, 0, 1)
+	}
+
+	// Append new withdraw and update tree
+	withdraws = append(withdraws, withdraw)
+	d.withdraws.Set(collectableTime, withdraws)
 }
 
-func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
-	d.withdraws = append(d.withdraws, withdraw)
+// RemoveWithdrawsAtTime removes all withdraws at the given collectableTime
+func (d *Delegation) RemoveWithdrawsAtTime(collectableTime int64) {
+	d.withdraws.Remove(collectableTime)
+}
+
+// UpdateWithdrawsAtTime updates the withdraw slice at the given collectableTime
+// If the slice is empty, the time bucket is removed from the tree
+func (d *Delegation) UpdateWithdrawsAtTime(collectableTime int64, withdraws []*DelegationWithdraw) {
+	if len(withdraws) == 0 {
+		d.withdraws.Remove(collectableTime)
+	} else {
+		d.withdraws.Set(collectableTime, withdraws)
+	}
 }
