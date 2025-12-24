@@ -738,8 +738,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			tierStartTime:         100,
 			tierEndTime:           200,
 			currentTime:           250,
-			expectedHasError:      true,
-			expectedError:         "project has no remaining amount",
+			expectedHasError:      false,
 		},
 		{
 			name:                  "refund validation succeeds when ended with remaining amount",

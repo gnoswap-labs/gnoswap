@@ -323,13 +323,17 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 		accumTotalDistributeAmount = safeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
 	}
 
+	if accumLeftReward == 0 {
+		return 0, errors.New("project has no remaining amount")
+	}
+
 	actualTotalDistributeAmount := safeAddInt64(accumCollectedReward, accumLeftReward)
 	if accumTotalDistributeAmount != actualTotalDistributeAmount {
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
 	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
-	projectLeftReward := getProjectRemainingAmount(project)
+	projectLeftReward := accumLeftReward
 	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
 
 	if refundableAmount < 0 {
