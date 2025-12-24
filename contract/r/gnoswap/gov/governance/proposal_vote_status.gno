@@ -11,7 +11,7 @@ type ProposalVoteStatus struct {
 
 /* Getter methods */
 func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
-func (p *ProposalVoteStatus) QuorumAmount() int64 { return p.quorumAmount }
+func (p *ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
 
 // YesWeight returns the total weight of "yes" votes.
 //
@@ -51,16 +51,14 @@ func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) {
 //
 // Parameters:
 //   - maxVotingWeight: maximum possible voting weight for this proposal
-//   - quorum: quorum percentage required for passage (0-100)
+//   - quorumAmount: quorum amount required for passage
 //
 // Returns:
 //   - *ProposalVoteStatus: new vote status instance
 func NewProposalVoteStatus(
 	maxVotingWeight int64,
-	quorum int64,
+	quorumAmount int64,
 ) *ProposalVoteStatus {
-	// Calculate the absolute vote weight needed to meet quorum
-	quorumAmount := maxVotingWeight * quorum / 100
 
 	return &ProposalVoteStatus{
 		yea:             0,               // Start with no "yes" votes

@@ -158,3 +158,33 @@ func safeSubInt64(a, b int64) int64 {
 	}
 	return a - b
 }
+
+// safeMulDiv performs safe multiplication and division: (a * b) / c
+// Prevents overflow in multiplication step by checking bounds
+func safeMulDiv(a, b, c int64) int64 {
+	if c == 0 {
+		panic("division by zero in safeMulDiv")
+	}
+
+	// Check for multiplication overflow
+	// If a * b would overflow, we need to be careful
+	if a != 0 && b != 0 {
+		// Check if multiplication would overflow
+		if a > 0 && b > 0 && a > math.MaxInt64/b {
+			panic("int64 multiplication overflow in safeMulDiv")
+		}
+		if a > 0 && b < 0 && b < math.MinInt64/a {
+			panic("int64 multiplication underflow in safeMulDiv")
+		}
+		if a < 0 && b > 0 && a < math.MinInt64/b {
+			panic("int64 multiplication underflow in safeMulDiv")
+		}
+		if a < 0 && b < 0 && a < math.MaxInt64/b {
+			panic("int64 multiplication overflow in safeMulDiv")
+		}
+	}
+
+	result := (a * b) / c
+
+	return result
+}

@@ -124,8 +124,9 @@ type IGovernanceStore interface {
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
-	AddUserProposal(user string, proposalID int64) error
 	SetUserProposals(userProposals *avl.Tree) error
+	AddUserProposal(user string, proposalID int64) error
+	RemoveUserProposal(user string, proposalID int64) error
 }
 
 // GovStakerAccessor provides an interface for accessing gov staker functionality.

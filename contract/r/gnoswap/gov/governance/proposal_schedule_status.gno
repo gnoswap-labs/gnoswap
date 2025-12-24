@@ -11,7 +11,7 @@ type ProposalScheduleStatus struct {
 	expiredTime    int64 // When execution window ends (ExecutableTime + ExecutionWindow)
 }
 
-func NewProposalScheduleStatusInstance(
+func NewProposalScheduleStatus(
 	createTime int64,
 	activeTime int64,
 	votingEndTime int64,
@@ -19,24 +19,38 @@ func NewProposalScheduleStatusInstance(
 	expiredTime int64,
 ) *ProposalScheduleStatus {
 	return &ProposalScheduleStatus{
-		createTime: createTime,
-		activeTime: activeTime,
-		votingEndTime: votingEndTime,
+		createTime:     createTime,
+		activeTime:     activeTime,
+		votingEndTime:  votingEndTime,
 		executableTime: executableTime,
-		expiredTime: expiredTime,
+		expiredTime:    expiredTime,
 	}
 }
 
 /* Getter methods */
-func (p *ProposalScheduleStatus) CreateTime() int64 { return p.createTime }
-func (p *ProposalScheduleStatus) ActiveTime() int64 { return p.activeTime }
-func (p *ProposalScheduleStatus) VotingEndTime() int64 { return p.votingEndTime }
+func (p *ProposalScheduleStatus) CreateTime() int64     { return p.createTime }
+func (p *ProposalScheduleStatus) ActiveTime() int64     { return p.activeTime }
+func (p *ProposalScheduleStatus) VotingEndTime() int64  { return p.votingEndTime }
 func (p *ProposalScheduleStatus) ExecutableTime() int64 { return p.executableTime }
-func (p *ProposalScheduleStatus) ExpiredTime() int64 { return p.expiredTime }
+func (p *ProposalScheduleStatus) ExpiredTime() int64    { return p.expiredTime }
 
 /* Setter methods */
-func (p *ProposalScheduleStatus) SetCreateTime(createTime int64) { p.createTime = createTime }
-func (p *ProposalScheduleStatus) SetActiveTime(activeTime int64) { p.activeTime = activeTime }
-func (p *ProposalScheduleStatus) SetVotingEndTime(votingEndTime int64) { p.votingEndTime = votingEndTime }
-func (p *ProposalScheduleStatus) SetExecutableTime(executableTime int64) { p.executableTime = executableTime }
-func (p *ProposalScheduleStatus) SetExpiredTime(expiredTime int64) { p.expiredTime = expiredTime }
+func (p *ProposalScheduleStatus) SetCreateTime(createTime int64) {
+	p.createTime = createTime
+}
+
+func (p *ProposalScheduleStatus) SetActiveTime(activeTime int64) {
+	p.activeTime = activeTime
+}
+
+func (p *ProposalScheduleStatus) SetVotingEndTime(votingEndTime int64) {
+	p.votingEndTime = votingEndTime
+}
+
+func (p *ProposalScheduleStatus) SetExecutableTime(executableTime int64) {
+	p.executableTime = executableTime
+}
+
+func (p *ProposalScheduleStatus) SetExpiredTime(expiredTime int64) {
+	p.expiredTime = expiredTime
+}

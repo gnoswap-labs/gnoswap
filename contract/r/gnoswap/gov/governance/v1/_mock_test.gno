@@ -167,6 +167,36 @@ func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) err
 	return nil
 }
 
+func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) error {
+	if m.userProposals == nil {
+		return nil
+	}
+
+	proposalIDsRaw, ok := m.userProposals.Get(user)
+	if !ok {
+		return nil
+	}
+
+	proposalIDs, ok := proposalIDsRaw.([]int64)
+	newProposalIDs := make([]int64, 0)
+
+	for _, id := range proposalIDs {
+		if id == proposalID {
+			continue
+		}
+
+		newProposalIDs = append(newProposalIDs, id)
+	}
+
+	if len(newProposalIDs) == 0 {
+		m.userProposals.Remove(user)
+	} else {
+		m.userProposals.Set(user, newProposalIDs)
+	}
+
+	return nil
+}
+
 func (m *mockGovernanceStore) SetUserProposals(userProposals *avl.Tree) error {
 	m.userProposals = userProposals
 	return nil

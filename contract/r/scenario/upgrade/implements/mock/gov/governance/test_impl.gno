@@ -2,12 +2,14 @@
 package mock
 
 import (
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 	governance "gno.land/r/gnoswap/gov/governance"
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
 
 func NewV3ValidGovernance(store governance.IGovernanceStore) governance.IGovernance {
-	instance := v1.NewGovernanceV1(store)
+	instance := v1.NewGovernanceV1(store, newStakerAccessor())
 
 	return &TestGovernance{
 		instance: instance,
@@ -106,6 +108,20 @@ func (t *TestGovernance) GetProposalTypeByProposalId(id int64) string {
 		t.instance.GetProposalTypeByProposalId, // actualFn
 		id,                                     // args
 	).(string)
+}
+
+func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
+	return t.ExecuteFn(
+		"GetMaxSmoothingPeriod",
+		t.instance.GetMaxSmoothingPeriod, // actualFn
+	).(int64)
+}
+
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	return t.ExecuteFn(
+		"GetOldestActiveProposalSnapshotTime",
+		t.instance.GetOldestActiveProposalSnapshotTime, // actualFn
+	).(int64), false
 }
 
 func (t *TestGovernance) GetYeaByProposalId(id int64) int64 {
@@ -226,4 +242,47 @@ func (t *TestGovernance) GetVotedAt(proposalID int64, address address) int64 {
 		t.instance.GetVotedAt, // actualFn
 		proposalID, address,   // args
 	).(int64)
+}
+
+type stakerAccessor struct {
+	userDelegationAmounts  map[address]*avl.Tree
+	totalDelegationAmounts *avl.Tree
+}
+
+func (s *stakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	tree, ok := s.userDelegationAmounts[userAddr]
+	if !ok {
+		return 0, false
+	}
+
+	amount := int64(0)
+	exists := false
+
+	tree.ReverseIterate("0", ufmt.Sprintf("%d", snapshotTime), func(key string, value any) bool {
+		amount = value.(int64)
+		exists = true
+		return true
+	})
+
+	return amount, exists
+}
+
+func (s *stakerAccessor) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	amount := int64(0)
+	exists := false
+
+	s.totalDelegationAmounts.ReverseIterate("0", ufmt.Sprintf("%d", snapshotTime), func(key string, value any) bool {
+		amount = value.(int64)
+		exists = true
+		return true
+	})
+
+	return amount, exists
+}
+
+func newStakerAccessor() *stakerAccessor {
+	return &stakerAccessor{
+		userDelegationAmounts:  make(map[address]*avl.Tree),
+		totalDelegationAmounts: avl.NewTree(),
+	}
 }

@@ -9,16 +9,16 @@ import (
 // TestProposalStatus_NewProposalStatusBy tests the creation of proposal status with components
 func TestProposalStatus_NewProposalStatusBy(t *testing.T) {
 	tests := []struct {
-		name            string
-		schedule        *ProposalScheduleStatus
+		name             string
+		schedule         *ProposalScheduleStatus
 		actionExecutable bool
-		quorumPercent   int64
-		setupAction     func(*ProposalActionStatus)
-		setupVote       func(*ProposalVoteStatus)
+		quorumPercent    int64
+		setupAction      func(*ProposalActionStatus)
+		setupVote        func(*ProposalVoteStatus)
 	}{
 		{
 			name: "create with all components",
-			schedule: NewProposalScheduleStatusInstance(
+			schedule: NewProposalScheduleStatus(
 				1000, 1100, 1300, 1400, 1600,
 			),
 			actionExecutable: true,
@@ -28,7 +28,7 @@ func TestProposalStatus_NewProposalStatusBy(t *testing.T) {
 		},
 		{
 			name: "create with executed status",
-			schedule: NewProposalScheduleStatusInstance(
+			schedule: NewProposalScheduleStatus(
 				1000, 1100, 1300, 1400, 1600,
 			),
 			actionExecutable: true,
@@ -46,7 +46,7 @@ func TestProposalStatus_NewProposalStatusBy(t *testing.T) {
 		},
 		{
 			name: "create with canceled status",
-			schedule: NewProposalScheduleStatusInstance(
+			schedule: NewProposalScheduleStatus(
 				1000, 1100, 1300, 1400, 1600,
 			),
 			actionExecutable: true,
