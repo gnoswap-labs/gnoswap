@@ -123,12 +123,20 @@ func (m *MockGovStaker) GetLockedAmount() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
-	res, ok := m.Response.Get("GetDelegationSnapshots")
+func (m *MockGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	res, ok := m.Response.Get("GetTotalDelegationAmountAtSnapshot")
 	if !ok {
-		return nil, false
+		return 0, false
 	}
-	return res[0].(DelegationSnapshot), res[1].(bool)
+	return res[0].(int64), res[1].(bool)
+}
+
+func (m *MockGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	res, ok := m.Response.Get("GetUserDelegationAmountAtSnapshot")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
 }
 
 func (m *MockGovStaker) GetClaimableRewardByAddress(addr address) string {
@@ -155,7 +163,7 @@ func (m *MockGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
 	return res[0].(string)
 }
 
-func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
+func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
 	m.Response.Get("CleanStakerDelegationSnapshotByAdmin")
 }
 

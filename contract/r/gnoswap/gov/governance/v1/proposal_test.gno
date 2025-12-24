@@ -98,7 +98,8 @@ func TestProposal_Validation(t *testing.T) {
 				tc.metadata,
 				tc.data,
 				address("g1proposer"),
-				1,
+				1, // configVersion
+				baseTime,
 				baseTime,
 				runtime.ChainHeight(),
 			)
@@ -166,7 +167,8 @@ func TestProposal_StatusOperations(t *testing.T) {
 				governance.NewProposalMetadata("Test", "Test"),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
-				1,
+				1, // configVersion
+				baseTime.Unix(),
 				baseTime.Unix(),
 				runtime.ChainHeight(),
 			)
@@ -230,7 +232,8 @@ func TestNewProposal(t *testing.T) {
 				governance.NewProposalMetadata(tc.title, tc.description),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				tc.proposer,
-				1,
+				1, // configVersion
+				baseTime,
 				baseTime,
 				runtime.ChainHeight(),
 			)

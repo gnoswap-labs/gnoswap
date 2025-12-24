@@ -5,11 +5,11 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
 // ProposeText creates a text proposal for community discussion.
@@ -56,8 +56,8 @@ func (gv *governanceV1) ProposeText(
 		panic(errAlreadyActiveProposal)
 	}
 
-	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
+	// Get snapshot time and total voting weight for proposal creation
+	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -70,6 +70,7 @@ func (gv *governanceV1) ProposeText(
 		governance.Text,
 		config,
 		maxVotingWeight,
+		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalTextData(),
 		callerAddress,
@@ -81,8 +82,8 @@ func (gv *governanceV1) ProposeText(
 		panic(err)
 	}
 
-	// Store voting information for the proposal
-	success := gv.updateProposalUserVotes(proposal, userVotes)
+	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -140,10 +141,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	callerAddress := runtime.PreviousRealm().Address()
+	assertIsValidToken(tokenPath)
 
 	createdAt := time.Now().Unix()
 	createdHeight := runtime.ChainHeight()
+
+	callerAddress := runtime.PreviousRealm().Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
@@ -156,8 +159,8 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		panic(errAlreadyActiveProposal)
 	}
 
-	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
+	// Get snapshot time and total voting weight for proposal creation
+	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -170,6 +173,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		governance.CommunityPoolSpend,
 		config,
 		maxVotingWeight,
+		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
 		callerAddress,
@@ -181,8 +185,8 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		panic(err)
 	}
 
-	// Store voting information for the proposal
-	success := gv.updateProposalUserVotes(proposal, userVotes)
+	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -262,8 +266,8 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(errAlreadyActiveProposal)
 	}
 
-	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
+	// Get snapshot time and total voting weight for proposal creation
+	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -281,6 +285,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		governance.ParameterChange,
 		config,
 		maxVotingWeight,
+		snapshotTime,
 		governance.NewProposalMetadata(title, description),
 		NewProposalExecutionData(numToExecute, executions),
 		callerAddress,
@@ -292,8 +297,8 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(err)
 	}
 
-	// Store voting information for the proposal
-	success := gv.updateProposalUserVotes(proposal, userVotes)
+	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -324,6 +329,7 @@ func (gv *governanceV1) createProposal(
 	proposalType governance.ProposalType,
 	config governance.Config,
 	maxVotingWeight int64,
+	snapshotTime int64,
 	proposalMetadata *governance.ProposalMetadata,
 	proposalData *governance.ProposalData,
 	proposerAddress address,
@@ -364,7 +370,7 @@ func (gv *governanceV1) createProposal(
 	// Get current configuration version for tracking
 	configVersion := gv.getCurrentConfigVersion()
 
-	// Create the proposal object
+	// Create the proposal object with snapshotTime for lazy voting weight lookup
 	proposal := governance.NewProposal(
 		proposalID,
 		proposalStatus,
@@ -372,6 +378,7 @@ func (gv *governanceV1) createProposal(
 		proposalData,
 		proposerAddress,
 		configVersion,
+		snapshotTime,
 		createdAt,
 		createdHeight,
 	)
@@ -385,56 +392,23 @@ func (gv *governanceV1) createProposal(
 	return proposal, nil
 }
 
-// getUserVotingInfoSnapshot retrieves voting information snapshot for proposal creation.
-// Calculates voting weights at specific time point for fair voting.
-func (gv *governanceV1) getUserVotingInfoSnapshot(
+// getVotingWeightSnapshot retrieves the total voting weight at a specific snapshot time.
+// Returns the snapshot time and total voting weight for proposal creation.
+func (gv *governanceV1) getVotingWeightSnapshot(
 	current,
 	smoothingPeriod int64,
-) (map[string]*governance.VotingInfo, int64, error) {
+) (int64, int64, error) {
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
-
-	var votingInfos map[string]*governance.VotingInfo
-	var maxVotingWeight int64
-	var ok bool
-
-	// Use custom snapshot function if available
-	if gv.getUserVotingInfoSnapshotFn != nil {
-		votingInfos, maxVotingWeight, ok = gv.getUserVotingInfoSnapshotFn(snapshotTime)
-	} else {
-		votingInfos, maxVotingWeight, ok = getUserVotingInfoWithDelegationSnapshots(snapshotTime)
+	if snapshotTime < 0 {
+		snapshotTime = 0
 	}
 
-	if !ok || maxVotingWeight <= 0 {
-		return votingInfos, maxVotingWeight, errNotEnoughVotingWeight
+	// Get total delegation amount at snapshot time from staker contract via accessor
+	totalVotingWeight, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)
+	if !ok || totalVotingWeight <= 0 {
+		return 0, snapshotTime, errNotEnoughVotingWeight
 	}
 
-	return votingInfos, maxVotingWeight, nil
-}
-
-// getUserVotingInfoWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
-// Integrates with staker contract to get actual delegation amounts.
-func getUserVotingInfoWithDelegationSnapshots(
-	snapshotTime int64,
-) (map[string]*governance.VotingInfo, int64, bool) {
-	// Get delegation snapshots from staker contract
-	delegationSnapshots, ok := staker.GetDelegationSnapshots(snapshotTime)
-	if !ok {
-		return nil, 0, false
-	}
-
-	maxVotingWeight := int64(0)
-	userVotes := make(map[string]*governance.VotingInfo)
-
-	// Process each delegation snapshot
-	for _, snapshot := range delegationSnapshots {
-		delegatorAddress := snapshot.DelegatorAddress()
-		delegationAmount := snapshot.DelegationAmount()
-
-		// Create voting info for each delegator
-		userVotes[delegatorAddress.String()] = governance.NewVotingInfo(delegationAmount, delegatorAddress)
-		maxVotingWeight += delegationAmount
-	}
-
-	return userVotes, maxVotingWeight, true
+	return totalVotingWeight, snapshotTime, nil
 }

@@ -11,7 +11,7 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func(t *testing.T)
-		initializer          func(s IGovernanceStore) IGovernance
+		initializer          func(governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool

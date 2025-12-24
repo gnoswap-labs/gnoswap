@@ -68,3 +68,41 @@ func (gv *governanceV1) GetConfig(configVersion int64) governance.Config {
 
 	return config
 }
+
+// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+func (gv *governanceV1) GetMaxSmoothingPeriod() int64 {
+	return maxSmoothingPeriod
+}
+
+// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
+// This is used by gov/staker to prevent cleanup of delegation history that is still needed
+// by active proposals for voting weight calculation.
+func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+	currentTime := time.Now().Unix()
+	currentProposalID := gv.getCurrentProposalID()
+
+	var (
+		oldestSnapshotTime int64
+		hasActiveProposal  bool
+	)
+
+	// Iterate through all proposals to find active ones
+	for id := int64(1); id <= currentProposalID; id++ {
+		proposal, exists := gv.getProposal(id)
+		if !exists {
+			continue
+		}
+
+		proposalResolver := NewProposalResolver(proposal)
+
+		if proposalResolver.IsActive(currentTime) {
+			snapshotTime := proposal.SnapshotTime()
+			if !hasActiveProposal || snapshotTime < oldestSnapshotTime {
+				oldestSnapshotTime = snapshotTime
+				hasActiveProposal = true
+			}
+		}
+	}
+
+	return oldestSnapshotTime, hasActiveProposal
+}

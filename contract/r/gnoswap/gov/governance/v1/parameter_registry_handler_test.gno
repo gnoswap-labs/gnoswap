@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 )
 
 // TestRegistryHandler_NewRegistryHandler tests the creation of registry handler
@@ -26,7 +26,7 @@ func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
 		{
 			name: "create handler with failing function",
 			handlerFn: func(params []string) error {
-				return ufmt.Errorf("handler error")
+				return errors.New("handler error")
 			},
 			testParams:    []string{"param1"},
 			expectedError: true,
@@ -35,7 +35,7 @@ func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
 			name: "create handler with nil params",
 			handlerFn: func(params []string) error {
 				if len(params) == 0 {
-					return ufmt.Errorf("no params")
+					return errors.New("no params")
 				}
 				return nil
 			},
@@ -82,59 +82,88 @@ func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
 func TestRegistryHandler_Execute(t *testing.T) {
 	tests := []struct {
-		name           string
-		params         []string
-		handlerFn      ParameterHandler
-		expectedError  bool
-		expectedErrMsg string
+		name             string
+		params           []string
+		handlerFactory   func() ParameterHandler
+		expectedError    bool
+		expectedErrMsg   string
+		expectedPanic    bool
+		expectedPanicMsg string
 	}{
 		{
 			name:   "Success - Execute with valid params",
 			params: []string{"param1", "param2"},
-			handlerFn: NewParameterHandlerOptions(
-				"test/pkg",
-				"testFunc",
-				2,
-				func([]string) error {
-					return nil
-				},
-			),
+			handlerFactory: func() ParameterHandler {
+				return NewParameterHandlerOptions(
+					"test/pkg",
+					"testFunc",
+					2,
+					func([]string) error {
+						return nil
+					},
+				)
+			},
 			expectedError: false,
 		},
 		{
 			name:   "Failure - Different param count",
 			params: []string{"param1"},
-			handlerFn: NewParameterHandlerOptions(
-				"test/pkg",
-				"testFunc",
-				2,
-				func([]string) error {
-					return ufmt.Errorf("test error")
-				},
-			),
+			handlerFactory: func() ParameterHandler {
+				return NewParameterHandlerOptions(
+					"test/pkg",
+					"testFunc",
+					2,
+					func([]string) error {
+						return errors.New("test error")
+					},
+				)
+			},
 			expectedError:  true,
 			expectedErrMsg: "expected 2 parameters, got 1",
 		},
 		{
 			name:   "Failure - Execute with error",
 			params: []string{"param1"},
-			handlerFn: NewParameterHandlerOptions(
-				"test/pkg",
-				"testFunc",
-				1,
-				func([]string) error {
-					return ufmt.Errorf("test error")
-				},
-			),
+			handlerFactory: func() ParameterHandler {
+				return NewParameterHandlerOptions(
+					"test/pkg",
+					"testFunc",
+					1,
+					func([]string) error {
+						return errors.New("test error")
+					},
+				)
+			},
 			expectedError:  true,
 			expectedErrMsg: "test error",
+		},
+		{
+			name: "Failure - Validator count mismatch",
+			handlerFactory: func() ParameterHandler {
+				return NewParameterHandlerOptions(
+					"gno.land/r/gnoswap/test",
+					"DoThing",
+					2,
+					func([]string) error { return nil },
+					func(string) error { return nil },
+				)
+			},
+			expectedPanic:    true,
+			expectedPanicMsg: "invalid validator count for gno.land/r/gnoswap/test:DoThing: expected 2, got 1",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					_ = tc.handlerFactory()
+				})
+				return
+			}
+
 			// given
-			handler := tc.handlerFn
+			handler := tc.handlerFactory()
 
 			// when
 			err := handler.Execute(tc.params)
@@ -142,7 +171,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 			// then
 			if tc.expectedError {
 				uassert.NotNil(t, err)
-				uassert.Equal(t, err.Error(), tc.expectedErrMsg)
+				uassert.ErrorContains(t, err, tc.expectedErrMsg)
 			} else {
 				uassert.Nil(t, err)
 			}
