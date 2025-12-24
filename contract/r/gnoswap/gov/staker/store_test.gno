@@ -233,7 +233,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 
 				uassert.False(t, gs.HasDelegation(1), "delegation 1 should not exist")
 
-				delegation := NewDelegation(1, "g1delegator", "g1delegateTo", 1000, 100, 12345)
+				delegation := NewDelegation(1, address("g1delegator"), address("g1delegateTo"), 1000, 100, 12345)
 
 				err = gs.SetDelegation(1, delegation)
 				uassert.NoError(t, err)
@@ -257,7 +257,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 				err := gs.SetDelegations(delegations)
 				uassert.NoError(t, err)
 
-				delegation := NewDelegation(1, "g1delegator", "g1delegateTo", 1000, 100, 12345)
+				delegation := NewDelegation(1, address("g1delegator"), address("g1delegateTo"), 1000, 100, 12345)
 
 				err = gs.SetDelegation(1, delegation)
 				uassert.NoError(t, err)
