@@ -1,5 +1,7 @@
 package protocol_fee
 
+import "gno.land/p/nt/avl"
+
 // MockResponse is a simple mock response helper
 type MockResponse struct {
 	data      map[string][]any
@@ -83,12 +85,12 @@ func (m *MockProtocolFee) GetGovStakerPct() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockProtocolFee) GetTokenListWithAmount() map[string]int64 {
+func (m *MockProtocolFee) GetTokenListWithAmount() *avl.Tree {
 	res, ok := m.Response.Get("GetTokenListWithAmount")
 	if !ok {
 		return nil
 	}
-	return res[0].(map[string]int64)
+	return res[0].(*avl.Tree)
 }
 
 func (m *MockProtocolFee) GetAmountOfToken(tokenPath string) int64 {

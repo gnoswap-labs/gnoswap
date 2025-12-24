@@ -2,6 +2,7 @@
 package mock
 
 import (
+	"gno.land/p/nt/avl"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/protocol_fee/v1"
 )
@@ -101,11 +102,11 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	).(int64)
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
+func (t *TestProtocolFee) GetTokenListWithAmount() *avl.Tree {
 	return t.ExecuteFn(
 		"GetTokenListWithAmount",
 		func(args ...any) any { return t.instance.GetTokenListWithAmount() },
-	).(map[string]int64)
+	).(*avl.Tree)
 }
 
 func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {

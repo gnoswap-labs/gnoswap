@@ -26,14 +26,23 @@ import (
 func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	assertIsAdminOrGovStaker(caller)
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
 
-	for token, amount := range pf.store.GetTokenListWithAmounts() {
+	state := pf.getProtocolFeeState()
+	devOpsPct := state.DevOpsPct()
+
+	pf.store.GetTokenListWithAmounts().Iterate("", "", func(token string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Errorf("failed to cast amount to int64: %T", value))
+		}
+
 		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// amount should be less than or equal to balance
@@ -45,22 +54,17 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 
 		if amount <= 0 {
-			continue
+			return false
 		}
 
 		// Distribute only the recorded amount, not the entire balance
 		distributeAmount := amount
-		if distributeAmount > balance {
-			// This should not happen due to the check above, but safeguard anyway
-			distributeAmount = balance
-		}
 
-		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
 		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
 		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount) // default 100%
 
 		// Distribute to DevOps
-		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
+		if err := state.distributeToDevOps(token, toDevOpsAmount); err != nil {
 			panic(err)
 		}
 		if toDevOpsAmount > 0 {
@@ -68,23 +72,23 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 
 		// Distribute to Gov/Staker
-		if err := pf.getProtocolFeeState().distributeToGovStaker(token, toGovStakerAmount); err != nil {
+		if err := state.distributeToGovStaker(token, toGovStakerAmount); err != nil {
 			panic(err)
 		}
 		if toGovStakerAmount > 0 {
 			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
 			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
-	}
+		return false
+	})
 
-	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
+	if err := state.clearTokenListWithAmount(); err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"TransferProtocolFee",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
 		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
@@ -103,28 +107,29 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidPercent(pct)
 
-	prevDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
-	prevGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
+	// Capture previous values before mutation
+	state := pf.getProtocolFeeState()
+	prevDevOpsPct := state.DevOpsPct()
+	prevGovStakerPct := state.GovStakerPct()
 
-	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(pct)
+	newDevOpsPct, err := state.setDevOpsPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetDevOpsPct",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
 		"prevDevOpsPct", strconv.FormatInt(prevDevOpsPct, 10),
-		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
+		"newGovStakerPct", strconv.FormatInt(state.GovStakerPct(), 10),
 		"prevGovStakerPct", strconv.FormatInt(prevGovStakerPct, 10),
 	)
 }
@@ -139,26 +144,27 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidPercent(pct)
 
-	prevDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
-	prevGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
+	// Capture previous values before mutation
+	state := pf.getProtocolFeeState()
+	prevDevOpsPct := state.DevOpsPct()
+	prevGovStakerPct := state.GovStakerPct()
 
-	newGovStakerPct, err := pf.getProtocolFeeState().setGovStakerPct(pct)
+	newGovStakerPct, err := state.setGovStakerPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetGovStakerPct",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
+		"newDevOpsPct", strconv.FormatInt(state.DevOpsPct(), 10),
 		"prevDevOpsPct", strconv.FormatInt(prevDevOpsPct, 10),
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
 		"prevGovStakerPct", strconv.FormatInt(prevGovStakerPct, 10),
@@ -190,11 +196,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	if !exists {
 		currentAmount = 0
 	}
-
-	// Check for overflow
-	addedAmount := safeAddInt64(currentAmount, amount)
-
-	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
+	pf.store.SetTokenListWithAmountItem(tokenPath, safeAddInt64(currentAmount, amount))
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.

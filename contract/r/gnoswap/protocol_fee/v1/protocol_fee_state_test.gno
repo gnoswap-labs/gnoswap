@@ -221,13 +221,13 @@ func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 			}
 
 			// Verify initial state
-			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), len(test.initialData))
+			uassert.Equal(t, pfs.store.GetTokenListWithAmounts().Size(), len(test.initialData))
 
 			// Clear the list
 			pfs.clearTokenListWithAmount()
 
 			// Verify final state
-			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), test.expectedLen)
+			uassert.Equal(t, pfs.store.GetTokenListWithAmounts().Size(), test.expectedLen)
 		})
 	}
 }
@@ -668,19 +668,19 @@ func TestProtocolFeeState_ClearTokenListWithAmount_MultipleTokens(t *testing.T) 
 			// Given
 			pfs := newProtocolFeeStateInternal(t)
 			for token, amount := range tt.initialData {
-				pfs.TokenListWithAmounts()[token] = amount
+				pfs.TokenListWithAmounts().Set(token, amount)
 			}
-			uassert.Equal(t, len(pfs.TokenListWithAmounts()), len(tt.initialData))
+			uassert.Equal(t, pfs.TokenListWithAmounts().Size(), len(tt.initialData))
 
 			// When
 			pfs.clearTokenListWithAmount()
 
 			// Then
-			uassert.Equal(t, len(pfs.TokenListWithAmounts()), 0)
+			uassert.Equal(t, pfs.TokenListWithAmounts().Size(), 0)
 
 			// Verify all tokens were removed
 			for token := range tt.initialData {
-				_, exists := pfs.TokenListWithAmounts()[token]
+				_, exists := pfs.TokenListWithAmounts().Get(token)
 				uassert.False(t, exists)
 			}
 		})
