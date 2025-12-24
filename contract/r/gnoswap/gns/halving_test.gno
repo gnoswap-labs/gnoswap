@@ -52,49 +52,89 @@ func TestGetHalvingYear(t *testing.T) {
 	})
 }
 
-func TestHalvingYearStartTimestamp(t *testing.T) {
+func TestEmissionState_CalculateAmountPerSeconds(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
 
-	// Test that we can get the start timestamp for a valid year
-	startTimestamp := GetHalvingYearStartTimestamp(1)
-	uassert.True(t, startTimestamp > 0)
+	// Test emission state basic functions
+	uassert.True(t, IsEmissionInitialized())
+
+	es := getEmissionState()
+	uassert.True(t, es.getStartTimestamp() > 0)
+	uassert.True(t, es.getEndTimestamp() > es.getStartTimestamp())
+
+	// Test amount per seconds for year 1
+	expected := es.getHalvingYearAmountPerSecond(1)
+	uassert.True(t, expected > 0)
+
+	for y := int64(1); y <= HALVING_END_YEAR; y++ {
+		amountPerSeconds := es.getHalvingYearAmountPerSecond(y)
+		yearMaxAmount := GetHalvingYearMaxAmount(y)
+
+		// Amount per seconds should be year max amount divided by seconds in year
+		expected := yearMaxAmount / SECONDS_IN_YEAR
+		uassert.Equal(
+			t,
+			expected,
+			amountPerSeconds,
+			ufmt.Sprintf("year %d amount per seconds mismatch: expected=%d, got=%d", y, expected, amountPerSeconds),
+		)
+	}
 }
 
-func TestHalvingYearTimestamp(t *testing.T) {
+func TestHalvingYearGetters(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
 
-	// Test that we can get the timestamp for a valid year
-	timestamp := GetHalvingYearTimestamp(2)
-	uassert.True(t, timestamp > 0)
-}
+	t.Run("valid years (1-12)", func(t *testing.T) {
+		var prevendTimestamp int64
 
-func TestHalvingYearMaxAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+		for year := int64(1); year <= HALVING_END_YEAR; year++ {
+			startTimestamp := GetHalvingYearStartTimestamp(year)
+			endTimestamp := GetHalvingYearEndTimestamp(year)
 
-	// Test that we can get the max amount for a valid year
-	maxAmount := GetHalvingYearMaxAmount(3)
-	uassert.True(t, maxAmount > 0)
-}
+			// StartTimestamp and EndTimestamp should be positive
+			uassert.True(t, startTimestamp > 0)
+			uassert.True(t, endTimestamp > startTimestamp)
 
-func TestHalvingYearMintAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+			// EndTimestamp should be startTimestamp + SECONDS_IN_YEAR - 1
+			uassert.Equal(t, startTimestamp+SECONDS_IN_YEAR-1, endTimestamp)
 
-	// Test that we can get the mint amount for a valid year (initially 0)
-	mintAmount := GetHalvingYearMintAmount(4)
-	uassert.Equal(t, int64(0), mintAmount)
-}
+			// GetHalvingYearTimestamp should equal GetHalvingYearStartTimestamp
+			uassert.Equal(t, startTimestamp, GetHalvingYearTimestamp(year))
 
-func TestHalvingYearAccuAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
+			// Year N+1 start should be Year N end + 1
+			if year > 1 {
+				uassert.Equal(t, prevendTimestamp+1, startTimestamp)
+			}
+			prevendTimestamp = endTimestamp
 
-	// Test that we can get the accumulated amount for a valid year (initially 0)
-	accuAmount := GetHalvingYearAccuAmount(5)
-	uassert.Equal(t, int64(0), accuAmount)
+			// MaxAmount should match GetHalvingAmountsPerYear
+			uassert.Equal(t, GetHalvingAmountsPerYear(year), GetHalvingYearMaxAmount(year))
+
+			// MintAmount and AccuAmount should be 0 initially
+			uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year))
+			uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year))
+		}
+	})
+
+	t.Run("invalid year 0", func(t *testing.T) {
+		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
+		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
+		uassert.Equal(t, int64(0), GetHalvingYearTimestamp(0))
+		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
+		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(0))
+		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
+	})
+
+	t.Run("invalid year 13", func(t *testing.T) {
+		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
+		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
+		uassert.Equal(t, int64(0), GetHalvingYearTimestamp(13))
+		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
+		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(13))
+		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(13))
+	})
 }
 
 func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
@@ -115,58 +155,32 @@ func TestGetHalvingInfo(t *testing.T) {
 }
 
 func TestValidBlockTime(t *testing.T) {
-	// Test valid block time validation
-	err := validBlockTime(0)
-	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+	const maxBlockTime int64 = 1_000_000_000 // 1e9
 
-	err = validBlockTime(-5)
-	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+	tests := []struct {
+		name        string
+		blockTime   int64
+		shouldError bool
+	}{
+		// Lower boundary
+		{"blockTime = -1 (invalid)", -1, true},
+		{"blockTime = 0 (invalid)", 0, true},
+		{"blockTime = 1 (valid, min boundary)", 1, false},
 
-	err = validBlockTime(1000)
-	uassert.NoError(t, err)
-}
+		// Upper boundary
+		{"blockTime = maxBlockTime-1 (valid, max boundary)", maxBlockTime - 1, false},
+		{"blockTime = maxBlockTime (invalid)", maxBlockTime, true},
+	}
 
-func TestEmissionState(t *testing.T) {
-	/*
-		Test basic emission state functionality
-	*/
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test emission state basic functions
-	uassert.True(t, IsEmissionInitialized())
-
-	es := getEmissionState()
-	uassert.True(t, es.getStartTimestamp() > 0)
-	uassert.True(t, es.getEndTimestamp() > es.getStartTimestamp())
-
-	// Test amount per seconds for year 1
-	expected := es.getHalvingYearAmountPerSecond(1)
-	uassert.True(t, expected > 0)
-}
-
-func TestAmountPerSecondsCalculation(t *testing.T) {
-	/*
-		Test that the amount per seconds is correctly calculated for all years
-	*/
-	resetObject(t)
-	InitGnsTest(t)
-
-	es := getEmissionState()
-
-	// Test each year has correct amount per seconds calculation
-	for y := int64(1); y <= HALVING_END_YEAR; y++ {
-		amountPerSeconds := es.getHalvingYearAmountPerSecond(y)
-		yearMaxAmount := GetHalvingYearMaxAmount(y)
-
-		// Amount per seconds should be year max amount divided by seconds in year
-		expected := yearMaxAmount / SECONDS_IN_YEAR
-		uassert.Equal(
-			t,
-			expected,
-			amountPerSeconds,
-			ufmt.Sprintf("year %d amount per seconds mismatch: expected=%d, got=%d", y, expected, amountPerSeconds),
-		)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validBlockTime(tt.blockTime)
+			if tt.shouldError {
+				uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
 	}
 }
 
@@ -436,11 +450,11 @@ func TestHalvingDataBoundaryTimestamps(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hd := NewHalvingData(tt.startTimestamp)
 
-			startTs := hd.getStartTimestamp(tt.year)
-			endTs := hd.getEndTimestamp(tt.year)
+			startTimestamp := hd.getStartTimestamp(tt.year)
+			endTimestamp := hd.getEndTimestamp(tt.year)
 
-			uassert.Equal(t, tt.expectedStart, startTs, "Start timestamp mismatch")
-			uassert.Equal(t, tt.expectedEnd, endTs, "End timestamp mismatch")
+			uassert.Equal(t, tt.expectedStart, startTimestamp, "Start timestamp mismatch")
+			uassert.Equal(t, tt.expectedEnd, endTimestamp, "End timestamp mismatch")
 		})
 	}
 }
