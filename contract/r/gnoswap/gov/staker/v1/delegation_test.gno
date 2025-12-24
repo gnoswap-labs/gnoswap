@@ -1,7 +1,7 @@
 package v1
 
 import (
-    "math"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -744,7 +744,7 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			expectedHasError: false,
 		},
 		{
-			name:                "overflow",
+			name:                 "overflow",
 			collectedAmount:      math.MaxInt64, // MaxInt64
 			amount:               1,
 			expectedResult:       0,
@@ -757,14 +757,14 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// when/then
 			if tc.expectedHasPanic {
-    			uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
-       				addToCollectedAmount(tc.collectedAmount, tc.amount)
-    			})
-            } else if tc.expectedHasError {
-                _, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+					addToCollectedAmount(tc.collectedAmount, tc.amount)
+				})
+			} else if tc.expectedHasError {
+				_, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NotNil(t, err)
 			} else {
-			    result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NoError(t, err)
 				uassert.Equal(t, result, tc.expectedResult)
 			}
@@ -946,4 +946,294 @@ func TestDelegation_BoundaryConditions(t *testing.T) {
 		// then: should succeed
 		uassert.NoError(t, err)
 	})
+}
+
+// TestDelegation_WithdrawDeletion tests that fully collected withdraws are removed from the list
+func TestDelegation_WithdrawDeletion(t *testing.T) {
+	tests := []struct {
+		name                       string
+		setupDelegation            func() (*staker.Delegation, *DelegationResolver)
+		collectAmount              int64
+		collectTime                int64
+		expectedWithdrawCount      int
+		expectedCollectedAmount    int64
+		expectedRemainingWithdraws func([]*staker.DelegationWithdraw)
+	}{
+		{
+			name: "Single withdraw - full collection removes it",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(500, 100, 100, 100)
+				return delegation, resolver
+			},
+			collectAmount:           500,
+			collectTime:             300,
+			expectedWithdrawCount:   0,
+			expectedCollectedAmount: 500,
+		},
+		{
+			name: "Single withdraw - partial collection keeps it",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(500, 100, 100, 100)
+				return delegation, resolver
+			},
+			collectAmount:           300,
+			collectTime:             300,
+			expectedWithdrawCount:   1,
+			expectedCollectedAmount: 300,
+			expectedRemainingWithdraws: func(withdraws []*staker.DelegationWithdraw) {
+				uassert.Equal(t, len(withdraws), 1)
+				uassert.Equal(t, withdraws[0].UnDelegateAmount(), int64(500))
+				uassert.Equal(t, withdraws[0].CollectedAmount(), int64(300))
+				uassert.False(t, withdraws[0].IsCollected())
+			},
+		},
+		{
+			name: "Multiple withdraws - full collection removes all",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(300, 100, 100, 100)
+				resolver.UnDelegate(200, 150, 150, 100)
+				resolver.UnDelegate(100, 200, 200, 100)
+				return delegation, resolver
+			},
+			collectAmount:           600,
+			collectTime:             400,
+			expectedWithdrawCount:   0,
+			expectedCollectedAmount: 600,
+		},
+		{
+			name: "Multiple withdraws - partial collection removes only fully collected ones",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(300, 100, 100, 100)
+				resolver.UnDelegate(200, 150, 150, 100)
+				resolver.UnDelegate(100, 200, 200, 100)
+				return delegation, resolver
+			},
+			collectAmount:           550,
+			collectTime:             400,
+			expectedWithdrawCount:   1,
+			expectedCollectedAmount: 550,
+			expectedRemainingWithdraws: func(withdraws []*staker.DelegationWithdraw) {
+				uassert.Equal(t, len(withdraws), 1)
+				uassert.Equal(t, withdraws[0].UnDelegateAmount(), int64(100))
+				uassert.Equal(t, withdraws[0].CollectedAmount(), int64(50))
+				uassert.False(t, withdraws[0].IsCollected())
+			},
+		},
+		{
+			name: "Withdraw deletion with UnDelegateWithoutLockup",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegateWithoutLockup(500, 100, 100)
+				return delegation, resolver
+			},
+			collectAmount:           0,
+			collectTime:             200,
+			expectedWithdrawCount:   0, // Already collected withdraw gets cleaned up
+			expectedCollectedAmount: 500,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup delegation
+			delegation, resolver := tt.setupDelegation()
+
+			// When: Collect
+			err := resolver.Collect(tt.collectAmount, tt.collectTime)
+
+			// Then: Verify results
+			uassert.NoError(t, err)
+			uassert.Equal(t, len(resolver.Get().Withdraws()), tt.expectedWithdrawCount)
+			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollectedAmount)
+
+			// Additional withdraw validation if needed
+			if tt.expectedRemainingWithdraws != nil {
+				tt.expectedRemainingWithdraws(delegation.Withdraws())
+			}
+		})
+	}
+}
+
+// TestDelegation_IsEmptyAfterCleanup tests that IsEmpty() works correctly after withdraw cleanup
+func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
+	tests := []struct {
+		name              string
+		initialAmount     int64
+		operations        func(*DelegationResolver)
+		expectedIsEmpty   bool
+		expectedLocked    int64
+		expectedWithdraws int
+	}{
+		{
+			name:          "IsEmpty after full collection and cleanup",
+			initialAmount: 1000,
+			operations: func(r *DelegationResolver) {
+				r.UnDelegate(1000, 100, 100, 100)
+				err := r.Collect(1000, 300)
+				uassert.NoError(t, err)
+			},
+			expectedIsEmpty:   true,
+			expectedLocked:    0,
+			expectedWithdraws: 0,
+		},
+		{
+			name:          "Not empty after partial collection",
+			initialAmount: 1000,
+			operations: func(r *DelegationResolver) {
+				r.UnDelegate(1000, 100, 100, 100)
+				err := r.Collect(500, 300)
+				uassert.NoError(t, err)
+			},
+			expectedIsEmpty:   false,
+			expectedLocked:    500,
+			expectedWithdraws: 1,
+		},
+		{
+			name:          "IsEmpty progression through multiple operations",
+			initialAmount: 600,
+			operations: func(r *DelegationResolver) {
+				r.UnDelegate(200, 100, 100, 100)
+				r.UnDelegate(400, 150, 150, 100)
+				uassert.False(t, r.IsEmpty())
+				uassert.Equal(t, r.LockedAmount(), int64(600))
+
+				err1 := r.Collect(200, 300)
+				uassert.NoError(t, err1)
+				uassert.False(t, r.IsEmpty())
+				uassert.Equal(t, r.LockedAmount(), int64(400))
+				uassert.Equal(t, len(r.Get().Withdraws()), 1)
+
+				err2 := r.Collect(400, 300)
+				uassert.NoError(t, err2)
+			},
+			expectedIsEmpty:   true,
+			expectedLocked:    0,
+			expectedWithdraws: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Fresh delegation with specified initial amount
+			delegation := NewDelegation(
+				1,
+				address("g1delegator"),
+				address("g1validator"),
+				tt.initialAmount,
+				100,
+				100,
+			)
+			resolver := NewDelegationResolver(delegation)
+
+			// When: Execute operations
+			tt.operations(resolver)
+
+			// Then: Verify final state
+			uassert.Equal(t, resolver.IsEmpty(), tt.expectedIsEmpty)
+			uassert.Equal(t, resolver.LockedAmount(), tt.expectedLocked)
+			uassert.Equal(t, len(resolver.Get().Withdraws()), tt.expectedWithdraws)
+		})
+	}
+}
+
+// TestDelegation_WithdrawCleanupEdgeCases tests edge cases for withdraw cleanup
+func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
+	tests := []struct {
+		name                    string
+		setupDelegation         func() (*staker.Delegation, *DelegationResolver)
+		collectAmount           int64
+		collectTime             int64
+		expectedWithdrawCount   int
+		expectedCollectedAmount int64
+		validateRemaining       func([]*staker.DelegationWithdraw)
+	}{
+		{
+			name: "No withdraws - cleanup is no-op",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				return delegation, resolver
+			},
+			collectAmount:           0,
+			collectTime:             200,
+			expectedWithdrawCount:   0,
+			expectedCollectedAmount: 0,
+		},
+		{
+			name: "All withdraws already collected - get cleaned up",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegateWithoutLockup(500, 100, 100)
+				return delegation, resolver
+			},
+			collectAmount:           0,
+			collectTime:             200,
+			expectedWithdrawCount:   0, // Already collected withdraw gets cleaned up
+			expectedCollectedAmount: 500,
+		},
+		{
+			name: "Mixed lockup periods - cleanup respects collectability",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 1000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(300, 100, 100, 100)
+				resolver.UnDelegate(200, 150, 150, 10000)
+				return delegation, resolver
+			},
+			collectAmount:           300,
+			collectTime:             300,
+			expectedWithdrawCount:   1,
+			expectedCollectedAmount: 300,
+			validateRemaining: func(withdraws []*staker.DelegationWithdraw) {
+				uassert.Equal(t, len(withdraws), 1)
+				uassert.Equal(t, withdraws[0].UnDelegateAmount(), int64(200))
+				uassert.Equal(t, withdraws[0].CollectedAmount(), int64(0))
+			},
+		},
+		{
+			name: "Large number of withdraws - all get cleaned up",
+			setupDelegation: func() (*staker.Delegation, *DelegationResolver) {
+				delegation := NewDelegation(1, address("g1delegator"), address("g1validator"), 10000, 100, 100)
+				resolver := NewDelegationResolver(delegation)
+				for i := 0; i < 10; i++ {
+					resolver.UnDelegate(100, 100+int64(i*10), 100+int64(i*10), 100)
+				}
+				return delegation, resolver
+			},
+			collectAmount:           1000,
+			collectTime:             400,
+			expectedWithdrawCount:   0,
+			expectedCollectedAmount: 1000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup delegation
+			delegation, resolver := tt.setupDelegation()
+
+			// When: Collect
+			err := resolver.Collect(tt.collectAmount, tt.collectTime)
+
+			// Then: Verify results
+			uassert.NoError(t, err)
+			uassert.Equal(t, len(resolver.Get().Withdraws()), tt.expectedWithdrawCount)
+			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollectedAmount)
+
+			// Additional validation if needed
+			if tt.validateRemaining != nil {
+				tt.validateRemaining(delegation.Withdraws())
+			}
+		})
+	}
 }

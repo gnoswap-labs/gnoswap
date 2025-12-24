@@ -87,35 +87,41 @@ func (r *DelegationResolver) Collect(amount, currentTime int64) error {
 // processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(amount, currentTime int64) error {
 	remainingToCollect := amount
+	activeWithdraws := make([]*staker.DelegationWithdraw, 0)
 
 	for _, withdraw := range r.delegation.Withdraws() {
-		if remainingToCollect <= 0 {
-			break
+		// Process collection if we still have amount to collect
+		if remainingToCollect > 0 {
+			resolver := NewDelegationWithdrawResolver(withdraw)
+
+			if resolver.IsCollectable(currentTime) {
+				collectableAmount := resolver.CollectableAmount(currentTime)
+				if collectableAmount > 0 {
+					amountToCollect := min(remainingToCollect, collectableAmount)
+
+					if err := resolver.Collect(amountToCollect, currentTime); err != nil {
+						return err
+					}
+
+					updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
+					if err != nil {
+						return err
+					}
+					r.delegation.SetCollectedAmount(updatedAmount)
+					remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
+				}
+			}
 		}
 
-		resolver := NewDelegationWithdrawResolver(withdraw)
-
-		if !resolver.IsCollectable(currentTime) {
-			continue
+		// Only keep withdraws that are not fully collected
+		if !withdraw.IsCollected() {
+			activeWithdraws = append(activeWithdraws, withdraw)
 		}
+	}
 
-		collectableAmount := resolver.CollectableAmount(currentTime)
-		if collectableAmount <= 0 {
-			continue
-		}
-
-		amountToCollect := min(remainingToCollect, collectableAmount)
-
-		if err := resolver.Collect(amountToCollect, currentTime); err != nil {
-			return err
-		}
-
-		updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
-		if err != nil {
-			return err
-		}
-		r.delegation.SetCollectedAmount(updatedAmount)
-		remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
+	// Update withdraws list if any were removed
+	if len(activeWithdraws) < len(r.delegation.Withdraws()) {
+		r.delegation.SetWithdraws(activeWithdraws)
 	}
 
 	return nil
