@@ -18,13 +18,12 @@ import (
 )
 
 var (
-	adminAddr, _      = access.GetAddress(prbac.ROLE_ADMIN.String())
-	stakerAddr, _     = access.GetAddress(prbac.ROLE_STAKER.String())
-	governanceAddr, _ = access.GetAddress(prbac.ROLE_GOVERNANCE.String())
-	adminRealm        = testing.NewUserRealm(adminAddr)
-	adminUser         = adminAddr
-	dummyRealm        = testing.NewCodeRealm("gno.land/r/dummy")
-	aliceAddr         = testutils.TestAddress("alice")
+	adminAddr      = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr     = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	governanceAddr = access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
+
+	adminUser = adminAddr
+	aliceAddr = testutils.TestAddress("alice")
 
 	// contract paths
 	poolPath       = "gno.land/r/gnoswap/pool"
@@ -34,9 +33,12 @@ var (
 	govStakerPath  = "gno.land/r/gnoswap/gov/staker"
 	governancePath = "gno.land/r/gnoswap/gov/governance"
 
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	stakerRealm     = testing.NewCodeRealm(stakerPath)
 	govStakerRealm  = testing.NewCodeRealm(govStakerPath)
 	governanceRealm = testing.NewCodeRealm(governancePath)
+
+	dummyRealm = testing.NewCodeRealm("gno.land/r/dummy")
 )
 
 // createTestProtocolFee creates a fresh protocolFeeV1 instance for testing
