@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/launchpad"
+	"gno.land/r/gnoswap/launchpad"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -95,23 +95,80 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 }
 
 func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
-	const currentDepositID = "1"
-	userAddr := testutils.TestAddress("user2")
+	userAddr := testutils.TestAddress("user_withdraw")
+
+	// Skip heights constants for different tier durations
+	// Formula: seconds_in_period / 5 (block time) + buffer
+	const (
+		skipHeightTier30  = 60*60*24*30/5 + 2  // 30 days
+		skipHeightTier180 = 60*60*24*180/5 + 2 // 180 days (default in initLaunchpadWithdrawTest)
+	)
 
 	tests := []struct {
-		name                 string
-		depositID            string
-		expectedHasError     bool
-		expectedErrorMessage string
-		expectedAmount       int64
-		skipHeight           int64
+		name           string
+		skipHeights    int64
+		useNilDeposit  bool
+		currentTime    func() int64
+		withdrawTwice  bool
+		expectedErr    bool
+		expectedErrMsg string
+		expectedAmount int64
 	}{
+		// Success cases
 		{
-			name:             "withdraw deposit successfully",
-			depositID:        currentDepositID,
-			expectedHasError: false,
-			expectedAmount:   1000000000,
-			skipHeight:       60*60*24*180/5 + 2,
+			name:           "success - withdraw deposit after tier ends",
+			skipHeights:    skipHeightTier180,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    false,
+			expectedAmount: 1000000000,
+		},
+		// Error cases
+		{
+			name:           "fail - deposit not yet ended",
+			skipHeights:    0,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "project lock period is not over yet",
+		},
+		{
+			name:           "fail - deposit already withdrawn",
+			skipHeights:    skipHeightTier180,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  true,
+			expectedErr:    true,
+			expectedErrMsg: "already collected",
+		},
+		{
+			name:           "fail - invalid currentTime zero",
+			skipHeights:    skipHeightTier180,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return 0 },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "currentTime must be positive",
+		},
+		{
+			name:           "fail - invalid currentTime negative",
+			skipHeights:    skipHeightTier180,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return -100 },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "currentTime must be positive",
+		},
+		{
+			name:           "fail - nil deposit",
+			skipHeights:    0,
+			useNilDeposit:  true,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "deposit is nil",
 		},
 	}
 
@@ -119,20 +176,41 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadWithdrawTest(t, userAddr)
 			lp := getTestImplementation()
-			testing.SkipHeights(tt.skipHeight)
-			deposit, _ := getDeposit(tt.depositID)
 
-			currentTime := time.Now().Unix()
-			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
-
-			if tt.expectedHasError {
-				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
-				return
+			if tt.skipHeights > 0 {
+				testing.SkipHeights(tt.skipHeights)
 			}
 
-			testing.SkipHeights(-tt.skipHeight)
-			uassert.NoError(t, err)
-			uassert.Equal(t, tt.expectedAmount, amount)
+			var deposit *launchpad.Deposit
+			var err error
+
+			if !tt.useNilDeposit {
+				deposit, err = getDeposit("1")
+				uassert.NoError(t, err)
+			}
+
+			currentTime := tt.currentTime()
+
+			if tt.withdrawTwice {
+				// First withdrawal should succeed
+				_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+				uassert.NoError(t, err)
+
+				// Refresh deposit to get updated state
+				deposit, err = getDeposit("1")
+				uassert.NoError(t, err)
+			}
+
+			// Execute withdrawal (or second withdrawal for withdrawTwice case)
+			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+
+			if tt.expectedErr {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedErrMsg)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expectedAmount, amount)
+			}
 		})
 	}
 }
