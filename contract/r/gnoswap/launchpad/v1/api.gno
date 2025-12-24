@@ -138,3 +138,31 @@ func (lp *launchpadV1) ApiGetProjectRecipientRewardByAddress(address address) st
 
 	return gs.GetClaimableRewardByAddress(address)
 }
+
+// ProjectStats holds aggregated statistics for a project across all tiers.
+// This struct is used to collect all stats in a single iteration over tiers.
+type ProjectStats struct {
+	TotalDepositCount    int64
+	TotalDepositAmount   int64
+	CurrentDepositCount  int64
+	CurrentDepositAmount int64
+	TotalCollectedAmount int64
+	RemainingAmount      int64
+}
+
+// getProjectStats calculates all project statistics in a single iteration over tiers.
+// This is more efficient than calling individual getter functions separately.
+func getProjectStats(p *launchpad.Project) ProjectStats {
+	var stats ProjectStats
+
+	for _, tier := range p.Tiers() {
+		stats.TotalDepositCount = safeAddInt64(stats.TotalDepositCount, tier.TotalDepositCount())
+		stats.TotalDepositAmount = safeAddInt64(stats.TotalDepositAmount, tier.TotalDepositAmount())
+		stats.CurrentDepositCount = safeAddInt64(stats.CurrentDepositCount, getTierCurrentDepositCount(tier))
+		stats.CurrentDepositAmount = safeAddInt64(stats.CurrentDepositAmount, getTierCurrentDepositAmount(tier))
+		stats.TotalCollectedAmount = safeAddInt64(stats.TotalCollectedAmount, tier.TotalCollectedAmount())
+		stats.RemainingAmount = safeAddInt64(stats.RemainingAmount, getCalculatedLeftReward(tier))
+	}
+
+	return stats
+}
