@@ -837,3 +837,56 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 		})
 	}
 }
+
+func TestGetImplementationPanicWhenNil(t *testing.T) {
+	tests := []struct {
+		name     string
+		callFunc func()
+	}{
+		{
+			name: "DistributeProtocolFee panics when implementation is nil",
+			callFunc: func() {
+				DistributeProtocolFee(cross)
+			},
+		},
+		{
+			name: "SetDevOpsPct panics when implementation is nil",
+			callFunc: func() {
+				SetDevOpsPct(cross, 50)
+			},
+		},
+		{
+			name: "SetGovStakerPct panics when implementation is nil",
+			callFunc: func() {
+				SetGovStakerPct(cross, 50)
+			},
+		},
+		{
+			name: "AddToProtocolFee panics when implementation is nil",
+			callFunc: func() {
+				AddToProtocolFee(cross, "gno.land/r/demo/gns", 1000)
+			},
+		},
+		{
+			name: "ClearTokenListWithAmount panics when implementation is nil",
+			callFunc: func() {
+				ClearTokenListWithAmount(cross)
+			},
+		},
+		{
+			name: "ClearAccuTransferToGovStaker panics when implementation is nil",
+			callFunc: func() {
+				ClearAccuTransferToGovStaker(cross)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			// Do NOT register any initializer - implementation remains nil
+
+			uassert.AbortsContains(t, "implementation is not initialized", tt.callFunc)
+		})
+	}
+}
