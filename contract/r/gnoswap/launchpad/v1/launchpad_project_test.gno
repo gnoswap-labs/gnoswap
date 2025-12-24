@@ -698,7 +698,6 @@ func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	setTestProjects(projects)
 }
 
-// TestLaunchpadProject_isGovernanceToken tests isGovernanceToken private function
 func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -735,7 +734,6 @@ func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	}
 }
 
-// TestLaunchpadProject_validateRefundProject tests validateRefundProject private function
 func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 	testAddr := testutils.TestAddress("recipient")
 
@@ -751,7 +749,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		expectedError         string
 	}{
 		{
-			name:                  "valid refund - project ended and has remaining amount",
+			name:                  "valid refund - project ended with remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
@@ -761,7 +759,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			expectedHasError:      false,
 		},
 		{
-			name:                  "error when project has no remaining amount",
+			name:                  "valid refund - project ended without remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
@@ -769,6 +767,17 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			recipient:             testAddr,
 			currentTime:           2001,
 			expectedHasError:      false,
+		},
+		{
+			name:                  "error when recipient is invalid",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  50_000_000,
+			recipient:             address("invalid"),
+			currentTime:           2001,
+			expectedHasError:      true,
+			expectedError:         "invalid recipient address",
 		},
 		{
 			name:                  "error when project not ended yet",
