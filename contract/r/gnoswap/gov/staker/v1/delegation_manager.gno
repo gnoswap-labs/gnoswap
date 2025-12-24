@@ -25,7 +25,10 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDsWithDelegatee(delegator
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
-	ids, _ := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	ids, exists := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	if !exists {
+		return []int64{}
+	}
 	return ids
 }
 
@@ -117,4 +120,3 @@ func (dm *DelegationManagerResolver) removeDelegation(delegator, delegatee addre
 		dm.SetDelegateeIDs(delegatorAddress, delegateeAddress, ids)
 	}
 }
-
