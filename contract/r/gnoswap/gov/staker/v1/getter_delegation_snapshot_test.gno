@@ -3,381 +3,299 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// Test GetDelegationSnapshots
-func TestGetDelegationSnapshots(t *testing.T) {
+func TestGetTotalDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
 	tests := []struct {
-		name         string
-		setupState   func(gs *govStakerV1)
-		snapshotTime int64
-		expectFound  bool
+		name           string
+		setupHistory   func() *staker.UintTree
+		snapshotTime   int64
+		expectedAmount int64
+		expectedFound  bool
 	}{
 		{
-			name: "Get snapshot with empty state",
-			setupState: func(gs *govStakerV1) {
-				// Reset state
-				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
-				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
+			name: "empty history returns false",
+			setupHistory: func() *staker.UintTree {
+				return staker.NewUintTree()
 			},
-			snapshotTime: 100,
-			expectFound:  true,
+			snapshotTime:   100,
+			expectedAmount: 0,
+			expectedFound:  false,
 		},
 		{
-			name: "Get snapshot with existing data",
-			setupState: func(gs *govStakerV1) {
-				// Setup delegation snapshots
-				snapshots := make(staker.DelegationSnapshot)
-				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// Setup delegation history
-				history := make(staker.DelegationHistory, 0)
-
-				// Add a delegation record after snapshot time
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					500,
-					address("user1"),
-					address("validator1"),
-					150, // After snapshot time
-				)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "exact timestamp match",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				return h
 			},
-			snapshotTime: 100,
-			expectFound:  true,
+			snapshotTime:   100,
+			expectedAmount: 1000,
+			expectedFound:  true,
 		},
 		{
-			name: "Get snapshot with history records before snapshot time",
-			setupState: func(gs *govStakerV1) {
-				// Setup delegation snapshots
-				snapshots := make(staker.DelegationSnapshot)
-				snapshots["user1"] = staker.NewDelegationSnapshotItem(1500, address("user1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// Setup delegation history with records before snapshot time
-				history := make(staker.DelegationHistory, 0)
-
-				// Add a delegation record before snapshot time (should be subtracted)
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					500,
-					address("user1"),
-					address("validator1"),
-					50, // Before snapshot time
-				)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "snapshot time after all entries returns latest",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				h.Set(int64(200), int64(2000))
+				return h
 			},
-			snapshotTime: 100,
-			expectFound:  true,
+			snapshotTime:   500,
+			expectedAmount: 2000,
+			expectedFound:  true,
 		},
 		{
-			name: "Get snapshot with multiple history records",
-			setupState: func(gs *govStakerV1) {
-				// Setup delegation snapshots
-				snapshots := make(staker.DelegationSnapshot)
-				snapshots["user1"] = staker.NewDelegationSnapshotItem(2000, address("user1"))
-				snapshots["user2"] = staker.NewDelegationSnapshotItem(1000, address("user2"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// Setup delegation history with multiple records
-				history := make(staker.DelegationHistory, 0)
-
-				// Records before snapshot time (should be subtracted)
-				record1 := staker.NewDelegationRecord(
-					staker.DelegateType,
-					300,
-					address("user1"),
-					address("validator1"),
-					30,
-				)
-
-				record2 := staker.NewDelegationRecord(
-					staker.DelegateType,
-					200,
-					address("user1"),
-					address("validator1"),
-					70,
-				)
-
-				record3 := staker.NewDelegationRecord(
-					staker.DelegateType,
-					100,
-					address("user2"),
-					address("validator2"),
-					80,
-				)
-
-				// Record after snapshot time (should not be subtracted)
-				record4 := staker.NewDelegationRecord(
-					staker.DelegateType,
-					400,
-					address("user1"),
-					address("validator1"),
-					150,
-				)
-
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record1)
-				history = historyResolver.addRecord(record2)
-				history = historyResolver.addRecord(record3)
-				history = historyResolver.addRecord(record4)
-				gs.setDelegationHistory(history)
+			name: "snapshot time before all entries returns false",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				h.Set(int64(200), int64(2000))
+				return h
 			},
-			snapshotTime: 100,
-			expectFound:  true,
+			snapshotTime:   50,
+			expectedAmount: 0,
+			expectedFound:  false,
 		},
 		{
-			name: "Get snapshot with undelegate records",
-			setupState: func(gs *govStakerV1) {
-				// Setup delegation snapshots
-				snapshots := make(staker.DelegationSnapshot)
-				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// Setup delegation history with undelegate record
-				history := make(staker.DelegationHistory, 0)
-
-				record := staker.NewDelegationRecord(
-					staker.UnDelegateType, // Undelegate
-					300,
-					address("user1"),
-					address("validator1"),
-					50,
-				)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "snapshot time between entries returns earlier entry",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				h.Set(int64(200), int64(2000))
+				h.Set(int64(300), int64(3000))
+				return h
 			},
-			snapshotTime: 100,
-			expectFound:  true,
+			snapshotTime:   250,
+			expectedAmount: 2000,
+			expectedFound:  true,
+		},
+		{
+			name: "multiple entries at same timestamp uses last set value",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				h.Set(int64(100), int64(1500)) // overwrite
+				return h
+			},
+			snapshotTime:   100,
+			expectedAmount: 1500,
+			expectedFound:  true,
+		},
+		{
+			name: "zero delegation amount is valid",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(1000))
+				h.Set(int64(200), int64(0))
+				return h
+			},
+			snapshotTime:   250,
+			expectedAmount: 0,
+			expectedFound:  true,
+		},
+		{
+			name: "single entry history",
+			setupHistory: func() *staker.UintTree {
+				h := staker.NewUintTree()
+				h.Set(int64(100), int64(5000))
+				return h
+			},
+			snapshotTime:   100,
+			expectedAmount: 5000,
+			expectedFound:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create new instance and setup state
-			gs := createTestGovStaker()
-			tt.setupState(gs)
+			store := newMockGovStakerStore().(*mockGovStakerStore)
+			store.totalDelegationHistory = tt.setupHistory()
 
-			// When: Get delegation snapshots
-			snapshot, found := gs.GetDelegationSnapshots(tt.snapshotTime)
+			gs := &govStakerV1{store: store}
+			amount, found := gs.GetTotalDelegationAmountAtSnapshot(tt.snapshotTime)
 
-			// Then: Should return expected result
-			uassert.Equal(t, found, tt.expectFound)
-
-			if tt.expectFound {
-				uassert.NotEqual(t, snapshot, nil)
-
-				// Basic validation that we got a snapshot
-				uassert.True(t, len(snapshot) >= 0)
-			}
+			uassert.Equal(t, tt.expectedFound, found)
+			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
 }
 
-// Test GetDelegationSnapshots with specific scenarios
-func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
+func TestGetUserDelegationAmountAtSnapshot_Comprehensive(t *testing.T) {
+	user1 := address("g1user0000000000000000000000000000000001")
+	user2 := address("g1user0000000000000000000000000000000002")
+
 	tests := []struct {
-		name                   string
-		setupState             func(gs *govStakerV1)
-		snapshotTime           int64
-		expectedUserDelegation int64
-		userAddress            string
+		name           string
+		setupHistory   func() *avl.Tree
+		userAddr       address
+		snapshotTime   int64
+		expectedAmount int64
+		expectedFound  bool
 	}{
 		{
-			name: "Snapshot calculation with delegate user1 to validator1 record before time",
-			setupState: func(gs *govStakerV1) {
-				// Reset state
-				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
-				snapshots := make(staker.DelegationSnapshot)
-
-				// Current snapshot shows validator1 has received 1000 in delegations
-				snapshots["validator1"] = staker.NewDelegationSnapshotItem(1000, address("validator1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// There was a delegate of 200 to validator1 at time 50
-				// Since this happened before snapshot time (100), it should NOT be subtracted
-				// So at time 100, validator1 should still have 1000
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					200,
-					address("user1"),
-					address("validator1"),
-					50,
-				)
-				history := make(staker.DelegationHistory, 0)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "empty history returns false",
+			setupHistory: func() *avl.Tree {
+				return avl.NewTree()
 			},
-			snapshotTime:           100,
-			userAddress:            "validator1", // Check validator1, not user1
-			expectedUserDelegation: 1000,
+			userAddr:       user1,
+			snapshotTime:   100,
+			expectedAmount: 0,
+			expectedFound:  false,
 		},
 		{
-			name: "Snapshot calculation with delegate user1 to user1 record before time",
-			setupState: func(gs *govStakerV1) {
-				// Reset state
-				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
-				snapshots := make(staker.DelegationSnapshot)
-
-				// Current snapshot shows 1000 delegated
-				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// But there was a delegate of 200 at time 50
-				// So at time 100, it should be 1000
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					200,
-					address("user1"),
-					address("user1"),
-					150,
-				)
-				history := make(staker.DelegationHistory, 0)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "user not in history returns false",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				userHistory.Set(int64(100), int64(1000))
+				tree.Set(user2.String(), userHistory)
+				return tree
 			},
-			snapshotTime:           100,
-			userAddress:            "user1",
-			expectedUserDelegation: 800, // 1000 - 200
+			userAddr:       user1,
+			snapshotTime:   100,
+			expectedAmount: 0,
+			expectedFound:  false,
 		},
 		{
-			name: "Snapshot calculation with undelegate record before time",
-			setupState: func(gs *govStakerV1) {
-				// Reset state
-				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
-				snapshots := make(staker.DelegationSnapshot)
-
-				// Current snapshot shows validator1 has 500 in delegations
-				snapshots["validator1"] = staker.NewDelegationSnapshotItem(500, address("validator1"))
-				gs.setDelegationSnapshots(snapshots)
-
-				// There was an undelegate of 100 from validator1 at time 50
-				// Since this happened before snapshot time (100), it should NOT be subtracted
-				// So at time 100, validator1 should still have 500
-				record := staker.NewDelegationRecord(
-					staker.UnDelegateType,
-					100,
-					address("user1"),
-					address("validator1"),
-					50,
-				)
-				history := make(staker.DelegationHistory, 0)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
+			name: "exact timestamp match for user",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				userHistory.Set(int64(100), int64(1000))
+				tree.Set(user1.String(), userHistory)
+				return tree
 			},
-			snapshotTime:           100,
-			userAddress:            "validator1", // Check validator1, not user1
-			expectedUserDelegation: 500,          // Undelegate happened before snapshot time, already reflected
+			userAddr:       user1,
+			snapshotTime:   100,
+			expectedAmount: 1000,
+			expectedFound:  true,
+		},
+		{
+			name: "snapshot time after all user entries",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				userHistory.Set(int64(100), int64(1000))
+				userHistory.Set(int64(200), int64(2000))
+				tree.Set(user1.String(), userHistory)
+				return tree
+			},
+			userAddr:       user1,
+			snapshotTime:   500,
+			expectedAmount: 2000,
+			expectedFound:  true,
+		},
+		{
+			name: "snapshot time before all user entries returns false",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				userHistory.Set(int64(100), int64(1000))
+				tree.Set(user1.String(), userHistory)
+				return tree
+			},
+			userAddr:       user1,
+			snapshotTime:   50,
+			expectedAmount: 0,
+			expectedFound:  false,
+		},
+		{
+			name: "snapshot time between user entries",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				userHistory.Set(int64(100), int64(1000))
+				userHistory.Set(int64(200), int64(2000))
+				userHistory.Set(int64(300), int64(3000))
+				tree.Set(user1.String(), userHistory)
+				return tree
+			},
+			userAddr:       user1,
+			snapshotTime:   250,
+			expectedAmount: 2000,
+			expectedFound:  true,
+		},
+		{
+			name: "multiple users independent histories",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+
+				user1History := staker.NewUintTree()
+				user1History.Set(int64(100), int64(1000))
+				tree.Set(user1.String(), user1History)
+
+				user2History := staker.NewUintTree()
+				user2History.Set(int64(100), int64(5000))
+				tree.Set(user2.String(), user2History)
+
+				return tree
+			},
+			userAddr:       user1,
+			snapshotTime:   100,
+			expectedAmount: 1000,
+			expectedFound:  true,
+		},
+		{
+			name: "user with empty history returns false",
+			setupHistory: func() *avl.Tree {
+				tree := avl.NewTree()
+				userHistory := staker.NewUintTree()
+				tree.Set(user1.String(), userHistory)
+				return tree
+			},
+			userAddr:       user1,
+			snapshotTime:   100,
+			expectedAmount: 0,
+			expectedFound:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create new instance and setup state
-			gs := createTestGovStaker()
-			tt.setupState(gs)
+			store := newMockGovStakerStore().(*mockGovStakerStore)
+			store.userDelegationHistory = tt.setupHistory()
 
-			// When: Get delegation snapshots
-			snapshot, found := gs.GetDelegationSnapshots(tt.snapshotTime)
+			gs := &govStakerV1{store: store}
+			amount, found := gs.GetUserDelegationAmountAtSnapshot(tt.userAddr, tt.snapshotTime)
 
-			// Then: Should return expected result
-			uassert.True(t, found)
-
-			// Check specific user delegation amount
-			if item, exists := snapshot[tt.userAddress]; exists {
-				uassert.Equal(t, item.DelegationAmount(), tt.expectedUserDelegation)
-			} else {
-				// If address not found, check if expected was 0
-				if tt.expectedUserDelegation != 0 {
-					t.Fatalf("Address %s NOT found in snapshot, expected delegation: %d", tt.userAddress, tt.expectedUserDelegation)
-				}
-			}
+			uassert.Equal(t, tt.expectedFound, found)
+			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
 }
 
-// Test GetDelegationSnapshots edge cases
-func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
+func TestHasDelegationSnapshotsKey(t *testing.T) {
 	tests := []struct {
-		name         string
-		setupState   func(gs *govStakerV1)
-		snapshotTime int64
-		description  string
+		name     string
+		hasKey   bool
+		expected bool
 	}{
 		{
-			name: "Zero snapshot time",
-			setupState: func(gs *govStakerV1) {
-				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
-				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
-			},
-			snapshotTime: 0,
-			description:  "Should handle zero snapshot time",
+			name:     "returns true when key exists",
+			hasKey:   true,
+			expected: true,
 		},
 		{
-			name: "Negative snapshot time",
-			setupState: func(gs *govStakerV1) {
-				history := make(staker.DelegationHistory, 0)
-
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					100,
-					address("user1"),
-					address("validator1"),
-					50,
-				)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
-				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
-			},
-			snapshotTime: -10,
-			description:  "Should handle negative snapshot time",
-		},
-		{
-			name: "Very large snapshot time",
-			setupState: func(gs *govStakerV1) {
-				history := make(staker.DelegationHistory, 0)
-
-				record := staker.NewDelegationRecord(
-					staker.DelegateType,
-					100,
-					address("user1"),
-					address("validator1"),
-					1000,
-				)
-				historyResolver := NewDelegationHistoryResolver(history)
-				history = historyResolver.addRecord(record)
-				gs.setDelegationHistory(history)
-				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
-			},
-			snapshotTime: 999999999,
-			description:  "Should handle very large snapshot time",
+			name:     "returns false when key does not exist",
+			hasKey:   false,
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create new instance and setup state
-			gs := createTestGovStaker()
-			tt.setupState(gs)
+			store := newMockGovStakerStore().(*mockGovStakerStore)
+			store.hasTotalDelegationHistoryKey = tt.hasKey
 
-			// When: Get delegation snapshots
-			snapshot, found := gs.GetDelegationSnapshots(tt.snapshotTime)
+			gs := &govStakerV1{store: store}
+			result := gs.HasDelegationSnapshotsKey()
 
-			// Then: Should not panic and return valid result
-			uassert.True(t, found)
-			uassert.NotEqual(t, snapshot, nil)
+			uassert.Equal(t, tt.expected, result)
 		})
 	}
 }

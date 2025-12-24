@@ -9,6 +9,7 @@ type Proposal struct {
 	status        *ProposalStatus   // Current status and voting information
 	metadata      *ProposalMetadata // Title and description
 	data          *ProposalData     // Type-specific proposal data
+	snapshotTime  int64             // Timestamp for voting weight snapshot lookup
 	createdAt     int64             // Creation timestamp
 	createdHeight int64             // Block height at creation
 }
@@ -68,6 +69,11 @@ func (p *Proposal) ConfigVersion() int64 {
 	return p.configVersion
 }
 
+// SnapshotTime returns the snapshot time for voting weight lookup.
+func (p *Proposal) SnapshotTime() int64 {
+	return p.snapshotTime
+}
+
 // Data returns the proposal data.
 func (p *Proposal) Data() *ProposalData {
 	return p.data
@@ -110,6 +116,7 @@ func (p *Proposal) IsProposer(addr address) bool {
 //   - data: type-specific proposal data
 //   - proposerAddress: address of the proposal creator
 //   - configVersion: governance configuration version
+//   - snapshotTime: timestamp for voting weight snapshot lookup
 //   - createdAt: creation timestamp
 //   - createdHeight: creation block height
 //
@@ -122,6 +129,7 @@ func NewProposal(
 	data *ProposalData,
 	proposerAddress address,
 	configVersion int64,
+	snapshotTime int64,
 	createdAt int64,
 	createdHeight int64,
 ) *Proposal {
@@ -132,6 +140,7 @@ func NewProposal(
 		metadata:      metadata,
 		data:          data,
 		configVersion: configVersion,
+		snapshotTime:  snapshotTime,
 		createdAt:     createdAt,
 		createdHeight: createdHeight,
 	}

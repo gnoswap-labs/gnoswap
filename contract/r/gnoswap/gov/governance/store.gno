@@ -23,7 +23,6 @@ const (
 
 	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
 
-	StoreKeyProposalVotingInfos     StoreKey = "proposalVotingInfos"     // Proposal voting infos AVL tree
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
 
 	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping AVL tree
@@ -198,26 +197,22 @@ func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) erro
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
-func (s *governanceStore) HasProposalVotingInfosStoreKey() bool {
-	return s.kvStore.Has(StoreKeyProposalVotingInfos.String())
-}
-
-func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (map[string]*VotingInfo, bool) {
+func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
 	votingInfo, ok := votingInfos.Get(int64ToString(proposalID))
 	if !ok {
 		return nil, false
 	}
 
-	votingInfoMap, ok := votingInfo.(map[string]*VotingInfo)
+	votingInfoTree, ok := votingInfo.(*avl.Tree)
 	if !ok {
 		return nil, false
 	}
 
-	return votingInfoMap, true
+	return votingInfoTree, true
 }
 
-func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos map[string]*VotingInfo) error {
+func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
 	if !s.HasProposalUserVotingInfosStoreKey() {
 		return errors.New("proposal user voting infos store key not found")
 	}
