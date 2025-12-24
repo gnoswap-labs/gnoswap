@@ -11,15 +11,15 @@ import (
 // Only callable by emission contract. Sets up 12-year emission schedule
 // with halving every 2 years. Panics if caller is not emission contract.
 func InitEmissionState(cur realm, height int64, timestamp int64) {
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
 	emissionState = NewEmissionState(height, timestamp)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"InitEmissionState",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"height", formatInt(height),
 		"timestamp", formatInt(timestamp),

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 // TestGetHalvingYearInfo verifies that GetHalvingYearInfo correctly calculates
@@ -111,7 +112,6 @@ func TestGetHalvingYearInfo(t *testing.T) {
 	}
 }
 
-// TestValidYearEdgeCases tests validYear with boundary values
 func TestValidYearEdgeCases(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -140,7 +140,6 @@ func TestValidYearEdgeCases(t *testing.T) {
 	}
 }
 
-// TestValidEmissionAmountEdgeCases tests validEmissionAmount with boundary values
 func TestValidEmissionAmountEdgeCases(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -173,10 +172,11 @@ func TestValidEmissionAmountEdgeCases(t *testing.T) {
 	}
 }
 
-// TestGetEmissionAmountPerSecondInRangeEdgeCases tests edge cases for GetEmissionAmountPerSecondInRange
 func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 	resetEmissionState(t)
 	InitGnsTest(t)
+
+	year3Start := GetHalvingYearStartTimestamp(3)
 
 	tests := []struct {
 		name           string
@@ -185,11 +185,11 @@ func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 		expectedLength int
 	}{
 		{"fromTime after toTime", GetHalvingYearStartTimestamp(5), GetHalvingYearStartTimestamp(1), 0},
-		{"fromTime equals toTime at year start", GetHalvingYearStartTimestamp(3), GetHalvingYearStartTimestamp(3), 1},
-		{"fromTime equals toTime not at year start", GetHalvingYearStartTimestamp(3) + 100, GetHalvingYearStartTimestamp(3) + 100, 0},
+		{"fromTime equals toTime at year start", year3Start, year3Start, 1},
+		{"fromTime equals toTime not at year start", year3Start + 100, year3Start + 100, 0},
 		{"Both before emission start", GetHalvingYearStartTimestamp(1) - 10000, GetHalvingYearStartTimestamp(1) - 1, 0},
 		{"Both after emission end", GetHalvingYearEndTimestamp(12) + 1, GetHalvingYearEndTimestamp(12) + 10000, 0},
-		{"Years 3 to 7", GetHalvingYearStartTimestamp(3), GetHalvingYearEndTimestamp(7), 5},
+		{"Years 3 to 7", year3Start, GetHalvingYearEndTimestamp(7), 5},
 	}
 
 	for _, tt := range tests {
@@ -211,11 +211,65 @@ func TestGetEmissionAmountPerSecondInRangeEdgeCases(t *testing.T) {
 	}
 }
 
-// TestGetEmissionFunctionsWithInvalidTimestamps tests getter functions with invalid timestamps
+func TestGetEmissionAmountPerSecondInRangeBoundary(t *testing.T) {
+	resetEmissionState(t)
+	InitGnsTest(t)
+
+	year3Start := GetHalvingYearStartTimestamp(3)
+	year4Start := GetHalvingYearStartTimestamp(4)
+	year5Start := GetHalvingYearStartTimestamp(5)
+	year5End := GetHalvingYearEndTimestamp(5)
+	midYear3 := year3Start + (SECONDS_IN_YEAR / 2)
+
+	verifyResult := func(t *testing.T, times, emissions []int64, expectedLen int) {
+		uassert.Equal(t, expectedLen, len(times))
+		uassert.Equal(t, expectedLen, len(emissions))
+		for _, e := range emissions {
+			uassert.True(t, e > 0)
+		}
+		for i := 1; i < len(times); i++ {
+			uassert.True(t, times[i] > times[i-1])
+		}
+	}
+
+	t.Run("fromTime at year start includes that year", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5End)
+		verifyResult(t, times, emissions, 3)
+		uassert.Equal(t, year3Start, times[0])
+	})
+
+	t.Run("fromTime after year start excludes that year", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(year3Start+1, year5End)
+		verifyResult(t, times, emissions, 2)
+		uassert.Equal(t, year4Start, times[0])
+	})
+
+	t.Run("fromTime in middle of year to next year start-1 returns empty", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(midYear3, year4Start-1)
+		verifyResult(t, times, emissions, 0)
+	})
+
+	t.Run("fromTime in middle of year to next year start includes only next year", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(midYear3, year4Start)
+		verifyResult(t, times, emissions, 1)
+		uassert.Equal(t, year4Start, times[0])
+	})
+
+	t.Run("toTime at year start includes that year", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start)
+		verifyResult(t, times, emissions, 3)
+		uassert.Equal(t, year5Start, times[2])
+	})
+
+	t.Run("toTime one second before year start excludes that year", func(t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start-1)
+		verifyResult(t, times, emissions, 2)
+	})
+}
+
 func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
 	resetEmissionState(t)
 	InitGnsTest(t)
-	resetEmissionState(t)
 
 	tests := []struct {
 		name      string
@@ -243,6 +297,170 @@ func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
 		t.Run(tt.name+" - GetEmissionAccumulatedAmountByTimestamp", func(t *testing.T) {
 			result := GetEmissionAccumulatedAmountByTimestamp(tt.timestamp)
 			uassert.Equal(t, int64(0), result)
+		})
+	}
+}
+
+func TestEmissionActiveBoundaries(t *testing.T) {
+	const testStartTimestamp = int64(1000000)
+	emissionState = NewEmissionState(1, testStartTimestamp)
+
+	endTimestamp := getEmissionState().getEndTimestamp()
+
+	tests := []struct {
+		name           string
+		timestamp      int64
+		expectedActive bool
+		expectedEnded  bool
+		expectedYear   int64
+	}{
+		{
+			name:           "start-1: one second before emission starts",
+			timestamp:      testStartTimestamp - 1,
+			expectedActive: false,
+			expectedEnded:  false,
+			expectedYear:   0,
+		},
+		{
+			name:           "start: exactly at emission start",
+			timestamp:      testStartTimestamp,
+			expectedActive: true,
+			expectedEnded:  false,
+			expectedYear:   1,
+		},
+		{
+			name:           "start+1: one second after emission starts",
+			timestamp:      testStartTimestamp + 1,
+			expectedActive: true,
+			expectedEnded:  false,
+			expectedYear:   1,
+		},
+		{
+			name:           "end-1: one second before emission ends",
+			timestamp:      endTimestamp - 1,
+			expectedActive: true,
+			expectedEnded:  false,
+			expectedYear:   12,
+		},
+		{
+			name:           "end: exactly at emission end",
+			timestamp:      endTimestamp,
+			expectedActive: true,
+			expectedEnded:  false,
+			expectedYear:   12,
+		},
+		{
+			name:           "end+1: one second after emission ends",
+			timestamp:      endTimestamp + 1,
+			expectedActive: false,
+			expectedEnded:  true,
+			expectedYear:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := getEmissionState()
+
+			actualActive := es.isActive(tt.timestamp)
+			uassert.Equal(t, tt.expectedActive, actualActive,
+				"isActive mismatch for "+tt.name)
+
+			actualEnded := es.isEnded(tt.timestamp)
+			uassert.Equal(t, tt.expectedEnded, actualEnded,
+				"isEnded mismatch for "+tt.name)
+
+			actualYear := es.getCurrentYear(tt.timestamp)
+			uassert.Equal(t, tt.expectedYear, actualYear,
+				"getCurrentYear mismatch for "+tt.name)
+		})
+	}
+}
+
+// TestEmissionStateUninitializedBoundaries tests behavior when emission state is
+// created with startTimestamp=0 (uninitialized). Note that getCurrentYear returns 1
+// for timestamps >= 0 within the 12-year range because the calculation is:
+// (timestamp - startTimestamp) / SECONDS_IN_YEAR + 1 = (timestamp - 0) / SECONDS_IN_YEAR + 1
+// However, isActive returns false because isInitialized() is false (startBlock == 0).
+func TestEmissionStateUninitializedBoundaries(t *testing.T) {
+	emissionState = NewEmissionState(0, 0)
+	endTimestamp := getEmissionState().getEndTimestamp()
+
+	tests := []struct {
+		name           string
+		timestamp      int64
+		expectedActive bool
+		expectedEnded  bool
+		expectedYear   int64
+	}{
+		{
+			name:           "timestamp zero",
+			timestamp:      0,
+			expectedActive: false,
+			expectedEnded:  false,
+			expectedYear:   1,
+		},
+		{
+			name:           "timestamp positive",
+			timestamp:      1000,
+			expectedActive: false,
+			expectedEnded:  false,
+			expectedYear:   1,
+		},
+		{
+			name:           "timestamp negative",
+			timestamp:      -1,
+			expectedActive: false,
+			expectedEnded:  false,
+			expectedYear:   0,
+		},
+		{
+			name:           "timestamp after end",
+			timestamp:      endTimestamp + 1,
+			expectedActive: false,
+			expectedEnded:  true,
+			expectedYear:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := getEmissionState()
+
+			uassert.Equal(t, tt.expectedActive, es.isActive(tt.timestamp),
+				"isActive mismatch for "+tt.name)
+			uassert.Equal(t, tt.expectedEnded, es.isEnded(tt.timestamp),
+				"isEnded mismatch for "+tt.name)
+			uassert.Equal(t, tt.expectedYear, es.getCurrentYear(tt.timestamp),
+				"getCurrentYear mismatch for "+tt.name)
+		})
+	}
+}
+
+func TestYearTransitionBoundaries(t *testing.T) {
+	const testStartTimestamp = int64(1000000)
+	emissionState = NewEmissionState(1, testStartTimestamp)
+
+	for year := int64(1); year < HALVING_END_YEAR; year++ {
+		yearEndTimestamp := testStartTimestamp + (SECONDS_IN_YEAR * year) - 1
+		nextYearStartTimestamp := testStartTimestamp + (SECONDS_IN_YEAR * year)
+
+		t.Run(ufmt.Sprintf("year %d to %d transition", year, year+1), func(t *testing.T) {
+			es := getEmissionState()
+
+			// Last second of current year
+			yearAtEnd := es.getCurrentYear(yearEndTimestamp)
+			uassert.Equal(t, year, yearAtEnd,
+				"expected year at end timestamp")
+
+			// First second of next year
+			yearAtStart := es.getCurrentYear(nextYearStartTimestamp)
+			uassert.Equal(t, year+1, yearAtStart,
+				"expected year at next year start timestamp")
+
+			// Both should be active
+			uassert.True(t, es.isActive(yearEndTimestamp), "should be active at year end")
+			uassert.True(t, es.isActive(nextYearStartTimestamp), "should be active at next year start")
 		})
 	}
 }
