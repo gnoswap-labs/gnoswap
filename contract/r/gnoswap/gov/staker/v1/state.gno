@@ -2,6 +2,7 @@ package v1
 
 import (
 	"math"
+	"strconv"
 
 	"gno.land/p/nt/ufmt"
 
@@ -131,37 +132,67 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - []*Delegation: list of user's delegations
 func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
 	delegationManager := g.store.GetDelegationManager()
+	allDelegations := g.store.GetAllDelegations()
+	delegations = make([]*staker.Delegation, 0)
 
-	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	delegationIDs := resolvedManager.GetUserDelegationIDs(user)
-	delegations = make([]*staker.Delegation, 0, len(delegationIDs))
-	for _, delegationID := range delegationIDs {
-		if delegation := g.getDelegation(delegationID); delegation != nil {
-			delegations = append(delegations, delegation)
-		}
+	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
+	if !exists {
+		return delegations
 	}
+
+	userDelegations.Iterate("", "", func(delegatee string, value interface{}) bool {
+		delegationIDs, ok := value.([]int64)
+		if !ok {
+			return false
+		}
+
+		for _, id := range delegationIDs {
+			idStr := strconv.FormatInt(id, 10)
+			if delegation, exists := allDelegations.Get(idStr); exists {
+				if d, ok := delegation.(*staker.Delegation); ok {
+					delegations = append(delegations, d)
+				}
+			}
+		}
+		return false
+	})
+
 	return delegations
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
-// Note: Current implementation returns all user delegations regardless of delegatee (potential bug).
 //
 // Parameters:
 //   - user: user's address
-//   - delegatee: delegatee's address (currently unused)
+//   - delegatee: delegatee's address
 //
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
 func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
 	delegationManager := g.store.GetDelegationManager()
-	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	delegationIDs := resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee)
-	delegations = make([]*staker.Delegation, 0, len(delegationIDs))
-	for _, delegationID := range delegationIDs {
-		if delegation := g.getDelegation(delegationID); delegation != nil {
-			delegations = append(delegations, delegation)
+	allDelegations := g.store.GetAllDelegations()
+	delegations = make([]*staker.Delegation, 0)
+
+	// Direct access without GetDelegateeIDs wrapper to avoid redundant function call
+	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
+	if !exists {
+		return delegations
+	}
+
+	delegateeStr := delegatee.String()
+	if delegationIDs, exists := userDelegations.Get(delegateeStr); exists {
+		if ids, ok := delegationIDs.([]int64); ok {
+			for _, id := range ids {
+				idStr := strconv.FormatInt(id, 10)
+				if delegation, exists := allDelegations.Get(idStr); exists {
+					if d, ok := delegation.(*staker.Delegation); ok {
+						delegations = append(delegations, d)
+					}
+				}
+			}
 		}
 	}
+
 	return delegations
 }
 
