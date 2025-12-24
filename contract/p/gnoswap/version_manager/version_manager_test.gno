@@ -889,121 +889,6 @@ func TestMakeInitializerSafe_InvalidType(t *testing.T) {
 	}
 }
 
-// TestVersionManager_IntegrationScenario tests full lifecycle scenarios
-func TestVersionManager_IntegrationScenario(t *testing.T) {
-	tests := []struct {
-		name             string
-		domainPath       string
-		scenario         []struct {
-			action         string
-			packagePath    string
-			expectError    bool
-			expectedCurrent string
-		}
-	}{
-		{
-			name:       "register v1, change to v1",
-			domainPath: "gno.land/r/gnoswap/protocol_fee",
-			scenario: []struct {
-				action         string
-				packagePath    string
-				expectError    bool
-				expectedCurrent string
-			}{
-				{action: "register", packagePath: "gno.land/r/gnoswap/protocol_fee/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/protocol_fee/v1"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/protocol_fee/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/protocol_fee/v1"},
-			},
-		},
-		{
-			name:       "register v1, v2, change v1->v2->v1",
-			domainPath: "gno.land/r/gnoswap/pool",
-			scenario: []struct {
-				action         string
-				packagePath    string
-				expectError    bool
-				expectedCurrent string
-			}{
-				{action: "register", packagePath: "gno.land/r/gnoswap/pool/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
-				{action: "register", packagePath: "gno.land/r/gnoswap/pool/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/pool/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v2"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/pool/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
-			},
-		},
-		{
-			name:       "register v1, v2, v3, sequential changes",
-			domainPath: "gno.land/r/gnoswap/position",
-			scenario: []struct {
-				action         string
-				packagePath    string
-				expectError    bool
-				expectedCurrent string
-			}{
-				{action: "register", packagePath: "gno.land/r/gnoswap/position/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
-				{action: "register", packagePath: "gno.land/r/gnoswap/position/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
-				{action: "register", packagePath: "gno.land/r/gnoswap/position/v3", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/position/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v2"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/position/v3", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v3"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/position/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
-			},
-		},
-		{
-			name:       "attempt change before registration",
-			domainPath: "gno.land/r/gnoswap/staker",
-			scenario: []struct {
-				action         string
-				packagePath    string
-				expectError    bool
-				expectedCurrent string
-			}{
-				{action: "change", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: true, expectedCurrent: ""},
-				{action: "register", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/staker/v1"},
-				{action: "change", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/staker/v1"},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vmInternal := &versionManager{
-				domainPath:              tt.domainPath,
-				domainKVStore:           kvStore,
-				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
-				currentPackagePath:      "",
-				currentImplementation:   nil,
-			}
-
-			for i, step := range tt.scenario {
-				var err error
-				switch step.action {
-				case "register":
-					vmInternal.initializers.Set(step.packagePath, mockInitializer(step.packagePath))
-					if vmInternal.currentPackagePath == "" {
-						vmInternal.currentPackagePath = step.packagePath
-						vmInternal.currentImplementation = mockInitializer(step.packagePath)(vmInternal.initializeDomainStoreFn(vmInternal.domainKVStore))
-					}
-				case "change":
-					err = vmInternal.ChangeImplementation(step.packagePath)
-				}
-
-				if step.expectError {
-					if err == nil {
-						t.Errorf("step %d: expected error but got none", i)
-					}
-				} else {
-					if err != nil {
-						t.Errorf("step %d: unexpected error: %v", i, err)
-					}
-					if got := vmInternal.GetCurrentPackagePath(); got != step.expectedCurrent {
-						t.Errorf("step %d: GetCurrentPackagePath() = %s, want %s", i, got, step.expectedCurrent)
-					}
-				}
-			}
-		})
-	}
-}
-
 // TestIsContainDomainPath_Boundaries tests boundary conditions for domain path validation
 func TestIsContainDomainPath_Boundaries(t *testing.T) {
 	tests := []struct {
@@ -1214,8 +1099,29 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 		expectedFinal    string
 	}{
 		{
-			name:             "multiple changes maintain consistency",
+			name:             "single version registration and change",
 			domainPath:       "gno.land/r/gnoswap/protocol_fee",
+			registerPackages: []string{"v1"},
+			changeSequence:   []string{"v1"},
+			expectedFinal:    "v1",
+		},
+		{
+			name:             "two versions with forward and rollback",
+			domainPath:       "gno.land/r/gnoswap/pool",
+			registerPackages: []string{"v1", "v2"},
+			changeSequence:   []string{"v1", "v2", "v1"},
+			expectedFinal:    "v1",
+		},
+		{
+			name:             "three versions with sequential changes",
+			domainPath:       "gno.land/r/gnoswap/position",
+			registerPackages: []string{"v1", "v2", "v3"},
+			changeSequence:   []string{"v2", "v3", "v1"},
+			expectedFinal:    "v1",
+		},
+		{
+			name:             "multiple changes maintain consistency",
+			domainPath:       "gno.land/r/gnoswap/staker",
 			registerPackages: []string{"v1", "v2", "v3"},
 			changeSequence:   []string{"v1", "v2", "v3", "v1", "v2"},
 			expectedFinal:    "v2",
