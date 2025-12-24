@@ -216,6 +216,60 @@ func TestStakerDelegate_Undelegate(t *testing.T) {
 	}
 }
 
+// Test Undelegate with multiple delegations to same delegatee
+// This tests the optimization where GetUnDelegationLockupPeriod is called only once
+func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
+	// Given: Setup gov staker
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	user := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+
+	testing.SetRealm(testing.NewUserRealm(user))
+
+	// Create 5 separate delegations to the same validator
+	delegationAmounts := []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3, minimumAmount * 4, minimumAmount * 5}
+	totalDelegated := int64(0)
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		for _, amount := range delegationAmounts {
+			gs.Delegate(validator, amount, "")
+			totalDelegated += amount
+		}
+	}(cross)
+
+	// When: Undelegate an amount that spans across multiple delegation records
+	undelegateAmount := int64(minimumAmount * 8) // This will require processing first 3 delegations
+	var undelegatedAmount int64
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		undelegatedAmount = gs.Undelegate(validator, undelegateAmount)
+	}(cross)
+
+	// Then: Should successfully undelegate the requested amount
+	uassert.Equal(t, undelegatedAmount, undelegateAmount)
+
+	// And: Should create proper withdraws for each affected delegation
+	delegations := gs.getUserDelegationsWithDelegatee(user, validator)
+	totalWithdraws := 0
+	totalUndelegated := int64(0)
+
+	for _, delegation := range delegations {
+		withdraws := delegation.Withdraws()
+		totalWithdraws += len(withdraws)
+		totalUndelegated += delegation.UnDelegatedAmount()
+	}
+
+	// Verify total undelegated amount matches
+	uassert.Equal(t, totalUndelegated, undelegateAmount)
+
+	// Verify withdraws were created (should be at least 3 since we span 3 delegations)
+	uassert.True(t, totalWithdraws >= 3)
+}
+
 // Test Redelegate function
 func TestStakerDelegate_Redelegate(t *testing.T) {
 	// Initialize gov staker
