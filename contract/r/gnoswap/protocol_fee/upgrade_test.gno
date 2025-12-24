@@ -884,8 +884,6 @@ func TestGetImplementationPanicWhenNil(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resetTestState(t)
-			// Do NOT register any initializer - implementation remains nil
-
 			uassert.AbortsContains(t, "implementation is not initialized", tt.callFunc)
 		})
 	}
