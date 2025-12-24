@@ -134,7 +134,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 
 	if distributableAmount != distributedGNSAmount {
-		remainder := distributableAmount - distributedGNSAmount
+		remainder := safeSubInt64(distributableAmount, distributedGNSAmount)
 		if remainder < 0 {
 			panic("remainder calculation error")
 		}

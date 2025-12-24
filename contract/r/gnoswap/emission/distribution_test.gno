@@ -173,6 +173,7 @@ func TestTransferToTarget(t *testing.T) {
 			name:   "transfer to LIQUIDITY_STAKER",
 			target: LIQUIDITY_STAKER,
 			setup: func() {
+				resetObject(t)
 				testing.SetRealm(adminRealm)
 				gns.Transfer(cross, emissionAddr, 100000) // give enough balance for emission
 			},
