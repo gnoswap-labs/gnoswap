@@ -1,9 +1,11 @@
 package governance
 
 import (
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -13,6 +15,73 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			gs := NewGovernanceStore(kvStore)
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+			if !gs.HasConfigsStoreKey() {
+				gs.SetConfigs(avl.NewTree())
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					gs.GetConfigs()
+				})
+			} else {
+				gs.GetConfigs()
+			}
+
+			err := gs.SetConfigs(avl.NewTree())
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetConfigCounter(t *testing.T) {
@@ -461,4 +530,3 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	uassert.Equal(t, int64(5), gs.GetProposalCounter().Get())
 	uassert.NotEqual(t, nil, gs.GetProposalUserVotingInfos())
 }
-

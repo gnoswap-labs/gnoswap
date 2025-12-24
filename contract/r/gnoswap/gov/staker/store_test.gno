@@ -1,9 +1,11 @@
 package staker
 
 import (
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -58,6 +60,82 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "governance has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			gs := NewGovStakerStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+			if !gs.HasDelegationsStoreKey() {
+				gs.SetDelegations(avl.NewTree())
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					gs.GetAllDelegations()
+				})
+			} else {
+				gs.GetAllDelegations()
+			}
+
+			err := gs.SetDelegations(avl.NewTree())
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetUnDelegationLockupPeriod(t *testing.T) {
@@ -559,4 +637,3 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	uassert.NotEqual(t, nil, gs.GetTotalDelegationHistory())
 	uassert.NotEqual(t, nil, gs.GetUserDelegationHistory())
 }
-

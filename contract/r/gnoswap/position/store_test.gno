@@ -1,10 +1,12 @@
 package position
 
 import (
+	"chain/runtime"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -14,6 +16,90 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "pool has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "staker has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			ps := NewPositionStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
+			if !ps.HasPositionNextIDStoreKey() {
+				ps.SetPositionNextID(1)
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					ps.GetPositionNextID()
+				})
+			} else {
+				ps.GetPositionNextID()
+			}
+
+			err := ps.SetPositionNextID(2)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetPositions(t *testing.T) {
@@ -339,4 +425,3 @@ func TestStoreUpdatePosition(t *testing.T) {
 	retrieved, _ = ps.GetPosition(1)
 	uassert.Equal(t, "gno.land/r/demo/pool2", retrieved.poolKey)
 }
-

@@ -1,9 +1,11 @@
 package pool
 
 import (
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -13,6 +15,98 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "router has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/router"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "position has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "staker has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			ps := NewPoolStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+			if !ps.HasPoolCreationFee() {
+				ps.SetPoolCreationFee(100)
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					ps.GetPoolCreationFee()
+				})
+			} else {
+				ps.GetPoolCreationFee()
+			}
+
+			err := ps.SetPoolCreationFee(200)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetPools(t *testing.T) {
@@ -352,10 +446,10 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 
 func TestStoreUpdateValues(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupFn   func(IPoolStore)
-		updateFn  func(IPoolStore)
-		verifyFn  func(*testing.T, IPoolStore)
+		name     string
+		setupFn  func(IPoolStore)
+		updateFn func(IPoolStore)
+		verifyFn func(*testing.T, IPoolStore)
 	}{
 		{
 			name: "update pool creation fee twice",
@@ -419,4 +513,3 @@ func TestStoreUpdateValues(t *testing.T) {
 		})
 	}
 }
-

@@ -97,8 +97,8 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			}
 
 			testing.SetRealm(tc.callerRealm)
-			if tc.expectedPanicWithRead {
-				uassert.PanicsContains(t, tc.expectedPanicMessageWithRead, func() {
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
 					ss.GetAllowedTokens()
 				})
 			} else {
@@ -106,8 +106,8 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			}
 
 			err := ss.SetAllowedTokens([]string{"gno.land/r/demo/token1"})
-			if tc.expectedPanicWithWrite {
-				uassert.ErrorContains(t, err, tc.expectedPanicMessageWithWrite)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
 				uassert.NoError(t, err)
 			}

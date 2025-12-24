@@ -1,8 +1,10 @@
 package router
 
 import (
+	"chain/runtime"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -12,6 +14,82 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/router"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/router/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "gov/staker has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			rs := NewRouterStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+			if !rs.HasSwapFeeKey() {
+				rs.SetSwapFee(25)
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					rs.GetSwapFee()
+				})
+			} else {
+				rs.GetSwapFee()
+			}
+
+			err := rs.SetSwapFee(50)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSwapFee(t *testing.T) {
@@ -117,4 +195,3 @@ func TestStoreUpdateSwapFee(t *testing.T) {
 		})
 	}
 }
-

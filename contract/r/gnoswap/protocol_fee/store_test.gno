@@ -1,8 +1,10 @@
 package protocol_fee
 
 import (
+	"chain/runtime"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -12,6 +14,82 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "gov/staker has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			ps := NewProtocolFeeStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+			if !ps.HasDevOpsPctStoreKey() {
+				ps.SetDevOpsPct(10)
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedErrorWithRead {
+				uassert.PanicsContains(t, tc.expectedErrorMessageWithRead, func() {
+					ps.GetDevOpsPct()
+				})
+			} else {
+				ps.GetDevOpsPct()
+			}
+
+			err := ps.SetDevOpsPct(20)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetDevOpsPct(t *testing.T) {
@@ -518,4 +596,3 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	amount, _ = ps.GetTokenListWithAmountItem("token1")
 	uassert.Equal(t, int64(1500), amount)
 }
-
