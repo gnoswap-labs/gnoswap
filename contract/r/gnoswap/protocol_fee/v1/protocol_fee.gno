@@ -113,13 +113,14 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 
 	assertIsValidPercent(pct)
 
+	// Capture previous values before mutation
 	prevState := pf.getProtocolFeeState()
 
-	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(pct)
+	state := prevState
+	newDevOpsPct, err := state.setDevOpsPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
 	chain.Emit(
 		"SetDevOpsPct",
@@ -127,7 +128,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
 		"prevDevOpsPct", strconv.FormatInt(prevState.DevOpsPct(), 10),
-		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
+		"newGovStakerPct", strconv.FormatInt(state.GovStakerPct(), 10),
 		"prevGovStakerPct", strconv.FormatInt(prevState.GovStakerPct(), 10),
 	)
 }
@@ -148,20 +149,20 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 
 	assertIsValidPercent(pct)
 
-
+	// Capture previous values before mutation
 	prevState := pf.getProtocolFeeState()
 
-	newGovStakerPct, err := pf.getProtocolFeeState().setGovStakerPct(pct)
+	state := prevState
+	newGovStakerPct, err := state.setGovStakerPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 
 	chain.Emit(
 		"SetGovStakerPct",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"newDevOpsPct", strconv.FormatInt(newDevOpsPct, 10),
+		"newDevOpsPct", strconv.FormatInt(state.DevOpsPct(), 10),
 		"prevDevOpsPct", strconv.FormatInt(prevState.DevOpsPct(), 10),
 		"newGovStakerPct", strconv.FormatInt(newGovStakerPct, 10),
 		"prevGovStakerPct", strconv.FormatInt(prevState.GovStakerPct(), 10),
