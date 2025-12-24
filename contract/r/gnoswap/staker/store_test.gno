@@ -1,9 +1,11 @@
 package staker
 
 import (
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -13,6 +15,104 @@ func TestStoreInitialization(t *testing.T) {
 	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
 	domainAddr := kvStore.GetDomainAddress()
 	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+}
+
+func TestStore_AuthorizedCallers(t *testing.T) {
+	tests := []struct {
+		name                          string
+		callerRealm                   runtime.Realm
+		expectedErrorWithRead         bool
+		expectedErrorWithWrite        bool
+		expectedErrorMessageWithRead  string
+		expectedErrorMessageWithWrite string
+	}{
+		{
+			name:        "domain address",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+		},
+		{
+			name:                          "domain implementation has no permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker/v2"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "pool has read and write permission",
+			callerRealm:            testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+		{
+			name:                          "position has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "router has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/router"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "emission has read permission",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/emission"),
+			expectedErrorWithRead:         false,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                          "panic with no permission realm",
+			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
+			expectedErrorWithRead:         true,
+			expectedErrorWithWrite:        true,
+			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithWrite: "write permission denied",
+		},
+		{
+			name:                   "user has permission",
+			callerRealm:            testing.NewUserRealm(testutils.TestAddress("bob")),
+			expectedErrorWithRead:  false,
+			expectedErrorWithWrite: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resetTestState(t)
+
+			ss := NewStakerStore(kvStore)
+			initRegisterReadableContract()
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
+			if !ss.HasAllowedTokensStoreKey() {
+				ss.SetAllowedTokens([]string{})
+			}
+
+			testing.SetRealm(tc.callerRealm)
+			if tc.expectedPanicWithRead {
+				uassert.PanicsContains(t, tc.expectedPanicMessageWithRead, func() {
+					ss.GetAllowedTokens()
+				})
+			} else {
+				ss.GetAllowedTokens()
+			}
+
+			err := ss.SetAllowedTokens([]string{"gno.land/r/demo/token1"})
+			if tc.expectedPanicWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedPanicMessageWithWrite)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestStoreSetAndGetDepositGnsAmount(t *testing.T) {
@@ -774,4 +874,3 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	retrievedTokens := ss.GetAllowedTokens()
 	uassert.Equal(t, 2, len(retrievedTokens))
 }
-
