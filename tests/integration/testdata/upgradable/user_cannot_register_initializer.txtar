@@ -1,0 +1,48 @@
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK/parent -pkgpath gno.land/r/test/parent -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# User directly calls RegisterInitializer
+# runtime.PreviousRealm().IsUser() == true → should fail
+! gnokey maketx call -pkgpath gno.land/r/test/parent -func RegisterInitializer -args "test" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 10000000 -memo "" test1
+stderr 'version_manager: caller cannot be user'
+
+-- parent/gnomod.toml --
+module = "gno.land/r/test/parent"
+gno = "0.9"
+
+-- parent/parent.gno --
+package parent
+
+import (
+	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/version_manager"
+)
+
+var vm version_manager.VersionManager
+
+func init() {
+	kvStore := store.NewKVStore(address("g1testparent"))
+	vm = version_manager.NewVersionManager(
+		"gno.land/r/test/parent",
+		kvStore,
+		func(kvStore store.KVStore) any {
+			return kvStore
+		},
+	)
+}
+
+// RegisterInitializer is exposed as a public function
+// This allows us to test what happens when a user calls it directly
+func RegisterInitializer(cur realm, name string) {
+	initializer := func(store any) any {
+		return name
+	}
+	err := vm.RegisterInitializer(initializer)
+	if err != nil {
+		panic(err)
+	}
+}
