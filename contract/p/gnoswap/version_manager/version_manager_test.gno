@@ -628,12 +628,12 @@ func TestVersionManager_DomainPath_EdgeCases(t *testing.T) {
 // TestChangeImplementation_Success tests successful implementation changes
 func TestChangeImplementation_Success(t *testing.T) {
 	tests := []struct {
-		name              string
-		domainPath        string
-		registerPackages  []string
-		changeToPackage   string
-		expectError       bool
-		expectedCurrent   string
+		name             string
+		domainPath       string
+		registerPackages []string
+		changeToPackage  string
+		expectError      bool
+		expectedCurrent  string
 	}{
 		{
 			name:             "change to registered v1",
@@ -928,7 +928,6 @@ func TestIsContainDomainPath_Boundaries(t *testing.T) {
 	}
 }
 
-// TestRegisterInitializer_CallerValidation tests caller validation in RegisterInitializer
 // TestVersionManager_NilHandling tests nil value handling
 func TestVersionManager_NilHandling(t *testing.T) {
 	tests := []struct {
@@ -1080,10 +1079,10 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 					currentPackagePath:      "",
 					currentImplementation:   nil,
 				}
-				
+
 				// Pre-register an initializer
 				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
-				
+
 				// Simulate checking for duplicate
 				if vm.initializers.Has("gno.land/r/gnoswap/protocol_fee/v1") {
 					return vm, errors.New("version_manager: initializer already registered")
@@ -1101,7 +1100,6 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 		})
 	}
 }
-
 
 // TestRegisterInitializer_DomainPathBranch tests the domain path validation branch
 func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
@@ -1155,7 +1153,7 @@ func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
 
 			// Test isContainDomainPath logic
 			result := vm.isContainDomainPath(tt.callerPath)
-			
+
 			if tt.shouldPass {
 				if !result {
 					t.Errorf("isContainDomainPath(%q) should pass for domain %q", tt.callerPath, tt.domainPath)
@@ -1164,7 +1162,7 @@ func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
 				if result {
 					t.Errorf("isContainDomainPath(%q) should fail for domain %q", tt.callerPath, tt.domainPath)
 				}
-				
+
 				// Verify the error message that would be returned
 				if tt.errorContains != "" {
 					expectedError := "version_manager: " + tt.errorContains
@@ -1174,6 +1172,7 @@ func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
 		})
 	}
 }
+
 // TestChangeImplementation_AllBranches tests all error branches in ChangeImplementation
 func TestChangeImplementation_AllBranches(t *testing.T) {
 	tests := []struct {
