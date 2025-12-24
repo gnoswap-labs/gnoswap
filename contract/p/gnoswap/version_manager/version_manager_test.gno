@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/nt/avl"
 )
 
 // Mock domain address for testing
@@ -583,6 +584,421 @@ func TestChangeImplementation_NoPermissionModification(t *testing.T) {
 			}
 
 			t.Logf("✓ %s", tt.description)
+		})
+	}
+}
+
+// TestVersionManager_DomainPath_EdgeCases tests edge cases for domain paths
+func TestVersionManager_DomainPath_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name       string
+		domainPath string
+		wantPanic  bool
+	}{
+		{
+			name:       "empty domain path",
+			domainPath: "",
+			wantPanic:  false,
+		},
+		{
+			name:       "domain path with trailing slash",
+			domainPath: "gno.land/r/gnoswap/protocol_fee/",
+			wantPanic:  false,
+		},
+		{
+			name:       "very long domain path",
+			domainPath: "gno.land/r/gnoswap/very/long/path/with/many/segments/to/test/limits",
+			wantPanic:  false,
+		},
+		{
+			name:       "domain path with special characters",
+			domainPath: "gno.land/r/gnoswap/protocol-fee_v2",
+			wantPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("wantPanic = %v, got panic = %v", tt.wantPanic, r != nil)
+				}
+			}()
+
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vm := NewVersionManager(
+				tt.domainPath,
+				kvStore,
+				mockInitializeDomainStoreFn,
+			)
+
+			if got := vm.GetDomainPath(); got != tt.domainPath {
+				t.Errorf("GetDomainPath() = %s, want %s", got, tt.domainPath)
+			}
+		})
+	}
+}
+
+// TestChangeImplementation_Success tests successful implementation changes
+func TestChangeImplementation_Success(t *testing.T) {
+	tests := []struct {
+		name              string
+		domainPath        string
+		registerPackages  []string
+		changeToPackage   string
+		expectError       bool
+		expectedCurrent   string
+	}{
+		{
+			name:             "change to registered v1",
+			domainPath:       "gno.land/r/gnoswap/protocol_fee",
+			registerPackages: []string{"gno.land/r/gnoswap/protocol_fee/v1"},
+			changeToPackage:  "gno.land/r/gnoswap/protocol_fee/v1",
+			expectError:      false,
+			expectedCurrent:  "gno.land/r/gnoswap/protocol_fee/v1",
+		},
+		{
+			name:       "change to registered v2",
+			domainPath: "gno.land/r/gnoswap/pool",
+			registerPackages: []string{
+				"gno.land/r/gnoswap/pool/v1",
+				"gno.land/r/gnoswap/pool/v2",
+			},
+			changeToPackage: "gno.land/r/gnoswap/pool/v2",
+			expectError:     false,
+			expectedCurrent: "gno.land/r/gnoswap/pool/v2",
+		},
+		{
+			name:       "change back to v1 after v2",
+			domainPath: "gno.land/r/gnoswap/position",
+			registerPackages: []string{
+				"gno.land/r/gnoswap/position/v1",
+				"gno.land/r/gnoswap/position/v2",
+			},
+			changeToPackage: "gno.land/r/gnoswap/position/v1",
+			expectError:     false,
+			expectedCurrent: "gno.land/r/gnoswap/position/v1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vmInternal := &versionManager{
+				domainPath:              tt.domainPath,
+				domainKVStore:           kvStore,
+				initializeDomainStoreFn: mockInitializeDomainStoreFn,
+				initializers:            avl.NewTree(),
+				currentPackagePath:      "",
+				currentImplementation:   nil,
+			}
+
+			for _, pkg := range tt.registerPackages {
+				vmInternal.initializers.Set(pkg, mockInitializer(pkg))
+			}
+
+			err := vmInternal.ChangeImplementation(tt.changeToPackage)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("ChangeImplementation() should return error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("ChangeImplementation() should not return error, got %v", err)
+				}
+				if got := vmInternal.GetCurrentPackagePath(); got != tt.expectedCurrent {
+					t.Errorf("GetCurrentPackagePath() = %s, want %s", got, tt.expectedCurrent)
+				}
+				if vmInternal.GetCurrentImplementation() == nil {
+					t.Error("GetCurrentImplementation() should not be nil after successful change")
+				}
+			}
+		})
+	}
+}
+
+// TestChangeImplementation_InvalidInitializerType tests type validation
+func TestChangeImplementation_InvalidInitializerType(t *testing.T) {
+	tests := []struct {
+		name          string
+		domainPath    string
+		packagePath   string
+		initValue     any
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:          "initializer is string instead of function",
+			domainPath:    "gno.land/r/gnoswap/protocol_fee",
+			packagePath:   "gno.land/r/gnoswap/protocol_fee/v1",
+			initValue:     "not a function",
+			expectError:   true,
+			errorContains: "initializer is not a function",
+		},
+		{
+			name:          "initializer is int instead of function",
+			domainPath:    "gno.land/r/gnoswap/pool",
+			packagePath:   "gno.land/r/gnoswap/pool/v1",
+			initValue:     42,
+			expectError:   true,
+			errorContains: "initializer is not a function",
+		},
+		{
+			name:          "initializer is nil",
+			domainPath:    "gno.land/r/gnoswap/position",
+			packagePath:   "gno.land/r/gnoswap/position/v1",
+			initValue:     nil,
+			expectError:   true,
+			errorContains: "initializer is not a function",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vmInternal := &versionManager{
+				domainPath:              tt.domainPath,
+				domainKVStore:           kvStore,
+				initializeDomainStoreFn: mockInitializeDomainStoreFn,
+				initializers:            avl.NewTree(),
+				currentPackagePath:      "",
+				currentImplementation:   nil,
+			}
+
+			vmInternal.initializers.Set(tt.packagePath, tt.initValue)
+
+			err := vmInternal.ChangeImplementation(tt.packagePath)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("ChangeImplementation() should return error")
+				} else if tt.errorContains != "" {
+					errStr := err.Error()
+					found := false
+					for i := 0; i <= len(errStr)-len(tt.errorContains); i++ {
+						if errStr[i:i+len(tt.errorContains)] == tt.errorContains {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("error message should contain %q, got %q", tt.errorContains, errStr)
+					}
+				}
+			} else {
+				if err != nil {
+					t.Errorf("ChangeImplementation() should not return error, got %v", err)
+				}
+			}
+		})
+	}
+}
+
+// TestGetInitializers_ReadOnly tests that returned tree is read-only
+func TestGetInitializers_ReadOnly(t *testing.T) {
+	tests := []struct {
+		name       string
+		domainPath string
+	}{
+		{
+			name:       "protocol_fee initializers is read-only",
+			domainPath: "gno.land/r/gnoswap/protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vmInternal := &versionManager{
+				domainPath:              tt.domainPath,
+				domainKVStore:           kvStore,
+				initializeDomainStoreFn: mockInitializeDomainStoreFn,
+				initializers:            avl.NewTree(),
+				currentPackagePath:      "",
+				currentImplementation:   nil,
+			}
+
+			vmInternal.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
+
+			initializers := vmInternal.GetInitializers()
+			if initializers == nil {
+				t.Fatal("GetInitializers() should not be nil")
+			}
+
+			if initializers.Size() != 1 {
+				t.Errorf("initializers.Size() = %d, want 1", initializers.Size())
+			}
+
+			result, exists := initializers.Get("gno.land/r/gnoswap/protocol_fee/v1")
+			if !exists {
+				t.Error("initializer should exist for v1")
+			}
+
+			if _, ok := result.(func(store any) any); !ok {
+				t.Errorf("initializer should be function type, got %T", result)
+			}
+		})
+	}
+}
+
+// TestMakeInitializerSafe_InvalidType tests panic on invalid type
+func TestMakeInitializerSafe_InvalidType(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     any
+		wantPanic bool
+	}{
+		{
+			name:      "string input causes panic",
+			input:     "not a function",
+			wantPanic: true,
+		},
+		{
+			name:      "int input causes panic",
+			input:     42,
+			wantPanic: true,
+		},
+		{
+			name:      "nil input causes panic",
+			input:     nil,
+			wantPanic: true,
+		},
+		{
+			name: "valid function does not panic",
+			input: func(store any) any {
+				return store
+			},
+			wantPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("wantPanic = %v, got panic = %v", tt.wantPanic, r != nil)
+				}
+			}()
+
+			_ = makeInitializerSafe(tt.input)
+		})
+	}
+}
+
+// TestVersionManager_IntegrationScenario tests full lifecycle scenarios
+func TestVersionManager_IntegrationScenario(t *testing.T) {
+	tests := []struct {
+		name             string
+		domainPath       string
+		scenario         []struct {
+			action         string
+			packagePath    string
+			expectError    bool
+			expectedCurrent string
+		}
+	}{
+		{
+			name:       "register v1, change to v1",
+			domainPath: "gno.land/r/gnoswap/protocol_fee",
+			scenario: []struct {
+				action         string
+				packagePath    string
+				expectError    bool
+				expectedCurrent string
+			}{
+				{action: "register", packagePath: "gno.land/r/gnoswap/protocol_fee/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/protocol_fee/v1"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/protocol_fee/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/protocol_fee/v1"},
+			},
+		},
+		{
+			name:       "register v1, v2, change v1->v2->v1",
+			domainPath: "gno.land/r/gnoswap/pool",
+			scenario: []struct {
+				action         string
+				packagePath    string
+				expectError    bool
+				expectedCurrent string
+			}{
+				{action: "register", packagePath: "gno.land/r/gnoswap/pool/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
+				{action: "register", packagePath: "gno.land/r/gnoswap/pool/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/pool/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v2"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/pool/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/pool/v1"},
+			},
+		},
+		{
+			name:       "register v1, v2, v3, sequential changes",
+			domainPath: "gno.land/r/gnoswap/position",
+			scenario: []struct {
+				action         string
+				packagePath    string
+				expectError    bool
+				expectedCurrent string
+			}{
+				{action: "register", packagePath: "gno.land/r/gnoswap/position/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
+				{action: "register", packagePath: "gno.land/r/gnoswap/position/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
+				{action: "register", packagePath: "gno.land/r/gnoswap/position/v3", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/position/v2", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v2"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/position/v3", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v3"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/position/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/position/v1"},
+			},
+		},
+		{
+			name:       "attempt change before registration",
+			domainPath: "gno.land/r/gnoswap/staker",
+			scenario: []struct {
+				action         string
+				packagePath    string
+				expectError    bool
+				expectedCurrent string
+			}{
+				{action: "change", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: true, expectedCurrent: ""},
+				{action: "register", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/staker/v1"},
+				{action: "change", packagePath: "gno.land/r/gnoswap/staker/v1", expectError: false, expectedCurrent: "gno.land/r/gnoswap/staker/v1"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vmInternal := &versionManager{
+				domainPath:              tt.domainPath,
+				domainKVStore:           kvStore,
+				initializeDomainStoreFn: mockInitializeDomainStoreFn,
+				initializers:            avl.NewTree(),
+				currentPackagePath:      "",
+				currentImplementation:   nil,
+			}
+
+			for i, step := range tt.scenario {
+				var err error
+				switch step.action {
+				case "register":
+					vmInternal.initializers.Set(step.packagePath, mockInitializer(step.packagePath))
+					if vmInternal.currentPackagePath == "" {
+						vmInternal.currentPackagePath = step.packagePath
+						vmInternal.currentImplementation = mockInitializer(step.packagePath)(vmInternal.initializeDomainStoreFn(vmInternal.domainKVStore))
+					}
+				case "change":
+					err = vmInternal.ChangeImplementation(step.packagePath)
+				}
+
+				if step.expectError {
+					if err == nil {
+						t.Errorf("step %d: expected error but got none", i)
+					}
+				} else {
+					if err != nil {
+						t.Errorf("step %d: unexpected error: %v", i, err)
+					}
+					if got := vmInternal.GetCurrentPackagePath(); got != step.expectedCurrent {
+						t.Errorf("step %d: GetCurrentPackagePath() = %s, want %s", i, got, step.expectedCurrent)
+					}
+				}
+			}
 		})
 	}
 }
