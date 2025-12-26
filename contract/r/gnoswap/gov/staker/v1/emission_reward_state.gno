@@ -134,7 +134,7 @@ func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (i
 
 	accumulatedRewardAmount := self.GetAccumulatedRewardAmount()
 	previousClaimedAmount := self.GetClaimedRewardAmount()
-	claimableAmount := accumulatedRewardAmount - previousClaimedAmount
+	claimableAmount := safeSubInt64(accumulatedRewardAmount, previousClaimedAmount)
 
 	self.SetClaimedRewardAmount(accumulatedRewardAmount)
 	self.SetClaimedTimestamp(currentTimestamp)

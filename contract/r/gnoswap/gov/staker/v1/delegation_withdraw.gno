@@ -26,7 +26,7 @@ func (r *DelegationWithdrawResolver) Get() *staker.DelegationWithdraw {
 //   - int64: amount available for collection
 func (r *DelegationWithdrawResolver) CollectableAmount(currentTime int64) int64 {
 	if r.IsCollectable(currentTime) {
-		return r.withdraw.UnDelegateAmount() - r.withdraw.CollectedAmount()
+		return safeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
 	}
 
 	return 0
@@ -48,7 +48,8 @@ func (r *DelegationWithdrawResolver) IsCollectable(currentTime int64) bool {
 		return false
 	}
 
-	if r.withdraw.UnDelegateAmount()-r.withdraw.CollectedAmount() <= 0 {
+	remaining := safeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
+	if remaining <= 0 {
 		return false
 	}
 

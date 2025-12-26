@@ -23,11 +23,11 @@ func (r *DelegationResolver) Get() *staker.Delegation {
 }
 
 func (r *DelegationResolver) DelegatedAmount() int64 {
-	return r.delegation.TotalDelegatedAmount() - r.delegation.UnDelegatedAmount()
+	return safeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.UnDelegatedAmount())
 }
 
 func (r *DelegationResolver) LockedAmount() int64 {
-	return r.delegation.TotalDelegatedAmount() - r.delegation.CollectedAmount()
+	return safeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.CollectedAmount())
 }
 
 func (r *DelegationResolver) IsEmpty() bool {
