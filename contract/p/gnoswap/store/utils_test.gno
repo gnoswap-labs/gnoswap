@@ -10,12 +10,12 @@ import (
 
 func TestCastToInt64(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = int64(123)
 				result, err := CastToInt64(value)
 				uassert.NoError(t, err)
@@ -24,7 +24,7 @@ func TestCastToInt64(t *testing.T) {
 		},
 		{
 			name: "Failure_Uint64",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = uint64(123)
 				_, err := CastToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -33,7 +33,7 @@ func TestCastToInt64(t *testing.T) {
 		},
 		{
 			name: "Failure_String",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "123"
 				_, err := CastToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -42,7 +42,7 @@ func TestCastToInt64(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -52,19 +52,19 @@ func TestCastToInt64(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestCastToUint64(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = uint64(456)
 				result, err := CastToUint64(value)
 				uassert.NoError(t, err)
@@ -73,7 +73,7 @@ func TestCastToUint64(t *testing.T) {
 		},
 		{
 			name: "Failure_Int64",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = int64(456)
 				_, err := CastToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -82,7 +82,7 @@ func TestCastToUint64(t *testing.T) {
 		},
 		{
 			name: "Failure_String",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "456"
 				_, err := CastToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -91,7 +91,7 @@ func TestCastToUint64(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -101,19 +101,19 @@ func TestCastToUint64(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestCastToBool(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success_True",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = true
 				result, err := CastToBool(value)
 				uassert.NoError(t, err)
@@ -122,7 +122,7 @@ func TestCastToBool(t *testing.T) {
 		},
 		{
 			name: "Success_False",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = false
 				result, err := CastToBool(value)
 				uassert.NoError(t, err)
@@ -131,7 +131,7 @@ func TestCastToBool(t *testing.T) {
 		},
 		{
 			name: "Failure_Int",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = 1
 				_, err := CastToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -140,7 +140,7 @@ func TestCastToBool(t *testing.T) {
 		},
 		{
 			name: "Failure_String",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "true"
 				_, err := CastToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -149,7 +149,7 @@ func TestCastToBool(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -159,19 +159,19 @@ func TestCastToBool(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestCastToString(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "test string"
 				result, err := CastToString(value)
 				uassert.NoError(t, err)
@@ -180,7 +180,7 @@ func TestCastToString(t *testing.T) {
 		},
 		{
 			name: "Success_EmptyString",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = ""
 				result, err := CastToString(value)
 				uassert.NoError(t, err)
@@ -189,7 +189,7 @@ func TestCastToString(t *testing.T) {
 		},
 		{
 			name: "Failure_Int",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = 123
 				_, err := CastToString(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -198,7 +198,7 @@ func TestCastToString(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToString(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -208,19 +208,19 @@ func TestCastToString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestCastToAddress(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				addr := testutils.TestAddress("test")
 				var value any = addr
 				result, err := CastToAddress(value)
@@ -230,7 +230,7 @@ func TestCastToAddress(t *testing.T) {
 		},
 		{
 			name: "Failure_String",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "g1test"
 				_, err := CastToAddress(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -239,7 +239,7 @@ func TestCastToAddress(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToAddress(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -249,19 +249,19 @@ func TestCastToAddress(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestCastToTree(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Success",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				tree := avl.NewTree()
 				var value any = tree
 				result, err := CastToTree(value)
@@ -271,7 +271,7 @@ func TestCastToTree(t *testing.T) {
 		},
 		{
 			name: "Failure_String",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = "not a tree"
 				_, err := CastToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -280,7 +280,7 @@ func TestCastToTree(t *testing.T) {
 		},
 		{
 			name: "Failure_Map",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = make(map[string]string)
 				_, err := CastToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -288,7 +288,7 @@ func TestCastToTree(t *testing.T) {
 		},
 		{
 			name: "Failure_Nil",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				var value any = nil
 				_, err := CastToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
@@ -298,7 +298,7 @@ func TestCastToTree(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }

@@ -296,12 +296,12 @@ func TestStoreSetAndGetDelegations(t *testing.T) {
 
 func TestStoreSetAndGetDelegation(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovStakerStore(kvStore)
 
@@ -327,7 +327,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 		},
 		{
 			name: "Remove",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovStakerStore(kvStore)
 
@@ -350,7 +350,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }

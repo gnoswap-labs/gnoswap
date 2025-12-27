@@ -212,12 +212,12 @@ func TestStoreUpdatePositionNextID(t *testing.T) {
 
 func TestStorePosition(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "Has",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
@@ -243,7 +243,7 @@ func TestStorePosition(t *testing.T) {
 		},
 		{
 			name: "Get",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
@@ -273,7 +273,7 @@ func TestStorePosition(t *testing.T) {
 		},
 		{
 			name: "SetNotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
@@ -291,7 +291,7 @@ func TestStorePosition(t *testing.T) {
 		},
 		{
 			name: "Remove",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
@@ -318,7 +318,7 @@ func TestStorePosition(t *testing.T) {
 		},
 		{
 			name: "RemoveNotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
@@ -330,7 +330,7 @@ func TestStorePosition(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }

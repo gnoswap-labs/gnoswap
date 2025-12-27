@@ -56,12 +56,12 @@ func TestPermissionUpdateVsRemove(t *testing.T) {
 
 func TestAddAuthorizedCaller_Errors(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "already_registered",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
@@ -74,7 +74,7 @@ func TestAddAuthorizedCaller_Errors(t *testing.T) {
 		},
 		{
 			name: "invalid_permission",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
@@ -87,7 +87,7 @@ func TestAddAuthorizedCaller_Errors(t *testing.T) {
 		},
 		{
 			name: "unauthorized_domain",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				otherAddr := testutils.TestAddress("other")
 				testing.SetRealm(testing.NewUserRealm(otherAddr))
@@ -102,19 +102,19 @@ func TestAddAuthorizedCaller_Errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "not_found",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
@@ -126,7 +126,7 @@ func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 		},
 		{
 			name: "invalid_permission",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
@@ -140,7 +140,7 @@ func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 		},
 		{
 			name: "unauthorized_domain",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				otherAddr := testutils.TestAddress("other")
 
@@ -158,19 +158,19 @@ func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestRemoveAuthorizedCaller_Errors(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "not_found",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
@@ -182,7 +182,7 @@ func TestRemoveAuthorizedCaller_Errors(t *testing.T) {
 		},
 		{
 			name: "unauthorized_domain",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
 				otherAddr := testutils.TestAddress("other")
 
@@ -200,26 +200,26 @@ func TestRemoveAuthorizedCaller_Errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
 
 func TestBaseOperations_KeyNotFound(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T, KVStore)
+		name     string
+		verifyFn func(*testing.T, KVStore)
 	}{
 		{
 			name: "get_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.Get("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "delete_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				err := store.Delete("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
@@ -232,23 +232,23 @@ func TestBaseOperations_KeyNotFound(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(domainAddr))
 			store := NewKVStore(domainAddr)
 
-			tc.testFn(t, store)
+			tc.verifyFn(t, store)
 		})
 	}
 }
 
 func TestTypedGetters_TypeMismatch(t *testing.T) {
 	testCases := []struct {
-		name    string
-		setupFn func(KVStore)
-		testFn  func(*testing.T, KVStore)
+		name     string
+		setupFn  func(KVStore)
+		verifyFn func(*testing.T, KVStore)
 	}{
 		{
 			name: "int64_type_mismatch",
 			setupFn: func(store KVStore) {
 				store.Set("key", "string value")
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetInt64("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -258,7 +258,7 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			setupFn: func(store KVStore) {
 				store.Set("key", int64(123))
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetUint64("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -268,7 +268,7 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			setupFn: func(store KVStore) {
 				store.Set("key", 1)
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetBool("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -278,7 +278,7 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			setupFn: func(store KVStore) {
 				store.Set("key", 123)
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetString("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -288,7 +288,7 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			setupFn: func(store KVStore) {
 				store.Set("key", "not an address")
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetAddress("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -298,7 +298,7 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			setupFn: func(store KVStore) {
 				store.Set("key", "not a tree")
 			},
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetTree("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
@@ -312,54 +312,54 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			store := NewKVStore(domainAddr)
 
 			tc.setupFn(store)
-			tc.testFn(t, store)
+			tc.verifyFn(t, store)
 		})
 	}
 }
 
 func TestTypedGetters_KeyNotFound(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T, KVStore)
+		name     string
+		verifyFn func(*testing.T, KVStore)
 	}{
 		{
 			name: "int64_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetInt64("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "uint64_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetUint64("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "bool_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetBool("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "string_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetString("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "address_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetAddress("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
 			name: "tree_key_not_found",
-			testFn: func(t *testing.T, store KVStore) {
+			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.GetTree("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
@@ -372,7 +372,7 @@ func TestTypedGetters_KeyNotFound(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(domainAddr))
 			store := NewKVStore(domainAddr)
 
-			tc.testFn(t, store)
+			tc.verifyFn(t, store)
 		})
 	}
 }

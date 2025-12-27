@@ -168,12 +168,12 @@ func TestStoreSetAndGetConfigs(t *testing.T) {
 
 func TestStoreSetAndGetConfig(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -206,7 +206,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 		},
 		{
 			name: "NotInitialized",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -220,7 +220,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -237,7 +237,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
@@ -258,12 +258,12 @@ func TestStoreSetAndGetProposals(t *testing.T) {
 
 func TestStoreSetAndGetProposal(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -291,7 +291,7 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -307,7 +307,7 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
@@ -346,12 +346,12 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 
 func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "SetAndGet",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -379,7 +379,7 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -392,7 +392,7 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
@@ -438,12 +438,12 @@ func TestStoreGetUserProposalIDs(t *testing.T) {
 
 func TestStoreAddUserProposal(t *testing.T) {
 	testCases := []struct {
-		name   string
-		testFn func(*testing.T)
+		name     string
+		verifyFn func(*testing.T)
 	}{
 		{
 			name: "AddMultiple",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -471,7 +471,7 @@ func TestStoreAddUserProposal(t *testing.T) {
 		},
 		{
 			name: "NotInitializedError",
-			testFn: func(t *testing.T) {
+			verifyFn: func(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
@@ -483,7 +483,7 @@ func TestStoreAddUserProposal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testFn(t)
+			tc.verifyFn(t)
 		})
 	}
 }
