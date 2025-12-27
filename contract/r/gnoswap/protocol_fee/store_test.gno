@@ -9,11 +9,31 @@ import (
 )
 
 func TestStoreInitialization(t *testing.T) {
-	resetTestState(t)
+	tests := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "kvStore should be initialized",
+			verifyFn: func(t *testing.T) {
+				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
+			},
+		},
+		{
+			name: "domain address should not be empty",
+			verifyFn: func(t *testing.T) {
+				domainAddr := kvStore.GetDomainAddress()
+				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+			},
+		},
+	}
 
-	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
-	domainAddr := kvStore.GetDomainAddress()
-	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			tt.verifyFn(t)
+		})
+	}
 }
 
 func TestStore_AuthorizedCallers(t *testing.T) {
@@ -93,77 +113,125 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 }
 
 func TestStoreSetAndGetDevOpsPct(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get dev ops pct successfully",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.SetDevOpsPct(25)
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasDevOpsPctStoreKey(), "should have dev ops pct after setting")
+				retrieved := ps.GetDevOpsPct()
+				uassert.Equal(t, int64(25), retrieved)
+			},
+		},
+		{
+			name: "should not have dev ops pct initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasDevOpsPctStoreKey(), "should not have dev ops pct initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized dev ops pct",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetDevOpsPct()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized dev ops pct",
+		},
+		{
+			name: "initialize dev ops pct to zero",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeDevOpsPct()
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasDevOpsPctStoreKey())
+				uassert.Equal(t, int64(0), ps.GetDevOpsPct())
+			},
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasDevOpsPctStoreKey(), "should not have dev ops pct initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.SetDevOpsPct(25)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasDevOpsPctStoreKey(), "should have dev ops pct after setting")
-
-		retrieved := ps.GetDevOpsPct()
-		uassert.Equal(t, int64(25), retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized dev ops pct")
-		}()
-
-		ps.GetDevOpsPct()
-	})
-
-	t.Run("Initialize", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		err := ps.InitializeDevOpsPct()
-		uassert.NoError(t, err)
-
-		uassert.True(t, ps.HasDevOpsPctStoreKey())
-		uassert.Equal(t, int64(0), ps.GetDevOpsPct())
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetAccuToGovStaker(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "initialize and get accu to gov staker",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeAccuToGovStaker()
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasAccuToGovStakerStoreKey(), "should have accu to gov staker after initializing")
+				retrieved := ps.GetAccuToGovStaker()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have accu to gov staker initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasAccuToGovStakerStoreKey(), "should not have accu to gov staker initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized accu to gov staker",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetAccuToGovStaker()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized accu to gov staker",
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasAccuToGovStakerStoreKey(), "should not have accu to gov staker initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.InitializeAccuToGovStaker()
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasAccuToGovStakerStoreKey(), "should have accu to gov staker after initializing")
-
-		retrieved := ps.GetAccuToGovStaker()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized accu to gov staker")
-		}()
-
-		ps.GetAccuToGovStaker()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetAccuToGovStakerItem(t *testing.T) {
@@ -217,34 +285,59 @@ func TestStoreSetAndGetAccuToGovStakerItem(t *testing.T) {
 }
 
 func TestStoreSetAndGetAccuToDevOps(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "initialize and get accu to dev ops",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeAccuToDevOps()
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasAccuToDevOpsStoreKey(), "should have accu to dev ops after initializing")
+				retrieved := ps.GetAccuToDevOps()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have accu to dev ops initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasAccuToDevOpsStoreKey(), "should not have accu to dev ops initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized accu to dev ops",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetAccuToDevOps()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized accu to dev ops",
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasAccuToDevOpsStoreKey(), "should not have accu to dev ops initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.InitializeAccuToDevOps()
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasAccuToDevOpsStoreKey(), "should have accu to dev ops after initializing")
-
-		retrieved := ps.GetAccuToDevOps()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized accu to dev ops")
-		}()
-
-		ps.GetAccuToDevOps()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetAccuToDevOpsItem(t *testing.T) {
@@ -298,53 +391,73 @@ func TestStoreSetAndGetAccuToDevOpsItem(t *testing.T) {
 }
 
 func TestStoreSetAndGetTokenListWithAmounts(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get token list with amounts successfully",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeTokenListWithAmount()
+				tokenList := map[string]int64{
+					"gno.land/r/demo/token1": 100,
+					"gno.land/r/demo/token2": 200,
+				}
+				ps.SetTokenListWithAmounts(tokenList)
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasTokenListWithAmountsStoreKey(), "should have token list after initializing")
+				retrieved := ps.GetTokenListWithAmounts()
+				uassert.NotEqual(t, nil, retrieved)
+				uassert.Equal(t, int64(100), retrieved["gno.land/r/demo/token1"])
+				uassert.Equal(t, int64(200), retrieved["gno.land/r/demo/token2"])
+			},
+		},
+		{
+			name: "should not have token list initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasTokenListWithAmountsStoreKey(), "should not have token list initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized token list",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetTokenListWithAmounts()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized token list",
+		},
+		{
+			name: "error when setting nil token list",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				err := ps.SetTokenListWithAmounts(nil)
+				uassert.ErrorContains(t, err, "tokenListWithAmounts is nil")
+			},
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasTokenListWithAmountsStoreKey(), "should not have token list initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.InitializeTokenListWithAmount()
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasTokenListWithAmountsStoreKey(), "should have token list after initializing")
-
-		tokenList := map[string]int64{
-			"gno.land/r/demo/token1": 100,
-			"gno.land/r/demo/token2": 200,
-		}
-
-		err = ps.SetTokenListWithAmounts(tokenList)
-		uassert.NoError(t, err)
-
-		retrieved := ps.GetTokenListWithAmounts()
-		uassert.NotEqual(t, nil, retrieved)
-		uassert.Equal(t, int64(100), retrieved["gno.land/r/demo/token1"])
-		uassert.Equal(t, int64(200), retrieved["gno.land/r/demo/token2"])
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized token list")
-		}()
-
-		ps.GetTokenListWithAmounts()
-	})
-
-	t.Run("NilError", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		err := ps.SetTokenListWithAmounts(nil)
-		uassert.ErrorContains(t, err, "tokenListWithAmounts is nil")
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetTokenListWithAmountItem(t *testing.T) {
@@ -398,34 +511,59 @@ func TestStoreSetAndGetTokenListWithAmountItem(t *testing.T) {
 }
 
 func TestStoreSetAndGetDistributedToGovStakerHistory(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "initialize and get distributed to gov staker history",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeDistributedToGovStakerHistory()
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasDistributedToGovStakerHistoryStoreKey(), "should have distributed to gov staker history after initializing")
+				retrieved := ps.GetDistributedToGovStakerHistory()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have distributed to gov staker history initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasDistributedToGovStakerHistoryStoreKey(), "should not have distributed to gov staker history initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized distributed to gov staker history",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetDistributedToGovStakerHistory()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized distributed to gov staker history",
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasDistributedToGovStakerHistoryStoreKey(), "should not have distributed to gov staker history initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.InitializeDistributedToGovStakerHistory()
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasDistributedToGovStakerHistoryStoreKey(), "should have distributed to gov staker history after initializing")
-
-		retrieved := ps.GetDistributedToGovStakerHistory()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized distributed to gov staker history")
-		}()
-
-		ps.GetDistributedToGovStakerHistory()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetDistributedToGovStakerHistoryItem(t *testing.T) {
@@ -475,34 +613,59 @@ func TestStoreSetAndGetDistributedToGovStakerHistoryItem(t *testing.T) {
 }
 
 func TestStoreSetAndGetDistributedToDevOpsHistory(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IProtocolFeeStore)
+		testFn       func(*testing.T, IProtocolFeeStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "initialize and get distributed to dev ops history",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeDistributedToDevOpsHistory()
+			},
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasDistributedToDevOpsHistoryStoreKey(), "should have distributed to dev ops history after initializing")
+				retrieved := ps.GetDistributedToDevOpsHistory()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have distributed to dev ops history initially",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.False(t, ps.HasDistributedToDevOpsHistoryStoreKey(), "should not have distributed to dev ops history initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized distributed to dev ops history",
+			testFn: func(t *testing.T, ps IProtocolFeeStore) {
+				ps.GetDistributedToDevOpsHistory()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized distributed to dev ops history",
+		},
+	}
 
-		ps := NewProtocolFeeStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-		uassert.False(t, ps.HasDistributedToDevOpsHistoryStoreKey(), "should not have distributed to dev ops history initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.InitializeDistributedToDevOpsHistory()
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasDistributedToDevOpsHistoryStoreKey(), "should have distributed to dev ops history after initializing")
-
-		retrieved := ps.GetDistributedToDevOpsHistory()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewProtocolFeeStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized distributed to dev ops history")
-		}()
-
-		ps.GetDistributedToDevOpsHistory()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetDistributedToDevOpsHistoryItem(t *testing.T) {
@@ -552,47 +715,51 @@ func TestStoreSetAndGetDistributedToDevOpsHistoryItem(t *testing.T) {
 }
 
 func TestStoreMultipleSetAndGet(t *testing.T) {
-	resetTestState(t)
+	tests := []struct {
+		name     string
+		setupFn  func(IProtocolFeeStore)
+		verifyFn func(*testing.T, IProtocolFeeStore)
+	}{
+		{
+			name: "set and get all store values",
+			setupFn: func(ps IProtocolFeeStore) {
+				ps.InitializeDevOpsPct()
+				ps.InitializeAccuToGovStaker()
+				ps.InitializeAccuToDevOps()
+				ps.InitializeTokenListWithAmount()
 
-	ps := NewProtocolFeeStore(kvStore)
+				ps.SetDevOpsPct(30)
+				ps.SetAccuToGovStakerItem("token1", 1000)
+				ps.SetAccuToDevOpsItem("token1", 500)
+				ps.SetTokenListWithAmountItem("token1", 1500)
+			},
+			verifyFn: func(t *testing.T, ps IProtocolFeeStore) {
+				uassert.True(t, ps.HasDevOpsPctStoreKey())
+				uassert.True(t, ps.HasAccuToGovStakerStoreKey())
+				uassert.True(t, ps.HasAccuToDevOpsStoreKey())
+				uassert.True(t, ps.HasTokenListWithAmountsStoreKey())
 
-	err := ps.InitializeDevOpsPct()
-	uassert.NoError(t, err)
+				uassert.Equal(t, int64(30), ps.GetDevOpsPct())
 
-	err = ps.InitializeAccuToGovStaker()
-	uassert.NoError(t, err)
+				amount, _ := ps.GetAccuToGovStakerItem("token1")
+				uassert.Equal(t, int64(1000), amount)
 
-	err = ps.InitializeAccuToDevOps()
-	uassert.NoError(t, err)
+				amount, _ = ps.GetAccuToDevOpsItem("token1")
+				uassert.Equal(t, int64(500), amount)
 
-	err = ps.InitializeTokenListWithAmount()
-	uassert.NoError(t, err)
+				amount, _ = ps.GetTokenListWithAmountItem("token1")
+				uassert.Equal(t, int64(1500), amount)
+			},
+		},
+	}
 
-	err = ps.SetDevOpsPct(30)
-	uassert.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewProtocolFeeStore(kvStore)
 
-	err = ps.SetAccuToGovStakerItem("token1", 1000)
-	uassert.NoError(t, err)
-
-	err = ps.SetAccuToDevOpsItem("token1", 500)
-	uassert.NoError(t, err)
-
-	err = ps.SetTokenListWithAmountItem("token1", 1500)
-	uassert.NoError(t, err)
-
-	uassert.True(t, ps.HasDevOpsPctStoreKey())
-	uassert.True(t, ps.HasAccuToGovStakerStoreKey())
-	uassert.True(t, ps.HasAccuToDevOpsStoreKey())
-	uassert.True(t, ps.HasTokenListWithAmountsStoreKey())
-
-	uassert.Equal(t, int64(30), ps.GetDevOpsPct())
-
-	amount, _ := ps.GetAccuToGovStakerItem("token1")
-	uassert.Equal(t, int64(1000), amount)
-
-	amount, _ = ps.GetAccuToDevOpsItem("token1")
-	uassert.Equal(t, int64(500), amount)
-
-	amount, _ = ps.GetTokenListWithAmountItem("token1")
-	uassert.Equal(t, int64(1500), amount)
+			tt.setupFn(ps)
+			tt.verifyFn(t, ps)
+		})
+	}
 }

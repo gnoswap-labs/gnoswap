@@ -11,11 +11,31 @@ import (
 )
 
 func TestStoreInitialization(t *testing.T) {
-	resetTestState(t)
+	tests := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "kvStore should be initialized",
+			verifyFn: func(t *testing.T) {
+				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
+			},
+		},
+		{
+			name: "domain address should not be empty",
+			verifyFn: func(t *testing.T) {
+				domainAddr := kvStore.GetDomainAddress()
+				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+			},
+		},
+	}
 
-	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
-	domainAddr := kvStore.GetDomainAddress()
-	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			tt.verifyFn(t)
+		})
+	}
 }
 
 func TestStore_AuthorizedCallers(t *testing.T) {
@@ -103,66 +123,116 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 }
 
 func TestStoreSetAndGetPositions(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IPositionStore)
+		testFn       func(*testing.T, IPositionStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get positions successfully",
+			setupFn: func(ps IPositionStore) {
+				positions := avl.NewTree()
+				ps.SetPositions(positions)
+			},
+			testFn: func(t *testing.T, ps IPositionStore) {
+				uassert.True(t, ps.HasPositionsStoreKey(), "should have positions after setting")
+				retrieved := ps.GetPositions()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have positions initially",
+			testFn: func(t *testing.T, ps IPositionStore) {
+				uassert.False(t, ps.HasPositionsStoreKey(), "should not have positions initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized positions",
+			testFn: func(t *testing.T, ps IPositionStore) {
+				ps.GetPositions()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized positions",
+		},
+	}
 
-		ps := NewPositionStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewPositionStore(kvStore)
 
-		uassert.False(t, ps.HasPositionsStoreKey(), "should not have positions initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		positions := avl.NewTree()
-		err := ps.SetPositions(positions)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasPositionsStoreKey(), "should have positions after setting")
-
-		retrieved := ps.GetPositions()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewPositionStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized positions")
-		}()
-
-		ps.GetPositions()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreSetAndGetPositionNextID(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(IPositionStore)
+		testFn       func(*testing.T, IPositionStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get position next ID successfully",
+			setupFn: func(ps IPositionStore) {
+				ps.SetPositionNextID(100)
+			},
+			testFn: func(t *testing.T, ps IPositionStore) {
+				uassert.True(t, ps.HasPositionNextIDStoreKey(), "should have position next ID after setting")
+				retrieved := ps.GetPositionNextID()
+				uassert.Equal(t, uint64(100), retrieved)
+			},
+		},
+		{
+			name: "should not have position next ID initially",
+			testFn: func(t *testing.T, ps IPositionStore) {
+				uassert.False(t, ps.HasPositionNextIDStoreKey(), "should not have position next ID initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized position next ID",
+			testFn: func(t *testing.T, ps IPositionStore) {
+				ps.GetPositionNextID()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized position next ID",
+		},
+	}
 
-		ps := NewPositionStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewPositionStore(kvStore)
 
-		uassert.False(t, ps.HasPositionNextIDStoreKey(), "should not have position next ID initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
 
-		err := ps.SetPositionNextID(100)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ps.HasPositionNextIDStoreKey(), "should have position next ID after setting")
-
-		retrieved := ps.GetPositionNextID()
-		uassert.Equal(t, uint64(100), retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ps := NewPositionStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized position next ID")
-		}()
-
-		ps.GetPositionNextID()
-	})
+			tt.testFn(t, ps)
+		})
+	}
 }
 
 func TestStoreUpdatePositionNextID(t *testing.T) {

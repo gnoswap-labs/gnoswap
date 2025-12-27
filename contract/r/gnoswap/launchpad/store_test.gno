@@ -10,11 +10,31 @@ import (
 )
 
 func TestStoreInitialization(t *testing.T) {
-	resetTestState(t)
+	tests := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "kvStore should be initialized",
+			verifyFn: func(t *testing.T) {
+				uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
+			},
+		},
+		{
+			name: "domain address should not be empty",
+			verifyFn: func(t *testing.T) {
+				domainAddr := kvStore.GetDomainAddress()
+				uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+			},
+		},
+	}
 
-	uassert.NotEqual(t, nil, kvStore, "kvStore should be initialized")
-	domainAddr := kvStore.GetDomainAddress()
-	uassert.NotEqual(t, address(""), domainAddr, "domain address should not be empty")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			tt.verifyFn(t)
+		})
+	}
 }
 
 func TestStore_AuthorizedCallers(t *testing.T) {
@@ -94,99 +114,174 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 }
 
 func TestStoreSetAndGetProjects(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(ILaunchpadStore)
+		testFn       func(*testing.T, ILaunchpadStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get projects successfully",
+			setupFn: func(ls ILaunchpadStore) {
+				projects := avl.NewTree()
+				ls.SetProjects(projects)
+			},
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasProjectsKey(), "should have projects after setting")
+				retrieved := ls.GetProjects()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have projects initially",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.False(t, ls.HasProjectsKey(), "should not have projects initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized projects",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				ls.GetProjects()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized projects",
+		},
+	}
 
-		ls := NewLaunchpadStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ls := NewLaunchpadStore(kvStore)
 
-		uassert.False(t, ls.HasProjectsKey(), "should not have projects initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ls)
+			}
 
-		projects := avl.NewTree()
-		err := ls.SetProjects(projects)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ls.HasProjectsKey(), "should have projects after setting")
-
-		retrieved := ls.GetProjects()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ls := NewLaunchpadStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized projects")
-		}()
-
-		ls.GetProjects()
-	})
+			tt.testFn(t, ls)
+		})
+	}
 }
 
 func TestStoreSetAndGetProjectTierRewardManagers(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(ILaunchpadStore)
+		testFn       func(*testing.T, ILaunchpadStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get project tier reward managers successfully",
+			setupFn: func(ls ILaunchpadStore) {
+				managers := avl.NewTree()
+				ls.SetProjectTierRewardManagers(managers)
+			},
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasProjectTierRewardManagersKey(), "should have project tier reward managers after setting")
+				retrieved := ls.GetProjectTierRewardManagers()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have project tier reward managers initially",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.False(t, ls.HasProjectTierRewardManagersKey(), "should not have project tier reward managers initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized project tier reward managers",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				ls.GetProjectTierRewardManagers()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized project tier reward managers",
+		},
+	}
 
-		ls := NewLaunchpadStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ls := NewLaunchpadStore(kvStore)
 
-		uassert.False(t, ls.HasProjectTierRewardManagersKey(), "should not have project tier reward managers initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ls)
+			}
 
-		managers := avl.NewTree()
-		err := ls.SetProjectTierRewardManagers(managers)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ls.HasProjectTierRewardManagersKey(), "should have project tier reward managers after setting")
-
-		retrieved := ls.GetProjectTierRewardManagers()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ls := NewLaunchpadStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized project tier reward managers")
-		}()
-
-		ls.GetProjectTierRewardManagers()
-	})
+			tt.testFn(t, ls)
+		})
+	}
 }
 
 func TestStoreSetAndGetDepositCounter(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(ILaunchpadStore)
+		testFn       func(*testing.T, ILaunchpadStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get deposit counter successfully",
+			setupFn: func(ls ILaunchpadStore) {
+				counter := &Counter{}
+				ls.SetDepositCounter(counter)
+			},
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasDepositCounterStoreKey(), "should have deposit counter after setting")
+				retrieved := ls.GetDepositCounter()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have deposit counter initially",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.False(t, ls.HasDepositCounterStoreKey(), "should not have deposit counter initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized deposit counter",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				ls.GetDepositCounter()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized deposit counter",
+		},
+	}
 
-		ls := NewLaunchpadStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ls := NewLaunchpadStore(kvStore)
 
-		uassert.False(t, ls.HasDepositCounterStoreKey(), "should not have deposit counter initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ls)
+			}
 
-		counter := &Counter{}
-		err := ls.SetDepositCounter(counter)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ls.HasDepositCounterStoreKey(), "should have deposit counter after setting")
-
-		retrieved := ls.GetDepositCounter()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ls := NewLaunchpadStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized deposit counter")
-		}()
-
-		ls.GetDepositCounter()
-	})
+			tt.testFn(t, ls)
+		})
+	}
 }
 
 func TestStoreNextDepositID(t *testing.T) {
@@ -209,78 +304,117 @@ func TestStoreNextDepositID(t *testing.T) {
 }
 
 func TestStoreSetAndGetDeposits(t *testing.T) {
-	t.Run("SetAndGet", func(t *testing.T) {
-		resetTestState(t)
+	tests := []struct {
+		name         string
+		setupFn      func(ILaunchpadStore)
+		testFn       func(*testing.T, ILaunchpadStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get deposits successfully",
+			setupFn: func(ls ILaunchpadStore) {
+				deposits := avl.NewTree()
+				ls.SetDeposits(deposits)
+			},
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasDepositsKey(), "should have deposits after setting")
+				retrieved := ls.GetDeposits()
+				uassert.NotEqual(t, nil, retrieved)
+			},
+		},
+		{
+			name: "should not have deposits initially",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.False(t, ls.HasDepositsKey(), "should not have deposits initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized deposits",
+			testFn: func(t *testing.T, ls ILaunchpadStore) {
+				ls.GetDeposits()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized deposits",
+		},
+	}
 
-		ls := NewLaunchpadStore(kvStore)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ls := NewLaunchpadStore(kvStore)
 
-		uassert.False(t, ls.HasDepositsKey(), "should not have deposits initially")
+			if tt.setupFn != nil {
+				tt.setupFn(ls)
+			}
 
-		deposits := avl.NewTree()
-		err := ls.SetDeposits(deposits)
-		uassert.NoError(t, err)
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
 
-		uassert.True(t, ls.HasDepositsKey(), "should have deposits after setting")
-
-		retrieved := ls.GetDeposits()
-		uassert.NotEqual(t, nil, retrieved)
-	})
-
-	t.Run("NotInitializedPanic", func(t *testing.T) {
-		resetTestState(t)
-
-		ls := NewLaunchpadStore(kvStore)
-
-		defer func() {
-			r := recover()
-			uassert.NotEqual(t, nil, r, "should panic when getting uninitialized deposits")
-		}()
-
-		ls.GetDeposits()
-	})
+			tt.testFn(t, ls)
+		})
+	}
 }
 
 func TestStoreMultipleSetAndGet(t *testing.T) {
-	resetTestState(t)
+	tests := []struct {
+		name     string
+		setupFn  func(ILaunchpadStore)
+		verifyFn func(*testing.T, ILaunchpadStore)
+	}{
+		{
+			name: "set and get all store values",
+			setupFn: func(ls ILaunchpadStore) {
+				projects := avl.NewTree()
+				projects.Set("project1", "data1")
+				ls.SetProjects(projects)
 
-	ls := NewLaunchpadStore(kvStore)
+				managers := avl.NewTree()
+				managers.Set("manager1", "mdata1")
+				ls.SetProjectTierRewardManagers(managers)
 
-	projects := avl.NewTree()
-	projects.Set("project1", "data1")
-	err := ls.SetProjects(projects)
-	uassert.NoError(t, err)
+				counter := &Counter{}
+				ls.SetDepositCounter(counter)
 
-	managers := avl.NewTree()
-	managers.Set("manager1", "mdata1")
-	err = ls.SetProjectTierRewardManagers(managers)
-	uassert.NoError(t, err)
+				deposits := avl.NewTree()
+				deposits.Set("deposit1", "ddata1")
+				ls.SetDeposits(deposits)
+			},
+			verifyFn: func(t *testing.T, ls ILaunchpadStore) {
+				uassert.True(t, ls.HasProjectsKey())
+				uassert.True(t, ls.HasProjectTierRewardManagersKey())
+				uassert.True(t, ls.HasDepositCounterStoreKey())
+				uassert.True(t, ls.HasDepositsKey())
 
-	counter := &Counter{}
-	err = ls.SetDepositCounter(counter)
-	uassert.NoError(t, err)
+				retrievedProjects := ls.GetProjects()
+				val, _ := retrievedProjects.Get("project1")
+				uassert.Equal(t, "data1", val)
 
-	deposits := avl.NewTree()
-	deposits.Set("deposit1", "ddata1")
-	err = ls.SetDeposits(deposits)
-	uassert.NoError(t, err)
+				retrievedManagers := ls.GetProjectTierRewardManagers()
+				val, _ = retrievedManagers.Get("manager1")
+				uassert.Equal(t, "mdata1", val)
 
-	uassert.True(t, ls.HasProjectsKey())
-	uassert.True(t, ls.HasProjectTierRewardManagersKey())
-	uassert.True(t, ls.HasDepositCounterStoreKey())
-	uassert.True(t, ls.HasDepositsKey())
+				retrievedCounter := ls.GetDepositCounter()
+				uassert.NotEqual(t, nil, retrievedCounter)
 
-	retrievedProjects := ls.GetProjects()
-	val, _ := retrievedProjects.Get("project1")
-	uassert.Equal(t, "data1", val)
+				retrievedDeposits := ls.GetDeposits()
+				val, _ = retrievedDeposits.Get("deposit1")
+				uassert.Equal(t, "ddata1", val)
+			},
+		},
+	}
 
-	retrievedManagers := ls.GetProjectTierRewardManagers()
-	val, _ = retrievedManagers.Get("manager1")
-	uassert.Equal(t, "mdata1", val)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ls := NewLaunchpadStore(kvStore)
 
-	retrievedCounter := ls.GetDepositCounter()
-	uassert.NotEqual(t, nil, retrievedCounter)
-
-	retrievedDeposits := ls.GetDeposits()
-	val, _ = retrievedDeposits.Get("deposit1")
-	uassert.Equal(t, "ddata1", val)
+			tt.setupFn(ls)
+			tt.verifyFn(t, ls)
+		})
+	}
 }
