@@ -279,3 +279,141 @@ func TestDelegationManager_GetDelegateeIDs_NonExistent(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegationManager_BidirectionalIndex tests that both forward and reverse indexes are maintained
+func TestDelegationManager_BidirectionalIndex(t *testing.T) {
+	tests := []struct {
+		name                    string
+		delegations             map[string]map[string][]int64 // delegator -> delegatee -> ids
+		verifyDelegatee         string
+		expectedDelegatorsCount int
+		expectedTotalIDs        int
+	}{
+		{
+			name: "Single delegator to single delegatee",
+			delegations: map[string]map[string][]int64{
+				"delegator1": {
+					"delegatee1": {1, 2, 3},
+				},
+			},
+			verifyDelegatee:         "delegatee1",
+			expectedDelegatorsCount: 1,
+			expectedTotalIDs:        3,
+		},
+		{
+			name: "Multiple delegators to single delegatee",
+			delegations: map[string]map[string][]int64{
+				"delegator1": {
+					"delegatee1": {1, 2},
+				},
+				"delegator2": {
+					"delegatee1": {3, 4, 5},
+				},
+				"delegator3": {
+					"delegatee1": {6},
+				},
+			},
+			verifyDelegatee:         "delegatee1",
+			expectedDelegatorsCount: 3,
+			expectedTotalIDs:        6,
+		},
+		{
+			name: "Delegator delegates to multiple delegatees",
+			delegations: map[string]map[string][]int64{
+				"delegator1": {
+					"delegatee1": {1, 2},
+					"delegatee2": {3, 4},
+				},
+			},
+			verifyDelegatee:         "delegatee1",
+			expectedDelegatorsCount: 1,
+			expectedTotalIDs:        2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			dm := NewDelegationManager()
+			for delegator, delegatees := range tc.delegations {
+				for delegatee, ids := range delegatees {
+					dm.SetDelegateeIDs(delegator, delegatee, ids)
+				}
+			}
+
+			// when - verify reverse index
+			delegators, exists := dm.GetDelegateeDelegators(tc.verifyDelegatee)
+
+			// then
+			uassert.True(t, exists)
+			uassert.Equal(t, delegators.Size(), tc.expectedDelegatorsCount)
+
+			// verify total IDs count
+			totalIDs := 0
+			delegators.Iterate("", "", func(key string, value interface{}) bool {
+				if ids, ok := value.([]int64); ok {
+					totalIDs += len(ids)
+				}
+				return false
+			})
+			uassert.Equal(t, totalIDs, tc.expectedTotalIDs)
+
+			// verify forward index still works
+			for delegator, delegatees := range tc.delegations {
+				for delegatee, expectedIDs := range delegatees {
+					ids, exists := dm.GetDelegateeIDs(delegator, delegatee)
+					uassert.True(t, exists)
+					uassert.Equal(t, len(ids), len(expectedIDs))
+				}
+			}
+		})
+	}
+}
+
+// TestDelegationManager_GetDelegatorIDsByDelegatee tests reverse lookup functionality
+func TestDelegationManager_GetDelegatorIDsByDelegatee(t *testing.T) {
+	tests := []struct {
+		name        string
+		delegator   string
+		delegatee   string
+		ids         []int64
+		shouldExist bool
+	}{
+		{
+			name:        "Get IDs for existing delegatee-delegator pair",
+			delegator:   "delegator1",
+			delegatee:   "delegatee1",
+			ids:         []int64{1, 2, 3},
+			shouldExist: true,
+		},
+		{
+			name:        "Get IDs for non-existent delegatee",
+			delegator:   "delegator1",
+			delegatee:   "nonexistent",
+			ids:         []int64{},
+			shouldExist: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			dm := NewDelegationManager()
+			if tc.shouldExist {
+				dm.SetDelegateeIDs(tc.delegator, tc.delegatee, tc.ids)
+			}
+
+			// when
+			ids, exists := dm.GetDelegatorIDsByDelegatee(tc.delegatee, tc.delegator)
+
+			// then
+			uassert.Equal(t, exists, tc.shouldExist)
+			if tc.shouldExist {
+				uassert.Equal(t, len(ids), len(tc.ids))
+				for i, expectedID := range tc.ids {
+					uassert.Equal(t, ids[i], expectedID)
+				}
+			}
+		})
+	}
+}
