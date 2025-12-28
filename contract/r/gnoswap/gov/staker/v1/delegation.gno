@@ -87,57 +87,42 @@ func (r *DelegationResolver) Collect(amount, currentTime int64) error {
 // processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(amount, currentTime int64) error {
 	remainingToCollect := amount
-	timesToRemove := make([]int64, 0)
+	keysToRemove := make([]string, 0)
 
-	// Iterate only through collectable time ranges (collectableTime <= currentTime)
-	r.delegation.IterateWithdrawsByTime(0, currentTime, func(collectableTime int64, withdraws []*staker.DelegationWithdraw) bool {
-		updatedWithdraws := make([]*staker.DelegationWithdraw, 0, len(withdraws))
+	// Iterate through all withdraws sequentially
+	r.delegation.IterateWithdraws(func(key string, withdraw *staker.DelegationWithdraw) bool {
+		resolver := NewDelegationWithdrawResolver(withdraw)
 
-		// Process each withdraw in this time bucket
-		for _, withdraw := range withdraws {
-			resolver := NewDelegationWithdrawResolver(withdraw)
+		// Collect if we still have remaining amount
+		if remainingToCollect > 0 {
+			collectableAmount := resolver.CollectableAmount(currentTime)
+			if collectableAmount > 0 {
+				amountToCollect := min(remainingToCollect, collectableAmount)
 
-			// Collect if we still have remaining amount
-			if remainingToCollect > 0 {
-				collectableAmount := resolver.CollectableAmount(currentTime)
-				if collectableAmount > 0 {
-					amountToCollect := min(remainingToCollect, collectableAmount)
-
-					if err := resolver.Collect(amountToCollect, currentTime); err != nil {
-						return true // Stop iteration on error
-					}
-
-					updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
-					if err != nil {
-						return true // Stop iteration on error
-					}
-					r.delegation.SetCollectedAmount(updatedAmount)
-					remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
+				if err := resolver.Collect(amountToCollect, currentTime); err != nil {
+					return true // Stop iteration on error
 				}
-			}
 
-			// Keep withdraw only if not fully collected
-			// This ensures already-collected withdraws (e.g., from UnDelegateWithoutLockup) are cleaned up
-			if !withdraw.IsCollected() {
-				updatedWithdraws = append(updatedWithdraws, withdraw)
+				updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
+				if err != nil {
+					return true // Stop iteration on error
+				}
+				r.delegation.SetCollectedAmount(updatedAmount)
+				remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
 			}
 		}
 
-		// Update or remove this time bucket based on remaining withdraws
-		if len(updatedWithdraws) == 0 {
-			// All withdraws collected, mark time bucket for removal
-			timesToRemove = append(timesToRemove, collectableTime)
-		} else if len(updatedWithdraws) != len(withdraws) {
-			// Some withdraws collected, update the slice
-			r.delegation.UpdateWithdrawsAtTime(collectableTime, updatedWithdraws)
+		// Mark for removal if fully collected
+		if withdraw.IsCollected() {
+			keysToRemove = append(keysToRemove, key)
 		}
 
 		return false // Continue iteration
 	})
 
-	// Remove empty time buckets from tree
-	for _, time := range timesToRemove {
-		r.delegation.RemoveWithdrawsAtTime(time)
+	// Remove collected withdraws from tree
+	for _, key := range keysToRemove {
+		r.delegation.RemoveWithdraw(key)
 	}
 
 	return nil
