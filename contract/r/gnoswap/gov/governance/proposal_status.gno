@@ -64,9 +64,9 @@ func NewProposalStatusBy(
 }
 
 /* Getter methods */
-func (s *ProposalStatus) Schedule() *ProposalScheduleStatus { return s.schedule }
+func (s *ProposalStatus) Schedule() *ProposalScheduleStatus   { return s.schedule }
 func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return s.actionStatus }
-func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus { return s.voteStatus }
+func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus     { return s.voteStatus }
 
 /* Delegation getters for vote data */
 

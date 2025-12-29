@@ -175,12 +175,11 @@ func distributeToTarget(amount int64) (int64, error) {
 			return false
 		}
 
-		totalSent += distAmount
+		totalSent = safeAddInt64(totalSent, distAmount)
 
 		distErr = transferToTarget(targetInt, distAmount)
 		if distErr != nil {
 			err = distErr
-
 			return true
 		}
 
@@ -224,9 +223,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToStaker = safeAddInt64(distributedToStaker, amount)
+		accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
 		gns.Transfer(cross, stakerAddr, amount)
-		distributedToStaker += amount
-		accuDistributedToStaker += amount
 
 	case DEVOPS:
 		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
@@ -237,9 +236,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
+		accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
 		gns.Transfer(cross, devOpsAddr, amount)
-		distributedToDevOps += amount
-		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
 		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
@@ -250,9 +249,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
+		accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
 		gns.Transfer(cross, communityPoolAddr, amount)
-		distributedToCommunityPool += amount
-		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
 		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
@@ -263,9 +262,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
+		accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
 		gns.Transfer(cross, govStakerAddr, amount)
-		distributedToGovStaker += amount
-		accuDistributedToGovStaker += amount
 
 	default:
 		return makeErrorWithDetails(

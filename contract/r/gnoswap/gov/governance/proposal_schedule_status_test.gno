@@ -7,8 +7,8 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestProposalScheduleStatus_NewProposalScheduleStatusInstance tests the instance creation
-func TestProposalScheduleStatus_NewProposalScheduleStatusInstance(t *testing.T) {
+// TestProposalScheduleStatus_NewProposalScheduleStatus tests the instance creation
+func TestProposalScheduleStatus_NewProposalScheduleStatus(t *testing.T) {
 	tests := []struct {
 		name           string
 		createTime     int64
@@ -78,7 +78,7 @@ func TestProposalScheduleStatus_NewProposalScheduleStatusInstance(t *testing.T) 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// when
-			status := NewProposalScheduleStatusInstance(
+			status := NewProposalScheduleStatus(
 				tt.createTime,
 				tt.activeTime,
 				tt.votingEndTime,
@@ -182,7 +182,7 @@ func TestProposalScheduleStatus_Setters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			status := NewProposalScheduleStatusInstance(
+			status := NewProposalScheduleStatus(
 				tt.initialCreate,
 				tt.initialActive,
 				tt.initialVotingEnd,
