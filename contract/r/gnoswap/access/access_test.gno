@@ -1,7 +1,6 @@
 package access
 
 import (
-	"strings"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -156,26 +155,20 @@ func TestGetRoleAddresses(t *testing.T) {
 			// Verify each address array
 			for role, expectedAddrs := range tt.expected {
 				actualAddrs, exists := addresses[role]
-				if !exists {
-					t.Errorf("Expected role %s to exist", role)
-					continue
-				}
+				uassert.True(t, exists, "Expected role %s to exist", role)
 
-				if len(actualAddrs) != len(expectedAddrs) {
-					t.Errorf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs))
-					continue
-				}
+				uassert.True(t, len(actualAddrs) == len(expectedAddrs),
+				    ufmt.Sprintf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs)))
 
-				if actualAddrs != expectedAddrs {
-					t.Errorf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs)
-				}
+				uassert.True(t, actualAddrs == expectedAddrs,
+				    ufmt.Sprintf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs))
 			}
 
 			// Verify original map is not modified by modifying returned map
 			addresses["new_role"] = testutils.TestAddress("new")
-			if len(roleAddresses) != len(tt.setupRoles) {
-				t.Errorf("Original map should not be modified")
-			}
+
+			uassert.True(t, len(roleAddresses) == len(tt.setupRoles),
+			    ufmt.Sprintf("Original map should not be modified, expected %d, got %d", len(tt.setupRoles), len(roleAddresses)))
 		})
 	}
 }
@@ -241,18 +234,14 @@ func TestIsAuthorized(t *testing.T) {
 			// Reset state at start of each test case
 			roleAddresses = make(map[string]address)
 
-			// Setup
 			if tt.setupRole != "" {
 				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
 
-			// Test
 			authorized := IsAuthorized(tt.queryRole, tt.queryAddr)
 
-			// Verify
-			if authorized != tt.expectedAuth {
-				t.Errorf("Expected authorized=%v, got %v", tt.expectedAuth, authorized)
-			}
+			uassert.True(t, authorized == tt.expectedAuth,
+			    ufmt.Sprintf("Expected authorized=%v, got %v", tt.expectedAuth, authorized))
 		})
 	}
 }
@@ -375,12 +364,8 @@ func TestSetRoleAddress(t *testing.T) {
 			} else {
 				SetRoleAddress(cross, tt.roleName, tt.roleAddress)
 				addr, ok := GetAddress(tt.roleName)
-				if !ok {
-					t.Errorf("Role %s should exist after set", tt.roleName)
-				}
-				if addr != tt.roleAddress {
-					t.Errorf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr)
-				}
+				uassert.True(t, ok, ufmt.Sprintf("Role %s should exist after set", tt.roleName))
+				uassert.True(t, addr == tt.roleAddress, ufmt.Sprintf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr))
 			}
 		})
 	}
@@ -492,9 +477,7 @@ func TestRemoveRole(t *testing.T) {
 			} else {
 				RemoveRole(cross, tt.roleName)
 				_, ok := GetAddress(tt.roleName)
-				if ok {
-					t.Errorf("Role %s should not exist after removal", tt.roleName)
-				}
+				uassert.False(t, ok, ufmt.Sprintf("Role %s should not exist after removal", tt.roleName))
 			}
 		})
 	}
@@ -557,36 +540,14 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			addr := MustGetAddress(tt.queryRole)
-
-			if !tt.shouldPanic {
-				if addr != tt.expectedAddr {
-					t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
-				}
+			    uassert.PanicsContains(t, tt.panicMsg, func() {
+							MustGetAddress(tt.queryRole)
+				})
+			} else {
+				addr := MustGetAddress(tt.queryRole)
+				uassert.True(t, addr == tt.expectedAddr,
+				    ufmt.Sprintf("Expected address=%s, got %s", tt.expectedAddr, addr))
 			}
 		})
-	}
-}
-
-// Helper function to check if error contains string
-func containsString(r interface{}, substr string) bool {
-	switch v := r.(type) {
-	case string:
-		return strings.Contains(v, substr)
-	case error:
-		return strings.Contains(v.Error(), substr)
-	default:
-		return strings.Contains(ufmt.Sprintf("%v", v), substr)
 	}
 }
