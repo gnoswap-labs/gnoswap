@@ -35,8 +35,14 @@ func init() {
 
 func initRegisterReadableContract() {
 	governanceAddress := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
+	launchpadAddress := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	err := kvStore.AddAuthorizedCaller(governanceAddress, store.ReadOnly)
+	if err != nil {
+		panic(err)
+	}
+
+	err = kvStore.AddAuthorizedCaller(launchpadAddress, store.ReadOnly)
 	if err != nil {
 		panic(err)
 	}
