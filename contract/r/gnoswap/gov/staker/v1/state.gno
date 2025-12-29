@@ -184,15 +184,25 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 		return delegations
 	}
 
-	if ids, ok := delegationIDs.([]int64); ok {
-		for _, id := range ids {
-			idStr := strconv.FormatInt(id, 10)
-			if delegation, exists := allDelegations.Get(idStr); exists {
-				if d, ok := delegation.(*staker.Delegation); ok {
-					delegations = append(delegations, d)
-				}
-			}
+	ids, ok := delegationIDs.([]int64)
+	if !ok {
+		return delegations
+	}
+
+	for _, id := range ids {
+		idStr := strconv.FormatInt(id, 10)
+
+		delegationRaw, exists := allDelegations.Get(idStr)
+		if !exists {
+			continue
 		}
+
+		delegation, ok := delegationRaw.(*staker.Delegation)
+		if !ok {
+			continue
+		}
+
+		delegations = append(delegations, delegation)
 	}
 
 	return delegations
