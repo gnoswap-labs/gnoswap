@@ -173,53 +173,95 @@ func TestVersionManager_InitialState(t *testing.T) {
 	}
 }
 
-func TestVersionManager_ChangeImplementation_Errors(t *testing.T) {
+// TestChangeImplementation_Errors tests all error cases in ChangeImplementation
+func TestChangeImplementation_Errors(t *testing.T) {
 	tests := []struct {
 		name          string
-		domainPath    string
-		targetPackage string
-		expectError   bool
+		setupFunc     func() (*versionManager, string)
 		errorContains string
 	}{
+		// Package not found cases
 		{
-			name:          "change to non-existent package returns error",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			targetPackage: "gno.land/r/gnoswap/protocol_fee/v999",
-			expectError:   true,
+			name: "non-existent package",
+			setupFunc: func() (*versionManager, string) {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := &versionManager{
+					domainPath:              "gno.land/r/gnoswap/protocol_fee",
+					domainKVStore:           kvStore,
+					initializeDomainStoreFn: mockInitializeDomainStoreFn,
+					initializers:            avl.NewTree(),
+				}
+				return vm, "gno.land/r/gnoswap/protocol_fee/v999"
+			},
 			errorContains: "initializer not found for package path",
 		},
 		{
-			name:          "change to empty package path returns error",
-			domainPath:    "gno.land/r/gnoswap/pool",
-			targetPackage: "",
-			expectError:   true,
+			name: "empty package path",
+			setupFunc: func() (*versionManager, string) {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := &versionManager{
+					domainPath:              "gno.land/r/gnoswap/pool",
+					domainKVStore:           kvStore,
+					initializeDomainStoreFn: mockInitializeDomainStoreFn,
+					initializers:            avl.NewTree(),
+				}
+				return vm, ""
+			},
 			errorContains: "initializer not found for package path",
 		},
+		// Invalid initializer type cases
 		{
-			name:          "change to different domain package returns error",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			targetPackage: "gno.land/r/gnoswap/pool/v1",
-			expectError:   true,
-			errorContains: "initializer not found for package path",
+			name: "initializer is string",
+			setupFunc: func() (*versionManager, string) {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := &versionManager{
+					domainPath:              "gno.land/r/gnoswap/protocol_fee",
+					domainKVStore:           kvStore,
+					initializeDomainStoreFn: mockInitializeDomainStoreFn,
+					initializers:            avl.NewTree(),
+				}
+				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", "not a function")
+				return vm, "gno.land/r/gnoswap/protocol_fee/v1"
+			},
+			errorContains: "initializer is not a function",
+		},
+		{
+			name: "initializer is int",
+			setupFunc: func() (*versionManager, string) {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := &versionManager{
+					domainPath:              "gno.land/r/gnoswap/pool",
+					domainKVStore:           kvStore,
+					initializeDomainStoreFn: mockInitializeDomainStoreFn,
+					initializers:            avl.NewTree(),
+				}
+				vm.initializers.Set("gno.land/r/gnoswap/pool/v1", 42)
+				return vm, "gno.land/r/gnoswap/pool/v1"
+			},
+			errorContains: "initializer is not a function",
+		},
+		{
+			name: "initializer is nil",
+			setupFunc: func() (*versionManager, string) {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := &versionManager{
+					domainPath:              "gno.land/r/gnoswap/position",
+					domainKVStore:           kvStore,
+					initializeDomainStoreFn: mockInitializeDomainStoreFn,
+					initializers:            avl.NewTree(),
+				}
+				vm.initializers.Set("gno.land/r/gnoswap/position/v1", nil)
+				return vm, "gno.land/r/gnoswap/position/v1"
+			},
+			errorContains: "initializer is not a function",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vm := NewVersionManager(
-				tt.domainPath,
-				kvStore,
-				mockInitializeDomainStoreFn,
-			)
-
-			err := vm.ChangeImplementation(tt.targetPackage)
-
-			if tt.expectError {
-				uassert.ErrorContains(t, err, tt.errorContains)
-			} else {
-				uassert.NoError(t, err)
-			}
+			vm, packagePath := tt.setupFunc()
+			err := vm.ChangeImplementation(packagePath)
+			uassert.ErrorContains(t, err, tt.errorContains)
 		})
 	}
 }
@@ -245,113 +287,32 @@ func mockInitializeDomainStoreFn(kvStore store.KVStore) any {
 	return kvStore
 }
 
-// TestRegisterInitializer_NoPermissionGrantedToImplementation verifies that
-func TestRegisterInitializer_NoPermissionGrantedToImplementation(t *testing.T) {
-	tests := []struct {
-		name        string
-		description string
-		domainPath  string
-	}{
-		{
-			name:        "implementation realm receives no storage permission",
-			description: "RegisterInitializer should not grant any storage permission to implementation realms",
-			domainPath:  "gno.land/r/gnoswap/protocol_fee",
-		},
-		{
-			name:        "subsequent registrations also receive no permission",
-			description: "Multiple RegisterInitializer calls should not accumulate permissions",
-			domainPath:  "gno.land/r/gnoswap/pool",
-		},
+// TestVersionManager_StoragePermission verifies that only domain address has storage permission
+func TestVersionManager_StoragePermission(t *testing.T) {
+	kvStore := store.NewKVStore(mockDomainAddr)
+	vm := NewVersionManager(
+		"gno.land/r/gnoswap/protocol_fee",
+		kvStore,
+		mockInitializeDomainStoreFn,
+	)
+
+	// Attempt to change to non-existent package (should fail)
+	_ = vm.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
+
+	// Verify kvStore has only domain address as authorized caller
+	authorizedCallers, err := kvStore.GetAuthorizedCallers()
+	if err != nil {
+		t.Fatalf("failed to get authorized callers: %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vm := NewVersionManager(
-				tt.domainPath,
-				kvStore,
-				mockInitializeDomainStoreFn,
-			)
-
-			if vm.GetDomainPath() != tt.domainPath {
-				t.Errorf("domain path mismatch: got %s, want %s", vm.GetDomainPath(), tt.domainPath)
-			}
-
-			// Verify kvStore has no authorized callers
-			authorizedCallers, err := kvStore.GetAuthorizedCallers()
-			if err != nil {
-				t.Errorf("failed to get authorized callers: %v", err)
-			}
-
-			if len(authorizedCallers) != 1 {
-				t.Errorf("authorized callers only domain address")
-			}
-
-			for caller, _ := range authorizedCallers {
-				if caller != mockDomainAddr {
-					t.Errorf("authorized caller should only be domain address, got %s", caller)
-				}
-			}
-
-			t.Logf("✓ %s", tt.description)
-		})
-	}
-}
-
-// TestChangeImplementation_NoPermissionModification verifies that ChangeImplementation
-func TestChangeImplementation_NoPermissionModification(t *testing.T) {
-	tests := []struct {
-		name        string
-		description string
-	}{
-		{
-			name:        "change implementation does not modify permissions",
-			description: "ChangeImplementation should only switch the active implementation without altering storage permissions",
-		},
+	if len(authorizedCallers) != 1 {
+		t.Errorf("expected 1 authorized caller, got %d", len(authorizedCallers))
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vm := NewVersionManager(
-				"gno.land/r/gnoswap/protocol_fee",
-				kvStore,
-				mockInitializeDomainStoreFn,
-			)
-
-			// Attempt to change to non-existent package (should fail cleanly)
-			err := vm.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
-			if err == nil {
-				t.Error("ChangeImplementation to unregistered package should fail")
-			}
-
-			// Verify version manager state is unchanged
-			if vm.GetCurrentPackagePath() != "" {
-				t.Errorf("currentPackagePath should remain empty after failed change, got %s", vm.GetCurrentPackagePath())
-			}
-
-			if vm.GetCurrentImplementation() != nil {
-				t.Error("currentImplementation should remain nil after failed change")
-			}
-
-			// Verify kvStore has no authorized callers
-			authorizedCallers, err := kvStore.GetAuthorizedCallers()
-			if err != nil {
-				t.Errorf("failed to get authorized callers: %v", err)
-			}
-
-			if len(authorizedCallers) != 1 {
-				t.Errorf("authorized callers only domain address")
-			}
-
-			for caller, _ := range authorizedCallers {
-				if caller != mockDomainAddr {
-					t.Errorf("authorized caller should only be domain address, got %s", caller)
-				}
-			}
-
-			t.Logf("✓ %s", tt.description)
-		})
+	for caller := range authorizedCallers {
+		if caller != mockDomainAddr {
+			t.Errorf("authorized caller should only be domain address, got %s", caller)
+		}
 	}
 }
 
@@ -486,111 +447,34 @@ func TestChangeImplementation_Success(t *testing.T) {
 	}
 }
 
-// TestChangeImplementation_InvalidInitializerType tests type validation
-func TestChangeImplementation_InvalidInitializerType(t *testing.T) {
-	tests := []struct {
-		name          string
-		domainPath    string
-		packagePath   string
-		initValue     any
-		expectError   bool
-		errorContains string
-	}{
-		{
-			name:          "initializer is string instead of function",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			packagePath:   "gno.land/r/gnoswap/protocol_fee/v1",
-			initValue:     "not a function",
-			expectError:   true,
-			errorContains: "initializer is not a function",
-		},
-		{
-			name:          "initializer is int instead of function",
-			domainPath:    "gno.land/r/gnoswap/pool",
-			packagePath:   "gno.land/r/gnoswap/pool/v1",
-			initValue:     42,
-			expectError:   true,
-			errorContains: "initializer is not a function",
-		},
-		{
-			name:          "initializer is nil",
-			domainPath:    "gno.land/r/gnoswap/position",
-			packagePath:   "gno.land/r/gnoswap/position/v1",
-			initValue:     nil,
-			expectError:   true,
-			errorContains: "initializer is not a function",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vmInternal := &versionManager{
-				domainPath:              tt.domainPath,
-				domainKVStore:           kvStore,
-				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
-				currentPackagePath:      "",
-				currentImplementation:   nil,
-			}
-
-			vmInternal.initializers.Set(tt.packagePath, tt.initValue)
-
-			err := vmInternal.ChangeImplementation(tt.packagePath)
-
-			if tt.expectError {
-				uassert.ErrorContains(t, err, tt.errorContains)
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
-
 // TestGetInitializers_ReadOnly tests that returned tree is read-only
 func TestGetInitializers_ReadOnly(t *testing.T) {
-	tests := []struct {
-		name       string
-		domainPath string
-	}{
-		{
-			name:       "protocol_fee initializers is read-only",
-			domainPath: "gno.land/r/gnoswap/protocol_fee",
-		},
+	kvStore := store.NewKVStore(mockDomainAddr)
+	vm := &versionManager{
+		domainPath:              "gno.land/r/gnoswap/protocol_fee",
+		domainKVStore:           kvStore,
+		initializeDomainStoreFn: mockInitializeDomainStoreFn,
+		initializers:            avl.NewTree(),
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vmInternal := &versionManager{
-				domainPath:              tt.domainPath,
-				domainKVStore:           kvStore,
-				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
-				currentPackagePath:      "",
-				currentImplementation:   nil,
-			}
+	vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
 
-			vmInternal.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
+	initializers := vm.GetInitializers()
+	if initializers == nil {
+		t.Fatal("GetInitializers() should not be nil")
+	}
 
-			initializers := vmInternal.GetInitializers()
-			if initializers == nil {
-				t.Fatal("GetInitializers() should not be nil")
-			}
+	if initializers.Size() != 1 {
+		t.Errorf("initializers.Size() = %d, want 1", initializers.Size())
+	}
 
-			if initializers.Size() != 1 {
-				t.Errorf("initializers.Size() = %d, want 1", initializers.Size())
-			}
+	result, exists := initializers.Get("gno.land/r/gnoswap/protocol_fee/v1")
+	if !exists {
+		t.Error("initializer should exist for v1")
+	}
 
-			result, exists := initializers.Get("gno.land/r/gnoswap/protocol_fee/v1")
-			if !exists {
-				t.Error("initializer should exist for v1")
-			}
-
-			if _, ok := result.(func(store any) any); !ok {
-				t.Errorf("initializer should be function type, got %T", result)
-			}
-		})
+	if _, ok := result.(func(store any) any); !ok {
+		t.Errorf("initializer should be function type, got %T", result)
 	}
 }
 
@@ -639,44 +523,64 @@ func TestMakeInitializerSafe_InvalidType(t *testing.T) {
 	}
 }
 
-// TestIsContainDomainPath_Boundaries tests boundary conditions for domain path validation
-func TestIsContainDomainPath_Boundaries(t *testing.T) {
+// TestIsContainDomainPath tests boundary conditions for domain path validation
+//
+// Note: The previousRealm.IsUser() check in RegisterInitializer is tested in integration test:
+// tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
+func TestIsContainDomainPath(t *testing.T) {
 	tests := []struct {
 		name       string
 		domainPath string
 		testPath   string
 		expected   bool
 	}{
+		// Valid cases
 		{
-			name:       "exact match without trailing slash should fail",
-			domainPath: "gno.land/r/gnoswap/protocol_fee",
-			testPath:   "gno.land/r/gnoswap/protocol_fee",
-			expected:   false,
-		},
-		{
-			name:       "valid subpath with slash should pass",
+			name:       "valid subpath",
 			domainPath: "gno.land/r/gnoswap/protocol_fee",
 			testPath:   "gno.land/r/gnoswap/protocol_fee/v1",
 			expected:   true,
 		},
 		{
-			name:       "partial match should fail",
+			name:       "nested subpath",
+			domainPath: "gno.land/r/gnoswap/protocol_fee",
+			testPath:   "gno.land/r/gnoswap/protocol_fee/v1/internal",
+			expected:   true,
+		},
+		// Invalid cases - exact match
+		{
+			name:       "exact match without slash",
+			domainPath: "gno.land/r/gnoswap/protocol_fee",
+			testPath:   "gno.land/r/gnoswap/protocol_fee",
+			expected:   false,
+		},
+		// Invalid cases - partial match
+		{
+			name:       "partial match with suffix",
 			domainPath: "gno.land/r/gnoswap/protocol_fee",
 			testPath:   "gno.land/r/gnoswap/protocol_fee_v1",
 			expected:   false,
 		},
 		{
-			name:       "different domain should fail",
+			name:       "partial match malicious suffix",
+			domainPath: "gno.land/r/gnoswap/protocol_fee",
+			testPath:   "gno.land/r/gnoswap/protocol_fee_malicious",
+			expected:   false,
+		},
+		// Invalid cases - different domain
+		{
+			name:       "different domain same org",
 			domainPath: "gno.land/r/gnoswap/protocol_fee",
 			testPath:   "gno.land/r/gnoswap/pool/v1",
 			expected:   false,
 		},
 		{
-			name:       "longer subpath should pass",
+			name:       "completely different org",
 			domainPath: "gno.land/r/gnoswap/protocol_fee",
-			testPath:   "gno.land/r/gnoswap/protocol_fee/v1/internal",
-			expected:   true,
+			testPath:   "gno.land/r/attacker/malicious",
+			expected:   false,
 		},
+		// Edge cases
 		{
 			name:       "empty domain path",
 			domainPath: "",
@@ -790,7 +694,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 	}
 }
 
-// TestRegisterInitializer_ErrorBranches tests all error branches in RegisterInitializer
+// tests all error branches in RegisterInitializer
 func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -844,134 +748,3 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 	}
 }
 
-// TestRegisterInitializer_DomainPathBranch tests the domain path validation branch
-//
-// Note: The previousRealm.IsUser() == false branch is tested in the integration test:
-// tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
-//
-// Unit tests cannot test this branch because they cannot simulate cross-realm calls.
-func TestRegisterInitializer_DomainPathBranch(t *testing.T) {
-	tests := []struct {
-		name          string
-		domainPath    string
-		callerPath    string
-		shouldPass    bool
-		errorContains string
-	}{
-		{
-			name:          "caller not in domain path",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			callerPath:    "gno.land/r/attacker/malicious",
-			shouldPass:    false,
-			errorContains: "caller is not in the domain path",
-		},
-		{
-			name:          "caller in different domain",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			callerPath:    "gno.land/r/gnoswap/pool/v1",
-			shouldPass:    false,
-			errorContains: "caller is not in the domain path",
-		},
-		{
-			name:       "caller in correct domain",
-			domainPath: "gno.land/r/gnoswap/protocol_fee",
-			callerPath: "gno.land/r/gnoswap/protocol_fee/v1",
-			shouldPass: true,
-		},
-		{
-			name:          "caller path without version suffix",
-			domainPath:    "gno.land/r/gnoswap/protocol_fee",
-			callerPath:    "gno.land/r/gnoswap/protocol_fee_malicious",
-			shouldPass:    false,
-			errorContains: "caller is not in the domain path",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kvStore := store.NewKVStore(mockDomainAddr)
-			vm := &versionManager{
-				domainPath:              tt.domainPath,
-				domainKVStore:           kvStore,
-				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
-				currentPackagePath:      "",
-				currentImplementation:   nil,
-			}
-
-			// Test isContainDomainPath logic
-			result := vm.isContainDomainPath(tt.callerPath)
-
-			if tt.shouldPass {
-				if !result {
-					t.Errorf("isContainDomainPath(%q) should pass for domain %q", tt.callerPath, tt.domainPath)
-				}
-			} else {
-				if result {
-					t.Errorf("isContainDomainPath(%q) should fail for domain %q", tt.callerPath, tt.domainPath)
-				}
-
-				// Verify the error message that would be returned
-				if tt.errorContains != "" {
-					expectedError := "version_manager: " + tt.errorContains
-					t.Logf("Expected error when !isContainDomainPath: %q", expectedError)
-				}
-			}
-		})
-	}
-}
-
-// TestChangeImplementation_AllBranches tests all error branches in ChangeImplementation
-func TestChangeImplementation_AllBranches(t *testing.T) {
-	tests := []struct {
-		name          string
-		description   string
-		setupFunc     func() (*versionManager, string)
-		errorContains string
-	}{
-		{
-			name:        "initializer not found - Has() check",
-			description: "ChangeImplementation should return error when package not registered",
-			setupFunc: func() (*versionManager, string) {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := &versionManager{
-					domainPath:              "gno.land/r/gnoswap/protocol_fee",
-					domainKVStore:           kvStore,
-					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
-					currentPackagePath:      "",
-					currentImplementation:   nil,
-				}
-				return vm, "gno.land/r/gnoswap/protocol_fee/v999"
-			},
-			errorContains: "initializer not found for package path",
-		},
-		{
-			name:        "initializer not a function - type assertion",
-			description: "ChangeImplementation should return error when initializer has wrong type",
-			setupFunc: func() (*versionManager, string) {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := &versionManager{
-					domainPath:              "gno.land/r/gnoswap/protocol_fee",
-					domainKVStore:           kvStore,
-					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
-					currentPackagePath:      "",
-					currentImplementation:   nil,
-				}
-				// Set wrong type
-				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", "not a function")
-				return vm, "gno.land/r/gnoswap/protocol_fee/v1"
-			},
-			errorContains: "initializer is not a function",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			vm, packagePath := tt.setupFunc()
-			err := vm.ChangeImplementation(packagePath)
-			uassert.ErrorContains(t, err, tt.errorContains)
-		})
-	}
-}
