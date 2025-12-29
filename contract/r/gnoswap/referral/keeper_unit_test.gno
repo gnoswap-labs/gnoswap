@@ -522,3 +522,275 @@ func TestKeeperGet(t *testing.T) {
 		})
 	}
 }
+
+// TestKeeperTryRegister_CyclicReference tests cyclic reference prevention
+func TestKeeperTryRegister_CyclicReference(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingReferrals []struct {
+			addr    address
+			refAddr address
+		}
+		newAddr           address
+		newRefAddr        address
+		expectedIsSuccess bool
+		expectedHasNew    bool
+		expectedNewRef    address
+	}{
+		{
+			name: "prevents direct cyclic reference (A->B when B->A exists)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr2, keeperAddr1}, // B -> A
+			},
+			newAddr:           keeperAddr1,
+			newRefAddr:        keeperAddr2, // A -> B (creates cycle)
+			expectedIsSuccess: false,
+			expectedHasNew:    false,
+			expectedNewRef:    zeroAddress,
+		},
+		{
+			name: "allows chain referral without cycle (A->B, C->A)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr2}, // A -> B
+			},
+			newAddr:           keeperAddr3,
+			newRefAddr:        keeperAddr1, // C -> A (no cycle)
+			expectedIsSuccess: true,
+			expectedHasNew:    true,
+			expectedNewRef:    keeperAddr1,
+		},
+		{
+			name:              "allows registration when referral has no referrer",
+			existingReferrals: nil,
+			newAddr:           keeperAddr1,
+			newRefAddr:        keeperAddr2, // A -> B (B has no referral)
+			expectedIsSuccess: true,
+			expectedHasNew:    true,
+			expectedNewRef:    keeperAddr2,
+		},
+		{
+			name: "prevents cycle in independent pair (C->D exists, D->C attempt)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr2}, // A -> B (unrelated)
+				{keeperAddr3, keeperAddr4}, // C -> D
+			},
+			newAddr:           keeperAddr4,
+			newRefAddr:        keeperAddr3, // D -> C (creates cycle)
+			expectedIsSuccess: false,
+			expectedHasNew:    false,
+			expectedNewRef:    zeroAddress,
+		},
+		{
+			name: "allows parallel referrals without cycle",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr3}, // A -> C
+			},
+			newAddr:           keeperAddr2,
+			newRefAddr:        keeperAddr3, // B -> C (same referral target, no cycle)
+			expectedIsSuccess: true,
+			expectedHasNew:    true,
+			expectedNewRef:    keeperAddr3,
+		},
+		{
+			name: "allows referral to address that refers elsewhere",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr2, keeperAddr3}, // B -> C
+			},
+			newAddr:           keeperAddr1,
+			newRefAddr:        keeperAddr2, // A -> B (B refers to C, not A)
+			expectedIsSuccess: true,
+			expectedHasNew:    true,
+			expectedNewRef:    keeperAddr2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := mockValidCallerKeeper()
+			defer cleanup()
+
+			k := setupKeeperUnit()
+
+			// setup existing referrals
+			for _, ref := range tc.existingReferrals {
+				err := k.register(ref.addr, ref.refAddr)
+				uassert.NoError(t, err)
+			}
+
+			gReferralKeeper = k
+			defer func() {
+				gReferralKeeper = NewKeeper()
+			}()
+
+			// when
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+			isSuccess := TryRegister(cross, tc.newAddr, tc.newRefAddr.String())
+
+			// then
+			uassert.Equal(t, tc.expectedIsSuccess, isSuccess)
+
+			// verify final state, if expectedHasNew is true, the new address should have a referral
+			if tc.expectedHasNew {
+				ref, _ := k.get(tc.newAddr)
+				uassert.Equal(t, tc.expectedNewRef.String(), ref.String())
+			} else {
+				ref, _ := k.get(tc.newAddr)
+				uassert.NotEqual(t, tc.newRefAddr.String(), ref.String())
+			}
+		})
+	}
+}
+
+// TestKeeperRegister_CyclicReference tests cyclic reference prevention
+func TestKeeperRegister_CyclicReference(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingReferrals []struct {
+			addr    address
+			refAddr address
+		}
+		newAddr        address
+		newRefAddr     address
+		expectedError  error
+		expectedHasNew bool
+		expectedNewRef address
+	}{
+		{
+			name: "prevents direct cyclic reference (A->B when B->A exists)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr2, keeperAddr1}, // B -> A
+			},
+			newAddr:        keeperAddr1,
+			newRefAddr:     keeperAddr2, // A -> B (creates cycle)
+			expectedError:  ErrCyclicReference,
+			expectedHasNew: false,
+			expectedNewRef: zeroAddress,
+		},
+		{
+			name: "allows chain referral without cycle (A->B, C->A)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr2}, // A -> B
+			},
+			newAddr:        keeperAddr3,
+			newRefAddr:     keeperAddr1, // C -> A (no cycle)
+			expectedError:  nil,
+			expectedHasNew: true,
+			expectedNewRef: keeperAddr1,
+		},
+		{
+			name:              "allows registration when referral has no referrer",
+			existingReferrals: nil,
+			newAddr:           keeperAddr1,
+			newRefAddr:        keeperAddr2, // A -> B (B has no referral)
+			expectedError:     nil,
+			expectedHasNew:    true,
+			expectedNewRef:    keeperAddr2,
+		},
+		{
+			name: "prevents cycle in independent pair (C->D exists, D->C attempt)",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr2}, // A -> B (unrelated)
+				{keeperAddr3, keeperAddr4}, // C -> D
+			},
+			newAddr:        keeperAddr4,
+			newRefAddr:     keeperAddr3, // D -> C (creates cycle)
+			expectedError:  ErrCyclicReference,
+			expectedHasNew: false,
+			expectedNewRef: zeroAddress,
+		},
+		{
+			name: "allows parallel referrals without cycle",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr1, keeperAddr3}, // A -> C
+			},
+			newAddr:        keeperAddr2,
+			newRefAddr:     keeperAddr3, // B -> C (same referral target, no cycle)
+			expectedError:  nil,
+			expectedHasNew: true,
+			expectedNewRef: keeperAddr3,
+		},
+		{
+			name: "allows referral to address that refers elsewhere",
+			existingReferrals: []struct {
+				addr    address
+				refAddr address
+			}{
+				{keeperAddr2, keeperAddr3}, // B -> C
+			},
+			newAddr:        keeperAddr1,
+			newRefAddr:     keeperAddr2, // A -> B (B refers to C, not A)
+			expectedError:  nil,
+			expectedHasNew: true,
+			expectedNewRef: keeperAddr2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := mockValidCallerKeeper()
+			defer cleanup()
+
+			k := setupKeeperUnit()
+
+			// setup existing referrals
+			for _, ref := range tc.existingReferrals {
+				err := k.register(ref.addr, ref.refAddr)
+				uassert.NoError(t, err)
+			}
+
+			gReferralKeeper = k
+			defer func() {
+				gReferralKeeper = NewKeeper()
+			}()
+
+			// when
+			err := k.register(tc.newAddr, tc.newRefAddr)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.Error(t, err)
+				uassert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+
+			// verify final state, if expectedHasNew is true, the new address should have a referral
+			if tc.expectedHasNew {
+				ref, _ := k.get(tc.newAddr)
+				uassert.Equal(t, tc.expectedNewRef.String(), ref.String())
+			} else {
+				ref, _ := k.get(tc.newAddr)
+				uassert.NotEqual(t, tc.newRefAddr.String(), ref.String())
+			}
+		})
+	}
+}

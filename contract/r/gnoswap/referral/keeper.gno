@@ -78,6 +78,12 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 		return err
 	}
 
+	// prevent cyclic reference by rejecting if refAddr already refers to address
+	refRegistered, err := k.get(refAddr)
+	if err == nil && refRegistered == addr {
+		return ErrCyclicReference
+	}
+
 	k.store.Set(addrStr, refAddrStr)
 	k.lastOps[addrStr] = time.Now().Unix()
 
