@@ -1,6 +1,7 @@
 package store
 
 import (
+	"strings"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -543,14 +544,14 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 
 func TestGetAllKeys(t *testing.T) {
 	testCases := []struct {
-		name          string
-		setupFn       func(KVStore)
-		expectedCount int
+		name         string
+		setupFn      func(KVStore)
+		expectedKeys []string
 	}{
 		{
-			name:          "empty_store",
-			setupFn:       func(store KVStore) {},
-			expectedCount: 0,
+			name:         "empty_store",
+			setupFn:      func(store KVStore) {},
+			expectedKeys: []string{},
 		},
 		{
 			name: "multiple_keys",
@@ -559,7 +560,7 @@ func TestGetAllKeys(t *testing.T) {
 				store.Set("key2", "value2")
 				store.Set("key3", "value3")
 			},
-			expectedCount: 3,
+			expectedKeys: []string{"key1", "key2", "key3"},
 		},
 	}
 
@@ -573,7 +574,29 @@ func TestGetAllKeys(t *testing.T) {
 
 			keys, err := store.GetAllKeys()
 			uassert.NoError(t, err)
-			uassert.Equal(t, tc.expectedCount, len(keys))
+			uassert.Equal(t, len(tc.expectedKeys), len(keys))
+
+			// Verify key format: "domainAddress:key"
+			for _, key := range keys {
+				parts := strings.Split(key, ":")
+				uassert.Equal(t, 2, len(parts), "key should have format 'domainAddress:key'")
+
+				// Verify domain address is valid
+				addr := address(parts[0])
+				uassert.True(t, addr.IsValid(), "domain address should be valid")
+				uassert.Equal(t, domainAddr, addr, "domain address should match")
+
+				// Verify actual key is in expected keys
+				actualKey := parts[1]
+				found := false
+				for _, expectedKey := range tc.expectedKeys {
+					if actualKey == expectedKey {
+						found = true
+						break
+					}
+				}
+				uassert.True(t, found, "actual key should be in expected keys: "+actualKey)
+			}
 		})
 	}
 }

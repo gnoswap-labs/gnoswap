@@ -35,6 +35,7 @@ func (k *kvStore) GetDomainAddress() address {
 func (k *kvStore) GetAllKeys() ([]string, error) {
 	keys := make([]string, 0, len(k.data))
 
+	// Keys are namespace-prefixed (domainAddress:key) by design
 	for key := range k.data {
 		keys = append(keys, key)
 	}
@@ -151,6 +152,13 @@ func (k *kvStore) Set(key string, value any) error {
 func (k *kvStore) Delete(key string) error {
 	caller := runtime.CurrentRealm().Address()
 
+	// Unlike `Get` and `Set`, this function does not perform `IsCode` checks.
+	// As a package providing generic storage functionality,
+	// `kvStore` focuses on namespace-based data isolation to prevent data
+	// contamination across domains.
+	//
+	// More permission controls (e.g., restricting which keys can be deleted)
+	// should be implemented at the realm level based on specific requirements.
 	if !k.IsWriteAuthorized(caller) {
 		return ErrWritePermissionDenied
 	}
