@@ -15,7 +15,7 @@ func AssertIsAdminOrGovernance(caller address) {
 		return
 	}
 
-	panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	panic(ufmt.Errorf(errUnauthorizedAdminOrGov, caller))
 }
 
 // AssertIsAdmin panics if the caller is not admin.
@@ -89,11 +89,11 @@ func AssertIsGovXGNS(caller address) {
 func AssertIsAuthorized(roleName string, caller address) {
 	addr, ok := GetAddress(roleName)
 	if !ok {
-		panic(ufmt.Errorf("role %s does not exist", roleName))
+		panic(ufmt.Errorf(errRoleDoesNotExistWithName, roleName))
 	}
 
 	if caller != addr {
-		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
+		panic(ufmt.Errorf(errUnauthorized, caller, roleName))
 	}
 }
 
@@ -103,7 +103,7 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
 		addr, ok := GetAddress(roleName)
 		if !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
+			panic(ufmt.Errorf(errRoleDoesNotExistWithName, roleName))
 		}
 
 		if caller == addr {
@@ -111,13 +111,13 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 		}
 	}
 
-	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
+	panic(ufmt.Errorf(errUnauthorizedAnyRole, caller, roleNames))
 }
 
 // AssertIsValidAddress panics if the provided address is invalid.
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
-		panic(ufmt.Errorf("invalid address: %s", addr))
+		panic(ufmt.Errorf(errInvalidAddressShort, addr))
 	}
 }
 
@@ -125,7 +125,7 @@ func AssertIsValidAddress(addr address) {
 // Used to ensure calls come from user accounts, not other contracts.
 func AssertIsUser(r runtime.Realm) {
 	if !r.IsUser() {
-		panic(ufmt.Errorf("caller is not user"))
+		panic(errCallerNotUser)
 	}
 }
 
@@ -135,6 +135,6 @@ func assertIsRBAC(caller address) {
 	rbacAddress := chain.PackageAddress(rbacPackagePath)
 
 	if caller != rbacAddress {
-		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
+		panic(ufmt.Errorf(errUnauthorizedRBAC, caller))
 	}
 }

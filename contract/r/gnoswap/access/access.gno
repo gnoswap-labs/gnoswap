@@ -27,7 +27,7 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 
 	// Validate address
 	if !roleAddress.IsValid() || roleAddress == address("") {
-		panic(ufmt.Errorf("invalid address for role %s: %s", roleName, roleAddress))
+		panic(ufmt.Errorf(errInvalidAddress, roleName, roleAddress))
 	}
 
 	roleAddresses[roleName] = roleAddress
@@ -44,7 +44,7 @@ func RemoveRole(cur realm, roleName string) {
 	assertIsRBAC(caller)
 
 	if _, ok := roleAddresses[roleName]; !ok {
-		panic("role does not exist")
+		panic(errRoleDoesNotExist)
 	}
 
 	delete(roleAddresses, roleName)
@@ -89,7 +89,7 @@ func GetRoleAddresses() map[string]address {
 func MustGetAddress(role string) address {
 	addr, ok := GetAddress(role)
 	if !ok {
-		panic(ufmt.Errorf("role %s not found", role))
+		panic(ufmt.Errorf(errRoleNotFound, role))
 	}
 
 	return addr
