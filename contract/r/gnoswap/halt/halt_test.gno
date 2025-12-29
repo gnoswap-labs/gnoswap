@@ -10,7 +10,6 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-// Test internal setHaltLevel function
 func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -61,7 +60,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// when
 			err := setHaltLevel(tc.inputLevel)
@@ -97,7 +96,7 @@ func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given - set level once
 			err := setHaltLevel(tc.level)
@@ -119,9 +118,8 @@ func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
 	}
 }
 
-// Test GetHaltConfig function
 func TestHalt_GetHaltConfig(t *testing.T) {
-	cleanup()
+	cleanup(t)
 
 	// given - set a specific configuration
 	err := setHaltLevel(HaltLevelSafeMode)
@@ -150,7 +148,6 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	uassert.Equal(t, halted, false) // Should still be false (not halted) in the clone
 }
 
-// Test IsHalted function
 func TestHalt_IsHalted(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -226,7 +223,7 @@ func TestHalt_IsHalted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -246,7 +243,6 @@ func TestHalt_IsHalted(t *testing.T) {
 	}
 }
 
-// Test individual operation halt status functions
 func TestHalt_IndividualOperationStatus(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -302,7 +298,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -321,7 +317,6 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 	}
 }
 
-// Test GetHaltConfigJson function
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -381,7 +376,7 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -411,10 +406,9 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 	}
 }
 
-// Test SetHaltLevel with authorization
 func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string
@@ -460,7 +454,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -498,8 +492,8 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 // Test SetOperationStatus with authorization
 func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string
@@ -545,7 +539,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -607,7 +601,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// Set initial level
 			err := setHaltLevel(tc.initialLevel)
@@ -633,10 +627,9 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 	}
 }
 
-// Test edge cases
 func TestHalt_EdgeCases(t *testing.T) {
 	t.Run("GetHaltConfig independence", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		configByGetter := GetHaltConfig()
 
@@ -654,7 +647,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("IsHalted with no operations", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 		err := setHaltLevel(HaltLevelComplete)
 		uassert.NoError(t, err)
 
@@ -665,7 +658,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Multiple halt level changes", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		// Start with emergency
 		err := setHaltLevel(HaltLevelEmergency)
@@ -685,7 +678,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig Clone method", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		original := newSafeModeConfig()
 		cloned := original.Clone()
@@ -705,7 +698,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig IsHalted method", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		config := newNoneConfig()
 
@@ -718,7 +711,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 }
 
-// Test newHaltStateManagerByConfig function with table-driven approach
 func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 	tests := []struct {
 		name                   string
@@ -863,7 +855,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 	}
 }
 
-// Test HaltState independence using table-driven approach
 func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -935,7 +926,7 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 }
 
-// Test helpers
-func cleanup() {
+func cleanup(t *testing.T) {
+    t.Helper()
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }
