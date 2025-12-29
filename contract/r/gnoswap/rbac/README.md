@@ -8,46 +8,67 @@ RBAC realm manages role addresses and permissions for the GnoSwap protocol, inte
 
 ## Configuration
 
-- **Admin Control**: Full role management
+- **Admin/Governance Control**: Role management by admin or governance
 - **Dynamic Roles**: Add/remove at runtime
 - **Access Integration**: Syncs with access package
 
 ## Key Functions
 
-### `RegisterRole`
+### `RegisterRole(cur realm, roleName string, roleAddress address)`
 
-Registers new role in system.
+Registers new role in system. Only callable by admin or governance.
 
-### `RemoveRole`
+### `RemoveRole(cur realm, roleName string)`
 
-Removes existing role.
+Removes existing role. Only callable by admin or governance. System roles cannot be removed.
 
-### `UpdateRoleAddress`
+### `UpdateRoleAddress(cur realm, roleName string, addr address)`
 
-Updates address for role.
+Updates address for role. Only callable by admin or governance.
 
-### `GetRoleAddress`
+### `GetRoleAddress(roleName string) (address, error)`
 
 Returns address for role.
 
-### `TransferOwnership`
+### `IsOwner(addr address) bool`
 
-Transfers admin role to new address.
+Returns true if addr is the current owner.
+
+### `IsPendingOwner(addr address) bool`
+
+Returns true if addr is the pending owner.
+
+### `GetOwner() address`
+
+Returns the current owner address.
+
+### `GetPendingOwner() address`
+
+Returns the pending owner address.
+
+### `TransferOwnership(cur realm, newOwner address)`
+
+Initiates two-step ownership transfer. Only callable by current owner.
+
+### `AcceptOwnership(cur realm)`
+
+Accepts pending ownership transfer. Only callable by pending owner.
 
 ## Usage
 
 ```go
-// Register new role
-RegisterRole("new_role")
+// Register new role (requires admin or governance)
+RegisterRole(cross, "new_role", roleAddress)
 
 // Update role address
-UpdateRoleAddress("staker", newAddress)
+UpdateRoleAddress(cross, "staker", newAddress)
 
 // Get role address
 addr, err := GetRoleAddress("router")
 
-// Transfer admin ownership
-TransferOwnership(newAdmin)
+// Transfer ownership (two-step)
+TransferOwnership(cross, newAdmin)  // Step 1: Initiate
+AcceptOwnership(cross)               // Step 2: Accept (by newAdmin)
 ```
 
 ## Contract Upgrade
