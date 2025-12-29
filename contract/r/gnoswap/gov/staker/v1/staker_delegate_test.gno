@@ -324,8 +324,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
 				totalUndelegated := int64(0)
 
 				for _, delegation := range delegations {
-					withdraws := delegation.Withdraws()
-					totalWithdraws += len(withdraws)
+					totalWithdraws += withdrawCount(delegation)
 					totalUndelegated += delegation.UnDelegatedAmount()
 				}
 
