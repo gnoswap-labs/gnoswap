@@ -274,9 +274,7 @@ func (k *kvStore) isRegisteredAuthorizedCaller(caller address) bool {
 
 // isUpdatableAuthorizedCaller checks if the current realm is the same as the domain address
 func (k *kvStore) isUpdatableAuthorizedCaller() bool {
-	currentRealm := runtime.CurrentRealm()
-
-	return currentRealm.Address() == k.domainAddress
+	return runtime.CurrentRealm().Address() == k.domainAddress
 }
 
 // makeKey creates a prefixed key with the domain address to ensure isolation
