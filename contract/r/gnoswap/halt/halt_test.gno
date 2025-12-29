@@ -490,7 +490,6 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 	}
 }
 
-// Test SetOperationStatus with authorization
 func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
@@ -926,7 +925,91 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 }
 
+func TestHaltStateManager_getOperationHalted_NotFound(t *testing.T) {
+	tests := []struct {
+		name           string
+		manager        HaltStateManager
+		op             OpType
+		expectedErrMsg string
+	}{
+		{
+			name:           "Get non-existent operation from empty manager",
+			manager:        make(HaltStateManager),
+			op:             OpTypePool,
+			expectedErrMsg: "operation type not found in config: pool",
+		},
+		{
+			name:           "Get invalid operation type from empty manager",
+			manager:        make(HaltStateManager),
+			op:             OpType("invalid_op"),
+			expectedErrMsg: "operation type not found in config: invalid_op",
+		},
+		{
+			name: "Get non-existent operation from partial manager",
+			manager: HaltStateManager{
+				OpTypePool: true,
+			},
+			op:             OpTypeRouter,
+			expectedErrMsg: "operation type not found in config: router",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			halted, err := tc.manager.getOperationHalted(tc.op)
+
+			// then
+			uassert.Error(t, err)
+			uassert.ErrorContains(t, err, tc.expectedErrMsg)
+			uassert.Equal(t, halted, false)
+		})
+	}
+}
+
+func TestHaltStateManager_setOperationHalted_InvalidOpType(t *testing.T) {
+	tests := []struct {
+		name           string
+		op             OpType
+		halted         bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Set invalid operation type to halted",
+			op:             OpType("invalid_op"),
+			halted:         true,
+			expectedErrMsg: "invalid operation type: invalid_op",
+		},
+		{
+			name:           "Set empty operation type to halted",
+			op:             OpType(""),
+			halted:         true,
+			expectedErrMsg: "invalid operation type: ",
+		},
+		{
+			name:           "Set invalid operation type to not halted",
+			op:             OpType("unknown"),
+			halted:         false,
+			expectedErrMsg: "invalid operation type: unknown",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			manager := newHaltStateManagerByConfig(newNoneConfig())
+
+			// when
+			err := manager.setOperationHalted(tc.op, tc.halted)
+
+			// then
+			uassert.Error(t, err)
+			uassert.ErrorContains(t, err, tc.expectedErrMsg)
+		})
+	}
+}
+
 func cleanup(t *testing.T) {
-    t.Helper()
+	t.Helper()
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }
