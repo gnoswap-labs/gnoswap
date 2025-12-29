@@ -39,20 +39,10 @@ func init() {
 }
 
 func initRegisterReadableContract() {
-	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
-	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 	emissionAddr := access.MustGetAddress(prbac.ROLE_EMISSION.String())
 
-	if err := kvStore.AddAuthorizedCaller(poolAddr, store.Write); err != nil {
-		panic(err)
-	}
-
 	if err := kvStore.AddAuthorizedCaller(positionAddr, store.ReadOnly); err != nil {
-		panic(err)
-	}
-
-	if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
 
