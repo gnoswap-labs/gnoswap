@@ -790,6 +790,16 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			expectedHasError:      true,
 			expectedError:         "project not ended yet",
 		},
+		{
+			name:                  "valid refund - collected amount equals distribute amount (no overflow)",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: MAX_INT64,
+			totalCollectedAmount:  MAX_INT64,
+			recipient:             testAddr,
+			currentTime:           2001,
+			expectedHasError:      false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -815,6 +825,50 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("panic on addition overflow - multiple tiers with large remaining amounts", func(t *testing.T) {
+		// Create multiple tiers with large remaining amounts that will overflow when summed
+		tier30 := launchpad.NewProjectTier("test", 30, MAX_INT64/2+1, 1000, 2000)
+		tier30.SetID("test:30")
+		tier30.SetTotalCollectedAmount(0)
+
+		tier90 := launchpad.NewProjectTier("test", 90, MAX_INT64/2+1, 1000, 2000)
+		tier90.SetID("test:90")
+		tier90.SetTotalCollectedAmount(0)
+
+		project := launchpad.NewProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+		project.SetID("test:100")
+
+		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers[projectTier30] = tier30
+		tiers[projectTier90] = tier90
+		project.SetTiers(tiers)
+
+		// getProjectRemainingAmount will panic when summing large remaining amounts
+		uassert.PanicsContains(t, "int64 addition overflow", func() {
+			getProjectRemainingAmount(project)
+		})
+	})
+
+	t.Run("panic on subtraction underflow - extreme values", func(t *testing.T) {
+		// Create a tier where subtraction causes underflow
+		// totalDistributeAmount - totalCollectedAmount underflows
+		tier := launchpad.NewProjectTier("test", 180, MIN_INT64/2, 1000, 2000)
+		tier.SetID("test:180")
+		tier.SetTotalCollectedAmount(MAX_INT64)
+
+		project := launchpad.NewProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+		project.SetID("test:100")
+
+		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers[projectTier180] = tier
+		project.SetTiers(tiers)
+
+		// getProjectRemainingAmount will panic due to subtraction underflow
+		uassert.PanicsContains(t, "int64 subtraction underflow", func() {
+			getProjectRemainingAmount(project)
+		})
+	})
 }
 
 // TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits tests that claimable rewards
