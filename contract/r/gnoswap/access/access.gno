@@ -2,6 +2,7 @@ package access
 
 import (
 	"chain/runtime"
+	"strings"
 
 	"gno.land/p/nt/ufmt"
 )
@@ -26,6 +27,7 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	assertIsRBAC(caller)
 
 	// Validate role name
+	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {
 		panic("role name cannot be empty")
 	}
@@ -49,6 +51,7 @@ func RemoveRole(cur realm, roleName string) {
 	assertIsRBAC(caller)
 
 	// Validate role name
+	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {
 		panic("role name cannot be empty")
 	}

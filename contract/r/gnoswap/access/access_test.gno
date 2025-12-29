@@ -270,6 +270,8 @@ func TestSetRoleAddress(t *testing.T) {
 	tests := []struct {
 		name        string
 		realmPath   string
+		userRealm   bool
+		userAddr    address
 		setupRoles  map[string]address
 		roleName    string
 		roleAddress address
@@ -322,10 +324,29 @@ func TestSetRoleAddress(t *testing.T) {
 			abortMsg:    "unauthorized",
 		},
 		{
+			name:        "unauthorized user realm",
+			userRealm:   true,
+			userAddr:    testutils.TestAddress("user"),
+			setupRoles:  map[string]address{},
+			roleName:    "newrole",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
 			name:        "empty role name",
 			realmPath:   rbacPackagePath,
 			setupRoles:  map[string]address{},
 			roleName:    "",
+			roleAddress: testutils.TestAddress("valid"),
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:        "whitespace role name",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "  ",
 			roleAddress: testutils.TestAddress("valid"),
 			shouldAbort: true,
 			abortMsg:    "role name cannot be empty",
@@ -341,7 +362,11 @@ func TestSetRoleAddress(t *testing.T) {
 			}
 
 			// Set realm for this test case
-			testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
+			if tt.userRealm {
+				testing.SetRealm(testing.NewUserRealm(tt.userAddr))
+			} else {
+				testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
+			}
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, tt.abortMsg, func() {
@@ -374,6 +399,8 @@ func TestRemoveRole(t *testing.T) {
 	tests := []struct {
 		name        string
 		realmPath   string
+		userRealm   bool
+		userAddr    address
 		setupRoles  map[string]address
 		roleName    string
 		shouldAbort bool
@@ -411,12 +438,33 @@ func TestRemoveRole(t *testing.T) {
 			abortMsg:    "unauthorized",
 		},
 		{
+			name:      "unauthorized user realm",
+			userRealm: true,
+			userAddr:  testutils.TestAddress("user"),
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "existing",
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
 			name:      "empty role name",
 			realmPath: rbacPackagePath,
 			setupRoles: map[string]address{
 				"existing": testutils.TestAddress("existing"),
 			},
 			roleName:    "",
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:      "whitespace role name",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "  ",
 			shouldAbort: true,
 			abortMsg:    "role name cannot be empty",
 		},
@@ -431,7 +479,11 @@ func TestRemoveRole(t *testing.T) {
 			}
 
 			// Set realm for this test case
-			testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
+			if tt.userRealm {
+				testing.SetRealm(testing.NewUserRealm(tt.userAddr))
+			} else {
+				testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
+			}
 
 			if tt.shouldAbort {
 				uassert.AbortsContains(t, tt.abortMsg, func() {
