@@ -1,7 +1,6 @@
 package version_manager
 
 import (
-	"errors"
 	"testing"
 
 	"gno.land/p/gnoswap/store"
@@ -760,55 +759,23 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 	}
 }
 
-// tests all error branches in RegisterInitializer
+// TestRegisterInitializer_ErrorBranches tests error branches in RegisterInitializer
+//
+// Note: The following branches require cross-realm calls and are tested in integration tests:
+//   - duplicate registration (line 90-92)
+//   - caller is user (line 80-82)
+//   - caller not in domain path (line 85-87)
+//
+// See: tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
 func TestRegisterInitializer_ErrorBranches(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupFunc     func() error
-		errorContains string
-	}{
-		{
-			name: "nil initializer",
-			setupFunc: func() error {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := NewVersionManager(
-					"gno.land/r/gnoswap/protocol_fee",
-					kvStore,
-					mockInitializeDomainStoreFn,
-				)
-				return vm.RegisterInitializer(nil)
-			},
-			errorContains: "initializer cannot be nil",
-		},
-		{
-			name: "duplicate registration",
-			setupFunc: func() error {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := &versionManager{
-					domainPath:              "gno.land/r/gnoswap/protocol_fee",
-					domainKVStore:           kvStore,
-					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
-					currentPackagePath:      "",
-					currentImplementation:   nil,
-				}
-
-				// Pre-register an initializer
-				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
-
-				// Simulate checking for duplicate
-				if vm.initializers.Has("gno.land/r/gnoswap/protocol_fee/v1") {
-					return errors.New("version_manager: initializer already registered")
-				}
-				return nil
-			},
-			errorContains: "initializer already registered",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.ErrorContains(t, tt.setupFunc(), tt.errorContains)
-		})
-	}
+	t.Run("nil initializer", func(t *testing.T) {
+		kvStore := store.NewKVStore(mockDomainAddr)
+		vm := NewVersionManager(
+			"gno.land/r/gnoswap/protocol_fee",
+			kvStore,
+			mockInitializeDomainStoreFn,
+		)
+		err := vm.RegisterInitializer(nil)
+		uassert.ErrorContains(t, err, "initializer cannot be nil")
+	})
 }
