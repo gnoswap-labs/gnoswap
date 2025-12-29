@@ -430,6 +430,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentTime,
 		)
 
+		// Save updated delegation state after undelegation without lockup
+		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
@@ -480,9 +482,11 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		// Simple addition since addToCollectedAmount was removed
 		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 
-		// Remove empty delegations to keep storage clean
+		// Save updated delegation state after collection
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
+		} else {
+			gs.setDelegation(delegation.ID(), delegation)
 		}
 	}
 
