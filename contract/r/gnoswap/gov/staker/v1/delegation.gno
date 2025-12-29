@@ -92,85 +92,56 @@ func (r *DelegationResolver) Collect(amount, currentTime int64) error {
 
 // processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(amount, currentTime int64) error {
-	remaining := amount
-	timesToRemove := make([]int64, 0)
+	if amount < 0 {
+		return nil
+	}
 
-	// Iterate time buckets where collectableTime <= currentTime
-	// Note: AVL Iterate uses exclusive end, so we add 1 to make it inclusive
-	r.delegation.Withdraws().Iterate(0, currentTime+1, func(collectableTime int64, value any) bool {
+	remaining := amount
+	totalCollected := int64(0)
+	withdrawsTree := r.delegation.Withdraws()
+
+	withdrawsTree.Iterate(0, currentTime+1, func(collectableTime int64, value any) bool {
 		withdraws, ok := value.([]*staker.DelegationWithdraw)
 		if !ok {
 			return false
 		}
 
-		// Process all withdraws in this time bucket
-		uncollected, collected := r.processTimeBucket(withdraws, &remaining, currentTime)
+		updatedWithdraws := make([]*staker.DelegationWithdraw, 0, len(withdraws))
 
-		// Update tree based on results
-		if len(uncollected) == 0 {
-			timesToRemove = append(timesToRemove, collectableTime)
-		} else if collected > 0 {
-			r.delegation.Withdraws().Set(collectableTime, uncollected)
+		for _, withdraw := range withdraws {
+			if remaining > 0 {
+				resolver := NewDelegationWithdrawResolver(withdraw)
+				collectableAmount := resolver.CollectableAmount(currentTime)
+
+				if collectableAmount > 0 {
+					amountToCollect := min(remaining, collectableAmount)
+					if err := resolver.Collect(amountToCollect, currentTime); err == nil {
+						remaining = safeSubInt64(remaining, amountToCollect)
+						totalCollected = safeAddInt64(totalCollected, amountToCollect)
+					}
+				}
+			}
+
+			if !withdraw.IsCollected() {
+				updatedWithdraws = append(updatedWithdraws, withdraw)
+			}
+		}
+
+		if len(updatedWithdraws) > 0 {
+			withdrawsTree.Set(collectableTime, updatedWithdraws)
+		} else {
+			withdrawsTree.Remove(collectableTime)
 		}
 
 		return false
 	})
 
-	// Clean up empty time buckets
-	for _, time := range timesToRemove {
-		r.delegation.Withdraws().Remove(time)
+	if totalCollected > 0 {
+		newTotal := safeAddInt64(r.delegation.CollectedAmount(), totalCollected)
+		r.delegation.SetCollectedAmount(newTotal)
 	}
 
 	return nil
-}
-
-// processTimeBucket processes all withdraws in a single time bucket
-// Returns (uncollected withdraws, number of withdraws collected)
-func (r *DelegationResolver) processTimeBucket(withdraws []*staker.DelegationWithdraw, remaining *int64, currentTime int64) ([]*staker.DelegationWithdraw, int) {
-	uncollected := make([]*staker.DelegationWithdraw, 0, len(withdraws))
-	numCollected := 0
-
-	for _, withdraw := range withdraws {
-		if *remaining > 0 {
-			collected := r.tryCollectFromWithdraw(withdraw, remaining, currentTime)
-			if collected > 0 {
-				numCollected++
-			}
-		}
-
-		// Keep withdraw if not fully collected
-		if !withdraw.IsCollected() {
-			uncollected = append(uncollected, withdraw)
-		}
-	}
-
-	return uncollected, numCollected
-}
-
-// tryCollectFromWithdraw attempts to collect from a single withdraw
-// Returns the amount collected
-func (r *DelegationResolver) tryCollectFromWithdraw(withdraw *staker.DelegationWithdraw, remaining *int64, currentTime int64) int64 {
-	resolver := NewDelegationWithdrawResolver(withdraw)
-	collectableAmount := resolver.CollectableAmount(currentTime)
-
-	if collectableAmount == 0 {
-		return 0
-	}
-
-	// Collect up to remaining amount
-	amountToCollect := min(*remaining, collectableAmount)
-	if err := resolver.Collect(amountToCollect, currentTime); err != nil {
-		return 0
-	}
-
-	// Update delegation's total collected amount
-	newTotal := safeAddInt64(r.delegation.CollectedAmount(), amountToCollect)
-	r.delegation.SetCollectedAmount(newTotal)
-
-	// Update remaining
-	*remaining = safeSubInt64(*remaining, amountToCollect)
-
-	return amountToCollect
 }
 
 // min returns the smaller of two int64 values
