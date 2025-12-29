@@ -1,6 +1,9 @@
 package rbac
 
-import "chain/runtime"
+import (
+	"chain/runtime"
+	"strings"
+)
 
 // RBAC encapsulates and manages roles and their permissions.
 // It combines role management with two-step ownership transfer functionality.
@@ -36,8 +39,19 @@ func (rb *RBAC) IsAuthorized(roleName string, addr address) bool {
 	return role.IsAuthorized(addr)
 }
 
-// RegisterRole registers a new role with roleName. Returns ErrRoleAlreadyExists if the role already exists.
+// RegisterRole registers a new role with given role name and address.
+//
+// Errors:
+// `RegisterRole` returns an error in the following situations:
+//  - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
+//  - `ErrRoleAlreadyExists`: the role to be registered already exists in rbac.
+//    Since system roles are registered through `initRbac`, attempting to register
+//    a new role with a system role name will return an `ErrRoleAlreadyExists` error.
 func (rb *RBAC) RegisterRole(roleName string, addr address) error {
+	if strings.TrimSpace(roleName) == "" {
+		return ErrInvalidRoleName
+	}
+
 	if rb.existsRole(roleName) {
 		return ErrRoleAlreadyExists
 	}

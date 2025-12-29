@@ -96,6 +96,27 @@ func TestRbac_RegisterRole(t *testing.T) {
 			addr:        address(""),
 			shouldError: false, // RegisterRole doesn't validate address
 		},
+		{
+			name:        "Register role with empty name fails",
+			roleName:    "",
+			addr:        adminAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Register role with whitespace-only name fails",
+			roleName:    "   ",
+			addr:        adminAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Register role with tab and space fails",
+			roleName:    " \t ",
+			addr:        adminAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
 	}
 
 	for _, tt := range tests {
