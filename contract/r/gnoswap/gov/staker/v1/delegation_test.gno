@@ -104,7 +104,7 @@ func TestNewDelegation(t *testing.T) {
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), int64(0))
 			uassert.Equal(t, resolver.Get().CollectedAmount(), int64(0))
 			uassert.Equal(t, resolver.Get().CreatedAt(), tt.createdAt)
-			uassert.Equal(t, withdrawCount(resolver.Get()), 0)
+			uassert.Equal(t, resolver.Get().Withdraws().Size(), 0)
 		})
 	}
 }
@@ -240,40 +240,36 @@ func TestDelegationGetters(t *testing.T) {
 // Test unDelegate
 func TestDelegation_unDelegate(t *testing.T) {
 	tests := []struct {
-		name                  string
-		initialAmount         int64
-		unDelegateAmount      int64
-		currentTime           int64
-		lockupPeriod          int64
-		expectedUnDelegated   int64
-		expectedWithdrawCount int
+		name                string
+		initialAmount       int64
+		unDelegateAmount    int64
+		currentTime         int64
+		lockupPeriod        int64
+		expectedUnDelegated int64
 	}{
 		{
-			name:                  "Undelegate with standard lockup",
-			initialAmount:         1000,
-			unDelegateAmount:      300,
-			currentTime:           200,
-			lockupPeriod:          7 * 24 * 60 * 60, // 7 days
-			expectedUnDelegated:   300,
-			expectedWithdrawCount: 1,
+			name:                "Undelegate with standard lockup",
+			initialAmount:       1000,
+			unDelegateAmount:    300,
+			currentTime:         200,
+			lockupPeriod:        7 * 24 * 60 * 60, // 7 days
+			expectedUnDelegated: 300,
 		},
 		{
-			name:                  "Undelegate with zero lockup",
-			initialAmount:         1000,
-			unDelegateAmount:      500,
-			currentTime:           300,
-			lockupPeriod:          0,
-			expectedUnDelegated:   500,
-			expectedWithdrawCount: 1,
+			name:                "Undelegate with zero lockup",
+			initialAmount:       1000,
+			unDelegateAmount:    500,
+			currentTime:         300,
+			lockupPeriod:        0,
+			expectedUnDelegated: 500,
 		},
 		{
-			name:                  "Multiple undelegations",
-			initialAmount:         1000,
-			unDelegateAmount:      200,
-			currentTime:           400,
-			lockupPeriod:          3 * 24 * 60 * 60, // 3 days
-			expectedUnDelegated:   200,              // First undelegation
-			expectedWithdrawCount: 1,                // First withdraw record
+			name:                "Multiple undelegations",
+			initialAmount:       1000,
+			unDelegateAmount:    200,
+			currentTime:         400,
+			lockupPeriod:        3 * 24 * 60 * 60, // 3 days
+			expectedUnDelegated: 200,              // First undelegation
 		},
 	}
 
@@ -296,22 +292,21 @@ func TestDelegation_unDelegate(t *testing.T) {
 
 			// Then: Should update state correctly
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), tt.expectedUnDelegated)
-			uassert.Equal(t, withdrawCount(resolver.Get()), tt.expectedWithdrawCount)
 
-			// Verify withdraw record
-			if withdrawCount(resolver.Get()) > 0 {
-				var firstWithdraw *staker.DelegationWithdraw
-				resolver.Get().Withdraws().Iterate(0, math.MaxInt64, func(time int64, value any) bool {
-					if withdraws, ok := value.([]*staker.DelegationWithdraw); ok && len(withdraws) > 0 {
-						firstWithdraw = withdraws[0]
-						return true // stop iteration
-					}
-					return false
-				})
-				uassert.Equal(t, firstWithdraw.DelegationID(), delegation.ID())
-				uassert.Equal(t, firstWithdraw.UnDelegateAmount(), tt.unDelegateAmount)
-				uassert.Equal(t, firstWithdraw.UnDelegatedAt(), tt.currentTime)
-			}
+			// Verify withdraw record created with correct collectableTime
+			expectedCollectableTime := tt.currentTime + tt.lockupPeriod
+			withdrawsAtTime, exists := resolver.Get().Withdraws().Get(expectedCollectableTime)
+			uassert.True(t, exists)
+
+			withdraws, ok := withdrawsAtTime.([]*staker.DelegationWithdraw)
+			uassert.True(t, ok)
+			uassert.Equal(t, len(withdraws), 1)
+
+			withdraw := withdraws[0]
+			uassert.Equal(t, withdraw.DelegationID(), delegation.ID())
+			uassert.Equal(t, withdraw.UnDelegateAmount(), tt.unDelegateAmount)
+			uassert.Equal(t, withdraw.UnDelegatedAt(), tt.currentTime)
+			uassert.Equal(t, withdraw.CollectableTime(), expectedCollectableTime)
 		})
 	}
 }
@@ -364,18 +359,17 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 			// Then: Should update state correctly
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), tt.expectedUnDelegated)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollected)
-			uassert.Equal(t, withdrawCount(resolver.Get()), 1)
 
-			// Verify withdraw record is immediately collectable
-			var firstWithdraw *staker.DelegationWithdraw
-			resolver.Get().Withdraws().Iterate(0, math.MaxInt64, func(time int64, value any) bool {
-				if withdraws, ok := value.([]*staker.DelegationWithdraw); ok && len(withdraws) > 0 {
-					firstWithdraw = withdraws[0]
-					return true // stop iteration
-				}
-				return false
-			})
-			withdrawResolver := NewDelegationWithdrawResolver(firstWithdraw)
+			// Verify withdraw record created with immediate collectableTime (currentTime)
+			withdrawsAtTime, exists := resolver.Get().Withdraws().Get(tt.currentTime)
+			uassert.True(t, exists)
+
+			withdraws, ok := withdrawsAtTime.([]*staker.DelegationWithdraw)
+			uassert.True(t, ok)
+			uassert.Equal(t, len(withdraws), 1)
+
+			withdraw := withdraws[0]
+			withdrawResolver := NewDelegationWithdrawResolver(withdraw)
 			uassert.Equal(t, withdrawResolver.IsCollectable(tt.currentTime), false)
 			uassert.Equal(t, withdrawResolver.CollectableAmount(tt.currentTime), int64(0)) // Already collected
 		})
@@ -511,18 +505,18 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				// First undelegation with 7 day lockup
 				d.UnDelegate(200, 100, 100, 7*24*60*60)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(200))
-				uassert.Equal(t, withdrawCount(d.Get()), 1)
+				uassert.Equal(t, d.Get().Withdraws().Size(), 1) // One time bucket
 
 				// Second undelegation with 3 day lockup
 				d.UnDelegate(150, 200, 200, 3*24*60*60)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(350))
-				uassert.Equal(t, withdrawCount(d.Get()), 2)
+				uassert.Equal(t, d.Get().Withdraws().Size(), 2) // Two time buckets
 
 				// Third undelegation without lockup
 				d.UnDelegateWithoutLockup(100, 300, 300)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(450))
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(100)) // Immediate collection
-				uassert.Equal(t, withdrawCount(d.Get()), 3)
+				uassert.Equal(t, d.Get().Withdraws().Size(), 3)         // Three time buckets
 			},
 			description: "Should handle multiple undelegations with different lockup periods",
 		},
@@ -890,13 +884,12 @@ func TestDelegation_BoundaryConditions(t *testing.T) {
 // TestDelegation_WithdrawDeletion tests that fully collected withdraws are removed from the list
 func TestDelegation_WithdrawDeletion(t *testing.T) {
 	tests := []struct {
-		name                       string
-		setupDelegation            func() (*staker.Delegation, *DelegationResolver)
-		collectAmount              int64
-		collectTime                int64
-		expectedWithdrawCount      int
-		expectedCollectedAmount    int64
-		expectedRemainingWithdraws func(*staker.UintTree)
+		name                    string
+		setupDelegation         func() (*staker.Delegation, *DelegationResolver)
+		collectAmount           int64
+		collectTime             int64
+		expectedCollectedAmount int64
+		validateRemaining       func(*staker.UintTree)
 	}{
 		{
 			name: "Single withdraw - full collection removes it",
@@ -908,8 +901,11 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 			},
 			collectAmount:           500,
 			collectTime:             300,
-			expectedWithdrawCount:   0,
 			expectedCollectedAmount: 500,
+			validateRemaining: func(tree *staker.UintTree) {
+				// No withdraws should remain
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 		{
 			name: "Single withdraw - partial collection keeps it",
@@ -921,10 +917,12 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 			},
 			collectAmount:           300,
 			collectTime:             300,
-			expectedWithdrawCount:   1,
 			expectedCollectedAmount: 300,
-			expectedRemainingWithdraws: func(tree *staker.UintTree) {
-				// Collect all withdraws from tree
+			validateRemaining: func(tree *staker.UintTree) {
+				// One withdraw should remain
+				uassert.Equal(t, tree.Size(), 1)
+
+				// Verify the remaining withdraw state
 				allWithdraws := make([]*staker.DelegationWithdraw, 0)
 				tree.Iterate(0, math.MaxInt64, func(time int64, value any) bool {
 					if ws, ok := value.([]*staker.DelegationWithdraw); ok {
@@ -950,8 +948,11 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 			},
 			collectAmount:           600,
 			collectTime:             400,
-			expectedWithdrawCount:   0,
 			expectedCollectedAmount: 600,
+			validateRemaining: func(tree *staker.UintTree) {
+				// No withdraws should remain
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 		{
 			name: "Multiple withdraws - partial collection removes only fully collected ones",
@@ -965,10 +966,12 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 			},
 			collectAmount:           550,
 			collectTime:             400,
-			expectedWithdrawCount:   1,
 			expectedCollectedAmount: 550,
-			expectedRemainingWithdraws: func(tree *staker.UintTree) {
-				// Collect all withdraws from tree
+			validateRemaining: func(tree *staker.UintTree) {
+				// One time bucket should remain
+				uassert.Equal(t, tree.Size(), 1)
+
+				// Verify the remaining withdraw state
 				allWithdraws := make([]*staker.DelegationWithdraw, 0)
 				tree.Iterate(0, math.MaxInt64, func(time int64, value any) bool {
 					if ws, ok := value.([]*staker.DelegationWithdraw); ok {
@@ -992,8 +995,11 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 			},
 			collectAmount:           0,
 			collectTime:             200,
-			expectedWithdrawCount:   0, // Already collected withdraw gets cleaned up
 			expectedCollectedAmount: 500,
+			validateRemaining: func(tree *staker.UintTree) {
+				// Already collected withdraw gets cleaned up
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 	}
 
@@ -1007,13 +1013,10 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 
 			// Then: Verify results
 			uassert.NoError(t, err)
-			uassert.Equal(t, withdrawCount(resolver.Get()), tt.expectedWithdrawCount)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollectedAmount)
 
-			// Additional withdraw validation if needed
-			if tt.expectedRemainingWithdraws != nil {
-				tt.expectedRemainingWithdraws(delegation.Withdraws())
-			}
+			// Validate remaining withdraw state
+			tt.validateRemaining(delegation.Withdraws())
 		})
 	}
 }
@@ -1021,12 +1024,12 @@ func TestDelegation_WithdrawDeletion(t *testing.T) {
 // TestDelegation_IsEmptyAfterCleanup tests that IsEmpty() works correctly after withdraw cleanup
 func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
 	tests := []struct {
-		name              string
-		initialAmount     int64
-		operations        func(*DelegationResolver)
-		expectedIsEmpty   bool
-		expectedLocked    int64
-		expectedWithdraws int
+		name            string
+		initialAmount   int64
+		operations      func(*DelegationResolver)
+		expectedIsEmpty bool
+		expectedLocked  int64
+		expectedSize    int // Expected number of time buckets in withdraw tree
 	}{
 		{
 			name:          "IsEmpty after full collection and cleanup",
@@ -1036,9 +1039,9 @@ func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
 				err := r.Collect(1000, 300)
 				uassert.NoError(t, err)
 			},
-			expectedIsEmpty:   true,
-			expectedLocked:    0,
-			expectedWithdraws: 0,
+			expectedIsEmpty: true,
+			expectedLocked:  0,
+			expectedSize:    0,
 		},
 		{
 			name:          "Not empty after partial collection",
@@ -1048,9 +1051,9 @@ func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
 				err := r.Collect(500, 300)
 				uassert.NoError(t, err)
 			},
-			expectedIsEmpty:   false,
-			expectedLocked:    500,
-			expectedWithdraws: 1,
+			expectedIsEmpty: false,
+			expectedLocked:  500,
+			expectedSize:    1,
 		},
 		{
 			name:          "IsEmpty progression through multiple operations",
@@ -1065,14 +1068,14 @@ func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
 				uassert.NoError(t, err1)
 				uassert.False(t, r.IsEmpty())
 				uassert.Equal(t, r.LockedAmount(), int64(400))
-				uassert.Equal(t, withdrawCount(r.Get()), 1)
+				uassert.Equal(t, r.Get().Withdraws().Size(), 1)
 
 				err2 := r.Collect(400, 300)
 				uassert.NoError(t, err2)
 			},
-			expectedIsEmpty:   true,
-			expectedLocked:    0,
-			expectedWithdraws: 0,
+			expectedIsEmpty: true,
+			expectedLocked:  0,
+			expectedSize:    0,
 		},
 	}
 
@@ -1095,7 +1098,7 @@ func TestDelegation_IsEmptyAfterCleanup(t *testing.T) {
 			// Then: Verify final state
 			uassert.Equal(t, resolver.IsEmpty(), tt.expectedIsEmpty)
 			uassert.Equal(t, resolver.LockedAmount(), tt.expectedLocked)
-			uassert.Equal(t, withdrawCount(resolver.Get()), tt.expectedWithdraws)
+			uassert.Equal(t, resolver.Get().Withdraws().Size(), tt.expectedSize)
 		})
 	}
 }
@@ -1107,7 +1110,6 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 		setupDelegation         func() (*staker.Delegation, *DelegationResolver)
 		collectAmount           int64
 		collectTime             int64
-		expectedWithdrawCount   int
 		expectedCollectedAmount int64
 		validateRemaining       func(*staker.UintTree)
 	}{
@@ -1120,8 +1122,10 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 			},
 			collectAmount:           0,
 			collectTime:             200,
-			expectedWithdrawCount:   0,
 			expectedCollectedAmount: 0,
+			validateRemaining: func(tree *staker.UintTree) {
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 		{
 			name: "All withdraws already collected - get cleaned up",
@@ -1133,8 +1137,11 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 			},
 			collectAmount:           0,
 			collectTime:             200,
-			expectedWithdrawCount:   0, // Already collected withdraw gets cleaned up
 			expectedCollectedAmount: 500,
+			validateRemaining: func(tree *staker.UintTree) {
+				// Already collected withdraw gets cleaned up
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 		{
 			name: "Mixed lockup periods - cleanup respects collectability",
@@ -1147,10 +1154,11 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 			},
 			collectAmount:           300,
 			collectTime:             300,
-			expectedWithdrawCount:   1,
 			expectedCollectedAmount: 300,
 			validateRemaining: func(tree *staker.UintTree) {
-				// Collect all withdraws from tree
+				uassert.Equal(t, tree.Size(), 1)
+
+				// Verify remaining withdraw state
 				allWithdraws := make([]*staker.DelegationWithdraw, 0)
 				tree.Iterate(0, math.MaxInt64, func(time int64, value any) bool {
 					if ws, ok := value.([]*staker.DelegationWithdraw); ok {
@@ -1175,8 +1183,11 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 			},
 			collectAmount:           1000,
 			collectTime:             400,
-			expectedWithdrawCount:   0,
 			expectedCollectedAmount: 1000,
+			validateRemaining: func(tree *staker.UintTree) {
+				// All withdraws should be cleaned up
+				uassert.Equal(t, tree.Size(), 0)
+			},
 		},
 	}
 
@@ -1190,13 +1201,10 @@ func TestDelegation_WithdrawCleanupEdgeCases(t *testing.T) {
 
 			// Then: Verify results
 			uassert.NoError(t, err)
-			uassert.Equal(t, withdrawCount(resolver.Get()), tt.expectedWithdrawCount)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollectedAmount)
 
-			// Additional validation if needed
-			if tt.validateRemaining != nil {
-				tt.validateRemaining(delegation.Withdraws())
-			}
+			// Validate remaining withdraw state
+			tt.validateRemaining(delegation.Withdraws())
 		})
 	}
 }

@@ -318,18 +318,20 @@ func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
 			if tt.expectedSuccess {
 				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
 
-				// Verify withdraws were created correctly
+				// Verify delegations were affected correctly
 				delegations := gs.getUserDelegationsWithDelegatee(user, validator)
-				totalWithdraws := 0
+				affectedDelegations := 0
 				totalUndelegated := int64(0)
 
 				for _, delegation := range delegations {
-					totalWithdraws += withdrawCount(delegation)
+					if delegation.UnDelegatedAmount() > 0 {
+						affectedDelegations++
+					}
 					totalUndelegated += delegation.UnDelegatedAmount()
 				}
 
 				uassert.Equal(t, totalUndelegated, tt.undelegateAmount)
-				uassert.True(t, totalWithdraws >= tt.minExpectedWithdraws)
+				uassert.True(t, affectedDelegations >= tt.minExpectedWithdraws)
 			}
 		})
 	}

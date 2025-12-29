@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/banker"
-	"math"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -14,7 +13,6 @@ import (
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
 // contract Paths
@@ -130,16 +128,4 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
-}
-
-// withdrawCount returns the total number of withdraws across all time buckets (test helper)
-func withdrawCount(d *staker.Delegation) int {
-	count := 0
-	d.Withdraws().Iterate(0, math.MaxInt64, func(time int64, value any) bool {
-		if slice, ok := value.([]*staker.DelegationWithdraw); ok {
-			count += len(slice)
-		}
-		return false
-	})
-	return count
 }
