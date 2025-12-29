@@ -87,11 +87,12 @@ func AssertIsGovXGNS(caller address) {
 // AssertIsAuthorized panics if the caller does not have the specified role.
 // Also panics if the role does not exist.
 func AssertIsAuthorized(roleName string, caller address) {
-	if !IsAuthorized(roleName, caller) {
-		if _, ok := GetAddress(roleName); !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
-		}
+	addr, ok := GetAddress(roleName)
+	if !ok {
+		panic(ufmt.Errorf("role %s does not exist", roleName))
+	}
 
+	if caller != addr {
 		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
 	}
 }
@@ -100,11 +101,12 @@ func AssertIsAuthorized(roleName string, caller address) {
 // Also panics if any of the roles do not exist.
 func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
-		if _, ok := GetAddress(roleName); !ok {
+		addr, ok := GetAddress(roleName)
+		if !ok {
 			panic(ufmt.Errorf("role %s does not exist", roleName))
 		}
 
-		if IsAuthorized(roleName, caller) {
+		if caller == addr {
 			return
 		}
 	}
