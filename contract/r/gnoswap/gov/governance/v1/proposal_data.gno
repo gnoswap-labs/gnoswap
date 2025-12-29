@@ -274,7 +274,7 @@ func NewProposalCommunityPoolSpendData(
 	executionInfoMessage := makeExecuteMessage(
 		communityPoolPackagePath,
 		"TransferToken",
-		[]string{tokenPath, to.String(), ufmt.Sprintf("%d", amount)},
+		[]string{tokenPath, to.String(), formatInt(amount)},
 	)
 
 	return governance.NewProposalData(
