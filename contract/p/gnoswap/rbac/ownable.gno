@@ -31,7 +31,7 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 		return ErrUnauthorized
 	}
 
-	if newOwner.String() == "" || !newOwner.IsValid() {
+	if newOwner == "" || !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
