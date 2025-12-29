@@ -21,16 +21,17 @@ func initRbac() {
 
 	// Prepare initial roles for one-time initialization
 	for role, addr := range DefaultRoleAddresses {
-		err := manager.RegisterRole(role.String(), addr)
+		roleName := role.String()
+		err := manager.RegisterRole(roleName, addr)
 		if err != nil {
 			panic(makeErrorWithDetails(
 				err,
-				ufmt.Sprintf("role name: %s, address: %s", role.String(), addr.String()),
+				ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
 			))
 		}
 
 		// Update access package with the role address
-		access.SetRoleAddress(cross, role.String(), addr)
+		access.SetRoleAddress(cross, roleName, addr)
 	}
 }
 
