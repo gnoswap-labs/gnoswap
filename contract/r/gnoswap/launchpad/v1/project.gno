@@ -7,17 +7,6 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func newProject(
-	name string,
-	tokenPath string,
-	depositAmount int64,
-	recipient address,
-	createdHeight int64,
-	createdAt int64,
-) *launchpad.Project {
-	return launchpad.NewProject(name, tokenPath, depositAmount, recipient, createdHeight, createdAt)
-}
-
 func isProjectActive(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsActivated(currentTime)
 }

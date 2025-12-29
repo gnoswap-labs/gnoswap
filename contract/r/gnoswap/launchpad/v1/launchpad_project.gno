@@ -145,7 +145,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 	}
 
 	// create project
-	project := newProject(
+	project := launchpad.NewProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
@@ -195,7 +195,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
-		projectTier := newProjectTier(
+		projectTier := launchpad.NewProjectTier(
 			project.ID(),
 			rewardCollectableDuration,
 			tierDistributeAmount,
