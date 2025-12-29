@@ -16,7 +16,7 @@ func init() {
 // Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
-//   - cur: current realm (used for caller verification)
+//   - cur: current realm (required by interrealm spec; not used directly)
 //   - roleName: name of the role
 //   - roleAddress: address for the role
 //
@@ -69,7 +69,6 @@ func IsAuthorized(role string, caller address) bool {
 // GetAddress returns the address for a role and whether it exists.
 func GetAddress(role string) (address, bool) {
 	addr, ok := roleAddresses[role]
-
 	return addr, ok
 }
 

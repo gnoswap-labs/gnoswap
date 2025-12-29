@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -273,17 +274,15 @@ func TestSetRoleAddress(t *testing.T) {
 		setupRoles  map[string]address
 		roleName    string
 		roleAddress address
-		shouldPanic bool
-		panicMsg    string
+		shouldAbort bool
+		abortMsg    string
 	}{
 		{
-			name: "set new role",
-			setupRoles: map[string]address{
-				"admin": testutils.TestAddress("admin"),
-			},
+			name:        "set new role",
+			setupRoles:  map[string]address{},
 			roleName:    "newrole",
 			roleAddress: testutils.TestAddress("newrole"),
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
 			name: "update existing role",
@@ -292,50 +291,43 @@ func TestSetRoleAddress(t *testing.T) {
 			},
 			roleName:    "admin",
 			roleAddress: testutils.TestAddress("newadmin"),
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name: "set role with invalid address",
-			setupRoles: map[string]address{
-				"admin": testutils.TestAddress("admin"),
-			},
+			name:        "set role with empty address",
+			setupRoles:  map[string]address{},
 			roleName:    "invalid",
 			roleAddress: address(""),
-			shouldPanic: true,
-			panicMsg:    "invalid address for role invalid",
+			shouldAbort: true,
+			abortMsg:    "invalid address for role invalid",
+		},
+		{
+			name:        "set role with invalid address format",
+			setupRoles:  map[string]address{},
+			roleName:    "invalid",
+			roleAddress: address("invalid_addr"),
+			shouldAbort: true,
+			abortMsg:    "invalid address for role invalid",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup initial roles
-			roleAddresses = tt.setupRoles
+			roleAddresses = make(map[string]address)
+			for k, v := range tt.setupRoles {
+				roleAddresses[k] = v
+			}
+
+			// Set realm to RBAC contract to pass authorization check
+			testing.SetRealm(testing.NewCodeRealm(rbacPackagePath))
 
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			// Simulate SetRoleAddress logic
-			if tt.roleAddress == address("") {
-				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
-			}
-
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				roleAddresses[tt.roleName] = address("")
-			}
-
-			roleAddresses[tt.roleName] = tt.roleAddress
-
-			if !tt.shouldPanic {
-				// Verify set operation
+				uassert.AbortsContains(t, tt.panicMsg, func() {
+					SetRoleAddress(cross, tt.roleName, tt.roleAddress)
+				})
+			} else {
+				SetRoleAddress(cross, tt.roleName, tt.roleAddress)
 				addr, ok := GetAddress(tt.roleName)
 				if !ok {
 					t.Errorf("Role %s should exist after set", tt.roleName)
@@ -362,8 +354,8 @@ func TestRemoveRole(t *testing.T) {
 		name        string
 		setupRoles  map[string]address
 		roleName    string
-		shouldPanic bool
-		panicMsg    string
+		shouldAbort bool
+		abortMsg    string
 	}{
 		{
 			name: "remove existing role",
@@ -373,7 +365,7 @@ func TestRemoveRole(t *testing.T) {
 				"custom":     testutils.TestAddress("custom"),
 			},
 			roleName:    "custom",
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
 			name: "remove non-existent role",
@@ -381,41 +373,32 @@ func TestRemoveRole(t *testing.T) {
 				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "nonexistent",
-			shouldPanic: true,
-			panicMsg:    "role nonexistent does not exist",
+			shouldAbort: true,
+			abortMsg:    "role does not exist",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup roles
-			roleAddresses = tt.setupRoles
+			roleAddresses = make(map[string]address)
+			for k, v := range tt.setupRoles {
+				roleAddresses[k] = v
+			}
+
+			// Set realm to RBAC contract to pass authorization check
+			testing.SetRealm(testing.NewCodeRealm(rbacPackagePath))
 
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			// Simulate RemoveRole logic
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				panic(ufmt.Errorf("role %s does not exist", tt.roleName))
-			}
-
-			delete(roleAddresses, tt.roleName)
-
-			if !tt.shouldPanic {
-				// Verify removal
-				_, ok := GetAddress(tt.roleName)
-				if ok {
-					t.Errorf("Role %s should not exist after removal", tt.roleName)
-				}
+			    uassert.AbortsContains(t, tt.panicMsg, func() {
+			        RemoveRole(cross, tt.roleName)
+			    })
+			} else {
+			    RemoveRole(cross, tt.roleName)
+			    _, ok := GetAddress(tt.roleName)
+			    if ok {
+			        t.Errorf("Role %s should not exist after removal", tt.roleName)
+			    }
 			}
 		})
 	}
