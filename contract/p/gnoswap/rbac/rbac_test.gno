@@ -1,11 +1,11 @@
 package rbac
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -19,14 +19,14 @@ var (
 
 func adminChecker(caller address) error {
 	if caller != adminAddr {
-		return ufmt.Errorf("caller is not admin")
+		return errors.New("caller is not admin")
 	}
 	return nil
 }
 
 func editorChecker(caller address) error {
 	if caller != editorAddr {
-		return ufmt.Errorf("caller is not editor")
+		return errors.New("caller is not editor")
 	}
 	return nil
 }
@@ -353,9 +353,9 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 	uassert.NoError(t, err)
 
 	tests := []struct {
-		name        string
-		roleName    string
-		shouldError bool
+		name         string
+		roleName     string
+		shouldError  bool
 		expectedAddr address
 	}{
 		{
