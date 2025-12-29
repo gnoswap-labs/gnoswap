@@ -195,6 +195,9 @@ func (vm *versionManager) GetCurrentImplementation() any {
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"
 //   - Invalid callers: "gno.land/r/gnoswap/other", "gno.land/r/attacker/malicious"
 func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
+    // `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
+    // Therefore, there is no need for a separate trailing slash check,
+    // and the prefix is determined by directly appending `/` for version detection.
 	prefix := vm.domainPath + "/"
 
 	return strings.HasPrefix(targetPackagePath, prefix)
