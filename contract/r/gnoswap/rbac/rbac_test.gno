@@ -542,7 +542,7 @@ func TestRBACToAccessSync(t *testing.T) {
 		verifyRoles map[string]address // Expected final state
 	}{
 		{
-			name: "Register new role updates access package",
+			name: "Register new role updates access package (empty address)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -556,7 +556,21 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 		},
 		{
-			name: "Remove role updates access package",
+			name: "Register new role with initial address then update",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "test_role_2", address: testutils.TestAddress("initial_addr")},
+				{action: "update", roleName: "test_role_2", address: testutils.TestAddress("updated_addr")},
+			},
+			verifyRoles: map[string]address{
+				"test_role_2": testutils.TestAddress("updated_addr"),
+			},
+		},
+		{
+			name: "Remove role updates access package (empty address)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -571,7 +585,22 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 		},
 		{
-			name: "Multiple operations sync correctly",
+			name: "Remove role updates access package (with initial address)",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "temp_role_2", address: testutils.TestAddress("initial_addr")},
+				{action: "update", roleName: "temp_role_2", address: testutils.TestAddress("updated_addr")},
+				{action: "remove", roleName: "temp_role_2"},
+			},
+			verifyRoles: map[string]address{
+				// temp_role_2 should not exist
+			},
+		},
+		{
+			name: "Multiple operations sync correctly (empty addresses)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -587,6 +616,23 @@ func TestRBACToAccessSync(t *testing.T) {
 			verifyRoles: map[string]address{
 				"role_a": testutils.TestAddress("role_a_new"),
 				// role_b should not exist
+			},
+		},
+		{
+			name: "Multiple operations sync correctly (with initial addresses)",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "role_c", address: testutils.TestAddress("role_c_init")},
+				{action: "register", roleName: "role_d", address: testutils.TestAddress("role_d_init")},
+				{action: "update", roleName: "role_c", address: testutils.TestAddress("role_c_new")}, // Update to new
+				{action: "remove", roleName: "role_d"},
+			},
+			verifyRoles: map[string]address{
+				"role_c": testutils.TestAddress("role_c_new"),
+				// role_d should not exist
 			},
 		},
 	}
