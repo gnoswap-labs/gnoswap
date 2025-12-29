@@ -84,6 +84,12 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 		)
 	}
 
+	if getProjectRemainingAmount(p) == 0 {
+		return errors.New(
+			ufmt.Sprintf("project has no remaining amount"),
+		)
+	}
+
 	return nil
 }
 

@@ -766,7 +766,8 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			totalCollectedAmount:  100_000_000,
 			recipient:             testAddr,
 			currentTime:           2001,
-			expectedHasError:      false,
+			expectedHasError:      true,
+			expectedError:         "project has no remaining amount",
 		},
 		{
 			name:                  "error when recipient is invalid",
@@ -791,14 +792,15 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			expectedError:         "project not ended yet",
 		},
 		{
-			name:                  "valid refund - collected amount equals distribute amount (no overflow)",
+			name:                  "collected amount equals distribute amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: MAX_INT64,
 			totalCollectedAmount:  MAX_INT64,
 			recipient:             testAddr,
 			currentTime:           2001,
-			expectedHasError:      false,
+			expectedHasError:      true,
+			expectedError:         "project has no remaining amount",
 		},
 	}
 
