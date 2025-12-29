@@ -1062,14 +1062,25 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 	tests := []struct {
 		name          string
-		description   string
-		setupFunc     func() (*versionManager, error)
+		setupFunc     func() error
 		errorContains string
 	}{
 		{
-			name:        "duplicate registration error",
-			description: "RegisterInitializer should return error when initializer already registered",
-			setupFunc: func() (*versionManager, error) {
+			name: "nil initializer",
+			setupFunc: func() error {
+				kvStore := store.NewKVStore(mockDomainAddr)
+				vm := NewVersionManager(
+					"gno.land/r/gnoswap/protocol_fee",
+					kvStore,
+					mockInitializeDomainStoreFn,
+				)
+				return vm.RegisterInitializer(nil)
+			},
+			errorContains: "initializer cannot be nil",
+		},
+		{
+			name: "duplicate registration",
+			setupFunc: func() error {
 				kvStore := store.NewKVStore(mockDomainAddr)
 				vm := &versionManager{
 					domainPath:              "gno.land/r/gnoswap/protocol_fee",
@@ -1085,9 +1096,9 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 
 				// Simulate checking for duplicate
 				if vm.initializers.Has("gno.land/r/gnoswap/protocol_fee/v1") {
-					return vm, errors.New("version_manager: initializer already registered")
+					return errors.New("version_manager: initializer already registered")
 				}
-				return vm, nil
+				return nil
 			},
 			errorContains: "initializer already registered",
 		},
@@ -1095,7 +1106,7 @@ func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := tt.setupFunc()
+			err := tt.setupFunc()
 			uassert.ErrorContains(t, err, tt.errorContains)
 		})
 	}

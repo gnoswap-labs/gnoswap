@@ -70,6 +70,11 @@ type versionManager struct {
 //
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath)
 func (vm *versionManager) RegisterInitializer(initializer func(store any) any) error {
+	// Validate initializer is not nil to prevent panic during initialization
+	if initializer == nil {
+		return errors.New("version_manager: initializer cannot be nil")
+	}
+
 	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
 	previousRealm := runtime.PreviousRealm()
 	if previousRealm.IsUser() {
