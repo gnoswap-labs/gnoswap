@@ -22,7 +22,9 @@ var validCallerRoles = []string{
 
 // isValidCaller checks if the caller address has permission to modify referral data.
 // Only addresses with specific roles defined in validCallerRoles are authorized.
-// Returns an error if the caller is not authorized.
+//
+// Errors:
+//   - ErrUnauthorized: the caller is not authorized to modify referral data
 func isValidCaller(caller address) error {
 	for _, role := range validCallerRoles {
 		if access.IsAuthorized(role, caller) {
@@ -30,5 +32,5 @@ func isValidCaller(caller address) error {
 		}
 	}
 
-	return ufmt.Errorf("unauthorized caller: %s", caller)
+	return ufmt.Errorf("%s: %s", ErrUnauthorized.Error(), caller.String())
 }
