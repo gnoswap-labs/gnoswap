@@ -8,6 +8,188 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
+func TestNewKVStore_InitialState(t *testing.T) {
+	domainAddr := testutils.TestAddress("domain")
+	testing.SetRealm(testing.NewUserRealm(domainAddr))
+
+	store := NewKVStore(domainAddr)
+
+	// Verify data is empty
+	keys, err := store.GetAllKeys()
+	uassert.NoError(t, err)
+	uassert.Equal(t, 0, len(keys))
+
+	// Verify domain address is correctly set
+	uassert.Equal(t, domainAddr, store.GetDomainAddress())
+
+	// Verify domain address has Write permission
+	authorized, err := store.GetAuthorizedCallers()
+	uassert.NoError(t, err)
+	uassert.True(t, authorized[domainAddr] == Write, "domain address should have Write permission")
+}
+
+func TestGetDomainAddress(t *testing.T) {
+	domainAddr := testutils.TestAddress("domain")
+	testing.SetRealm(testing.NewUserRealm(domainAddr))
+
+	store := NewKVStore(domainAddr)
+
+	uassert.Equal(t, domainAddr, store.GetDomainAddress())
+}
+
+func TestIsDomainAddress(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "same_address_returns_true",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr).(*kvStore)
+
+				uassert.True(t, store.IsDomainAddress(domainAddr), "should return true for domain address")
+			},
+		},
+		{
+			name: "different_address_returns_false",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				otherAddr := testutils.TestAddress("other")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr).(*kvStore)
+
+				uassert.False(t, store.IsDomainAddress(otherAddr), "should return false for different address")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
+
+func TestIsReadAuthorized(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "domain_address_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.True(t, store.IsReadAuthorized(domainAddr), "domain address should have read access")
+			},
+		},
+		{
+			name: "readonly_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, ReadOnly)
+
+				uassert.True(t, store.IsReadAuthorized(caller), "ReadOnly caller should have read access")
+			},
+		},
+		{
+			name: "write_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, Write)
+
+				uassert.True(t, store.IsReadAuthorized(caller), "Write caller should have read access")
+			},
+		},
+		{
+			name: "unregistered_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				unregistered := testutils.TestAddress("unregistered")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.False(t, store.IsReadAuthorized(unregistered), "unregistered caller should not have read access")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
+
+func TestIsWriteAuthorized(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "domain_address_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.True(t, store.IsWriteAuthorized(domainAddr), "domain address should have write access")
+			},
+		},
+		{
+			name: "write_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, Write)
+
+				uassert.True(t, store.IsWriteAuthorized(caller), "Write caller should have write access")
+			},
+		},
+		{
+			name: "readonly_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, ReadOnly)
+
+				uassert.False(t, store.IsWriteAuthorized(caller), "ReadOnly caller should not have write access")
+			},
+		},
+		{
+			name: "unregistered_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				unregistered := testutils.TestAddress("unregistered")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.False(t, store.IsWriteAuthorized(unregistered), "unregistered caller should not have write access")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
+
 func TestPermissionUpdateVsRemove(t *testing.T) {
 	// Test that ensures proper permission management without None level
 	// This addresses the issue where version manager needs clear distinction
