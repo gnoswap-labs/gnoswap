@@ -158,17 +158,17 @@ func TestGetRoleAddresses(t *testing.T) {
 				uassert.True(t, exists, "Expected role %s to exist", role)
 
 				uassert.True(t, len(actualAddrs) == len(expectedAddrs),
-				    ufmt.Sprintf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs)))
+					ufmt.Sprintf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs)))
 
 				uassert.True(t, actualAddrs == expectedAddrs,
-				    ufmt.Sprintf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs))
+					ufmt.Sprintf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs))
 			}
 
 			// Verify original map is not modified by modifying returned map
 			addresses["new_role"] = testutils.TestAddress("new")
 
 			uassert.True(t, len(roleAddresses) == len(tt.setupRoles),
-			    ufmt.Sprintf("Original map should not be modified, expected %d, got %d", len(tt.setupRoles), len(roleAddresses)))
+				ufmt.Sprintf("Original map should not be modified, expected %d, got %d", len(tt.setupRoles), len(roleAddresses)))
 		})
 	}
 }
@@ -241,7 +241,7 @@ func TestIsAuthorized(t *testing.T) {
 			authorized := IsAuthorized(tt.queryRole, tt.queryAddr)
 
 			uassert.True(t, authorized == tt.expectedAuth,
-			    ufmt.Sprintf("Expected authorized=%v, got %v", tt.expectedAuth, authorized))
+				ufmt.Sprintf("Expected authorized=%v, got %v", tt.expectedAuth, authorized))
 		})
 	}
 }
@@ -540,13 +540,13 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-			    uassert.PanicsContains(t, tt.panicMsg, func() {
-							MustGetAddress(tt.queryRole)
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					MustGetAddress(tt.queryRole)
 				})
 			} else {
 				addr := MustGetAddress(tt.queryRole)
 				uassert.True(t, addr == tt.expectedAddr,
-				    ufmt.Sprintf("Expected address=%s, got %s", tt.expectedAddr, addr))
+					ufmt.Sprintf("Expected address=%s, got %s", tt.expectedAddr, addr))
 			}
 		})
 	}
