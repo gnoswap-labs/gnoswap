@@ -90,7 +90,7 @@ func safeAddInt64(a, b int64) int64 {
 		panic("int64 addition overflow")
 	}
 
-	if a < 0 && b < MAX_INT64-a {
+	if a < 0 && b < MIN_INT64-a {
 		panic("int64 addition underflow")
 	}
 
@@ -103,7 +103,7 @@ func safeSubInt64(a, b int64) int64 {
 		panic("int64 subtraction underflow")
 	}
 
-	if b < 0 && a > MIN_INT64+b {
+	if b < 0 && a > MAX_INT64+b {
 		panic("int64 subtraction overflow")
 	}
 
