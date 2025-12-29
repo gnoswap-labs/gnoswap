@@ -217,9 +217,9 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 			}
 
 			// Update votes
-			success := gv.updateProposalUserVotes(proposal, votingInfos)
+			err := gv.updateProposalUserVotes(proposal, votingInfos)
 
-			uassert.True(t, success)
+			uassert.NoError(t, err)
 
 			// Verify stored votes
 			storedVotes, exists := store.GetProposalVotingInfos(tt.proposalID)
