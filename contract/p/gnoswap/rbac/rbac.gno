@@ -61,7 +61,11 @@ func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 	return nil
 }
 
-// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
+// UpdateRoleAddress assigns addr to roleName.
+//
+// Errors:
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
+//   - `ErrInvalidAddress`: addr is empty or has an invalid format
 func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 	role, exists := rb.roles[roleName]
 	if !exists {
@@ -77,7 +81,11 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 	return nil
 }
 
-// RemoveRole removes roleName from the RBAC system. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrCannotRemoveSystemRole for system roles.
+// RemoveRole removes roleName from the RBAC system.
+//
+// Errors:
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
+//   - `ErrCannotRemoveSystemRole`: attempting to remove a system role (e.g., admin, governance, pool, etc.)
 func (rb *RBAC) RemoveRole(roleName string) error {
 	if !rb.existsRole(roleName) {
 		return ErrRoleDoesNotExist
@@ -105,7 +113,10 @@ func (rb *RBAC) GetAllRoleAddresses() map[string]address {
 	return addresses
 }
 
-// GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
+// GetRoleAddress returns the address assigned to roleName.
+//
+// Errors:
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
 func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 	role, exists := rb.roles[roleName]
 	if !exists {
@@ -116,18 +127,40 @@ func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 }
 
 // Owner returns the current owner address.
-func (rb *RBAC) Owner() address { return rb.ownable.Owner() }
+func (rb *RBAC) Owner() address {
+    return rb.ownable.Owner()
+}
 
 // PendingOwner returns the pending owner address during ownership transfer.
-func (rb *RBAC) PendingOwner() address { return rb.ownable.PendingOwner() }
+func (rb *RBAC) PendingOwner() address {
+    return rb.ownable.PendingOwner()
+}
 
-// AcceptOwnership completes the ownership transfer process. Must be called by the pending owner.
-func (rb *RBAC) AcceptOwnershipBy(addr address) error { return rb.ownable.AcceptOwnershipBy(addr) }
+// AcceptOwnershipBy completes the ownership transfer process.
+// Must be called by the pending owner.
+//
+// Errors:
+//   - `ErrNoPendingOwner`: no ownership transfer is pending
+//   - `ErrPendingUnauthorized`: addr is not the pending owner
+func (rb *RBAC) AcceptOwnershipBy(addr address) error {
+    return rb.ownable.AcceptOwnershipBy(addr)
+}
 
-// DropOwnership removes the owner, effectively disabling owner-only actions. Only the current owner can call this function.
-func (rb *RBAC) DropOwnershipBy(addr address) error { return rb.ownable.DropOwnershipBy(addr) }
+// DropOwnershipBy removes the owner, effectively disabling owner-only actions.
+// This is irreversible and will prevent any future owner-only operations.
+//
+// Errors:
+//   - `ErrUnauthorized`: addr is not the current owner
+func (rb *RBAC) DropOwnershipBy(addr address) error {
+    return rb.ownable.DropOwnershipBy(addr)
+}
 
-// TransferOwnership initiates the two-step ownership transfer process to newOwner. Only the current owner can call this function.
+// TransferOwnershipBy initiates the two-step ownership transfer process.
+// The newOwner must call AcceptOwnershipBy to complete the transfer.
+//
+// Errors:
+//   - `ErrUnauthorized`: caller is not the current owner
+//   - `ErrInvalidAddress`: newOwner is empty or has an invalid format
 func (rb *RBAC) TransferOwnershipBy(newOwner, caller address) error {
 	return rb.ownable.TransferOwnershipBy(newOwner, caller)
 }
