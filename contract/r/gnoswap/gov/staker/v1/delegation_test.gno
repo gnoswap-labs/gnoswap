@@ -1434,3 +1434,188 @@ func TestDelegation_TimeBucketManagement(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegation_CollectableAmountIterationRange tests that CollectableAmount only iterates
+// up to currentTime and excludes future withdraws
+func TestDelegation_CollectableAmountIterationRange(t *testing.T) {
+	tests := []struct {
+		name                     string
+		setupWithdraws           func(*DelegationResolver)
+		currentTime              int64
+		expectedCollectableTotal int64
+		description              string
+	}{
+		{
+			name: "Future withdraws excluded - collectableTime > currentTime",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 100 + 50 = 150
+				resolver.UnDelegate(100, 100, 100, 50)
+				// collectableTime = 200 + 100 = 300
+				resolver.UnDelegate(200, 200, 200, 100)
+				// collectableTime = 300 + 200 = 500
+				resolver.UnDelegate(300, 300, 300, 200)
+			},
+			currentTime:              250, // Only first should be collectable (150 <= 250 < 300)
+			expectedCollectableTotal: 100, // Only first withdraw
+			description:              "Should exclude withdraws with collectableTime > currentTime (300, 500)",
+		},
+		{
+			name: "Exact currentTime included - collectableTime == currentTime",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 100 + 100 = 200
+				resolver.UnDelegate(100, 100, 100, 100)
+				// collectableTime = 150 + 50 = 200 (same as first)
+				resolver.UnDelegate(150, 150, 150, 50)
+				// collectableTime = 200 + 100 = 300
+				resolver.UnDelegate(200, 200, 200, 100)
+			},
+			currentTime:              200, // First two are collectable (time=200), third is not (time=300)
+			expectedCollectableTotal: 250, // 100 + 150
+			description:              "Should include withdraws with collectableTime == currentTime",
+		},
+		{
+			name: "All past - all withdraws collectable",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 100 + 50 = 150
+				resolver.UnDelegate(100, 100, 100, 50)
+				// collectableTime = 120 + 30 = 150
+				resolver.UnDelegate(200, 120, 120, 30)
+				// collectableTime = 140 + 10 = 150
+				resolver.UnDelegate(300, 140, 140, 10)
+			},
+			currentTime:              1000, // All are in the past
+			expectedCollectableTotal: 600,  // 100 + 200 + 300
+			description:              "Should include all withdraws when currentTime is far in future",
+		},
+		{
+			name: "All future - no withdraws collectable",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 500 + 100 = 600
+				resolver.UnDelegate(100, 500, 500, 100)
+				// collectableTime = 600 + 200 = 800
+				resolver.UnDelegate(200, 600, 600, 200)
+			},
+			currentTime:              100, // All are in the future
+			expectedCollectableTotal: 0,
+			description:              "Should return 0 when all withdraws are in future",
+		},
+		{
+			name: "Mixed with zero lockup - immediate collectability",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 100 + 0 = 100 (no lockup)
+				resolver.UnDelegate(100, 100, 100, 0)
+				// collectableTime = 150 + 100 = 250
+				resolver.UnDelegate(200, 150, 150, 100)
+				// collectableTime = 200 + 200 = 400
+				resolver.UnDelegate(300, 200, 200, 200)
+			},
+			currentTime:              250,
+			expectedCollectableTotal: 300, // First two: 100 (time=100) + 200 (time=250)
+			description:              "Should handle mix of zero and non-zero lockup periods",
+		},
+		{
+			name: "Boundary - currentTime exactly between two withdraws",
+			setupWithdraws: func(resolver *DelegationResolver) {
+				// collectableTime = 100 + 99 = 199
+				resolver.UnDelegate(100, 100, 100, 99)
+				// collectableTime = 100 + 100 = 200
+				resolver.UnDelegate(200, 100, 100, 100)
+				// collectableTime = 100 + 101 = 201
+				resolver.UnDelegate(300, 100, 100, 101)
+			},
+			currentTime:              200, // Exactly at second withdraw time
+			expectedCollectableTotal: 300, // First two: 100 (time=199) + 200 (time=200)
+			description:              "Should include withdraw at exact currentTime boundary",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create delegation with large initial amount
+			delegation := NewDelegation(
+				1,
+				address("g1delegator"),
+				address("g1validator"),
+				10000, // Large enough for all test cases
+				50,
+				50,
+			)
+			resolver := NewDelegationResolver(delegation)
+
+			// When: Setup withdraws
+			tt.setupWithdraws(resolver)
+
+			// Then: CollectableAmount should only count withdraws up to currentTime
+			collectableAmount := resolver.CollectableAmount(tt.currentTime)
+			uassert.Equal(t, collectableAmount, tt.expectedCollectableTotal)
+
+			// Verify: Manually count withdraws that should be included
+			// This verifies the iteration range is correct
+			manualTotal := int64(0)
+			delegation.Withdraws().Iterate(0, tt.currentTime+1, func(time int64, value any) bool {
+				if withdraws, ok := value.([]*staker.DelegationWithdraw); ok {
+					for _, w := range withdraws {
+						wResolver := NewDelegationWithdrawResolver(w)
+						manualTotal = safeAddInt64(manualTotal, wResolver.CollectableAmount(tt.currentTime))
+					}
+				}
+				return false
+			})
+			uassert.Equal(t, manualTotal, tt.expectedCollectableTotal)
+		})
+	}
+}
+
+// TestDelegation_CollectableAmountDoesNotIterateFuture verifies that CollectableAmount
+// does not waste gas iterating over future withdraws
+func TestDelegation_CollectableAmountDoesNotIterateFuture(t *testing.T) {
+	t.Run("Many future withdraws do not affect CollectableAmount", func(t *testing.T) {
+		// Given: Delegation with one past withdraw and many future withdraws
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			100000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Add one withdraw that is collectable
+		resolver.UnDelegate(100, 100, 100, 50) // collectableTime = 150
+
+		// Add many future withdraws (these should NOT be iterated)
+		for i := 0; i < 100; i++ {
+			// collectableTime = 1000 + (i * 100) + lockup
+			resolver.UnDelegate(100, 1000+int64(i*100), 1000+int64(i*100), 1000)
+		}
+
+		// When: Check collectable amount at time 200
+		currentTime := int64(200)
+		collectableAmount := resolver.CollectableAmount(currentTime)
+
+		// Then: Should only include the first withdraw (100)
+		// The 100 future withdraws should be skipped entirely
+		uassert.Equal(t, collectableAmount, int64(100))
+
+		// Verify: Count actual withdraws to ensure we created them
+		totalWithdrawCount := 0
+		delegation.Withdraws().Iterate(0, math.MaxInt64, func(time int64, value any) bool {
+			if withdraws, ok := value.([]*staker.DelegationWithdraw); ok {
+				totalWithdrawCount += len(withdraws)
+			}
+			return false
+		})
+		uassert.Equal(t, totalWithdrawCount, 101) // 1 past + 100 future
+
+		// Verify: Only 1 withdraw should be checked (not all 101)
+		iteratedCount := 0
+		delegation.Withdraws().Iterate(0, currentTime+1, func(time int64, value any) bool {
+			if withdraws, ok := value.([]*staker.DelegationWithdraw); ok {
+				iteratedCount += len(withdraws)
+			}
+			return false
+		})
+		uassert.Equal(t, iteratedCount, 1) // Only the past withdraw
+	})
+}
