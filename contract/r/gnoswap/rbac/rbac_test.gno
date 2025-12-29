@@ -293,6 +293,11 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 			roleName:  "non_existent_role",
 			shouldErr: true,
 		},
+		{
+			name:      "Get role with empty string should return error",
+			roleName:  "",
+			shouldErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -823,6 +828,19 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
 			panicContains: "does not exist",
+		},
+		{
+			name: "Update role with same address succeeds (idempotent)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_idempotent_role", testutils.TestAddress("same_addr"))
+			},
+			roleName:    "test_idempotent_role",
+			newAddr:     testutils.TestAddress("same_addr"),
+			callerRealm: ADMIN,
+			shouldPanic: false,
 		},
 	}
 
