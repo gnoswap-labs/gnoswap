@@ -288,6 +288,40 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
 }
 
+func (s *governanceStore) RemoveUserProposal(user string, proposalID int64) error {
+	if !s.HasUserProposalsStoreKey() {
+		return errors.New("user proposals store key not found")
+	}
+
+	userProposals := s.GetUserProposals()
+	proposalIDsRaw, ok := userProposals.Get(user)
+	// proposal already removed
+	if !ok {
+		return nil
+	}
+
+	proposalIDs, ok := proposalIDsRaw.([]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to []int64: %T", proposalIDs))
+	}
+
+	newProposalIDs := make([]int64, 0)
+
+	for _, id := range proposalIDs {
+		if id != proposalID {
+			newProposalIDs = append(newProposalIDs, id)
+		}
+	}
+
+	if len(newProposalIDs) == 0 {
+		userProposals.Remove(user)
+	} else {
+		userProposals.Set(user, newProposalIDs)
+	}
+
+	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+}
+
 // NewGovernanceStore creates a new governance store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
