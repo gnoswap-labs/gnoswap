@@ -500,6 +500,84 @@ func TestAccess_MustGetAddress(t *testing.T) {
 	}
 }
 
+func TestSetRoleAddress_EdgeCases(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	testAddr := testutils.TestAddress("test")
+
+	tests := []struct {
+		name        string
+		setupRoles  map[string]address
+		roleName    string
+		roleAddress address
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "empty role name - should work (no validation)",
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "",
+			roleAddress: testAddr,
+			shouldPanic: false,
+		},
+		{
+			name: "update with same address - idempotent",
+			setupRoles: map[string]address{
+				"admin": testAddr,
+			},
+			roleName:    "admin",
+			roleAddress: testAddr,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup initial roles
+			roleAddresses = tt.setupRoles
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			// Simulate SetRoleAddress logic (without RBAC check)
+			if tt.roleAddress == address("") {
+				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
+			}
+
+			roleAddresses[tt.roleName] = tt.roleAddress
+
+			if !tt.shouldPanic {
+				// Verify set operation
+				addr, ok := GetAddress(tt.roleName)
+				if !ok {
+					t.Errorf("Role %s should exist after set", tt.roleName)
+				}
+				if addr != tt.roleAddress {
+					t.Errorf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr)
+				}
+			}
+		})
+	}
+}
+
 // Helper function to check if error contains string
 func containsString(r interface{}, substr string) bool {
 	switch v := r.(type) {

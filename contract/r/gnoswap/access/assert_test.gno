@@ -477,6 +477,131 @@ func TestAssertHasAnyRole(t *testing.T) {
 	}
 }
 
+func TestAssertHasAnyRole_EdgeCases(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	adminAddr := testutils.TestAddress("admin")
+	routerAddr := testutils.TestAddress("router")
+
+	tests := []struct {
+		name        string
+		setupRoles  map[string]address
+		testAddr    address
+		roleNames   []string
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "empty role array should panic",
+			setupRoles:  map[string]address{},
+			testAddr:    adminAddr,
+			roleNames:   []string{},
+			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not any of the roles %v", adminAddr.String(), []string{}),
+		},
+		{
+			name: "duplicate roles in array - should work",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String(): adminAddr,
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ADMIN.String(), prbac.ROLE_ADMIN.String()},
+			shouldPanic: false,
+		},
+		{
+			name: "duplicate roles but unauthorized",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String():  adminAddr,
+				prbac.ROLE_ROUTER.String(): routerAddr,
+			},
+			testAddr:    routerAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ADMIN.String()},
+			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not any of the roles %v", routerAddr.String(), []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ADMIN.String()}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			roleAddresses = make(map[string]address)
+			for role, addrs := range tt.setupRoles {
+				roleAddresses[role] = addrs
+			}
+
+			// Test
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	authorizedAddr := testutils.TestAddress("authorized")
+
+	tests := []struct {
+		name        string
+		setupRoles  map[string]address
+		testRole    string
+		testAddr    address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "empty string role name should panic",
+			setupRoles:  map[string]address{},
+			testRole:    "",
+			testAddr:    authorizedAddr,
+			shouldPanic: true,
+			expectedMsg: "role  does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			roleAddresses = make(map[string]address)
+			for role, addrs := range tt.setupRoles {
+				roleAddresses[role] = addrs
+			}
+
+			// Test
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertIsAuthorized(tt.testRole, tt.testAddr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertIsAuthorized(tt.testRole, tt.testAddr)
+				})
+			}
+		})
+	}
+}
+
 func TestAssertIsValidAddress(t *testing.T) {
 	tests := []struct {
 		name        string
