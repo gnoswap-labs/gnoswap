@@ -93,19 +93,3 @@ func Burn(cur realm, from address, amount int64) {
 
 	checkErr(ledger.Burn(from, amount))
 }
-
-// BurnByLaunchPad burns tokens from address.
-//
-// Parameters:
-//   - from: address to burn from
-//   - amount: amount to burn
-//
-// Only callable by launchpad contract.
-func BurnByLaunchPad(cur realm, from address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
-
-	checkErr(ledger.Burn(from, amount))
-}
