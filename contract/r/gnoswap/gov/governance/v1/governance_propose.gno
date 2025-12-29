@@ -51,6 +51,12 @@ func (gv *governanceV1) ProposeText(
 		panic(errDataNotFound)
 	}
 
+	// Clean up inactive user proposals before checking if caller already has an active proposal
+	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
+	}
+
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
@@ -83,9 +89,9 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
@@ -154,6 +160,12 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		panic(errDataNotFound)
 	}
 
+	// Clean up inactive user proposals before checking if caller already has an active proposal
+	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
+	}
+
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
@@ -186,9 +198,9 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
@@ -261,6 +273,12 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(errDataNotFound)
 	}
 
+	// Clean up inactive user proposals before checking if caller already has an active proposal
+	err := gv.removeInactiveUserProposals(callerAddress, createdAt)
+	if err != nil {
+		panic(err)
+	}
+
 	// Check if caller already has an active proposal (one proposal per address)
 	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
@@ -298,9 +316,9 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	success := gv.updateProposalUserVotes(proposal, avl.NewTree())
-	if !success {
-		panic(errDataNotFound)
+	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	if err != nil {
+		panic(err)
 	}
 
 	// Emit proposal creation event for indexing and tracking
