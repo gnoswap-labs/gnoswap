@@ -51,11 +51,12 @@
 //
 // ## Error Handling
 //
-// The package defines several error types through ReferralError:
+// The package defines several error types:
 //   - `ErrInvalidAddress`: Returned when an address format is invalid
+//   - `ErrSelfReferral`: Returned when attempting to set self as referrer
 //   - `ErrUnauthorized`: Returned when the caller lacks permission
+//   - `ErrTooManyRequests`: Returned when rate limit is exceeded (24-hour cooldown)
 //   - `ErrNotFound`: Returned when attempting to get a non-existent referral
-//   - `ErrZeroAddress`: Returned when attempting operations with zero address
 //
 // ## Example: Integration with a Staking Contract
 //
