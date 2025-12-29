@@ -2,7 +2,6 @@ package v1
 
 import (
 	"errors"
-	"math"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -37,7 +36,7 @@ func (r *DelegationResolver) IsEmpty() bool {
 
 // CollectableAmount calculates the total amount that can be collected at the given time
 func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) {
-	r.delegation.Withdraws().Iterate(0, math.MaxInt64, func(time int64, value any) bool {
+	r.delegation.Withdraws().Iterate(0, currentTime+1, func(time int64, value any) bool {
 		if withdraws, ok := value.([]*staker.DelegationWithdraw); ok {
 			for _, withdraw := range withdraws {
 				total = safeAddInt64(total, NewDelegationWithdrawResolver(withdraw).CollectableAmount(currentTime))
