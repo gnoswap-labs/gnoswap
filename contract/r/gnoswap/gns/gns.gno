@@ -287,11 +287,15 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 
 // isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
 func isLastSecondOfHalvingYear(timestamp int64) bool {
-	state := getEmissionState()
-	year := state.getCurrentYear(timestamp)
-	lastSecond := state.getHalvingYearEndTimestamp(year)
+    year := getEmissionState().getCurrentYear(timestamp)
+	lastSecond := GetHalvingYearEndTimestamp(year)
 
 	return timestamp == lastSecond
+}
+
+// handleLeftEmissionAmount returns the remaining emission amount for a halving year.
+func handleLeftEmissionAmount(state *EmissionState, year, amount int64) int64 {
+	return safeSubInt64(GetHalvingYearLeftAmount(year), amount)
 }
 
 // skipIfSameHeight returns true if last minted height equals current height,
