@@ -1,6 +1,8 @@
 package rbac
 
 import (
+	"strings"
+
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -38,12 +40,12 @@ func assertIsAdmin(addr address) {
 	}
 }
 
-// assertIsValidRoleName panics if roleName is invalid (empty).
+// assertIsValidRoleName panics if roleName is invalid (empty or whitespace-only).
 func assertIsValidRoleName(roleName string) {
-	if roleName == "" {
+	if strings.TrimSpace(roleName) == "" {
 		panic(makeErrorWithDetails(
 			errInvalidRoleName,
-			ufmt.Sprintf("role name: %s", roleName),
+			ufmt.Sprintf("role name: %q", roleName),
 		))
 	}
 }
