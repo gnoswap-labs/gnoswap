@@ -59,15 +59,6 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 		))
 	}
 
-	// Update the role address immediately after registration
-	err = manager.UpdateRoleAddress(roleName, roleAddress)
-	if err != nil {
-		panic(makeErrorWithDetails(
-			errInvalidAddress,
-			ufmt.Sprintf("failed to set address for role %s: %s", roleName, roleAddress),
-		))
-	}
-
 	// Set the role in access control
 	access.SetRoleAddress(cross, roleName, roleAddress)
 	emitRegisterRoleEvent(roleName, roleAddress)
