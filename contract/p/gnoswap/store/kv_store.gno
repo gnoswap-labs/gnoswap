@@ -74,7 +74,7 @@ func (k *kvStore) GetInt64(key string) (int64, error) {
 		return 0, err
 	}
 
-	return CastToInt64(result)
+	return castToInt64(result)
 }
 
 // GetUint64 retrieves a value by key and casts it to uint64
@@ -85,7 +85,7 @@ func (k *kvStore) GetUint64(key string) (uint64, error) {
 		return 0, err
 	}
 
-	return CastToUint64(result)
+	return castToUint64(result)
 }
 
 // GetBool retrieves a value by key and casts it to bool
@@ -96,7 +96,7 @@ func (k *kvStore) GetBool(key string) (bool, error) {
 		return false, err
 	}
 
-	return CastToBool(result)
+	return castToBool(result)
 }
 
 // GetString retrieves a value by key and casts it to string
@@ -107,7 +107,7 @@ func (k *kvStore) GetString(key string) (string, error) {
 		return "", err
 	}
 
-	return CastToString(result)
+	return castToString(result)
 }
 
 // GetAddress retrieves a value by key and casts it to address
@@ -118,7 +118,7 @@ func (k *kvStore) GetAddress(key string) (address, error) {
 		return address(""), err
 	}
 
-	return CastToAddress(result)
+	return castToAddress(result)
 }
 
 // GetTree retrieves a value by key and casts it to *avl.Tree
@@ -129,7 +129,7 @@ func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
 		return nil, err
 	}
 
-	return CastToTree(result)
+	return castToTree(result)
 }
 
 // Set stores a value with the given key
