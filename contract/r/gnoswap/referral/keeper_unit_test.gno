@@ -522,3 +522,60 @@ func TestKeeperGet(t *testing.T) {
 		})
 	}
 }
+
+// TestKeeperSetReferralZeroAddressRemoval tests zero address removal scenarios
+func TestKeeperSetReferralZeroAddressRemoval(t *testing.T) {
+	t.Run("removes existing referral when zero address is provided", func(t *testing.T) {
+		cleanup := mockValidCallerKeeper()
+		defer cleanup()
+
+		k := setupKeeperUnit()
+
+		// First register a referral
+		err := k.setReferral(keeperAddr1, keeperAddr2, EventTypeRegister)
+		uassert.NoError(t, err)
+		uassert.True(t, k.has(keeperAddr1))
+
+		// Bypass rate limit for removal
+		k.lastOps.Set(keeperAddr1.String(), int64(0))
+
+		// Remove by setting zero address
+		err = k.setReferral(keeperAddr1, zeroAddress, EventTypeUpdate)
+		uassert.NoError(t, err)
+		uassert.False(t, k.has(keeperAddr1))
+	})
+
+	t.Run("does nothing when removing non-existent referral", func(t *testing.T) {
+		cleanup := mockValidCallerKeeper()
+		defer cleanup()
+
+		k := setupKeeperUnit()
+
+		// Try to remove non-existent referral with zero address
+		err := k.setReferral(keeperAddr1, zeroAddress, EventTypeRegister)
+		uassert.NoError(t, err)
+		uassert.False(t, k.has(keeperAddr1))
+	})
+
+	t.Run("emits event when removing existing referral", func(t *testing.T) {
+		cleanup := mockValidCallerKeeper()
+		defer cleanup()
+
+		k := setupKeeperUnit()
+
+		// First register a referral
+		err := k.setReferral(keeperAddr3, keeperAddr4, EventTypeRegister)
+		uassert.NoError(t, err)
+
+		// Bypass rate limit for removal
+		k.lastOps.Set(keeperAddr3.String(), int64(0))
+
+		// Remove by setting zero address - should succeed and emit event
+		err = k.setReferral(keeperAddr3, zeroAddress, EventTypeUpdate)
+		uassert.NoError(t, err)
+
+		// Verify referral is removed
+		has := k.has(keeperAddr3)
+		uassert.False(t, has)
+	})
+}
