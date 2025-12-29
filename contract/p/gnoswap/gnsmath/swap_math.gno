@@ -7,6 +7,8 @@ import (
 
 const denominator = uint64(1_000_000)
 
+var denominatorU256 = u256.NewUint(denominator)
+
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
 // for a swap step within a single tick range.
 //
@@ -160,7 +162,7 @@ func handleExactIn(
 	amountRemainingLessFee := u256.MulDiv(
 		amountRemainingAbs,
 		withoutFeeRateInPips,
-		u256.NewUint(denominator),
+		denominatorU256,
 	)
 
 	// Special case:
