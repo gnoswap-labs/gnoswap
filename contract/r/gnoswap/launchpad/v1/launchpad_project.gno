@@ -195,7 +195,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
-		projectTier := launchpad.NewProjectTier(
+		projectTier := newProjectTier(
 			project.ID(),
 			rewardCollectableDuration,
 			tierDistributeAmount,
