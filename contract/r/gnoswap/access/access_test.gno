@@ -322,8 +322,8 @@ func TestSetRoleAddress(t *testing.T) {
 			// Set realm to RBAC contract to pass authorization check
 			testing.SetRealm(testing.NewCodeRealm(rbacPackagePath))
 
-			if tt.shouldPanic {
-				uassert.AbortsContains(t, tt.panicMsg, func() {
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortMsg, func() {
 					SetRoleAddress(cross, tt.roleName, tt.roleAddress)
 				})
 			} else {
@@ -374,7 +374,7 @@ func TestRemoveRole(t *testing.T) {
 			},
 			roleName:    "nonexistent",
 			shouldAbort: true,
-			abortMsg:    "role does not exist",
+			abortMsg:    "role nonexistent does not exist",
 		},
 	}
 
@@ -389,16 +389,16 @@ func TestRemoveRole(t *testing.T) {
 			// Set realm to RBAC contract to pass authorization check
 			testing.SetRealm(testing.NewCodeRealm(rbacPackagePath))
 
-			if tt.shouldPanic {
-			    uassert.AbortsContains(t, tt.panicMsg, func() {
-			        RemoveRole(cross, tt.roleName)
-			    })
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortMsg, func() {
+					RemoveRole(cross, tt.roleName)
+				})
 			} else {
-			    RemoveRole(cross, tt.roleName)
-			    _, ok := GetAddress(tt.roleName)
-			    if ok {
-			        t.Errorf("Role %s should not exist after removal", tt.roleName)
-			    }
+				RemoveRole(cross, tt.roleName)
+				_, ok := GetAddress(tt.roleName)
+				if ok {
+					t.Errorf("Role %s should not exist after removal", tt.roleName)
+				}
 			}
 		})
 	}
