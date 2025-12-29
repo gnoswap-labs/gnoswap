@@ -173,21 +173,23 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 	allDelegations := g.store.GetAllDelegations()
 	delegations = make([]*staker.Delegation, 0)
 
-	// Direct access without GetDelegateeIDs wrapper to avoid redundant function call
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
 		return delegations
 	}
 
 	delegateeStr := delegatee.String()
-	if delegationIDs, exists := userDelegations.Get(delegateeStr); exists {
-		if ids, ok := delegationIDs.([]int64); ok {
-			for _, id := range ids {
-				idStr := strconv.FormatInt(id, 10)
-				if delegation, exists := allDelegations.Get(idStr); exists {
-					if d, ok := delegation.(*staker.Delegation); ok {
-						delegations = append(delegations, d)
-					}
+	delegationIDs, exists := userDelegations.Get(delegateeStr)
+	if !exists {
+		return delegations
+	}
+
+	if ids, ok := delegationIDs.([]int64); ok {
+		for _, id := range ids {
+			idStr := strconv.FormatInt(id, 10)
+			if delegation, exists := allDelegations.Get(idStr); exists {
+				if d, ok := delegation.(*staker.Delegation); ok {
+					delegations = append(delegations, d)
 				}
 			}
 		}
