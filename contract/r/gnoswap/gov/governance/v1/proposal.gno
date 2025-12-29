@@ -6,8 +6,8 @@ import (
 
 type ProposalResolver struct {
 	*governance.Proposal
-	statusResolver *ProposalStatusResolver
-	dataResolver *ProposalDataResolver
+	statusResolver   *ProposalStatusResolver
+	dataResolver     *ProposalDataResolver
 	metadataResolver *ProposalMetadataResolver
 }
 
@@ -16,9 +16,9 @@ func NewProposalResolver(proposal *governance.Proposal) *ProposalResolver {
 	dataResolver := NewProposalDataResolver(proposal.Data())
 	metadataResolver := NewProposalMetadataResolver(proposal.Metadata())
 	return &ProposalResolver{
-		Proposal: proposal,
-		statusResolver: statusResolver,
-		dataResolver: dataResolver,
+		Proposal:         proposal,
+		statusResolver:   statusResolver,
+		dataResolver:     dataResolver,
 		metadataResolver: metadataResolver,
 	}
 }
@@ -31,22 +31,22 @@ func (r *ProposalResolver) VotingTotalWeight() int64 {
 // IsActive determines if the proposal is currently active (can be voted on or executed).
 // A proposal is considered active if it's not rejected, expired, executed, or canceled.
 func (r *ProposalResolver) IsActive(current int64) bool {
-	// Text proposals become inactive once they pass (no execution needed)
-	if r.IsTextType() {
-		if r.statusResolver.IsPassed(current) {
-			return false
-		}
-	}
+	// Calculate status once and reuse to avoid redundant computations
+	status := r.statusResolver.StatusType(current)
 
-	// If the proposal is rejected, expired, executed, or canceled, it is not active
-	if r.statusResolver.IsRejected(current) ||
-		r.statusResolver.IsExpired(current) ||
-		r.statusResolver.actionStatusResolver.IsExecuted() ||
-		r.statusResolver.actionStatusResolver.Canceled() {
+	switch status {
+	case governance.StatusRejected,
+		governance.StatusExpired,
+		governance.StatusExecuted,
+		governance.StatusCanceled:
 		return false
+	case governance.StatusPassed:
+		// Text proposals become inactive once they pass (no execution needed)
+		return !r.IsTextType()
+	default:
+		// StatusUpcoming, StatusActive, StatusExecutable are considered active
+		return true
 	}
-
-	return true
 }
 
 // Validate performs comprehensive validation of the proposal data and metadata.
@@ -105,12 +105,6 @@ func (r *ProposalResolver) CommunityPoolSpendTokenPath() string {
 // This is an internal method called during voting process.
 func (r *ProposalResolver) Vote(votedYes bool, weight int64) error {
 	return r.statusResolver.vote(votedYes, weight)
-}
-
-// updateVoteStatus updates the voting status with new parameters.
-// This is used for dynamic voting requirement adjustments.
-func (r *ProposalResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return r.statusResolver.updateVoteStatus(maxVotingWeight, quorum)
 }
 
 // execute marks the proposal as executed and records execution details.

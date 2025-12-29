@@ -99,5 +99,5 @@ func NewProposalScheduleStatus(
 	executableTime := safeAddInt64(votingEndTime, executionDelay) // When execution can start
 	expiredTime := safeAddInt64(executableTime, executionWindow)  // When execution window closes
 
-	return governance.NewProposalScheduleStatusInstance(createTime, activeTime, votingEndTime, executableTime, expiredTime)
+	return governance.NewProposalScheduleStatus(createTime, activeTime, votingEndTime, executableTime, expiredTime)
 }
