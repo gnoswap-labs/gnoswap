@@ -1,32 +1,45 @@
 package halt
 
-import "errors"
+import (
+	"errors"
 
-type HaltStateManager map[OpType]bool
+	"gno.land/p/nt/avl"
+)
 
-func (h HaltStateManager) IsOperationHalted(op OpType) (bool, error) {
+type HaltStateManager struct {
+	states *avl.Tree
+}
+
+func (h *HaltStateManager) IsOperationHalted(op OpType) (bool, error) {
 	return h.getOperationHalted(op)
 }
 
-func (h HaltStateManager) ToConfig() HaltConfig {
+func (h *HaltStateManager) ToConfig() HaltConfig {
 	config := make(HaltConfig)
 
-	for op := range h {
+	h.states.Iterate("", "", func(key string, value any) bool {
+		op := OpType(key)
 		halted, err := h.getOperationHalted(op)
 		if err != nil {
-			return config
+			return true
 		}
 
 		config[op] = halted
-	}
+		return false
+	})
 
 	return config
 }
 
-func (h HaltStateManager) getOperationHalted(op OpType) (bool, error) {
-	halted, exists := h[op]
+func (h *HaltStateManager) getOperationHalted(op OpType) (bool, error) {
+	haltedRaw, exists := h.states.Get(op.String())
 	if !exists {
 		return false, errors.New("operation not found")
+	}
+
+	halted, ok := haltedRaw.(bool)
+	if !ok {
+		return false, errors.New("failed to cast value to bool")
 	}
 
 	return halted, nil
@@ -37,7 +50,7 @@ func (h HaltStateManager) setOperationHalted(op OpType, halted bool) error {
 		return makeErrorWithDetails(errInvalidOpType, op.String())
 	}
 
-	h[op] = halted
+	h.states.Set(op.String(), halted)
 
 	return nil
 }
@@ -53,7 +66,9 @@ func (h HaltStateManager) updateOperationHaltsByConfig(config HaltConfig) error 
 }
 
 func newHaltStateManagerByConfig(config HaltConfig) HaltStateManager {
-	haltState := make(HaltStateManager)
+	haltState := HaltStateManager{
+		states: avl.NewTree(),
+	}
 
 	for _, op := range OpTypes() {
 		halted, exists := config[op]
@@ -61,7 +76,7 @@ func newHaltStateManagerByConfig(config HaltConfig) HaltStateManager {
 			halted = true
 		}
 
-		haltState[op] = halted
+		haltState.states.Set(op.String(), halted)
 	}
 
 	return haltState

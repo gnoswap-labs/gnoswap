@@ -324,11 +324,11 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 // Test GetHaltConfigJson function
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
-		name                 string
-		initialLevel         HaltLevel
-		expectedContains     []string
-		expectedNotContains  []string
-		verifyOperations     map[OpType]bool
+		name                string
+		initialLevel        HaltLevel
+		expectedContains    []string
+		expectedNotContains []string
+		verifyOperations    map[OpType]bool
 	}{
 		{
 			name:         "None level JSON",
@@ -835,15 +835,15 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			// then
 			// Basic validations
 			if tc.expectedManagerNotNil {
-				uassert.True(t, manager != nil)
+				uassert.True(t, manager.states != nil)
 			}
 
-			uassert.Equal(t, len(manager), tc.expectedOperationCount)
+			uassert.Equal(t, manager.states.Size(), tc.expectedOperationCount)
 
 			// Verify all operation types are present with correct states
 			for _, opType := range OpTypes() {
-				halted, exists := manager[opType]
-				uassert.True(t, exists)
+				halted, err := manager.getOperationHalted(opType)
+				uassert.NoError(t, err)
 
 				if tc.shouldCheckAllOpsMatch {
 					// Check against the provided config
