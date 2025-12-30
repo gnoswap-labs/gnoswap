@@ -134,6 +134,11 @@ func TestIsInt64(t *testing.T) {
 			x:        "0",
 			expected: true,
 		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -163,6 +168,11 @@ func TestIsUint64(t *testing.T) {
 		{
 			name:     "zero",
 			x:        "0",
+			expected: true,
+		},
+		{
+			name:     "one",
+			x:        "1",
 			expected: true,
 		},
 		{

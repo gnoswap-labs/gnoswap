@@ -911,6 +911,24 @@ func TestLsh(t *testing.T) {
 			expected: "-4294967296",
 		},
 		{
+			name:     "x is non-neg & n is 64",
+			x:        "1",
+			n:        64,
+			expected: "18446744073709551616",
+		},
+		{
+			name:     "x is non-neg & n is 128",
+			x:        "1",
+			n:        128,
+			expected: "340282366920938463463374607431768211456",
+		},
+		{
+			name:     "x is non-neg & n is 192",
+			x:        "1",
+			n:        192,
+			expected: "6277101735386680763835789423207666416102355444464034512896",
+		},
+		{
 			name:     "x is neg & n is smaller than 256 and greater than or equal 192",
 			x:        "-11111",
 			n:        200,
@@ -987,6 +1005,24 @@ func TestRsh(t *testing.T) {
 			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 			n:        32,
 			expected: "13479973333575319897333507543509815336818572211270286240551805124607",
+		},
+		{
+			name:     "x is non-neg & n is 64",
+			x:        "18446744073709551616",
+			n:        64,
+			expected: "1",
+		},
+		{
+			name:     "x is non-neg & n is 128",
+			x:        "340282366920938463463374607431768211456",
+			n:        128,
+			expected: "1",
+		},
+		{
+			name:     "x is non-neg & n is 192",
+			x:        "6277101735386680763835789423207666416102355444464034512896",
+			n:        192,
+			expected: "1",
 		},
 		{
 			name:     "x is neg & n is smaller than 256 and greater than or equal 192",
@@ -1372,6 +1408,27 @@ func TestIsNeg(t *testing.T) {
 	}
 }
 
+func TestIsOne(t *testing.T) {
+	tests := []struct {
+		x    string
+		want bool
+	}{
+		{"0", false},
+		{"1", true},
+		{"-1", false},
+		{"2", false},
+		{MaxInt256().ToString(), false},
+	}
+
+	for _, tc := range tests {
+		x := MustFromDecimal(tc.x)
+		got := x.IsOne()
+		if got != tc.want {
+			t.Errorf("IsOne(%s) = %v, want %v", tc.x, got, tc.want)
+		}
+	}
+}
+
 func TestLt(t *testing.T) {
 	tests := []struct {
 		x, y string
@@ -1527,6 +1584,14 @@ func TestNilChecks(t *testing.T) {
 			name: "Gt with nil",
 			fn:   func() { validInt.Gt(nil) },
 		},
+		{
+			name: "Lte with nil",
+			fn:   func() { validInt.Lte(nil) },
+		},
+		{
+			name: "Gte with nil",
+			fn:   func() { validInt.Gte(nil) },
+		},
 	}
 
 	for _, tt := range tests {
@@ -1542,6 +1607,59 @@ func TestNilChecks(t *testing.T) {
 			tt.fn()
 		})
 	}
+}
+
+func TestSetBytes32(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected string
+	}{
+		{
+			name:     "all zeros",
+			input:    make([]byte, 32),
+			expected: "0",
+		},
+		{
+			name: "min int256",
+			input: func() []byte {
+				b := make([]byte, 32)
+				b[0] = 0x80
+				return b
+			}(),
+			expected: MinInt256().ToString(),
+		},
+		{
+			name: "all ones is -1",
+			input: func() []byte {
+				b := make([]byte, 32)
+				for i := range b {
+					b[i] = 0xff
+				}
+				return b
+			}(),
+			expected: "-1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			z := new(Int).SetBytes32(tt.input)
+			if got := z.ToString(); got != tt.expected {
+				t.Errorf("SetBytes32(%s) = %s, want %s", tt.name, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSetBytes32PanicsOnShortInput(t *testing.T) {
+	shortInput := make([]byte, 31)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic for short input")
+		}
+	}()
+	new(Int).SetBytes32(shortInput)
 }
 
 func TestSetInt64(t *testing.T) {
