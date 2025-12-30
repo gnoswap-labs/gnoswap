@@ -52,12 +52,20 @@ func (gs *govStakerV1) CollectReward() {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewards(caller.String(), currentTimestamp)
+	// Cache string conversions to avoid repeated calls
+	callerStr := caller.String()
+
+	emissionReward, protocolFeeRewards, err := gs.claimRewards(callerStr, currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
+
+	// Cache string conversions for event emission
+	prevAddrStr := previousRealm.Address().String()
+	prevRealmPath := previousRealm.PkgPath()
+	fromStr := from.String()
 
 	// Transfer emission rewards (GNS tokens) if any
 	if emissionReward > 0 {
@@ -65,10 +73,10 @@ func (gs *govStakerV1) CollectReward() {
 
 		chain.Emit(
 			"CollectEmissionReward",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"from", from.String(),
-			"to", caller.String(),
+			"prevAddr", prevAddrStr,
+			"prevRealm", prevRealmPath,
+			"from", fromStr,
+			"to", callerStr,
 			"emissionRewardAmount", formatInt(emissionReward),
 		)
 	}
@@ -83,11 +91,11 @@ func (gs *govStakerV1) CollectReward() {
 
 			chain.Emit(
 				"CollectProtocolFeeReward",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
+				"prevAddr", prevAddrStr,
+				"prevRealm", prevRealmPath,
 				"tokenPath", tokenPath,
-				"from", from.String(),
-				"to", caller.String(),
+				"from", fromStr,
+				"to", callerStr,
 				"collectedAmount", formatInt(amount),
 			)
 		}
@@ -110,21 +118,29 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
+	// Cache string conversions to avoid repeated calls
+	toStr := to.String()
+
+	launchpadRewardID := gs.makeLaunchpadRewardID(toStr)
 	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
 		panic(makeErrorWithDetails(
 			errNoDelegatedAmount,
-			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
+			ufmt.Sprintf("%s is not project wallet from launchpad", toStr),
 		))
 	}
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(to.String(), currentTimestamp)
+	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(toStr, currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
+
+	// Cache string conversions for event emission
+	prevAddrStr := previousRealm.Address().String()
+	prevRealmPath := previousRealm.PkgPath()
+	fromStr := from.String()
 
 	// Transfer emission rewards (GNS tokens) to project wallet if any
 	if emissionReward > 0 {
@@ -132,10 +148,10 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 
 		chain.Emit(
 			"CollectEmissionFromLaunchPad",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"from", from.String(),
-			"to", to.String(),
+			"prevAddr", prevAddrStr,
+			"prevRealm", prevRealmPath,
+			"from", fromStr,
+			"to", toStr,
 			"emissionRewardAmount", formatInt(emissionReward),
 		)
 	}
@@ -150,11 +166,11 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 
 			chain.Emit(
 				"CollectProtocolFeeFromLaunchPad",
-				"prevAddr", previousRealm.Address().String(),
-				"prevRealm", previousRealm.PkgPath(),
+				"prevAddr", prevAddrStr,
+				"prevRealm", prevRealmPath,
 				"tokenPath", tokenPath,
-				"from", from.String(),
-				"to", to.String(),
+				"from", fromStr,
+				"to", toStr,
 				"collectedAmount", formatInt(amount),
 			)
 		}
