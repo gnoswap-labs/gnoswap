@@ -48,11 +48,8 @@ func (gv *governanceV1) Execute(proposalID int64) int64 {
 	// Mint and distribute GNS tokens as part of the execution process
 	emission.MintAndDistributeGns(cross)
 
-	var proposal *governance.Proposal
-	var err error
-
 	// Attempt to execute the proposal with current context
-	proposal, err = gv.executeProposal(
+	proposal, err := gv.executeProposal(
 		proposalID,
 		currentAt,
 		currentHeight,

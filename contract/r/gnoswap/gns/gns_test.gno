@@ -78,29 +78,26 @@ func TestValidEmissionAmount(t *testing.T) {
 }
 
 func TestIsLastSecondOfHalvingYear(t *testing.T) {
-	tests := make([]struct {
+	resetEmissionState(t)
+	InitGnsTest(t)
+
+	type testdata struct {
 		name      string
 		timestamp int64
 		want      bool
-	}, 0, 24)
+	}
+
+	tests := make([]testdata, 0, 24)
 
 	for i := HALVING_START_YEAR; i <= HALVING_END_YEAR; i++ {
-		tests = append(tests, struct {
-			name      string
-			timestamp int64
-			want      bool
-		}{
+		tests = append(tests, testdata{
 			name:      ufmt.Sprintf("last second of halving year %d", i),
 			timestamp: GetHalvingYearEndTimestamp(i),
 			want:      true,
 		})
 
-		tests = append(tests, struct {
-			name      string
-			timestamp int64
-			want      bool
-		}{
-			name:      ufmt.Sprintf("not last second of halving year %d", i),
+		tests = append(tests, testdata{
+			name:      ufmt.Sprintf("second-to-last of halving year %d", i),
 			timestamp: GetHalvingYearEndTimestamp(i) - 1,
 			want:      false,
 		})
@@ -108,43 +105,49 @@ func TestIsLastSecondOfHalvingYear(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Note: This function may not exist, but assuming similar logic
-			// uassert.Equal(t, tt.want, isLastSecondOfHalvingYear(tt.timestamp))
+			uassert.Equal(t, tt.want, isLastSecondOfHalvingYear(tt.timestamp))
 		})
 	}
 }
 
 func TestHandleLeftEmissionAmount(t *testing.T) {
-	tests := make([]struct {
-		name   string
-		year   int64
-		amount int64
-		want   int64
-	}, 0, 24)
+	type testdata struct {
+		name      string
+		year      int64
+		subAmount int64
+		want      int64
+	}
+
+	tests := make([]testdata, 0, 24)
 
 	for i := int64(1); i <= 12; i++ {
-		tests = append(tests, struct {
-			name   string
-			year   int64
-			amount int64
-			want   int64
-		}{
-			name:   ufmt.Sprintf("handle left emission amount for year %d, non minted", i),
-			year:   i,
-			amount: 0,
-			want:   GetHalvingYearMaxAmount(i),
+		tests = append(tests, testdata{
+			name:      ufmt.Sprintf("handle left emission amount for year %d, non minted", i),
+			year:      i,
+			subAmount: 0,
+			want:      GetHalvingYearMaxAmount(i),
 		})
 
-		tests = append(tests, struct {
-			name   string
-			year   int64
-			amount int64
-			want   int64
-		}{
-			name:   ufmt.Sprintf("handle left emission amount for year %d, minted", i),
-			year:   i,
-			amount: int64(123456),
-			want:   GetHalvingYearMaxAmount(i) - int64(123456),
+		tests = append(tests, testdata{
+			name:      ufmt.Sprintf("handle left emission amount for year %d, minted", i),
+			year:      i,
+			subAmount: int64(123456),
+			want:      GetHalvingYearMaxAmount(i) - int64(123456),
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetEmissionState(t)
+
+			if tt.subAmount > 0 {
+				es := getEmissionState()
+				es.subHalvingYearLeftAmount(tt.year, tt.subAmount)
+			}
+
+			actual := GetHalvingYearLeftAmount(tt.year)
+			uassert.Equal(t, tt.want, actual,
+				ufmt.Sprintf("year %d: expected left amount %d, got %d", tt.year, tt.want, actual))
 		})
 	}
 }
@@ -415,11 +418,104 @@ func TestCalculateAmountToMint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			InitGnsTest(t)
 
-			amount := calculateAmountToMint(tt.inputFromTimestamp, tt.inputToTimestamp)
+			amount, err := calculateAmountToMint(tt.inputFromTimestamp, tt.inputToTimestamp)
+			uassert.NoError(t, err)
 
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
+}
+
+func TestCalculateAmountToMintBoundary(t *testing.T) {
+	t.Run("toTimestamp clamp to emission end", func(t *testing.T) {
+		InitGnsTest(t)
+
+		emissionEnd := GetHalvingYearEndTimestamp(12)
+		year12Start := GetHalvingYearStartTimestamp(12)
+
+		// Calculate amount for year 12 with toTimestamp at exactly emission end
+		amountAtEnd, err := calculateAmountToMint(year12Start, emissionEnd)
+		uassert.NoError(t, err)
+
+		InitGnsTest(t)
+
+		// Calculate amount for year 12 with toTimestamp after emission end (should be clamped)
+		amountAfterEnd, err := calculateAmountToMint(year12Start, emissionEnd+1000)
+		uassert.NoError(t, err)
+
+		// Both should return the same amount (clamped to endTimestamp)
+		uassert.Equal(t, amountAtEnd, amountAfterEnd)
+		uassert.Equal(t, GetHalvingAmountsPerYear(12), amountAtEnd)
+	})
+
+	t.Run("year end last second vs second-to-last", func(t *testing.T) {
+		InitGnsTest(t)
+
+		year1Start := GetHalvingYearStartTimestamp(1)
+		year1End := GetHalvingYearEndTimestamp(1)
+		amountPerSecond := GetAmountPerSecondPerHalvingYear(1)
+
+		// Amount up to second-to-last second of year 1
+		amountSecondToLast, err := calculateAmountToMint(year1Start, year1End-1)
+		uassert.NoError(t, err)
+
+		InitGnsTest(t)
+
+		// Amount up to last second of year 1 (includes leftover)
+		amountLastSecond, err := calculateAmountToMint(year1Start, year1End)
+		uassert.NoError(t, err)
+
+		// Last second should add the leftover to reach exactly the year's max amount
+		uassert.Equal(t, GetHalvingAmountsPerYear(1), amountLastSecond)
+
+		// The difference should be more than just 1 second of emission (due to leftover)
+		difference := amountLastSecond - amountSecondToLast
+		uassert.True(t, difference > amountPerSecond,
+			"last second should include leftover, not just 1 second of emission")
+	})
+
+	t.Run("fromTimestamp at emission start boundary", func(t *testing.T) {
+		InitGnsTest(t)
+
+		emissionStart := GetHalvingYearStartTimestamp(1)
+		amountPerSecond := GetAmountPerSecondPerHalvingYear(1)
+
+		// fromTimestamp exactly at emission start
+		amountAtStart, err := calculateAmountToMint(emissionStart, emissionStart)
+		uassert.NoError(t, err)
+		uassert.Equal(t, amountPerSecond, amountAtStart)
+
+		InitGnsTest(t)
+
+		// fromTimestamp before emission start (should be clamped to start)
+		amountBeforeStart, err := calculateAmountToMint(emissionStart-100, emissionStart)
+		uassert.NoError(t, err)
+		uassert.Equal(t, amountPerSecond, amountBeforeStart)
+	})
+
+	t.Run("year transition boundary", func(t *testing.T) {
+		InitGnsTest(t)
+
+		year1End := GetHalvingYearEndTimestamp(1)
+		year2Start := GetHalvingYearStartTimestamp(2)
+
+		// Verify year2Start = year1End + 1
+		uassert.Equal(t, year1End+1, year2Start)
+
+		// Calculate from last second of year 1 to first second of year 2
+		amount, err := calculateAmountToMint(year1End, year2Start)
+		uassert.NoError(t, err)
+
+		// Should include: year 1's last second (with leftover) + year 2's first second
+		year1AmountPerSecond := GetAmountPerSecondPerHalvingYear(1)
+		year2AmountPerSecond := GetAmountPerSecondPerHalvingYear(2)
+
+		// Year 1's last second includes leftover, Year 2's first second is just amountPerSecond
+		// Total should be > year1AmountPerSecond + year2AmountPerSecond (due to leftover)
+		minExpected := year1AmountPerSecond + year2AmountPerSecond
+		uassert.True(t, amount > minExpected,
+			"amount should include year 1's leftover")
+	})
 }
 
 func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {

@@ -698,7 +698,6 @@ func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	setTestProjects(projects)
 }
 
-// TestLaunchpadProject_isGovernanceToken tests isGovernanceToken private function
 func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -735,7 +734,6 @@ func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 	}
 }
 
-// TestLaunchpadProject_validateRefundProject tests validateRefundProject private function
 func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 	testAddr := testutils.TestAddress("recipient")
 
@@ -751,7 +749,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 		expectedError         string
 	}{
 		{
-			name:                  "valid refund - project ended and has remaining amount",
+			name:                  "valid refund - project ended with remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
@@ -761,7 +759,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			expectedHasError:      false,
 		},
 		{
-			name:                  "error when project has no remaining amount",
+			name:                  "valid refund - project ended without remaining amount",
 			tierStartTime:         1000,
 			tierEndTime:           2000,
 			totalDistributeAmount: 100_000_000,
@@ -769,7 +767,18 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			recipient:             testAddr,
 			currentTime:           2001,
 			expectedHasError:      true,
-			expectedError:         "no remaining amount",
+			expectedError:         "project has no remaining amount",
+		},
+		{
+			name:                  "error when recipient is invalid",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  50_000_000,
+			recipient:             address("invalid"),
+			currentTime:           2001,
+			expectedHasError:      true,
+			expectedError:         "invalid recipient address",
 		},
 		{
 			name:                  "error when project not ended yet",
@@ -781,6 +790,17 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			currentTime:           1500,
 			expectedHasError:      true,
 			expectedError:         "project not ended yet",
+		},
+		{
+			name:                  "collected amount equals distribute amount",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: MAX_INT64,
+			totalCollectedAmount:  MAX_INT64,
+			recipient:             testAddr,
+			currentTime:           2001,
+			expectedHasError:      true,
+			expectedError:         "project has no remaining amount",
 		},
 	}
 
@@ -807,6 +827,50 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("panic on addition overflow - multiple tiers with large remaining amounts", func(t *testing.T) {
+		// Create multiple tiers with large remaining amounts that will overflow when summed
+		tier30 := launchpad.NewProjectTier("test", 30, MAX_INT64/2+1, 1000, 2000)
+		tier30.SetID("test:30")
+		tier30.SetTotalCollectedAmount(0)
+
+		tier90 := launchpad.NewProjectTier("test", 90, MAX_INT64/2+1, 1000, 2000)
+		tier90.SetID("test:90")
+		tier90.SetTotalCollectedAmount(0)
+
+		project := launchpad.NewProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+		project.SetID("test:100")
+
+		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers[projectTier30] = tier30
+		tiers[projectTier90] = tier90
+		project.SetTiers(tiers)
+
+		// getProjectRemainingAmount will panic when summing large remaining amounts
+		uassert.PanicsContains(t, "int64 addition overflow", func() {
+			getProjectRemainingAmount(project)
+		})
+	})
+
+	t.Run("panic on subtraction underflow - extreme values", func(t *testing.T) {
+		// Create a tier where subtraction causes underflow
+		// totalDistributeAmount - totalCollectedAmount underflows
+		tier := launchpad.NewProjectTier("test", 180, MIN_INT64/2, 1000, 2000)
+		tier.SetID("test:180")
+		tier.SetTotalCollectedAmount(MAX_INT64)
+
+		project := launchpad.NewProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+		project.SetID("test:100")
+
+		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers[projectTier180] = tier
+		project.SetTiers(tiers)
+
+		// getProjectRemainingAmount will panic due to subtraction underflow
+		uassert.PanicsContains(t, "int64 subtraction underflow", func() {
+			getProjectRemainingAmount(project)
+		})
+	})
 }
 
 // TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits tests that claimable rewards
@@ -1021,7 +1085,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			// Execute transfer
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1139,7 +1203,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1159,12 +1223,23 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
+		totalCollectedAmount  int64
 		expectedRefundable    int64
+		expectError           bool
+		expectedErrorContains string
 	}{
 		{
 			name:                  "no depositors - full refund",
 			totalDistributeAmount: 1_000_000,
+			totalCollectedAmount:  0,
 			expectedRefundable:    1_000_000,
+		},
+		{
+			name:                  "no depositors - no remaining amount",
+			totalDistributeAmount: 1_000_000,
+			totalCollectedAmount:  1_000_000,
+			expectError:           true,
+			expectedErrorContains: "project has no remaining amount",
 		},
 	}
 
@@ -1185,7 +1260,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			tier.SetID(tierID)
 			tier.SetTotalDepositCount(0)  // No depositors
 			tier.SetTotalWithdrawCount(0) // No withdrawals
-			tier.SetTotalCollectedAmount(0)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
 			project.SetID(projectID)
@@ -1214,7 +1289,13 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 
 			// Execute transfer
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedErrorContains)
+				return
+			}
 
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedRefundable, refundedAmount)
