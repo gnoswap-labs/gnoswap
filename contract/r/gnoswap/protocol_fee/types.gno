@@ -75,8 +75,8 @@ type IProtocolFeeStore interface {
 
 	HasTokenListWithAmountsStoreKey() bool
 	InitializeTokenListWithAmount() error
-	GetTokenListWithAmounts() *avl.Tree
-	SetTokenListWithAmounts(tokenListWithAmounts *avl.Tree) error
+	GetTokenListWithAmounts() *rotree.ReadOnlyTree
+	SetTokenListWithAmounts(tokenListWithAmounts *rotree.ReadOnlyTree) error
 	GetTokenListWithAmountItem(tokenPath string) (int64, bool)
 	SetTokenListWithAmountItem(tokenPath string, amount int64) error
 }

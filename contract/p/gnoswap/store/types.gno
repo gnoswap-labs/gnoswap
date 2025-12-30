@@ -1,6 +1,9 @@
 package store
 
-import "gno.land/p/nt/avl"
+import (
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/avl/rotree"
+)
 
 type Permission uint8
 
@@ -42,6 +45,9 @@ type KVStore interface {
 
 	// GetTree retrieves a tree value by key
 	GetTree(key string) (*avl.Tree, error)
+
+	// GetReadOnlyTree retrieves a read-only tree value by key
+	GetReadOnlyTree(key string) (*rotree.ReadOnlyTree, error)
 
 	// Set stores a value with the given key
 	Set(key string, value any) error

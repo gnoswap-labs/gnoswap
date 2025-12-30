@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/avl/rotree"
 )
 
 // kvStore represents a domain-specific key-value storage
@@ -130,6 +131,15 @@ func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
 	}
 
 	return CastToTree(result)
+}
+
+func (k *kvStore) GetReadOnlyTree(key string) (*rotree.ReadOnlyTree, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return CastToReadOnlyTree(result)
 }
 
 // Set stores a value with the given key
