@@ -1528,22 +1528,20 @@ func TestLteAndGte(t *testing.T) {
 }
 
 func TestClone(t *testing.T) {
-	tests := []struct {
-		x string
-	}{
-		{"0"},
-		{"-0"},
-		{"1"},
-		{"-1"},
-		{"10"},
-		{"-10"},
-		{"57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+	tests := []string{
+		"0",
+		"-0",
+		"1",
+		"-1",
+		"10",
+		"-10",
+		"57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		"-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		"-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 	}
 
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
+	for _, tt := range tests {
+		x, err := FromDecimal(tt)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -1552,7 +1550,7 @@ func TestClone(t *testing.T) {
 		y := x.Clone()
 
 		if x.Cmp(y) != 0 {
-			t.Errorf("Clone(%s) = %v, want %v", tc.x, y, x)
+			t.Errorf("Clone(%s) = %v, want %v", tt, y, x)
 		}
 	}
 }
@@ -1751,21 +1749,68 @@ func TestSetInt64MinValueOverflow(t *testing.T) {
 
 func TestSetUint64(t *testing.T) {
 	tests := []struct {
-		x    uint64
-		want string
+		name         string
+		x            uint64
+		want         string
+		prevValue    string // if non-empty, set this value first to test overwrite
+		testChaining bool   // test method chaining
 	}{
-		{0, "0"},
-		{1, "1"},
+		// Basic values
+		{name: "zero", x: 0, want: "0"},
+		{name: "one", x: 1, want: "1"},
+
+		// Boundary values
+		{name: "max uint64", x: 18446744073709551615, want: "18446744073709551615"},
+		{name: "max int64 as uint64", x: 9223372036854775807, want: "9223372036854775807"},
+		{name: "max int64 + 1", x: 9223372036854775808, want: "9223372036854775808"},
+		{name: "max uint32", x: 4294967295, want: "4294967295"},
+		{name: "max uint32 + 1", x: 4294967296, want: "4294967296"},
+
+		// Power of 2 boundaries
+		{name: "2^32", x: 1 << 32, want: "4294967296"},
+		{name: "2^63", x: 1 << 63, want: "9223372036854775808"},
+
+		// Overwrite previous value (including negative)
+		{name: "overwrite negative value", x: 99999, want: "99999", prevValue: "-12345"},
+		{name: "overwrite large positive", x: 1, want: "1", prevValue: "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+
+		// Method chaining test
+		{name: "chaining", x: 42, want: "42", testChaining: true},
 	}
 
 	for _, tc := range tests {
-		var z Int
-		z.SetUint64(tc.x)
+		t.Run(tc.name, func(t *testing.T) {
+			var z *Int
+			if tc.prevValue != "" {
+				z = MustFromDecimal(tc.prevValue)
+			} else {
+				z = new(Int)
+			}
 
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("SetUint64(%d) = %s, want %s", tc.x, got, tc.want)
-		}
+			result := z.SetUint64(tc.x)
+
+			// Verify value
+			got := z.ToString()
+			if got != tc.want {
+				t.Errorf("SetUint64(%d) = %s, want %s", tc.x, got, tc.want)
+			}
+
+			// SetUint64 should always produce non-negative values
+			if z.IsNeg() {
+				t.Errorf("SetUint64(%d) produced negative value", tc.x)
+			}
+
+			// Method chaining: SetUint64 should return receiver
+			if tc.testChaining && result != z {
+				t.Error("SetUint64 should return the receiver for chaining")
+			}
+
+			// Round-trip verification
+			roundTrip := z.Uint64()
+			if roundTrip != tc.x {
+				t.Errorf("Round trip failed: SetUint64(%d).Uint64() = %d", tc.x, roundTrip)
+			}
+		})
 	}
 }
 
@@ -1812,107 +1857,59 @@ func TestUint64(t *testing.T) {
 
 func TestInt64(t *testing.T) {
 	tests := []struct {
-		x      string
-		want   int64
-		panics bool
+		name          string
+		x             string
+		want          int64
+		panics        bool
+		testRoundTrip bool // test SetInt64 -> Int64 round-trip
 	}{
-		{"0", 0, false},
-		{"1", 1, false},
-		{"-1", -1, false},
-		{"9223372036854775807", 9223372036854775807, false},
-		{"-9223372036854775808", -9223372036854775808, false},
-		{"9223372036854775808", 0, true},  // out of range
-		{"-9223372036854775809", 0, true}, // out of range
-		{"18446744073709551616", 0, true},
-		{"18446744073709551617", 0, true},
-		{"18446744073709551615", 0, true},
-		{"-18446744073709551615", 0, true},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 0, true},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
-		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
-		{"57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
-	}
+		// Basic values
+		{name: "zero", x: "0", want: 0},
+		{name: "one", x: "1", want: 1},
+		{name: "negative one", x: "-1", want: -1},
 
-	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
+		// int8 boundaries
+		{name: "max int8", x: "127", want: 127},
+		{name: "min int8", x: "-128", want: -128},
 
-		if tc.panics {
-			uassert.PanicsContains(t, "int64 overflow", func() {
-				z.Int64()
-			})
-			continue
-		}
+		// int16 boundaries
+		{name: "max int16", x: "32767", want: 32767},
+		{name: "min int16", x: "-32768", want: -32768},
 
-		got := z.Int64()
-		if got != tc.want {
-			t.Errorf("Int64(%s) = %d, want %d", tc.x, got, tc.want)
-		}
-	}
-}
+		// int32 boundaries
+		{name: "max int32", x: "2147483647", want: 2147483647},
+		{name: "min int32", x: "-2147483648", want: -2147483648},
 
-func TestInt64EdgeCases(t *testing.T) {
-	const minInt64 = -9223372036854775808 // -2^63
-	const maxInt64 = 9223372036854775807  // 2^63 - 1
+		// int64 boundaries
+		{name: "max int64", x: "9223372036854775807", want: 9223372036854775807},
+		{name: "min int64", x: "-9223372036854775808", want: -9223372036854775808},
 
-	tests := []struct {
-		name        string
-		setupInt    func() *Int
-		want        int64
-		description string
-		shouldPanic bool
-	}{
-		{
-			name: "MinInt64 from SetInt64",
-			setupInt: func() *Int {
-				z := new(Int)
-				return z.SetInt64(minInt64)
-			},
-			want:        minInt64,
-			description: "SetInt64(MinInt64) should round-trip correctly",
-		},
-		{
-			name: "MaxInt64 from SetInt64",
-			setupInt: func() *Int {
-				z := new(Int)
-				return z.SetInt64(maxInt64)
-			},
-			want:        maxInt64,
-			description: "SetInt64(MaxInt64) should round-trip correctly",
-		},
-		{
-			name: "Zero",
-			setupInt: func() *Int {
-				return Zero()
-			},
-			want:        0,
-			description: "Zero should return 0",
-		},
-		{
-			name: "Large positive int256",
-			setupInt: func() *Int {
-				// Value larger than int64 max
-				return MustFromDecimal("18446744073709551615")
-			},
-			want:        0,
-			description: "Large positive out of int64 range panics",
-			shouldPanic: true,
-		},
-		{
-			name: "Large negative int256",
-			setupInt: func() *Int {
-				return MustFromDecimal("-18446744073709551615")
-			},
-			want:        0,
-			description: "Large negative out of int64 range panics",
-			shouldPanic: true,
-		},
+		// Round-trip tests (SetInt64 -> Int64)
+		{name: "round-trip max int64", x: "9223372036854775807", want: 9223372036854775807, testRoundTrip: true},
+		{name: "round-trip min int64", x: "-9223372036854775808", want: -9223372036854775808, testRoundTrip: true},
+		{name: "round-trip zero", x: "0", want: 0, testRoundTrip: true},
+
+		// Overflow cases (positive)
+		{name: "max int64 + 1", x: "9223372036854775808", panics: true},
+		{name: "max uint64", x: "18446744073709551615", panics: true},
+		{name: "max uint64 + 1", x: "18446744073709551616", panics: true},
+		{name: "max uint64 + 2", x: "18446744073709551617", panics: true},
+		{name: "max int256", x: "57896044618658097711785492504343953926634992332820282019728792003956564819967", panics: true},
+		{name: "max int256 - 1", x: "57896044618658097711785492504343953926634992332820282019728792003956564819966", panics: true},
+
+		// Overflow cases (negative)
+		{name: "min int64 - 1", x: "-9223372036854775809", panics: true},
+		{name: "negative max uint64", x: "-18446744073709551615", panics: true},
+		{name: "min int256", x: "-57896044618658097711785492504343953926634992332820282019728792003956564819968", panics: true},
+		{name: "min int256 + 1", x: "-57896044618658097711785492504343953926634992332820282019728792003956564819967", panics: true},
+		{name: "min int256 + 2", x: "-57896044618658097711785492504343953926634992332820282019728792003956564819966", panics: true},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			z := tc.setupInt()
-			if tc.shouldPanic {
+			z := MustFromDecimal(tc.x)
+
+			if tc.panics {
 				uassert.PanicsContains(t, "int64 overflow", func() {
 					z.Int64()
 				})
@@ -1921,32 +1918,17 @@ func TestInt64EdgeCases(t *testing.T) {
 
 			got := z.Int64()
 			if got != tc.want {
-				t.Errorf("%s: got %d, want %d", tc.description, got, tc.want)
+				t.Errorf("Int64(%s) = %d, want %d", tc.x, got, tc.want)
 			}
-		})
-	}
-}
 
-// TestInt64RoundTrip verifies that SetInt64 and Int64 work correctly together
-func TestInt64RoundTrip(t *testing.T) {
-	// Test all interesting int64 values
-	values := []int64{
-		0, 1, -1,
-		127, -128, // int8 boundaries
-		32767, -32768, // int16 boundaries
-		2147483647, -2147483648, // int32 boundaries
-		9223372036854775807, -9223372036854775808, // int64 boundaries (MaxInt64, MinInt64)
-		1234567890, -1234567890,
-	}
-
-	for _, v := range values {
-		t.Run(ufmt.Sprintf("RoundTrip_%d", v), func(t *testing.T) {
-			z := new(Int)
-			z.SetInt64(v)
-
-			got := z.Int64()
-			if got != v {
-				t.Errorf("Round trip failed: SetInt64(%d).Int64() = %d", v, got)
+			// Round-trip verification: SetInt64 -> Int64
+			if tc.testRoundTrip {
+				z2 := new(Int)
+				z2.SetInt64(tc.want)
+				got2 := z2.Int64()
+				if got2 != tc.want {
+					t.Errorf("Round-trip failed: SetInt64(%d).Int64() = %d", tc.want, got2)
+				}
 			}
 		})
 	}
@@ -2017,24 +1999,80 @@ func TestNegOverflow(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	tests := []struct {
-		x    string
-		want string
+		name           string
+		src            string
+		dst            string // initial value of destination (empty means new(Int))
+		want           string
+		selfAssignment bool // test z.Set(z)
+		testChaining   bool
+		testIndepence  bool // verify src and dst are independent after Set
 	}{
-		{"0", "0"},
-		{"1", "1"},
-		{"-1", "-1"},
-		{"9223372036854775807", "9223372036854775807"},
-		{"-18446744073709551615", "-18446744073709551615"},
+		// Basic values
+		{name: "zero to new", src: "0", want: "0"},
+		{name: "one to new", src: "1", want: "1"},
+		{name: "negative one to new", src: "-1", want: "-1"},
+
+		// Boundary values
+		{name: "max int256", src: "57896044618658097711785492504343953926634992332820282019728792003956564819967", want: "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{name: "min int256", src: "-57896044618658097711785492504343953926634992332820282019728792003956564819968", want: "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+		{name: "max int64", src: "9223372036854775807", want: "9223372036854775807"},
+		{name: "min int64", src: "-9223372036854775808", want: "-9223372036854775808"},
+
+		// Overwrite existing value
+		{name: "positive to negative", src: "12345", dst: "-99999", want: "12345"},
+		{name: "negative to positive", src: "-12345", dst: "99999", want: "-12345"},
+		{name: "large to small", src: "1", dst: "57896044618658097711785492504343953926634992332820282019728792003956564819967", want: "1"},
+		{name: "small to large", src: "57896044618658097711785492504343953926634992332820282019728792003956564819967", dst: "1", want: "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+
+		// Self-assignment
+		{name: "self assignment zero", src: "0", selfAssignment: true, want: "0"},
+		{name: "self assignment positive", src: "12345", selfAssignment: true, want: "12345"},
+		{name: "self assignment negative", src: "-12345", selfAssignment: true, want: "-12345"},
+		{name: "self assignment max", src: "57896044618658097711785492504343953926634992332820282019728792003956564819967", selfAssignment: true, want: "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{name: "self assignment min", src: "-57896044618658097711785492504343953926634992332820282019728792003956564819968", selfAssignment: true, want: "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+
+		// Method chaining
+		{name: "chaining", src: "42", testChaining: true, want: "42"},
+
+		// Independence test
+		{name: "independence after set", src: "100", testIndepence: true, want: "100"},
 	}
 
 	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
-		z.Set(z)
+		t.Run(tc.name, func(t *testing.T) {
+			src := MustFromDecimal(tc.src)
 
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("set(%s) = %s, want %s", tc.x, got, tc.want)
-		}
+			var dst *Int
+			if tc.selfAssignment {
+				dst = src
+			} else if tc.dst != "" {
+				dst = MustFromDecimal(tc.dst)
+			} else {
+				dst = new(Int)
+			}
+
+			result := dst.Set(src)
+
+			// Verify value
+			got := dst.ToString()
+			if got != tc.want {
+				t.Errorf("Set(%s) = %s, want %s", tc.src, got, tc.want)
+			}
+
+			// Method chaining: Set should return receiver
+			if tc.testChaining && result != dst {
+				t.Error("Set should return the receiver for chaining")
+			}
+
+			// Independence: modifying src should not affect dst
+			if tc.testIndepence {
+				originalDst := dst.ToString()
+				src.SetInt64(999)
+				if dst.ToString() != originalDst {
+					t.Errorf("dst changed after modifying src: got %s, want %s", dst.ToString(), originalDst)
+				}
+			}
+		})
 	}
 }
 
@@ -2063,6 +2101,8 @@ func TestSetString(t *testing.T) {
 		{"1+23", true, "", false},
 		{"1-23", true, "", false},
 		{"12+3", true, "", false},
+		{"123-", true, "", false},
+		{"123+", true, "", false},
 
 		// scientific notation not allowed
 		{"-1e23", true, "", false},
@@ -2086,7 +2126,6 @@ func TestSetString(t *testing.T) {
 		}
 
 		if err != nil {
-			println("ERROR", err.Error(), tt.input)
 			t.Errorf("SetString(%q) returned unexpected error: %v", tt.input, err)
 			continue
 		}
