@@ -114,17 +114,18 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 		return errors.New("amount must be non-negative")
 	}
 
+	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		// if the address is unseen, initialize a snapshot to avoid nil deref
-		rewardState = staker.NewEmissionRewardState(self.GetAccumulatedRewardX128PerStake().Clone())
+		rewardState = staker.NewEmissionRewardState(accumulatedReward)
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, self.GetAccumulatedRewardX128PerStake(), currentTimestamp)
+	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
 	if err != nil {
 		return err
 	}
@@ -147,17 +148,18 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 		return errors.New("amount must be non-negative")
 	}
 
+	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		// if the address is unseen, initialize a snapshot to avoid nil deref
-		rewardState = staker.NewEmissionRewardState(self.GetAccumulatedRewardX128PerStake().Clone())
+		rewardState = staker.NewEmissionRewardState(accumulatedReward)
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAccumulatedRewardX128PerStake(), currentTimestamp)
+	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
 	if err != nil {
 		return err
 	}

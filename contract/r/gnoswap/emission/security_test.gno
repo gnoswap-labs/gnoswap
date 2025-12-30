@@ -670,10 +670,10 @@ func TestDistributeToTarget_SafeMath(t *testing.T) {
 			gns.Transfer(cross, emissionAddr, 1000000) // 1M GNS for tests
 
 			// Setup distribution percentages
-			distributionBpsPct.Set("1", tt.pct01)
-			distributionBpsPct.Set("2", tt.pct02)
-			distributionBpsPct.Set("3", tt.pct03)
-			distributionBpsPct.Set("4", tt.pct04)
+			distributionBpsPct[1] = tt.pct01
+			distributionBpsPct[2] = tt.pct02
+			distributionBpsPct[3] = tt.pct03
+			distributionBpsPct[4] = tt.pct04
 
 			if tt.expectedShouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
