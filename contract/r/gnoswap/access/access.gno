@@ -93,7 +93,7 @@ func GetAddress(role string) (address, bool) {
 
 // GetRoleAddresses returns a copy of all role addresses.
 func GetRoleAddresses() map[string]address {
-	addresses := make(map[string]address, len(roleAddresses))
+	addresses := make(map[string]address)
 
 	for role, data := range roleAddresses {
 		addresses[role] = data
