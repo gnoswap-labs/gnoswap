@@ -3,8 +3,8 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -558,86 +558,4 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 			tt.setupTest(resolver)
 		})
 	}
-}
-
-// TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake tests the private clone function
-func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "clone empty map",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given - empty map
-			original := make(map[string]*u256.Uint)
-
-			// when
-			cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-			// then
-			uassert.NotNil(t, cloned)
-			uassert.Equal(t, len(cloned), 0)
-		})
-	}
-
-	t.Run("clone map with single token", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.NotNil(t, cloned["token1"])
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-
-		// verify deep copy - modifying original shouldn't affect clone
-		original["token1"] = u256.NewUintFromInt64(2000)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-	})
-
-	t.Run("clone map with multiple tokens", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-		original["token2"] = u256.NewUintFromInt64(2000)
-		original["token3"] = u256.NewUintFromInt64(3000)
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 3)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-		uassert.Equal(t, cloned["token2"].ToString(), "2000")
-		uassert.Equal(t, cloned["token3"].ToString(), "3000")
-
-		// verify deep copy
-		original["token1"] = u256.NewUintFromInt64(9999)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-	})
-
-	t.Run("clone map with large values", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		largeValue := u256.NewUintFromInt64(1000)
-		largeValue = largeValue.Lsh(largeValue, 128) // Shift left by 128 bits
-		original["token1"] = largeValue
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.Equal(t, cloned["token1"].ToString(), largeValue.ToString())
-	})
 }

@@ -318,14 +318,17 @@ func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
 				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
 
 				// Verify withdraws were created correctly
-				delegations := gs.getUserDelegationsWithDelegatee(user, validator)
+				delegationIDs := gs.getUserDelegationIDsWithDelegatee(user, validator)
 				totalWithdraws := 0
 				totalUndelegated := int64(0)
 
-				for _, delegation := range delegations {
-					withdraws := delegation.Withdraws()
-					totalWithdraws += len(withdraws)
-					totalUndelegated += delegation.UnDelegatedAmount()
+				for _, delegationID := range delegationIDs {
+					delegation := gs.getDelegation(delegationID)
+					if delegation != nil {
+						withdraws := delegation.Withdraws()
+						totalWithdraws += len(withdraws)
+						totalUndelegated += delegation.UnDelegatedAmount()
+					}
 				}
 
 				uassert.Equal(t, totalUndelegated, tt.undelegateAmount)
@@ -1032,7 +1035,7 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	mockStore.delegations = avl.NewTree()
 	mockStore.totalDelegationHistory = staker.NewUintTree()
 	mockStore.userDelegationHistory = avl.NewTree()
-	mockStore.userDelegations = make(map[string]map[string][]int64)
+	mockStore.userDelegations = avl.NewTree()
 
 	// Reset managers in store
 	mockStore.delegationManager = staker.NewDelegationManager()
