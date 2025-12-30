@@ -2,7 +2,6 @@ package store
 
 import (
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/rotree"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -70,13 +69,4 @@ func CastToAddress(result any) (address, error) {
 	}
 
 	return v, nil
-}
-
-func CastToReadOnlyTree(result any) (*rotree.ReadOnlyTree, error) {
-	tree, ok := result.(*rotree.ReadOnlyTree)
-	if !ok {
-		return nil, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to *rotree.ReadOnlyTree", result))
-	}
-
-	return tree, nil
 }

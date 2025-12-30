@@ -133,15 +133,6 @@ func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
 	return CastToTree(result)
 }
 
-func (k *kvStore) GetReadOnlyTree(key string) (*rotree.ReadOnlyTree, error) {
-	result, err := k.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
-	return CastToReadOnlyTree(result)
-}
-
 // Set stores a value with the given key
 // Checks write permission before setting the value
 func (k *kvStore) Set(key string, value any) error {

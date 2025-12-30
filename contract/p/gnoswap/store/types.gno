@@ -46,9 +46,6 @@ type KVStore interface {
 	// GetTree retrieves a tree value by key
 	GetTree(key string) (*avl.Tree, error)
 
-	// GetReadOnlyTree retrieves a read-only tree value by key
-	GetReadOnlyTree(key string) (*rotree.ReadOnlyTree, error)
-
 	// Set stores a value with the given key
 	Set(key string, value any) error
 
