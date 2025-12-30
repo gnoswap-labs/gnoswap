@@ -475,7 +475,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
 func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) { // performance optimization
-	collectedAmount := int64(0)
+	totalCollectedAmount := int64(0)
 
 	delegationTree := gs.getUserDelegations(user)
 
@@ -504,19 +504,14 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			}
 
 			resolver := NewDelegationResolver(delegation)
-			collectableAmount := resolver.CollectableAmount(currentTime)
 
-			if collectableAmount == 0 {
-				continue
-			}
-
-			err = resolver.Collect(collectableAmount, currentTime)
+			collectedAmount, err := resolver.processCollection(currentTime)
 			if err != nil {
 				return true
 			}
 
 			// Simple addition since addToCollectedAmount was removed
-			collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
+			totalCollectedAmount = safeAddInt64(totalCollectedAmount, collectedAmount)
 
 			// Save updated delegation state after collection
 			if resolver.IsEmpty() {
@@ -534,9 +529,10 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 	}
 
 	if err != nil {
-		return collectedAmount, makeErrorWithDetails(errInvalidAmount, err.Error())
+		return totalCollectedAmount, makeErrorWithDetails(errInvalidAmount, err.Error())
 	}
-	return collectedAmount, nil
+
+	return totalCollectedAmount, nil
 }
 
 // registerReferrer registers or validates referrer for delegation.

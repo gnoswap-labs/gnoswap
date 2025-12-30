@@ -66,24 +66,11 @@ func (r *DelegationResolver) UnDelegateWithoutLockup(
 	r.delegation.SetCollectedAmount(safeAddInt64(r.delegation.CollectedAmount(), amount))
 }
 
-// Collect processes the collection of available amounts
-func (r *DelegationResolver) Collect(amount, currentTime int64) error {
-	if amount > r.CollectableAmount(currentTime) {
-		return errCollectAmountExceedsCollectable
-	}
-
-	return r.processCollection(amount, currentTime)
-}
-
 // processCollection handles the actual collection logic
-func (r *DelegationResolver) processCollection(amount, currentTime int64) error {
-	remainingToCollect := amount
+func (r *DelegationResolver) processCollection(currentTime int64) (int64, error) {
+	collectedAmount := int64(0)
 
 	for _, withdraw := range r.delegation.Withdraws() {
-		if remainingToCollect <= 0 {
-			break
-		}
-
 		resolver := NewDelegationWithdrawResolver(withdraw)
 
 		if !resolver.IsCollectable(currentTime) {
@@ -95,21 +82,21 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			continue
 		}
 
-		amountToCollect := min(remainingToCollect, collectableAmount)
-
-		if err := resolver.Collect(amountToCollect, currentTime); err != nil {
-			return err
-		}
-
-		updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), amountToCollect)
+		err := resolver.Collect(collectableAmount, currentTime)
 		if err != nil {
-			return err
+			return 0, err
 		}
+
+		updatedAmount, err := addToCollectedAmount(r.delegation.CollectedAmount(), collectableAmount)
+		if err != nil {
+			return 0, err
+		}
+
 		r.delegation.SetCollectedAmount(updatedAmount)
-		remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
+		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 	}
 
-	return nil
+	return collectedAmount, nil
 }
 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
