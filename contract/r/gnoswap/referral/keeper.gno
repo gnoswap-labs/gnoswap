@@ -16,8 +16,8 @@ const (
 // keeper implements ReferralKeeper using AVL tree storage.
 // It includes rate limiting to prevent abuse.
 type keeper struct {
-	store   *avl.Tree
-	lastOps map[string]int64
+	store   *avl.Tree // address(string) -> referral address(string)
+	lastOps *avl.Tree // address(string) -> last operation timestamp(int64)
 }
 
 var _ ReferralKeeper = &keeper{}
@@ -26,7 +26,7 @@ var _ ReferralKeeper = &keeper{}
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   avl.NewTree(),
-		lastOps: make(map[string]int64),
+		lastOps: avl.NewTree(),
 	}
 }
 
@@ -79,7 +79,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 	}
 
 	k.store.Set(addrStr, refAddrStr)
-	k.lastOps[addrStr] = time.Now().Unix()
+	k.lastOps.Set(addrStr, time.Now().Unix())
 
 	chain.Emit(
 		eventType,
@@ -172,12 +172,19 @@ func (k *keeper) isEmpty() bool {
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 
-	if lastOpTime, exists := k.lastOps[addr]; exists {
-		timeSinceLastOp := now - lastOpTime
+	lastOpTimeRaw, exists := k.lastOps.Get(addr)
+	if !exists {
+		return nil
+	}
 
-		if timeSinceLastOp < MinTimeBetweenUpdates {
-			return ErrTooManyRequests
-		}
+	lastOpTime, ok := lastOpTimeRaw.(int64)
+	if !ok {
+		return ErrInvalidTime
+	}
+
+	timeSinceLastOp := now - lastOpTime
+	if timeSinceLastOp < MinTimeBetweenUpdates {
+		return ErrTooManyRequests
 	}
 
 	return nil

@@ -13,6 +13,7 @@ var (
 	ErrCyclicReference = errors.New("cyclic reference is not allowed")
 	ErrTooManyRequests = errors.New("too many requests: operations allowed once per 24 hours for each address")
 	ErrNotFound        = errors.New("referral not found")
+	ErrInvalidTime     = errors.New("invalid time format")
 )
 
 func makeErrorWithDetails(err error, detail string) error {
