@@ -49,7 +49,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 
 	chain.Emit(
 		"CollectDepositGns",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", formatInt(withdrawalAmount),
@@ -104,12 +104,6 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	// Process withdrawal from project tier
 	withdrawToTier(projectTier, deposit)
 	project.SetTier(deposit.Tier(), projectTier)
-
-	// Update rewards with new deposit amount after withdrawal
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
-	if err != nil {
-		return "", 0, err
-	}
 
 	// Finalize withdrawal
 	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)

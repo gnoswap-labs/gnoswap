@@ -8,7 +8,6 @@ type launchpadV1 struct {
 	store launchpad.ILaunchpadStore
 }
 
-
 func NewLaunchpadV1(launchpadStore launchpad.ILaunchpadStore) launchpad.ILaunchpad {
 	return &launchpadV1{
 		store: launchpadStore,
