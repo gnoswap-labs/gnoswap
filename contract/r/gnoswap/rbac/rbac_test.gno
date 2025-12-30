@@ -538,13 +538,14 @@ func TestAddressChangeComplete(t *testing.T) {
 
 func TestRBACToAccessSync(t *testing.T) {
 	tests := []struct {
-		name       string
-		operations []struct {
+		name              string
+		operations        []struct {
 			action   string // "register", "update", "remove"
 			roleName string
 			address  address
 		}
-		verifyRoles map[string]address // Expected final state
+		verifyRoles       map[string]address // Expected final state (roles that SHOULD exist)
+		verifyRolesNotExist []string           // Roles that should NOT exist
 	}{
 		{
 			name: "Register new role updates access package (empty address)",
@@ -585,9 +586,8 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
 				{action: "remove", roleName: "temp_role"},
 			},
-			verifyRoles: map[string]address{
-				// temp_role should not exist
-			},
+			verifyRoles: map[string]address{},
+			verifyRolesNotExist: []string{"temp_role"},
 		},
 		{
 			name: "Remove role updates access package (with initial address)",
@@ -600,9 +600,8 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role_2", address: testutils.TestAddress("updated_addr")},
 				{action: "remove", roleName: "temp_role_2"},
 			},
-			verifyRoles: map[string]address{
-				// temp_role_2 should not exist
-			},
+			verifyRoles: map[string]address{},
+			verifyRolesNotExist: []string{"temp_role_2"},
 		},
 		{
 			name: "Multiple operations sync correctly (empty addresses)",
@@ -620,8 +619,8 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 			verifyRoles: map[string]address{
 				"role_a": testutils.TestAddress("role_a_new"),
-				// role_b should not exist
 			},
+			verifyRolesNotExist: []string{"role_b"},
 		},
 		{
 			name: "Multiple operations sync correctly (with initial addresses)",
@@ -637,8 +636,8 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 			verifyRoles: map[string]address{
 				"role_c": testutils.TestAddress("role_c_new"),
-				// role_d should not exist
 			},
+			verifyRolesNotExist: []string{"role_d"},
 		},
 	}
 
@@ -685,14 +684,11 @@ func TestRBACToAccessSync(t *testing.T) {
 				}
 			}
 
-			// Verify removed roles don't exist
-			for _, op := range tt.operations {
-				if op.action == "remove" {
-					_, exists := allRoles[op.roleName]
-					if exists {
-						t.Errorf("Role %s should not exist after removal", op.roleName)
-						continue
-					}
+			// Verify roles that should NOT exist
+			for _, roleName := range tt.verifyRolesNotExist {
+				_, exists := allRoles[roleName]
+				if exists {
+					t.Errorf("Role %s should not exist, but it does", roleName)
 				}
 			}
 		})
