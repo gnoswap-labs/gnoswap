@@ -44,7 +44,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 
 	chain.Emit(
 		"CollectRewardByDepositId",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"amount", formatInt(rewardAmount),
