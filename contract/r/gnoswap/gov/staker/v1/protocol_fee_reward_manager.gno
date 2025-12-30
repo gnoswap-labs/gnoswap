@@ -82,13 +82,14 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
 
-		// If no new fees for this token, keep existing rate
-		if protocolFeeDelta <= 0 {
+		// If no new fees for this token, keep existing rate and skip calculation
+		if protocolFeeDelta == 0 {
 			if existingAccumulatedFee == nil {
 				accumulatedProtocolFeesX128PerStake.Set(token, u256.NewUint(0))
 			} else {
 				accumulatedProtocolFeesX128PerStake.Set(token, existingAccumulatedFee)
 			}
+			continue
 		}
 
 		// Scale the fee delta by 2^128 for precision
