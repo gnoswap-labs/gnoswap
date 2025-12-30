@@ -506,8 +506,9 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 			resolver := NewDelegationResolver(delegation)
 
-			collectedAmount, err := resolver.processCollection(currentTime)
-			if err != nil {
+			collectedAmount, iErr := resolver.processCollection(currentTime)
+			if iErr != nil {
+				err = iErr
 				return true
 			}
 
