@@ -203,8 +203,9 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	// Update reward debt for all tokens
-	newRewardDebtX128 := cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
-	p.SetRewardDebtX128(newRewardDebtX128)
+	// Optimization: Use pointer reference instead of deep clone
+	// The tree is read-only for reward calculation purposes
+	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
 	for token, rewardAmount := range rewardAmounts {
@@ -278,30 +279,4 @@ func (p *ProtocolFeeRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
 	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	return p.claimRewards(currentTimestamp)
-}
-
-// cloneAccumulatedProtocolFeeX128PerStake creates a deep copy of the accumulated protocol fee tree.
-// This utility function prevents reference sharing between different reward states.
-//
-// Parameters:
-//   - accumulatedProtocolFeeX128PerStake: tree to clone
-//
-// Returns:
-//   - *avl.Tree: deep copy of the input tree
-func cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake *avl.Tree) *avl.Tree {
-	clone := avl.NewTree()
-	if accumulatedProtocolFeeX128PerStake == nil {
-		return clone
-	}
-
-	accumulatedProtocolFeeX128PerStake.Iterate("", "", func(token string, value interface{}) bool {
-		item, ok := value.(*u256.Uint)
-		if !ok {
-			return false
-		}
-		clone.Set(token, item.Clone())
-		return false
-	})
-
-	return clone
 }
