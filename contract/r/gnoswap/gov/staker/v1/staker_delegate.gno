@@ -470,6 +470,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 	delegationTree := gs.getUserDelegations(user)
 
 	var err error
+	var idsToRemove []int64
 
 	// Collect from all available delegations
 	delegationTree.Iterate("", "", func(delegatee string, value any) bool {
@@ -481,9 +482,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		if len(delegationIDs) == 0 {
 			return false
 		}
-		ids := make([]int64, len(delegationIDs))
-		copy(ids, delegationIDs)
-		for _, id := range ids {
+		for _, id := range delegationIDs {
 			delegation, exists := gs.store.GetDelegation(id)
 			if !exists {
 				continue
@@ -506,7 +505,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 			// Save updated delegation state after collection
 			if resolver.IsEmpty() {
-				gs.removeDelegation(delegation.ID())
+				idsToRemove = append(idsToRemove, delegation.ID())
 			} else {
 				gs.setDelegation(delegation.ID(), delegation)
 			}
@@ -515,10 +514,13 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		return false
 	})
 
+	for _, id := range idsToRemove {
+		gs.removeDelegation(id)
+	}
+
 	if err != nil {
 		return collectedAmount, makeErrorWithDetails(errInvalidAmount, err.Error())
 	}
-
 	return collectedAmount, nil
 }
 
