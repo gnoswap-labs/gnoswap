@@ -790,6 +790,26 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		// then - should succeed (no-op)
 		uassert.Nil(t, err)
 	})
+
+	t.Run("Error propagation from internal collect failure", func(t *testing.T) {
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		resolver.UnDelegate(300, 100, 100, 1000)
+		resolver.UnDelegate(200, 150, 150, 1000)
+
+		err := resolver.Collect(600, 500)
+
+		uassert.NotNil(t, err)
+		uassert.Equal(t, err.Error(), "amount to collect is greater than collectable amount")
+	})
 }
 
 // Test boundary conditions for safe arithmetic in delegation operations

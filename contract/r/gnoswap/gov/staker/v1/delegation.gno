@@ -117,7 +117,7 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			amountToCollect := min(remaining, collectableAmount)
 
 			iErr := resolver.Collect(amountToCollect, currentTime)
-			if err != nil {
+			if iErr != nil {
 				err = iErr
 				return true
 			}
