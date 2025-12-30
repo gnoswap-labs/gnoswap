@@ -163,14 +163,6 @@ func (m *MockGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
 	return res[0].(string)
 }
 
-func (m *MockGovStaker) HasLaunchpadProject(addr address) bool {
-	res, ok := m.Response.Get("HasLaunchpadProject")
-	if !ok {
-		return false
-	}
-	return res[0].(bool)
-}
-
 func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
 	m.Response.Get("CleanStakerDelegationSnapshotByAdmin")
 }

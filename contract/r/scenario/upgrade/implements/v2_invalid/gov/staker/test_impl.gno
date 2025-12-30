@@ -158,13 +158,6 @@ func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
 	return t.instance.GetClaimableRewardByRewardID(rewardID)
 }
 
-func (t *TestGovStaker) HasLaunchpadProject(addr address) bool {
-	if !t.isActive("HasLaunchpadProject") {
-		panic("test implementation: HasLaunchpadProject not supported")
-	}
-	return t.instance.HasLaunchpadProject(addr)
-}
-
 // IGovStakerAdmin interface
 func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 	if !t.isActive("CleanStakerDelegationSnapshotByAdmin") {

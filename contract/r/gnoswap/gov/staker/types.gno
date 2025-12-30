@@ -44,9 +44,6 @@ type IGovStakerGetter interface {
 	GetClaimableRewardByAddress(addr address) string
 	GetClaimableRewardByLaunchpad(addr address) string
 	GetClaimableRewardByRewardID(rewardID string) string
-
-	// Launchpad project getters
-	HasLaunchpadProject(addr address) bool
 }
 
 // Admin interface for administrative functions
