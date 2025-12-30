@@ -142,11 +142,10 @@ func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
-// Note: Current implementation returns all user delegations regardless of delegatee (potential bug).
 //
 // Parameters:
 //   - user: user's address
-//   - delegatee: delegatee's address (currently unused)
+//   - delegatee: delegatee's address
 //
 // Returns:
 //   - []int64: list of user's delegation IDs to the delegatee
