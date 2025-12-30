@@ -133,7 +133,7 @@ func NewDelegationWithdraw(
 		unDelegateAmount:  unDelegateAmount,
 		unDelegatedHeight: createdHeight,
 		unDelegatedAt:     createdAt,
-		collectableTime:   safeAddInt64(createdAt, unDelegationLockupPeriod),
+		collectableTime:   createdAt + unDelegationLockupPeriod,
 		collectedAmount:   0,
 		collectedAt:       0,
 		collected:         false,
