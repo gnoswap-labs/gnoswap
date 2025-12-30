@@ -49,3 +49,8 @@ func GetClaimableRewardByLaunchpad(addr address) string {
 func GetClaimableRewardByRewardID(rewardID string) string {
 	return getImplementation().GetClaimableRewardByRewardID(rewardID)
 }
+
+// HasLaunchpadProject checks if the given address owns any launchpad project.
+func HasLaunchpadProject(cur realm, addr address) bool {
+	return getImplementation().HasLaunchpadProject(addr)
+}
