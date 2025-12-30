@@ -215,7 +215,7 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 
 			statusResolver := NewProposalStatusResolver(status)
 			uassert.Equal(t, statusResolver.TotalVoteWeight(), tc.expectedTotal)
-			uassert.Equal(t, statusResolver.DiffVoteWeight(), tc.expectedDiff)
+			uassert.Equal(t, statusResolver.voteStatusResolver.DiffVoteWeight(), tc.expectedDiff)
 		})
 	}
 }
@@ -320,7 +320,9 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
-				return resolver.updateVoteStatus(2000, 60)
+				resolver.voteStatusResolver.SetMaxVotingWeight(2000)
+				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(2000, 60, 100))
+				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
@@ -336,7 +338,9 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 				return NewProposalStatusResolver(status)
 			},
 			action: func(resolver *ProposalStatusResolver) error {
-				return resolver.updateVoteStatus(500, 40)
+				resolver.voteStatusResolver.SetMaxVotingWeight(500)
+				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(500, 40, 100))
+				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)

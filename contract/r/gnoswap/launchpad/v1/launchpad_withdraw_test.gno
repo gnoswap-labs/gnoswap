@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/launchpad"
+	"gno.land/r/gnoswap/launchpad"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -94,45 +94,164 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	}
 }
 
+// TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
+// including both success and error cases across different tier durations.
 func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
-	const currentDepositID = "1"
-	userAddr := testutils.TestAddress("user2")
+	userAddr := testutils.TestAddress("user_withdraw")
+
+	// Skip heights constants for different tier durations
+	// Formula: seconds_in_period / 5 (block time) + buffer
+	const (
+		skipHeightTier30  = 60*60*24*30/5 + 2  // 30 days
+		skipHeightTier90  = 60*60*24*90/5 + 2  // 90 days
+		skipHeightTier180 = 60*60*24*180/5 + 2 // 180 days
+		depositAmount     = int64(1000000000)
+	)
 
 	tests := []struct {
-		name                 string
-		depositID            string
-		expectedHasError     bool
-		expectedErrorMessage string
-		expectedAmount       int64
-		skipHeight           int64
+		name           string
+		tierDuration   int64
+		skipHeights    int64
+		useNilDeposit  bool
+		currentTime    func() int64
+		withdrawTwice  bool
+		expectedErr    bool
+		expectedErrMsg string
+		expectedAmount int64
 	}{
+		// Success cases for different tiers
 		{
-			name:             "withdraw deposit successfully",
-			depositID:        currentDepositID,
-			expectedHasError: false,
-			expectedAmount:   1000000000,
-			skipHeight:       60*60*24*180/5 + 2,
+			name:           "success - withdraw tier 30 deposit after tier ends",
+			tierDuration:   30,
+			skipHeights:    skipHeightTier30,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    false,
+			expectedAmount: depositAmount,
+		},
+		{
+			name:           "success - withdraw tier 90 deposit after tier ends",
+			tierDuration:   90,
+			skipHeights:    skipHeightTier90,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    false,
+			expectedAmount: depositAmount,
+		},
+		{
+			name:           "success - withdraw tier 180 deposit after tier ends",
+			tierDuration:   180,
+			skipHeights:    skipHeightTier180,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    false,
+			expectedAmount: depositAmount,
+		},
+		// Error cases
+		{
+			name:           "fail - tier 30 deposit not yet ended",
+			tierDuration:   30,
+			skipHeights:    0,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "project lock period is not over yet",
+		},
+		{
+			name:           "fail - tier 90 deposit not yet ended (only 30 days passed)",
+			tierDuration:   90,
+			skipHeights:    skipHeightTier30, // Only skip 30 days, not enough for 90-day tier
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "project lock period is not over yet",
+		},
+		{
+			name:           "fail - deposit already withdrawn",
+			tierDuration:   30,
+			skipHeights:    skipHeightTier30,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  true,
+			expectedErr:    true,
+			expectedErrMsg: "already collected",
+		},
+		{
+			name:           "fail - invalid currentTime zero",
+			tierDuration:   30,
+			skipHeights:    skipHeightTier30,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return 0 },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "currentTime must be positive",
+		},
+		{
+			name:           "fail - invalid currentTime negative",
+			tierDuration:   30,
+			skipHeights:    skipHeightTier30,
+			useNilDeposit:  false,
+			currentTime:    func() int64 { return -100 },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "currentTime must be positive",
+		},
+		{
+			name:           "fail - nil deposit",
+			tierDuration:   30,
+			skipHeights:    0,
+			useNilDeposit:  true,
+			currentTime:    func() int64 { return time.Now().Unix() },
+			withdrawTwice:  false,
+			expectedErr:    true,
+			expectedErrMsg: "deposit is nil",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadWithdrawTest(t, userAddr)
+			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
 			lp := getTestImplementation()
-			testing.SkipHeights(tt.skipHeight)
-			deposit, _ := getDeposit(tt.depositID)
 
-			currentTime := time.Now().Unix()
-			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
-
-			if tt.expectedHasError {
-				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
-				return
+			if tt.skipHeights > 0 {
+				testing.SkipHeights(tt.skipHeights)
 			}
 
-			testing.SkipHeights(-tt.skipHeight)
-			uassert.NoError(t, err)
-			uassert.Equal(t, tt.expectedAmount, amount)
+			var deposit *launchpad.Deposit
+			var err error
+
+			if !tt.useNilDeposit {
+				deposit, err = getDeposit("1")
+				uassert.NoError(t, err)
+			}
+
+			currentTime := tt.currentTime()
+
+			if tt.withdrawTwice {
+				// First withdrawal should succeed
+				_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+				uassert.NoError(t, err)
+
+				// Refresh deposit to get updated state
+				deposit, err = getDeposit("1")
+				uassert.NoError(t, err)
+			}
+
+			// Execute withdrawal (or second withdrawal for withdrawTwice case)
+			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+
+			if tt.expectedErr {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedErrMsg)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expectedAmount, amount)
+			}
 		})
 	}
 }
@@ -453,7 +572,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			for i := 0; i < tt.numDeposits; i++ {
 				userAddr := testutils.TestAddress("multiuser" + formatInt(int64(i)))
 				testing.SetOriginCaller(userAddr)
-				deposit, _, _, _, _ := lp.depositGns(project.ID(), 30, depositAmount, userAddr)
+				deposit, _, _, _, _ := lp.depositGns(project, 30, depositAmount, userAddr)
 				depositIDs[i] = deposit.ID()
 			}
 
@@ -502,7 +621,322 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 	}
 }
 
+func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	userAddr := testutils.TestAddress("edge_user")
+	otherAddr := testutils.TestAddress("edge_other")
+
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	t.Run("fail - empty deposit ID", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		testing.SkipHeights(60*60*24*180/5 + 2)
+
+		uassert.AbortsContains(t, "not exist deposit", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("")
+			}(cross)
+		})
+	})
+
+	t.Run("fail - double collection attempt", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 2000000000) // Extra for second attempt
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		testing.SkipHeights(60*60*24*180/5 + 2)
+
+		// First collection should succeed
+		var firstAmount int64
+		var firstErr error
+		testing.SetOriginCaller(userAddr)
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			firstAmount, firstErr = lp.CollectDepositGns("1")
+		}(cross)
+		uassert.NoError(t, firstErr)
+		uassert.Equal(t, int64(1000000000), firstAmount)
+
+		// Second collection should fail
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		uassert.AbortsContains(t, "already collected", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("1")
+			}(cross)
+		})
+	})
+
+	t.Run("fail - collection before tier ends", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		// Don't skip heights - tier hasn't ended yet
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+
+		uassert.AbortsContains(t, "project lock period is not over yet", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("1")
+			}(cross)
+		})
+	})
+
+	t.Run("fail - collection with numeric but invalid deposit ID", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		testing.SkipHeights(60*60*24*180/5 + 2)
+
+		uassert.AbortsContains(t, "not exist deposit", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("99999")
+			}(cross)
+		})
+	})
+
+	t.Run("fail - collection with special characters in deposit ID", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+		testing.SkipHeights(60*60*24*180/5 + 2)
+
+		uassert.AbortsContains(t, "not exist deposit", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("1; DROP TABLE deposits;--")
+			}(cross)
+		})
+	})
+
+	t.Run("success - collection at exact end time boundary", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		// Get the exact tier end time
+		deposit, _ := getDeposit("1")
+		project, _ := lp.getProject(deposit.ProjectID())
+		projectTier, _ := getProjectTier(project, deposit.Tier())
+
+		// Skip to exactly one block after end time
+		blocksToEnd := (projectTier.EndTime() - time.Now().Unix()) / 5
+		if blocksToEnd > 0 {
+			testing.SkipHeights(blocksToEnd + 1)
+		}
+
+		testing.SetRealm(testing.NewUserRealm(userAddr))
+
+		var amount int64
+		var err error
+		testing.SetOriginCaller(userAddr)
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			amount, err = lp.CollectDepositGns("1")
+		}(cross)
+
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(1000000000), amount)
+	})
+
+	t.Run("fail - collection by different user than depositor", func(t *testing.T) {
+		initLaunchpadWithdrawTest(t, userAddr)
+		lp := getTestImplementation()
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		gns.Transfer(cross, launchpadAddr, 1000000000)
+
+		testing.SetRealm(testing.NewUserRealm(otherAddr))
+		testing.SkipHeights(60*60*24*180/5 + 2)
+
+		uassert.AbortsContains(t, "invalid owner", func() {
+			func(cur realm) {
+				lp.CollectDepositGns("1")
+			}(cross)
+		})
+	})
+}
+
+func TestLaunchpadWithdraw_CollectDepositGnsMultipleTiers(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	tierTests := []struct {
+		name         string
+		tierDuration int64
+		skipHeight   int64
+	}{
+		{
+			name:         "tier 30 collection",
+			tierDuration: 30,
+			skipHeight:   60*60*24*30/5 + 2,
+		},
+		{
+			name:         "tier 90 collection",
+			tierDuration: 90,
+			skipHeight:   60*60*24*90/5 + 2,
+		},
+		{
+			name:         "tier 180 collection",
+			tierDuration: 180,
+			skipHeight:   60*60*24*180/5 + 2,
+		},
+	}
+
+	for _, tt := range tierTests {
+		t.Run(tt.name, func(t *testing.T) {
+			userAddr := testutils.TestAddress("tier_user_" + formatInt(tt.tierDuration))
+			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
+			lp := getTestImplementation()
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			gns.Transfer(cross, launchpadAddr, 1000000000)
+
+			testing.SetRealm(testing.NewUserRealm(userAddr))
+			testing.SkipHeights(tt.skipHeight)
+
+			var amount int64
+			var err error
+			testing.SetOriginCaller(userAddr)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+				amount, err = lp.CollectDepositGns("1")
+			}(cross)
+
+			uassert.NoError(t, err)
+			uassert.Equal(t, int64(1000000000), amount)
+		})
+	}
+}
+
+func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
+	partialTests := []struct {
+		name         string
+		tierDuration int64
+		skipHeight   int64
+		shouldFail   bool
+	}{
+		{
+			name:         "tier 90 - only 30 days elapsed",
+			tierDuration: 90,
+			skipHeight:   60*60*24*30/5 + 2,
+			shouldFail:   true,
+		},
+		{
+			name:         "tier 180 - only 90 days elapsed",
+			tierDuration: 180,
+			skipHeight:   60*60*24*90/5 + 2,
+			shouldFail:   true,
+		},
+		{
+			name:         "tier 180 - only 30 days elapsed",
+			tierDuration: 180,
+			skipHeight:   60*60*24*30/5 + 2,
+			shouldFail:   true,
+		},
+		{
+			name:         "tier 30 - zero time elapsed",
+			tierDuration: 30,
+			skipHeight:   0,
+			shouldFail:   true,
+		},
+	}
+
+	for _, tt := range partialTests {
+		t.Run(tt.name, func(t *testing.T) {
+			userAddr := testutils.TestAddress("partial_user")
+			initLaunchpadWithdrawTestWithTier(t, userAddr, tt.tierDuration)
+			lp := getTestImplementation()
+
+			launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+			adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			gns.Transfer(cross, launchpadAddr, 1000000000)
+
+			if tt.skipHeight > 0 {
+				testing.SkipHeights(tt.skipHeight)
+			}
+
+			testing.SetRealm(testing.NewUserRealm(userAddr))
+
+			if tt.shouldFail {
+				uassert.AbortsContains(t, "project lock period is not over yet", func() {
+					func(cur realm) {
+						lp.CollectDepositGns("1")
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	userAddr := testutils.TestAddress("state_user")
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t, userAddr)
+	lp := getTestImplementation()
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
+
+	// Get deposit state before collection
+	depositBefore, err := getDeposit("1")
+	uassert.NoError(t, err)
+	uassert.False(t, depositBefore.IsWithdrawn(), "deposit should not be withdrawn before collection")
+
+	// Skip to end time and collect
+	testing.SkipHeights(60*60*24*180/5 + 2)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	testing.SetOriginCaller(userAddr)
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		lp.CollectDepositGns("1")
+	}(cross)
+
+	// Get deposit state after collection
+	depositAfter, err := getDeposit("1")
+	uassert.NoError(t, err)
+	uassert.True(t, depositAfter.IsWithdrawn(), "deposit should be withdrawn after collection")
+}
+
 func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
+	t.Helper()
+	initLaunchpadWithdrawTestWithTier(t, depositor, 30)
+}
+
+// initLaunchpadWithdrawTestWithTier initializes the test environment with a specific tier duration.
+// tierDuration should be 30, 90, or 180.
+func initLaunchpadWithdrawTestWithTier(t *testing.T, depositor address, tierDuration int64) {
+	t.Helper()
 	testing.SetHeight(123)
 
 	// Reset test store completely
@@ -515,15 +949,15 @@ func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
-	// Setup test project
+	// Setup test project with equal distribution across all tiers
 	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Test Project",
 			tokenPath:     "gno.land/r/onbloc/obl",
 			depositAmount: 1000000,
-			tier30Ratio:   30,
-			tier90Ratio:   30,
-			tier180Ratio:  40,
+			tier30Ratio:   34,
+			tier90Ratio:   33,
+			tier180Ratio:  33,
 			recipient:     testutils.TestAddress("project"),
 			startTime:     currentTime + 10,
 			currentTime:   currentTime,
@@ -539,7 +973,7 @@ func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	depositAmount := int64(1000000000)
 
 	testing.SetOriginCaller(depositor)
-	lp.depositGns(project.ID(), 30, depositAmount, depositor)
+	lp.depositGns(project, tierDuration, depositAmount, depositor)
 
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm := testing.NewUserRealm(govStakerAddr)
@@ -548,6 +982,6 @@ func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	xgns.Mint(cross, launchpadAddr, depositAmount)
 
-	projectTier, _ := getProjectTier(project, 30)
+	projectTier, _ := getProjectTier(project, tierDuration)
 	testing.SetHeight(projectTier.EndTime() + 1)
 }

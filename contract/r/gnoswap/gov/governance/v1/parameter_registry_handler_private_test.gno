@@ -6,23 +6,12 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestParameterRegistryHandler_newStateManager tests the private newStateManager function
-func TestParameterRegistryHandler_newStateManager(t *testing.T) {
-	// when
-	sm := newStateManager()
-
-	// then
-	uassert.NotNil(t, sm)
-	uassert.NotNil(t, sm.states)
-	uassert.Equal(t, len(sm.states), 0)
-}
-
 // TestParameterRegistryHandler_registerHandlers tests the private registerHandlers function
 func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
 	tests := []struct {
-		name             string
-		setupHandlers    func() ([]*ParameterHandlerOptions, []string)
-		expectedCount    int
+		name          string
+		setupHandlers func() ([]*ParameterHandlerOptions, []string)
+		expectedCount int
 	}{
 		{
 			name: "register multiple handlers",

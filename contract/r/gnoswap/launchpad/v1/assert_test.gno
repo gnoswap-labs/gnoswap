@@ -6,6 +6,8 @@ import (
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/launchpad"
 )
 
 func TestAssert_assertIsValidAmount(t *testing.T) {
@@ -183,7 +185,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		{
 			name: "valid - caller owns at least one project",
 			setupProjects: func(lp *launchpadV1) {
-				project := newProject(
+				project := launchpad.NewProject(
 					"Test Project",
 					"gno.land/r/demo/token",
 					1000000,
@@ -200,7 +202,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		{
 			name: "panic when caller owns no project",
 			setupProjects: func(lp *launchpadV1) {
-				project := newProject(
+				project := launchpad.NewProject(
 					"Test Project",
 					"gno.land/r/demo/token",
 					1000000,
@@ -230,7 +232,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 				projects := lp.store.GetProjects()
 
 				// Add project owned by someone else
-				project1 := newProject(
+				project1 := launchpad.NewProject(
 					"Other Project",
 					"gno.land/r/demo/token1",
 					1000000,
@@ -241,7 +243,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 				projects.Set(project1.ID(), project1)
 
 				// Add project owned by caller
-				project2 := newProject(
+				project2 := launchpad.NewProject(
 					"My Project",
 					"gno.land/r/demo/token2",
 					1000000,
@@ -261,7 +263,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 
 				// Add multiple projects owned by others
 				for i := 0; i < 3; i++ {
-					project := newProject(
+					project := launchpad.NewProject(
 						"Other Project",
 						"gno.land/r/demo/token",
 						1000000,
