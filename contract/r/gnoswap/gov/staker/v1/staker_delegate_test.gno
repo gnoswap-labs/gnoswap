@@ -319,11 +319,16 @@ func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
 				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
 
 				// Verify withdraws were created correctly
-				delegations := gs.getUserDelegationsWithDelegatee(user, validator)
+				delegationIDs := gs.getUserDelegationIDsWithDelegatee(user, validator)
 				totalWithdraws := 0
 				totalUndelegated := int64(0)
 
-				for _, delegation := range delegations {
+				for _, id := range delegationIDs {
+					delegation, exists := gs.store.GetDelegation(id)
+					if !exists {
+						continue
+					}
+
 					withdraws := delegation.Withdraws()
 					totalWithdraws += len(withdraws)
 					totalUndelegated += delegation.UnDelegatedAmount()
@@ -1140,11 +1145,11 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	tests := []struct {
 		name             string
-		delegationCounts []int          // number of delegations to create
-		amounts          [][]int64      // amounts for each delegation's withdrawals
-		lockupPeriods    []int64        // lockup period for each delegation
-		waitTime         int64          // time to wait before collecting
-		expectedTotal    int64          // expected total collected amount
+		delegationCounts []int     // number of delegations to create
+		amounts          [][]int64 // amounts for each delegation's withdrawals
+		lockupPeriods    []int64   // lockup period for each delegation
+		waitTime         int64     // time to wait before collecting
+		expectedTotal    int64     // expected total collected amount
 		description      string
 	}{
 		{
@@ -1255,11 +1260,12 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 
 			// Then: Verify collected amount
 			uassert.NoError(t, err)
+			println("collected", collected)
+			println("expectedTotal", tt.expectedTotal)
 			uassert.Equal(t, collected, tt.expectedTotal)
 		})
 	}
 }
-
 
 // TestStakerDelegate_collectDelegations_NoCollectableAmount tests when there's nothing to collect
 func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
@@ -1340,25 +1346,25 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
 // Test boundary conditions where safe arithmetic is used in delegation store operations
 func TestStakerDelegate_BoundaryConditions_TotalDelegatedAmount(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialAmount  int64
-		addAmount      int64
-		expectPanic    bool
-		description    string
+		name          string
+		initialAmount int64
+		addAmount     int64
+		expectPanic   bool
+		description   string
 	}{
 		{
-			name:           "add to total delegated near max int64",
-			initialAmount:  math.MaxInt64 - 10000000,
-			addAmount:      5000000,
-			expectPanic:    false,
-			description:    "Should handle adding when total is near max",
+			name:          "add to total delegated near max int64",
+			initialAmount: math.MaxInt64 - 10000000,
+			addAmount:     5000000,
+			expectPanic:   false,
+			description:   "Should handle adding when total is near max",
 		},
 		{
-			name:           "add causing overflow in total delegated",
-			initialAmount:  math.MaxInt64 - 1000,
-			addAmount:      2000,
-			expectPanic:    true,
-			description:    "Should panic when addition would overflow",
+			name:          "add causing overflow in total delegated",
+			initialAmount: math.MaxInt64 - 1000,
+			addAmount:     2000,
+			expectPanic:   true,
+			description:   "Should panic when addition would overflow",
 		},
 	}
 
@@ -1466,11 +1472,11 @@ func TestStakerDelegate_BoundaryConditions_Undelegate(t *testing.T) {
 // Test boundary conditions in collect operations
 func TestStakerDelegate_BoundaryConditions_CollectDelegations(t *testing.T) {
 	tests := []struct {
-		name             string
-		initialLocked    int64
-		collectAmount    int64
-		expectUnderflow  bool
-		description      string
+		name            string
+		initialLocked   int64
+		collectAmount   int64
+		expectUnderflow bool
+		description     string
 	}{
 		{
 			name:            "collect with locked amount at boundary",

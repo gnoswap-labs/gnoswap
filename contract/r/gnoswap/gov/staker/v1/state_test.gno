@@ -169,12 +169,27 @@ func TestGetUserDelegations(t *testing.T) {
 			userDelegations := gs.getUserDelegations(user)
 
 			// Then: Should return expected count
-			uassert.Equal(t, len(userDelegations), tt.expectedCount)
+			uassert.Equal(t, userDelegations.Size(), tt.expectedCount)
 
 			// Verify all delegations belong to the user
-			for _, delegation := range userDelegations {
-				uassert.Equal(t, delegation.DelegateFrom(), user)
-			}
+			userDelegations.Iterate("", "", func(delegatee string, value interface{}) bool {
+				delegationIDs, ok := value.([]int64)
+				if !ok {
+					return false
+				}
+
+				for _, id := range delegationIDs {
+					delegation, exists := gs.store.GetDelegation(id)
+					if !exists {
+						continue
+					}
+
+					uassert.Equal(t, delegation.DelegateFrom(), user)
+					return false
+				}
+
+				return false
+			})
 		})
 	}
 }
@@ -771,13 +786,18 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 			user, delegatee, expectedDelegationIDs := tt.setupState(gs)
 
 			// When: Get user delegations with delegatee
-			delegations := gs.getUserDelegationsWithDelegatee(user, delegatee)
+			delegationIDs := gs.getUserDelegationIDsWithDelegatee(user, delegatee)
 
 			// Then: Should return expected count
-			uassert.Equal(t, len(delegations), tt.expectedCount)
+			uassert.Equal(t, len(delegationIDs), tt.expectedCount)
 
 			// Then: All delegations should belong to the user and delegatee
-			for _, delegation := range delegations {
+			for _, id := range delegationIDs {
+				delegation, exists := gs.store.GetDelegation(id)
+				if !exists {
+					continue
+				}
+
 				uassert.Equal(t, delegation.DelegateFrom(), user)
 				uassert.Equal(t, delegation.DelegateTo(), delegatee)
 			}
@@ -785,7 +805,12 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 			// Then: Verify all expected delegation IDs are present
 			if tt.expectedCount > 0 {
 				foundIDs := make(map[int64]bool)
-				for _, delegation := range delegations {
+				for _, id := range delegationIDs {
+					delegation, exists := gs.store.GetDelegation(id)
+					if !exists {
+						continue
+					}
+
 					foundIDs[delegation.ID()] = true
 				}
 
@@ -1008,19 +1033,49 @@ func TestGetUserDelegationsComprehensive(t *testing.T) {
 			delegations := gs.getUserDelegations(user)
 
 			// Then: Should return expected total count
-			uassert.Equal(t, len(delegations), tt.expectedTotal)
+			uassert.Equal(t, delegations.Size(), tt.expectedTotal)
 
 			// Then: All delegations should belong to the user
-			for _, delegation := range delegations {
-				uassert.Equal(t, delegation.DelegateFrom(), user)
-			}
+			delegations.Iterate("", "", func(delegatee string, value interface{}) bool {
+				delegationIDs, ok := value.([]int64)
+				if !ok {
+					return false
+				}
+
+				for _, id := range delegationIDs {
+					delegation, exists := gs.store.GetDelegation(id)
+					if !exists {
+						continue
+					}
+
+					uassert.Equal(t, delegation.DelegateFrom(), user)
+					return false
+				}
+
+				return false
+			})
 
 			// Then: Verify delegations are grouped correctly by delegatee
 			if tt.expectedTotal > 0 {
 				delegateeCount := make(map[address]int)
-				for _, delegation := range delegations {
-					delegateeCount[delegation.DelegateTo()]++
-				}
+				delegations.Iterate("", "", func(delegatee string, value interface{}) bool {
+					delegationIDs, ok := value.([]int64)
+					if !ok {
+						return false
+					}
+
+					for _, id := range delegationIDs {
+						delegation, exists := gs.store.GetDelegation(id)
+						if !exists {
+							continue
+						}
+
+						delegateeCount[delegation.DelegateTo()]++
+						return false
+					}
+
+					return false
+				})
 
 				// Verify counts match expected
 				for delegatee, expectedCount := range delegateeCounts {
