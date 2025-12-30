@@ -11,7 +11,7 @@ const (
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
-var ErrBig256Range = errors.New("hex number > 256 bits")
+var ErrBig256Range = errors.New("decimal number > 256 bits")
 
 var (
 	zero  = Uint{0, 0, 0, 0}

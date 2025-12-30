@@ -63,7 +63,7 @@ func TestFromDecimal(t *testing.T) {
 			name:        "max_uint256_plus_one",
 			input:       "115792089237316195423570985008687907853269984665640564039457584007913129639936",
 			shouldPanic: true,
-			panicMsg:    "hex number > 256 bits",
+			panicMsg:    "decimal number > 256 bits",
 		},
 		{
 			name:        "multiple_plus_signs",
@@ -116,6 +116,43 @@ func TestFromDecimal(t *testing.T) {
 			} else {
 				result := MustFromDecimal(tt.input)
 				uassert.Equal(t, tt.expected, result.ToString())
+			}
+		})
+	}
+}
+
+func TestFromDecimalErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr error
+	}{
+		{
+			name:    "overflow",
+			input:   "115792089237316195423570985008687907853269984665640564039457584007913129639936",
+			wantErr: ErrBig256Range,
+		},
+		{
+			name:  "invalid_characters",
+			input: "123abc456",
+		},
+		{
+			name:  "empty_string",
+			input: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := FromDecimal(tt.input)
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("FromDecimal(%q) error = %v, want %v", tt.input, err, tt.wantErr)
+				}
+				return
+			}
+			if err == nil {
+				t.Errorf("FromDecimal(%q) expected error, got nil", tt.input)
 			}
 		})
 	}
