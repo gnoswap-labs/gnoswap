@@ -111,7 +111,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		// Add the new fee per stake to the accumulated amount
 		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
-		accumulatedProtocolFeesX128PerStake.Set(token, accumulatedProtocolFeeX128PerStake.Clone())
+		accumulatedProtocolFeesX128PerStake.Set(token, accumulatedProtocolFeeX128PerStake)
 
 		changedProtocolFeeAmounts.Set(token, protocolFeeAmount)
 	}
