@@ -69,14 +69,13 @@ func (r *DelegationResolver) UnDelegateWithoutLockup(
 // processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
-	unCollectedWithdraws := make([]*staker.DelegationWithdraw, 0)
+	withdraws := r.delegation.Withdraws()
 
-	for _, withdraw := range r.delegation.Withdraws() {
+	for _, withdraw := range withdraws {
 		resolver := NewDelegationWithdrawResolver(withdraw)
 
 		collectableAmount := resolver.CollectableAmount(currentTime)
 		if collectableAmount <= 0 {
-			unCollectedWithdraws = append(unCollectedWithdraws, withdraw)
 			continue
 		}
 
@@ -94,7 +93,21 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 	}
 
-	r.delegation.SetWithdraws(unCollectedWithdraws)
+	// Skip filtering if nothing was collected
+	if collectedAmount == 0 {
+		return collectedAmount, nil
+	}
+
+	currentIndex := 0
+
+	for _, withdraw := range withdraws {
+		if !withdraw.IsCollected() {
+			withdraws[currentIndex] = withdraw
+			currentIndex++
+		}
+	}
+
+	r.delegation.SetWithdraws(withdraws[:currentIndex])
 
 	return collectedAmount, nil
 }
