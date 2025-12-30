@@ -30,7 +30,8 @@ import (
 func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if period < 0 {
@@ -39,7 +40,6 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 
 	gs.setUnDelegationLockupPeriod(period)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetUnDelegationLockupPeriod",
 		"prevAddr", previousRealm.Address().String(),

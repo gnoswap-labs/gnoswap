@@ -120,7 +120,8 @@ func (gs *govStakerV1) Undelegate(
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
@@ -141,7 +142,6 @@ func (gs *govStakerV1) Undelegate(
 		panic(err)
 	}
 
-	prevRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Undelegate",
 		"prevAddr", prevRealm.Address().String(),
@@ -186,7 +186,8 @@ func (gs *govStakerV1) Redelegate(
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
@@ -217,7 +218,6 @@ func (gs *govStakerV1) Redelegate(
 		currentTimestamp,
 	)
 
-	prevRealm := runtime.PreviousRealm()
 	resolver := NewDelegationResolver(delegation)
 	chain.Emit(
 		"Redelegate",
@@ -307,7 +307,7 @@ func (gs *govStakerV1) delegate(
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(to, delegatedAmount, currentTimestamp)
 	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
-	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
+	gs.addStakeProtocolFeeReward(from.String(), amount, currentTimestamp)
 
 	// Update total amounts directly in store
 	currentDelegated := gs.store.GetTotalDelegatedAmount()

@@ -588,5 +588,5 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 // Returns:
 //   - string: formatted launchpad reward ID
 func (g *govStakerV1) makeLaunchpadRewardID(address string) string {
-	return ufmt.Sprintf("launchpad:%s", address)
+	return "launchpad:" + address
 }
