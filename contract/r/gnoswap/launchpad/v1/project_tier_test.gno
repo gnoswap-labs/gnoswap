@@ -154,6 +154,71 @@ func TestProjectTier_Status(t *testing.T) {
 	}
 }
 
+// TestProjectTier_StatusBoundaries tests exact boundary behavior for IsActivated and IsEnded.
+// This ensures the exact semantics are well-defined:
+// - IsActivated: startTime <= currentTime && currentTime < endTime (startTime inclusive, endTime exclusive)
+// - IsEnded: endTime < currentTime (endTime exclusive)
+func TestProjectTier_StatusBoundaries(t *testing.T) {
+	const startTime = int64(100)
+	const endTime = int64(200)
+
+	tests := []struct {
+		name             string
+		currentTime      int64
+		expectedIsActive bool
+		expectedIsEnded  bool
+		description      string
+	}{
+		{
+			name:             "exactly at startTime - tier is activated (startTime inclusive)",
+			currentTime:      startTime,
+			expectedIsActive: true,
+			expectedIsEnded:  false,
+			description:      "At startTime, tier should be active (startTime <= startTime && startTime < endTime)",
+		},
+		{
+			name:             "one second before startTime - tier is not activated",
+			currentTime:      startTime - 1,
+			expectedIsActive: false,
+			expectedIsEnded:  false,
+			description:      "Before startTime, tier should not be active",
+		},
+		{
+			name:             "exactly at endTime - tier is NOT activated (endTime exclusive for activation)",
+			currentTime:      endTime,
+			expectedIsActive: false,
+			expectedIsEnded:  false,
+			description:      "At endTime, tier should NOT be active (currentTime < endTime is false), but also NOT ended (endTime < endTime is false)",
+		},
+		{
+			name:             "one second before endTime - tier is still activated",
+			currentTime:      endTime - 1,
+			expectedIsActive: true,
+			expectedIsEnded:  false,
+			description:      "Just before endTime, tier should still be active",
+		},
+		{
+			name:             "one second after endTime - tier is ended",
+			currentTime:      endTime + 1,
+			expectedIsActive: false,
+			expectedIsEnded:  true,
+			description:      "After endTime, tier should be ended (endTime < endTime+1)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tier := launchpad.NewProjectTier("test_project", 180, 1000, startTime, endTime)
+
+			isActive := tier.IsActivated(tt.currentTime)
+			isEnded := tier.IsEnded(tt.currentTime)
+
+			uassert.Equal(t, tt.expectedIsActive, isActive)
+			uassert.Equal(t, tt.expectedIsEnded, isEnded)
+		})
+	}
+}
+
 func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 	tests := []struct {
 		name                   string
