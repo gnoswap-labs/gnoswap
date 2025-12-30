@@ -341,11 +341,16 @@ func (gs *govStakerV1) unDelegate(
 
 	unDelegationAmount := amount
 	lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegation, exists := gs.store.GetDelegation(id)
+		delegationRaw, exists := allDelegations.Get(formatInt(id))
 		if !exists {
+			continue
+		}
+		delegation, ok := delegationRaw.(*staker.Delegation)
+		if !ok {
 			continue
 		}
 
@@ -412,11 +417,16 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	unDelegationAmount := amount
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegation, exists := gs.store.GetDelegation(id)
+		delegationRaw, exists := allDelegations.Get(formatInt(id))
 		if !exists {
+			continue
+		}
+		delegation, ok := delegationRaw.(*staker.Delegation)
+		if !ok {
 			continue
 		}
 
@@ -471,6 +481,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 	var err error
 	var idsToRemove []int64
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Collect from all available delegations
 	delegationTree.Iterate("", "", func(delegatee string, value any) bool {
@@ -483,8 +494,12 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegation, exists := gs.store.GetDelegation(id)
+			delegationRaw, exists := allDelegations.Get(formatInt(id))
 			if !exists {
+				continue
+			}
+			delegation, ok := delegationRaw.(*staker.Delegation)
+			if !ok {
 				continue
 			}
 
