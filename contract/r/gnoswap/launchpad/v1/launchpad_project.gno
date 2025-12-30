@@ -47,7 +47,8 @@ func (lp *launchpadV1) CreateProject(
 ) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	launchpadAddr := runtime.CurrentRealm().Address()
@@ -108,10 +109,9 @@ func (lp *launchpadV1) CreateProject(
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateProject",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
@@ -145,7 +145,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 	}
 
 	// create project
-	project := newProject(
+	project := launchpad.NewProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
@@ -186,13 +186,13 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 	for _, duration := range projectTierDurations {
 		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
 		tierDurationTime := projectTierDurationTimes[duration]
-		tierDistributeAmount := params.depositAmount * projectTierRatios[duration] / 100
-		accumulatedTierDistributeAmount += tierDistributeAmount
+		tierDistributeAmount := safeMulDiv(params.depositAmount, projectTierRatios[duration], 100)
+		accumulatedTierDistributeAmount = safeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
 
 		// if the last tier, distribute the remaining amount
 		if duration == projectTier180 {
-			remainTierDistributeAmount := params.depositAmount - accumulatedTierDistributeAmount
-			tierDistributeAmount += remainTierDistributeAmount
+			remainTierDistributeAmount := safeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
+			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
 		projectTier := newProjectTier(
@@ -231,23 +231,22 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
-
-	projectLeftReward, err := lp.transferLeftFromProject(projectID, recipient, currentTime)
-	if err != nil {
-		panic(err)
-	}
 
 	project, err := lp.getProject(projectID)
 	if err != nil {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
+	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentTime)
+	if err != nil {
+		panic(err)
+	}
 
 	tier30, err := getProjectTier(project, projectTier30)
 	if err != nil {
@@ -266,7 +265,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 
 	chain.Emit(
 		"TransferLeftFromProjectByAdmin",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"projectId", projectID,
 		"recipient", recipient.String(),
@@ -289,12 +288,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient address, currentTime int64) (int64, error) {
-	project, err := lp.getProject(projectID)
-	if err != nil {
-		return 0, err
-	}
-
+func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
@@ -329,13 +323,17 @@ func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient addre
 		accumTotalDistributeAmount = safeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
 	}
 
+	if accumLeftReward == 0 {
+		return 0, errors.New("project has no remaining amount")
+	}
+
 	actualTotalDistributeAmount := safeAddInt64(accumCollectedReward, accumLeftReward)
 	if accumTotalDistributeAmount != actualTotalDistributeAmount {
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
 	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
-	projectLeftReward := getProjectRemainingAmount(project)
+	projectLeftReward := accumLeftReward
 	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
 
 	if refundableAmount < 0 {

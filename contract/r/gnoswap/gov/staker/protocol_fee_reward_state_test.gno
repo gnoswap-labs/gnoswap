@@ -3,61 +3,76 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/uassert"
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
 func TestNewProtocolFeeRewardState(t *testing.T) {
 	tests := []struct {
-		name                              string
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-		expectedMapSize                   int
+		name            string
+		setup           func() *avl.Tree
+		expectedMapSize int
+		verifyValues    func(*testing.T, *ProtocolFeeRewardState)
 	}{
 		{
 			name: "Create with empty map",
-			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-			expectedMapSize:                   0,
+			setup: func() *avl.Tree {
+				return avl.NewTree()
+			},
+			expectedMapSize: 0,
+			verifyValues:    func(t *testing.T, state *ProtocolFeeRewardState) {},
 		},
 		{
 			name: "Create with single token",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
+			setup: func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", u256.NewUint(1000))
+				return tree
 			},
 			expectedMapSize: 1,
+			verifyValues: func(t *testing.T, state *ProtocolFeeRewardState) {
+				actualValue := state.GetRewardDebtX128ForToken("token1")
+				uassert.NotNil(t, actualValue)
+				uassert.Equal(t, actualValue.ToString(), u256.NewUint(1000).ToString())
+			},
 		},
 		{
 			name: "Create with multiple tokens",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
-				"token2": u256.NewUint(2000),
-				"token3": u256.NewUint(3000),
+			setup: func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", u256.NewUint(1000))
+				tree.Set("token2", u256.NewUint(2000))
+				tree.Set("token3", u256.NewUint(3000))
+				return tree
 			},
 			expectedMapSize: 3,
+			verifyValues: func(t *testing.T, state *ProtocolFeeRewardState) {
+				uassert.Equal(t, state.GetRewardDebtX128ForToken("token1").ToString(), u256.NewUint(1000).ToString())
+				uassert.Equal(t, state.GetRewardDebtX128ForToken("token2").ToString(), u256.NewUint(2000).ToString())
+				uassert.Equal(t, state.GetRewardDebtX128ForToken("token3").ToString(), u256.NewUint(3000).ToString())
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			state := NewProtocolFeeRewardState(tc.accumulatedProtocolFeeX128PerStake)
+			state := NewProtocolFeeRewardState(tc.setup())
 
 			// then
 			uassert.NotNil(t, state)
 			uassert.NotNil(t, state.GetRewardDebtX128())
 			uassert.NotNil(t, state.GetAccumulatedRewards())
 			uassert.NotNil(t, state.GetClaimedRewards())
-			uassert.Equal(t, len(state.GetRewardDebtX128()), tc.expectedMapSize)
+			uassert.Equal(t, state.GetRewardDebtX128().Size(), tc.expectedMapSize)
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetStakedAmount(), int64(0))
 
-			// Verify cloned values
-			for token, expectedValue := range tc.accumulatedProtocolFeeX128PerStake {
-				actualValue := state.GetRewardDebtX128ForToken(token)
-				uassert.NotNil(t, actualValue)
-				uassert.Equal(t, actualValue.ToString(), expectedValue.ToString())
-			}
+			// Verify values
+			tc.verifyValues(t, state)
 		})
 	}
 }
@@ -66,59 +81,80 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	tests := []struct {
 		name                 string
-		rewardDebtX128       map[string]*u256.Uint
-		accumulatedRewards   map[string]int64
-		claimedRewards       map[string]int64
+		setupRewardDebt      func() *avl.Tree
+		setupAccumulated     func() *avl.Tree
+		setupClaimed         func() *avl.Tree
 		accumulatedTimestamp int64
 		claimedTimestamp     int64
 		stakedAmount         int64
+		expectedDebtSize     int
+		expectedAccumSize    int
+		expectedClaimedSize  int
 	}{
 		{
 			name: "Set and get all values",
-			rewardDebtX128: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
-				"token2": u256.NewUint(2000),
+			setupRewardDebt: func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", u256.NewUint(1000))
+				tree.Set("token2", u256.NewUint(2000))
+				return tree
 			},
-			accumulatedRewards: map[string]int64{
-				"token1": 100,
-				"token2": 200,
+			setupAccumulated: func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", int64(100))
+				tree.Set("token2", int64(200))
+				return tree
 			},
-			claimedRewards: map[string]int64{
-				"token1": 50,
-				"token2": 75,
+			setupClaimed: func() *avl.Tree {
+				tree := avl.NewTree()
+				tree.Set("token1", int64(50))
+				tree.Set("token2", int64(75))
+				return tree
 			},
 			accumulatedTimestamp: 1000000,
 			claimedTimestamp:     2000000,
 			stakedAmount:         50000,
+			expectedDebtSize:     2,
+			expectedAccumSize:    2,
+			expectedClaimedSize:  2,
 		},
 		{
-			name:                 "Set empty maps",
-			rewardDebtX128:       make(map[string]*u256.Uint),
-			accumulatedRewards:   make(map[string]int64),
-			claimedRewards:       make(map[string]int64),
+			name: "Set empty maps",
+			setupRewardDebt: func() *avl.Tree {
+				return avl.NewTree()
+			},
+			setupAccumulated: func() *avl.Tree {
+				return avl.NewTree()
+			},
+			setupClaimed: func() *avl.Tree {
+				return avl.NewTree()
+			},
 			accumulatedTimestamp: 0,
 			claimedTimestamp:     0,
 			stakedAmount:         0,
+			expectedDebtSize:     0,
+			expectedAccumSize:    0,
+			expectedClaimedSize:  0,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(avl.NewTree())
 
 			// when
-			state.SetRewardDebtX128(tc.rewardDebtX128)
-			state.SetAccumulatedRewards(tc.accumulatedRewards)
-			state.SetClaimedRewards(tc.claimedRewards)
+			state.SetRewardDebtX128(tc.setupRewardDebt())
+			state.SetAccumulatedRewards(tc.setupAccumulated())
+			state.SetClaimedRewards(tc.setupClaimed())
 			state.SetAccumulatedTimestamp(tc.accumulatedTimestamp)
 			state.SetClaimedTimestamp(tc.claimedTimestamp)
 			state.SetStakedAmount(tc.stakedAmount)
 
 			// then
-			uassert.Equal(t, len(state.GetRewardDebtX128()), len(tc.rewardDebtX128))
-			uassert.Equal(t, len(state.GetAccumulatedRewards()), len(tc.accumulatedRewards))
-			uassert.Equal(t, len(state.GetClaimedRewards()), len(tc.claimedRewards))
+			uassert.Equal(t, state.GetRewardDebtX128().Size(), tc.expectedDebtSize)
+			uassert.Equal(t, state.GetAccumulatedRewards().Size(), tc.expectedAccumSize)
+			uassert.Equal(t, state.GetClaimedRewards().Size(), tc.expectedClaimedSize)
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), tc.accumulatedTimestamp)
 			uassert.Equal(t, state.GetClaimedTimestamp(), tc.claimedTimestamp)
 			uassert.Equal(t, state.GetStakedAmount(), tc.stakedAmount)
@@ -147,9 +183,9 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(map[string]*u256.Uint{
-				tc.token: tc.rewardDebtX128,
-			})
+			tree := avl.NewTree()
+			tree.Set(tc.token, tc.rewardDebtX128)
+			state := NewProtocolFeeRewardState(tree)
 			state.SetAccumulatedRewardForToken(tc.token, tc.accumulatedReward)
 			state.SetClaimedRewardForToken(tc.token, tc.claimedReward)
 
@@ -184,7 +220,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(avl.NewTree())
 
 			// when
 			state.SetRewardDebtX128ForToken(tc.token, tc.rewardDebtX128)
@@ -253,13 +289,12 @@ func TestProtocolFeeRewardState_Clone(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			original := map[string]*u256.Uint{
-				tc.token: tc.originalValue,
-			}
+			tree := avl.NewTree()
+			tree.Set(tc.token, tc.originalValue)
 
 			// when
-			state := NewProtocolFeeRewardState(original)
-			original[tc.token] = tc.modifiedValue // Try to modify original
+			state := NewProtocolFeeRewardState(tree)
+			tree.Set(tc.token, tc.modifiedValue) // Try to modify original tree
 
 			// then - state should still have the original value
 			actualValue := state.GetRewardDebtX128ForToken(tc.token)

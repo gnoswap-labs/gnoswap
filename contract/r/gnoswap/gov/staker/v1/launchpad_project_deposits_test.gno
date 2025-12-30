@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -463,4 +464,114 @@ func TestLaunchpadProjectDeposits_RemoveDeposit(t *testing.T) {
 			uassert.Equal(t, exists, tc.shouldExist)
 		})
 	}
+}
+// Test boundary conditions for safe arithmetic in launchpad project deposits
+func TestLaunchpadProjectDeposits_BoundaryConditions(t *testing.T) {
+	t.Run("AddDeposit boundary - overflow panic", func(t *testing.T) {
+		// given: deposit near max with attempt to overflow
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		resolver.SetDeposit(ownerAddr, math.MaxInt64-1000)
+
+		// when: add amount causing overflow (uses safeAddInt64)
+		didPanic := false
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					didPanic = true
+				}
+			}()
+			resolver.addDeposit(ownerAddr, 2000)
+		}()
+
+		// then: should panic on overflow
+		uassert.True(t, didPanic)
+	})
+
+	t.Run("AddDeposit boundary - large amounts near max", func(t *testing.T) {
+		// given: deposit with large amount
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		resolver.SetDeposit(ownerAddr, math.MaxInt64/2)
+
+		// when: add more large amount (uses safeAddInt64)
+		resolver.addDeposit(ownerAddr, math.MaxInt64/4)
+
+		// then: should succeed without overflow
+		value, _ := resolver.GetDeposit(ownerAddr)
+		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
+		uassert.Equal(t, value, expected)
+	})
+
+	t.Run("AddDeposit boundary - negative result clamped to zero", func(t *testing.T) {
+		// given: deposit with positive amount
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		resolver.SetDeposit(ownerAddr, 1000)
+
+		// when: add large negative amount (uses safeAddInt64)
+		resolver.addDeposit(ownerAddr, -5000)
+
+		// then: should clamp to zero
+		value, _ := resolver.GetDeposit(ownerAddr)
+		uassert.Equal(t, value, int64(0))
+	})
+
+	t.Run("RemoveDeposit boundary - underflow with clamping", func(t *testing.T) {
+		// given: deposit with some amount
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		resolver.SetDeposit(ownerAddr, 1000)
+
+		// when: remove more than available (uses safeSubInt64 with clamping)
+		resolver.removeDeposit(ownerAddr, 5000)
+
+		// then: should clamp to zero
+		value, exists := resolver.GetDeposit(ownerAddr)
+		uassert.True(t, exists)
+		uassert.Equal(t, value, int64(0))
+	})
+
+	t.Run("RemoveDeposit boundary - exact subtraction", func(t *testing.T) {
+		// given: deposit with specific amount
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		depositAmount := int64(1000000)
+		resolver.SetDeposit(ownerAddr, depositAmount)
+
+		// when: remove exact amount (uses safeSubInt64)
+		resolver.removeDeposit(ownerAddr, depositAmount)
+
+		// then: should result in zero
+		value, exists := resolver.GetDeposit(ownerAddr)
+		uassert.True(t, exists)
+		uassert.Equal(t, value, int64(0))
+	})
+
+	t.Run("RemoveDeposit boundary - large amounts", func(t *testing.T) {
+		// given: deposit with large amount
+		deposits := staker.NewLaunchpadProjectDeposits()
+		resolver := NewLaunchpadProjectDepositsResolver(deposits)
+		ownerAddr := testutils.TestAddress("owner1").String()
+
+		resolver.SetDeposit(ownerAddr, math.MaxInt64/2)
+
+		// when: remove partial large amount (uses safeSubInt64)
+		resolver.removeDeposit(ownerAddr, math.MaxInt64/4)
+
+		// then: should succeed without underflow
+		value, _ := resolver.GetDeposit(ownerAddr)
+		expected := int64((math.MaxInt64 / 2) - (math.MaxInt64 / 4))
+		uassert.Equal(t, value, expected)
+	})
 }
