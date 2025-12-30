@@ -34,8 +34,13 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
 	caller := previousRealm.Address()
 
+	project, err := lp.getProject(projectID)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := lp.depositGns(
-		projectID,
+		project,
 		tierDuration,
 		depositAmount,
 		caller,
@@ -76,7 +81,7 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 	launchpadAddress := runtime.CurrentRealm().Address()
 
 	// stake governance token to the project
-	err = lp.stakeGovernance(projectID, depositAmount, launchpadAddress, caller)
+	err = lp.stakeGovernance(project.Recipient(), depositAmount, launchpadAddress, caller)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -86,16 +91,11 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 
 // depositGns deposits GNS to a project tier.
 func (lp *launchpadV1) depositGns(
-	projectID string,
+	project *launchpad.Project,
 	tierDuration int64,
 	depositAmount int64,
 	callerAddress address,
 ) (*launchpad.Deposit, *launchpad.RewardState, bool, string, error) {
-	project, err := lp.getProject(projectID)
-	if err != nil {
-		return nil, nil, false, "", err
-	}
-
 	balanceOfFn := func(tokenPath string, caller address) int64 {
 		if tokenPath == GOV_XGNS_PATH {
 			return xgns.BalanceOf(caller)
@@ -104,7 +104,7 @@ func (lp *launchpadV1) depositGns(
 		return common.BalanceOf(tokenPath, caller)
 	}
 
-	err = checkProjectConditions(project, callerAddress, balanceOfFn)
+	err := checkProjectConditions(project, callerAddress, balanceOfFn)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
@@ -118,13 +118,13 @@ func (lp *launchpadV1) depositGns(
 	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
-		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
+		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
 	}
 
 	depositID := lp.nextDepositID()
 	deposit := launchpad.NewDeposit(
 		depositID,
-		projectID,
+		project.ID(),
 		tierDuration,
 		callerAddress,
 		depositAmount,
@@ -181,13 +181,8 @@ func registerReferral(referrer string, callerAddress address) (string, bool) {
 }
 
 // stakeGovernance stakes governance token to the project.
-func (lp *launchpadV1) stakeGovernance(projectID string, depositAmount int64, launchpadAddress address, callerAddress address) error {
-	project, err := lp.getProject(projectID)
-	if err != nil {
-		return err
-	}
-
-	gov_staker.SetAmountByProjectWallet(cross, project.Recipient(), depositAmount, true)
+func (lp *launchpadV1) stakeGovernance(recipient address, depositAmount int64, launchpadAddress address, callerAddress address) error {
+	gov_staker.SetAmountByProjectWallet(cross, recipient, depositAmount, true)
 
 	gns.TransferFrom(
 		cross,
