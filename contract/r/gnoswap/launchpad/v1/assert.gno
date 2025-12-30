@@ -37,7 +37,6 @@ func assertIsValidAmount(amount int64) {
 
 // assertHasProject asserts that the caller is the owner of at least one project.
 // Panics if the caller is not the owner of any project.
-// Queries gov/staker for O(log N) reverse index lookup.
 func (lp *launchpadV1) assertHasProject(caller address) {
 	hasProject := false
 
