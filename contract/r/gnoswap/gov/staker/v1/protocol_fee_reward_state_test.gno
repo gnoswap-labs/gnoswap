@@ -193,12 +193,18 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			}(), tt.currentTimestamp)
 
 			// Then: Should return expected number of tokens
-			uassert.Equal(t, len(result), tt.expectedTokenCount)
+			uassert.Equal(t, result.Size(), tt.expectedTokenCount)
 
 			// Verify all amounts are non-negative
-			for token, amount := range result {
+			result.Iterate("", "", func(token string, value interface{}) bool {
+				amount, ok := value.(int64)
+				if !ok {
+					return false
+				}
+
 				uassert.True(t, amount >= 0, "Reward amount should be non-negative for token: "+token)
-			}
+				return false
+			})
 		})
 	}
 }
@@ -561,7 +567,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				}(), 100)
 
 				uassert.NotEqual(t, result, nil)
-				uassert.True(t, len(result) > 0)
+				uassert.True(t, result.Size() > 0)
 			},
 			description: "Should handle nil reward debt for new tokens",
 		},
@@ -611,7 +617,17 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				}(), 100)
 
 				// Should return zero rewards when no stake
-				uassert.Equal(t, result["token1"], int64(0))
+				rewardAmountRaw, ok := result.Get("token1")
+				if !ok {
+					t.Errorf("Expected reward amount for token1, got none")
+				}
+
+				rewardAmount, ok := rewardAmountRaw.(int64)
+				if !ok {
+					t.Errorf("Expected reward amount for token1, got none")
+				}
+
+				uassert.Equal(t, rewardAmount, int64(0))
 			},
 			description: "Should handle zero staked amount correctly",
 		},
