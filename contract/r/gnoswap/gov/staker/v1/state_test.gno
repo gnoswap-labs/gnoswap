@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 
 	_ "gno.land/p/gnoswap/rbac"
@@ -16,6 +17,19 @@ import (
 
 	"gno.land/r/gnoswap/gov/staker"
 )
+
+func countDelegationIDs(tree *avl.Tree) int {
+	total := 0
+	tree.Iterate("", "", func(_ string, value interface{}) bool {
+		delegationIDs, ok := value.([]int64)
+		if !ok {
+			return false
+		}
+		total += len(delegationIDs)
+		return false
+	})
+	return total
+}
 
 // Test lockup period management
 func TestUnDelegationLockupPeriod(t *testing.T) {
@@ -169,7 +183,7 @@ func TestGetUserDelegations(t *testing.T) {
 			userDelegations := gs.getUserDelegations(user)
 
 			// Then: Should return expected count
-			uassert.Equal(t, userDelegations.Size(), tt.expectedCount)
+			uassert.Equal(t, countDelegationIDs(userDelegations), tt.expectedCount)
 
 			// Verify all delegations belong to the user
 			userDelegations.Iterate("", "", func(delegatee string, value interface{}) bool {
@@ -185,7 +199,6 @@ func TestGetUserDelegations(t *testing.T) {
 					}
 
 					uassert.Equal(t, delegation.DelegateFrom(), user)
-					return false
 				}
 
 				return false
@@ -1033,7 +1046,7 @@ func TestGetUserDelegationsComprehensive(t *testing.T) {
 			delegations := gs.getUserDelegations(user)
 
 			// Then: Should return expected total count
-			uassert.Equal(t, delegations.Size(), tt.expectedTotal)
+			uassert.Equal(t, countDelegationIDs(delegations), tt.expectedTotal)
 
 			// Then: All delegations should belong to the user
 			delegations.Iterate("", "", func(delegatee string, value interface{}) bool {
@@ -1049,7 +1062,6 @@ func TestGetUserDelegationsComprehensive(t *testing.T) {
 					}
 
 					uassert.Equal(t, delegation.DelegateFrom(), user)
-					return false
 				}
 
 				return false
@@ -1071,7 +1083,6 @@ func TestGetUserDelegationsComprehensive(t *testing.T) {
 						}
 
 						delegateeCount[delegation.DelegateTo()]++
-						return false
 					}
 
 					return false

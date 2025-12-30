@@ -1260,8 +1260,6 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 
 			// Then: Verify collected amount
 			uassert.NoError(t, err)
-			println("collected", collected)
-			println("expectedTotal", tt.expectedTotal)
 			uassert.Equal(t, collected, tt.expectedTotal)
 		})
 	}
