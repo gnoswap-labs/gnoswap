@@ -329,22 +329,19 @@ func TestSetRoleAddress(t *testing.T) {
 			// Setup initial roles
 			roleAddresses = tt.setupRoles
 
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
 			// Call actual implementation
-			setRoleAddress(tt.roleName, tt.roleAddress)
+			err := setRoleAddress(tt.roleName, tt.roleAddress)
 
-			if !tt.shouldPanic {
+			if tt.shouldPanic {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				} else if tt.panicMsg != "" && !containsString(err, tt.panicMsg) {
+					t.Errorf("Expected error containing %q, got %v", tt.panicMsg, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got %v", err)
+				}
 				// Verify set operation
 				addr, ok := GetAddress(tt.roleName)
 				if !ok {
@@ -401,22 +398,19 @@ func TestRemoveRole(t *testing.T) {
 			// Setup roles
 			roleAddresses = tt.setupRoles
 
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
 			// Call actual implementation
-			removeRole(tt.roleName)
+			err := removeRole(tt.roleName)
 
-			if !tt.shouldPanic {
+			if tt.shouldPanic {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				} else if tt.panicMsg != "" && !containsString(err, tt.panicMsg) {
+					t.Errorf("Expected error containing %q, got %v", tt.panicMsg, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got %v", err)
+				}
 				// Verify removal
 				_, ok := GetAddress(tt.roleName)
 				if ok {

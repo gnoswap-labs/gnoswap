@@ -25,18 +25,21 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
-	setRoleAddress(roleName, roleAddress)
+	if err := setRoleAddress(roleName, roleAddress); err != nil {
+		panic(err)
+	}
 }
 
 // setRoleAddress is the internal implementation of SetRoleAddress.
 // Separated for testability.
-func setRoleAddress(roleName string, roleAddress address) {
+func setRoleAddress(roleName string, roleAddress address) error {
 	// Validate address
 	if !roleAddress.IsValid() || roleAddress == address("") {
-		panic(ufmt.Errorf(errInvalidAddress, roleName, roleAddress))
+		return ufmt.Errorf(errInvalidAddress, roleName, roleAddress)
 	}
 
 	roleAddresses[roleName] = roleAddress
+	return nil
 }
 
 // RemoveRole removes a role from the system.
@@ -49,17 +52,20 @@ func RemoveRole(cur realm, roleName string) {
 	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
-	removeRole(roleName)
+	if err := removeRole(roleName); err != nil {
+		panic(err)
+	}
 }
 
 // removeRole is the internal implementation of RemoveRole.
 // Separated for testability.
-func removeRole(roleName string) {
+func removeRole(roleName string) error {
 	if _, ok := roleAddresses[roleName]; !ok {
-		panic(ufmt.Errorf(errRoleNotFound, roleName))
+		return ufmt.Errorf(errRoleNotFound, roleName)
 	}
 
 	delete(roleAddresses, roleName)
+	return nil
 }
 
 // IsAuthorized checks if caller has the specified role.
