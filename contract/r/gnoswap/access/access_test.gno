@@ -304,6 +304,24 @@ func TestSetRoleAddress(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "invalid address for role invalid",
 		},
+		{
+			name: "empty role name - should work (no validation)",
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "",
+			roleAddress: testutils.TestAddress("test"),
+			shouldPanic: false,
+		},
+		{
+			name: "update with same address - idempotent",
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "admin",
+			roleAddress: testutils.TestAddress("admin"),
+			shouldPanic: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -482,80 +500,6 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			if !tt.shouldPanic {
 				if addr != tt.expectedAddr {
 					t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
-				}
-			}
-		})
-	}
-}
-
-func TestSetRoleAddress_EdgeCases(t *testing.T) {
-	// Save original state
-	originalRoles := make(map[string]address)
-	for k, v := range roleAddresses {
-		originalRoles[k] = v
-	}
-	defer func() {
-		roleAddresses = originalRoles
-	}()
-
-	testAddr := testutils.TestAddress("test")
-
-	tests := []struct {
-		name        string
-		setupRoles  map[string]address
-		roleName    string
-		roleAddress address
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "empty role name - should work (no validation)",
-			setupRoles: map[string]address{
-				"admin": testutils.TestAddress("admin"),
-			},
-			roleName:    "",
-			roleAddress: testAddr,
-			shouldPanic: false,
-		},
-		{
-			name: "update with same address - idempotent",
-			setupRoles: map[string]address{
-				"admin": testAddr,
-			},
-			roleName:    "admin",
-			roleAddress: testAddr,
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup initial roles
-			roleAddresses = tt.setupRoles
-
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			// Call actual implementation
-			setRoleAddress(tt.roleName, tt.roleAddress)
-
-			if !tt.shouldPanic {
-				// Verify set operation
-				addr, ok := GetAddress(tt.roleName)
-				if !ok {
-					t.Errorf("Role %s should exist after set", tt.roleName)
-				}
-				if addr != tt.roleAddress {
-					t.Errorf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr)
 				}
 			}
 		})
