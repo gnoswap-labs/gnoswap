@@ -85,3 +85,13 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 
 	return marshal(data)
 }
+
+// HasLaunchpadProject checks if the given address owns any launchpad project.
+// It returns true if the address exists in LaunchpadProjectDeposits.
+func (gs *govStakerV1) HasLaunchpadProject(addr address) bool {
+	launchpadRewardID := gs.makeLaunchpadRewardID(addr.String())
+	launchpadDeposits := gs.store.GetLaunchpadProjectDeposits()
+	resolver := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
+	_, exists := resolver.GetDeposit(launchpadRewardID)
+	return exists
+}

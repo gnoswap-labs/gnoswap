@@ -35,7 +35,7 @@ func (p *ProtocolFeeRewardStateResolver) IsClaimable(currentTimestamp int64) boo
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - map[string]int64: map of token path to claimable reward amount
+//   - *avl.Tree: tree of token path to claimable reward amount
 //   - error: nil on success, error if claiming is not allowed
 func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
@@ -57,7 +57,7 @@ func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - map[string]int64: map of token path to newly earned reward amount
+//   - *avl.Tree: tree of token path to newly earned reward amount
 func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
@@ -76,7 +76,6 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 		rewardDebtX128 := p.GetRewardDebtX128ForToken(token)
 		if rewardDebtX128 == nil {
 			rewardDebtX128 = u256.Zero()
-			p.SetRewardDebtX128ForToken(token, u256.Zero())
 		}
 
 		// Calculate the difference in accumulated rewards per stake since last update
@@ -177,8 +176,9 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	// Update reward debt for all tokens
-	newRewardDebtX128 := cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
-	p.SetRewardDebtX128(newRewardDebtX128)
+	// Optimization: Use pointer reference instead of deep clone
+	// The tree is read-only for reward calculation purposes
+	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
 	accumulatedRewards := p.GetAccumulatedRewards()
@@ -252,22 +252,4 @@ func (p *ProtocolFeeRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
 	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	return p.claimRewards(currentTimestamp)
-}
-
-// cloneAccumulatedProtocolFeeX128PerStake creates a deep copy of the accumulated protocol fee map.
-// This utility function prevents reference sharing between different reward states.
-//
-// Parameters:
-//   - accumulatedProtocolFeeX128PerStake: map to clone
-//
-// Returns:
-//   - map[string]*u256.Uint: deep copy of the input map
-func cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) map[string]*u256.Uint {
-	clone := make(map[string]*u256.Uint)
-
-	for token, item := range accumulatedProtocolFeeX128PerStake {
-		clone[token] = item.Clone()
-	}
-
-	return clone
 }

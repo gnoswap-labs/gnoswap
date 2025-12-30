@@ -2,7 +2,7 @@ package v1
 
 import (
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/launchpad"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
@@ -37,21 +37,9 @@ func assertIsValidAmount(amount int64) {
 
 // assertHasProject asserts that the caller is the owner of at least one project.
 // Panics if the caller is not the owner of any project.
+// Queries gov/staker for O(log N) reverse index lookup.
 func (lp *launchpadV1) assertHasProject(caller address) {
-	hasProject := false
-
-	projects := lp.store.GetProjects()
-	projects.Iterate("", "", func(key string, value interface{}) bool {
-		project, ok := value.(*launchpad.Project)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast projects's element to *launchpad.Project: %T", value))
-		}
-
-		hasProject = project.IsRecipient(caller)
-
-		// if true, break the loop
-		return hasProject
-	})
+	hasProject := staker.HasLaunchpadProject(cross, caller)
 
 	if !hasProject {
 		panic(makeErrorWithDetails(
