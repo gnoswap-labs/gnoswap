@@ -69,15 +69,6 @@ func (r *DelegationResolver) UnDelegateWithoutLockup(
 ) {
 	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
 	r.delegation.SetCollectedAmount(safeAddInt64(r.delegation.CollectedAmount(), amount))
-
-	withdraw := NewDelegationWithdrawWithoutLockup(
-		r.delegation.ID(),
-		amount,
-		currentHeight,
-		currentTime,
-	)
-
-	r.delegation.AddWithdraw(withdraw)
 }
 
 // Collect processes the collection of available amounts
@@ -99,15 +90,17 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 	totalCollected := int64(0)
 	withdrawsTree := r.delegation.Withdraws()
 
+	var err error
+
 	withdrawsTree.Iterate(0, currentTime+1, func(collectableTime int64, value any) bool {
 		withdraws, ok := value.([]*staker.DelegationWithdraw)
 		if !ok {
 			return false
 		}
 
-		updatedWithdraws := make([]*staker.DelegationWithdraw, 0)
+		collectedWithdrawIndexes := make(map[int]bool)
 
-		for _, withdraw := range withdraws {
+		for index, withdraw := range withdraws {
 			// All requested amount has been collected, no need to process remaining withdraws
 			if remaining <= 0 {
 				break
@@ -122,25 +115,44 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			}
 
 			amountToCollect := min(remaining, collectableAmount)
-			if err := resolver.Collect(amountToCollect, currentTime); err == nil {
-				remaining = safeSubInt64(remaining, amountToCollect)
-				totalCollected = safeAddInt64(totalCollected, amountToCollect)
+
+			iErr := resolver.Collect(amountToCollect, currentTime)
+			if err != nil {
+				err = iErr
+				return true
 			}
 
-			if !withdraw.IsCollected() {
-				updatedWithdraws = append(updatedWithdraws, withdraw)
+			remaining = safeSubInt64(remaining, amountToCollect)
+			totalCollected = safeAddInt64(totalCollected, amountToCollect)
+
+			if withdraw.IsCollected() {
+				collectedWithdrawIndexes[index] = true
 			}
 		}
 
-		if len(updatedWithdraws) > 0 {
-			withdrawsTree.Set(collectableTime, updatedWithdraws)
-		} else {
+		if len(withdraws) == len(collectedWithdrawIndexes) {
 			withdrawsTree.Remove(collectableTime)
+		} else {
+			updatedWithdraws := make([]*staker.DelegationWithdraw, 0)
+
+			for index, withdraw := range withdraws {
+				if !collectedWithdrawIndexes[index] {
+					continue
+				}
+
+				updatedWithdraws = append(updatedWithdraws, withdraw)
+			}
+
+			withdrawsTree.Set(collectableTime, updatedWithdraws)
 		}
 
 		// Stop iteration early if all requested amount has been collected
 		return remaining <= 0
 	})
+
+	if err != nil {
+		return err
+	}
 
 	if totalCollected > 0 {
 		newTotal := safeAddInt64(r.delegation.CollectedAmount(), totalCollected)
