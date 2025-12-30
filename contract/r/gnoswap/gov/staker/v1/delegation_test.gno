@@ -1,7 +1,7 @@
 package v1
 
 import (
-    "math"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -357,13 +357,7 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 			// Then: Should update state correctly
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), tt.expectedUnDelegated)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollected)
-			uassert.Equal(t, len(resolver.Get().Withdraws()), 1)
-
-			// Verify withdraw record is immediately collectable
-			withdraw := resolver.Get().Withdraws()[0]
-			withdrawResolver := NewDelegationWithdrawResolver(withdraw)
-			uassert.Equal(t, withdrawResolver.IsCollectable(tt.currentTime), false)
-			uassert.Equal(t, withdrawResolver.CollectableAmount(tt.currentTime), int64(0)) // Already collected
+			uassert.Equal(t, len(resolver.Get().Withdraws()), 0)
 		})
 	}
 }
@@ -508,7 +502,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				d.UnDelegateWithoutLockup(100, 300, 300)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(450))
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(100)) // Immediate collection
-				uassert.Equal(t, len(d.Get().Withdraws()), 3)
+				uassert.Equal(t, len(d.Get().Withdraws()), 2)
 			},
 			description: "Should handle multiple undelegations with different lockup periods",
 		},
@@ -744,7 +738,7 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			expectedHasError: false,
 		},
 		{
-			name:                "overflow",
+			name:                 "overflow",
 			collectedAmount:      math.MaxInt64, // MaxInt64
 			amount:               1,
 			expectedResult:       0,
@@ -757,14 +751,14 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// when/then
 			if tc.expectedHasPanic {
-    			uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
-       				addToCollectedAmount(tc.collectedAmount, tc.amount)
-    			})
-            } else if tc.expectedHasError {
-                _, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+					addToCollectedAmount(tc.collectedAmount, tc.amount)
+				})
+			} else if tc.expectedHasError {
+				_, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NotNil(t, err)
 			} else {
-			    result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NoError(t, err)
 				uassert.Equal(t, result, tc.expectedResult)
 			}

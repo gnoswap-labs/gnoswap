@@ -64,15 +64,6 @@ func (r *DelegationResolver) UnDelegateWithoutLockup(
 ) {
 	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
 	r.delegation.SetCollectedAmount(safeAddInt64(r.delegation.CollectedAmount(), amount))
-
-	withdraw := NewDelegationWithdrawWithoutLockup(
-		r.delegation.ID(),
-		amount,
-		currentHeight,
-		currentTime,
-	)
-
-	r.delegation.AddWithdraw(withdraw)
 }
 
 // Collect processes the collection of available amounts
