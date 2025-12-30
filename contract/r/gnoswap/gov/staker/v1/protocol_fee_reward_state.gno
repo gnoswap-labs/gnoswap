@@ -113,7 +113,7 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
-	newAmount := p.GetStakedAmount() - amount
+	newAmount := safeSubInt64(p.GetStakedAmount(), amount)
 	if newAmount < 0 {
 		newAmount = 0
 	}
@@ -145,7 +145,7 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 	// Calculate and update claimed amounts for each token
 	for token, rewardAmount := range accumulatedRewards {
 		claimedAmount := claimedRewards[token]
-		currentClaimedRewards[token] = rewardAmount - claimedAmount
+		currentClaimedRewards[token] = safeSubInt64(rewardAmount, claimedAmount)
 		p.SetClaimedRewardForToken(token, rewardAmount)
 	}
 

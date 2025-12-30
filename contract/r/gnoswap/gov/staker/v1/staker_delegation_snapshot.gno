@@ -90,7 +90,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 
 	toTimestamp := cutoffTimestamp
 	if cutoffTimestamp < math.MaxInt64 {
-		toTimestamp += 1
+		toTimestamp = safeAddInt64(toTimestamp, 1)
 	}
 
 	// First, find the most recent entry before cutoff to preserve state
@@ -133,7 +133,7 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 
 		toTimestamp := cutoffTimestamp
 		if cutoffTimestamp < math.MaxInt64 {
-			toTimestamp += 1
+			toTimestamp = safeAddInt64(toTimestamp, 1)
 		}
 
 		// Find the most recent entry before cutoff to preserve state

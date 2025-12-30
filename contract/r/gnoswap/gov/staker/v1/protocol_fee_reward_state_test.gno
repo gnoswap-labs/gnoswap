@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -558,4 +559,85 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 			tt.setupTest(resolver)
 		})
 	}
+}
+
+// Test boundary conditions for safe arithmetic in protocol fee reward operations
+func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
+	t.Run("AddStake boundary - large staked amount", func(t *testing.T) {
+		// given: protocol fee reward state with large staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
+
+		// Set initial large staked amount
+		state.SetStakedAmount(math.MaxInt64 / 2)
+
+		// when: add more stake (uses safeAddInt64 in addStake)
+		accumulatedFees := make(map[string]*u256.Uint)
+		err := resolver.addStakeWithUpdateRewardDebtX128(math.MaxInt64/4, accumulatedFees, 1000)
+
+		// then: should succeed without overflow
+		uassert.NoError(t, err)
+		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
+		uassert.Equal(t, state.GetStakedAmount(), expected)
+	})
+
+	t.Run("AddStake boundary - overflow", func(t *testing.T) {
+		// given: protocol fee reward state near max staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
+
+		state.SetStakedAmount(math.MaxInt64 - 1000)
+
+		// when: add stake causing overflow (uses safeAddInt64)
+		didPanic := false
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					didPanic = true
+				}
+			}()
+			accumulatedFees := make(map[string]*u256.Uint)
+			_ = resolver.addStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
+		}()
+
+		// then: should panic on overflow
+		uassert.True(t, didPanic)
+	})
+
+	t.Run("RemoveStake boundary - clamping to zero", func(t *testing.T) {
+		// given: protocol fee reward state with some staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
+
+		state.SetStakedAmount(1000)
+
+		// when: remove more than available (uses safeSubInt64 with clamping)
+		accumulatedFees := make(map[string]*u256.Uint)
+		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
+
+		// then: should clamp to zero
+		uassert.NoError(t, err)
+		uassert.Equal(t, state.GetStakedAmount(), int64(0))
+	})
+
+	t.Run("ClaimRewards boundary - exact subtraction", func(t *testing.T) {
+		// given: protocol fee reward state with accumulated and claimed equal
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
+		token := "gno.land/r/demo/foo"
+
+		rewardAmount := int64(1000000)
+		state.SetAccumulatedRewardForToken(token, rewardAmount)
+		state.SetClaimedRewardForToken(token, rewardAmount)
+		currentTimestamp := int64(2000)
+		state.SetAccumulatedTimestamp(currentTimestamp) // Update to match claim timestamp
+		state.SetClaimedTimestamp(500)
+
+		// when: claim rewards (uses safeSubInt64 in claimRewards)
+		claimed, err := resolver.claimRewards(currentTimestamp)
+
+		// then: should result in zero claimable
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimed[token], int64(0))
+	})
 }

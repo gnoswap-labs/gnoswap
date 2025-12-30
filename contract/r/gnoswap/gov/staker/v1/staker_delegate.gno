@@ -312,13 +312,13 @@ func (gs *govStakerV1) delegate(
 	// Update total amounts directly in store
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
 		panic(err)
 	}
 
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
+	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
 		panic(err)
 	}
 

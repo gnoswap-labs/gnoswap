@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -448,5 +449,75 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 
 		// then - should have remaining amount minus what was collected
 		uassert.Equal(t, remainingCollectable, int64(70))
+	})
+}
+
+// Test boundary conditions for safe arithmetic in delegation withdraw operations
+func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
+	t.Run("CollectableAmount with large amounts near max", func(t *testing.T) {
+		// given: withdrawal with very large amount
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			math.MaxInt64/2,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when: calculate collectable amount
+		collectable := resolver.CollectableAmount(2000)
+
+		// then: should handle large amount correctly
+		uassert.Equal(t, collectable, int64(math.MaxInt64/2))
+	})
+
+	t.Run("Collect causing overflow in collected amount", func(t *testing.T) {
+		// given: withdrawal at max
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			math.MaxInt64,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when: try to collect amount that would overflow
+		didPanic := false
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					didPanic = true
+				}
+			}()
+			// First collect to near max
+			_ = resolver.Collect(math.MaxInt64-1, 2000)
+			// This will overflow: (MaxInt64-1) + 2 = MaxInt64+1
+			_ = resolver.Collect(2, 2000)
+		}()
+
+		// then: should panic on overflow
+		uassert.True(t, didPanic)
+	})
+
+	t.Run("CollectableAmount subtraction with exact amounts", func(t *testing.T) {
+		// given: withdrawal with specific amounts
+		undelegateAmount := int64(1000000)
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			undelegateAmount,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when: collect exactly the undelegate amount
+		_ = resolver.Collect(undelegateAmount, 2000)
+		remaining := resolver.CollectableAmount(2000)
+
+		// then: remaining should be zero (safeSubInt64 result)
+		uassert.Equal(t, remaining, int64(0))
 	})
 }
