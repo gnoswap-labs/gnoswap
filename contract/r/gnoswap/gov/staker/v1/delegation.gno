@@ -86,7 +86,41 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 		return nil
 	}
 
-	remaining := amount
+	collected, err := r.processCollectionInternal(amount, currentTime)
+	if err != nil {
+		return err
+	}
+
+	if collected > 0 {
+		newTotal := safeAddInt64(r.delegation.CollectedAmount(), collected)
+		r.delegation.SetCollectedAmount(newTotal)
+	}
+
+	return nil
+}
+
+// processCollectionAll collects all available amounts without pre-calculating
+// Returns the total amount collected and any error encountered
+func (r *DelegationResolver) processCollectionAll(currentTime int64) (int64, error) {
+	collected, err := r.processCollectionInternal(0, currentTime)
+	if err != nil {
+		return 0, err
+	}
+
+	if collected > 0 {
+		newTotal := safeAddInt64(r.delegation.CollectedAmount(), collected)
+		r.delegation.SetCollectedAmount(newTotal)
+	}
+
+	return collected, nil
+}
+
+// processCollectionInternal is the core collection logic
+// If maxAmount <= 0, collects all available amounts
+// Otherwise, collects up to maxAmount
+func (r *DelegationResolver) processCollectionInternal(maxAmount, currentTime int64) (int64, error) {
+	collectAll := maxAmount <= 0
+	remaining := maxAmount
 	totalCollected := int64(0)
 	withdrawsTree := r.delegation.Withdraws()
 
@@ -101,20 +135,25 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 		collectedWithdrawIndexes := make(map[int]bool)
 
 		for index, withdraw := range withdraws {
-			// All requested amount has been collected, no need to process remaining withdraws
-			if remaining <= 0 {
+			// Stop if we've collected enough (only when maxAmount specified)
+			if !collectAll && remaining <= 0 {
 				break
 			}
 
 			resolver := NewDelegationWithdrawResolver(withdraw)
 
 			collectableAmount := resolver.CollectableAmount(currentTime)
-			// Skip withdraws that are not yet collectable or already fully collected
 			if collectableAmount <= 0 {
 				continue
 			}
 
-			amountToCollect := min(remaining, collectableAmount)
+			// Determine how much to collect from this withdraw
+			var amountToCollect int64
+			if collectAll {
+				amountToCollect = collectableAmount
+			} else {
+				amountToCollect = min(remaining, collectableAmount)
+			}
 
 			iErr := resolver.Collect(amountToCollect, currentTime)
 			if iErr != nil {
@@ -122,7 +161,9 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 				return true
 			}
 
-			remaining = safeSubInt64(remaining, amountToCollect)
+			if !collectAll {
+				remaining = safeSubInt64(remaining, amountToCollect)
+			}
 			totalCollected = safeAddInt64(totalCollected, amountToCollect)
 
 			if withdraw.IsCollected() {
@@ -130,36 +171,25 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			}
 		}
 
+		// Cleanup collected withdraws
 		if len(withdraws) == len(collectedWithdrawIndexes) {
 			withdrawsTree.Remove(collectableTime)
 		} else {
 			updatedWithdraws := make([]*staker.DelegationWithdraw, 0)
-
 			for index, withdraw := range withdraws {
 				if collectedWithdrawIndexes[index] {
 					continue
 				}
-
 				updatedWithdraws = append(updatedWithdraws, withdraw)
 			}
-
 			withdrawsTree.Set(collectableTime, updatedWithdraws)
 		}
 
-		// Stop iteration early if all requested amount has been collected
-		return remaining <= 0
+		// Stop iteration early if we've collected enough (only when maxAmount specified)
+		return !collectAll && remaining <= 0
 	})
 
-	if err != nil {
-		return err
-	}
-
-	if totalCollected > 0 {
-		newTotal := safeAddInt64(r.delegation.CollectedAmount(), totalCollected)
-		r.delegation.SetCollectedAmount(newTotal)
-	}
-
-	return nil
+	return totalCollected, err
 }
 
 // min returns the smaller of two int64 values

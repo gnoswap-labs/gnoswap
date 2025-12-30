@@ -465,20 +465,19 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 	// Collect from all available delegations
 	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
-		collectableAmount := resolver.CollectableAmount(currentTime)
 
-		if collectableAmount == 0 {
-			continue
-		}
-
-		err := resolver.Collect(collectableAmount, currentTime)
+		// processCollectionAll combines CollectableAmount + processCollection into single iteration
+		delegationCollected, err := resolver.processCollectionAll(currentTime)
 		if err != nil {
 			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
 			return collectedAmount, msg
 		}
 
-		// Simple addition since addToCollectedAmount was removed
-		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
+		if delegationCollected == 0 {
+			continue
+		}
+
+		collectedAmount = safeAddInt64(collectedAmount, delegationCollected)
 
 		// Save updated delegation state after collection
 		if resolver.IsEmpty() {
