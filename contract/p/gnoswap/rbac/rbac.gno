@@ -82,7 +82,7 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 
 // GetAllRoleAddresses returns a map of all role names to their assigned addresses.
 func (rb *RBAC) GetAllRoleAddresses() map[string]address {
-	addresses := make(map[string]address, len(rb.roles))
+	addresses := make(map[string]address)
 
 	for roleName, role := range rb.roles {
 		addresses[roleName] = role.Address()
