@@ -481,10 +481,15 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		if len(delegationIDs) == 0 {
 			return false
 		}
+		println("collectDelegations: delegatee", delegatee, "ids", len(delegationIDs))
 
-		for _, id := range delegationIDs {
+		ids := make([]int64, len(delegationIDs))
+		copy(ids, delegationIDs)
+		for _, id := range ids {
+			println("collectDelegations: processing id", id)
 			delegation, exists := gs.store.GetDelegation(id)
 			if !exists {
+				println("collectDelegations: missing id", id)
 				continue
 			}
 
@@ -492,6 +497,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			collectableAmount := resolver.CollectableAmount(currentTime)
 
 			if collectableAmount == 0 {
+				println("collectDelegations: not collectable id", id)
 				continue
 			}
 
@@ -499,14 +505,17 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			if err != nil {
 				return true
 			}
+			println("collectDelegations: collected id", id, "amount", collectableAmount)
 
 			// Simple addition since addToCollectedAmount was removed
 			collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 
 			// Save updated delegation state after collection
 			if resolver.IsEmpty() {
+				println("collectDelegations: removing id", id)
 				gs.removeDelegation(delegation.ID())
 			} else {
+				println("collectDelegations: updating id", id)
 				gs.setDelegation(delegation.ID(), delegation)
 			}
 		}
