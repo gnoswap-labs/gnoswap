@@ -57,12 +57,11 @@ func (gs *govStakerV1) CollectReward() {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
-
 	// Transfer emission rewards (GNS tokens) if any
 	if emissionReward > 0 {
 		gns.Transfer(cross, caller, emissionReward)
 
+		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
 			"CollectEmissionReward",
 			"prevAddr", previousRealm.Address().String(),
@@ -81,6 +80,7 @@ func (gs *govStakerV1) CollectReward() {
 				panic(err)
 			}
 
+			previousRealm := runtime.PreviousRealm()
 			chain.Emit(
 				"CollectProtocolFeeReward",
 				"prevAddr", previousRealm.Address().String(),
@@ -124,12 +124,11 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
-
 	// Transfer emission rewards (GNS tokens) to project wallet if any
 	if emissionReward > 0 {
 		gns.Transfer(cross, to, emissionReward)
 
+		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", previousRealm.Address().String(),
@@ -148,6 +147,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 				panic(err)
 			}
 
+			previousRealm := runtime.PreviousRealm()
 			chain.Emit(
 				"CollectProtocolFeeFromLaunchPad",
 				"prevAddr", previousRealm.Address().String(),

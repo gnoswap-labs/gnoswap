@@ -1,12 +1,10 @@
 package v1
 
 import (
-	"math"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -43,18 +41,12 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Create new protocol fee reward state
-			state := staker.NewProtocolFeeRewardState(func() *avl.Tree {
-				tree := avl.NewTree()
-				for k, v := range tt.accumulatedProtocolFeeX128PerStake {
-					tree.Set(k, v)
-				}
-				return tree
-			}())
+			state := staker.NewProtocolFeeRewardState(tt.accumulatedProtocolFeeX128PerStake)
 			resolver := NewProtocolFeeRewardStateResolver(state)
 
 			// Then: Should initialize correctly
 			uassert.NotEqual(t, resolver, nil)
-			uassert.Equal(t, resolver.GetRewardDebtX128().Size(), tt.expectedTokenCount)
+			uassert.Equal(t, len(resolver.GetRewardDebtX128()), tt.expectedTokenCount)
 			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, resolver.GetStakedAmount(), int64(0))
@@ -106,7 +98,7 @@ func TestProtocolFeeRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with claimed height
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetClaimedTimestamp(tt.claimedTimestamp)
 
@@ -132,11 +124,9 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			name: "No rewards when accumulated height is greater than current height",
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(200)
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(1000))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(1000),
@@ -179,18 +169,12 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 
 			// When: Get claimable reward amounts
-			result, _ := resolver.GetClaimableRewardAmounts(func() *avl.Tree {
-				tree := avl.NewTree()
-				for k, v := range tt.accumulatedRewardsX128PerStake {
-					tree.Set(k, v)
-				}
-				return tree
-			}(), tt.currentTimestamp)
+			result, _ := resolver.GetClaimableRewardAmounts(tt.accumulatedRewardsX128PerStake, tt.currentTimestamp)
 
 			// Then: Should return expected number of tokens
 			uassert.Equal(t, len(result), tt.expectedTokenCount)
@@ -234,7 +218,7 @@ func TestProtocolFeeRewardState_addStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -278,7 +262,7 @@ func TestProtocolFeeRewardState_removeStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -304,11 +288,9 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			name: "Claim when not claimable",
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(100)
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(1000))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
 			},
 			currentTimestamp: 100,
 			expectError:      true,
@@ -318,11 +300,9 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(50)
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(1000))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
 			},
 			currentTimestamp: 100,
 			expectError:      true, // Must update reward debt before claiming
@@ -332,18 +312,14 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(1000))
-					tree.Set("token2", int64(500))
-					return tree
-				}())
-				s.SetClaimedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(300))
-					tree.Set("token2", int64(0))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+					"token2": 500,
+				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 300,
+					"token2": 0,
+				})
 			},
 			currentTimestamp:      100,
 			expectError:           false,
@@ -354,7 +330,7 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -412,11 +388,9 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
 				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(200))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 200,
+				})
 			},
 			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
@@ -429,19 +403,13 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 			startedAt := resolver.GetAccumulatedTimestamp()
 
 			// When: Update reward debt X128
-			resolver.updateRewardDebtX128(func() *avl.Tree {
-				tree := avl.NewTree()
-				for k, v := range tt.accumulatedProtocolFeeX128PerStake {
-					tree.Set(k, v)
-				}
-				return tree
-			}(), tt.currentTimestamp)
+			resolver.updateRewardDebtX128(tt.accumulatedProtocolFeeX128PerStake, tt.currentTimestamp)
 
 			// Then: Check if state was updated as expected
 			if tt.shouldUpdate {
@@ -467,13 +435,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 					"token1": u256.NewUintFromInt64(1000),
 				}
 
-				s.addStakeWithUpdateRewardDebtX128(500, func() *avl.Tree {
-					tree := avl.NewTree()
-					for k, v := range accumulatedFees {
-						tree.Set(k, v)
-					}
-					return tree
-				}(), 100)
+				s.addStakeWithUpdateRewardDebtX128(500, accumulatedFees, 100)
 
 				uassert.Equal(t, s.GetStakedAmount(), int64(500))
 				uassert.Equal(t, s.GetAccumulatedTimestamp(), int64(100))
@@ -488,13 +450,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 					"token1": u256.NewUintFromInt64(1000),
 				}
 
-				s.removeStakeWithUpdateRewardDebtX128(300, func() *avl.Tree {
-					tree := avl.NewTree()
-					for k, v := range accumulatedFees {
-						tree.Set(k, v)
-					}
-					return tree
-				}(), 100)
+				s.removeStakeWithUpdateRewardDebtX128(300, accumulatedFees, 100)
 
 				uassert.Equal(t, s.GetStakedAmount(), int64(700))
 				uassert.Equal(t, s.GetAccumulatedTimestamp(), int64(100))
@@ -510,13 +466,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 					"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
 				}
 
-				rewards, err := s.claimRewardsWithUpdateRewardDebtX128(func() *avl.Tree {
-					tree := avl.NewTree()
-					for k, v := range accumulatedFees {
-						tree.Set(k, v)
-					}
-					return tree
-				}(), 100)
+				rewards, err := s.claimRewardsWithUpdateRewardDebtX128(accumulatedFees, 100)
 
 				uassert.NoError(t, err)
 				uassert.NotEqual(t, rewards, nil)
@@ -529,7 +479,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.operations(resolver)
 		})
@@ -552,13 +502,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				}
 
 				// Should handle nil reward debt gracefully
-				result, _ := s.calculateClaimableRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					for k, v := range accumulatedRewards {
-						tree.Set(k, v)
-					}
-					return tree
-				}(), 100)
+				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
 
 				uassert.NotEqual(t, result, nil)
 				uassert.True(t, len(result) > 0)
@@ -570,16 +514,12 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 			setupTest: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(1000))
-					return tree
-				}())
-				s.SetClaimedRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					tree.Set("token1", int64(0))
-					return tree
-				}())
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 0,
+				})
 
 				// First claim
 				rewards1, err1 := s.claimRewards(100)
@@ -602,13 +542,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 					"token1": u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 				}
 
-				result, _ := s.calculateClaimableRewards(func() *avl.Tree {
-					tree := avl.NewTree()
-					for k, v := range accumulatedRewards {
-						tree.Set(k, v)
-					}
-					return tree
-				}(), 100)
+				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
 
 				// Should return zero rewards when no stake
 				uassert.Equal(t, result["token1"], int64(0))
@@ -619,7 +553,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(avl.NewTree())
+			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupTest(resolver)
 		})
@@ -642,17 +576,11 @@ func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testi
 			original := make(map[string]*u256.Uint)
 
 			// when
-			cloned := cloneAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
-				tree := avl.NewTree()
-				for k, v := range original {
-					tree.Set(k, v)
-				}
-				return tree
-			}())
+			cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
 
 			// then
 			uassert.NotNil(t, cloned)
-			uassert.Equal(t, cloned.Size(), 0)
+			uassert.Equal(t, len(cloned), 0)
 		})
 	}
 
@@ -662,25 +590,17 @@ func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testi
 		original["token1"] = u256.NewUintFromInt64(1000)
 
 		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
-			tree := avl.NewTree()
-			for k, v := range original {
-				tree.Set(k, v)
-			}
-			return tree
-		}())
+		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
 
 		// then
 		uassert.NotNil(t, cloned)
-		uassert.Equal(t, cloned.Size(), 1)
-		val1, exists1 := cloned.Get("token1")
-		uassert.True(t, exists1 && val1 != nil)
-		uassert.Equal(t, val1.(*u256.Uint).ToString(), "1000")
+		uassert.Equal(t, len(cloned), 1)
+		uassert.NotNil(t, cloned["token1"])
+		uassert.Equal(t, cloned["token1"].ToString(), "1000")
 
 		// verify deep copy - modifying original shouldn't affect clone
 		original["token1"] = u256.NewUintFromInt64(2000)
-		val1After, _ := cloned.Get("token1")
-		uassert.Equal(t, val1After.(*u256.Uint).ToString(), "1000")
+		uassert.Equal(t, cloned["token1"].ToString(), "1000")
 	})
 
 	t.Run("clone map with multiple tokens", func(t *testing.T) {
@@ -691,28 +611,18 @@ func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testi
 		original["token3"] = u256.NewUintFromInt64(3000)
 
 		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
-			tree := avl.NewTree()
-			for k, v := range original {
-				tree.Set(k, v)
-			}
-			return tree
-		}())
+		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
 
 		// then
 		uassert.NotNil(t, cloned)
-		uassert.Equal(t, cloned.Size(), 3)
-		val1, _ := cloned.Get("token1")
-		uassert.Equal(t, val1.(*u256.Uint).ToString(), "1000")
-		val2, _ := cloned.Get("token2")
-		uassert.Equal(t, val2.(*u256.Uint).ToString(), "2000")
-		val3, _ := cloned.Get("token3")
-		uassert.Equal(t, val3.(*u256.Uint).ToString(), "3000")
+		uassert.Equal(t, len(cloned), 3)
+		uassert.Equal(t, cloned["token1"].ToString(), "1000")
+		uassert.Equal(t, cloned["token2"].ToString(), "2000")
+		uassert.Equal(t, cloned["token3"].ToString(), "3000")
 
 		// verify deep copy
 		original["token1"] = u256.NewUintFromInt64(9999)
-		val1After, _ := cloned.Get("token1")
-		uassert.Equal(t, val1After.(*u256.Uint).ToString(), "1000")
+		uassert.Equal(t, cloned["token1"].ToString(), "1000")
 	})
 
 	t.Run("clone map with large values", func(t *testing.T) {
@@ -723,99 +633,11 @@ func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testi
 		original["token1"] = largeValue
 
 		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(func() *avl.Tree {
-			tree := avl.NewTree()
-			for k, v := range original {
-				tree.Set(k, v)
-			}
-			return tree
-		}())
+		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
 
 		// then
 		uassert.NotNil(t, cloned)
-		uassert.Equal(t, cloned.Size(), 1)
-		val1, _ := cloned.Get("token1")
-		uassert.Equal(t, val1.(*u256.Uint).ToString(), largeValue.ToString())
-	})
-}
-
-// Test boundary conditions for safe arithmetic in protocol fee reward operations
-func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
-	t.Run("AddStake boundary - large staked amount", func(t *testing.T) {
-		// given: protocol fee reward state with large staked amount
-		state := staker.NewProtocolFeeRewardState(avl.NewTree())
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		// Set initial large staked amount
-		state.SetStakedAmount(math.MaxInt64 / 2)
-
-		// when: add more stake (uses safeAddInt64 in addStake)
-		accumulatedFees := avl.NewTree()
-		err := resolver.addStakeWithUpdateRewardDebtX128(math.MaxInt64/4, accumulatedFees, 1000)
-
-		// then: should succeed without overflow
-		uassert.NoError(t, err)
-		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
-		uassert.Equal(t, state.GetStakedAmount(), expected)
-	})
-
-	t.Run("AddStake boundary - overflow", func(t *testing.T) {
-		// given: protocol fee reward state near max staked amount
-		state := staker.NewProtocolFeeRewardState(avl.NewTree())
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		state.SetStakedAmount(math.MaxInt64 - 1000)
-
-		// when: add stake causing overflow (uses safeAddInt64)
-		didPanic := false
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					didPanic = true
-				}
-			}()
-			accumulatedFees := avl.NewTree()
-			_ = resolver.addStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
-		}()
-
-		// then: should panic on overflow
-		uassert.True(t, didPanic)
-	})
-
-	t.Run("RemoveStake boundary - clamping to zero", func(t *testing.T) {
-		// given: protocol fee reward state with some staked amount
-		state := staker.NewProtocolFeeRewardState(avl.NewTree())
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		state.SetStakedAmount(1000)
-
-		// when: remove more than available (uses safeSubInt64 with clamping)
-		accumulatedFees := avl.NewTree()
-		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
-
-		// then: should clamp to zero
-		uassert.NoError(t, err)
-		uassert.Equal(t, state.GetStakedAmount(), int64(0))
-	})
-
-	t.Run("ClaimRewards boundary - exact subtraction", func(t *testing.T) {
-		// given: protocol fee reward state with accumulated and claimed equal
-		state := staker.NewProtocolFeeRewardState(avl.NewTree())
-		resolver := NewProtocolFeeRewardStateResolver(state)
-		token := "gno.land/r/demo/foo"
-
-		rewardAmount := int64(1000000)
-		state.SetAccumulatedRewardForToken(token, rewardAmount)
-		state.SetClaimedRewardForToken(token, rewardAmount)
-		currentTimestamp := int64(2000)
-		state.SetAccumulatedTimestamp(currentTimestamp) // Update to match claim timestamp
-		state.SetClaimedTimestamp(500)
-
-		// when: claim rewards (uses safeSubInt64 in claimRewards)
-		claimed, err := resolver.claimRewards(currentTimestamp)
-
-		// then: should result in zero claimable
-		uassert.NoError(t, err)
-		uassert.Equal(t, claimed[token], int64(0))
+		uassert.Equal(t, len(cloned), 1)
+		uassert.Equal(t, cloned["token1"].ToString(), largeValue.ToString())
 	})
 }

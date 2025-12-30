@@ -63,7 +63,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) removeDeposit(ownerAddress string,
 	if !exists {
 		return
 	}
-	newDeposit := safeSubInt64(currentDeposit, amount)
+	newDeposit := currentDeposit - amount
 	if newDeposit < 0 {
 		newDeposit = 0
 	}

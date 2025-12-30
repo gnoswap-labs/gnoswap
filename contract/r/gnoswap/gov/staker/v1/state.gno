@@ -2,7 +2,6 @@ package v1
 
 import (
 	"math"
-	"strconv"
 
 	"gno.land/p/nt/ufmt"
 
@@ -132,79 +131,33 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - []*Delegation: list of user's delegations
 func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
 	delegationManager := g.store.GetDelegationManager()
-	allDelegations := g.store.GetAllDelegations()
-	delegations = make([]*staker.Delegation, 0)
 
-	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
-	if !exists {
-		return delegations
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
+	for _, delegationID := range resolvedManager.GetUserDelegationIDs(user) {
+		if delegation := g.getDelegation(delegationID); delegation != nil {
+			delegations = append(delegations, delegation)
+		}
 	}
-
-	userDelegations.Iterate("", "", func(delegatee string, value interface{}) bool {
-		delegationIDs, ok := value.([]int64)
-		if !ok {
-			return false
-		}
-
-		for _, id := range delegationIDs {
-			idStr := strconv.FormatInt(id, 10)
-			if delegation, exists := allDelegations.Get(idStr); exists {
-				if d, ok := delegation.(*staker.Delegation); ok {
-					delegations = append(delegations, d)
-				}
-			}
-		}
-		return false
-	})
-
 	return delegations
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
+// Note: Current implementation returns all user delegations regardless of delegatee (potential bug).
 //
 // Parameters:
 //   - user: user's address
-//   - delegatee: delegatee's address
+//   - delegatee: delegatee's address (currently unused)
 //
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
 func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
 	delegationManager := g.store.GetDelegationManager()
-	allDelegations := g.store.GetAllDelegations()
-	delegations = make([]*staker.Delegation, 0)
-
-	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
-	if !exists {
-		return delegations
-	}
-
-	delegateeStr := delegatee.String()
-	delegationIDs, exists := userDelegations.Get(delegateeStr)
-	if !exists {
-		return delegations
-	}
-
-	ids, ok := delegationIDs.([]int64)
-	if !ok {
-		return delegations
-	}
-
-	for _, id := range ids {
-		idStr := strconv.FormatInt(id, 10)
-
-		delegationRaw, exists := allDelegations.Get(idStr)
-		if !exists {
-			continue
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
+	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
+		if delegation := g.getDelegation(delegationID); delegation != nil {
+			delegations = append(delegations, delegation)
 		}
-
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
-
-		delegations = append(delegations, delegation)
 	}
-
 	return delegations
 }
 
@@ -625,5 +578,5 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 // Returns:
 //   - string: formatted launchpad reward ID
 func (g *govStakerV1) makeLaunchpadRewardID(address string) string {
-	return "launchpad:" + address
+	return ufmt.Sprintf("launchpad:%s", address)
 }

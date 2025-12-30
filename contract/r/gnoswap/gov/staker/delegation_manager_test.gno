@@ -3,7 +3,6 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 )
 
@@ -16,7 +15,7 @@ func TestDelegationManager_NewDelegationManager(t *testing.T) {
 		// then
 		uassert.NotNil(t, dm)
 		uassert.NotNil(t, dm.GetUserDelegations())
-		uassert.Equal(t, dm.GetUserDelegations().Size(), 0)
+		uassert.Equal(t, len(dm.GetUserDelegations()), 0)
 	})
 }
 
@@ -164,12 +163,9 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 			} else {
 				uassert.True(t, exists)
 				totalCount := 0
-				delegations.Iterate("", "", func(key string, value interface{}) bool {
-					if ids, ok := value.([]int64); ok {
-						totalCount += len(ids)
-					}
-					return false
-				})
+				for _, ids := range delegations {
+					totalCount += len(ids)
+				}
 				uassert.Equal(t, totalCount, tc.expectedTotalCount)
 			}
 		})
@@ -179,52 +175,23 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 // TestDelegationManager_SetUserDelegations tests setting entire user delegations map
 func TestDelegationManager_SetUserDelegations(t *testing.T) {
 	tests := []struct {
-		name           string
-		setup          func() *avl.Tree
-		expectedSize   int
-		verifyDelegator func(*testing.T, *avl.Tree)
+		name        string
+		delegations map[string]map[string][]int64
 	}{
 		{
-			name: "Set empty delegations",
-			setup: func() *avl.Tree {
-				return avl.NewTree()
-			},
-			expectedSize:   0,
-			verifyDelegator: func(t *testing.T, result *avl.Tree) {},
+			name:        "Set empty delegations",
+			delegations: make(map[string]map[string][]int64),
 		},
 		{
 			name: "Set delegations with data",
-			setup: func() *avl.Tree {
-				tree := avl.NewTree()
-
-				// delegator1
-				delegatee1Tree := avl.NewTree()
-				delegatee1Tree.Set("delegatee1", []int64{1, 2, 3})
-				delegatee1Tree.Set("delegatee2", []int64{4, 5})
-				tree.Set("delegator1", delegatee1Tree)
-
-				// delegator2
-				delegatee2Tree := avl.NewTree()
-				delegatee2Tree.Set("delegatee3", []int64{6})
-				tree.Set("delegator2", delegatee2Tree)
-
-				return tree
-			},
-			expectedSize: 2,
-			verifyDelegator: func(t *testing.T, result *avl.Tree) {
-				// Verify delegator1
-				val, exists := result.Get("delegator1")
-				uassert.True(t, exists)
-				delegator1Tree, ok := val.(*avl.Tree)
-				uassert.True(t, ok)
-				uassert.Equal(t, delegator1Tree.Size(), 2)
-
-				// Verify delegator2
-				val, exists = result.Get("delegator2")
-				uassert.True(t, exists)
-				delegator2Tree, ok := val.(*avl.Tree)
-				uassert.True(t, ok)
-				uassert.Equal(t, delegator2Tree.Size(), 1)
+			delegations: map[string]map[string][]int64{
+				"delegator1": {
+					"delegatee1": {1, 2, 3},
+					"delegatee2": {4, 5},
+				},
+				"delegator2": {
+					"delegatee3": {6},
+				},
 			},
 		},
 	}
@@ -235,12 +202,16 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			dm := NewDelegationManager()
 
 			// when
-			dm.SetUserDelegations(tc.setup())
+			dm.SetUserDelegations(tc.delegations)
 
 			// then
 			result := dm.GetUserDelegations()
-			uassert.Equal(t, result.Size(), tc.expectedSize)
-			tc.verifyDelegator(t, result)
+			uassert.Equal(t, len(result), len(tc.delegations))
+			for delegator, delegatees := range tc.delegations {
+				resultDelegatees, exists := result[delegator]
+				uassert.True(t, exists)
+				uassert.Equal(t, len(resultDelegatees), len(delegatees))
+			}
 		})
 	}
 }
