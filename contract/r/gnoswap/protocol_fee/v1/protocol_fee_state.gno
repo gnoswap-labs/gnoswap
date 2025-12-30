@@ -33,7 +33,7 @@ func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
 	return pfs.store.GetAccuToDevOps()
 }
 
-func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
+func (pfs *protocolFeeState) TokenListWithAmounts() *avl.Tree {
 	return pfs.store.GetTokenListWithAmounts()
 }
 
@@ -176,7 +176,7 @@ func retrieveAmount(tree *avl.Tree, key string) int64 {
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
 func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) error {
-	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
+	prevAmount := retrieveAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
 	if err := pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount); err != nil {
@@ -187,7 +187,7 @@ func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath strin
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
 func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) error {
-	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
+	prevAmount := retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
 	if err := pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount); err != nil {
@@ -196,22 +196,9 @@ func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, 
 	return nil
 }
 
-func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
-	if prevAmountI, exists := tree.Get(key); !exists {
-		return 0
-	} else {
-		v, ok := prevAmountI.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast prevAmount to int64: %T", prevAmountI))
-		}
-		amount = v
-	}
-	return
-}
-
 // clearTokenListWithAmount clears the tokenListWithAmount.
 func (pfs *protocolFeeState) clearTokenListWithAmount() error {
-	if err := pfs.store.SetTokenListWithAmounts(make(map[string]int64)); err != nil {
+	if err := pfs.store.SetTokenListWithAmounts(avl.NewTree()); err != nil {
 		return err
 	}
 	return nil

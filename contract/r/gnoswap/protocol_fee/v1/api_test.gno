@@ -261,10 +261,10 @@ func TestGetActualBalance(t *testing.T) {
 
 			// Record amounts
 			if tt.barRecorded > 0 || tt.barTransfer == 0 {
-				pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/bar"] = tt.barRecorded
+				pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/bar", tt.barRecorded)
 			}
 			if tt.quxRecorded > 0 || tt.quxTransfer == 0 {
-				pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/qux"] = tt.quxRecorded
+				pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/qux", tt.quxRecorded)
 			}
 
 			// When
@@ -325,9 +325,9 @@ func TestGetRecordedBalance(t *testing.T) {
 			}
 
 			// Set recorded amounts
-			pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/bar"] = tt.barRecorded
+			pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/bar", tt.barRecorded)
 			if tt.quxRecorded > 0 {
-				pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/qux"] = tt.quxRecorded
+				pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/qux", tt.quxRecorded)
 			}
 
 			// When
@@ -432,9 +432,9 @@ func TestGetUnrecordedBalance(t *testing.T) {
 			}
 
 			// Set recorded amounts
-			pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/bar"] = tt.barRecorded
+			pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/bar", tt.barRecorded)
 			if tt.quxTransfer > 0 || tt.quxRecorded > 0 {
-				pf.getProtocolFeeState().TokenListWithAmounts()["gno.land/r/onbloc/qux"] = tt.quxRecorded
+				pf.getProtocolFeeState().TokenListWithAmounts().Set("gno.land/r/onbloc/qux", tt.quxRecorded)
 			}
 
 			// When

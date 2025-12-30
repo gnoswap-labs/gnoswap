@@ -53,30 +53,6 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func (pf *protocolFeeV1) ApiGetActualBalance() string {
-	tokenMap := make(map[string]int64)
-
-	// get all recorded tokens
-	for token := range pf.store.GetTokenListWithAmounts() {
-		actualBalance := common.BalanceOf(token, protocolFeeAddr)
-		tokenMap[token] = actualBalance
-	}
-
-	// only include tokens that are already recorded.
-	// check for any tokens that have balance will requires
-	// iterating through known tokens or having a registry.
-	data := json.Builder().
-		WriteString("height", formatInt(runtime.ChainHeight())).
-		WriteString("now", formatInt(time.Now().Unix()))
-
-	for token, balance := range tokenMap {
-		data.WriteString(token, formatInt64(balance))
-	}
-
-	return marshal(data.Node())
-}
-
-// ApiGetRecordedBalance returns the recorded tokens and their amounts
-func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 	tokenList := pf.store.GetTokenListWithAmounts()
 	if tokenList == nil {
 		return ""
@@ -86,32 +62,70 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
-	for token, amount := range tokenList {
-		data.WriteString(token, formatInt64(amount))
-	}
+	// only include tokens that are already recorded.
+	// check for any tokens that have balance will requires
+	// iterating through known tokens or having a registry.
+	tokenList.Iterate("", "", func(token string, value any) bool {
+		actualBalance := common.BalanceOf(token, protocolFeeAddr)
+		data.WriteString(token, formatInt(actualBalance))
+		return false
+	})
 
 	return marshal(data.Node())
 }
 
-// ApiGetUnrecordedBalance returns tokens with unrecorded balances
-func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
-	unrecordedMap := make(map[string]int64)
-
-	// Check all recorded tokens for discrepancies
-	for token, recordedAmount := range pf.store.GetTokenListWithAmounts() {
-		actualBalance := common.BalanceOf(token, protocolFeeAddr)
-		if actualBalance > recordedAmount {
-			unrecordedAmount := actualBalance - recordedAmount
-			unrecordedMap[token] = unrecordedAmount
-		}
+// ApiGetRecordedBalance returns the recorded tokens and their amounts
+func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
+	tokenList := pf.store.GetTokenListWithAmounts()
+	if tokenList.Size() == 0 {
+		return ""
 	}
 
 	data := json.Builder().
 		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
+	tokenList.Iterate("", "", func(token string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast amount to int64: %T", value))
+		}
+		data.WriteString(token, formatInt(amount))
+		return false
+	})
+
+	return marshal(data.Node())
+}
+
+// ApiGetUnrecordedBalance returns tokens with unrecorded balances
+func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
+	tokenList := pf.store.GetTokenListWithAmounts()
+	if tokenList.Size() == 0 {
+		return ""
+	}
+
+	unrecordedMap := make(map[string]int64)
+
+	// Check all recorded tokens for discrepancies
+	pf.store.GetTokenListWithAmounts().Iterate("", "", func(token string, value any) bool {
+		recordedAmount, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast recordedAmount to int64: %T", value))
+		}
+		actualBalance := common.BalanceOf(token, protocolFeeAddr)
+		if actualBalance > recordedAmount {
+			unrecordedAmount := actualBalance - recordedAmount
+			unrecordedMap[token] = unrecordedAmount
+		}
+		return false
+	})
+
+	data := json.Builder().
+		WriteString("height", formatInt(runtime.ChainHeight())).
+		WriteString("now", formatInt(time.Now().Unix()))
+
 	for token, unrecordedBalance := range unrecordedMap {
-		data.WriteString(token, formatInt64(unrecordedBalance))
+		data.WriteString(token, formatInt(unrecordedBalance))
 	}
 
 	return marshal(data.Node())
@@ -133,16 +147,6 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 	})
 
 	return data.Node()
-}
-
-// formatUint formats uint64 to string.
-func formatUint(v uint64) string {
-	return strconv.FormatUint(v, 10)
-}
-
-// formatInt64 formats int64 to string.
-func formatInt64(v int64) string {
-	return strconv.FormatInt(v, 10)
 }
 
 // formatInt formats int64 to string.

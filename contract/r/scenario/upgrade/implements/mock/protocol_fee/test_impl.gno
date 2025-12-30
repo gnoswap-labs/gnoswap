@@ -2,6 +2,7 @@
 package mock
 
 import (
+	"gno.land/p/nt/avl/rotree"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/protocol_fee/v1"
 )
@@ -101,11 +102,11 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	).(int64)
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
+func (t *TestProtocolFee) GetTokenListWithAmount() *rotree.ReadOnlyTree {
 	return t.ExecuteFn(
 		"GetTokenListWithAmount",
 		func(args ...any) any { return t.instance.GetTokenListWithAmount() },
-	).(map[string]int64)
+	).(*rotree.ReadOnlyTree)
 }
 
 func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {

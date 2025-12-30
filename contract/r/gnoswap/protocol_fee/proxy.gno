@@ -1,5 +1,9 @@
 package protocol_fee
 
+import (
+	"gno.land/p/nt/avl/rotree"
+)
+
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
 //
 // Returns:
@@ -53,8 +57,8 @@ func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
 }
 
-// GetTokenListWithAmount returns the list of tokens with their amounts.
-func GetTokenListWithAmount() map[string]int64 {
+// GetTokenListWithAmount returns a read-only view of the token list with their amounts.
+func GetTokenListWithAmount() *rotree.ReadOnlyTree {
 	return getImplementation().GetTokenListWithAmount()
 }
 
