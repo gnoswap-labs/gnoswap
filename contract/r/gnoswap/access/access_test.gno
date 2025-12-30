@@ -323,16 +323,8 @@ func TestSetRoleAddress(t *testing.T) {
 				}()
 			}
 
-			// Simulate SetRoleAddress logic
-			if tt.roleAddress == address("") {
-				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
-			}
-
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				roleAddresses[tt.roleName] = address("")
-			}
-
-			roleAddresses[tt.roleName] = tt.roleAddress
+			// Call actual implementation
+			setRoleAddress(tt.roleName, tt.roleAddress)
 
 			if !tt.shouldPanic {
 				// Verify set operation
@@ -403,12 +395,8 @@ func TestRemoveRole(t *testing.T) {
 				}()
 			}
 
-			// Simulate RemoveRole logic
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				panic(ufmt.Errorf("role %s does not exist", tt.roleName))
-			}
-
-			delete(roleAddresses, tt.roleName)
+			// Call actual implementation
+			removeRole(tt.roleName)
 
 			if !tt.shouldPanic {
 				// Verify removal
@@ -557,12 +545,8 @@ func TestSetRoleAddress_EdgeCases(t *testing.T) {
 				}()
 			}
 
-			// Simulate SetRoleAddress logic (without RBAC check)
-			if tt.roleAddress == address("") {
-				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
-			}
-
-			roleAddresses[tt.roleName] = tt.roleAddress
+			// Call actual implementation
+			setRoleAddress(tt.roleName, tt.roleAddress)
 
 			if !tt.shouldPanic {
 				// Verify set operation

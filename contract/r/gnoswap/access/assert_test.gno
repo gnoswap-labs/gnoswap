@@ -562,6 +562,8 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 
 	authorizedAddr := testutils.TestAddress("authorized")
 
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
+
 	tests := []struct {
 		name        string
 		setupRoles  map[string]address
@@ -577,6 +579,45 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
 			expectedMsg: "role  does not exist",
+		},
+		{
+			name: "role exists but caller address doesn't match",
+			setupRoles: map[string]address{
+				"admin": authorizedAddr,
+			},
+			testRole:    "admin",
+			testAddr:    unauthorizedAddr,
+			shouldPanic: true,
+			expectedMsg: "unauthorized: caller " + unauthorizedAddr.String() + " is not admin",
+		},
+		{
+			name: "role exists and caller address matches",
+			setupRoles: map[string]address{
+				"admin": authorizedAddr,
+			},
+			testRole:    "admin",
+			testAddr:    authorizedAddr,
+			shouldPanic: false,
+		},
+		{
+			name: "role with special characters doesn't exist",
+			setupRoles: map[string]address{
+				"admin": authorizedAddr,
+			},
+			testRole:    "admin!@#$",
+			testAddr:    authorizedAddr,
+			shouldPanic: true,
+			expectedMsg: "role admin!@#$ does not exist",
+		},
+		{
+			name: "empty address with existing role",
+			setupRoles: map[string]address{
+				"admin": authorizedAddr,
+			},
+			testRole:    "admin",
+			testAddr:    address(""),
+			shouldPanic: true,
+			expectedMsg: "unauthorized: caller " + address("").String() + " is not admin",
 		},
 	}
 
