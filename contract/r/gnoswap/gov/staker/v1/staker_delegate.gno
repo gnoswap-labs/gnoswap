@@ -334,16 +334,27 @@ func (gs *govStakerV1) unDelegate(
 	currentHeight,
 	currentTimestamp int64,
 ) (int64, error) {
-	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
-	if len(delegations) == 0 {
+	delegationIDs := gs.getUserDelegationIDsWithDelegatee(delegator, delegatee)
+	if len(delegationIDs) == 0 {
 		return 0, nil
 	}
 
 	unDelegationAmount := amount
 	lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Process undelegation across multiple delegation records if necessary
-	for _, delegation := range delegations {
+	for _, id := range delegationIDs {
+		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		if !exists {
+			continue
+		}
+
+		delegation, ok := delegationRaw.(*staker.Delegation)
+		if !ok {
+			continue
+		}
+
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
@@ -401,15 +412,25 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	currentHeight,
 	currentTime int64,
 ) (int64, error) {
-	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
-	if len(delegations) == 0 {
+	delegationIDs := gs.getUserDelegationIDsWithDelegatee(delegator, delegatee)
+	if len(delegationIDs) == 0 {
 		return 0, nil
 	}
 
 	unDelegationAmount := amount
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Process undelegation across multiple delegation records if necessary
-	for _, delegation := range delegations {
+	for _, id := range delegationIDs {
+		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		if !exists {
+			continue
+		}
+		delegation, ok := delegationRaw.(*staker.Delegation)
+		if !ok {
+			continue
+		}
+
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
@@ -428,6 +449,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentTime,
 		)
 
+		// Save updated delegation state after undelegation without lockup
+		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
@@ -452,39 +475,66 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) { // performance optimization
-	collectedAmount := int64(0)
+func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
+	totalCollectedAmount := int64(0)
 
-	delegations := gs.getUserDelegations(user)
-	if len(delegations) == 0 {
-		return collectedAmount, nil
-	}
+	delegationTree := gs.getUserDelegations(user)
+
+	var err error
+	var idsToRemove []int64
+	allDelegations := gs.store.GetAllDelegations()
 
 	// Collect from all available delegations
-	for _, delegation := range delegations {
-		resolver := NewDelegationResolver(delegation)
-		collectableAmount := resolver.CollectableAmount(currentTime)
-
-		if collectableAmount == 0 {
-			continue
+	delegationTree.Iterate("", "", func(delegatee string, value any) bool {
+		delegationIDs, ok := value.([]int64)
+		if !ok {
+			return false
 		}
 
-		err := resolver.Collect(collectableAmount, currentTime)
-		if err != nil {
-			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
-			return collectedAmount, msg
+		if len(delegationIDs) == 0 {
+			return false
+		}
+		for _, id := range delegationIDs {
+			delegationRaw, exists := allDelegations.Get(formatInt(id))
+			if !exists {
+				continue
+			}
+			delegation, ok := delegationRaw.(*staker.Delegation)
+			if !ok {
+				continue
+			}
+
+			resolver := NewDelegationResolver(delegation)
+
+			collectedAmount, iErr := resolver.processCollection(currentTime)
+			if iErr != nil {
+				err = iErr
+				return true
+			}
+
+			// Simple addition since addToCollectedAmount was removed
+			totalCollectedAmount = safeAddInt64(totalCollectedAmount, collectedAmount)
+
+			// Save updated delegation state after collection
+			if resolver.IsEmpty() {
+				idsToRemove = append(idsToRemove, delegation.ID())
+			} else {
+				gs.setDelegation(delegation.ID(), delegation)
+			}
 		}
 
-		// Simple addition since addToCollectedAmount was removed
-		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
+		return false
+	})
 
-		// Remove empty delegations to keep storage clean
-		if resolver.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
-		}
+	for _, id := range idsToRemove {
+		gs.removeDelegation(id)
 	}
 
-	return collectedAmount, nil
+	if err != nil {
+		return totalCollectedAmount, makeErrorWithDetails(errInvalidAmount, err.Error())
+	}
+
+	return totalCollectedAmount, nil
 }
 
 // registerReferrer registers or validates referrer for delegation.

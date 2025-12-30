@@ -1,7 +1,7 @@
 package v1
 
 import (
-    "math"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -357,13 +357,7 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 			// Then: Should update state correctly
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), tt.expectedUnDelegated)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollected)
-			uassert.Equal(t, len(resolver.Get().Withdraws()), 1)
-
-			// Verify withdraw record is immediately collectable
-			withdraw := resolver.Get().Withdraws()[0]
-			withdrawResolver := NewDelegationWithdrawResolver(withdraw)
-			uassert.Equal(t, withdrawResolver.IsCollectable(tt.currentTime), false)
-			uassert.Equal(t, withdrawResolver.CollectableAmount(tt.currentTime), int64(0)) // Already collected
+			uassert.Equal(t, len(resolver.Get().Withdraws()), 0)
 		})
 	}
 }
@@ -400,7 +394,7 @@ func TestDelegation_collect(t *testing.T) {
 			expectedCollected: 300,
 		},
 		{
-			name: "Collect more than collectable amount",
+			name: "Collect collectable amount",
 			setupDelegation: func() *staker.Delegation {
 				delegation := NewDelegation(
 					2,
@@ -415,12 +409,13 @@ func TestDelegation_collect(t *testing.T) {
 				resolver.UnDelegate(200, 200, 200, 100)
 				return delegation
 			},
-			collectAmount: 500, // More than available
-			currentTime:   400,
-			expectError:   true,
+			collectAmount:     200,
+			currentTime:       400,
+			expectError:       false,
+			expectedCollected: 200,
 		},
 		{
-			name: "Collect partial amount",
+			name: "Collect full amount",
 			setupDelegation: func() *staker.Delegation {
 				delegation := NewDelegation(
 					3,
@@ -434,10 +429,10 @@ func TestDelegation_collect(t *testing.T) {
 				resolver.UnDelegate(500, 200, 200, 100)
 				return delegation
 			},
-			collectAmount:     300, // Partial collection
+			collectAmount:     500,
 			currentTime:       400,
 			expectError:       false,
-			expectedCollected: 300,
+			expectedCollected: 500,
 		},
 		{
 			name: "Collect large amount without overflow",
@@ -471,7 +466,7 @@ func TestDelegation_collect(t *testing.T) {
 			initialCollected := resolver.Get().CollectedAmount()
 
 			// When: Collect
-			err := resolver.Collect(tt.collectAmount, tt.currentTime)
+			_, err := resolver.processCollection(tt.currentTime)
 
 			// Then: Check result
 			if tt.expectError {
@@ -508,12 +503,12 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				d.UnDelegateWithoutLockup(100, 300, 300)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(450))
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(100)) // Immediate collection
-				uassert.Equal(t, len(d.Get().Withdraws()), 3)
+				uassert.Equal(t, len(d.Get().Withdraws()), 2)
 			},
 			description: "Should handle multiple undelegations with different lockup periods",
 		},
 		{
-			name: "Partial collections from multiple withdraws",
+			name: "Full collections from multiple withdraws",
 			operations: func(d *DelegationResolver) {
 				// Setup multiple undelegations
 				d.UnDelegate(300, 100, 100, 100) // Short lockup
@@ -523,12 +518,12 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				currentTime := int64(400)
 
 				// Collect partially
-				err := d.Collect(250, currentTime)
+				collectedAmount, err := d.processCollection(currentTime)
 				uassert.NoError(t, err)
-				uassert.Equal(t, d.Get().CollectedAmount(), int64(250))
+				uassert.Equal(t, collectedAmount, int64(500))
 
 				// Collect remaining
-				err = d.Collect(250, currentTime+100)
+				_, err = d.processCollection(currentTime + 100)
 				uassert.NoError(t, err)
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(500))
 			},
@@ -549,7 +544,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(200))
 
 				// Collect locked amount after lockup period
-				err := d.Collect(300, 400) // After lockup
+				_, err := d.processCollection(400) // After lockup
 				uassert.NoError(t, err)
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(500))
 
@@ -572,17 +567,17 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				currentTime := int64(400)
 
 				// First collection
-				err := d.Collect(300_000_000, currentTime)
+				_, err := d.processCollection(currentTime)
 				uassert.NoError(t, err)
-				uassert.Equal(t, d.Get().CollectedAmount(), int64(300_000_000))
+				uassert.Equal(t, d.Get().CollectedAmount(), int64(900_000_000))
 
 				// Second collection - tests accumulation
-				err = d.Collect(400_000_000, currentTime)
+				_, err = d.processCollection(currentTime)
 				uassert.NoError(t, err)
-				uassert.Equal(t, d.Get().CollectedAmount(), int64(700_000_000))
+				uassert.Equal(t, d.Get().CollectedAmount(), int64(900_000_000))
 
 				// Third collection - total 900M
-				err = d.Collect(200_000_000, currentTime)
+				_, err = d.processCollection(currentTime)
 				uassert.NoError(t, err)
 				uassert.Equal(t, d.Get().CollectedAmount(), int64(900_000_000))
 			},
@@ -621,7 +616,7 @@ func TestDelegation_EdgeCases(t *testing.T) {
 		description string
 	}{
 		{
-			name: "Collect with no undelegations should fail",
+			name: "Collect with no undelegations should return 0",
 			testFunc: func() {
 				delegation := NewDelegation(
 					1,
@@ -633,10 +628,11 @@ func TestDelegation_EdgeCases(t *testing.T) {
 				)
 
 				resolver := NewDelegationResolver(delegation)
-				err := resolver.Collect(100, 200)
-				uassert.Error(t, err) // Should fail - nothing to collect
+				collectedAmount, err := resolver.processCollection(200)
+				uassert.NoError(t, err)
+				uassert.Equal(t, collectedAmount, int64(0))
 			},
-			description: "Should fail when trying to collect with no undelegations",
+			description: "Should return 0 when trying to collect with no undelegations",
 		},
 		{
 			name: "Zero amount operations",
@@ -656,14 +652,14 @@ func TestDelegation_EdgeCases(t *testing.T) {
 				uassert.Equal(t, resolver.Get().UnDelegatedAmount(), int64(0))
 
 				// Zero collection should succeed but do nothing
-				err := resolver.Collect(0, 300)
+				_, err := resolver.processCollection(300)
 				uassert.NoError(t, err)
 				uassert.Equal(t, resolver.Get().CollectedAmount(), int64(0))
 			},
 			description: "Should handle zero amount operations correctly",
 		},
 		{
-			name: "Collection before lockup expiry",
+			name: "Collection before lockup expiry should return 0",
 			testFunc: func() {
 				delegation := NewDelegation(
 					1,
@@ -679,8 +675,9 @@ func TestDelegation_EdgeCases(t *testing.T) {
 				resolver.UnDelegate(300, 200, 200, 1000000) // Very long lockup
 
 				// Try to collect immediately - should fail or collect nothing
-				err := resolver.Collect(300, 250)
-				uassert.Error(t, err) // Should fail - lockup not expired
+				collectedAmount, err := resolver.processCollection(250)
+				uassert.NoError(t, err)
+				uassert.Equal(t, collectedAmount, int64(0))
 			},
 			description: "Should handle collection attempts before lockup expiry",
 		},
@@ -744,7 +741,7 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			expectedHasError: false,
 		},
 		{
-			name:                "overflow",
+			name:                 "overflow",
 			collectedAmount:      math.MaxInt64, // MaxInt64
 			amount:               1,
 			expectedResult:       0,
@@ -757,14 +754,14 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// when/then
 			if tc.expectedHasPanic {
-    			uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
-       				addToCollectedAmount(tc.collectedAmount, tc.amount)
-    			})
-            } else if tc.expectedHasError {
-                _, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+					addToCollectedAmount(tc.collectedAmount, tc.amount)
+				})
+			} else if tc.expectedHasError {
+				_, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NotNil(t, err)
 			} else {
-			    result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NoError(t, err)
 				uassert.Equal(t, result, tc.expectedResult)
 			}
@@ -790,11 +787,11 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		resolver.UnDelegate(500, 100, 100, 86400) // 1 day lockup
 
 		// when - try to collect more than collectable (0 at currentTime=100)
-		err := resolver.Collect(100, 100) // lockup not passed
+		collectedAmount, err := resolver.processCollection(100) // lockup not passed
 
 		// then
-		uassert.NotNil(t, err)
-		uassert.Equal(t, err.Error(), "amount to collect is greater than collectable amount")
+		uassert.NoError(t, err)
+		uassert.Equal(t, collectedAmount, int64(0))
 	})
 
 	t.Run("Collect with negative amount", func(t *testing.T) {
@@ -815,11 +812,10 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		// when - try to collect negative amount after lockup (treated as no-op)
 		currentTime := int64(100 + 86400 + 1)
 		collectableBefore := resolver.CollectableAmount(currentTime)
-		err := resolver.Collect(-100, currentTime)
-
+		collectedAmount, err := resolver.processCollection(currentTime)
 		// then - should succeed (negative amount is treated as zero)
 		uassert.Nil(t, err)
-		uassert.Equal(t, resolver.CollectableAmount(currentTime), collectableBefore) // nothing was collected
+		uassert.Equal(t, collectedAmount, collectableBefore) // nothing was collected
 	})
 
 	t.Run("Collect exact collectable amount", func(t *testing.T) {
@@ -839,8 +835,7 @@ func TestDelegation_CollectErrors(t *testing.T) {
 
 		// when - collect exact collectable amount after lockup passes
 		currentTime := int64(100 + 86400 + 1)
-		collectableAmount := resolver.CollectableAmount(currentTime)
-		err := resolver.Collect(collectableAmount, currentTime)
+		_, err := resolver.processCollection(currentTime)
 
 		// then - should succeed
 		uassert.Nil(t, err)
@@ -863,7 +858,7 @@ func TestDelegation_CollectErrors(t *testing.T) {
 		resolver.UnDelegateWithoutLockup(500, 100, 100)
 
 		// when - collect zero amount
-		err := resolver.Collect(0, 200)
+		_, err := resolver.processCollection(200)
 
 		// then - should succeed (no-op)
 		uassert.Nil(t, err)
