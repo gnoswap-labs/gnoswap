@@ -49,7 +49,25 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	return resolvedState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
+	rewardAmountTree, err := resolvedState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	rewardAmounts := make(map[string]int64)
+
+	rewardAmountTree.Iterate("", "", func(token string, value any) bool {
+		rewardAmount, ok := value.(int64)
+		if !ok {
+			return false
+		}
+
+		rewardAmounts[token] = rewardAmount
+
+		return false
+	})
+
+	return rewardAmounts, nil
 }
 
 // calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake for all tokens.
