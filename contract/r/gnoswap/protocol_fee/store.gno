@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/rotree"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -263,8 +262,8 @@ func (s *protocolFeeStore) InitializeTokenListWithAmount() error {
 	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), avl.NewTree())
 }
 
-func (s *protocolFeeStore) GetTokenListWithAmounts() *rotree.ReadOnlyTree {
-	result, err := s.kvStore.GetReadOnlyTree(StoreKeyTokenListWithAmounts.String())
+func (s *protocolFeeStore) GetTokenListWithAmounts() *avl.Tree {
+	result, err := s.kvStore.GetTree(StoreKeyTokenListWithAmounts.String())
 	if err != nil {
 		panic(err)
 	}
@@ -272,7 +271,7 @@ func (s *protocolFeeStore) GetTokenListWithAmounts() *rotree.ReadOnlyTree {
 	return result
 }
 
-func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts *rotree.ReadOnlyTree) error {
+func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts *avl.Tree) error {
 	if tokenListWithAmounts == nil {
 		return errors.New("tokenListWithAmounts is nil")
 	}
