@@ -96,6 +96,12 @@ func TestRbac_RegisterRole(t *testing.T) {
 			addr:        address(""),
 			shouldError: false, // RegisterRole doesn't validate address
 		},
+		{
+			name:        "Register role with empty name",
+			roleName:    "",
+			addr:        adminAddr,
+			shouldError: false, // RegisterRole doesn't validate role name
+		},
 	}
 
 	for _, tt := range tests {
@@ -227,6 +233,23 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			shouldError: true,
 			errorMsg:    ErrInvalidAddress.Error(),
 		},
+		{
+			name:        "Update with empty role name fails",
+			setup:       func(rb *RBAC) {},
+			roleName:    "",
+			newAddr:     userAddr,
+			shouldError: true,
+			errorMsg:    ErrRoleDoesNotExist.Error(),
+		},
+		{
+			name: "Update with same address succeeds (idempotent)",
+			setup: func(rb *RBAC) {
+				rb.RegisterRole(adminRole, adminAddr)
+			},
+			roleName:    adminRole,
+			newAddr:     adminAddr,
+			shouldError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -301,6 +324,13 @@ func TestRbac_RemoveRole(t *testing.T) {
 		uassert.Error(t, err)
 		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
 	})
+
+	t.Run("remove role with empty name fails", func(t *testing.T) {
+		manager := New()
+		err := manager.RemoveRole("")
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
+	})
 }
 
 func TestRbac_GetAllRoleAddresses(t *testing.T) {
@@ -346,6 +376,11 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 		{
 			name:        "Get non-existent role fails",
 			roleName:    "non_existent",
+			shouldError: true,
+		},
+		{
+			name:        "Get role with empty name fails",
+			roleName:    "",
 			shouldError: true,
 		},
 	}
