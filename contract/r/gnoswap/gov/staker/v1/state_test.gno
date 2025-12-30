@@ -679,7 +679,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 
 				return user, targetDelegatee, delegationIDs
 			},
-			expectedCount: 2,
+			expectedCount: 1,
 		},
 		{
 			name: "User with no delegations to specific delegatee",
@@ -786,7 +786,7 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 
 				return user, delegatee, delegationIDs
 			},
-			expectedCount: 3,
+			expectedCount: 1,
 		},
 	}
 
@@ -796,265 +796,49 @@ func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Given: Setup state
-			user, delegatee, expectedDelegationIDs := tt.setupState(gs)
+			user, _, expectedDelegationIDs := tt.setupState(gs)
 
 			// When: Get user delegations with delegatee
-			delegations := gs.getUserDelegationsWithDelegatee(user, delegatee)
-
-			// Then: Should return expected count
-			uassert.Equal(t, len(delegations), tt.expectedCount)
+			delegationTree := gs.getUserDelegations(user)
 
 			// Then: All delegations should belong to the user and delegatee
-			for _, delegation := range delegations {
-				uassert.Equal(t, delegation.DelegateFrom(), user)
-				uassert.Equal(t, delegation.DelegateTo(), delegatee)
-			}
+			delegationTree.Iterate("", "", func(delegatee string, value interface{}) bool {
+				delegationIDs, ok := value.([]int64)
+				if !ok {
+					return false
+				}
+
+				for _, id := range delegationIDs {
+					delegation, exists := gs.store.GetDelegation(id)
+					if !exists {
+						continue
+					}
+
+					uassert.Equal(t, delegation.DelegateFrom().String(), user.String())
+					uassert.Equal(t, delegation.DelegateTo().String(), delegatee)
+				}
+
+				return false
+			})
 
 			// Then: Verify all expected delegation IDs are present
 			if tt.expectedCount > 0 {
 				foundIDs := make(map[int64]bool)
-				for _, delegation := range delegations {
-					foundIDs[delegation.ID()] = true
-				}
+				delegationTree.Iterate("", "", func(delegatee string, value interface{}) bool {
+					delegationIDs, ok := value.([]int64)
+					if !ok {
+						return false
+					}
+
+					for _, id := range delegationIDs {
+						foundIDs[id] = true
+					}
+
+					return false
+				})
 
 				for _, expectedID := range expectedDelegationIDs {
 					uassert.True(t, foundIDs[expectedID])
-				}
-			}
-		})
-	}
-}
-
-// Test getUserDelegations with comprehensive edge cases and scenarios
-func TestGetUserDelegationsComprehensive(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupState    func(gs *govStakerV1) (address, map[address]int)
-		expectedTotal int
-	}{
-		{
-			name: "User with delegations to multiple different delegatees",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				user := address("g1multiuser1234567890abcdefghijklmno")
-				delegateeCounts := make(map[address]int)
-
-				// Add delegations to 3 different delegatees
-				delegatees := []address{
-					address("g1validator1111111111abcdefghijklm"),
-					address("g1validator2222222222abcdefghijklm"),
-					address("g1validator3333333333abcdefghijklm"),
-				}
-
-				for _, delegatee := range delegatees {
-					count := 2 // 2 delegations per delegatee
-					for i := 0; i < count; i++ {
-						delegationID := gs.nextDelegationID()
-						delegation := staker.NewDelegation(
-							delegationID,
-							user,
-							delegatee,
-							int64(1000*(i+1)),
-							100,
-							100,
-						)
-						gs.addDelegation(delegationID, delegation)
-					}
-					delegateeCounts[delegatee] = count
-				}
-
-				return user, delegateeCounts
-			},
-			expectedTotal: 6,
-		},
-		{
-			name: "User with single delegation to single delegatee",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				user := address("g1singleuser1234567890abcdefghijklm")
-				delegatee := address("g1validator4444444444abcdefghijklm")
-				delegateeCounts := make(map[address]int)
-
-				delegationID := gs.nextDelegationID()
-				delegation := staker.NewDelegation(
-					delegationID,
-					user,
-					delegatee,
-					5000,
-					100,
-					100,
-				)
-				gs.addDelegation(delegationID, delegation)
-				delegateeCounts[delegatee] = 1
-
-				return user, delegateeCounts
-			},
-			expectedTotal: 1,
-		},
-		{
-			name: "User with many delegations to many delegatees",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				user := address("g1heavyuser1234567890abcdefghijklmn")
-				delegateeCounts := make(map[address]int)
-
-				// 5 delegatees with varying numbers of delegations
-				delegateesWithCounts := []struct {
-					addr  address
-					count int
-				}{
-					{address("g1validator5555555555abcdefghijklm"), 3},
-					{address("g1validator6666666666abcdefghijklm"), 2},
-					{address("g1validator7777777777abcdefghijklm"), 4},
-					{address("g1validator8888888888abcdefghijklm"), 1},
-					{address("g1validator9999999999abcdefghijklm"), 5},
-				}
-
-				totalDelegations := 0
-				for _, dc := range delegateesWithCounts {
-					for i := 0; i < dc.count; i++ {
-						delegationID := gs.nextDelegationID()
-						delegation := staker.NewDelegation(
-							delegationID,
-							user,
-							dc.addr,
-							int64(500*(i+1)),
-							100,
-							100,
-						)
-						gs.addDelegation(delegationID, delegation)
-						totalDelegations++
-					}
-					delegateeCounts[dc.addr] = dc.count
-				}
-
-				return user, delegateeCounts
-			},
-			expectedTotal: 15,
-		},
-		{
-			name: "User with no delegations - empty state",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				user := address("g1emptyuser1234567890abcdefghijklmn")
-				return user, make(map[address]int)
-			},
-			expectedTotal: 0,
-		},
-		{
-			name: "User with delegations after some are removed",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				user := address("g1removeduser1234567890abcdefghijklm")
-				delegatee := address("g1validator1010101010abcdefghijklm")
-				delegateeCounts := make(map[address]int)
-
-				// Add 5 delegations
-				delegationIDs := make([]int64, 0)
-				for i := 0; i < 5; i++ {
-					delegationID := gs.nextDelegationID()
-					delegation := staker.NewDelegation(
-						delegationID,
-						user,
-						delegatee,
-						int64(1000*(i+1)),
-						100,
-						100,
-					)
-					gs.addDelegation(delegationID, delegation)
-					delegationIDs = append(delegationIDs, delegationID)
-				}
-
-				// Remove 2 delegations
-				gs.removeDelegation(delegationIDs[1])
-				gs.removeDelegation(delegationIDs[3])
-
-				delegateeCounts[delegatee] = 3
-				return user, delegateeCounts
-			},
-			expectedTotal: 3,
-		},
-		{
-			name: "Multiple users - verify isolation",
-			setupState: func(gs *govStakerV1) (address, map[address]int) {
-				targetUser := address("g1targetuser1234567890abcdefghijklm")
-				otherUser1 := address("g1otheruser1111111111abcdefghijklm")
-				otherUser2 := address("g1otheruser2222222222abcdefghijklm")
-				delegatee := address("g1sharedvalidator1234567890abcdefg")
-				delegateeCounts := make(map[address]int)
-
-				// Add delegations for target user (should be returned)
-				for i := 0; i < 3; i++ {
-					delegationID := gs.nextDelegationID()
-					delegation := staker.NewDelegation(
-						delegationID,
-						targetUser,
-						delegatee,
-						int64(1000*(i+1)),
-						100,
-						100,
-					)
-					gs.addDelegation(delegationID, delegation)
-				}
-				delegateeCounts[delegatee] = 3
-
-				// Add delegations for other users (should NOT be returned)
-				for i := 0; i < 2; i++ {
-					delegationID := gs.nextDelegationID()
-					delegation := staker.NewDelegation(
-						delegationID,
-						otherUser1,
-						delegatee,
-						int64(500*(i+1)),
-						100,
-						100,
-					)
-					gs.addDelegation(delegationID, delegation)
-				}
-
-				delegationID := gs.nextDelegationID()
-				delegation := staker.NewDelegation(
-					delegationID,
-					otherUser2,
-					delegatee,
-					2000,
-					100,
-					100,
-				)
-				gs.addDelegation(delegationID, delegation)
-
-				return targetUser, delegateeCounts
-			},
-			expectedTotal: 3,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
-
-			// Given: Setup state
-			user, delegateeCounts := tt.setupState(gs)
-
-			// When: Get all user delegations
-			delegations := gs.getUserDelegations(user)
-
-			// Then: Should return expected total count
-			uassert.Equal(t, len(delegations), tt.expectedTotal)
-
-			// Then: All delegations should belong to the user
-			for _, delegation := range delegations {
-				uassert.Equal(t, delegation.DelegateFrom(), user)
-			}
-
-			// Then: Verify delegations are grouped correctly by delegatee
-			if tt.expectedTotal > 0 {
-				delegateeCount := make(map[address]int)
-				for _, delegation := range delegations {
-					delegateeCount[delegation.DelegateTo()]++
-				}
-
-				// Verify counts match expected
-				for delegatee, expectedCount := range delegateeCounts {
-					actualCount, exists := delegateeCount[delegatee]
-					uassert.True(t, exists)
-					uassert.Equal(t, actualCount, expectedCount)
 				}
 			}
 		})

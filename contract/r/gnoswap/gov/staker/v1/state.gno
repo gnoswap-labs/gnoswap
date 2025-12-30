@@ -129,7 +129,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - user: user's address
 //
 // Returns:
-//   - []*Delegation: list of user's delegations
+//   - *avl.Tree: tree of user's delegations
 func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 	delegationManager := g.store.GetDelegationManager()
 
@@ -149,7 +149,7 @@ func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 //   - delegatee: delegatee's address (currently unused)
 //
 // Returns:
-//   - []*Delegation: list of user's delegations to the delegatee
+//   - []int64: list of user's delegation IDs to the delegatee
 func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee address) []int64 {
 	delegationManager := g.store.GetDelegationManager()
 
