@@ -936,7 +936,7 @@ func TestDelegation_BoundaryConditions(t *testing.T) {
 		resolver.UnDelegate(math.MaxInt64/4, 100, 100, 0) // 0 lockup period
 
 		// when: collect large amount (uses safeAddInt64 internally)
-		err := resolver.Collect(math.MaxInt64/4, 200)
+		_, err := resolver.processCollection(200)
 
 		// then: should succeed
 		uassert.NoError(t, err)

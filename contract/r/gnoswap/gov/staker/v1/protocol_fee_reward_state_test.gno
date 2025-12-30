@@ -126,8 +126,8 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(200)
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 1000,
-			})
+					"token1": 1000,
+				})
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(1000),
@@ -290,8 +290,8 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(100)
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 1000,
-			})
+					"token1": 1000,
+				})
 			},
 			currentTimestamp: 100,
 			expectError:      true,
@@ -302,8 +302,8 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(50)
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 1000,
-			})
+					"token1": 1000,
+				})
 			},
 			currentTimestamp: 100,
 			expectError:      true, // Must update reward debt before claiming
@@ -314,13 +314,13 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 1000,
-				"token2": 500,
-			})
+					"token1": 1000,
+					"token2": 500,
+				})
 				s.SetClaimedRewards(map[string]int64{
-				"token1": 300,
-				"token2": 0,
-			})
+					"token1": 300,
+					"token2": 0,
+				})
 			},
 			currentTimestamp:      100,
 			expectError:           false,
@@ -390,8 +390,8 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 				s.SetStakedAmount(1000)
 				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 200,
-			})
+					"token1": 200,
+				})
 			},
 			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
@@ -516,11 +516,11 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
 				s.SetAccumulatedRewards(map[string]int64{
-				"token1": 1000,
-			})
+					"token1": 1000,
+				})
 				s.SetClaimedRewards(map[string]int64{
-				"token1": 0,
-			})
+					"token1": 0,
+				})
 
 				// First claim
 				rewards1, err1 := s.claimRewards(100)
@@ -559,88 +559,6 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 			tt.setupTest(resolver)
 		})
 	}
-}
-
-// TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake tests the private clone function
-func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "clone empty map",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given - empty map
-			original := make(map[string]*u256.Uint)
-
-			// when
-			cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-			// then
-			uassert.NotNil(t, cloned)
-			uassert.Equal(t, len(cloned), 0)
-		})
-	}
-
-	t.Run("clone map with single token", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.NotNil(t, cloned["token1"])
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-
-		// verify deep copy - modifying original shouldn't affect clone
-		original["token1"] = u256.NewUintFromInt64(2000)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-	})
-
-	t.Run("clone map with multiple tokens", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-		original["token2"] = u256.NewUintFromInt64(2000)
-		original["token3"] = u256.NewUintFromInt64(3000)
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 3)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-		uassert.Equal(t, cloned["token2"].ToString(), "2000")
-		uassert.Equal(t, cloned["token3"].ToString(), "3000")
-
-		// verify deep copy
-		original["token1"] = u256.NewUintFromInt64(9999)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-	})
-
-	t.Run("clone map with large values", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		largeValue := u256.NewUintFromInt64(1000)
-		largeValue = largeValue.Lsh(largeValue, 128) // Shift left by 128 bits
-		original["token1"] = largeValue
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.Equal(t, cloned["token1"].ToString(), largeValue.ToString())
-	})
 }
 
 // Test boundary conditions for safe arithmetic in protocol fee reward operations
