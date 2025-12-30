@@ -444,12 +444,6 @@ func TestXgns_Halted(t *testing.T) {
 			setupMint:       true,
 			expectedMessage: "halted: xgns",
 		},
-		{
-			name:            "Halted BurnByLaunchPad",
-			operation:       "BurnByLaunchPad",
-			setupMint:       true,
-			expectedMessage: "halted: xgns",
-		},
 	}
 
 	for _, tc := range tests {
@@ -480,12 +474,303 @@ func TestXgns_Halted(t *testing.T) {
 					testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 					Burn(cross, govStakerAddress, 50)
 				})
-			case "BurnByLaunchPad":
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-					BurnByLaunchPad(cross, launchpadAddress, 50)
-				})
 			}
+		})
+	}
+}
+
+// TestXgns_MintThenBurnAll tests minting and then burning the entire amount
+func TestXgns_MintThenBurnAll(t *testing.T) {
+	tests := []struct {
+		name                   string
+		mintAmount             int64
+		burnAmount             int64
+		expectedFinalBalance   int64
+		expectedFinalSupply    int64
+	}{
+		{
+			name:                   "Mint and burn entire amount",
+			mintAmount:             1000,
+			burnAmount:             1000,
+			expectedFinalBalance:   0,
+			expectedFinalSupply:    0,
+		},
+		{
+			name:                   "Mint large amount and burn all",
+			mintAmount:             1000000000,
+			burnAmount:             1000000000,
+			expectedFinalBalance:   0,
+			expectedFinalSupply:    0,
+		},
+		{
+			name:                   "Mint minimum and burn all",
+			mintAmount:             1,
+			burnAmount:             1,
+			expectedFinalBalance:   0,
+			expectedFinalSupply:    0,
+		},
+		{
+			name:                   "Mint and burn partial amount",
+			mintAmount:             1000,
+			burnAmount:             600,
+			expectedFinalBalance:   400,
+			expectedFinalSupply:    400,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+			resetHalt(t)
+
+			// given - mint tokens
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+			Mint(cross, govStakerAddress, tc.mintAmount)
+
+			// verify mint
+			uassert.Equal(t, tc.mintAmount, BalanceOf(govStakerAddress))
+			uassert.Equal(t, tc.mintAmount, TotalSupply())
+
+			// when - burn tokens
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+			Burn(cross, govStakerAddress, tc.burnAmount)
+
+			// then
+			uassert.Equal(t, tc.expectedFinalBalance, BalanceOf(govStakerAddress))
+			uassert.Equal(t, tc.expectedFinalSupply, TotalSupply())
+		})
+	}
+}
+
+// TestXgns_MultipleAddressMintVotingSupply tests VotingSupply with multiple addresses
+func TestXgns_MultipleAddressMintVotingSupply(t *testing.T) {
+	user1 := testutils.TestAddress("user1")
+	user2 := testutils.TestAddress("user2")
+	user3 := testutils.TestAddress("user3")
+
+	tests := []struct {
+		name                 string
+		mintToGovStaker      int64
+		mintToLaunchpad      int64
+		mintToUser1          int64
+		mintToUser2          int64
+		mintToUser3          int64
+		expectedTotalSupply  int64
+		expectedVotingSupply int64
+	}{
+		{
+			name:                 "Multiple users with no launchpad",
+			mintToGovStaker:      1000,
+			mintToLaunchpad:      0,
+			mintToUser1:          500,
+			mintToUser2:          300,
+			mintToUser3:          200,
+			expectedTotalSupply:  2000,
+			expectedVotingSupply: 2000,
+		},
+		{
+			name:                 "Multiple users with launchpad",
+			mintToGovStaker:      1000,
+			mintToLaunchpad:      500,
+			mintToUser1:          300,
+			mintToUser2:          200,
+			mintToUser3:          0,
+			expectedTotalSupply:  2000,
+			expectedVotingSupply: 1500, // 2000 - 500 (launchpad)
+		},
+		{
+			name:                 "Large amounts distributed",
+			mintToGovStaker:      1000000000,
+			mintToLaunchpad:      500000000,
+			mintToUser1:          200000000,
+			mintToUser2:          100000000,
+			mintToUser3:          50000000,
+			expectedTotalSupply:  1850000000,
+			expectedVotingSupply: 1350000000, // 1850000000 - 500000000
+		},
+		{
+			name:                 "Only launchpad has tokens",
+			mintToGovStaker:      0,
+			mintToLaunchpad:      1000,
+			mintToUser1:          0,
+			mintToUser2:          0,
+			mintToUser3:          0,
+			expectedTotalSupply:  1000,
+			expectedVotingSupply: 0, // all in launchpad
+		},
+		{
+			name:                 "Equal distribution across users",
+			mintToGovStaker:      100,
+			mintToLaunchpad:      100,
+			mintToUser1:          100,
+			mintToUser2:          100,
+			mintToUser3:          100,
+			expectedTotalSupply:  500,
+			expectedVotingSupply: 400, // 500 - 100 (launchpad)
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+			resetHalt(t)
+
+			// given - mint to various addresses
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+
+			if tc.mintToGovStaker > 0 {
+				Mint(cross, govStakerAddress, tc.mintToGovStaker)
+			}
+			if tc.mintToLaunchpad > 0 {
+				Mint(cross, launchpadAddress, tc.mintToLaunchpad)
+			}
+			if tc.mintToUser1 > 0 {
+				Mint(cross, user1, tc.mintToUser1)
+			}
+			if tc.mintToUser2 > 0 {
+				Mint(cross, user2, tc.mintToUser2)
+			}
+			if tc.mintToUser3 > 0 {
+				Mint(cross, user3, tc.mintToUser3)
+			}
+
+			// when
+			actualTotalSupply := TotalSupply()
+			actualVotingSupply := VotingSupply()
+
+			// then
+			uassert.Equal(t, tc.expectedTotalSupply, actualTotalSupply)
+			uassert.Equal(t, tc.expectedVotingSupply, actualVotingSupply)
+
+			// verify individual balances
+			uassert.Equal(t, tc.mintToGovStaker, BalanceOf(govStakerAddress))
+			uassert.Equal(t, tc.mintToLaunchpad, BalanceOf(launchpadAddress))
+			uassert.Equal(t, tc.mintToUser1, BalanceOf(user1))
+			uassert.Equal(t, tc.mintToUser2, BalanceOf(user2))
+			uassert.Equal(t, tc.mintToUser3, BalanceOf(user3))
+		})
+	}
+}
+
+// TestXgns_SequentialMintBurn tests sequential mint and burn operations
+func TestXgns_SequentialMintBurn(t *testing.T) {
+	type operation struct {
+		opType string // "mint" or "burn"
+		target address
+		amount int64
+	}
+
+	tests := []struct {
+		name                 string
+		operations           []operation
+		expectedFinalSupply  int64
+		expectedGovBalance   int64
+		expectedLaunchBalance int64
+	}{
+		{
+			name: "Alternating mint and burn",
+			operations: []operation{
+				{"mint", govStakerAddress, 1000},
+				{"burn", govStakerAddress, 200},
+				{"mint", govStakerAddress, 500},
+				{"burn", govStakerAddress, 300},
+			},
+			expectedFinalSupply:  1000,
+			expectedGovBalance:   1000,
+			expectedLaunchBalance: 0,
+		},
+		{
+			name: "Multiple mints then burns",
+			operations: []operation{
+				{"mint", govStakerAddress, 100},
+				{"mint", govStakerAddress, 200},
+				{"mint", govStakerAddress, 300},
+				{"burn", govStakerAddress, 150},
+				{"burn", govStakerAddress, 250},
+			},
+			expectedFinalSupply:  200,
+			expectedGovBalance:   200,
+			expectedLaunchBalance: 0,
+		},
+		{
+			name: "Cross-address operations",
+			operations: []operation{
+				{"mint", govStakerAddress, 1000},
+				{"mint", launchpadAddress, 500},
+				{"burn", govStakerAddress, 200},
+				{"mint", govStakerAddress, 100},
+				{"burn", launchpadAddress, 100},
+			},
+			expectedFinalSupply:   1300,
+			expectedGovBalance:    900,
+			expectedLaunchBalance: 400,
+		},
+		{
+			name: "Burn all then mint again",
+			operations: []operation{
+				{"mint", govStakerAddress, 1000},
+				{"burn", govStakerAddress, 1000},
+				{"mint", govStakerAddress, 500},
+			},
+			expectedFinalSupply:  500,
+			expectedGovBalance:   500,
+			expectedLaunchBalance: 0,
+		},
+		{
+			name: "Complex sequence with multiple addresses",
+			operations: []operation{
+				{"mint", govStakerAddress, 1000},
+				{"mint", launchpadAddress, 2000},
+				{"burn", govStakerAddress, 500},
+				{"mint", govStakerAddress, 300},
+				{"burn", launchpadAddress, 1000},
+				{"mint", launchpadAddress, 500},
+			},
+			expectedFinalSupply:   2300,
+			expectedGovBalance:    800,
+			expectedLaunchBalance: 1500,
+		},
+		{
+			name: "Small incremental operations",
+			operations: []operation{
+				{"mint", govStakerAddress, 1},
+				{"mint", govStakerAddress, 1},
+				{"mint", govStakerAddress, 1},
+				{"burn", govStakerAddress, 1},
+				{"mint", govStakerAddress, 1},
+				{"burn", govStakerAddress, 1},
+			},
+			expectedFinalSupply:  2,
+			expectedGovBalance:   2,
+			expectedLaunchBalance: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+			resetHalt(t)
+
+			// given & when - execute operations sequentially
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+
+			for _, op := range tc.operations {
+				switch op.opType {
+				case "mint":
+					Mint(cross, op.target, op.amount)
+				case "burn":
+					Burn(cross, op.target, op.amount)
+				}
+			}
+
+			// then
+			uassert.Equal(t, tc.expectedFinalSupply, TotalSupply())
+			uassert.Equal(t, tc.expectedGovBalance, BalanceOf(govStakerAddress))
+			uassert.Equal(t, tc.expectedLaunchBalance, BalanceOf(launchpadAddress))
+
+			// verify voting supply calculation
+			expectedVotingSupply := tc.expectedFinalSupply - tc.expectedLaunchBalance
+			uassert.Equal(t, expectedVotingSupply, VotingSupply())
 		})
 	}
 }
