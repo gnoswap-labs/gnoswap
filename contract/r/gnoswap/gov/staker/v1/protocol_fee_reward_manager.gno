@@ -5,6 +5,7 @@ import (
 	"math"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -59,19 +60,19 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - map[string]*u256.Uint: updated accumulated reward per stake for each token
-//   - map[string]int64: updated protocol fee amounts for each token
+//   - *avl.Tree: updated accumulated reward per stake for each token
+//   - *avl.Tree: updated protocol fee amounts for each token
 func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerStake(
 	protocolFeeAmounts map[string]int64,
 	currentTimestamp int64,
-) (map[string]*u256.Uint, map[string]int64, error) {
+) (*avl.Tree, *avl.Tree, error) {
 	// If we're looking at a past timestamp, return current state
 	if self.GetAccumulatedTimestamp() > currentTimestamp {
 		return self.GetAllAccumulatedProtocolFeeX128PerStake(), self.GetProtocolFeeAmounts(), nil
 	}
 
-	accumulatedProtocolFeesX128PerStake := make(map[string]*u256.Uint)
-	changedProtocolFeeAmounts := make(map[string]int64)
+	accumulatedProtocolFeesX128PerStake := avl.NewTree()
+	changedProtocolFeeAmounts := avl.NewTree()
 
 	// Process each token's protocol fees
 	for token, protocolFeeAmount := range protocolFeeAmounts {
@@ -79,11 +80,14 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		protocolFeeDelta := safeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
 
+		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
+
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
-			accumulatedProtocolFeesX128PerStake[token] = self.GetAccumulatedProtocolFeeX128PerStake(token)
-			if accumulatedProtocolFeesX128PerStake[token] == nil {
-				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
+			if existingAccumulatedFee == nil {
+				accumulatedProtocolFeesX128PerStake.Set(token, u256.NewUint(0))
+			} else {
+				accumulatedProtocolFeesX128PerStake.Set(token, existingAccumulatedFee)
 			}
 		}
 
@@ -101,16 +105,15 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		// Get current accumulated fee per stake for this token
 		accumulatedProtocolFeeX128PerStake := u256.Zero()
-		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
 		if existingAccumulatedFee != nil {
 			accumulatedProtocolFeeX128PerStake = existingAccumulatedFee
 		}
 
 		// Add the new fee per stake to the accumulated amount
 		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
-		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
+		accumulatedProtocolFeesX128PerStake.Set(token, accumulatedProtocolFeeX128PerStake.Clone())
 
-		changedProtocolFeeAmounts[token] = protocolFeeAmount
+		changedProtocolFeeAmounts.Set(token, protocolFeeAmount)
 	}
 
 	return accumulatedProtocolFeesX128PerStake, changedProtocolFeeAmounts, nil
