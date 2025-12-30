@@ -1,6 +1,9 @@
 package protocol_fee
 
-import "gno.land/p/nt/avl"
+import (
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/avl/rotree"
+)
 
 type IProtocolFee interface {
 	IProtocolFeeManager
@@ -20,7 +23,7 @@ type IProtocolFeeManager interface {
 type IProtocolFeeGetter interface {
 	GetDevOpsPct() int64
 	GetGovStakerPct() int64
-	GetTokenListWithAmount() *avl.Tree
+	GetTokenListWithAmount() *rotree.ReadOnlyTree
 	GetAmountOfToken(tokenPath string) int64
 	GetAccuTransfersToGovStaker() map[string]int64
 	GetAccuTransfersToDevOps() map[string]int64

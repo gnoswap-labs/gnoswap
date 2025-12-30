@@ -2,7 +2,7 @@
 package v3_valid
 
 import (
-	"gno.land/p/nt/avl"
+	"gno.land/p/nt/avl/rotree"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 	v1 "gno.land/r/gnoswap/protocol_fee/v1"
 )
@@ -58,7 +58,7 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	return t.instance.GetGovStakerPct()
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() *avl.Tree {
+func (t *TestProtocolFee) GetTokenListWithAmount() *rotree.ReadOnlyTree {
 	return t.instance.GetTokenListWithAmount()
 }
 

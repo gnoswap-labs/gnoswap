@@ -1,6 +1,8 @@
 package v1
 
-import "gno.land/p/nt/avl"
+import (
+	"gno.land/p/nt/avl/rotree"
+)
 
 // GetDevOpsPct returns the percentage allocated to devOps.
 func (pf *protocolFeeV1) GetDevOpsPct() int64 {
@@ -12,9 +14,19 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 	return pf.getProtocolFeeState().GovStakerPct()
 }
 
-// GetTokenListWithAmount returns the token path and amount.
-func (pf *protocolFeeV1) GetTokenListWithAmount() *avl.Tree {
-	return pf.getProtocolFeeState().TokenListWithAmounts()
+// GetTokenListWithAmount returns a read-only view of the token path and amount.
+func (pf *protocolFeeV1) GetTokenListWithAmount() *rotree.ReadOnlyTree {
+	return rotree.Wrap(pf.getProtocolFeeState().TokenListWithAmounts(), cloneInt64)
+}
+
+// cloneInt64 creates a safe copy of int64 value for read-only tree access.
+// Since int64 is a value type, it returns the value as-is.
+func cloneInt64(v any) any {
+	amount, ok := v.(int64)
+	if !ok {
+		panic("expected int64 value in token amount tree")
+	}
+	return amount
 }
 
 // GetAmountOfToken returns the amount of token.
