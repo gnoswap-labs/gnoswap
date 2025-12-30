@@ -333,7 +333,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 			testRole:    testRole,
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
-			expectedMsg: "role test_role does not exist",
+			expectedMsg: "role test_role not found",
 		},
 		{
 			name: "authorized address should pass",
@@ -362,7 +362,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 			testRole:    "wrong_role",
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
-			expectedMsg: "role wrong_role does not exist",
+			expectedMsg: "role wrong_role not found",
 		},
 	}
 
@@ -451,7 +451,7 @@ func TestAssertHasAnyRole(t *testing.T) {
 			testAddr:    adminAddr,
 			roleNames:   []string{"non_existent_role"},
 			shouldPanic: true,
-			expectedMsg: "role non_existent_role does not exist",
+			expectedMsg: "role non_existent_role not found",
 		},
 	}
 
@@ -578,7 +578,7 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 			testRole:    "",
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
-			expectedMsg: "role  does not exist",
+			expectedMsg: "role  not found",
 		},
 		{
 			name: "role exists but caller address doesn't match",
@@ -607,7 +607,7 @@ func TestAssertIsAuthorized_EdgeCases(t *testing.T) {
 			testRole:    "admin!@#$",
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
-			expectedMsg: "role admin!@#$ does not exist",
+			expectedMsg: "role admin!@#$ not found",
 		},
 		{
 			name: "empty address with existing role",

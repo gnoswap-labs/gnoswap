@@ -392,7 +392,7 @@ func TestRemoveRole(t *testing.T) {
 			},
 			roleName:    "nonexistent",
 			shouldPanic: true,
-			panicMsg:    "role nonexistent does not exist",
+			panicMsg:    "role nonexistent not found",
 		},
 	}
 

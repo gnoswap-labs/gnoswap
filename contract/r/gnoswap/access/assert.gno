@@ -89,7 +89,7 @@ func AssertIsGovXGNS(caller address) {
 func AssertIsAuthorized(roleName string, caller address) {
 	addr, ok := GetAddress(roleName)
 	if !ok {
-		panic(ufmt.Errorf(errRoleDoesNotExistWithName, roleName))
+		panic(ufmt.Errorf(errRoleNotFound, roleName))
 	}
 
 	if caller != addr {
@@ -103,7 +103,7 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
 		addr, ok := GetAddress(roleName)
 		if !ok {
-			panic(ufmt.Errorf(errRoleDoesNotExistWithName, roleName))
+			panic(ufmt.Errorf(errRoleNotFound, roleName))
 		}
 
 		if caller == addr {

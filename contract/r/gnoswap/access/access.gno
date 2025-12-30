@@ -56,7 +56,7 @@ func RemoveRole(cur realm, roleName string) {
 // Separated for testability.
 func removeRole(roleName string) {
 	if _, ok := roleAddresses[roleName]; !ok {
-		panic(ufmt.Errorf(errRoleDoesNotExistWithName, roleName))
+		panic(ufmt.Errorf(errRoleNotFound, roleName))
 	}
 
 	delete(roleAddresses, roleName)
