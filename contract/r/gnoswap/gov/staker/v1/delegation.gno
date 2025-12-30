@@ -73,10 +73,6 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 	for _, withdraw := range r.delegation.Withdraws() {
 		resolver := NewDelegationWithdrawResolver(withdraw)
 
-		if !resolver.IsCollectable(currentTime) {
-			continue
-		}
-
 		collectableAmount := resolver.CollectableAmount(currentTime)
 		if collectableAmount <= 0 {
 			continue
