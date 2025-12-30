@@ -29,8 +29,7 @@ func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.U
 	if overflow {
 		panic(errOverflow)
 	}
-	reward = u256.Zero().Rsh(reward, 128)
-
+	reward = reward.Rsh(reward, 128)
 	return safeConvertToInt64(reward)
 }
 

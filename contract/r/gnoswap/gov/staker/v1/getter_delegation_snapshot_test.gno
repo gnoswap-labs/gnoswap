@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -298,4 +299,120 @@ func TestHasDelegationSnapshotsKey(t *testing.T) {
 			uassert.Equal(t, tt.expected, result)
 		})
 	}
+}
+// Test boundary conditions for safe arithmetic in delegation snapshot getters
+func TestGetterDelegationSnapshot_BoundaryConditions(t *testing.T) {
+	t.Run("GetTotalDelegationAmountAtSnapshot with MaxInt64 snapshot", func(t *testing.T) {
+		// given: delegation history with various timestamps
+		history := staker.NewUintTree()
+		history.Set(100, int64(1000))
+		history.Set(1000, int64(5000))
+		history.Set(math.MaxInt64-1, int64(9000))
+
+		gs := createTestGovStaker()
+		func(cur realm) {
+			err := gs.store.SetTotalDelegationHistory(history)
+			if err != nil {
+				panic(err)
+			}
+		}(cross)
+
+		// when: get snapshot at MaxInt64 (uses safeAddInt64 at line 32)
+		// This should NOT panic because the code checks snapshotTime < math.MaxInt64
+		func(cur realm) {
+			amount, exists := gs.GetTotalDelegationAmountAtSnapshot(math.MaxInt64)
+
+			// then: should succeed and return most recent entry
+			uassert.True(t, exists)
+			uassert.Equal(t, amount, int64(9000))
+		}(cross)
+	})
+
+	t.Run("GetTotalDelegationAmountAtSnapshot with near-max snapshot", func(t *testing.T) {
+		// given: delegation history with timestamps near max
+		history := staker.NewUintTree()
+		history.Set(100, int64(1000))
+		history.Set(math.MaxInt64-1000, int64(5000))
+		history.Set(math.MaxInt64-500, int64(9000))
+
+		gs := createTestGovStaker()
+		func(cur realm) {
+			err := gs.store.SetTotalDelegationHistory(history)
+			if err != nil {
+				panic(err)
+			}
+		}(cross)
+
+		// when: get snapshot at near-max time (uses safeAddInt64)
+		snapshotTime := int64(math.MaxInt64 - 100)
+		func(cur realm) {
+			amount, exists := gs.GetTotalDelegationAmountAtSnapshot(snapshotTime)
+
+			// then: should succeed and return correct entry
+			uassert.True(t, exists)
+			// Should get the most recent entry before or at snapshot time
+			uassert.Equal(t, amount, int64(9000))
+		}(cross)
+	})
+
+	t.Run("GetUserDelegationAmountAtSnapshot with MaxInt64 snapshot", func(t *testing.T) {
+		// given: user delegation history with various timestamps
+		gs := createTestGovStaker()
+		alice := address("g1alice")
+
+		func(cur realm) {
+			userHistory := staker.NewUintTree()
+			userHistory.Set(100, int64(2000))
+			userHistory.Set(1000, int64(4000))
+			userHistory.Set(math.MaxInt64-1, int64(8000))
+
+			history := avl.NewTree()
+			history.Set(alice.String(), userHistory)
+			err := gs.store.SetUserDelegationHistory(history)
+			if err != nil {
+				panic(err)
+			}
+		}(cross)
+
+		// when: get user snapshot at MaxInt64 (uses safeAddInt64 at line 83)
+		// This should NOT panic because the code checks snapshotTime < math.MaxInt64
+		func(cur realm) {
+			amount, exists := gs.GetUserDelegationAmountAtSnapshot(alice, math.MaxInt64)
+
+			// then: should succeed and return most recent entry
+			uassert.True(t, exists)
+			uassert.Equal(t, amount, int64(8000))
+		}(cross)
+	})
+
+	t.Run("GetUserDelegationAmountAtSnapshot with near-max snapshot", func(t *testing.T) {
+		// given: user delegation history with timestamps near max
+		gs := createTestGovStaker()
+		bob := address("g1bob")
+
+		func(cur realm) {
+			userHistory := staker.NewUintTree()
+			userHistory.Set(100, int64(1500))
+			userHistory.Set(math.MaxInt64-1000, int64(3500))
+			userHistory.Set(math.MaxInt64-500, int64(7500))
+
+			history := avl.NewTree()
+			history.Set(bob.String(), userHistory)
+			err := gs.store.SetUserDelegationHistory(history)
+			if err != nil {
+				panic(err)
+			}
+		}(cross)
+
+		// when: get user snapshot at near-max time (uses safeAddInt64)
+		snapshotTime := int64(math.MaxInt64 - 100)
+		func(cur realm) {
+			amount, exists := gs.GetUserDelegationAmountAtSnapshot(bob, snapshotTime)
+
+			// then: should succeed and return correct entry
+			uassert.True(t, exists)
+			// Should get the most recent entry before or at snapshot time
+			uassert.Equal(t, amount, int64(7500))
+		}(cross)
+	})
 }

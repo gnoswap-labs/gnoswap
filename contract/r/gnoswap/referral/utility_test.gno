@@ -119,7 +119,7 @@ func TestUtility_GlobalKeeperFunctions(t *testing.T) {
 			// when & then
 			switch tc.operation {
 			case "get_keeper":
-				keeper := getKeeper()
+				keeper := gReferralKeeper
 				uassert.NotNil(t, keeper)
 			case "get_referral":
 				// Setup referral first
@@ -342,7 +342,7 @@ func TestUtility_StateManipulation(t *testing.T) {
 				testKeeper2 := setupUtilityKeeper()
 				testKeeper2.register(tc.userAddr, tc.refAddr1)
 				// Manipulate the lastOps to bypass rate limiting
-				testKeeper2.lastOps[tc.userAddr.String()] = 0
+				testKeeper2.lastOps.Set(tc.userAddr.String(), int64(0))
 
 				// Remove
 				err = testKeeper2.remove(tc.userAddr)
@@ -439,7 +439,7 @@ func TestUtility_GlobalStateConsistency(t *testing.T) {
 				for i := 0; i < tc.numUsers/2; i++ {
 					testKeeper := setupUtilityKeeper()
 					testKeeper.register(users[i], testutils.TestAddress("ref"+string(rune(i+'0'))))
-					testKeeper.lastOps[users[i].String()] = 0 // Bypass rate limiting
+					testKeeper.lastOps.Set(users[i].String(), int64(0)) // Bypass rate limiting
 					err := testKeeper.remove(users[i])
 					uassert.NoError(t, err)
 				}
