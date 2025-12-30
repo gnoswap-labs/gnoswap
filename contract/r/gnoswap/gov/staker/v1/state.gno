@@ -2,8 +2,8 @@ package v1
 
 import (
 	"math"
-	"strconv"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
@@ -129,35 +129,16 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - user: user's address
 //
 // Returns:
-//   - []*Delegation: list of user's delegations
-func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
+//   - *avl.Tree: tree of user's delegations
+func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 	delegationManager := g.store.GetDelegationManager()
-	allDelegations := g.store.GetAllDelegations()
-	delegations = make([]*staker.Delegation, 0)
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
-		return delegations
+		return avl.NewTree()
 	}
 
-	userDelegations.Iterate("", "", func(delegatee string, value interface{}) bool {
-		delegationIDs, ok := value.([]int64)
-		if !ok {
-			return false
-		}
-
-		for _, id := range delegationIDs {
-			idStr := strconv.FormatInt(id, 10)
-			if delegation, exists := allDelegations.Get(idStr); exists {
-				if d, ok := delegation.(*staker.Delegation); ok {
-					delegations = append(delegations, d)
-				}
-			}
-		}
-		return false
-	})
-
-	return delegations
+	return userDelegations
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
@@ -167,45 +148,27 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 //   - delegatee: delegatee's address
 //
 // Returns:
-//   - []*Delegation: list of user's delegations to the delegatee
-func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
+//   - []int64: list of user's delegation IDs to the delegatee
+func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee address) []int64 {
 	delegationManager := g.store.GetDelegationManager()
-	allDelegations := g.store.GetAllDelegations()
-	delegations = make([]*staker.Delegation, 0)
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
-		return delegations
+		return nil
 	}
 
 	delegateeStr := delegatee.String()
 	delegationIDs, exists := userDelegations.Get(delegateeStr)
 	if !exists {
-		return delegations
+		return nil
 	}
 
 	ids, ok := delegationIDs.([]int64)
 	if !ok {
-		return delegations
+		return nil
 	}
 
-	for _, id := range ids {
-		idStr := strconv.FormatInt(id, 10)
-
-		delegationRaw, exists := allDelegations.Get(idStr)
-		if !exists {
-			continue
-		}
-
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
-
-		delegations = append(delegations, delegation)
-	}
-
-	return delegations
+	return ids
 }
 
 // addDelegationRecord records a delegation change in the history.
