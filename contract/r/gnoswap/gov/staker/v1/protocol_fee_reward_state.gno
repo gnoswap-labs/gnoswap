@@ -35,7 +35,7 @@ func (p *ProtocolFeeRewardStateResolver) IsClaimable(currentTimestamp int64) boo
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - *avl.Tree: tree of token path to claimable reward amount
+//   - map[string]int64: map of token path to claimable reward amount
 //   - error: nil on success, error if claiming is not allowed
 func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
@@ -57,7 +57,7 @@ func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - *avl.Tree: tree of token path to newly earned reward amount
+//   - map[string]int64: map of token path to newly earned reward amount
 func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
@@ -176,8 +176,6 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	// Update reward debt for all tokens
-	// Optimization: Use pointer reference instead of deep clone
-	// The tree is read-only for reward calculation purposes
 	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
