@@ -87,6 +87,7 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 			}
 		}
 		s = s[i:]
+		sLen = len(s)
 	}
 
 	maxLen := len(MAX_UINT256)

@@ -48,6 +48,11 @@ func TestFromDecimal(t *testing.T) {
 			expected: "1234567890",
 		},
 		{
+			name:     "leading_zeros_over_max_len",
+			input:    "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+			expected: "0",
+		},
+		{
 			name:     "plus_sign",
 			input:    "+12345",
 			expected: "12345",
