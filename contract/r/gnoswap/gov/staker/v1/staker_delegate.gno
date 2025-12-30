@@ -120,8 +120,7 @@ func (gs *govStakerV1) Undelegate(
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
 
-	prevRealm := runtime.PreviousRealm()
-	caller := prevRealm.Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
@@ -142,6 +141,7 @@ func (gs *govStakerV1) Undelegate(
 		panic(err)
 	}
 
+	prevRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Undelegate",
 		"prevAddr", prevRealm.Address().String(),
@@ -186,8 +186,7 @@ func (gs *govStakerV1) Redelegate(
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
 
-	prevRealm := runtime.PreviousRealm()
-	caller := prevRealm.Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
@@ -218,6 +217,7 @@ func (gs *govStakerV1) Redelegate(
 		currentTimestamp,
 	)
 
+	prevRealm := runtime.PreviousRealm()
 	resolver := NewDelegationResolver(delegation)
 	chain.Emit(
 		"Redelegate",
@@ -307,18 +307,18 @@ func (gs *govStakerV1) delegate(
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(to, delegatedAmount, currentTimestamp)
 	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
-	gs.addStakeProtocolFeeReward(from.String(), amount, currentTimestamp)
+	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
 	// Update total amounts directly in store
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
-	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
 		panic(err)
 	}
 
 	currentLocked := gs.store.GetTotalLockedAmount()
 
-	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
+	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
 		panic(err)
 	}
 
@@ -349,6 +349,7 @@ func (gs *govStakerV1) unDelegate(
 		if !exists {
 			continue
 		}
+
 		delegation, ok := delegationRaw.(*staker.Delegation)
 		if !ok {
 			continue
@@ -448,8 +449,6 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentTime,
 		)
 
-		// Save updated delegation state after undelegation without lockup
-		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
@@ -474,7 +473,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) { // performance optimization
+func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
 	totalCollectedAmount := int64(0)
 
 	delegationTree := gs.getUserDelegations(user)

@@ -22,6 +22,142 @@ func TestNewDelegationManagerResolver(t *testing.T) {
 	})
 }
 
+// TestDelegationManagerResolver_GetUserDelegationIDsWithDelegatee tests retrieving delegation IDs for specific pair
+func TestDelegationManagerResolver_GetUserDelegationIDsWithDelegatee(t *testing.T) {
+	tests := []struct {
+		name             string
+		setup            func(*DelegationManagerResolver)
+		delegator        address
+		delegatee        address
+		expectedIDsCount int
+	}{
+		{
+			name: "Get delegation IDs for existing pair",
+			setup: func(dm *DelegationManagerResolver) {
+				dm.addDelegation(address("g1delegator"), address("g1delegatee"), 1)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee"), 2)
+			},
+			delegator:        address("g1delegator"),
+			delegatee:        address("g1delegatee"),
+			expectedIDsCount: 2,
+		},
+		{
+			name:             "Get delegation IDs for non-existent pair",
+			setup:            func(dm *DelegationManagerResolver) {},
+			delegator:        address("g1delegator"),
+			delegatee:        address("g1delegatee"),
+			expectedIDsCount: 0,
+		},
+		{
+			name: "Get delegation IDs for one delegatee among multiple",
+			setup: func(dm *DelegationManagerResolver) {
+				dm.addDelegation(address("g1delegator"), address("g1delegatee1"), 1)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee1"), 2)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee2"), 3)
+			},
+			delegator:        address("g1delegator"),
+			delegatee:        address("g1delegatee1"),
+			expectedIDsCount: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			manager := staker.NewDelegationManager()
+			resolver := NewDelegationManagerResolver(manager)
+			tc.setup(resolver)
+
+			// when
+			ids := resolver.GetUserDelegationIDsWithDelegatee(tc.delegator, tc.delegatee)
+
+			// then
+			uassert.Equal(t, len(ids), tc.expectedIDsCount)
+		})
+	}
+}
+
+// TestDelegationManagerResolver_GetUserDelegationIDs tests retrieving all delegation IDs for a delegator
+func TestDelegationManagerResolver_GetUserDelegationIDs(t *testing.T) {
+	tests := []struct {
+		name             string
+		setup            func(*DelegationManagerResolver)
+		delegator        address
+		expectedIDsCount int
+	}{
+		{
+			name: "Get all delegation IDs for delegator with multiple delegatees",
+			setup: func(dm *DelegationManagerResolver) {
+				dm.addDelegation(address("g1delegator"), address("g1delegatee1"), 1)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee1"), 2)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee2"), 3)
+				dm.addDelegation(address("g1delegator"), address("g1delegatee3"), 4)
+			},
+			delegator:        address("g1delegator"),
+			expectedIDsCount: 4,
+		},
+		{
+			name:             "Get delegation IDs for delegator with no delegations",
+			setup:            func(dm *DelegationManagerResolver) {},
+			delegator:        address("g1delegator"),
+			expectedIDsCount: 0,
+		},
+		{
+			name: "Get delegation IDs for one delegator among multiple",
+			setup: func(dm *DelegationManagerResolver) {
+				dm.addDelegation(address("g1delegator1"), address("g1delegatee"), 1)
+				dm.addDelegation(address("g1delegator1"), address("g1delegatee"), 2)
+				dm.addDelegation(address("g1delegator2"), address("g1delegatee"), 3)
+			},
+			delegator:        address("g1delegator1"),
+			expectedIDsCount: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			manager := staker.NewDelegationManager()
+			resolver := NewDelegationManagerResolver(manager)
+			tc.setup(resolver)
+
+			// when
+			ids := resolver.GetUserDelegationIDs(tc.delegator)
+
+			// then
+			uassert.Equal(t, len(ids), tc.expectedIDsCount)
+		})
+	}
+
+	t.Run("Get delegation IDs with multiple delegatees and verify per-delegatee counts", func(t *testing.T) {
+		// given
+		manager := staker.NewDelegationManager()
+		resolver := NewDelegationManagerResolver(manager)
+		delegator := address("g1delegator")
+
+		// when - add delegations to multiple delegatees
+		resolver.addDelegation(delegator, address("g1delegatee1"), 1)
+		resolver.addDelegation(delegator, address("g1delegatee1"), 2)
+		resolver.addDelegation(delegator, address("g1delegatee2"), 3)
+		resolver.addDelegation(delegator, address("g1delegatee3"), 4)
+		resolver.addDelegation(delegator, address("g1delegatee3"), 5)
+
+		// then - should get all IDs
+		allIds := resolver.GetUserDelegationIDs(delegator)
+		uassert.Equal(t, len(allIds), 5)
+
+		// And specific delegatee IDs
+		ids1 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee1"))
+		uassert.Equal(t, len(ids1), 2)
+
+		ids2 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee2"))
+		uassert.Equal(t, len(ids2), 1)
+
+		ids3 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee3"))
+		uassert.Equal(t, len(ids3), 2)
+	})
+}
+
 // TestDelegationManagerResolver_addDelegation tests adding delegations
 func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 	tests := []struct {
@@ -91,7 +227,7 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 			resolver.addDelegation(tc.delegator, tc.delegatee, tc.delegationID)
 
 			// then
-			ids, _ := resolver.GetDelegateeIDs(tc.delegator.String(), tc.delegatee.String())
+			ids := resolver.GetUserDelegationIDsWithDelegatee(tc.delegator, tc.delegatee)
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
@@ -171,7 +307,7 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 			resolver.removeDelegation(tc.delegator, tc.delegatee, tc.delegationID)
 
 			// then
-			ids, _ := resolver.GetDelegateeIDs(tc.delegator.String(), tc.delegatee.String())
+			ids := resolver.GetUserDelegationIDsWithDelegatee(tc.delegator, tc.delegatee)
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
@@ -193,7 +329,7 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 		resolver.removeDelegation(delegator, delegatee, 3)
 
 		// then - should be empty
-		ids, _ := resolver.GetDelegateeIDs(delegator.String(), delegatee.String())
+		ids := resolver.GetUserDelegationIDsWithDelegatee(delegator, delegatee)
 		uassert.Equal(t, len(ids), 0)
 	})
 }

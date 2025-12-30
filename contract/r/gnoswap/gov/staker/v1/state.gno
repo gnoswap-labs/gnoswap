@@ -130,7 +130,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //
 // Returns:
 //   - []*Delegation: list of user's delegations
-func (g *govStakerV1) getUserDelegations(user address) (delegations *avl.Tree) {
+func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 	delegationManager := g.store.GetDelegationManager()
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
@@ -142,10 +142,11 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations *avl.Tree) {
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
+// Note: Current implementation returns all user delegations regardless of delegatee (potential bug).
 //
 // Parameters:
 //   - user: user's address
-//   - delegatee: delegatee's address
+//   - delegatee: delegatee's address (currently unused)
 //
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
@@ -588,5 +589,5 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 // Returns:
 //   - string: formatted launchpad reward ID
 func (g *govStakerV1) makeLaunchpadRewardID(address string) string {
-	return "launchpad:" + address
+	return ufmt.Sprintf("launchpad:%s", address)
 }

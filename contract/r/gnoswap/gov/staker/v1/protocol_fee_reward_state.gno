@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -39,9 +38,9 @@ func (p *ProtocolFeeRewardStateResolver) IsClaimable(currentTimestamp int64) boo
 //   - *avl.Tree: tree of token path to claimable reward amount
 //   - error: nil on success, error if claiming is not allowed
 func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
-	accumulatedRewardsX128PerStake *avl.Tree,
+	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) (*avl.Tree, error) {
+) (map[string]int64, error) {
 	rewardAmounts, err := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
 	if err != nil {
 		return nil, err
@@ -60,47 +59,41 @@ func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 // Returns:
 //   - *avl.Tree: tree of token path to newly earned reward amount
 func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
-	accumulatedRewardsX128PerStake *avl.Tree,
+	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) (*avl.Tree, error) {
+) (map[string]int64, error) {
+	// Don't calculate rewards for past timestamps
 	if p.GetAccumulatedTimestamp() >= currentTimestamp {
 		return p.GetAccumulatedRewards(), nil
 	}
 
-	rewardAmounts := avl.NewTree()
-
-	if accumulatedRewardsX128PerStake == nil {
-		return rewardAmounts, nil
-	}
-
+	rewardAmounts := make(map[string]int64)
 	stakedAmount := p.GetStakedAmount()
 
-	accumulatedRewardsX128PerStake.Iterate("", "", func(token string, value interface{}) bool {
-		accumulatedRewardX128PerStake, ok := value.(*u256.Uint)
-		if !ok {
-			return false
-		}
-
+	// Calculate rewards for each token type
+	for token, accumulatedRewardX128PerStake := range accumulatedRewardsX128PerStake {
+		// Get reward debt for this token
 		rewardDebtX128 := p.GetRewardDebtX128ForToken(token)
 		if rewardDebtX128 == nil {
 			rewardDebtX128 = u256.Zero()
 		}
 
+		// Calculate the difference in accumulated rewards per stake since last update
+		// Using modular arithmetic for accumulator values - underflow is allowed and handled correctly
 		rewardDebtDeltaX128 := u256.Zero().Sub(
 			accumulatedRewardX128PerStake,
 			rewardDebtX128,
 		)
 
+		// Multiply by staked amount to get total reward for this staker and token
 		rewardAmount := u256.MulDiv(
 			rewardDebtDeltaX128,
 			u256.NewUintFromInt64(stakedAmount),
 			q128,
 		)
 
-		rewardAmounts.Set(token, safeConvertToInt64(rewardAmount))
-
-		return false
-	})
+		rewardAmounts[token] = safeConvertToInt64(rewardAmount)
+	}
 
 	return rewardAmounts, nil
 }
@@ -120,7 +113,7 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
-	newAmount := safeSubInt64(p.GetStakedAmount(), amount)
+	newAmount := p.GetStakedAmount() - amount
 	if newAmount < 0 {
 		newAmount = 0
 	}
@@ -147,22 +140,14 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 
 	currentClaimedRewards := make(map[string]int64)
 	accumulatedRewards := p.GetAccumulatedRewards()
-	if accumulatedRewards == nil {
-		p.SetClaimedTimestamp(currentTimestamp)
-		return currentClaimedRewards, nil
-	}
+	claimedRewards := p.GetClaimedRewards()
 
-	accumulatedRewards.Iterate("", "", func(token string, value interface{}) bool {
-		rewardAmount, ok := value.(int64)
-		if !ok {
-			return false
-		}
-
-		claimedAmount := p.GetClaimedRewardForToken(token)
-		currentClaimedRewards[token] = safeSubInt64(rewardAmount, claimedAmount)
+	// Calculate and update claimed amounts for each token
+	for token, rewardAmount := range accumulatedRewards {
+		claimedAmount := claimedRewards[token]
+		currentClaimedRewards[token] = rewardAmount - claimedAmount
 		p.SetClaimedRewardForToken(token, rewardAmount)
-		return false
-	})
+	}
 
 	p.SetClaimedTimestamp(currentTimestamp)
 
@@ -176,7 +161,7 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 //   - accumulatedProtocolFeeX128PerStake: current system-wide accumulated protocol fees per stake for all tokens
 //   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
-	accumulatedProtocolFeeX128PerStake *avl.Tree,
+	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) error {
 	// Don't update if we're looking at a past timestamp
@@ -196,16 +181,10 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
-	rewardAmounts.Iterate("", "", func(token string, value interface{}) bool {
-		rewardAmount, ok := value.(int64)
-		if !ok {
-			return false
-		}
-
-		p.SetAccumulatedRewardForToken(token, safeAddInt64(p.GetAccumulatedRewardForToken(token), rewardAmount))
-
-		return false
-	})
+	accumulatedRewards := p.GetAccumulatedRewards()
+	for token, rewardAmount := range rewardAmounts {
+		p.SetAccumulatedRewardForToken(token, safeAddInt64(accumulatedRewards[token], rewardAmount))
+	}
 
 	p.SetAccumulatedTimestamp(currentTimestamp)
 
@@ -221,7 +200,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 //   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 	amount int64,
-	accumulatedProtocolFeeX128PerStake *avl.Tree,
+	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) error {
 	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
@@ -243,7 +222,7 @@ func (p *ProtocolFeeRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 //   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	amount int64,
-	accumulatedProtocolFeeX128PerStake *avl.Tree,
+	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) error {
 	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
@@ -267,7 +246,7 @@ func (p *ProtocolFeeRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 //   - map[string]int64: map of token path to claimed reward amount
 //   - error: nil on success, error if claiming fails
 func (p *ProtocolFeeRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
-	accumulatedProtocolFeeX128PerStake *avl.Tree,
+	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) (map[string]int64, error) {
 	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
