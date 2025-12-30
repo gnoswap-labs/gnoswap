@@ -96,7 +96,6 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 		rewardDebtX128 := p.GetRewardDebtX128ForToken(token)
 		if rewardDebtX128 == nil {
 			rewardDebtX128 = u256.Zero()
-			p.SetRewardDebtX128ForToken(token, u256.Zero())
 		}
 
 		rewardDebtDeltaX128 := u256.Zero().Sub(
