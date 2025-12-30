@@ -360,18 +360,7 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 			uassert.Equal(t, resolver.Get().UnDelegatedAmount(), tt.expectedUnDelegated)
 			uassert.Equal(t, resolver.Get().CollectedAmount(), tt.expectedCollected)
 
-			// Verify withdraw record created with immediate collectableTime (currentTime)
-			withdrawsAtTime, exists := resolver.Get().Withdraws().Get(tt.currentTime)
-			uassert.True(t, exists)
-
-			withdraws, ok := withdrawsAtTime.([]*staker.DelegationWithdraw)
-			uassert.True(t, ok)
-			uassert.Equal(t, len(withdraws), 1)
-
-			withdraw := withdraws[0]
-			withdrawResolver := NewDelegationWithdrawResolver(withdraw)
-			uassert.Equal(t, withdrawResolver.IsCollectable(tt.currentTime), false)
-			uassert.Equal(t, withdrawResolver.CollectableAmount(tt.currentTime), int64(0)) // Already collected
+			uassert.Equal(t, resolver.Get().Withdraws().Size(), 0)
 		})
 	}
 }
@@ -515,8 +504,8 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				// Third undelegation without lockup
 				d.UnDelegateWithoutLockup(100, 300, 300)
 				uassert.Equal(t, d.Get().UnDelegatedAmount(), int64(450))
-				uassert.Equal(t, d.Get().CollectedAmount(), int64(100)) // Immediate collection
-				uassert.Equal(t, d.Get().Withdraws().Size(), 3)         // Three time buckets
+				uassert.Equal(t, d.Get().CollectedAmount(), int64(100))
+				uassert.Equal(t, d.Get().Withdraws().Size(), 2)
 			},
 			description: "Should handle multiple undelegations with different lockup periods",
 		},

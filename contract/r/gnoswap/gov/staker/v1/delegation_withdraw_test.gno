@@ -66,47 +66,6 @@ func TestNewDelegationWithdraw(t *testing.T) {
 	}
 }
 
-// TestNewDelegationWithdrawWithoutLockup tests creating withdraw without lockup
-func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
-	tests := []struct {
-		name             string
-		delegationID     int64
-		unDelegateAmount int64
-		createdAt        int64
-		currentTime      int64
-	}{
-		{
-			name:             "Create withdraw without lockup",
-			delegationID:     1,
-			unDelegateAmount: 100,
-			createdAt:        1000,
-			currentTime:      1000,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			withdraw := NewDelegationWithdrawWithoutLockup(
-				tc.delegationID,
-				tc.unDelegateAmount,
-				tc.createdAt,
-				tc.createdAt,
-			)
-
-			resolver := NewDelegationWithdrawResolver(withdraw)
-
-			// then
-			uassert.Equal(t, resolver.Get().DelegationID(), tc.delegationID)
-			uassert.Equal(t, resolver.Get().UnDelegateAmount(), tc.unDelegateAmount)
-			uassert.Equal(t, resolver.Get().UnDelegatedAt(), tc.createdAt)
-			uassert.Equal(t, resolver.Get().CollectableTime(), tc.createdAt)
-			uassert.True(t, resolver.Get().IsCollected())
-			uassert.Equal(t, resolver.CollectableAmount(tc.currentTime), int64(0))
-		})
-	}
-}
-
 // TestDelegationWithdrawResolver_IsCollectable tests the collectable status
 func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 	tests := []struct {

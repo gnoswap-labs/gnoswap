@@ -121,28 +121,3 @@ func NewDelegationWithdraw(
 		unDelegationLockupPeriod,
 	)
 }
-
-// NewDelegationWithdrawWithoutLockup creates a new delegation withdrawal that is immediately collectable.
-// This is a convenience wrapper around staker.NewDelegationWithdrawWithoutLockup.
-//
-// Parameters:
-//   - delegationID: unique identifier of the associated delegation
-//   - unDelegateAmount: amount being withdrawn
-//   - createdHeight: height when the withdrawal was created
-//   - createdAt: timestamp when the withdrawal was created
-//
-// Returns:
-//   - *staker.DelegationWithdraw: new withdrawal instance that is immediately collected
-func NewDelegationWithdrawWithoutLockup(
-	delegationID,
-	unDelegateAmount,
-	createdHeight,
-	createdAt int64,
-) *staker.DelegationWithdraw {
-	return staker.NewDelegationWithdrawWithoutLockup(
-		delegationID,
-		unDelegateAmount,
-		createdHeight,
-		createdAt,
-	)
-}

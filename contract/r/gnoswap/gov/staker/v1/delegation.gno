@@ -136,7 +136,7 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			updatedWithdraws := make([]*staker.DelegationWithdraw, 0)
 
 			for index, withdraw := range withdraws {
-				if !collectedWithdrawIndexes[index] {
+				if collectedWithdrawIndexes[index] {
 					continue
 				}
 
