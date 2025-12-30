@@ -54,7 +54,7 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 		return ErrRoleDoesNotExist
 	}
 
-	if addr == "" || !addr.IsValid() {
+	if addr == zeroAddress || !addr.IsValid() {
 		return ErrInvalidAddress
 	}
 

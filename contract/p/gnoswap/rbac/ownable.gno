@@ -31,7 +31,7 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 		return ErrUnauthorized
 	}
 
-	if newOwner == "" || !newOwner.IsValid() {
+	if newOwner == zeroAddress || !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
@@ -49,7 +49,7 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 // AcceptOwnership completes the ownership transfer.
 // Must be called by the pending owner. Panics if no pending owner exists or caller is not the pending owner.
 func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
-	if o.pendingOwner == "" {
+	if o.pendingOwner == zeroAddress {
 		return ErrNoPendingOwner
 	}
 
