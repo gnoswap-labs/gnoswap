@@ -71,25 +71,30 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 		return self.GetAllAccumulatedProtocolFeeX128PerStake(), self.GetProtocolFeeAmounts(), nil
 	}
 
+	if len(protocolFeeAmounts) == 0 {
+		return self.GetAllAccumulatedProtocolFeeX128PerStake(), self.GetProtocolFeeAmounts(), nil
+	}
+
 	accumulatedProtocolFeesX128PerStake := avl.NewTree()
 	changedProtocolFeeAmounts := avl.NewTree()
+	totalStakedAmount := self.GetTotalStakedAmount()
 
 	// Process each token's protocol fees
 	for token, protocolFeeAmount := range protocolFeeAmounts {
 		previousProtocolFeeAmount := self.GetProtocolFeeAmount(token)
 
 		protocolFeeDelta := safeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
-
-		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
-
-		// If no new fees for this token, keep existing rate
-		if protocolFeeDelta <= 0 {
+		if protocolFeeDelta == 0 {
+			existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
 			if existingAccumulatedFee == nil {
 				accumulatedProtocolFeesX128PerStake.Set(token, u256.NewUint(0))
 			} else {
 				accumulatedProtocolFeesX128PerStake.Set(token, existingAccumulatedFee)
 			}
+			continue
 		}
+
+		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
 
 		// Scale the fee delta by 2^128 for precision
 		protocolFeeDeltaX128 := u256.NewUintFromInt64(protocolFeeDelta)
@@ -98,8 +103,8 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 		protocolFeeDeltaX128PerStake := u256.Zero()
 
 		// Calculate fee per stake if there are staked tokens
-		if self.GetTotalStakedAmount() > 0 {
-			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
+		if totalStakedAmount > 0 {
+			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(totalStakedAmount))
 			protocolFeeDeltaX128PerStake = feePerStake
 		}
 
