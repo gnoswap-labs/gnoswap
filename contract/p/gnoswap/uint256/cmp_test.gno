@@ -4,6 +4,13 @@ import (
 	"testing"
 )
 
+const (
+	maxUint256MinusOne  = "115792089237316195423570985008687907853269984665640564039457584007913129639934"
+	maxUint256MinusTwo  = "115792089237316195423570985008687907853269984665640564039457584007913129639933"
+	twoPow255           = "57896044618658097711785492504343953926634992332820282019728792003956564819968"
+	twoPow255MinusOne   = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
+)
+
 func TestCmp(t *testing.T) {
 	tests := []struct {
 		x, y string
@@ -16,6 +23,10 @@ func TestCmp(t *testing.T) {
 		{"10", "10", 0},
 		{"10", "11", -1},
 		{"11", "10", 1},
+		{MAX_UINT256, maxUint256MinusOne, 1},
+		{maxUint256MinusOne, MAX_UINT256, -1},
+		{twoPow255MinusOne, twoPow255, -1},
+		{twoPow255, twoPow255MinusOne, 1},
 	}
 
 	for _, tc := range tests {
@@ -71,6 +82,7 @@ func TestLtUint64(t *testing.T) {
 		{"0", 1, true},
 		{"1", 0, false},
 		{"10", 10, false},
+		{"18446744073709551615", ^uint64(0), false},
 		{"18446744073709551616", 1, false}, // exceeds uint64
 	}
 
@@ -100,6 +112,10 @@ func TestLte(t *testing.T) {
 		{"10", "10", true},  // equal
 		{"10", "11", true},  // less than
 		{"11", "10", false}, // greater than
+		{maxUint256MinusOne, MAX_UINT256, true},
+		{MAX_UINT256, maxUint256MinusOne, false},
+		{twoPow255MinusOne, twoPow255, true},
+		{twoPow255, twoPow255MinusOne, false},
 	}
 
 	for _, tc := range tests {
@@ -133,6 +149,10 @@ func TestGte(t *testing.T) {
 		{"10", "10", true},  // equal
 		{"10", "11", false}, // less than
 		{"11", "10", true},  // greater than
+		{MAX_UINT256, maxUint256MinusOne, true},
+		{maxUint256MinusOne, MAX_UINT256, false},
+		{twoPow255, twoPow255MinusOne, true},
+		{twoPow255MinusOne, twoPow255, false},
 	}
 
 	for _, tc := range tests {
@@ -164,6 +184,7 @@ func TestGtUint64(t *testing.T) {
 		{"0", 1, false},
 		{"1", 0, true},
 		{"10", 10, false},
+		{"18446744073709551615", ^uint64(0), false},
 		{"18446744073709551616", 1, true}, // higher word set
 	}
 
@@ -192,6 +213,8 @@ func TestEq(t *testing.T) {
 		{"18446744073709551615", "18446744073709551616", false},
 		{"0", "0", true},
 		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "115792089237316195423570985008687907853269984665640564039457584007913129639935", true},
+		{maxUint256MinusOne, maxUint256MinusOne, true},
+		{maxUint256MinusTwo, maxUint256MinusOne, false},
 	}
 
 	for _, tc := range tests {
@@ -226,6 +249,8 @@ func TestNeq(t *testing.T) {
 		{"1", "0", true},
 		{"10", "10", false},
 		{"10", "11", true},
+		{maxUint256MinusOne, maxUint256MinusOne, false},
+		{maxUint256MinusTwo, maxUint256MinusOne, true},
 	}
 
 	for _, tc := range tests {
