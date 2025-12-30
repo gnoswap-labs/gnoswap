@@ -1,9 +1,6 @@
 package store
 
-import (
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/rotree"
-)
+import "gno.land/p/nt/avl"
 
 type Permission uint8
 

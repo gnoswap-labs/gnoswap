@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/rotree"
 )
 
 // kvStore represents a domain-specific key-value storage
