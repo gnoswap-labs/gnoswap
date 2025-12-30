@@ -596,7 +596,7 @@ func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 	}
 }
 
-// Test getUserDelegationsWithDelegatee with comprehensive scenarios
+// Test getUserDelegationIDsWithDelegatee with comprehensive scenarios
 func TestGetUserDelegationsWithDelegatee(t *testing.T) {
 	tests := []struct {
 		name          string
