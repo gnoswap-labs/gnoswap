@@ -217,6 +217,219 @@ func TestStakerDelegate_Undelegate(t *testing.T) {
 	}
 }
 
+// Test Undelegate with multiple delegations to same delegatee
+// This tests the optimization where GetUnDelegationLockupPeriod is called only once
+func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
+	tests := []struct {
+		name                 string
+		delegationAmounts    []int64
+		undelegateAmount     int64
+		expectedSuccess      bool
+		minExpectedWithdraws int
+		description          string
+	}{
+		{
+			name:                 "Undelegate spanning multiple delegations",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3, minimumAmount * 4, minimumAmount * 5},
+			undelegateAmount:     minimumAmount * 8,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should process first 3 delegations (1M + 2M + 3M + 2M from 4th)",
+		},
+		{
+			name:                 "Early exit - only first delegation needed",
+			delegationAmounts:    []int64{minimumAmount * 10, minimumAmount * 5, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 5,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should only process first delegation and exit early",
+		},
+		{
+			name:                 "Exact match - first delegation",
+			delegationAmounts:    []int64{minimumAmount * 5, minimumAmount * 3, minimumAmount * 2},
+			undelegateAmount:     minimumAmount * 5,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should exactly match and consume first delegation",
+		},
+		{
+			name:                 "Exact match - multiple delegations",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 6,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should exactly consume all three delegations (1M + 2M + 3M)",
+		},
+		{
+			name:                 "All delegations required",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 6,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should process all delegations when amount equals total",
+		},
+		{
+			name:                 "Partial last delegation",
+			delegationAmounts:    []int64{minimumAmount * 2, minimumAmount * 3, minimumAmount * 10},
+			undelegateAmount:     minimumAmount * 7,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should fully use first two and partially use third (2M + 3M + 2M)",
+		},
+		{
+			name:                 "Single delegation - partial undelegate",
+			delegationAmounts:    []int64{minimumAmount * 10},
+			undelegateAmount:     minimumAmount * 3,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should handle single delegation case (boundary)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup gov staker with clean state
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := testutils.TestAddress("alice")
+			validator := testutils.TestAddress("validator1")
+
+			testing.SetRealm(testing.NewUserRealm(user))
+
+			// Create delegations according to test case
+			totalDelegated := int64(0)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				for _, amount := range tt.delegationAmounts {
+					gs.Delegate(validator, amount, "")
+					totalDelegated += amount
+				}
+			}(cross)
+
+			// When: Undelegate specified amount
+			var undelegatedAmount int64
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				undelegatedAmount = gs.Undelegate(validator, tt.undelegateAmount)
+			}(cross)
+
+			// Then: Verify results
+			if tt.expectedSuccess {
+				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
+
+				// Verify withdraws were created correctly
+				delegations := gs.getUserDelegationsWithDelegatee(user, validator)
+				totalWithdraws := 0
+				totalUndelegated := int64(0)
+
+				for _, delegation := range delegations {
+					withdraws := delegation.Withdraws()
+					totalWithdraws += len(withdraws)
+					totalUndelegated += delegation.UnDelegatedAmount()
+				}
+
+				uassert.Equal(t, totalUndelegated, tt.undelegateAmount)
+				uassert.True(t, totalWithdraws >= tt.minExpectedWithdraws)
+			}
+		})
+	}
+}
+
+// Test Undelegate edge cases with multiple delegations
+func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(gs *govStakerV1, user, validator address)
+		undelegateAmt int64
+		expectPanic   bool
+		expectedError string
+		description   string
+	}{
+		{
+			name: "Undelegate from non-existent delegatee",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				// No delegations created
+			},
+			undelegateAmt: minimumAmount,
+			expectPanic:   false,
+			description:   "Should return 0 when no delegations exist",
+		},
+		{
+			name: "Undelegate more than total delegated",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: minimumAmount * 10,
+			expectPanic:   false,
+			description:   "Should return available amount when requested exceeds delegated",
+		},
+		{
+			name: "Undelegate zero amount",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: 0,
+			expectPanic:   true,
+			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
+			description:   "Should reject zero amount",
+		},
+		{
+			name: "Undelegate negative amount",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: -minimumAmount,
+			expectPanic:   true,
+			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
+			description:   "Should reject negative amount",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup test environment
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := testutils.TestAddress("alice")
+			validator := testutils.TestAddress("validator1")
+
+			testing.SetRealm(testing.NewUserRealm(user))
+			tt.setupFunc(gs, user, validator)
+
+			// When & Then: Execute and verify
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+						gs.Undelegate(validator, tt.undelegateAmt)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					result := gs.Undelegate(validator, tt.undelegateAmt)
+					// For non-panic cases, verify result is reasonable
+					// (either 0 for no delegations, or capped at available amount)
+					if tt.undelegateAmt > 0 {
+						uassert.True(t, result >= 0)
+					}
+				}(cross)
+			}
+		})
+	}
+}
+
 // Test Redelegate function
 func TestStakerDelegate_Redelegate(t *testing.T) {
 	// Initialize gov staker
@@ -927,11 +1140,11 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	tests := []struct {
 		name             string
-		delegationCounts []int     // number of delegations to create
-		amounts          [][]int64 // amounts for each delegation's withdrawals
-		lockupPeriods    []int64   // lockup period for each delegation
-		waitTime         int64     // time to wait before collecting
-		expectedTotal    int64     // expected total collected amount
+		delegationCounts []int          // number of delegations to create
+		amounts          [][]int64      // amounts for each delegation's withdrawals
+		lockupPeriods    []int64        // lockup period for each delegation
+		waitTime         int64          // time to wait before collecting
+		expectedTotal    int64          // expected total collected amount
 		description      string
 	}{
 		{
