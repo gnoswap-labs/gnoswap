@@ -560,7 +560,6 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 	}
 }
 
-// Test comprehensive integration scenarios
 func TestHalt_IntegrationScenarios(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -925,7 +924,7 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 }
 
-func TestHaltStateManager_getOperationHalted_NotFound(t *testing.T) {
+func TestHaltStateManager_GetOperationHalted_NotFound(t *testing.T) {
 	tests := []struct {
 		name           string
 		manager        HaltStateManager
@@ -967,7 +966,7 @@ func TestHaltStateManager_getOperationHalted_NotFound(t *testing.T) {
 	}
 }
 
-func TestHaltStateManager_setOperationHalted_InvalidOpType(t *testing.T) {
+func TestHaltStateManager_SetOperationHalted_InvalidOpType(t *testing.T) {
 	tests := []struct {
 		name           string
 		op             OpType
