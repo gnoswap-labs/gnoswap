@@ -123,39 +123,39 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 func TestGlobalKeeper_GetReferral(t *testing.T) {
 	tests := []struct {
 		name             string
-		addr             address
-		setupReferral    address
-		expectedReferral address
+		addr             string
+		setupReferral    string
+		expectedReferral string
 	}{
 		{
 			name:             "Success get existing referral",
-			addr:             testutils.TestAddress("user1"),
-			setupReferral:    testutils.TestAddress("referrer1"),
-			expectedReferral: testutils.TestAddress("referrer1"),
+			addr:             testutils.TestAddress("user1").String(),
+			setupReferral:    testutils.TestAddress("referrer1").String(),
+			expectedReferral: testutils.TestAddress("referrer1").String(),
 		},
 		{
 			name:             "Empty result for non-existing referral",
-			addr:             testutils.TestAddress("user2"),
-			setupReferral:    address(""),
-			expectedReferral: address(""),
+			addr:             testutils.TestAddress("user2").String(),
+			setupReferral:    "",
+			expectedReferral: "",
 		},
 		{
 			name:             "Empty result for zero address referral",
-			addr:             testutils.TestAddress("user3"),
-			setupReferral:    address(""),
-			expectedReferral: address(""),
+			addr:             testutils.TestAddress("user3").String(),
+			setupReferral:    "",
+			expectedReferral: "",
 		},
 		{
 			name:             "Empty result for invalid address - empty string",
-			addr:             address(""),
-			setupReferral:    address(""),
-			expectedReferral: address(""),
+			addr:             "",
+			setupReferral:    "",
+			expectedReferral: "",
 		},
 		{
 			name:             "Empty result for invalid address - invalid format",
 			addr:             "invalid",
-			setupReferral:    address(""),
-			expectedReferral: address(""),
+			setupReferral:    "",
+			expectedReferral: "",
 		},
 	}
 
@@ -182,38 +182,38 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 func TestGlobalKeeper_HasReferral(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr          address
-		setupReferral address
+		addr          string
+		setupReferral string
 		expectedHas   bool
 	}{
 		{
 			name:          "True for existing referral",
-			addr:          testutils.TestAddress("user1"),
-			setupReferral: testutils.TestAddress("referrer1"),
+			addr:          testutils.TestAddress("user1").String(),
+			setupReferral: testutils.TestAddress("referrer1").String(),
 			expectedHas:   true,
 		},
 		{
 			name:          "False for non-existing referral",
-			addr:          testutils.TestAddress("user2"),
-			setupReferral: address(""),
+			addr:          testutils.TestAddress("user2").String(),
+			setupReferral: "",
 			expectedHas:   false,
 		},
 		{
 			name:          "False for zero address referral",
-			addr:          testutils.TestAddress("user3"),
-			setupReferral: address(""),
+			addr:          testutils.TestAddress("user3").String(),
+			setupReferral: "",
 			expectedHas:   false,
 		},
 		{
 			name:          "False for invalid address - empty string",
-			addr:          address(""),
-			setupReferral: address(""),
+			addr:          "",
+			setupReferral: "",
 			expectedHas:   false,
 		},
 		{
 			name:          "False for invalid address - invalid format",
-			addr:          address("invalid"),
-			setupReferral: address(""),
+			addr:          "invalid",
+			setupReferral: "",
 			expectedHas:   false,
 		},
 	}
