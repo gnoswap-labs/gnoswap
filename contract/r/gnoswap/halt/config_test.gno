@@ -143,7 +143,7 @@ func TestHaltConfig_Set(t *testing.T) {
 	}
 }
 
-func TestHaltConfig_Get_InvalidOpType(t *testing.T) {
+func TestHaltConfig_Get_NotFound(t *testing.T) {
 	tests := []struct {
 		name             string
 		config           HaltConfig
@@ -156,14 +156,14 @@ func TestHaltConfig_Get_InvalidOpType(t *testing.T) {
 			config:           make(HaltConfig),
 			op:               OpTypePool,
 			expectedError:    true,
-			expectedErrorMsg: "invalid operation type",
+			expectedErrorMsg: "operation type not found in config",
 		},
 		{
-			name:             "Get invalid operation type",
+			name:             "Get non-existent operation type",
 			config:           HaltConfig{OpTypePool: true},
 			op:               OpType("invalid_op"),
 			expectedError:    true,
-			expectedErrorMsg: "invalid operation type",
+			expectedErrorMsg: "operation type not found in config",
 		},
 		{
 			name:          "Get valid existing operation",

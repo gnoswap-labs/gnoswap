@@ -26,11 +26,13 @@ func (c HaltConfig) Clone() HaltConfig {
 }
 
 // get retrieves halt state for the specified operation type.
-// Returns error if operation type is invalid.
+//
+// Errors:
+//   - errOpTypeNotFound: the specified operation type does not exist in the config
 func (c HaltConfig) get(op OpType) (bool, error) {
 	enabled, exists := c[op]
 	if !exists {
-		return false, makeErrorWithDetails(errInvalidOpType, op.String())
+		return false, makeErrorWithDetails(errOpTypeNotFound, op.String())
 	}
 
 	return enabled, nil
