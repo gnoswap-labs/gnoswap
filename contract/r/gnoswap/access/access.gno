@@ -26,18 +26,21 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
-	// Validate role name
-	roleName = strings.TrimSpace(roleName)
-	if roleName == "" {
-		panic("role name cannot be empty")
+	if err := setRoleAddress(roleName, roleAddress); err != nil {
+		panic(err)
 	}
+}
 
+// setRoleAddress is the internal implementation of SetRoleAddress.
+// Separated for testability.
+func setRoleAddress(roleName string, roleAddress address) error {
 	// Validate address
 	if !roleAddress.IsValid() || roleAddress == address("") {
-		panic(ufmt.Errorf("invalid address for role %s: %s", roleName, roleAddress))
+		return ufmt.Errorf(errInvalidAddress, roleName, roleAddress)
 	}
 
 	roleAddresses[roleName] = roleAddress
+	return nil
 }
 
 // RemoveRole removes a role from the system.
@@ -101,7 +104,7 @@ func GetRoleAddresses() map[string]address {
 func MustGetAddress(role string) address {
 	addr, ok := GetAddress(role)
 	if !ok {
-		panic(ufmt.Errorf("role %s not found", role))
+		panic(ufmt.Errorf(errRoleNotFound, role))
 	}
 
 	return addr
