@@ -30,7 +30,7 @@ func TestSvgGenerator_genImageParams(t *testing.T) {
 	uassert.True(t, strings.HasPrefix(parts[5], "#"))
 }
 
-func TestSvgGenerator_paramsToImageURI(t *testing.T) {
+func TestSvgGenerator_generateImageURI(t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -51,9 +51,12 @@ func TestSvgGenerator_paramsToImageURI(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			params, err := parseImageParams(tc.params)
+			uassert.NoError(t, err)
+
 			var uri string
 			uassert.NotPanics(t, func() {
-				uri = paramsToImageURI(tc.params)
+				uri = params.generateImageURI()
 			})
 
 			// Verify URI prefix
@@ -61,8 +64,7 @@ func TestSvgGenerator_paramsToImageURI(t *testing.T) {
 
 			// Verify base64 decoding works
 			base64Part := strings.TrimPrefix(uri, "data:image/svg+xml;base64,")
-			decoded, err := b64.StdEncoding.DecodeString(base64Part)
-			uassert.NoError(t, err)
+			decoded, _ := b64.StdEncoding.DecodeString(base64Part)
 
 			// Verify decoded content is valid SVG
 			decodedStr := string(decoded)
@@ -74,7 +76,7 @@ func TestSvgGenerator_paramsToImageURI(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_paramsToImageRaw(t *testing.T) {
+func TestSvgGenerator_generateSVG(t *testing.T) {
 	tests := []struct {
 		name   string
 		params string
@@ -95,10 +97,12 @@ func TestSvgGenerator_paramsToImageRaw(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var svg string
-			uassert.NotPanics(t, func() {
-				svg = paramsToImageRaw(tc.params)
-			})
+			// Parse params first
+			p, err := parseImageParams(tc.params)
+			uassert.NoError(t, err)
+
+			// Generate SVG
+			svg := p.generateSVG()
 
 			// Verify SVG structure
 			uassert.True(t, strings.Contains(svg, "<svg"))
@@ -112,7 +116,9 @@ func TestSvgGenerator_paramsToImageRaw(t *testing.T) {
 
 func TestSvgGenerator_paramsToImageRaw_ColorFormat(t *testing.T) {
 	params := "10,12,125,123,#AABBCC,#DDEEFF"
-	svg := paramsToImageRaw(params)
+	p, err := parseImageParams(params)
+	uassert.NoError(t, err)
+	svg := p.generateSVG()
 
 	// Extract colors from stop-color attributes
 	// Should find two colors in #XXXXXX format
@@ -174,7 +180,9 @@ func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svg := paramsToImageRaw(tc.params)
+			p, err := parseImageParams(tc.params)
+			uassert.NoError(t, err)
+			svg := p.generateSVG()
 
 			// Verify SVG contains linearGradient with coordinates
 			uassert.True(t, strings.Contains(svg, "linearGradient"))
@@ -215,7 +223,9 @@ func TestSvgGenerator_genImageParams_CoordinateRanges(t *testing.T) {
 
 			for i := 0; i < 10; i++ {
 				params := genImageParams(r)
-				svg := paramsToImageRaw(params)
+				p, err := parseImageParams(params)
+				uassert.NoError(t, err)
+				svg := p.generateSVG()
 
 				// Extract and validate coordinate values
 				x1, y1, x2, y2 := extractCoordinates(t, svg)
@@ -260,17 +270,20 @@ func TestSvgGenerator_roundTrip(t *testing.T) {
 			r := rand.New(pcg)
 
 			// Generate params
-			params := genImageParams(r)
+			paramsStr := genImageParams(r)
+
+			// Parse params
+			params, err := parseImageParams(paramsStr)
+			uassert.NoError(t, err)
 
 			// Convert to URI
-			uri := paramsToImageURI(params)
+			uri := params.generateImageURI()
 
 			// Verify URI is valid base64-encoded SVG
 			uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
 
 			base64Part := strings.TrimPrefix(uri, "data:image/svg+xml;base64,")
-			decoded, err := b64.StdEncoding.DecodeString(base64Part)
-			uassert.NoError(t, err)
+			decoded, _ := b64.StdEncoding.DecodeString(base64Part)
 
 			decodedStr := string(decoded)
 			uassert.True(t, strings.HasPrefix(decodedStr, "<svg"))
@@ -312,9 +325,9 @@ func TestSvgGenerator_paramsToImageRaw_InvalidParams(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, errInvalidTokenParams.Error(), func() {
-				paramsToImageRaw(tc.params)
-			})
+			_, err := parseImageParams(tc.params)
+			uassert.Error(t, err)
+			uassert.Equal(t, errInvalidTokenParams.Error(), err.Error())
 		})
 	}
 }
@@ -378,7 +391,9 @@ func TestSvgGenerator_outputConsistency(t *testing.T) {
 			pcg2 := rand.NewPCG(tc.seed1, tc.seed2)
 			r2 := rand.New(pcg2)
 			params := genImageParams(r2)
-			newSVG := paramsToImageRaw(params)
+			p, err := parseImageParams(params)
+			uassert.NoError(t, err)
+			newSVG := p.generateSVG()
 
 			// Both should produce identical output
 			uassert.Equal(t, oldSVG, newSVG)
@@ -488,8 +503,10 @@ func TestSvgGenerator_boundaryValues(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.valid {
+				p, err := parseImageParams(tc.params)
+				uassert.NoError(t, err)
 				uassert.NotPanics(t, func() {
-					paramsToImageRaw(tc.params)
+					p.generateSVG()
 				})
 			}
 		})
@@ -555,9 +572,9 @@ func TestSvgGenerator_outOfRangeValues(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, errInvalidTokenParamsRange.Error(), func() {
-				paramsToImageRaw(tc.params)
-			})
+			_, err := parseImageParams(tc.params)
+			uassert.Error(t, err)
+			uassert.Equal(t, errInvalidTokenParamsRange.Error(), err.Error())
 		})
 	}
 }
@@ -612,9 +629,9 @@ func TestSvgGenerator_invalidColorFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, errInvalidColorFormat.Error(), func() {
-				paramsToImageRaw(tc.params)
-			})
+			_, err := parseImageParams(tc.params)
+			uassert.Error(t, err)
+			uassert.Equal(t, errInvalidColorFormat.Error(), err.Error())
 		})
 	}
 }
@@ -663,10 +680,12 @@ func TestSvgGenerator_genImageParams_alwaysProducesValidOutput(t *testing.T) {
 		r := rand.New(pcg)
 
 		params := genImageParams(r)
+		p, err := parseImageParams(params)
+		uassert.NoError(t, err)
 
 		// Should never panic
 		uassert.NotPanics(t, func() {
-			svg := paramsToImageRaw(params)
+			svg := p.generateSVG()
 			// Verify basic SVG structure
 			uassert.True(t, strings.Contains(svg, "<svg"))
 			uassert.True(t, strings.Contains(svg, "</svg>"))
@@ -735,181 +754,180 @@ func extractIntValue(t *testing.T, text, prefix string) int {
 	return result
 }
 
-// TestSvgGenerator_isImageParams tests the isImageParams function
-// which validates the expected parameter format.
-func TestSvgGenerator_isImageParams(t *testing.T) {
+// TestSvgGenerator_parseImageParams tests the parseImageParams function
+// which validates and parses the expected parameter format.
+func TestSvgGenerator_parseImageParams(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected bool
+		name          string
+		input         string
+		expectedError error
 	}{
-		// Valid cases
 		{
-			name:     "valid params - standard format",
-			input:    "10,12,125,123,#FF0000,#00FF00",
-			expected: true,
+			name:  "valid params - standard format",
+			input: "10,12,125,123,#FF0000,#00FF00",
 		},
 		{
-			name:     "valid params - boundary min values",
-			input:    "7,7,121,121,#000000,#FFFFFF",
-			expected: true,
+			name:  "valid params - boundary min values",
+			input: "7,7,121,121,#000000,#FFFFFF",
 		},
 		{
-			name:     "valid params - boundary max values",
-			input:    "13,13,126,126,#ABCDEF,#123456",
-			expected: true,
+			name:  "valid params - boundary max values",
+			input: "13,13,126,126,#ABCDEF,#123456",
 		},
 		{
-			name:     "valid params - lowercase hex colors",
-			input:    "10,10,125,125,#aabbcc,#ddeeff",
-			expected: true,
+			name:  "valid params - lowercase hex colors",
+			input: "10,10,125,125,#aabbcc,#ddeeff",
 		},
 		{
-			name:     "valid params - mixed case hex colors",
-			input:    "10,10,125,125,#AaBbCc,#DdEeFf",
-			expected: true,
+			name:  "valid params - mixed case hex colors",
+			input: "10,10,125,125,#AaBbCc,#DdEeFf",
 		},
 		// Invalid cases - wrong comma count
 		{
-			name:     "invalid - no commas (plain URI)",
-			input:    "https://example.com/token/1",
-			expected: false,
+			name:          "invalid - no commas (plain URI)",
+			input:         "https://example.com/token/1",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - too few commas (4 commas)",
-			input:    "10,12,125,123,#FF0000",
-			expected: false,
+			name:          "invalid - too few commas (4 commas)",
+			input:         "10,12,125,123,#FF0000",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - too many commas (6 commas)",
-			input:    "10,12,125,123,#FF0000,#00FF00,extra",
-			expected: false,
+			name:          "invalid - too many commas (6 commas)",
+			input:         "10,12,125,123,#FF0000,#00FF00,extra",
+			expectedError: errInvalidTokenParams,
 		},
 		// Invalid cases - non-numeric coordinates
 		{
-			name:     "invalid - first param not numeric",
-			input:    "abc,12,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - first param not numeric",
+			input:         "abc,12,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - second param not numeric",
-			input:    "10,xyz,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - second param not numeric",
+			input:         "10,xyz,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - third param not numeric",
-			input:    "10,12,foo,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - third param not numeric",
+			input:         "10,12,foo,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - fourth param not numeric",
-			input:    "10,12,125,bar,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - fourth param not numeric",
+			input:         "10,12,125,bar,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - empty first param",
-			input:    ",12,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - empty first param",
+			input:         ",12,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		// Invalid cases - invalid color format
 		{
-			name:     "invalid - color1 missing hash",
-			input:    "10,12,125,123,FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - color1 missing hash",
+			input:         "10,12,125,123,FF0000,#00FF00",
+			expectedError: errInvalidColorFormat,
 		},
 		{
-			name:     "invalid - color2 missing hash",
-			input:    "10,12,125,123,#FF0000,00FF00",
-			expected: false,
+			name:          "invalid - color2 missing hash",
+			input:         "10,12,125,123,#FF0000,00FF00",
+			expectedError: errInvalidColorFormat,
 		},
 		{
-			name:     "invalid - color1 too short",
-			input:    "10,12,125,123,#FF00,#00FF00",
-			expected: false,
+			name:          "invalid - color1 too short",
+			input:         "10,12,125,123,#FF00,#00FF00",
+			expectedError: errInvalidColorFormat,
 		},
 		{
-			name:     "invalid - color2 too long",
-			input:    "10,12,125,123,#FF0000,#00FF00FF",
-			expected: false,
+			name:          "invalid - color2 too long",
+			input:         "10,12,125,123,#FF0000,#00FF00FF",
+			expectedError: errInvalidColorFormat,
 		},
 		{
-			name:     "invalid - color with invalid hex chars",
-			input:    "10,12,125,123,#GGGGGG,#00FF00",
-			expected: false,
+			name:          "invalid - color with invalid hex chars",
+			input:         "10,12,125,123,#GGGGGG,#00FF00",
+			expectedError: errInvalidColorFormat,
 		},
 		{
-			name:     "invalid - empty color",
-			input:    "10,12,125,123,,#00FF00",
-			expected: false,
+			name:          "invalid - empty color",
+			input:         "10,12,125,123,,#00FF00",
+			expectedError: errInvalidColorFormat,
 		},
 		// Edge cases
 		{
-			name:     "invalid - empty string",
-			input:    "",
-			expected: false,
+			name:          "invalid - empty string",
+			input:         "",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - only commas",
-			input:    ",,,,,",
-			expected: false,
+			name:          "invalid - only commas",
+			input:         ",,,,,",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - spaces in params",
-			input:    "10, 12, 125, 123, #FF0000, #00FF00",
-			expected: false,
+			name:          "invalid - spaces in params",
+			input:         "10, 12, 125, 123, #FF0000, #00FF00",
+			expectedError: errInvalidTokenParams,
 		},
 		{
-			name:     "invalid - negative numbers",
-			input:    "-10,12,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - negative numbers",
+			input:         "-10,12,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		// Invalid cases - coordinate range validation
 		{
-			name:     "invalid - x1 below min range (6 < 7)",
-			input:    "6,12,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - x1 below min range (6 < 7)",
+			input:         "6,12,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - x1 above max range (14 > 13)",
-			input:    "14,12,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - x1 above max range (14 > 13)",
+			input:         "14,12,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - y1 below min range (6 < 7)",
-			input:    "10,6,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - y1 below min range (6 < 7)",
+			input:         "10,6,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - y1 above max range (14 > 13)",
-			input:    "10,14,125,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - y1 above max range (14 > 13)",
+			input:         "10,14,125,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - x2 below min range (120 < 121)",
-			input:    "10,12,120,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - x2 below min range (120 < 121)",
+			input:         "10,12,120,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - x2 above max range (127 > 126)",
-			input:    "10,12,127,123,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - x2 above max range (127 > 126)",
+			input:         "10,12,127,123,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - y2 below min range (120 < 121)",
-			input:    "10,12,125,120,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - y2 below min range (120 < 121)",
+			input:         "10,12,125,120,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 		{
-			name:     "invalid - y2 above max range (127 > 126)",
-			input:    "10,12,125,127,#FF0000,#00FF00",
-			expected: false,
+			name:          "invalid - y2 above max range (127 > 126)",
+			input:         "10,12,125,127,#FF0000,#00FF00",
+			expectedError: errInvalidTokenParamsRange,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := isImageParams(tc.input)
-			uassert.Equal(t, tc.expected, result)
+			_, err := parseImageParams(tc.input)
+			if tc.expectedError == nil {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+				uassert.Equal(t, tc.expectedError.Error(), err.Error())
+			}
 		})
 	}
 }

@@ -110,96 +110,56 @@ func genImageParams(r *rand.Rand) string {
 		color1 + "," + color2
 }
 
-// paramsToImageURI converts stored parameters to a base64-encoded SVG image URI.
-func paramsToImageURI(params string) string {
-	imageRaw := paramsToImageRaw(params)
-	sEnc := b64.StdEncoding.EncodeToString([]byte(imageRaw))
-
-	return "data:image/svg+xml;base64," + sEnc
+// ImageParams holds parsed and validated image parameters.
+type ImageParams struct {
+	x1, y1, x2, y2 int
+	color1, color2 string
 }
 
-// isImageParams checks if the string is in the expected parameter format.
-// Expected format: "x1,y1,x2,y2,color1,color2" where:
-//   - x1, y1, x2, y2 are numeric values within valid ranges (indices 0-3)
-//   - color1, color2 are hex color strings in #XXXXXX format (indices 4-5)
-func isImageParams(s string) bool {
-	parts := strings.Split(s, ",")
-	if len(parts) != 6 {
-		return false
-	}
-
-	// Validate coordinates are numeric and within valid ranges
-	x1, err := strconv.Atoi(parts[0])
-	if err != nil || x1 < x1Min || x1 > x1Max {
-		return false
-	}
-
-	y1, err := strconv.Atoi(parts[1])
-	if err != nil || y1 < y1Min || y1 > y1Max {
-		return false
-	}
-
-	x2, err := strconv.Atoi(parts[2])
-	if err != nil || x2 < x2Min || x2 > x2Max {
-		return false
-	}
-
-	y2, err := strconv.Atoi(parts[3])
-	if err != nil || y2 < y2Min || y2 > y2Max {
-		return false
-	}
-
-	// Validate color format (#XXXXXX)
-	if !isValidHexColor(parts[4]) || !isValidHexColor(parts[5]) {
-		return false
-	}
-
-	return true
-}
-
-// paramsToImageRaw parses parameters and generates SVG image.
+// parseImageParams parses and validates parameters in one step.
+// Returns parsed ImageParams or error.
 // Expected format: "x1,y1,x2,y2,color1,color2"
-func paramsToImageRaw(params string) string {
+func parseImageParams(params string) (ImageParams, error) {
 	parts := strings.Split(params, ",")
 	if len(parts) != 6 {
-		panic(errInvalidTokenParams)
+		return ImageParams{}, errInvalidTokenParams
 	}
 
 	x1, err := strconv.Atoi(parts[0])
 	if err != nil {
-		panic(errInvalidTokenParams)
+		return ImageParams{}, errInvalidTokenParams
 	}
 
 	y1, err := strconv.Atoi(parts[1])
 	if err != nil {
-		panic(errInvalidTokenParams)
+		return ImageParams{}, errInvalidTokenParams
 	}
 
 	x2, err := strconv.Atoi(parts[2])
 	if err != nil {
-		panic(errInvalidTokenParams)
+		return ImageParams{}, errInvalidTokenParams
 	}
 
 	y2, err := strconv.Atoi(parts[3])
 	if err != nil {
-		panic(errInvalidTokenParams)
+		return ImageParams{}, errInvalidTokenParams
 	}
 
 	// Validate coordinate ranges
 	if x1 < x1Min || x1 > x1Max {
-		panic(errInvalidTokenParamsRange)
+		return ImageParams{}, errInvalidTokenParamsRange
 	}
 
 	if y1 < y1Min || y1 > y1Max {
-		panic(errInvalidTokenParamsRange)
+		return ImageParams{}, errInvalidTokenParamsRange
 	}
 
 	if x2 < x2Min || x2 > x2Max {
-		panic(errInvalidTokenParamsRange)
+		return ImageParams{}, errInvalidTokenParamsRange
 	}
 
 	if y2 < y2Min || y2 > y2Max {
-		panic(errInvalidTokenParamsRange)
+		return ImageParams{}, errInvalidTokenParamsRange
 	}
 
 	color1 := parts[4]
@@ -207,12 +167,32 @@ func paramsToImageRaw(params string) string {
 
 	// Validate color format (#XXXXXX)
 	if !isValidHexColor(color1) || !isValidHexColor(color2) {
-		panic(errInvalidColorFormat)
+		return ImageParams{}, errInvalidColorFormat
 	}
 
-	return svgTemplate[0] + strconv.Itoa(x1) + svgTemplate[1] + strconv.Itoa(y1) +
-		svgTemplate[2] + strconv.Itoa(x2) + svgTemplate[3] + strconv.Itoa(y2) +
-		svgTemplate[4] + color1 + svgTemplate[5] + color2 + svgTemplate[6]
+	return ImageParams{
+		x1:     x1,
+		y1:     y1,
+		x2:     x2,
+		y2:     y2,
+		color1: color1,
+		color2: color2,
+	}, nil
+}
+
+// generateImageURI converts parsed image parameters to a base64-encoded SVG image URI.
+func (params ImageParams) generateImageURI() string {
+	svg := params.generateSVG()
+	sEnc := b64.StdEncoding.EncodeToString([]byte(svg))
+
+	return "data:image/svg+xml;base64," + sEnc
+}
+
+// generateSVG generates SVG image from parsed and validated parameters.
+func (params ImageParams) generateSVG() string {
+	return svgTemplate[0] + strconv.Itoa(params.x1) + svgTemplate[1] + strconv.Itoa(params.y1) +
+		svgTemplate[2] + strconv.Itoa(params.x2) + svgTemplate[3] + strconv.Itoa(params.y2) +
+		svgTemplate[4] + params.color1 + svgTemplate[5] + params.color2 + svgTemplate[6]
 }
 
 // isValidHexColor checks if a string is a valid hex color in #XXXXXX format.

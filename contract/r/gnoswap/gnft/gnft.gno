@@ -44,9 +44,9 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 		return "", err
 	}
 
-	// Check if it looks like SVG parameters format (x1,y1,x2,y2,color1,color2)
-	if isImageParams(stored) {
-		return paramsToImageURI(stored), nil
+	params, err := parseImageParams(stored)
+	if err == nil {
+		return params.generateImageURI(), nil
 	}
 
 	return stored, nil
