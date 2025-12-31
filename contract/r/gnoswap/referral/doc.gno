@@ -76,14 +76,12 @@
 //
 // ## Error Handling
 //
-// The package defines the following error types:
-//
-//   - ErrInvalidAddress: Returned when an address format is invalid
-//   - ErrSelfReferral: Returned when attempting to set self as referrer
-//   - ErrUnauthorized: Returned when the caller lacks permission
-//   - ErrTooManyRequests: Returned when rate limit is exceeded
-//   - ErrNotFound: Returned when a referral does not exist
-//   - ErrCyclicReference: Reserved for cyclic reference detection
+// The package defines several error types:
+//   - `ErrInvalidAddress`: Returned when an address format is invalid
+//   - `ErrSelfReferral`: Returned when attempting to set self as referrer
+//   - `ErrUnauthorized`: Returned when the caller lacks permission
+//   - `ErrTooManyRequests`: Returned when rate limit is exceeded (24-hour cooldown)
+//   - `ErrNotFound`: Returned when attempting to get a non-existent referral
 //
 // ## Example: Integration with Router Contract
 //

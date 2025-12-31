@@ -54,7 +54,7 @@ func TestKeeper_Register(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanupKeeper(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
@@ -104,7 +104,7 @@ func TestKeeper_Has(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanupKeeper(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -158,7 +158,7 @@ func TestKeeper_Get(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanupKeeper(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -218,7 +218,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanupKeeper(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -236,12 +236,18 @@ func TestKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
-// Helper functions
-func setupKeeperTest() *keeper {
-	return NewKeeper().(*keeper)
+func TestKeeper_NewKeeper(t *testing.T) {
+	k := NewKeeper().(*keeper)
+	if k == nil {
+		t.Fatal("keeper should not be nil")
+	}
+
+	uassert.True(t, k.isEmpty())
 }
 
-func cleanupKeeper() {
+func cleanupKeeper(t *testing.T) {
+    t.Helper()
+
 	// Reset global keeper
 	gReferralKeeper = NewKeeper()
 }

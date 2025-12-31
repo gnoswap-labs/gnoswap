@@ -6,37 +6,58 @@ Referral system for tracking user relationships.
 
 Manages referral relationships between users with cooldown periods to prevent gaming.
 
-## Key Functions
+## Global Functions
 
-### `TryRegister`
-Attempts to register referral relationship.
+### `TryRegister(cur realm, addr address, referral string) bool`
+Attempts to register a referral relationship. Returns true on success, false on failure.
+Emits `ReferralRegistrationFailed` event on error.
 
-### `Register`
-Registers new referral (panics if exists).
+### `GetReferral(addr string) string`
+Returns the referral address for the given address. Returns empty string if not found.
 
-### `UpdateReferral`
-Changes referral address after cooldown.
+### `HasReferral(addr string) bool`
+Returns true if the given address has a referral.
 
-### `DeleteReferral`
-Removes referral relationship.
+### `IsEmpty() bool`
+Returns true if no referrals exist in the system.
 
-### `GetReferral`
-Returns referral for address.
+## Referral Struct Methods
+
+### `NewReferral() *Referral`
+Creates a new Referral instance with the global keeper.
+
+### `Register(addr, refAddr address) error`
+Creates or updates a referral relationship.
+
+### `Update(addr, newAddr address) error`
+Modifies a referral relationship (same behavior as Register).
+
+### `Remove(addr address) error`
+Deletes a referral relationship.
+
+### `Has(addr address) bool`
+Returns true if a referral exists for the given address.
+
+### `Get(addr address) (address, error)`
+Retrieves the referral address for the given address.
 
 ## Usage
 
 ```go
-// Register referral
-success := TryRegister(user, referrer)
-
-// Update after cooldown
-UpdateReferral(newReferrer)
+// Register referral (returns bool)
+success := TryRegister(cross, userAddr, referrerAddr.String())
 
 // Query referral
 referrer := GetReferral(userAddress)
 
-// Remove referral
-DeleteReferral()
+// Check if referral exists
+exists := HasReferral(userAddress)
+
+// Using Referral struct
+r := NewReferral()
+err := r.Register(userAddr, referrerAddr)
+refAddr, err := r.Get(userAddr)
+err = r.Remove(userAddr)
 ```
 
 ## Security
@@ -45,3 +66,4 @@ DeleteReferral()
 - 24-hour change cooldown
 - No self-referrals
 - Immutable during cooldown
+- Only authorized callers can modify referrals
