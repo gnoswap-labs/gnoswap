@@ -97,14 +97,14 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 				}
 			}()
 
-			cleanup()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
 
 			// Set up pre-existing referral for failure test case
 			if tc.name == "Fail register existing referral" {
-				setupExistingReferral(tc.addr, testutils.TestAddress("existing"))
+				setupExistingReferral(t, tc.addr, testutils.TestAddress("existing"))
 			}
 
 			// when
@@ -161,13 +161,13 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -220,13 +220,13 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(address(tc.addr), address(tc.setupReferral))
+				setupExistingReferral(t, address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -268,13 +268,13 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			for addr, referral := range tc.setupReferrals {
-				setupExistingReferral(address(addr), address(referral))
+				setupExistingReferral(t, address(addr), address(referral))
 			}
 
 			// when
@@ -299,7 +299,7 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// when
 			keeper := gReferralKeeper
@@ -315,11 +315,12 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 }
 
 // Helper functions
-func cleanup() {
+func cleanup(t *testing.T) {
+    t.Helper()
 	// Reset global keeper
 	gReferralKeeper = NewKeeper()
 }
 
-func setupExistingReferral(addr, referralAddr address) {
+func setupExistingReferral(t *testing.T, addr, referralAddr address) {
 	TryRegister(cross, addr, referralAddr.String())
 }

@@ -15,9 +15,10 @@ import (
 )
 
 func TestRateLimit_AllowsFirstOperation(t *testing.T) {
-	cleanup := setupValidCaller()
+	cleanup := setupValidCaller(t)
 	defer cleanup()
-	k := setupRateLimitKeeper()
+
+	k := setupRateLimitKeeper(t)
 
 	userAddr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
@@ -31,9 +32,9 @@ func TestRateLimit_AllowsFirstOperation(t *testing.T) {
 }
 
 func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
-	cleanup := setupValidCaller()
+	cleanup := setupValidCaller(t)
 	defer cleanup()
-	k := setupRateLimitKeeper()
+	k := setupRateLimitKeeper(t)
 
 	userAddr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
@@ -50,9 +51,10 @@ func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
 }
 
 func TestRateLimit_IsAddressSpecific(t *testing.T) {
-	cleanup := setupValidCaller()
+	cleanup := setupValidCaller(t)
 	defer cleanup()
-	k := setupRateLimitKeeper()
+
+	k := setupRateLimitKeeper(t)
 
 	user1 := testutils.TestAddress("user1")
 	user2 := testutils.TestAddress("user2")
@@ -123,9 +125,9 @@ func TestRateLimit_OperationCombinations(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup := setupValidCaller()
+			cleanup := setupValidCaller(t)
 			defer cleanup()
-			k := setupRateLimitKeeper()
+			k := setupRateLimitKeeper(t)
 
 			user := testutils.TestAddress(tc.prefix + "_user")
 			ref1 := testutils.TestAddress(tc.prefix + "_ref1")
@@ -141,9 +143,9 @@ func TestRateLimit_OperationCombinations(t *testing.T) {
 }
 
 func TestRateLimit_ZeroAddressNotRateLimited(t *testing.T) {
-	cleanup := setupValidCaller()
+	cleanup := setupValidCaller(t)
 	defer cleanup()
-	k := setupRateLimitKeeper()
+	k := setupRateLimitKeeper(t)
 
 	userAddr := testutils.TestAddress("user1")
 
@@ -185,9 +187,9 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup := setupValidCaller()
+			cleanup := setupValidCaller(t)
 			defer cleanup()
-			k := setupRateLimitKeeper()
+			k := setupRateLimitKeeper(t)
 
 			user := testutils.TestAddress(tc.prefix + "_user")
 			ref1 := testutils.TestAddress(tc.prefix + "_ref1")
@@ -248,7 +250,7 @@ func TestRateLimit_CheckRateLimitInternal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			k := setupRateLimitKeeper()
+			k := setupRateLimitKeeper(t)
 			userAddr := testutils.TestAddress("user")
 			tc.setupLastOps(k, userAddr.String())
 
@@ -264,9 +266,9 @@ func TestRateLimit_CheckRateLimitInternal(t *testing.T) {
 }
 
 func TestRateLimit_UnauthorizedCallerTakesPrecedence(t *testing.T) {
-	cleanup := setupRateLimitCaller("unauthorized")
+	cleanup := setupRateLimitCaller(t, "unauthorized")
 	defer cleanup()
-	k := setupRateLimitKeeper()
+	k := setupRateLimitKeeper(t)
 
 	user := testutils.TestAddress("user")
 	referrer := testutils.TestAddress("referrer")
@@ -278,9 +280,9 @@ func TestRateLimit_UnauthorizedCallerTakesPrecedence(t *testing.T) {
 }
 
 func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
-	cleanup := setupValidCaller()
+	cleanup := setupValidCaller(t)
 	defer cleanup()
-	k := setupRateLimitKeeper()
+	k := setupRateLimitKeeper(t)
 
 	user := testutils.TestAddress("user")
 
@@ -289,11 +291,13 @@ func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
 	uassert.ErrorIs(t, err, ErrSelfReferral)
 }
 
-func setupRateLimitKeeper() *keeper {
+func setupRateLimitKeeper(t *testing.T) *keeper {
+    t.Helper()
 	return NewKeeper().(*keeper)
 }
 
-func setupValidCaller() func() {
+func setupValidCaller(t *testing.T) func() {
+	t.Helper()
 	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
@@ -302,7 +306,8 @@ func setupValidCaller() func() {
 	}
 }
 
-func setupRateLimitCaller(caller string) func() {
+func setupRateLimitCaller(t *testing.T, caller string) func() {
+	t.Helper()
 	origCaller := runtime.OriginCaller()
 	switch caller {
 	case "router":
