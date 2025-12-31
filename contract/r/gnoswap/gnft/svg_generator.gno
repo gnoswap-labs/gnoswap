@@ -83,15 +83,20 @@ const (
 	x2Max = 126
 	y2Min = 121
 	y2Max = 126
+
+	x1Range = x1Max - x1Min + 1
+	y1Range = y1Max - y1Min + 1
+	x2Range = x2Max - x2Min + 1
+	y2Range = y2Max - y2Min + 1
 )
 
 // genImageParams generates random gradient parameters and returns them as a compact string.
 // Format: "x1,y1,x2,y2,color1,color2" (e.g., "10,12,125,123,#AABBCC,#DDEEFF")
 func genImageParams(r *rand.Rand) string {
-	x1 := x1Min + r.Uint64N(x1Max-x1Min+1)
-	y1 := y1Min + r.Uint64N(y1Max-y1Min+1)
-	x2 := x2Min + r.Uint64N(x2Max-x2Min+1)
-	y2 := y2Min + r.Uint64N(y2Max-y2Min+1)
+	x1 := x1Min + r.Uint64N(x1Range)
+	y1 := y1Min + r.Uint64N(y1Range)
+	x2 := x2Min + r.Uint64N(x2Range)
+	y2 := y2Min + r.Uint64N(y2Range)
 
 	var color1, color2 strings.Builder
 	color1.Grow(7)
