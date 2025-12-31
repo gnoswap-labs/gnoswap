@@ -63,47 +63,6 @@ func TestLiquidityAmounts_ToAscendingOrder(t *testing.T) {
 	}
 }
 
-func TestLiquidityAmounts_ToUint128(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "Value within uint128 range",
-			input:    "100000000",
-			expected: "100000000",
-		},
-		{
-			name:     "Exactly MAX_UINT128",
-			input:    MAX_UINT128,
-			expected: MAX_UINT128,
-		},
-		{
-			name:     "Value exceeding uint128 - should mask",
-			input:    "680564733841876926926749214863536422912", // MAX_UINT128 * 2
-			expected: "0",                                       // Masked to lower 128 bits
-		},
-		{
-			name:     "MAX_UINT256 - extreme masking",
-			input:    "115792089237316195423570985008687907853269984665640564039457584007913129639935",
-			expected: MAX_UINT128,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			input := u256.MustFromDecimal(tt.input)
-			result := toUint128(input)
-			expected := u256.MustFromDecimal(tt.expected)
-
-			if !result.Eq(expected) {
-				t.Errorf("Expected %s, got %s", expected.ToString(), result.ToString())
-			}
-		})
-	}
-}
-
 func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 	tests := []struct {
 		name        string

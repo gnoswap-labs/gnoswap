@@ -299,34 +299,6 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// toUint128 ensures the value fits within uint128 range.
-//
-// Validates and constrains a 256-bit unsigned integer to 128-bit range.
-// Used for liquidity calculations where amounts must fit in compact storage.
-//
-// Parameters:
-//   - value: 256-bit unsigned integer to constrain
-//
-// Returns:
-//   - Masked value if exceeds MAX_UINT128 (2^128 - 1)
-//   - Original value if within range
-//
-// Panics if value is nil.
-// Critical for preventing overflow in liquidity math.
-func toUint128(value *u256.Uint) *u256.Uint {
-	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
-	}
-
-	if value.Gt(maxUint128) {
-		return u256.Zero().And(value, q128Mask)
-	}
-	return value
-}
-
 // safeConvertToUint128 safely ensures a *u256.Uint value fits within the uint128 range.
 //
 // This function verifies that the provided unsigned 256-bit integer does not exceed the maximum value for uint128 (`2^128 - 1`).

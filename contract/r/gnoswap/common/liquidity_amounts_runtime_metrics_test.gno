@@ -139,23 +139,6 @@ func TestLiquidityAmountsRuntimeMetrics(t *testing.T) {
 				})
 			},
 		},
-		// toUint128 tests
-		{
-			name: "toUint128_WithinRange",
-			run: func(t *testing.T) LiquidityMetricResult {
-				return runLiquidityMetric(t, "toUint128_WithinRange", iterations, func() {
-					_ = toUint128(liquidityMedium)
-				})
-			},
-		},
-		{
-			name: "toUint128_MaxValue",
-			run: func(t *testing.T) LiquidityMetricResult {
-				return runLiquidityMetric(t, "toUint128_MaxValue", iterations, func() {
-					_ = toUint128(liquidityMax)
-				})
-			},
-		},
 		// safeConvertToUint128 tests
 		{
 			name: "safeConvertToUint128_Valid",
