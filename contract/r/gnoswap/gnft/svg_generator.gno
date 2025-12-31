@@ -98,20 +98,16 @@ func genImageParams(r *rand.Rand) string {
 	x2 := x2Min + r.Uint64N(x2Range)
 	y2 := y2Min + r.Uint64N(y2Range)
 
-	var color1, color2 strings.Builder
-	color1.Grow(7)
-	color2.Grow(7)
-	color1.WriteByte('#')
-	color2.WriteByte('#')
-
+	color1 := "#"
+	color2 := "#"
 	for i := 0; i < 6; i++ {
-		color1.WriteByte(charset[r.IntN(16)])
-		color2.WriteByte(charset[r.IntN(16)])
+		color1 += string(charset[r.IntN(16)])
+		color2 += string(charset[r.IntN(16)])
 	}
 
 	return strconv.Itoa(int(x1)) + "," + strconv.Itoa(int(y1)) + "," +
 		strconv.Itoa(int(x2)) + "," + strconv.Itoa(int(y2)) + "," +
-		color1.String() + "," + color2.String()
+		color1 + "," + color2
 }
 
 // paramsToImageURI converts stored parameters to a base64-encoded SVG image URI.
