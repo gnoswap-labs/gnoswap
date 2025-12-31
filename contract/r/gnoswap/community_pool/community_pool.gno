@@ -22,28 +22,18 @@ func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedCommunityPool()
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := transferToken(tokenPath, to, amount)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// transferToken performs actual token transfer.
-func transferToken(tokenPath string, to address, amount int64) error {
 	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
-	prevRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"TransferToken",
-		"prevAddr", prevRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"tokenPath", tokenPath,
 		"to", to.String(),
 		"amount", strconv.FormatInt(amount, 10),
 	)
-
-	return nil
 }
