@@ -13,7 +13,7 @@
 //     especially isValidCaller, which ensures only specific, pre-authorized
 //     callers (e.g., governance or router addresses) can invoke the core
 //     functions.
-//  3. **types.gno**: Defines core constants for event types, attributes,
+//  3. **type.gno**: Defines core constants for event types, attributes,
 //     and the ReferralKeeper interface, which outlines the fundamental
 //     methods of the referral system (Register, Update, Remove, etc.).
 //  4. **keeper.gno**: Implements the actual business logic behind the
@@ -66,17 +66,16 @@
 // ```go
 //
 //	import (
-//	    "std"
 //	    "gno.land/r/gnoswap/referral"
 //	    "gno.land/p/demo/mystaking"        // example staking contract
 //	)
 //
-//	func rewardReferrerOnStake(user std.Address, amount int) {
+//	func rewardReferrerOnStake(user address, amount int) {
 //	    // 1) Access the referral system
 //	    r := referral.NewReferral()
 //
 //	    // 2) Get the user's referrer
-//	    refAddr, err := r.GetReferral(user)
+//	    refAddr, err := r.Get(user)
 //	    if err != nil {
 //	        // handle error or skip if not found
 //	        return
