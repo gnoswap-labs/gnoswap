@@ -1,6 +1,11 @@
 #!/bin/bash
 # Run all integration tests individually
-# Usage: ./scripts/all-integration-tests.sh [GNO_INTEGRATION_PATH] [CONTRACT_PATH] [--skip]
+# Usage: ./scripts/all-integration-tests.sh [GNO_INTEGRATION_PATH] [CONTRACT_PATH] [--skip] [--category=<categories>]
+#
+# Examples:
+#   ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip
+#   ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip --category=base
+#   ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip --category=base,gov,upgradable
 
 set -e
 
@@ -11,16 +16,42 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Default paths (can be overridden by arguments)
-GNO_INTEGRATION_PATH="${1:-/app/gno/gno.land/pkg/integration}"
-CONTRACT_PATH="${2:-/app}"
-SKIP_FLAG="${3:-}"
+# Parse arguments
+GNO_INTEGRATION_PATH=""
+CONTRACT_PATH=""
+SKIP_FLAG=""
+CATEGORY_FLAG=""
+
+for arg in "$@"; do
+    case $arg in
+        --skip)
+            SKIP_FLAG="--skip"
+            ;;
+        --category=*)
+            CATEGORY_FLAG="--category=${arg#*=}"
+            ;;
+        *)
+            if [ -z "$GNO_INTEGRATION_PATH" ]; then
+                GNO_INTEGRATION_PATH="$arg"
+            elif [ -z "$CONTRACT_PATH" ]; then
+                CONTRACT_PATH="$arg"
+            fi
+            ;;
+    esac
+done
+
+# Default paths
+GNO_INTEGRATION_PATH="${GNO_INTEGRATION_PATH:-/app/gno/gno.land/pkg/integration}"
+CONTRACT_PATH="${CONTRACT_PATH:-/app}"
 
 # Convert to absolute paths
 GNO_INTEGRATION_PATH="$(cd "$GNO_INTEGRATION_PATH" && pwd)"
 CONTRACT_PATH="$(cd "$CONTRACT_PATH" && pwd)"
 
 echo -e "${BLUE}Running all integration tests individually...${NC}"
+if [ -n "$CATEGORY_FLAG" ]; then
+    echo -e "${BLUE}Category filter: ${CATEGORY_FLAG#--category=}${NC}"
+fi
 echo ""
 
 cd "$GNO_INTEGRATION_PATH"
@@ -28,7 +59,7 @@ cd "$GNO_INTEGRATION_PATH"
 tests=()
 while IFS= read -r test; do
     tests+=("$test")
-done < <(cd "$CONTRACT_PATH" && python3 setup.py --list-tests $SKIP_FLAG)
+done < <(cd "$CONTRACT_PATH" && python3 setup.py --list-tests $SKIP_FLAG $CATEGORY_FLAG)
 
 total=${#tests[@]}
 passed=0
