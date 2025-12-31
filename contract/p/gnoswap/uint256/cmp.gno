@@ -39,16 +39,6 @@ func (z *Uint) Sign() int {
 	return -1
 }
 
-// LtUint64 returns true if z is less than the uint64 value n.
-func (z *Uint) LtUint64(n uint64) bool {
-	return z[0] < n && (z[1]|z[2]|z[3]) == 0
-}
-
-// GtUint64 returns true if z is greater than the uint64 value n.
-func (z *Uint) GtUint64(n uint64) bool {
-	return z[0] > n || (z[1]|z[2]|z[3]) != 0
-}
-
 // Lt returns true if z is less than x.
 func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
