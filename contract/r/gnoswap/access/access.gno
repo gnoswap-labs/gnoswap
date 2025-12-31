@@ -34,7 +34,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 // setRoleAddress is the internal implementation of SetRoleAddress.
 // Separated for testability.
 func setRoleAddress(roleName string, roleAddress address) error {
-    if strings.TrimSpace(roleName) == "" {
+    roleName = strings.TrimSpace(roleName)
+    if roleName == "" {
 		panic("role name cannot be empty")
 	}
 
