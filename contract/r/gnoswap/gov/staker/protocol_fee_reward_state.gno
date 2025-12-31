@@ -1,8 +1,6 @@
 package staker
 
 import (
-	"gno.land/p/nt/avl"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -12,14 +10,11 @@ import (
 type ProtocolFeeRewardState struct {
 	// rewardDebtX128 maps token path to reward debt with 128-bit precision scaling
 	// Used to calculate rewards earned since the last update for each token
-	// Using AVL tree to handle unbounded growth of token types efficiently
-	rewardDebtX128 *avl.Tree // token path -> *u256.Uint
+	rewardDebtX128 map[string]*u256.Uint
 	// accumulatedRewards maps token path to total rewards accumulated but not yet claimed
-	// Using AVL tree to handle unbounded growth of token types efficiently
-	accumulatedRewards *avl.Tree // token path -> int64
+	accumulatedRewards map[string]int64
 	// claimedRewards maps token path to total amount of rewards that have been claimed
-	// Using AVL tree to handle unbounded growth of token types efficiently
-	claimedRewards *avl.Tree // token path -> int64
+	claimedRewards map[string]int64
 	// accumulatedTimestamp is the last timestamp when rewards were accumulated
 	accumulatedTimestamp int64
 	// claimedTimestamp is the last timestamp when rewards were claimed
@@ -28,15 +23,15 @@ type ProtocolFeeRewardState struct {
 	stakedAmount int64
 }
 
-func (p *ProtocolFeeRewardState) GetRewardDebtX128() *avl.Tree {
+func (p *ProtocolFeeRewardState) GetRewardDebtX128() map[string]*u256.Uint {
 	return p.rewardDebtX128
 }
 
-func (p *ProtocolFeeRewardState) GetAccumulatedRewards() *avl.Tree {
+func (p *ProtocolFeeRewardState) GetAccumulatedRewards() map[string]int64 {
 	return p.accumulatedRewards
 }
 
-func (p *ProtocolFeeRewardState) GetClaimedRewards() *avl.Tree {
+func (p *ProtocolFeeRewardState) GetClaimedRewards() map[string]int64 {
 	return p.claimedRewards
 }
 
@@ -54,15 +49,15 @@ func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
 
 /* Setters */
 
-func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 *avl.Tree) {
+func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
 	p.rewardDebtX128 = rewardDebtX128
 }
 
-func (p *ProtocolFeeRewardState) SetAccumulatedRewards(accumulatedRewards *avl.Tree) {
+func (p *ProtocolFeeRewardState) SetAccumulatedRewards(accumulatedRewards map[string]int64) {
 	p.accumulatedRewards = accumulatedRewards
 }
 
-func (p *ProtocolFeeRewardState) SetClaimedRewards(claimedRewards *avl.Tree) {
+func (p *ProtocolFeeRewardState) SetClaimedRewards(claimedRewards map[string]int64) {
 	p.claimedRewards = claimedRewards
 }
 
@@ -84,89 +79,60 @@ func (p *ProtocolFeeRewardState) GetRewardDebtX128ForToken(token string) *u256.U
 	if p.rewardDebtX128 == nil {
 		return nil
 	}
-	value, exists := p.rewardDebtX128.Get(token)
-	if !exists {
-		return nil
-	}
-	debt, ok := value.(*u256.Uint)
-	if !ok {
-		return nil
-	}
-	return debt
+	return p.rewardDebtX128[token]
 }
 
 func (p *ProtocolFeeRewardState) GetAccumulatedRewardForToken(token string) int64 {
 	if p.accumulatedRewards == nil {
 		return 0
 	}
-	value, exists := p.accumulatedRewards.Get(token)
-	if !exists {
-		return 0
-	}
-	reward, ok := value.(int64)
-	if !ok {
-		return 0
-	}
-	return reward
+	return p.accumulatedRewards[token]
 }
 
 func (p *ProtocolFeeRewardState) GetClaimedRewardForToken(token string) int64 {
 	if p.claimedRewards == nil {
 		return 0
 	}
-	value, exists := p.claimedRewards.Get(token)
-	if !exists {
-		return 0
-	}
-	claimed, ok := value.(int64)
-	if !ok {
-		return 0
-	}
-	return claimed
+	return p.claimedRewards[token]
 }
 
 // Additional setters for individual token rewards
 
 func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *u256.Uint) {
 	if p.rewardDebtX128 == nil {
-		p.rewardDebtX128 = avl.NewTree()
+		p.rewardDebtX128 = make(map[string]*u256.Uint)
 	}
-	p.rewardDebtX128.Set(token, value)
+	p.rewardDebtX128[token] = value
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {
 	if p.accumulatedRewards == nil {
-		p.accumulatedRewards = avl.NewTree()
+		p.accumulatedRewards = make(map[string]int64)
 	}
-	p.accumulatedRewards.Set(token, value)
+	p.accumulatedRewards[token] = value
 }
 
 func (p *ProtocolFeeRewardState) SetClaimedRewardForToken(token string, value int64) {
 	if p.claimedRewards == nil {
-		p.claimedRewards = avl.NewTree()
+		p.claimedRewards = make(map[string]int64)
 	}
-	p.claimedRewards.Set(token, value)
+	p.claimedRewards[token] = value
 }
 
 // NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
 // This factory function initializes the state with the current system reward debt for all tokens.
-func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake *avl.Tree) *ProtocolFeeRewardState {
-	rewardDebtX128 := avl.NewTree()
+func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) *ProtocolFeeRewardState {
+	rewardDebtX128 := make(map[string]*u256.Uint)
 
 	// Clone reward debt for each token to avoid reference issues
-	if accumulatedProtocolFeeX128PerStake != nil {
-		accumulatedProtocolFeeX128PerStake.Iterate("", "", func(key string, value interface{}) bool {
-			if accumulatedFee, ok := value.(*u256.Uint); ok {
-				rewardDebtX128.Set(key, accumulatedFee.Clone())
-			}
-			return false
-		})
+	for token, accumulatedFee := range accumulatedProtocolFeeX128PerStake {
+		rewardDebtX128[token] = accumulatedFee.Clone()
 	}
 
 	return &ProtocolFeeRewardState{
 		rewardDebtX128:       rewardDebtX128,
-		claimedRewards:       avl.NewTree(),
-		accumulatedRewards:   avl.NewTree(),
+		claimedRewards:       make(map[string]int64),
+		accumulatedRewards:   make(map[string]int64),
 		stakedAmount:         0,
 		accumulatedTimestamp: 0,
 		claimedTimestamp:     0,

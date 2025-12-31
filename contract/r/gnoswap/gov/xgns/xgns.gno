@@ -30,7 +30,7 @@ func VotingSupply() int64 {
 	total := token.TotalSupply()
 	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !ok {
-		panic(ufmt.Sprintf("launchpad address not found"))
+		panic("launchpad address not found")
 	}
 
 	return total - token.BalanceOf(launchpad)
@@ -90,22 +90,6 @@ func Burn(cur realm, from address, amount int64) {
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
-
-	checkErr(ledger.Burn(from, amount))
-}
-
-// BurnByLaunchPad burns tokens from address.
-//
-// Parameters:
-//   - from: address to burn from
-//   - amount: amount to burn
-//
-// Only callable by launchpad contract.
-func BurnByLaunchPad(cur realm, from address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
 
 	checkErr(ledger.Burn(from, amount))
 }
