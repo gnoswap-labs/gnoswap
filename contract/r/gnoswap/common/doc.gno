@@ -109,15 +109,9 @@
 //   - IsGNOTNativePath: Checks for native GNOT path ("ugnot")
 //   - IsGNOTWrappedPath: Checks for wrapped ugnot path (wugnot)
 //
-// ### User Coin Validation
+// ### Coin Validation and Assertion Functions
 //
 //   - ExistsUserSendCoins: Checks if user sent any coins
-//   - isUserSendGNOTAmount: Validates GNOT amount matches expected
-//   - hasUnsupportedNativeCoins: Detects unsupported coin types
-//   - getUserSendCoins: Aggregates all sent coins by denomination
-//
-// ### Assertion Functions
-//
 //   - AssertIsUserSendGNOTAmount: Validates GNOT amount or panics
 //   - AssertIsNotHandleNativeCoin: Ensures no native coins in transaction
 //
@@ -144,18 +138,14 @@
 //
 // The package defines several error codes with [GNOSWAP-COMMON-XXX] prefixes:
 //
-//   - 001: No permission
-//   - 002: Halted
-//   - 003: Value out of range
-//   - 004: Token not registered
-//   - 005: Invalid address
-//   - 006/009: Overflow
-//   - 007: Invalid position ID
-//   - 008: Invalid input
-//   - 010: Identical ticks
-//   - 011: Unsupported coins
-//   - 012: Invalid GNOT amount
-//   - 013: Native coin not allowed
+//   - 001: Value out of range
+//   - 002: Token is not registered
+//   - 003: Invalid input data
+//   - 004: Overflow
+//   - 005: Identical ticks
+//   - 006: Sent coins contain unsupported coins
+//   - 007: Sent GNOT amount does not match specified amount
+//   - 008: Handle native coin is not allowed
 //
 // ## Usage Examples
 //
