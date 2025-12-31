@@ -408,7 +408,7 @@ func TestAdditional_GlobalStateConsistency(t *testing.T) {
 				},
 				func(k *keeper) error {
 					// Mock rate limit for remove operation
-					k.lastOps[testutils.TestAddress("mix1").String()] = 0
+					k.lastOps.Set(testutils.TestAddress("mix1").String(), int64(0))
 					return k.remove(testutils.TestAddress("mix1"))
 				},
 			},
@@ -435,12 +435,12 @@ func TestAdditional_GlobalStateConsistency(t *testing.T) {
 				},
 				func(k *keeper) error {
 					// Mock rate limit for remove operation
-					k.lastOps[testutils.TestAddress("temp1").String()] = 0
+					k.lastOps.Set(testutils.TestAddress("temp1").String(), int64(0))
 					return k.remove(testutils.TestAddress("temp1"))
 				},
 				func(k *keeper) error {
 					// Mock rate limit for remove operation
-					k.lastOps[testutils.TestAddress("temp3").String()] = 0
+					k.lastOps.Set(testutils.TestAddress("temp3").String(), int64(0))
 					return k.remove(testutils.TestAddress("temp3"))
 				},
 			},

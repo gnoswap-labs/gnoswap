@@ -1,8 +1,6 @@
 package referral
 
 import (
-	"gno.land/p/nt/ufmt"
-
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -32,5 +30,5 @@ func isValidCaller(caller address) error {
 		}
 	}
 
-	return ufmt.Errorf("%s: %s", ErrUnauthorized.Error(), caller.String())
+	return makeErrorWithDetails(ErrUnauthorized, caller.String())
 }
