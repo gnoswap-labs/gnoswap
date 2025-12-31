@@ -617,3 +617,292 @@ func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 		})
 	}
 }
+
+// TestTickMath_MaxTickBoundaryBehavior explicitly tests MAX_TICK boundary behavior
+func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
+	tests := []struct {
+		name             string
+		tick             int32
+		expectPanic      bool
+		expectedPanicMsg string
+		description      string
+	}{
+		{
+			name:        "MAX_TICK can convert to sqrt ratio",
+			tick:        MAX_TICK,
+			expectPanic: false,
+			description: "TickMathGetSqrtRatioAtTick should accept MAX_TICK",
+		},
+		{
+			name:        "MAX_TICK - 1 supports full roundtrip",
+			tick:        MAX_TICK - 1,
+			expectPanic: false,
+			description: "MAX_TICK - 1 should support tick -> sqrt -> tick conversion",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					TickMathGetSqrtRatioAtTick(tt.tick)
+				})
+			} else {
+				sqrtRatio := TickMathGetSqrtRatioAtTick(tt.tick)
+
+				// For MAX_TICK - 1, we can do full roundtrip
+				if tt.tick == MAX_TICK-1 {
+					recoveredTick := TickMathGetTickAtSqrtRatio(sqrtRatio)
+					uassert.Equal(t, tt.tick, recoveredTick,
+						ufmt.Sprintf("Roundtrip should work for MAX_TICK - 1"))
+				}
+
+				// For MAX_TICK, the sqrt ratio equals MAX_SQRT_RATIO
+				if tt.tick == MAX_TICK {
+					maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+					uassert.True(t, sqrtRatio.Eq(maxSqrtRatio),
+						ufmt.Sprintf("MAX_TICK should produce MAX_SQRT_RATIO"))
+				}
+			}
+		})
+	}
+
+	// Explicitly test that MAX_SQRT_RATIO is rejected by TickMathGetTickAtSqrtRatio
+	t.Run("MAX_SQRT_RATIO_rejected_by_GetTickAtSqrtRatio", func(t *testing.T) {
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+		// This should panic because TickMathGetTickAtSqrtRatio uses strict inequality (sqrtPriceX96 >= maxSqrtPriceX96)
+		uassert.PanicsContains(t, "out of range", func() {
+			TickMathGetTickAtSqrtRatio(maxSqrtRatio)
+		})
+	})
+
+	// Test that MAX_SQRT_RATIO - 1 is accepted
+	t.Run("MAX_SQRT_RATIO_minus_1_accepted", func(t *testing.T) {
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+		almostMaxSqrtRatio := u256.Zero().Sub(maxSqrtRatio, u256.One())
+
+		// This should NOT panic
+		uassert.NotPanics(t, func() {
+			tick := TickMathGetTickAtSqrtRatio(almostMaxSqrtRatio)
+			// Should return MAX_TICK - 1
+			uassert.Equal(t, MAX_TICK-1, tick,
+				ufmt.Sprintf("MAX_SQRT_RATIO - 1 should map to MAX_TICK - 1"))
+		})
+	})
+}
+
+// TestTickMath_ExtendedRoundtripAccuracy tests roundtrip accuracy for a wider range of ticks
+func TestTickMath_ExtendedRoundtripAccuracy(t *testing.T) {
+	// Test more granular tick values to ensure precision
+	// MAX_TICK is excluded from roundtrip tests - see TestTickMath_MaxTickBoundaryBehavior for details
+	testTicks := []int32{
+		MIN_TICK,
+		MIN_TICK + 1,
+		MIN_TICK + 10,
+		MIN_TICK + 100,
+		MIN_TICK + 1000,
+		-500000,
+		-100000,
+		-50000,
+		-10000,
+		-5000,
+		-1000,
+		-500,
+		-100,
+		-50,
+		-10,
+		-5,
+		-1,
+		0,
+		1,
+		5,
+		10,
+		50,
+		100,
+		500,
+		1000,
+		5000,
+		10000,
+		50000,
+		100000,
+		500000,
+		MAX_TICK - 1000,
+		MAX_TICK - 100,
+		MAX_TICK - 10,
+		MAX_TICK - 1,
+		// MAX_TICK excluded - see note above
+	}
+
+	for _, tick := range testTicks {
+		t.Run(ufmt.Sprintf("tick_%d", tick), func(t *testing.T) {
+			// Convert tick to sqrt ratio
+			sqrtRatio := TickMathGetSqrtRatioAtTick(tick)
+
+			// Validate sqrt ratio is in valid range
+			minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+			maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+			uassert.True(t, sqrtRatio.Gte(minSqrtRatio),
+				ufmt.Sprintf("SqrtRatio %s should be >= MIN_SQRT_RATIO", sqrtRatio.ToString()))
+			uassert.True(t, sqrtRatio.Lte(maxSqrtRatio),
+				ufmt.Sprintf("SqrtRatio %s should be <= MAX_SQRT_RATIO", sqrtRatio.ToString()))
+
+			// Convert back to tick
+			recoveredTick := TickMathGetTickAtSqrtRatio(sqrtRatio)
+
+			// Recovered tick should equal original tick
+			uassert.Equal(t, tick, recoveredTick,
+				ufmt.Sprintf("Roundtrip failed: tick %d -> sqrt %s -> tick %d",
+					tick, sqrtRatio.ToString(), recoveredTick))
+		})
+	}
+}
+
+// TestTickMath_SpecificPriceAccuracy tests accuracy for specific well-known price points
+func TestTickMath_SpecificPriceAccuracy(t *testing.T) {
+	tests := []struct {
+		name          string
+		tick          int32
+		description   string
+		expectedRatio string
+	}{
+		{
+			name:          "price_1.0",
+			tick:          0,
+			description:   "Price 1.0 (tick 0)",
+			expectedRatio: "79228162514264337593543950336", // Q96
+		},
+		{
+			name:          "price_1.0001",
+			tick:          1,
+			description:   "Price 1.0001 (1 basis point)",
+			expectedRatio: "79228162514264337593543950336", // Approximately Q96 * sqrt(1.0001)
+		},
+		{
+			name:          "price_1.01",
+			tick:          100,
+			description:   "Price 1.01 (100 basis points)",
+			expectedRatio: "79625275426524748796330556128",
+		},
+		{
+			name:          "price_0.99",
+			tick:          -100,
+			description:   "Price 0.99",
+			expectedRatio: "78833030112140176575862854579",
+		},
+		{
+			name:          "price_2.0",
+			tick:          6932, // log_1.0001(2.0) ≈ 6931.47
+			description:   "Price approximately 2.0",
+			expectedRatio: "112045541949572279837463876454",
+		},
+		{
+			name:          "price_0.5",
+			tick:          -6932,
+			description:   "Price approximately 0.5",
+			expectedRatio: "56022770974786139918731938227",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TickMathGetSqrtRatioAtTick(tt.tick)
+			expected := u256.MustFromDecimal(tt.expectedRatio)
+
+			// For tick != 0, allow small rounding differences
+			if tt.tick == 0 {
+				uassert.True(t, result.Eq(expected),
+					ufmt.Sprintf("%s: Expected exact match %s, got %s",
+						tt.description, expected.ToString(), result.ToString()))
+			} else {
+				// Calculate relative difference (should be < 0.01%)
+				diff := u256.Zero()
+				if result.Gt(expected) {
+					diff = u256.Zero().Sub(result, expected)
+				} else {
+					diff = u256.Zero().Sub(expected, result)
+				}
+
+				// diff / expected should be very small
+				// For simplicity, just check they are close
+				maxDiff := u256.Zero().Div(expected, u256.NewUint(10000)) // 0.01% tolerance
+
+				uassert.True(t, diff.Lte(maxDiff),
+					ufmt.Sprintf("%s: Difference %s exceeds tolerance %s",
+						tt.description, diff.ToString(), maxDiff.ToString()))
+			}
+		})
+	}
+}
+
+// TestTickMath_TickSpacingConsistency tests that tick spacing remains consistent
+func TestTickMath_TickSpacingConsistency(t *testing.T) {
+	// Test that price ratio between consecutive ticks is approximately 1.0001
+	testTicks := []int32{0, 100, 1000, 10000, 100000}
+
+	for _, baseTick := range testTicks {
+		if baseTick+1 > MAX_TICK {
+			continue
+		}
+
+		t.Run(ufmt.Sprintf("tick_spacing_%d", baseTick), func(t *testing.T) {
+			ratio1 := TickMathGetSqrtRatioAtTick(baseTick)
+			ratio2 := TickMathGetSqrtRatioAtTick(baseTick + 1)
+
+			// ratio2 / ratio1 should be approximately sqrt(1.0001)
+			// We can't easily compute sqrt in tests, so just verify ratio2 > ratio1
+			uassert.True(t, ratio2.Gt(ratio1),
+				ufmt.Sprintf("Tick %d: ratio2 (%s) should be > ratio1 (%s)",
+					baseTick, ratio2.ToString(), ratio1.ToString()))
+
+			// The increase should be very small (about 0.005%)
+			diff := u256.Zero().Sub(ratio2, ratio1)
+			maxIncrease := u256.Zero().Div(ratio1, u256.NewUint(20000)) // ~0.005%
+
+			// For higher ticks, the absolute difference increases, so scale tolerance
+			scaleFactor := u256.NewUint(1)
+			if baseTick > 10000 {
+				scaleFactor = u256.NewUint(10)
+			}
+			maxIncrease = u256.Zero().Mul(maxIncrease, scaleFactor)
+
+			uassert.True(t, diff.Lte(maxIncrease),
+				ufmt.Sprintf("Tick %d: price increase %s exceeds tolerance %s",
+					baseTick, diff.ToString(), maxIncrease.ToString()))
+		})
+	}
+}
+
+// TestTickMath_NegativeTickSymmetry tests that negative ticks are symmetric with positive ticks
+func TestTickMath_NegativeTickSymmetry(t *testing.T) {
+	testTicks := []int32{1, 10, 100, 1000, 10000, 100000}
+
+	q96 := u256.MustFromDecimal("79228162514264337593543950336")
+
+	for _, tick := range testTicks {
+		t.Run(ufmt.Sprintf("symmetry_tick_%d", tick), func(t *testing.T) {
+			positiveRatio := TickMathGetSqrtRatioAtTick(tick)
+			negativeRatio := TickMathGetSqrtRatioAtTick(-tick)
+
+			// For symmetric ticks: sqrt(price_positive) * sqrt(price_negative) ≈ Q96
+			// This is because: sqrt(P) * sqrt(1/P) = 1, and Q96 represents price 1.0
+			product := u256.MulDiv(positiveRatio, negativeRatio, q96)
+
+			// Product should be approximately Q96 (allowing small rounding)
+			diff := u256.Zero()
+			if product.Gt(q96) {
+				diff = u256.Zero().Sub(product, q96)
+			} else {
+				diff = u256.Zero().Sub(q96, product)
+			}
+
+			// Allow 0.01% tolerance
+			maxDiff := u256.Zero().Div(q96, u256.NewUint(10000))
+
+			uassert.True(t, diff.Lte(maxDiff),
+				ufmt.Sprintf("Tick ±%d: Product %s differs from Q96 by %s (max %s)",
+					tick, product.ToString(), diff.ToString(), maxDiff.ToString()))
+		})
+	}
+}
