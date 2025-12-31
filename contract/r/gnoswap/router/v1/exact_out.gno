@@ -1,17 +1,12 @@
 package v1
 
 import (
-	"chain"
-	"chain/runtime"
-
 	"gno.land/p/nt/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/referral"
 )
 
 // ExactOutSwapRoute swaps tokens for an exact output amount.
@@ -157,47 +152,7 @@ func (r *routerV1) exactOutSwapRoute(
 	params SwapRouteParams,
 	referrer string,
 ) (int64, int64) {
-	inputAmount, outputAmount, err := r.commonSwapRoute(params)
-	if err != nil {
-		panic(err)
-	}
-
-	if params.IsUnwrap() {
-		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
-	}
-
-	// handle referral registration
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
-
-	resultInputAmount := inputAmount
-	resultOutputAmount := -outputAmount
-
-	chain.Emit(
-		"ExactOutSwap",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"input", params.inputToken,
-		"output", params.outputToken,
-		"exactAmount", formatInt64(params.exactAmount),
-		"route", params.routeArr,
-		"quote", params.quoteArr,
-		"resultInputAmount", formatInt64(resultInputAmount),
-		"resultOutputAmount", formatInt64(resultOutputAmount),
-		"referrer", actualReferrer,
-	)
-
-	return resultInputAmount, resultOutputAmount
+	return r.finalizeSwapRoute(params, referrer, "ExactOutSwap")
 }
 
 // ExactOutSwapOperation handles swaps where the output amount is specified.

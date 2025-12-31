@@ -157,6 +157,17 @@ func (r *routerV1) exactInSwapRoute(
 	params SwapRouteParams,
 	referrer string,
 ) (int64, int64) {
+	return r.finalizeSwapRoute(params, referrer, "ExactInSwap")
+}
+
+// finalizeSwapRoute handles common finalization logic for both ExactIn and ExactOut swaps.
+// It executes the swap, transfers output tokens, handles referral registration, and emits events.
+// This function is defined in exact_in.gno to avoid adding imports to base.gno.
+func (r *routerV1) finalizeSwapRoute(
+	params SwapRouteParams,
+	referrer string,
+	eventName string,
+) (int64, int64) {
 	inputAmount, outputAmount, err := r.commonSwapRoute(params)
 	if err != nil {
 		panic(err)
@@ -171,7 +182,6 @@ func (r *routerV1) exactInSwapRoute(
 		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
 	}
 
-	// handle referral registration
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	success := referral.TryRegister(cross, caller, referrer)
@@ -184,7 +194,7 @@ func (r *routerV1) exactInSwapRoute(
 	resultOutputAmount := -outputAmount
 
 	chain.Emit(
-		"ExactInSwap",
+		eventName,
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
