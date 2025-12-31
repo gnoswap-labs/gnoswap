@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/router")
-	userRealm     = testing.NewCodeRealm("gno.land/r/demo/users")
+	routerAddr  = access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	routerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/router")
+	userRealm   = testing.NewCodeRealm("gno.land/r/demo/users")
 )
 
 func TestGlobalKeeper_TryRegister(t *testing.T) {
