@@ -1,12 +1,195 @@
 package store
 
 import (
+	"strings"
 	"testing"
 
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
+
+func TestNewKVStore_InitialState(t *testing.T) {
+	domainAddr := testutils.TestAddress("domain")
+	testing.SetRealm(testing.NewUserRealm(domainAddr))
+
+	store := NewKVStore(domainAddr)
+
+	// Verify data is empty
+	keys, err := store.GetAllKeys()
+	uassert.NoError(t, err)
+	uassert.Equal(t, 0, len(keys))
+
+	// Verify domain address is correctly set
+	uassert.Equal(t, domainAddr, store.GetDomainAddress())
+
+	// Verify domain address has Write permission
+	authorized, err := store.GetAuthorizedCallers()
+	uassert.NoError(t, err)
+	uassert.True(t, authorized[domainAddr] == Write, "domain address should have Write permission")
+}
+
+func TestGetDomainAddress(t *testing.T) {
+	domainAddr := testutils.TestAddress("domain")
+	testing.SetRealm(testing.NewUserRealm(domainAddr))
+
+	store := NewKVStore(domainAddr)
+
+	uassert.Equal(t, domainAddr, store.GetDomainAddress())
+}
+
+func TestIsDomainAddress(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "same_address_returns_true",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr).(*kvStore)
+
+				uassert.True(t, store.IsDomainAddress(domainAddr), "should return true for domain address")
+			},
+		},
+		{
+			name: "different_address_returns_false",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				otherAddr := testutils.TestAddress("other")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr).(*kvStore)
+
+				uassert.False(t, store.IsDomainAddress(otherAddr), "should return false for different address")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
+
+func TestIsReadAuthorized(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "domain_address_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.True(t, store.IsReadAuthorized(domainAddr), "domain address should have read access")
+			},
+		},
+		{
+			name: "readonly_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, ReadOnly)
+
+				uassert.True(t, store.IsReadAuthorized(caller), "ReadOnly caller should have read access")
+			},
+		},
+		{
+			name: "write_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, Write)
+
+				uassert.True(t, store.IsReadAuthorized(caller), "Write caller should have read access")
+			},
+		},
+		{
+			name: "unregistered_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				unregistered := testutils.TestAddress("unregistered")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.False(t, store.IsReadAuthorized(unregistered), "unregistered caller should not have read access")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
+
+func TestIsWriteAuthorized(t *testing.T) {
+	testCases := []struct {
+		name     string
+		verifyFn func(*testing.T)
+	}{
+		{
+			name: "domain_address_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.True(t, store.IsWriteAuthorized(domainAddr), "domain address should have write access")
+			},
+		},
+		{
+			name: "write_caller_authorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, Write)
+
+				uassert.True(t, store.IsWriteAuthorized(caller), "Write caller should have write access")
+			},
+		},
+		{
+			name: "readonly_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				caller := testutils.TestAddress("caller")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+				store.AddAuthorizedCaller(caller, ReadOnly)
+
+				uassert.False(t, store.IsWriteAuthorized(caller), "ReadOnly caller should not have write access")
+			},
+		},
+		{
+			name: "unregistered_caller_unauthorized",
+			verifyFn: func(t *testing.T) {
+				domainAddr := testutils.TestAddress("domain")
+				unregistered := testutils.TestAddress("unregistered")
+				testing.SetRealm(testing.NewUserRealm(domainAddr))
+				store := NewKVStore(domainAddr)
+
+				uassert.False(t, store.IsWriteAuthorized(unregistered), "unregistered caller should not have write access")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.verifyFn(t)
+		})
+	}
+}
 
 func TestPermissionUpdateVsRemove(t *testing.T) {
 	// Test that ensures proper permission management without None level
@@ -205,22 +388,64 @@ func TestRemoveAuthorizedCaller_Errors(t *testing.T) {
 	}
 }
 
-func TestBaseOperations_KeyNotFound(t *testing.T) {
+func TestKeyNotFound(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T, KVStore)
 	}{
 		{
-			name: "get_key_not_found",
+			name: "Get",
 			verifyFn: func(t *testing.T, store KVStore) {
 				_, err := store.Get("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
 		{
-			name: "delete_key_not_found",
+			name: "Delete",
 			verifyFn: func(t *testing.T, store KVStore) {
 				err := store.Delete("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetInt64",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetInt64("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetUint64",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetUint64("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetBool",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetBool("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetString",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetString("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetAddress",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetAddress("nonexistent")
+				uassert.ErrorIs(t, err, ErrKeyNotFound)
+			},
+		},
+		{
+			name: "GetTree",
+			verifyFn: func(t *testing.T, store KVStore) {
+				_, err := store.GetTree("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
@@ -317,76 +542,16 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 	}
 }
 
-func TestTypedGetters_KeyNotFound(t *testing.T) {
-	testCases := []struct {
-		name     string
-		verifyFn func(*testing.T, KVStore)
-	}{
-		{
-			name: "int64_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetInt64("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-		{
-			name: "uint64_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetUint64("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-		{
-			name: "bool_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetBool("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-		{
-			name: "string_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetString("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-		{
-			name: "address_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetAddress("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-		{
-			name: "tree_key_not_found",
-			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetTree("nonexistent")
-				uassert.ErrorIs(t, err, ErrKeyNotFound)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			domainAddr := testutils.TestAddress("domain")
-			testing.SetRealm(testing.NewUserRealm(domainAddr))
-			store := NewKVStore(domainAddr)
-
-			tc.verifyFn(t, store)
-		})
-	}
-}
-
 func TestGetAllKeys(t *testing.T) {
 	testCases := []struct {
-		name          string
-		setupFn       func(KVStore)
-		expectedCount int
+		name         string
+		setupFn      func(KVStore)
+		expectedKeys []string
 	}{
 		{
-			name:          "empty_store",
-			setupFn:       func(store KVStore) {},
-			expectedCount: 0,
+			name:         "empty_store",
+			setupFn:      func(store KVStore) {},
+			expectedKeys: []string{},
 		},
 		{
 			name: "multiple_keys",
@@ -395,7 +560,7 @@ func TestGetAllKeys(t *testing.T) {
 				store.Set("key2", "value2")
 				store.Set("key3", "value3")
 			},
-			expectedCount: 3,
+			expectedKeys: []string{"key1", "key2", "key3"},
 		},
 	}
 
@@ -409,7 +574,29 @@ func TestGetAllKeys(t *testing.T) {
 
 			keys, err := store.GetAllKeys()
 			uassert.NoError(t, err)
-			uassert.Equal(t, tc.expectedCount, len(keys))
+			uassert.Equal(t, len(tc.expectedKeys), len(keys))
+
+			// Verify key format: "domainAddress:key"
+			for _, key := range keys {
+				parts := strings.Split(key, ":")
+				uassert.Equal(t, 2, len(parts), "key should have format 'domainAddress:key'")
+
+				// Verify domain address is valid
+				addr := address(parts[0])
+				uassert.True(t, addr.IsValid(), "domain address should be valid")
+				uassert.Equal(t, domainAddr, addr, "domain address should match")
+
+				// Verify actual key is in expected keys
+				actualKey := parts[1]
+				found := false
+				for _, expectedKey := range tc.expectedKeys {
+					if actualKey == expectedKey {
+						found = true
+						break
+					}
+				}
+				uassert.True(t, found, "actual key should be in expected keys: "+actualKey)
+			}
 		})
 	}
 }
