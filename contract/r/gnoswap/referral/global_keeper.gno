@@ -4,8 +4,6 @@ import "chain"
 
 var gReferralKeeper ReferralKeeper
 
-const EventRegisterFailed = "ReferralRegistrationFailed"
-
 func init() {
 	if gReferralKeeper == nil {
 		gReferralKeeper = NewKeeper()
@@ -18,17 +16,17 @@ func getKeeper() ReferralKeeper {
 }
 
 // GetReferral returns the referral address for the given address.
-func GetReferral(addr string) string {
-	referral, err := gReferralKeeper.get(address(addr))
+func GetReferral(addr address) address {
+	referral, err := gReferralKeeper.get(addr)
 	if err != nil {
 		return ""
 	}
-	return referral.String()
+	return referral
 }
 
 // HasReferral returns true if the given address has a referral.
-func HasReferral(addr string) bool {
-	referral, err := gReferralKeeper.get(address(addr))
+func HasReferral(addr address) bool {
+	referral, err := gReferralKeeper.get(addr)
 	if err != nil {
 		return false
 	}
@@ -53,7 +51,7 @@ func TryRegister(cur realm, addr address, referral string) bool {
 	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
 		chain.Emit(
-			EventRegisterFailed,
+			"ReferralRegistrationFailed",
 			"address", addr.String(),
 			"error", err.Error(),
 		)

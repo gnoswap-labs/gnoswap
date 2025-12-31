@@ -114,7 +114,7 @@ func TestKeeper_Has(t *testing.T) {
 			}
 
 			// when
-			result := HasReferral(tc.addr.String()) // Use global function instead of k.has()
+			result := HasReferral(tc.addr) // Use global function instead of k.has()
 
 			// then
 			uassert.Equal(t, tc.expectedHas, result)
@@ -128,7 +128,7 @@ func TestKeeper_Get(t *testing.T) {
 		addr          address
 		setupReferral bool
 		refAddr       address
-		expectedAddr  string
+		expectedAddr  address
 		expectedError bool
 	}{
 		{
@@ -136,14 +136,14 @@ func TestKeeper_Get(t *testing.T) {
 			addr:          testutils.TestAddress("user1"),
 			setupReferral: true,
 			refAddr:       testutils.TestAddress("referrer1"),
-			expectedAddr:  testutils.TestAddress("referrer1").String(),
+			expectedAddr:  testutils.TestAddress("referrer1"),
 			expectedError: false,
 		},
 		{
 			name:          "Empty result for non-existing referral",
 			addr:          testutils.TestAddress("user2"),
 			setupReferral: false,
-			expectedAddr:  "",
+			expectedAddr:  address(""),
 			expectedError: false, // GetReferral returns empty string, not error
 		},
 		{
@@ -151,7 +151,7 @@ func TestKeeper_Get(t *testing.T) {
 			addr:          testutils.TestAddress("user3"),
 			setupReferral: true,
 			refAddr:       zeroAddress,
-			expectedAddr:  "", // Zero address returns empty string
+			expectedAddr:  address(""),
 			expectedError: false,
 		},
 	}
@@ -168,7 +168,7 @@ func TestKeeper_Get(t *testing.T) {
 			}
 
 			// when
-			result := GetReferral(tc.addr.String()) // Use global function
+			result := GetReferral(tc.addr) // Use global function
 
 			// then
 			uassert.Equal(t, tc.expectedAddr, result)
