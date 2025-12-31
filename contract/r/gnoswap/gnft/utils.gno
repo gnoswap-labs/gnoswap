@@ -11,8 +11,9 @@ import (
 
 // generateRandInstance generates a new random instance.
 func generateRandInstance() *rand.Rand {
-	seed1 := time.Now().Unix() + TotalSupply()
-	seed2 := time.Now().UnixNano() + TotalSupply()
+	now := time.Now()
+	seed1 := now.Unix() + TotalSupply()
+	seed2 := now.UnixNano() + TotalSupply()
 	pcg := rand.NewPCG(uint64(seed1), uint64(seed2))
 	return rand.New(pcg)
 }
