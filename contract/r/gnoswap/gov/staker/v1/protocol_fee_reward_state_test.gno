@@ -1,10 +1,11 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -560,84 +561,83 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 	}
 }
 
-// TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake tests the private clone function
-func TestProtocolFeeRewardState_cloneAccumulatedProtocolFeeX128PerStake(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "clone empty map",
-		},
-	}
+// Test boundary conditions for safe arithmetic in protocol fee reward operations
+func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
+	t.Run("AddStake boundary - large staked amount", func(t *testing.T) {
+		// given: protocol fee reward state with large staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given - empty map
-			original := make(map[string]*u256.Uint)
+		// Set initial large staked amount
+		state.SetStakedAmount(math.MaxInt64 / 2)
 
-			// when
-			cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
+		// when: add more stake (uses safeAddInt64 in addStake)
+		accumulatedFees := make(map[string]*u256.Uint)
+		err := resolver.addStakeWithUpdateRewardDebtX128(math.MaxInt64/4, accumulatedFees, 1000)
 
-			// then
-			uassert.NotNil(t, cloned)
-			uassert.Equal(t, len(cloned), 0)
-		})
-	}
-
-	t.Run("clone map with single token", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
-
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.NotNil(t, cloned["token1"])
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-
-		// verify deep copy - modifying original shouldn't affect clone
-		original["token1"] = u256.NewUintFromInt64(2000)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
+		// then: should succeed without overflow
+		uassert.NoError(t, err)
+		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
+		uassert.Equal(t, state.GetStakedAmount(), expected)
 	})
 
-	t.Run("clone map with multiple tokens", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		original["token1"] = u256.NewUintFromInt64(1000)
-		original["token2"] = u256.NewUintFromInt64(2000)
-		original["token3"] = u256.NewUintFromInt64(3000)
+	t.Run("AddStake boundary - overflow", func(t *testing.T) {
+		// given: protocol fee reward state near max staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
 
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
+		state.SetStakedAmount(math.MaxInt64 - 1000)
 
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 3)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
-		uassert.Equal(t, cloned["token2"].ToString(), "2000")
-		uassert.Equal(t, cloned["token3"].ToString(), "3000")
+		// when: add stake causing overflow (uses safeAddInt64)
+		didPanic := false
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					didPanic = true
+				}
+			}()
+			accumulatedFees := make(map[string]*u256.Uint)
+			_ = resolver.addStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
+		}()
 
-		// verify deep copy
-		original["token1"] = u256.NewUintFromInt64(9999)
-		uassert.Equal(t, cloned["token1"].ToString(), "1000")
+		// then: should panic on overflow
+		uassert.True(t, didPanic)
 	})
 
-	t.Run("clone map with large values", func(t *testing.T) {
-		// given
-		original := make(map[string]*u256.Uint)
-		largeValue := u256.NewUintFromInt64(1000)
-		largeValue = largeValue.Lsh(largeValue, 128) // Shift left by 128 bits
-		original["token1"] = largeValue
+	t.Run("RemoveStake boundary - clamping to zero", func(t *testing.T) {
+		// given: protocol fee reward state with some staked amount
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
 
-		// when
-		cloned := cloneAccumulatedProtocolFeeX128PerStake(original)
+		state.SetStakedAmount(1000)
 
-		// then
-		uassert.NotNil(t, cloned)
-		uassert.Equal(t, len(cloned), 1)
-		uassert.Equal(t, cloned["token1"].ToString(), largeValue.ToString())
+		// when: remove more than available (uses safeSubInt64 with clamping)
+		accumulatedFees := make(map[string]*u256.Uint)
+		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
+
+		// then: should clamp to zero
+		uassert.NoError(t, err)
+		uassert.Equal(t, state.GetStakedAmount(), int64(0))
+	})
+
+	t.Run("ClaimRewards boundary - exact subtraction", func(t *testing.T) {
+		// given: protocol fee reward state with accumulated and claimed equal
+		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		resolver := NewProtocolFeeRewardStateResolver(state)
+		token := "gno.land/r/demo/foo"
+
+		rewardAmount := int64(1000000)
+		state.SetAccumulatedRewardForToken(token, rewardAmount)
+		state.SetClaimedRewardForToken(token, rewardAmount)
+		currentTimestamp := int64(2000)
+		state.SetAccumulatedTimestamp(currentTimestamp) // Update to match claim timestamp
+		state.SetClaimedTimestamp(500)
+
+		// when: claim rewards (uses safeSubInt64 in claimRewards)
+		claimed, err := resolver.claimRewards(currentTimestamp)
+
+		// then: should result in zero claimable
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimed[token], int64(0))
 	})
 }

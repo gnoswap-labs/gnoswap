@@ -48,6 +48,7 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+
 	return resolvedState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
 }
 

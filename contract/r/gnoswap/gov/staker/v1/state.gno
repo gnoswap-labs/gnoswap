@@ -3,6 +3,7 @@ package v1
 import (
 	"math"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
@@ -128,37 +129,46 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - user: user's address
 //
 // Returns:
-//   - []*Delegation: list of user's delegations
-func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
+//   - *avl.Tree: tree of user's delegations
+func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
 	delegationManager := g.store.GetDelegationManager()
 
-	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	for _, delegationID := range resolvedManager.GetUserDelegationIDs(user) {
-		if delegation := g.getDelegation(delegationID); delegation != nil {
-			delegations = append(delegations, delegation)
-		}
+	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
+	if !exists {
+		return avl.NewTree()
 	}
-	return delegations
+
+	return userDelegations
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
-// Note: Current implementation returns all user delegations regardless of delegatee (potential bug).
 //
 // Parameters:
 //   - user: user's address
-//   - delegatee: delegatee's address (currently unused)
+//   - delegatee: delegatee's address
 //
 // Returns:
-//   - []*Delegation: list of user's delegations to the delegatee
-func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
+//   - []int64: list of user's delegation IDs to the delegatee
+func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee address) []int64 {
 	delegationManager := g.store.GetDelegationManager()
-	resolvedManager := NewDelegationManagerResolver(delegationManager)
-	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
-		if delegation := g.getDelegation(delegationID); delegation != nil {
-			delegations = append(delegations, delegation)
-		}
+
+	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
+	if !exists {
+		return nil
 	}
-	return delegations
+
+	delegateeStr := delegatee.String()
+	delegationIDs, exists := userDelegations.Get(delegateeStr)
+	if !exists {
+		return nil
+	}
+
+	ids, ok := delegationIDs.([]int64)
+	if !ok {
+		return nil
+	}
+
+	return ids
 }
 
 // addDelegationRecord records a delegation change in the history.
@@ -578,5 +588,5 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 // Returns:
 //   - string: formatted launchpad reward ID
 func (g *govStakerV1) makeLaunchpadRewardID(address string) string {
-	return ufmt.Sprintf("launchpad:%s", address)
+	return "launchpad:" + address
 }

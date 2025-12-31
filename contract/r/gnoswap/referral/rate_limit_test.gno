@@ -397,7 +397,7 @@ func TestRateLimit_TimeBoundaryConditions(t *testing.T) {
 
 			// Manually set lastOps to simulate time passage
 			now := time.Now().Unix()
-			k.lastOps[tc.userAddr.String()] = now - tc.timeSinceLastOp
+			k.lastOps.Set(tc.userAddr.String(), now-tc.timeSinceLastOp)
 
 			// when - attempt update
 			err = k.update(tc.userAddr, tc.secondRefAddr)
@@ -411,6 +411,66 @@ func TestRateLimit_TimeBoundaryConditions(t *testing.T) {
 				ref, err := k.get(tc.userAddr)
 				uassert.NoError(t, err)
 				uassert.Equal(t, tc.secondRefAddr.String(), ref.String())
+			}
+		})
+	}
+}
+
+func TestRateLimit_CheckRateLimitInvalidTime(t *testing.T) {
+	tests := []struct {
+		name          string
+		userAddr      address
+		setupLastOps  func(k *keeper, addr string)
+		expectedError error
+	}{
+		{
+			name:     "success when lastOps entry does not exist",
+			userAddr: testutils.TestAddress("user"),
+			setupLastOps: func(k *keeper, addr string) {
+			},
+			expectedError: nil,
+		},
+		{
+			name:     "success when enough time has passed",
+			userAddr: testutils.TestAddress("user"),
+			setupLastOps: func(k *keeper, addr string) {
+				k.lastOps.Set(addr, int64(0))
+			},
+			expectedError: nil,
+		},
+		{
+			name:     "error when lastOps contains invalid type",
+			userAddr: testutils.TestAddress("user"),
+			setupLastOps: func(k *keeper, addr string) {
+				k.lastOps.Set(addr, "invalid_time_value")
+			},
+			expectedError: ErrInvalidTime,
+		},
+		{
+			name:     "error when lastOps less than 24 hours",
+			userAddr: testutils.TestAddress("user"),
+			setupLastOps: func(k *keeper, addr string) {
+				registeredTime := time.Now().Unix() - MinTimeBetweenUpdates + 1
+				k.lastOps.Set(addr, registeredTime)
+			},
+			expectedError: ErrTooManyRequests,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			k := setupRateLimitKeeper()
+			tc.setupLastOps(k, tc.userAddr.String())
+
+			// when
+			err := k.checkRateLimit(tc.userAddr.String())
+
+			// then
+			if tc.expectedError == nil {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Equal(t, err.Error(), tc.expectedError.Error())
 			}
 		})
 	}

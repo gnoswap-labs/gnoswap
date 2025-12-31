@@ -1,53 +1,78 @@
 // Package referral implements a referral system on Gno. It allows
-// any authorized caller to register, update, or remove referral
-// information. A referral link is defined as a mapping from one
+// authorized contracts to register, update, or remove referral
+// relationships. A referral link is defined as a mapping from one
 // address (the "user") to another address (the "referrer").
 //
 // ## Overview
 //
 // The referral package is composed of the following components:
 //
-//  1. **errors.gno**: Provides custom error types (ReferralError) with
-//     specific error codes and messages.
-//  2. **utils.gno**: Contains utility functions for permission checks,
-//     especially isValidCaller, which ensures only specific, pre-authorized
-//     callers (e.g., governance or router addresses) can invoke the core
-//     functions.
-//  3. **type.gno**: Defines core constants for event types, attributes,
-//     and the ReferralKeeper interface, which outlines the fundamental
-//     methods of the referral system (Register, Update, Remove, etc.).
-//  4. **keeper.gno**: Implements the actual business logic behind the
-//     ReferralKeeper interface. It uses an AVL Tree (avl.Tree) to store
-//     referral data (address -> referrer). The keeper methods emit events
-//     when a new referral is registered, updated, or removed.
-//  5. **referral.gno**: Exposes a public API (the Referral struct)
-//     that delegates to the keeper, providing external contracts or
-//     applications a straightforward way to interact with the system.
+//  1. **errors.gno**: Defines error types for various failure scenarios
+//     such as invalid address, unauthorized caller, self-referral,
+//     rate limit exceeded, and referral not found.
+//  2. **utils.gno**: Contains the isValidCaller function that checks
+//     if the caller has an authorized role (governance, router, position,
+//     staker, or launchpad contracts).
+//  3. **type.gno**: Defines the ReferralKeeper interface and event type
+//     constants for register, update, and remove operations.
+//  4. **keeper.gno**: Implements the ReferralKeeper interface using an
+//     AVL tree for storage. Includes rate limiting (24-hour cooldown)
+//     to prevent abuse of referral operations.
+//  5. **global_keeper.gno**: Exposes the public API functions that
+//     external contracts can use to interact with the referral system.
+//
+// ## Public API
+//
+// The package exposes the following public functions:
+//
+//   - GetReferral(addr string) string: Returns the referrer address for
+//     the given user address. Returns empty string if not found.
+//   - HasReferral(addr string) bool: Returns true if the user has a
+//     registered referrer.
+//   - IsEmpty() bool: Returns true if no referral relationships exist.
+//   - TryRegister(cur realm, addr address, referral string) bool:
+//     Attempts to register a new referral. Returns true on success.
 //
 // ## Workflow
 //
 // Typical usage of this contract follows these steps:
 //
-//  1. A caller with valid permissions invokes Register, Update, or Remove
-//     through the Referral struct.
-//  2. The Referral struct forwards the request to the internal keeper
-//     methods.
-//  3. The keeper checks caller permission (via isValidCaller), validates
-//     addresses, and stores or removes data in the AVL Tree.
-//  4. An event is emitted for off-chain or cross-module notifications.
+//  1. An authorized contract (router, staker, etc.) calls TryRegister
+//     to create a referral relationship.
+//  2. The keeper validates the caller's permissions via isValidCaller.
+//  3. Address validation ensures both addresses are valid and not
+//     self-referencing.
+//  4. Rate limiting checks prevent operations more than once per 24 hours.
+//  5. The referral is stored in the AVL tree and an event is emitted.
 //
-// ## Integration with Other Contracts
+// ## Authorized Callers
 //
-// Other contracts can leverage the referral system in two major ways:
+// Only contracts with the following roles can modify referral data:
 //
-//  1. **Direct Calls**: If you wish to directly call this contract,
-//     instantiate the Referral object (via NewReferral) and invoke its
-//     methods, assuming you meet the authorized-caller criteria.
+//   - ROLE_GOVERNANCE: Governance contracts
+//   - ROLE_GOV_STAKER: Governance staker contracts
+//   - ROLE_ROUTER: Router contracts
+//   - ROLE_POSITION: Position manager contracts
+//   - ROLE_STAKER: Staker contracts
+//   - ROLE_LAUNCHPAD: Launchpad contracts
 //
-//  2. **Embedded or Extended**: If you have a complex module that includes
-//     referral features, import this package and embed a Referral instance
-//     in your own keeper. This way, you can handle additional validations
-//     or custom logic before delegating to the existing referral functions.
+// ## Rate Limiting
+//
+// To prevent abuse, the system enforces a 24-hour cooldown period between
+// operations for each address. This means:
+//
+//   - A new referral can only be registered once per 24 hours per address
+//   - Updates and removals are also subject to the same rate limit
+//   - Attempting operations within the cooldown period returns ErrTooManyRequests
+//
+// ## Events
+//
+// The package emits the following events:
+//
+//   - RegisterReferral: Emitted when a new referral is created
+//   - UpdateReferral: Emitted when an existing referral is modified
+//   - RemoveReferral: Emitted when a referral is deleted
+//   - ReferralRegistrationFailed: Emitted when TryRegister fails
 //
 // ## Error Handling
 //
@@ -58,52 +83,60 @@
 //   - `ErrTooManyRequests`: Returned when rate limit is exceeded (24-hour cooldown)
 //   - `ErrNotFound`: Returned when attempting to get a non-existent referral
 //
-// ## Example: Integration with a Staking Contract
+// ## Example: Integration with Router Contract
 //
-// Suppose you have a staking contract that wants to reward referrers
-// when a new user stakes tokens:
+// The router contract can register referrals during swap operations:
 //
 // ```go
 //
 //	import (
 //	    "gno.land/r/gnoswap/referral"
-//	    "gno.land/p/demo/mystaking"        // example staking contract
 //	)
 //
-//	func rewardReferrerOnStake(user address, amount int) {
-//	    // 1) Access the referral system
-//	    r := referral.NewReferral()
-//
-//	    // 2) Get the user's referrer
-//	    refAddr, err := r.Get(user)
-//	    if err != nil {
-//	        // handle error or skip if not found
-//	        return
+//	func SwapWithReferral(user std.Address, referralCode string, ...) {
+//	    // Register the referral if provided
+//	    if referralCode != "" {
+//	        referral.TryRegister(std.CurrentRealm(), user, referralCode)
 //	    }
 //
-//	    // 3) Reward the referrer
-//	    mystaking.AddReward(refAddr, calculateReward(amount))
+//	    // Continue with swap logic...
 //	}
 //
 // ```
 //
-// In this simple example, the staking contract checks if the user has
-// a referrer by calling `GetReferral`. If a referrer is found, it then
-// calculates a reward based on the staked amount.
+// ## Example: Checking Referral for Rewards
+//
+// Other contracts can check referral relationships for reward distribution:
+//
+// ```go
+//
+//	import (
+//	    "gno.land/r/gnoswap/referral"
+//	)
+//
+//	func DistributeRewards(user std.Address, amount uint64) {
+//	    // Check if user has a referrer
+//	    if referral.HasReferral(user.String()) {
+//	        referrerAddr := referral.GetReferral(user.String())
+//	        // Calculate and distribute referral bonus
+//	        referrerBonus := amount * referralRate / 100
+//	        sendReward(std.Address(referrerAddr), referrerBonus)
+//	    }
+//	}
+//
+// ```
 //
 // ## Limitations and Constraints
 //
-// - A user can have only one referrer at a time
-// - Once a referral is removed, it cannot be automatically restored
-// - Only authorized contracts can modify referral relationships
-// - Address validation is strict and requires proper Bech32 format
+//   - A user can have only one referrer at a time
+//   - Self-referral is not allowed
+//   - Operations are rate-limited to once per 24 hours per address
+//   - Only authorized contracts can register/update/remove referrals
+//   - Zero address as referrer triggers removal of the referral
 //
-// # Notes
+// ## Notes
 //
-//   - The contract strictly enforces caller restrictions via isValidCaller.
-//     Make sure to configure it to permit only the addresses or roles that
-//     should be able to register or update referrals.
-//   - Zero addresses are treated as a trigger for removing a referral record.
-//   - The system emits events (register_referral, update_referral, remove_referral)
-//     which can be consumed by other on-chain or off-chain services.
+//   - The contract uses RBAC (Role-Based Access Control) for authorization
+//   - Rate limiting state persists across transactions
+//   - Events are emitted for all state changes for off-chain tracking
 package referral

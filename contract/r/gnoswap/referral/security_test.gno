@@ -172,7 +172,7 @@ func TestSecurityTest_ValidCallerAccess(t *testing.T) {
 				err = k.register(tc.addr, tc.refAddr)
 				uassert.NoError(t, err)
 				// Mock time to bypass rate limit
-				k.lastOps[tc.addr.String()] = 0
+				k.lastOps.Set(tc.addr.String(), int64(0))
 				// Then update
 				err = k.update(tc.addr, tc.newRefAddr)
 			case "remove":
@@ -180,7 +180,7 @@ func TestSecurityTest_ValidCallerAccess(t *testing.T) {
 				err = k.register(tc.addr, tc.refAddr)
 				uassert.NoError(t, err)
 				// Mock time to bypass rate limit
-				k.lastOps[tc.addr.String()] = 0
+				k.lastOps.Set(tc.addr.String(), int64(0))
 				// Then remove
 				err = k.remove(tc.addr)
 			}
@@ -270,7 +270,7 @@ func TestSecurityTest_InputSanitization(t *testing.T) {
 				err = k.register(tc.addr, testutils.TestAddress("sec2"))
 				uassert.NoError(t, err)
 				// Mock time to bypass rate limit
-				k.lastOps[tc.addr.String()] = 0
+				k.lastOps.Set(tc.addr.String(), int64(0))
 				// Then set referral to zero address
 				err = k.setReferral(tc.addr, tc.refAddr, EventTypeUpdate)
 			}
@@ -452,7 +452,7 @@ func TestSecurityTest_StateIntegrity(t *testing.T) {
 				// State should be consistent
 				uassert.Equal(t, tc.expectedFirstHas, k.has(tc.addr))
 				// Mock time to bypass rate limit
-				k.lastOps[tc.addr.String()] = 0
+				k.lastOps.Set(tc.addr.String(), int64(0))
 				// Remove
 				err = k.remove(tc.addr)
 				uassert.NoError(t, err)
@@ -463,7 +463,7 @@ func TestSecurityTest_StateIntegrity(t *testing.T) {
 				err = k.register(tc.otherAddr, tc.addr)
 				uassert.NoError(t, err)
 				// Mock time to bypass rate limit
-				k.lastOps[tc.addr.String()] = 0
+				k.lastOps.Set(tc.addr.String(), int64(0))
 				// Remove one
 				err = k.remove(tc.addr)
 				uassert.NoError(t, err)

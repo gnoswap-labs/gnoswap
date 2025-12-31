@@ -70,3 +70,7 @@ func (d *Delegation) SetCollectedAmount(amount int64) {
 func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
 	d.withdraws = append(d.withdraws, withdraw)
 }
+
+func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
+	d.withdraws = withdraws
+}

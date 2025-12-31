@@ -21,7 +21,7 @@ type mockGovStakerStore struct {
 	// Delegation data
 	delegations      *avl.Tree // map[int64]*staker.Delegation
 	delegationNextID *staker.Counter
-	userDelegations  map[string]map[string][]int64
+	userDelegations  *avl.Tree
 
 	// New delegation history structures
 	totalDelegationHistory       *staker.UintTree // timestamp -> int64
@@ -40,7 +40,7 @@ var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
 		delegations:                  avl.NewTree(),
-		userDelegations:              make(map[string]map[string][]int64),
+		userDelegations:              avl.NewTree(),
 		delegationNextID:             staker.NewCounter(),
 		totalDelegationHistory:       staker.NewUintTree(),
 		userDelegationHistory:        avl.NewTree(),
@@ -189,43 +189,27 @@ func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
 }
 
 func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
-	_, exists := m.userDelegations[user]
+	_, exists := m.userDelegations.Get(user)
 	return exists
 }
 
-func (m *mockGovStakerStore) SetUserDelegations(delegations map[string]map[string][]int64) error {
+func (m *mockGovStakerStore) SetUserDelegations(delegations *avl.Tree) error {
 	m.userDelegations = delegations
 	return nil
 }
 
-func (m *mockGovStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {
-	if delegations, exists := m.userDelegations[user]; exists {
-		return delegations, nil
+func (m *mockGovStakerStore) GetUserDelegations(user string) ([]int64, error) {
+	value, exists := m.userDelegations.Get(user)
+	if !exists {
+		return nil, errors.New("user delegations not found")
 	}
-	return make(map[string][]int64), nil
-}
 
-func (m *mockGovStakerStore) AddUserDelegation(from, to string, delegationID int64) error {
-	if _, exists := m.userDelegations[from]; !exists {
-		m.userDelegations[from] = make(map[string][]int64)
+	delegationIDs, ok := value.([]int64)
+	if !ok {
+		return nil, errors.New("user delegations not found")
 	}
-	m.userDelegations[from][to] = append(m.userDelegations[from][to], delegationID)
-	return nil
-}
 
-func (m *mockGovStakerStore) RemoveUserDelegation(from, to string, delegationID int64) error {
-	if delegations, exists := m.userDelegations[from]; exists {
-		if ids, exists := delegations[to]; exists {
-			// Remove the delegationID from the slice
-			for i, id := range ids {
-				if id == delegationID {
-					delegations[to] = append(ids[:i], ids[i+1:]...)
-					break
-				}
-			}
-		}
-	}
-	return nil
+	return delegationIDs, nil
 }
 
 func (m *mockGovStakerStore) HasEmissionRewardManagerStoreKey() bool {

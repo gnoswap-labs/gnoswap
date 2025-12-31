@@ -302,7 +302,7 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 			cleanup()
 
 			// when
-			keeper := getKeeper()
+			keeper := gReferralKeeper
 
 			// then
 			if tc.expectedNotNil {

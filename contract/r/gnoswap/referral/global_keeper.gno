@@ -10,11 +10,6 @@ func init() {
 	}
 }
 
-// getKeeper returns the global referral keeper instance.
-func getKeeper() ReferralKeeper {
-	return gReferralKeeper
-}
-
 // GetReferral returns the referral address for the given address.
 func GetReferral(addr address) address {
 	referral, err := gReferralKeeper.get(addr)
