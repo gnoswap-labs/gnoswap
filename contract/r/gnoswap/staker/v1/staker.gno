@@ -30,16 +30,6 @@ import (
 
 const ZERO_ADDRESS = address("")
 
-var (
-	adminAddr         = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
-	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
-	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	positionAddr      = access.MustGetAddress(prbac.ROLE_POSITION.String())
-)
-
 // Deposits manages all staked positions.
 type Deposits struct {
 	tree *avl.Tree
@@ -341,6 +331,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	s.getStakers().addDeposit(caller, positionId, deposit)
 
 	// transfer NFT ownership to staker contract
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 		panic(err.Error())
 	}
@@ -475,6 +466,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
 
 	// transfer external rewards to user
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
 
@@ -725,6 +717,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	}
 
 	// transfer NFT ownership to origin owner
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	s.nftAccessor.TransferFrom(stakerAddr, deposit.Owner(), positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
@@ -790,6 +783,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 
 // hasTokenOwnership validates that the caller has permission to operate the token.
 func hasTokenOwnership(owner, caller address) error {
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	isCallerOwner := owner == caller
 	isStakerOwner := owner == stakerAddr
 

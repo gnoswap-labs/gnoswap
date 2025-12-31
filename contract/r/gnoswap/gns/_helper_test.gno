@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -14,6 +13,8 @@ import (
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
+
+var adminAddr = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 
 func resetObject(t *testing.T) {
 	t.Helper()
@@ -27,10 +28,7 @@ func resetGnsTokenObject(t *testing.T) {
 
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 
-	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
-	owner = ownable.NewWithAddress(adminAddr)
-
-	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
+	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 }
 
 // resetEmissionState resets the emission state to a clean state for testing
