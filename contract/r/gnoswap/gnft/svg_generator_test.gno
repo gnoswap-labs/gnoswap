@@ -863,6 +863,47 @@ func TestSvgGenerator_isImageParams(t *testing.T) {
 			input:    "-10,12,125,123,#FF0000,#00FF00",
 			expected: false,
 		},
+		// Invalid cases - coordinate range validation
+		{
+			name:     "invalid - x1 below min range (6 < 7)",
+			input:    "6,12,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - x1 above max range (14 > 13)",
+			input:    "14,12,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - y1 below min range (6 < 7)",
+			input:    "10,6,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - y1 above max range (14 > 13)",
+			input:    "10,14,125,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - x2 below min range (120 < 121)",
+			input:    "10,12,120,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - x2 above max range (127 > 126)",
+			input:    "10,12,127,123,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - y2 below min range (120 < 121)",
+			input:    "10,12,125,120,#FF0000,#00FF00",
+			expected: false,
+		},
+		{
+			name:     "invalid - y2 above max range (127 > 126)",
+			input:    "10,12,125,127,#FF0000,#00FF00",
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {

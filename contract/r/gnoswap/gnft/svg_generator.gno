@@ -124,7 +124,7 @@ func paramsToImageURI(params string) string {
 
 // isImageParams checks if the string is in the expected parameter format.
 // Expected format: "x1,y1,x2,y2,color1,color2" where:
-//   - x1, y1, x2, y2 are non-negative numeric values (indices 0-3)
+//   - x1, y1, x2, y2 are numeric values within valid ranges (indices 0-3)
 //   - color1, color2 are hex color strings in #XXXXXX format (indices 4-5)
 func isImageParams(s string) bool {
 	parts := strings.Split(s, ",")
@@ -132,12 +132,25 @@ func isImageParams(s string) bool {
 		return false
 	}
 
-	// Validate x1, y1, x2, y2 are non-negative numeric values
-	for i := 0; i < 4; i++ {
-		val, err := strconv.Atoi(parts[i])
-		if err != nil || val < 0 {
-			return false
-		}
+	// Validate coordinates are numeric and within valid ranges
+	x1, err := strconv.Atoi(parts[0])
+	if err != nil || x1 < x1Min || x1 > x1Max {
+		return false
+	}
+
+	y1, err := strconv.Atoi(parts[1])
+	if err != nil || y1 < y1Min || y1 > y1Max {
+		return false
+	}
+
+	x2, err := strconv.Atoi(parts[2])
+	if err != nil || x2 < x2Min || x2 > x2Max {
+		return false
+	}
+
+	y2, err := strconv.Atoi(parts[3])
+	if err != nil || y2 < y2Min || y2 > y2Max {
+		return false
 	}
 
 	// Validate color format (#XXXXXX)
