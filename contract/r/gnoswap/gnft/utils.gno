@@ -3,17 +3,11 @@ package gnft
 import (
 	"chain/runtime"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 )
-
-// tid converts uint64 to grc721.TokenID.
-func tid(id uint64) grc721.TokenID {
-	return grc721.TokenID(strconv.FormatUint(id, 10))
-}
 
 // generateRandInstance generates a new random instance.
 func generateRandInstance() *rand.Rand {
