@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	nft   = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	nft          = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 	positionAddr = access.MustGetAddress(prabc.ROLE_POSITION.String())
-	owner = ownable.NewWithAddress(positionAddr)
+	owner        = ownable.NewWithAddress(positionAddr)
 )
 
 // Name returns the NFT collection name.
@@ -44,45 +44,30 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 		return "", err
 	}
 
-	storedStr := string(stored)
-
 	// Check if it looks like SVG parameters format (x1,y1,x2,y2,color1,color2)
-	if isImageParams(storedStr) {
-		return paramsToImageURI(storedStr), nil
+	if isImageParams(stored) {
+		return paramsToImageURI(stored), nil
 	}
 
-	return storedStr, nil
+	return stored, nil
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
 func BalanceOf(owner address) (int64, error) {
 	assertIsValidAddress(owner)
-
-	balance, err := nft.BalanceOf(owner)
-	if err != nil {
-		return 0, err
-	}
-	return balance, nil
+	return nft.BalanceOf(owner)
 }
 
 // OwnerOf returns the owner address for the specified token ID.
 func OwnerOf(tid grc721.TokenID) (address, error) {
-	ownerAddr, err := nft.OwnerOf(tid)
-	if err != nil {
-		return "", err
-	}
-
-	return ownerAddr, nil
+	return nft.OwnerOf(tid)
 }
 
 // MustOwnerOf returns the owner address for the specified token ID.
 // It panics if the token ID is invalid.
 func MustOwnerOf(tid grc721.TokenID) address {
-	ownerAddr, err := OwnerOf(tid)
-	if err != nil {
-		panic(err.Error())
-	}
-
+	ownerAddr, err := nft.OwnerOf(tid)
+	checkErr(err)
 	return ownerAddr
 }
 
@@ -99,10 +84,7 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 
 	assertIsValidTokenURI(tid)
 
-	err := setTokenURI(tid, tURI)
-	if err != nil {
-		panic(err)
-	}
+	checkErr(setTokenURI(tid, tURI))
 
 	return true, nil
 }
@@ -226,10 +208,7 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
 	// Parameters are converted to full SVG on read via TokenURI().
 	imageParams := genImageParams(generateRandInstance())
-	err := setTokenURI(tid, grc721.TokenURI(imageParams))
-	if err != nil {
-		panic(err)
-	}
+	checkErr(setTokenURI(tid, grc721.TokenURI(imageParams)))
 
 	checkErr(nft.TransferFrom(ownerAddress, to, tid))
 
@@ -239,11 +218,7 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 // Exists checks if token ID exists.
 func Exists(tid grc721.TokenID) bool {
 	_, err := nft.OwnerOf(tid)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 // Burn removes a specific token ID.
@@ -261,12 +236,10 @@ func Burn(cur realm, tid grc721.TokenID) {
 
 // Render returns the HTML representation of the NFT.
 func Render(path string) string {
-	switch {
-	case path == "":
+	if path == "" {
 		return nft.RenderHome()
-	default:
-		return "404\n"
 	}
+	return "404\n"
 }
 
 // setTokenURI sets the metadata URI for a specific token ID.
