@@ -13,19 +13,13 @@ const (
 	maxWords      = 256 / bits.UintSize
 )
 
-var (
-	ErrOverflow                    = errors.New("int256: overflow")
-	ErrEmptyString                 = errors.New("int256: empty string")
-	ErrInvalidSignInMiddleOfNumber = errors.New("int256: invalid sign in middle of number")
-
-	multipliers = [5]*Int{
-		nil,
-		{0x8ac7230489e80000, 0, 0, 0},
-		{0x98a224000000000, 0x4b3b4ca85a86c47a, 0, 0},
-		{0x4a00000000000000, 0xebfdcb54864ada83, 0x28c87cb5c89a2571, 0},
-		{0, 0x7775a5f171951000, 0x764b4abe8652979, 0x161bcca7119915b5},
-	}
-)
+var multipliers = [5]*Int{
+	nil,
+	{0x8ac7230489e80000, 0, 0, 0},
+	{0x98a224000000000, 0x4b3b4ca85a86c47a, 0, 0},
+	{0x4a00000000000000, 0xebfdcb54864ada83, 0x28c87cb5c89a2571, 0},
+	{0, 0x7775a5f171951000, 0x764b4abe8652979, 0x161bcca7119915b5},
+}
 
 func FromDecimal(decimal string) (*Int, error) {
 	z, err := new(Int).SetString(decimal)
@@ -87,7 +81,7 @@ func (z *Int) ToString() string {
 
 func (z *Int) SetString(s string) (*Int, error) {
 	if len(s) == 0 {
-		return nil, ErrEmptyString
+		return nil, errors.New("int256: empty string")
 	}
 
 	isNeg := false
@@ -100,7 +94,7 @@ func (z *Int) SetString(s string) (*Int, error) {
 	}
 
 	if len(s) == 0 {
-		return nil, ErrEmptyString
+		return nil, errors.New("int256: empty string")
 	}
 
 	// Parallel comparison technique for validation
@@ -131,7 +125,7 @@ func (z *Int) SetString(s string) (*Int, error) {
 
 		// If either test is non-zero, a sign character exists
 		if (plusTest | minusTest) != 0 {
-			return nil, ErrInvalidSignInMiddleOfNumber
+			return nil, errors.New("int256: invalid sign in middle of number")
 		}
 
 		i += 8
@@ -140,7 +134,7 @@ func (z *Int) SetString(s string) (*Int, error) {
 	// Process remaining bytes
 	for ; i < sLen; i++ {
 		if s[i] == '+' || s[i] == '-' {
-			return nil, ErrInvalidSignInMiddleOfNumber
+			return nil, errors.New("int256: invalid sign in middle of number")
 		}
 	}
 
@@ -161,7 +155,7 @@ func (z *Int) SetString(s string) (*Int, error) {
 	if len(s) > len(maxAbsI256Dec) ||
 		(len(s) == len(maxAbsI256Dec) && s > maxAbsI256Dec) ||
 		(s == maxAbsI256Dec && !isNeg) {
-		return nil, ErrOverflow
+		return nil, errors.New("int256: overflow")
 	}
 
 	if err := z.fromDecimal(s); err != nil {
