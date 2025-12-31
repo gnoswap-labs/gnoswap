@@ -236,6 +236,13 @@ func TestKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
+func TestKeeper_NewKeeper(t *testing.T) {
+	k := NewKeeper()
+
+	uassert.NotEqual(t, nil, k)
+	uassert.True(t, k.isEmpty())
+}
+
 // Helper functions
 func setupKeeperTest() *keeper {
 	return NewKeeper().(*keeper)
