@@ -191,11 +191,11 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
+	token0Balance, overflow := calculatedToken0Balance.AddOverflow(calculatedToken0Balance, amount0)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
+	token1Balance, overflow := calculatedToken1Balance.AddOverflow(calculatedToken1Balance, amount1)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}

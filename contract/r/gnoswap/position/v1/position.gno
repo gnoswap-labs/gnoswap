@@ -438,8 +438,8 @@ func (p *positionV1) collectFee(
 
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, currentFeeGrowth)
 
-	position.SetFeeGrowthInside0LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128))
-	position.SetFeeGrowthInside1LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128))
+	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128)
+	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
@@ -454,13 +454,13 @@ func (p *positionV1) collectFee(
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
+	tokensOwed0Updated, underflow := amount0Uint256.SubOverflow(tokensOwed0, amount0Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
 	position.SetTokensOwed0(tokensOwed0Updated)
 
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
+	tokensOwed1Updated, underflow := amount1Uint256.SubOverflow(tokensOwed1, amount1Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
@@ -540,7 +540,7 @@ func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int
 	if overflow {
 		panic(errOverflow)
 	}
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
+	feeAmount = feeAmount.Div(feeAmount, u256.NewUint(10000))
 	amountWithoutFee := u256.Zero().Sub(amount, feeAmount)
 
 	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
