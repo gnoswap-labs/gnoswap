@@ -137,17 +137,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 	}
 
-	// Check for underflow when subtracting collected amounts from tokens owed
-	newOwed0, underflow0 := u256.Zero().SubOverflow(position.TokensOwed0(), collectAmount0)
-	if underflow0 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%s) < collectAmount0(%s)", position.TokensOwed0().ToString(), collectAmount0.ToString()))
-	}
+	newOwed0 := u256.Zero().Sub(position.TokensOwed0(), collectAmount0)
 	position.SetTokensOwed0(newOwed0)
 
-	newOwed1, underflow1 := u256.Zero().SubOverflow(position.TokensOwed1(), collectAmount1)
-	if underflow1 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%s) < collectAmount1(%s)", position.TokensOwed1().ToString(), collectAmount1.ToString()))
-	}
+	newOwed1 := u256.Zero().Sub(position.TokensOwed1(), collectAmount1)
 	position.SetTokensOwed1(newOwed1)
 
 	if position.IsClear() {
@@ -173,15 +166,8 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 		position.Liquidity(),
 	)
 
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed0()), fee0)
-	if overflow0 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
-	}
-
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed1()), fee1)
-	if overflow1 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
-	}
+	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), fee0)
+	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), fee1)
 
 	return tokensOwed0, tokensOwed1
 }
