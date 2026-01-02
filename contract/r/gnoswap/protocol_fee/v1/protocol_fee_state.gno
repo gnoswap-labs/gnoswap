@@ -33,10 +33,12 @@ func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
 	return pfs.store.GetAccuToDevOps()
 }
 
+// TokenListWithAmounts returns the map of token paths to their accumulated amounts.
 func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
 	return pfs.store.GetTokenListWithAmounts()
 }
 
+// TokenAmountOfTokenPath returns the accumulated amount for a specific token path.
 func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
 	amount, exists := pfs.store.GetTokenListWithAmountItem(tokenPath)
 	if !exists {
