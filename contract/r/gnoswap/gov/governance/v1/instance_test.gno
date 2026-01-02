@@ -69,8 +69,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
-					proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-				)
+					proposerAddr, 1, baseCreatedAt)
 				gv.addProposal(proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
@@ -85,8 +84,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
-					proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-				)
+					proposerAddr, 1, baseCreatedAt)
 				gv.addProposal(proposal)
 			},
 			currentTime:            expiredTime + 100, // after expired
@@ -102,8 +100,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					NewProposalStatus(config, 1000, false, baseCreatedAt),
 					governance.NewProposalMetadata("Old Title", "Old Description"),
 					NewProposalTextData(),
-					proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-				)
+					proposerAddr, 1, baseCreatedAt)
 				gv.addProposal(oldProposal)
 
 				// Active proposal (created after first one expired)
@@ -113,8 +110,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					NewProposalStatus(config, 1000, false, newCreatedAt),
 					governance.NewProposalMetadata("New Title", "New Description"),
 					NewProposalTextData(),
-					proposerAddr, 1, newCreatedAt, newCreatedAt, 200,
-				)
+					proposerAddr, 1, newCreatedAt)
 				gv.addProposal(newProposal)
 			},
 			currentTime:            expiredTime + 50 + config.VotingStartDelay + 50, // during new proposal's voting period
@@ -129,8 +125,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					NewProposalStatus(config, 1000, true, baseCreatedAt),
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
-					proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-				)
+					proposerAddr, 1, baseCreatedAt)
 				gv.addProposal(proposal)
 
 				// Cancel the proposal
@@ -150,8 +145,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 						NewProposalStatus(config, 1000, false, baseCreatedAt),
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
-						proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-					)
+						proposerAddr, 1, baseCreatedAt)
 					gv.addProposal(proposal)
 				}
 			},
@@ -168,8 +162,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 						NewProposalStatus(config, 1000, false, baseCreatedAt),
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
-						proposerAddr, 1, baseCreatedAt, baseCreatedAt, 100,
-					)
+						proposerAddr, 1, baseCreatedAt)
 					gv.addProposal(proposal)
 				}
 			},

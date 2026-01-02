@@ -72,12 +72,14 @@ func (p *ProposalVoteStatusResolver) IsRejected() bool {
 }
 
 // IsPassed determines if the proposal has passed the voting requirements.
-// A proposal passes if it receives at least the quorum amount of "yes" votes.
+// A proposal passes if "yes" votes meet quorum and exceed "no" votes.
 //
 // Returns:
 //   - bool: true if proposal has passed
 func (p *ProposalVoteStatusResolver) IsPassed() bool {
-	return p.YesWeight() >= p.QuorumAmount()
+	yesMeetsQuorum := p.YesWeight() >= p.QuorumAmount()
+	yesBeatsNo := p.YesWeight() > p.NoWeight()
+	return yesMeetsQuorum && yesBeatsNo
 }
 
 // addYesVoteWeight adds the specified weight to the "yes" vote tally.
