@@ -149,7 +149,6 @@ func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 }
 
 // getEmissionState returns the singleton emission state instance.
-// Creates a new instance with current height and timestamp if one doesn't exist.
 func getEmissionState() *EmissionState {
 	if emissionState == nil {
 		emissionState = NewEmissionState(runtime.ChainHeight(), time.Now().Unix())

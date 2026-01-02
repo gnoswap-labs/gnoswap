@@ -207,7 +207,9 @@ func checkErr(err error) {
 	}
 }
 
-// calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
+// calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
+// This function has side effects: it updates the accumulated and remaining amounts
+// for each halving year in the emission state.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
 	state := getEmissionState()
