@@ -12,8 +12,8 @@ type governanceV1 struct {
 }
 
 func NewGovernanceV1(
-    governanceStore governance.IGovernanceStore,
-    stakerAccessor governance.GovStakerAccessor,
+	governanceStore governance.IGovernanceStore,
+	stakerAccessor governance.GovStakerAccessor,
 ) governance.IGovernance {
 	return &governanceV1{
 		store:          governanceStore,

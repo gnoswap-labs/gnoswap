@@ -43,7 +43,6 @@ func (gv *governanceV1) ProposeText(
 	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()
-	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
@@ -82,7 +81,6 @@ func (gv *governanceV1) ProposeText(
 		callerAddress,
 		gnsBalance,
 		createdAt,
-		createdHeight,
 	)
 	if err != nil {
 		panic(err)
@@ -150,7 +148,6 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	assertIsValidToken(tokenPath)
 
 	createdAt := time.Now().Unix()
-	createdHeight := runtime.ChainHeight()
 
 	callerAddress := runtime.PreviousRealm().Address()
 	gnsBalance := gns.BalanceOf(callerAddress)
@@ -191,7 +188,6 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		callerAddress,
 		gnsBalance,
 		createdAt,
-		createdHeight,
 	)
 	if err != nil {
 		panic(err)
@@ -265,7 +261,6 @@ func (gv *governanceV1) ProposeParameterChange(
 	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()
-	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := gv.getCurrentConfig()
@@ -309,7 +304,6 @@ func (gv *governanceV1) ProposeParameterChange(
 		callerAddress,
 		gnsBalance,
 		createdAt,
-		createdHeight,
 	)
 	if err != nil {
 		panic(err)
@@ -353,7 +347,6 @@ func (gv *governanceV1) createProposal(
 	proposerAddress address,
 	proposerGnsBalance int64,
 	createdAt int64,
-	createdHeight int64,
 ) (*governance.Proposal, error) {
 	// Validate proposal metadata (title and description)
 	metadataResolver := NewProposalMetadataResolver(proposalMetadata)
@@ -397,8 +390,6 @@ func (gv *governanceV1) createProposal(
 		proposerAddress,
 		configVersion,
 		snapshotTime,
-		createdAt,
-		createdHeight,
 	)
 
 	// Store the proposal in state

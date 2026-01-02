@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/banker"
-	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -96,7 +95,6 @@ func newTestProposal(
 	proposer address,
 	configVersion int64,
 	snapshotTime int64,
-	createdAt int64,
 ) *governance.Proposal {
 	return governance.NewProposal(
 		id,
@@ -106,7 +104,5 @@ func newTestProposal(
 		proposer,
 		configVersion,
 		snapshotTime,
-		createdAt,
-		runtime.ChainHeight(),
 	)
 }

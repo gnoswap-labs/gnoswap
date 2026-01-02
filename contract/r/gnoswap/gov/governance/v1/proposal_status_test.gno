@@ -166,7 +166,6 @@ func TestProposalStatus_StatusType_NoMajorityWithQuorum(t *testing.T) {
 		address("g1proposer"),
 		1,
 		baseTime.Unix(),
-		baseTime.Unix(),
 	)
 
 	resolver := NewProposalStatusResolver(proposal.Status())
