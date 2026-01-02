@@ -48,8 +48,6 @@
 // package main
 //
 // import (
-//
-//	"std"
 //	"gno.land/p/gnoswap/rbac"
 //
 // )
@@ -59,8 +57,8 @@
 //	    manager := rbac.New()
 //
 //	    // Define example addresses
-//	    adminAddr := std.Address("g1...")
-//	    userAddr  := std.Address("g1...")
+//	    adminAddr := address("g1...")
+//	    userAddr  := address("g1...")
 //
 //	    // Register an "admin" role with adminAddr
 //	    if err := manager.RegisterRole("admin", adminAddr); err != nil {
@@ -83,7 +81,7 @@
 //	    }
 //
 //	    // Update the editor role to a different address
-//	    newEditorAddr := std.Address("g1...")
+//	    newEditorAddr := address("g1...")
 //	    if err := manager.UpdateRoleAddress("editor", newEditorAddr); err != nil {
 //	        panic(err)
 //	    }

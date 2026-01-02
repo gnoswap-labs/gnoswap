@@ -293,7 +293,13 @@ func TestAssert_assertIsValidRoleName(t *testing.T) {
 			name:        "Empty role name should panic",
 			roleName:    "",
 			shouldPanic: true,
-			expectedMsg: "invalid role name || role name: ",
+			expectedMsg: "invalid role name || role name: \"\"",
+		},
+		{
+			name:        "Whitespace-only role name should panic",
+			roleName:    "   ",
+			shouldPanic: true,
+			expectedMsg: "invalid role name || role name: \"   \"",
 		},
 	}
 

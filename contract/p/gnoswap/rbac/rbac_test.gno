@@ -1,11 +1,11 @@
 package rbac
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -19,14 +19,14 @@ var (
 
 func adminChecker(caller address) error {
 	if caller != adminAddr {
-		return ufmt.Errorf("caller is not admin")
+		return errors.New("caller is not admin")
 	}
 	return nil
 }
 
 func editorChecker(caller address) error {
 	if caller != editorAddr {
-		return ufmt.Errorf("caller is not editor")
+		return errors.New("caller is not editor")
 	}
 	return nil
 }
@@ -97,10 +97,25 @@ func TestRbac_RegisterRole(t *testing.T) {
 			shouldError: false, // RegisterRole doesn't validate address
 		},
 		{
-			name:        "Register role with empty name",
+			name:        "Register role with empty name fails",
 			roleName:    "",
 			addr:        adminAddr,
-			shouldError: false, // RegisterRole doesn't validate role name
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Register role with whitespace-only name fails",
+			roleName:    "   ",
+			addr:        adminAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Register role with tab and space fails",
+			roleName:    " \t ",
+			addr:        adminAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
 		},
 	}
 
@@ -362,9 +377,9 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 	uassert.NoError(t, err)
 
 	tests := []struct {
-		name        string
-		roleName    string
-		shouldError bool
+		name         string
+		roleName     string
+		shouldError  bool
 		expectedAddr address
 	}{
 		{
