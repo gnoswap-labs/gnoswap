@@ -285,20 +285,6 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 	return totalAmountToMint, nil
 }
 
-// isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
-func isLastSecondOfHalvingYear(timestamp int64) bool {
-	year := getEmissionState().getCurrentYear(timestamp)
-	lastSecond := GetHalvingYearEndTimestamp(year)
-
-	return timestamp == lastSecond
-}
-
-// skipIfSameHeight returns true if last minted height equals current height,
-// preventing multiple mints in the same block.
-func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
-	return lastMintedHeight == currentHeight
-}
-
 // BurnAmount returns the total amount of GNS tokens burned.
 func BurnAmount() int64 { return burnAmount }
 

@@ -77,39 +77,6 @@ func TestValidEmissionAmount(t *testing.T) {
 	}
 }
 
-func TestIsLastSecondOfHalvingYear(t *testing.T) {
-	resetEmissionState(t)
-	InitGnsTest(t)
-
-	type testdata struct {
-		name      string
-		timestamp int64
-		want      bool
-	}
-
-	tests := make([]testdata, 0, 24)
-
-	for i := HALVING_START_YEAR; i <= HALVING_END_YEAR; i++ {
-		tests = append(tests, testdata{
-			name:      ufmt.Sprintf("last second of halving year %d", i),
-			timestamp: GetHalvingYearEndTimestamp(i),
-			want:      true,
-		})
-
-		tests = append(tests, testdata{
-			name:      ufmt.Sprintf("second-to-last of halving year %d", i),
-			timestamp: GetHalvingYearEndTimestamp(i) - 1,
-			want:      false,
-		})
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.want, isLastSecondOfHalvingYear(tt.timestamp))
-		})
-	}
-}
-
 func TestHandleLeftEmissionAmount(t *testing.T) {
 	type testdata struct {
 		name      string

@@ -587,32 +587,7 @@ func TestAddSubConsistency(t *testing.T) {
 	}
 }
 
-// updateHalvingData Tests
-
-func TestUpdateHalvingData(t *testing.T) {
-	es := NewEmissionState(1, 10000)
-	originalStartTs := es.getHalvingYearStartTimestamp(1)
-
-	// Update with new timestamp
-	newStartTs := int64(50000)
-	es.updateHalvingData(newStartTs)
-
-	// Verify halving data was updated
-	updatedStartTs := es.getHalvingYearStartTimestamp(1)
-	uassert.Equal(t, newStartTs, updatedStartTs)
-	uassert.True(t, originalStartTs != updatedStartTs)
-
-	// Verify all years are updated correctly
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		expectedStart := newStartTs + (year-1)*SECONDS_IN_YEAR
-		expectedEnd := newStartTs + year*SECONDS_IN_YEAR - 1
-		uassert.Equal(t, expectedStart, es.getHalvingYearStartTimestamp(year))
-		uassert.Equal(t, expectedEnd, es.getHalvingYearEndTimestamp(year))
-	}
-}
-
 // getEmissionState Tests (Singleton pattern)
-
 func TestGetEmissionState(t *testing.T) {
 	// Reset global state
 	resetEmissionState(t)

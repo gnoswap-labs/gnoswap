@@ -135,11 +135,6 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	return e.halvingData.setLeftAmount(year, leftAmount)
 }
 
-// updateHalvingData initializes halving data with the given start timestamp.
-func (e *EmissionState) updateHalvingData(startTimestamp int64) {
-	e.halvingData = NewHalvingData(startTimestamp)
-}
-
 // NewEmissionState creates a new EmissionState with specified start height and timestamp.
 // Calculates emission end time based on 12-year schedule and initializes halving data.
 func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
