@@ -62,21 +62,21 @@ func TestProposal_Validation(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			name: "Valid Text proposal",
-			metadata: governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data: governance.NewProposalData(governance.Text, nil, nil),
+			name:          "Valid Text proposal",
+			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
+			data:          governance.NewProposalData(governance.Text, nil, nil),
 			expectedError: false,
 		},
 		{
-			name: "Invalid metadata",
-			metadata: governance.NewProposalMetadata("", "Valid Description"),
-			data: governance.NewProposalData(governance.Text, nil, nil),
+			name:          "Invalid metadata",
+			metadata:      governance.NewProposalMetadata("", "Valid Description"),
+			data:          governance.NewProposalData(governance.Text, nil, nil),
 			expectedError: true,
 		},
 		{
-			name: "Invalid CommunityPoolSpend proposal",
-			metadata: governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data: governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), nil),
+			name:          "Invalid CommunityPoolSpend proposal",
+			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
+			data:          governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), nil),
 			expectedError: true,
 		},
 	}
@@ -174,7 +174,11 @@ func TestProposal_StatusOperations(t *testing.T) {
 			)
 
 			if tc.isExecuted {
-				err := NewProposalResolver(proposal).execute(tc.currentTime.Unix(), 100, address("g1executor"))
+				resolver := NewProposalResolver(proposal)
+				err := resolver.Vote(true, 600)
+				uassert.NoError(t, err)
+
+				err = NewProposalResolver(proposal).execute(tc.currentTime.Unix(), 100, address("g1executor"))
 				uassert.NoError(t, err)
 			}
 			if tc.isCanceled {
@@ -272,16 +276,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Passed status tests (Text vs non-Text)
 		{
-			name:               "StatusPassed: Text proposal becomes inactive",
-			description:        "Text proposal becomes inactive after passing (no execution needed)",
-			proposalType:       governance.Text,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  350, // after voting ends
+			name:              "StatusPassed: Text proposal becomes inactive",
+			description:       "Text proposal becomes inactive after passing (no execution needed)",
+			proposalType:      governance.Text,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350, // after voting ends
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				// Add enough yes votes to pass
 				resolver := NewProposalResolver(proposal)
@@ -291,16 +295,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 			expectedStatusType: governance.StatusPassed,
 		},
 		{
-			name:               "StatusPassed: CommunityPoolSpend stays active",
-			description:        "CommunityPoolSpend proposal stays active after passing (awaiting execution)",
-			proposalType:       governance.CommunityPoolSpend,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  350, // after voting ends, before executable
+			name:              "StatusPassed: CommunityPoolSpend stays active",
+			description:       "CommunityPoolSpend proposal stays active after passing (awaiting execution)",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350, // after voting ends, before executable
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(true, 600) // 60% yes
@@ -309,16 +313,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 			expectedStatusType: governance.StatusPassed,
 		},
 		{
-			name:               "StatusPassed: ParameterChange stays active",
-			description:        "ParameterChange proposal stays active after passing",
-			proposalType:       governance.ParameterChange,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  350,
+			name:              "StatusPassed: ParameterChange stays active",
+			description:       "ParameterChange proposal stays active after passing",
+			proposalType:      governance.ParameterChange,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350,
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(true, 600)
@@ -328,16 +332,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Executable status tests
 		{
-			name:               "StatusExecutable: proposal can be executed",
-			description:        "Proposal is in executable window",
-			proposalType:       governance.CommunityPoolSpend,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  450, // after execution delay
+			name:              "StatusExecutable: proposal can be executed",
+			description:       "Proposal is in executable window",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 450, // after execution delay
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(true, 600)
@@ -347,16 +351,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Rejected status tests
 		{
-			name:               "StatusRejected: majority no votes",
-			description:        "Proposal rejected by majority no votes",
-			proposalType:       governance.Text,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  350,
+			name:              "StatusRejected: majority no votes",
+			description:       "Proposal rejected by majority no votes",
+			proposalType:      governance.Text,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350,
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(false, 600) // 60% no
@@ -365,19 +369,19 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 			expectedStatusType: governance.StatusRejected,
 		},
 		{
-			name:               "StatusRejected: insufficient yes votes for quorum",
-			description:        "Proposal rejected due to not reaching quorum of yes votes",
-			proposalType:       governance.CommunityPoolSpend,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  350,
+			name:              "StatusRejected: insufficient yes votes for quorum",
+			description:       "Proposal rejected due to not reaching quorum of yes votes",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350,
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 400) // 40% yes - not enough
+				resolver.Vote(true, 400)  // 40% yes - not enough
 				resolver.Vote(false, 500) // 50% no
 			},
 			expectedActive:     false,
@@ -385,16 +389,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Executed status tests
 		{
-			name:               "StatusExecuted: proposal has been executed",
-			description:        "Proposal is inactive after execution",
-			proposalType:       governance.CommunityPoolSpend,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  450,
+			name:              "StatusExecuted: proposal has been executed",
+			description:       "Proposal is inactive after execution",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 450,
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(true, 600)
@@ -405,16 +409,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Canceled status tests
 		{
-			name:               "StatusCanceled: proposal canceled before voting",
-			description:        "Proposal is inactive after cancellation",
-			proposalType:       governance.ParameterChange,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  50,
+			name:              "StatusCanceled: proposal canceled before voting",
+			description:       "Proposal is inactive after cancellation",
+			proposalType:      governance.ParameterChange,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 50,
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.cancel(current, 100, address("g1proposer"))
@@ -424,16 +428,16 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 		},
 		// Expired status tests
 		{
-			name:               "StatusExpired: execution window passed",
-			description:        "Proposal is inactive after execution window expires",
-			proposalType:       governance.CommunityPoolSpend,
-			votingStartDelay:   100,
-			votingPeriod:       200,
-			executionDelay:     100,
-			executionWindow:    200,
-			quorum:             50,
-			maxVotingWeight:    1000,
-			currentTimeOffset:  700, // after execution window
+			name:              "StatusExpired: execution window passed",
+			description:       "Proposal is inactive after execution window expires",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 700, // after execution window
 			setupFunc: func(proposal *governance.Proposal, current int64) {
 				resolver := NewProposalResolver(proposal)
 				resolver.Vote(true, 600)
