@@ -205,13 +205,6 @@ func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	return t.instance.GetDepositStakeTime(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	if !t.isActive("GetDepositStakeTimestamp") {
-		panic("test implementation: GetDepositStakeTimestamp not supported")
-	}
-	return t.instance.GetDepositStakeTimestamp(lpTokenId)
-}
-
 func (t *TestStaker) GetDepositTargetPoolPath(lpTokenId uint64) string {
 	if !t.isActive("GetDepositTargetPoolPath") {
 		panic("test implementation: GetDepositTargetPoolPath not supported")

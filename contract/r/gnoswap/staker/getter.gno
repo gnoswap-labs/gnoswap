@@ -39,11 +39,6 @@ func GetDepositStakeTime(lpTokenId uint64) int64 {
 	return getImplementation().GetDepositStakeTime(lpTokenId)
 }
 
-// GetDepositStakeTimestamp returns the staking timestamp of a position.
-func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	return getImplementation().GetDepositStakeTimestamp(lpTokenId)
-}
-
 // GetDepositTargetPoolPath returns the pool path of a staked position.
 func GetDepositTargetPoolPath(lpTokenId uint64) string {
 	return getImplementation().GetDepositTargetPoolPath(lpTokenId)

@@ -59,7 +59,6 @@ type IStakerGetter interface {
 	GetDepositLiquidity(lpTokenId uint64) *u256.Uint
 	GetDepositLiquidityAsString(lpTokenId uint64) string
 	GetDepositStakeTime(lpTokenId uint64) int64
-	GetDepositStakeTimestamp(lpTokenId uint64) int64
 	GetDepositTargetPoolPath(lpTokenId uint64) string
 	GetDepositTickLower(lpTokenId uint64) int32
 	GetDepositTickUpper(lpTokenId uint64) int32

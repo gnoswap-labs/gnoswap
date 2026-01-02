@@ -184,14 +184,6 @@ func (m *MockStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	res, ok := m.Response.Get("GetDepositStakeTimestamp")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
 func (m *MockStaker) GetDepositTargetPoolPath(lpTokenId uint64) string {
 	res, ok := m.Response.Get("GetDepositTargetPoolPath")
 	if !ok {

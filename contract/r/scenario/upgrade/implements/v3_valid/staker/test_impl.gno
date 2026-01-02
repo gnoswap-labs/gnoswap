@@ -118,10 +118,6 @@ func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	return t.instance.GetDepositStakeTime(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	return t.instance.GetDepositStakeTimestamp(lpTokenId)
-}
-
 func (t *TestStaker) GetDepositTargetPoolPath(lpTokenId uint64) string {
 	return t.instance.GetDepositTargetPoolPath(lpTokenId)
 }
