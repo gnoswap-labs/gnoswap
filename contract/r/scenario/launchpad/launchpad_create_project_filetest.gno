@@ -56,7 +56,7 @@ func createProjectByAdmin() {
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] admin attempting to create project")
 	println("[INFO] create project with project name:", projectName)
@@ -104,5 +104,5 @@ func createProjectByAdmin() {
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
-// [INFO] create project with start time: 1234571490
+// [INFO] create project with start time: 1235172690
 // [EXPECTED] created project id: gno.land/r/onbloc/obl:123

@@ -105,7 +105,7 @@ func createOBLProject() {
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
@@ -124,8 +124,8 @@ func createOBLProject() {
 		startTime,    // 5 block later
 	)
 
-	println("[INFO] Skipping 3600 blocks")
-	testing.SkipHeights(3600 / 5)
+	println("[INFO] Skipping 120960 blocks")
+	testing.SkipHeights(120960)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 
@@ -228,7 +228,7 @@ func unmarshal(data string) map[string]interface{} {
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [INFO] Skipping 3600 blocks
+// [INFO] Skipping 120960 blocks
 // [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
 // [EXPECTED] Project name: OBL Launchpad Project
 // [EXPECTED] Project token path: gno.land/r/onbloc/obl

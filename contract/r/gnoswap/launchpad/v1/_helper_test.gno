@@ -21,6 +21,7 @@ import (
 const (
 	testLaunchpadPkgPath = "gno.land/r/gnoswap/launchpad"
 	testOblTokenPath     = "gno.land/r/onbloc/obl"
+	testBlockTimeSeconds = int64(5)
 )
 
 // testEnvConfig holds environment configuration for test setup
@@ -102,7 +103,7 @@ func createTestProject(
 		obl.Approve(cross, launchpadAddr, cfg.rewardAmount)
 	}
 
-	startTime := time.Now().Unix() + 3700
+	startTime := testing.GetContext().Time.Unix() + projectMinimumStartDelayTime
 
 	var projectID string
 	func(cur realm) {
@@ -124,8 +125,8 @@ func createTestProject(
 		)
 	}(cross)
 
-	// Activate project by skipping to start time
-	testing.SkipHeights(3700)
+	// Activate project by skipping past start time (add buffer to ensure activation)
+	testing.SkipHeights(secondsToBlocks(projectMinimumStartDelayTime) + 20)
 
 	return projectID
 }
@@ -209,12 +210,26 @@ func collectTestReward(t *testing.T, lp *launchpadV1, userAddr address, depositI
 // =============================================================================
 
 // Common skip heights for different tiers (claimable duration + buffer)
-const (
-	testSkipTier30Claimable  = 260200  // 3 days + buffer
-	testSkipTier90Claimable  = 778600  // 9 days + buffer
-	testSkipTier180Claimable = 1556200 // 18 days + buffer
-	testSkipTier30End        = 2692000 // 30 days + buffer (distribution end)
+var (
+	testSkipTier30Claimable  int64
+	testSkipTier90Claimable  int64
+	testSkipTier180Claimable int64
+	testSkipTier30End        int64
 )
+
+func secondsToBlocks(seconds int64) int64 {
+	if seconds <= 0 {
+		return 0
+	}
+	return (seconds + testBlockTimeSeconds - 1) / testBlockTimeSeconds
+}
+
+func init() {
+	testSkipTier30Claimable = secondsToBlocks(projectTierRewardCollectableDuration[projectTier30]) + 20
+	testSkipTier90Claimable = secondsToBlocks(projectTierRewardCollectableDuration[projectTier90]) + 20
+	testSkipTier180Claimable = secondsToBlocks(projectTierRewardCollectableDuration[projectTier180]) + 20
+	testSkipTier30End = secondsToBlocks(projectTierDurationTimes[projectTier30]) + 20
+}
 
 // Test helper functions to access and manipulate state for testing purposes
 

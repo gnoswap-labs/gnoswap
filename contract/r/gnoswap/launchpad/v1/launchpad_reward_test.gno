@@ -243,10 +243,18 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 
 			// Verify reward ratios if specified
 			if len(tt.expectRewardRatio) > 0 && len(rewards) >= 2 {
-				actualRatio := rewards[1] / rewards[0]
-				expectedRatio := tt.expectRewardRatio[1] / tt.expectRewardRatio[0]
-				uassert.True(t, actualRatio >= expectedRatio-1 && actualRatio <= expectedRatio+1,
-					"reward ratio mismatch")
+				expectedLeft := rewards[1] * tt.expectRewardRatio[0]
+				expectedRight := rewards[0] * tt.expectRewardRatio[1]
+				diff := expectedLeft - expectedRight
+				if diff < 0 {
+					diff = -diff
+				}
+				// Allow small rounding differences from integer math and per-deposit timing.
+				tolerance := expectedRight / 100 // 1%
+				if tolerance < 1 {
+					tolerance = 1
+				}
+				uassert.True(t, diff <= tolerance, "reward ratio mismatch")
 			}
 
 			// Special case: early vs late depositor

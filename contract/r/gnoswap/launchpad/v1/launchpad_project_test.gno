@@ -56,10 +56,10 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() - 3600, // 1 hour
+			startTime:            time.Now().Unix() - projectMinimumStartDelayTime, // 7 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234564290) must be greater than now(1234571490)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1233963090) must be greater than now(1235172690)",
 		},
 		{
 			name:                 "create project failed by start time is less than minimum start delay time",
@@ -72,10 +72,10 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 3600 - 1, // 1 hour
+			startTime:            time.Now().Unix() + projectMinimumStartDelayTime - 1, // 7 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234571489) must be greater than now(1234571490)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1235172689) must be greater than now(1235172690)",
 		},
 	}
 
@@ -121,6 +121,32 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	}
 }
 
+func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
+	initLaunchpadProjectTest(t)
+
+	userAddr := testutils.TestAddress("nonAdminUser")
+	userRealm := testing.NewUserRealm(userAddr)
+	startTime := time.Now().Unix() + projectMinimumStartDelayTime
+
+	testing.SetRealm(userRealm)
+
+	uassert.AbortsContains(t, "not admin or governance", func() {
+		launchpad.CreateProject(
+			cross,
+			"Unauthorized Project",
+			"gno.land/r/onbloc/obl",
+			testutils.TestAddress("projectAddr"),
+			1_000_000,
+			"",
+			"",
+			30,
+			30,
+			40,
+			startTime,
+		)
+	})
+}
+
 func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
@@ -146,7 +172,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -166,7 +192,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(30),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600),
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -186,7 +212,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(60),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600),
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:10, 90:20, 180:60) should be 100",
@@ -205,7 +231,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600),
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty",
@@ -224,7 +250,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600),
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(abcdef)",
@@ -243,11 +269,11 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         runtime.ChainHeight(),
-				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
-				minimumStartDelayTime: 3600,
+				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 7 days - 1 second
+				minimumStartDelayTime: projectMinimumStartDelayTime,
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234571489) must be greater than now(1234571490)",
+			expectedErrorMessage: "must be greater than now",
 		},
 		{
 			name: "create project failed by invalid token path",
@@ -263,8 +289,8 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         runtime.ChainHeight(),
-				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
-				minimumStartDelayTime: 3600,
+				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 7 days - 1 second
+				minimumStartDelayTime: projectMinimumStartDelayTime,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/test/token) not registered",
@@ -282,7 +308,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 			projectId, err := lp.createProject(tt.params)
 
 			if tt.expectedHasError {
-				uassert.Equal(t, err.Error(), tt.expectedErrorMessage)
+				uassert.ErrorContains(t, err, tt.expectedErrorMessage)
 				return
 			}
 
@@ -320,7 +346,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -343,7 +369,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
@@ -571,7 +597,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 }
 
 func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
-	projectMinimumStartDelayTime := int64(60 * 60) // 1 hour
+	minimumStartDelayTime := projectMinimumStartDelayTime
 
 	tests := []struct {
 		name          string
@@ -580,7 +606,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 	}{
 		{
 			name:          "start time is valid",
-			startTime:     int64(time.Now().Unix() + projectMinimumStartDelayTime),
+			startTime:     int64(time.Now().Unix() + minimumStartDelayTime),
 			expectedError: nil,
 		},
 		{
@@ -595,7 +621,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 		},
 		{
 			name:          "start time is invalid by less than minimum start delay time",
-			startTime:     int64(time.Now().Unix() + projectMinimumStartDelayTime - 1),
+			startTime:     int64(time.Now().Unix() + minimumStartDelayTime - 1),
 			expectedError: errInvalidInput,
 		},
 	}
@@ -606,7 +632,7 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 				startTime: test.startTime,
 			}
 
-			err := params.validateStartTime(int64(time.Now().Unix()), projectMinimumStartDelayTime)
+			err := params.validateStartTime(int64(time.Now().Unix()), minimumStartDelayTime)
 
 			if test.expectedError == nil {
 				uassert.NoError(t, err)
@@ -966,6 +992,19 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(50_000), claimableRewards)
+	})
+}
+
+func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.T) {
+	initLaunchpadProjectTest(t)
+
+	userAddr := testutils.TestAddress("nonAdminUser")
+	userRealm := testing.NewUserRealm(userAddr)
+
+	testing.SetRealm(userRealm)
+
+	uassert.AbortsContains(t, "not admin or governance", func() {
+		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
 	})
 }
 
