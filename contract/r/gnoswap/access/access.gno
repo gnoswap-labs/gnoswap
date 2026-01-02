@@ -1,6 +1,7 @@
 package access
 
 import (
+    "chain"
 	"chain/runtime"
 	"strings"
 
@@ -29,6 +30,13 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	if err := setRoleAddress(roleName, roleAddress); err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+	    "SetRoleAddress",
+		"prevAddr", caller.String(),
+		"roles", roleName,
+		"roleAddress", roleAddress.String(),
+	)
 }
 
 // setRoleAddress is the internal implementation of SetRoleAddress.
@@ -69,6 +77,12 @@ func RemoveRole(cur realm, roleName string) {
 	}
 
 	delete(roleAddresses, roleName)
+
+	chain.Emit(
+		"RemoveRole",
+		"prevAddr", caller.String(),
+		"role", roleName,
+	)
 }
 
 // IsAuthorized checks if caller has the specified role.
@@ -89,6 +103,7 @@ func IsAuthorized(role string, caller address) bool {
 
 // GetAddress returns the address for a role and whether it exists.
 func GetAddress(role string) (address, bool) {
+    role = strings.TrimSpace(role)
 	addr, ok := roleAddresses[role]
 	return addr, ok
 }
@@ -107,6 +122,7 @@ func GetRoleAddresses() map[string]address {
 // MustGetAddress returns the address for a role or panics if it doesn't exist.
 // Use this when the role is expected to exist and failure is critical.
 func MustGetAddress(role string) address {
+    role = strings.TrimSpace(role)
 	addr, ok := GetAddress(role)
 	if !ok {
 		panic(ufmt.Errorf(errRoleNotFound, role))
