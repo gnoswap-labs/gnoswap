@@ -135,11 +135,6 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 	return data.Node()
 }
 
-// formatUint formats uint64 to string.
-func formatUint(v uint64) string {
-	return strconv.FormatUint(v, 10)
-}
-
 // formatInt64 formats int64 to string.
 func formatInt64(v int64) string {
 	return strconv.FormatInt(v, 10)
