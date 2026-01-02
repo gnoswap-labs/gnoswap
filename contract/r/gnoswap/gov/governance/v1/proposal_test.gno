@@ -99,7 +99,6 @@ func TestProposal_Validation(t *testing.T) {
 				address("g1proposer"),
 				1, // configVersion
 				baseTime,
-				baseTime,
 			)
 
 			// when
@@ -166,7 +165,6 @@ func TestProposal_StatusOperations(t *testing.T) {
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
 				1, // configVersion
-				baseTime.Unix(),
 				baseTime.Unix(),
 			)
 
@@ -463,7 +461,6 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 				address("g1proposer"),
 				1,
 				baseTime,
-				baseTime,
 			)
 
 			currentTime := baseTime + tc.currentTimeOffset
@@ -530,7 +527,6 @@ func TestNewProposal(t *testing.T) {
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				tc.proposer,
 				1, // configVersion
-				baseTime,
 				baseTime,
 			)
 

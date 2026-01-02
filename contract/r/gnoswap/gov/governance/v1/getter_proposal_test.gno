@@ -37,9 +37,8 @@ func TestGetterProposal_All(t *testing.T) {
 				address("g1proposer"),
 				42, // configVersion
 				time.Now().Unix(),
-				time.Now().Unix(),
 			),
-			getterFunc:    func(gv *governanceV1, id int64) any {
+			getterFunc: func(gv *governanceV1, id int64) any {
 				return gv.GetProposerByProposalId(id)
 			},
 			expectedValue: "g1proposer",
@@ -61,18 +60,17 @@ func TestGetterProposal_All(t *testing.T) {
 				address("g1proposer"),
 				42, // configVersion
 				time.Now().Unix(),
-				time.Now().Unix(),
 			),
-			getterFunc:    func(gv *governanceV1, id int64) any {
+			getterFunc: func(gv *governanceV1, id int64) any {
 				return gv.GetProposalTypeByProposalId(id)
 			},
 			expectedValue: "Text",
 		},
 		{
-			name:          "Get non-existent proposal",
-			proposalId:    999,
-			proposal:      nil,
-			getterFunc:    func(gv *governanceV1, id int64) any {
+			name:       "Get non-existent proposal",
+			proposalId: 999,
+			proposal:   nil,
+			getterFunc: func(gv *governanceV1, id int64) any {
 				return gv.GetProposerByProposalId(id)
 			},
 			expectedPanic: true,
@@ -107,9 +105,9 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 	baseTime := time.Now().Unix()
 
 	tests := []struct {
-		name                   string
-		setupProposals         func(gv *governanceV1)
-		expectedSnapshotTime   int64
+		name                      string
+		setupProposals            func(gv *governanceV1)
+		expectedSnapshotTime      int64
 		expectedHasActiveProposal bool
 	}{
 		{
@@ -117,7 +115,7 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 			setupProposals: func(gv *governanceV1) {
 				// No proposals added
 			},
-			expectedSnapshotTime:   0,
+			expectedSnapshotTime:      0,
 			expectedHasActiveProposal: false,
 		},
 		{
@@ -140,13 +138,10 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer"),
 					1,
-					baseTime-1000, // snapshotTime: 1000 seconds ago
-					baseTime,
-					100,
-				)
+					baseTime-1000)
 				gv.addProposal(proposal)
 			},
-			expectedSnapshotTime:   baseTime - 1000,
+			expectedSnapshotTime:      baseTime - 1000,
 			expectedHasActiveProposal: true,
 		},
 		{
@@ -170,10 +165,7 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer1"),
 					1,
-					baseTime-2000, // oldest snapshotTime
-					baseTime,
-					100,
-				)
+					baseTime-2000)
 				gv.addProposal(proposal1)
 
 				// Proposal 2: snapshotTime = baseTime - 500 (newer)
@@ -186,13 +178,10 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer2"),
 					1,
-					baseTime-500, // newer snapshotTime
-					baseTime,
-					101,
-				)
+					baseTime-500)
 				gv.addProposal(proposal2)
 			},
-			expectedSnapshotTime:   baseTime - 2000, // should return oldest
+			expectedSnapshotTime:      baseTime - 2000, // should return oldest
 			expectedHasActiveProposal: true,
 		},
 	}
