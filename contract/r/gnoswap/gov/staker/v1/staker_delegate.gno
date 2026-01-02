@@ -94,7 +94,7 @@ func (gs *govStakerV1) Delegate(
 // Undelegate undelegates xGNS from the existing delegate.
 //
 // Initiates withdrawal of staked GNS with lockup period.
-// Voting power removed immediately, tokens locked for 7 days.
+// Voting power removed immediately, xGNS burn occurs on collection.
 // Prevents governance attacks through time delay.
 //
 // Parameters:
@@ -105,14 +105,14 @@ func (gs *govStakerV1) Delegate(
 //  1. Removes voting power immediately
 //  2. Burns xGNS tokens
 //  3. Creates withdrawal request with timestamp
-//  4. Locks GNS for 7-day cooldown period
+//  4. Locks GNS for a configurable cooldown period (default: 7 days)
 //
 // Requirements:
 //   - Must have delegated to target address
 //   - Sufficient delegated amount
 //   - Cannot undelegate during active votes
 //
-// After 7 days, use Collect() to claim GNS.
+// After lockup (default: 7 days), use Collect() to claim GNS and burn xGNS.
 // Returns undelegated amount.
 func (gs *govStakerV1) Undelegate(
 	from address,
@@ -125,6 +125,7 @@ func (gs *govStakerV1) Undelegate(
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
+	assertNoActiveProposal()
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
@@ -190,6 +191,10 @@ func (gs *govStakerV1) Redelegate(
 	caller := prevRealm.Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
+
+	if delegatee == newDelegatee {
+		panic(errSameDelegatee)
+	}
 
 	assertIsValidDelegateAmount(amount)
 
@@ -341,20 +346,25 @@ func (gs *govStakerV1) unDelegate(
 
 	unDelegationAmount := amount
 	lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
-	allDelegations := gs.store.GetAllDelegations()
+	totalDelegated := int64(0)
+	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
-	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		delegation, exists := gs.store.GetDelegation(id)
 		if !exists {
 			continue
 		}
 
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
+		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		delegations = append(delegations, delegation)
+	}
 
+	if amount > totalDelegated {
+		return 0, errNotEnoughDelegated
+	}
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
@@ -418,19 +428,25 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	unDelegationAmount := amount
-	allDelegations := gs.store.GetAllDelegations()
+	totalDelegated := int64(0)
+	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
-	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		delegation, exists := gs.store.GetDelegation(id)
 		if !exists {
 			continue
 		}
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
 
+		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		delegations = append(delegations, delegation)
+	}
+
+	if amount > totalDelegated {
+		return 0, errNotEnoughDelegated
+	}
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())

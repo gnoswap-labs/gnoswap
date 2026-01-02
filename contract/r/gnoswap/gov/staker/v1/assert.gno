@@ -70,3 +70,10 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 		))
 	}
 }
+
+func assertNoActiveProposal() {
+	_, hasActiveProposal := governance.GetOldestActiveProposalSnapshotTime()
+	if hasActiveProposal {
+		panic(errActiveProposal)
+	}
+}

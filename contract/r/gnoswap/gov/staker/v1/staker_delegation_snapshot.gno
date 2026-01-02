@@ -70,7 +70,8 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidSnapshotTime(snapshotTime)
@@ -81,6 +82,13 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 
 	// Clean user delegation history
 	gs.cleanUserDelegationHistory(snapshotTime)
+
+	chain.Emit(
+		"CleanStakerDelegationSnapshot",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"snapshotTime", formatInt(snapshotTime),
+	)
 }
 
 // cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.

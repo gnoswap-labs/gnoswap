@@ -57,18 +57,18 @@ func main() {
 	undelegateThird()
 	println()
 
-	println("[STEP 6] Wait 1 day from first undelegate and collect")
-	testing.SkipHeights(15840) // Skip 15840 blocks to reach 1 day from first undelegate (17280 - 1440 = 15840)
+	println("[STEP 6] Wait 7 days from first undelegate and collect")
+	testing.SkipHeights(119520) // 7 days from first undelegate (120960 - 1440 = 119520)
 	collectFirst()
 	println()
 
 	println("[STEP 7] Wait 1 hour and collect second batch")
-	testing.SkipHeights(720) // Skip 720 more blocks to reach 1 day from second undelegate
+	testing.SkipHeights(720) // 7 days from second undelegate
 	collectSecond()
 	println()
 
 	println("[STEP 8] Wait 1 hour and collect third batch")
-	testing.SkipHeights(720) // Skip 720 more blocks to reach 1 day from third undelegate
+	testing.SkipHeights(720) // 7 days from third undelegate
 	collectThird()
 	println()
 
@@ -151,7 +151,7 @@ func collectThird() {
 // [STEP 5] Wait 1 hour and undelegate 4M GNS (third)
 // [INFO] Alice undelegated 4000000 GNS (third batch)
 //
-// [STEP 6] Wait 1 day from first undelegate and collect
+// [STEP 6] Wait 7 days from first undelegate and collect
 // [EXPECTED] Alice collected 3000000 GNS (first batch only)
 // [EXPECTED] Alice's GNS balance: 5000000
 //

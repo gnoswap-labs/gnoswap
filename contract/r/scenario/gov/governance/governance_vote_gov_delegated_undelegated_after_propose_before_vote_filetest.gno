@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -36,6 +37,8 @@ var (
 	currentBlockTime = int64(2)
 )
 
+var t *testing.T
+
 func main() {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
@@ -53,7 +56,7 @@ func main() {
 	proposalId := proposeText()
 	println()
 
-	println("[SCENARIO] 4. Undelegate from dummy after propose, before vote")
+	println("[SCENARIO] 4. Attempt undelegate after propose, before vote (expect blocked)")
 	undelegateFromDummy()
 	println()
 
@@ -75,6 +78,8 @@ func delegateGnsToAdminAndDummy() {
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to admin %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 	// dummy
+	gns.Transfer(cross, dummyAddr, delegatedAmount)
+	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
@@ -88,9 +93,13 @@ func proposeText() int64 {
 }
 
 func undelegateFromDummy() {
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	gs.Undelegate(cross, adminAddr, int64(1_000_000))
-	ufmt.Printf("[INFO] undelegated from dummy %s (amount: %d)\n", dummyAddr.String(), int64(1_000_000))
+	testing.SetRealm(testing.NewUserRealm(dummyAddr))
+	expectedAbortMsg := "[GNOSWAP-GOV_STAKER-014] cannot undelegate during active proposal"
+	ufmt.Printf("[INFO] attempting undelegate as dummy during active proposal\n")
+	uassert.AbortsContains(t, expectedAbortMsg, func() {
+		gs.Undelegate(cross, dummyAddr, int64(1_000_000))
+	})
+	ufmt.Printf("[INFO] undelegate blocked with expected error\n")
 }
 
 func voteProposalWithDummy(proposalId int64) {
@@ -111,8 +120,9 @@ func voteProposalWithDummy(proposalId int64) {
 // [SCENARIO] 3. Propose Text
 // [INFO] created proposal ID: 1
 //
-// [SCENARIO] 4. Undelegate from dummy after propose, before vote
-// [INFO] undelegated from dummy g1v36k6mteg9jxgujlta047h6lta047h6lydhz9l (amount: 1000000)
+// [SCENARIO] 4. Attempt undelegate after propose, before vote (expect blocked)
+// [INFO] attempting undelegate as dummy during active proposal
+// [INFO] undelegate blocked with expected error
 //
 // [SCENARIO] 5. Skip voting start delay for ready to vote
 // [INFO] current height: 86523

@@ -23,7 +23,7 @@ func registerGovStakerV1() {
 func initStoreData(store staker.IGovStakerStore) error {
 	// Initialize basic configuration
 	if !store.HasUnDelegationLockupPeriodStoreKey() {
-		err := store.SetUnDelegationLockupPeriod(int64(86400)) // 1 day default (24 * 60 * 60)
+		err := store.SetUnDelegationLockupPeriod(int64(7 * 24 * 60 * 60)) // 7 days default
 		if err != nil {
 			return err
 		}

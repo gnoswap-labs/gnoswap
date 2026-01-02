@@ -25,16 +25,16 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
 
-	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = testing.NewUserRealm(stakerAddr)
+	stakerAddr  = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm = testing.NewUserRealm(stakerAddr)
 
-	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
-	gnoStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	gnoStakerRealm  = testing.NewUserRealm(gnoStakerAddr)
+	gnoStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	gnoStakerRealm = testing.NewUserRealm(gnoStakerAddr)
 
 	aliceAddr = testutils.TestAddress("alice")
 	bobAddr   = testutils.TestAddress("bob")
@@ -89,7 +89,7 @@ func mockProtocolFeeDeposit() {
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
-	ufmt.Printf("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
+	print("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
 }
 
 func bobDelegateToBob() {
@@ -109,12 +109,12 @@ func mockProtocolFeeDepositAgain() {
 	testing.SetRealm(stakerRealm)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
-	ufmt.Printf("[INFO] protocol fee deposited again: bar(1000), qux(2500)\n")
+	println("[INFO] protocol fee deposited again: bar(1000), qux(2500)")
 }
 
 func skipBlocksAndDistribute() {
 	testing.SkipHeights(10)
-	ufmt.Printf("[INFO] skipped 10 blocks\n")
+	println("[INFO] skipped 10 blocks")
 }
 
 func protocolFeeRewardBob() {
@@ -123,7 +123,7 @@ func protocolFeeRewardBob() {
 	ufmt.Printf("[INFO] claimable reward (bob): %s\n", gcr)
 	testing.SetRealm(bobRealm)
 	staker.CollectReward(cross)
-	ufmt.Printf("[INFO] collected protocol fee reward for bob\n")
+	println("[INFO] collected protocol fee reward for bob")
 }
 
 func protocolFeeRewardAdmin() {
@@ -140,7 +140,7 @@ func protocolFeeRewardAdmin() {
 	afterBarBalance := bar.BalanceOf(adminAddr)
 	afterQuxBalance := qux.BalanceOf(adminAddr)
 
-	ufmt.Printf("[INFO] collected protocol fee reward for adminAddr\n")
+	println("[INFO] collected protocol fee reward for adminAddr")
 	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }

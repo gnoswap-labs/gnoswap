@@ -25,10 +25,10 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
 
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyAddr  = testutils.TestAddress("dummy")
 	dummyRealm = testing.NewUserRealm(dummyAddr)
@@ -56,7 +56,7 @@ func checkInitialState() {
 	// check admin's initial GNS and xGNS balance
 	ufmt.Printf("[INFO] admin GNS balance: %d\n", gns.BalanceOf(adminAddr))
 	ufmt.Printf("[INFO] admin xGNS balance: %d\n", xgns.BalanceOf(adminAddr))
-	ufmt.Printf("[EXPECTED] admin GNS: 100000000000000, xGNS: 0\n")
+	println("[EXPECTED] admin GNS: 100000000000000, xGNS: 0")
 }
 
 // Admin delegates GNS to dummy
@@ -67,7 +67,7 @@ func adminDelegateToDummy() {
 	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)
-	ufmt.Printf("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000\n")
+	println("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000")
 }
 
 // Admin redelegates from dummy to reDelegate
