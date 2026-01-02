@@ -275,6 +275,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 			"toTimestamp", formatInt(currentToTimestamp),
 			"year", formatInt(year),
 			"amountPerSecond", formatInt(amountPerSecond),
+			"mintedAmount", formatInt(yearAmountToMint),
 		)
 
 		fromTimestamp = currentToTimestamp + 1
