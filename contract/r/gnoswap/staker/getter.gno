@@ -34,6 +34,11 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return getImplementation().GetDepositLiquidityAsString(lpTokenId)
 }
 
+// GetDepositOwner returns the owner of a staked position.
+func GetDepositOwner(lpTokenId uint64) address {
+	return getImplementation().GetDepositOwner(lpTokenId)
+}
+
 // GetDepositStakeTime returns the staking duration of a position.
 func GetDepositStakeTime(lpTokenId uint64) int64 {
 	return getImplementation().GetDepositStakeTime(lpTokenId)
@@ -54,9 +59,24 @@ func GetDepositTickUpper(lpTokenId uint64) int32 {
 	return getImplementation().GetDepositTickUpper(lpTokenId)
 }
 
+// GetDepositWarmUp returns the warmup records of a staked position.
+func GetDepositWarmUp(lpTokenId uint64) []Warmup {
+	return getImplementation().GetDepositWarmUp(lpTokenId)
+}
+
+// GetExternalIncentiveByPoolPath returns all external incentives for a pool.
+func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
+	return getImplementation().GetExternalIncentiveByPoolPath(poolPath)
+}
+
 // GetIncentiveEndTimestamp returns the end timestamp of an incentive.
 func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveEndTimestamp(poolPath, incentiveId)
+}
+
+// GetIncentiveRefundee returns the refundee address of an incentive.
+func GetIncentiveRefundee(poolPath string, incentiveId string) address {
+	return getImplementation().GetIncentiveRefundee(poolPath, incentiveId)
 }
 
 // GetIncentiveRewardAmount returns the total reward amount of an incentive.

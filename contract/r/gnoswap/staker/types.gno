@@ -58,11 +58,15 @@ type IStakerGetter interface {
 	GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64
 	GetDepositLiquidity(lpTokenId uint64) *u256.Uint
 	GetDepositLiquidityAsString(lpTokenId uint64) string
+	GetDepositOwner(lpTokenId uint64) address
 	GetDepositStakeTime(lpTokenId uint64) int64
 	GetDepositTargetPoolPath(lpTokenId uint64) string
 	GetDepositTickLower(lpTokenId uint64) int32
 	GetDepositTickUpper(lpTokenId uint64) int32
+	GetDepositWarmUp(lpTokenId uint64) []Warmup
+	GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive
 	GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64
+	GetIncentiveRefundee(poolPath string, incentiveId string) address
 	GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint
 	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string
 	GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64

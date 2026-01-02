@@ -114,6 +114,10 @@ func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return t.instance.GetDepositLiquidityAsString(lpTokenId)
 }
 
+func (t *TestStaker) GetDepositOwner(lpTokenId uint64) address {
+	return t.instance.GetDepositOwner(lpTokenId)
+}
+
 func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	return t.instance.GetDepositStakeTime(lpTokenId)
 }
@@ -130,8 +134,20 @@ func (t *TestStaker) GetDepositTickUpper(lpTokenId uint64) int32 {
 	return t.instance.GetDepositTickUpper(lpTokenId)
 }
 
+func (t *TestStaker) GetDepositWarmUp(lpTokenId uint64) []staker.Warmup {
+	return t.instance.GetDepositWarmUp(lpTokenId)
+}
+
+func (t *TestStaker) GetExternalIncentiveByPoolPath(poolPath string) []staker.ExternalIncentive {
+	return t.instance.GetExternalIncentiveByPoolPath(poolPath)
+}
+
 func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
+}
+
+func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
