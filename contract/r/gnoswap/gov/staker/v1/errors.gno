@@ -20,6 +20,7 @@ var (
 	errLessThanMinimum     = errors.New("[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount")
 	errInvalidSnapshotTime = errors.New("[GNOSWAP-GOV_STAKER-012] invalid snapshot time")
 	errSameDelegatee       = errors.New("[GNOSWAP-GOV_STAKER-013] cannot redelegate to same address")
+	errActiveProposal      = errors.New("[GNOSWAP-GOV_STAKER-014] cannot undelegate during active proposal")
 )
 
 func makeErrorWithDetails(err error, detail string) error {

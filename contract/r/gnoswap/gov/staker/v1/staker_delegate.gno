@@ -9,6 +9,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
@@ -125,6 +126,7 @@ func (gs *govStakerV1) Undelegate(
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
+	assertNoActiveProposal()
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
@@ -563,4 +565,11 @@ func registerReferrer(caller address, referrer string) string {
 	}
 
 	return actualReferrer
+}
+
+func assertNoActiveProposal() {
+	_, hasActiveProposal := governance.GetOldestActiveProposalSnapshotTime()
+	if hasActiveProposal {
+		panic(errActiveProposal)
+	}
 }
