@@ -556,6 +556,48 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 	}
 }
 
+func TestStakerDelegate_XgnsBurnOccursOnCollect(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	user := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	amount := int64(minimumAmount)
+
+	testing.SetRealm(testing.NewUserRealm(admin))
+	func(cur realm) {
+		gs.SetUnDelegationLockupPeriodByAdmin(0)
+	}(cross)
+
+	initialSupply := xgns.TotalSupply()
+	initialBalance := xgns.BalanceOf(user)
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.Delegate(validator, amount, "")
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.Undelegate(validator, amount)
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.CollectUndelegatedGns()
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), initialSupply)
+	uassert.Equal(t, xgns.BalanceOf(user), initialBalance)
+}
+
 // Test CollectUndelegatedGns function
 func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 	tests := []struct {
