@@ -11,9 +11,14 @@ type governanceV1 struct {
 	stakerAccessor governance.GovStakerAccessor
 }
 
-func NewGovernanceV1(governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
-	gv := &governanceV1{store: governanceStore, stakerAccessor: stakerAccessor}
-	return gv
+func NewGovernanceV1(
+    governanceStore governance.IGovernanceStore,
+    stakerAccessor governance.GovStakerAccessor,
+) governance.IGovernance {
+	return &governanceV1{
+		store:          governanceStore,
+		stakerAccessor: stakerAccessor,
+	}
 }
 
 // Config version methods

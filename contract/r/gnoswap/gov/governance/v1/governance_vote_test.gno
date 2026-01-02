@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/halt"
 )
 
 func TestGovernanceVote_Vote(t *testing.T) {
@@ -221,13 +223,14 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 	tests := []struct {
 		name string
 		// given
-		proposalID      int64
-		voterAddress    address
-		votedYes        bool
-		votedHeight     int64
-		votedAt         int64
-		setupProposal   *governance.Proposal
-		setupVotingInfo *governance.VotingInfo
+		proposalID       int64
+		voterAddress     address
+		votedYes         bool
+		votedHeight      int64
+		votedAt          int64
+		setupProposal    *governance.Proposal
+		setupVotingInfo  *governance.VotingInfo
+		setVotingInfoErr error
 		// then
 		expectedYesWeight int64
 		expectedNoWeight  int64
@@ -351,6 +354,34 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			expectedHasError: true,
 			expectedError:    "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight",
 		},
+		{
+			name:         "fail - voting info store error",
+			proposalID:   1,
+			voterAddress: testutils.TestAddress("voter"),
+			votedYes:     true,
+			votedHeight:  100,
+			votedAt:      time.Now().Unix(),
+			setupProposal: governance.NewProposal(
+				1,
+				NewProposalStatus(
+					testConfig,
+					10_000_000_000,
+					true,
+					time.Now().Unix()-testConfig.VotingStartDelay,
+				),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
+				NewProposalTextData(),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
+				time.Now().Unix()-testConfig.VotingStartDelay,
+				100,
+			),
+			setupVotingInfo:  governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
+			setVotingInfoErr: errors.New("set proposal voting infos failed"),
+			expectedHasError: true,
+			expectedError:    "set proposal voting infos failed",
+		},
 	}
 
 	for _, tt := range tests {
@@ -363,6 +394,11 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			}
 			if tt.setupVotingInfo != nil {
 				setupTestVotingInfo(t, gov, tt.proposalID, tt.voterAddress.String(), tt.setupVotingInfo)
+			}
+			if tt.setVotingInfoErr != nil {
+				store, ok := gov.store.(*mockGovernanceStore)
+				uassert.True(t, ok)
+				store.setProposalVotingInfosErr = tt.setVotingInfoErr
 			}
 
 			// when
@@ -437,7 +473,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				)
 			},
 			setupHalt:     true,
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "halted: governance",
 		},
 		{
 			name:       "fail - canceled proposal voting",
@@ -516,9 +552,15 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			if tt.setupHalt {
-				// Mock halt state setup
+				halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 			}
+			defer func() {
+				testing.SetRealm(adminRealm)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			}()
 			if tt.setupProposal != nil {
 				setupTestProposal(t, gov, tt.setupProposal())
 				setupTestVotingInfo(t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000, tt.voter))

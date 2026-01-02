@@ -110,8 +110,7 @@ func (r *ProposalResolver) Vote(votedYes bool, weight int64) error {
 // execute marks the proposal as executed and records execution details.
 // This method validates execution conditions before proceeding.
 func (r *ProposalResolver) execute(
-	executedAt int64,
-	executedHeight int64,
+	executedAt, executedHeight int64,
 	executedBy address,
 ) error {
 	// Verify proposal is in executable state
@@ -126,8 +125,7 @@ func (r *ProposalResolver) execute(
 // cancel marks the proposal as canceled and records cancellation details.
 // This method validates cancellation conditions before proceeding.
 func (r *ProposalResolver) cancel(
-	canceledAt int64,
-	canceledHeight int64,
+	canceledAt, canceledHeight int64,
 	canceledBy address,
 ) error {
 	if r.statusResolver.IsCanceled(canceledAt) {
