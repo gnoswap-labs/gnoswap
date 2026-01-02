@@ -24,13 +24,13 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
 
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
-	userAddr     = testutils.TestAddress("alice")
-	userRealm    = testing.NewUserRealm(userAddr)
+	userAddr      = testutils.TestAddress("alice")
+	userRealm     = testing.NewUserRealm(userAddr)
 	validatorAddr = testutils.TestAddress("validator1")
 
 	minAmount = int64(1_000_000)
@@ -87,12 +87,11 @@ func undelegateDuringActiveProposal() {
 	testing.SetRealm(userRealm)
 
 	expectedAbortMsg := "[GNOSWAP-GOV_STAKER-014] cannot undelegate during active proposal"
-	ufmt.Printf("[INFO] attempting undelegate during active proposal\n")
+	println("[INFO] attempting undelegate during active proposal")
 	uassert.AbortsContains(t, expectedAbortMsg, func() {
 		staker.Undelegate(cross, validatorAddr, minAmount)
 	})
-	ufmt.Printf("[INFO] undelegate blocked with expected error\n")
-
+	println("[INFO] undelegate blocked with expected error")
 }
 
 // Output:

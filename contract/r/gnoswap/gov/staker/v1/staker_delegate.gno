@@ -9,7 +9,6 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
@@ -565,11 +564,4 @@ func registerReferrer(caller address, referrer string) string {
 	}
 
 	return actualReferrer
-}
-
-func assertNoActiveProposal() {
-	_, hasActiveProposal := governance.GetOldestActiveProposalSnapshotTime()
-	if hasActiveProposal {
-		panic(errActiveProposal)
-	}
 }
