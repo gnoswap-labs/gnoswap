@@ -10,6 +10,9 @@ const (
 // Ownable2Step implements a two-step ownership transfer mechanism.
 // It requires the new owner to explicitly accept ownership before the transfer is completed,
 // preventing accidental transfers to incorrect addresses.
+//
+// Note: This package does not verify callers. Consuming realms must extract the actual
+// caller using `runtime.PreviousRealm` or `runtime.OriginCaller` and pass it to these methods.
 type Ownable2Step struct {
 	owner        address
 	pendingOwner address
