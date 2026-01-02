@@ -120,7 +120,7 @@ func mintAndStakePosition() {
 		"",
 	)
 
-	stakeTimestamp := staker.GetDepositStakeTimestamp(positionId)
+	stakeTimestamp := staker.GetDepositStakeTime(positionId)
 
 	poolBalance0 := common.BalanceOf(token0Path, poolAddr)
 	poolBalance1 := common.BalanceOf(token1Path, poolAddr)

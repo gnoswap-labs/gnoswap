@@ -193,18 +193,18 @@ func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return t.instance.GetDepositLiquidityAsString(lpTokenId)
 }
 
+func (t *TestStaker) GetDepositOwner(lpTokenId uint64) address {
+	if !t.isActive("GetDepositOwner") {
+		panic("test implementation: GetDepositOwner not supported")
+	}
+	return t.instance.GetDepositOwner(lpTokenId)
+}
+
 func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	if !t.isActive("GetDepositStakeTime") {
 		panic("test implementation: GetDepositStakeTime not supported")
 	}
 	return t.instance.GetDepositStakeTime(lpTokenId)
-}
-
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	if !t.isActive("GetDepositStakeTimestamp") {
-		panic("test implementation: GetDepositStakeTimestamp not supported")
-	}
-	return t.instance.GetDepositStakeTimestamp(lpTokenId)
 }
 
 func (t *TestStaker) GetDepositTargetPoolPath(lpTokenId uint64) string {
@@ -228,11 +228,32 @@ func (t *TestStaker) GetDepositTickUpper(lpTokenId uint64) int32 {
 	return t.instance.GetDepositTickUpper(lpTokenId)
 }
 
+func (t *TestStaker) GetDepositWarmUp(lpTokenId uint64) []staker.Warmup {
+	if !t.isActive("GetDepositWarmUp") {
+		panic("test implementation: GetDepositWarmUp not supported")
+	}
+	return t.instance.GetDepositWarmUp(lpTokenId)
+}
+
+func (t *TestStaker) GetExternalIncentiveByPoolPath(poolPath string) []staker.ExternalIncentive {
+	if !t.isActive("GetExternalIncentiveByPoolPath") {
+		panic("test implementation: GetExternalIncentiveByPoolPath not supported")
+	}
+	return t.instance.GetExternalIncentiveByPoolPath(poolPath)
+}
+
 func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	if !t.isActive("GetIncentiveEndTimestamp") {
 		panic("test implementation: GetIncentiveEndTimestamp not supported")
 	}
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
+}
+
+func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+	if !t.isActive("GetIncentiveRefundee") {
+		panic("test implementation: GetIncentiveRefundee not supported")
+	}
+	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {

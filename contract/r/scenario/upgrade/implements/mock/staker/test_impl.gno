@@ -229,18 +229,18 @@ func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
 	).(string)
 }
 
+func (t *TestStaker) GetDepositOwner(lpTokenId uint64) address {
+	return t.ExecuteFn(
+		"GetDepositOwner",
+		func(args ...any) any { return t.instance.GetDepositOwner(args[0].(uint64)) },
+		lpTokenId,
+	).(address)
+}
+
 func (t *TestStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
 	return t.ExecuteFn(
 		"GetDepositStakeTime",
 		func(args ...any) any { return t.instance.GetDepositStakeTime(args[0].(uint64)) },
-		lpTokenId,
-	).(int64)
-}
-
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	return t.ExecuteFn(
-		"GetDepositStakeTimestamp",
-		func(args ...any) any { return t.instance.GetDepositStakeTimestamp(args[0].(uint64)) },
 		lpTokenId,
 	).(int64)
 }
@@ -269,12 +269,36 @@ func (t *TestStaker) GetDepositTickUpper(lpTokenId uint64) int32 {
 	).(int32)
 }
 
+func (t *TestStaker) GetDepositWarmUp(lpTokenId uint64) []staker.Warmup {
+	return t.ExecuteFn(
+		"GetDepositWarmUp",
+		func(args ...any) any { return t.instance.GetDepositWarmUp(args[0].(uint64)) },
+		lpTokenId,
+	).([]staker.Warmup)
+}
+
+func (t *TestStaker) GetExternalIncentiveByPoolPath(poolPath string) []staker.ExternalIncentive {
+	return t.ExecuteFn(
+		"GetExternalIncentiveByPoolPath",
+		func(args ...any) any { return t.instance.GetExternalIncentiveByPoolPath(args[0].(string)) },
+		poolPath,
+	).([]staker.ExternalIncentive)
+}
+
 func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	return t.ExecuteFn(
 		"GetIncentiveEndTimestamp",
 		func(args ...any) any { return t.instance.GetIncentiveEndTimestamp(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
 	).(int64)
+}
+
+func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+	return t.ExecuteFn(
+		"GetIncentiveRefundee",
+		func(args ...any) any { return t.instance.GetIncentiveRefundee(args[0].(string), args[1].(string)) },
+		poolPath, incentiveId,
+	).(address)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {

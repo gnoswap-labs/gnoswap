@@ -8,10 +8,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 )
 
-var (
-	zeroUint256 = u256.Zero()
-	zeroInt256  = i256.Zero()
-)
+var zeroUint256 = u256.Zero()
 
 type TickResolver struct {
 	*sr.Tick
