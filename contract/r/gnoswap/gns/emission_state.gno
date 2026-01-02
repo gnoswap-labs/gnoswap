@@ -119,8 +119,7 @@ func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64
 	accumulatedAmount := e.halvingData.getAccumAmount(year)
 	accumulatedAmount = safeAddInt64(accumulatedAmount, amount)
 
-	e.halvingData.setAccumAmount(year, accumulatedAmount)
-	return nil
+	return e.halvingData.setAccumAmount(year, accumulatedAmount)
 }
 
 // subHalvingYearLeftAmount subtracts from the remaining emission amount for the specified halving year.
@@ -133,8 +132,7 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	leftAmount := e.halvingData.getLeftAmount(year)
 	leftAmount = safeSubInt64(leftAmount, amount)
 
-	e.halvingData.setLeftAmount(year, leftAmount)
-	return nil
+	return e.halvingData.setLeftAmount(year, leftAmount)
 }
 
 // updateHalvingData initializes halving data with the given start timestamp.
