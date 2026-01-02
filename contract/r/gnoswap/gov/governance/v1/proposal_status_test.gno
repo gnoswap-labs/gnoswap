@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"testing"
 	"time"
 
@@ -159,7 +158,7 @@ func TestProposalStatus_StatusType_NoMajorityWithQuorum(t *testing.T) {
 		Quorum:           40,
 	}
 
-	proposal := governance.NewProposal(
+	proposal := newTestProposal(
 		1,
 		NewProposalStatus(config, 100, true, baseTime.Unix()),
 		governance.NewProposalMetadata("Test", "Test"),
@@ -168,7 +167,6 @@ func TestProposalStatus_StatusType_NoMajorityWithQuorum(t *testing.T) {
 		1,
 		baseTime.Unix(),
 		baseTime.Unix(),
-		runtime.ChainHeight(),
 	)
 
 	resolver := NewProposalStatusResolver(proposal.Status())

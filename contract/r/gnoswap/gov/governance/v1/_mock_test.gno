@@ -57,7 +57,7 @@ func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool)
 	if m.configs == nil {
 		return governance.Config{}, false
 	}
-	result, exists := m.configs.Get(formatInt(version))
+	result, exists := m.configs.Get(governance.FormatInt64Key(version))
 	if !exists {
 		return governance.Config{}, false
 	}
@@ -68,7 +68,7 @@ func (m *mockGovernanceStore) SetConfig(version int64, config governance.Config)
 	if m.configs == nil {
 		m.configs = avl.NewTree()
 	}
-	m.configs.Set(formatInt(version), config)
+	m.configs.Set(governance.FormatInt64Key(version), config)
 	return nil
 }
 
@@ -81,7 +81,7 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	proposal, exists := m.proposals.Get(formatInt(proposalID))
+	proposal, exists := m.proposals.Get(governance.FormatInt64Key(proposalID))
 	if !exists {
 		return nil, false
 	}
@@ -92,7 +92,7 @@ func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal *governance
 	if m.proposals == nil {
 		m.proposals = avl.NewTree()
 	}
-	m.proposals.Set(formatInt(proposalID), proposal)
+	m.proposals.Set(governance.FormatInt64Key(proposalID), proposal)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tre
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
-	result, exists := m.proposalUserVotingInfos.Get(formatInt(proposalID))
+	result, exists := m.proposalUserVotingInfos.Get(governance.FormatInt64Key(proposalID))
 	if !exists {
 		return nil, false
 	}
@@ -128,7 +128,7 @@ func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInf
 	if m.proposalUserVotingInfos == nil {
 		m.proposalUserVotingInfos = avl.NewTree()
 	}
-	m.proposalUserVotingInfos.Set(formatInt(proposalID), votingInfos)
+	m.proposalUserVotingInfos.Set(governance.FormatInt64Key(proposalID), votingInfos)
 	return nil
 }
 

@@ -225,7 +225,8 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 		// Split message into components: pkgPath, function, params
 		params := strings.Split(msg, parameterSeparator)
 		if len(params) != 3 {
-			continue // Skip malformed messages
+			// validation rejects mismatched counts upstream.
+			continue
 		}
 
 		pkgPath := params[0]

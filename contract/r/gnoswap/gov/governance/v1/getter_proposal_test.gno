@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:       "Get proposer address",
 			proposalId: 1,
-			proposal: governance.NewProposal(
+			proposal: newTestProposal(
 				1,
 				NewProposalStatus(governance.Config{
 					VotingStartDelay: 100,
@@ -39,7 +38,6 @@ func TestGetterProposal_All(t *testing.T) {
 				42, // configVersion
 				time.Now().Unix(),
 				time.Now().Unix(),
-				runtime.ChainHeight(),
 			),
 			getterFunc:    func(gv *governanceV1, id int64) any {
 				return gv.GetProposerByProposalId(id)
@@ -49,7 +47,7 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:       "Get proposal type",
 			proposalId: 1,
-			proposal: governance.NewProposal(
+			proposal: newTestProposal(
 				1,
 				NewProposalStatus(governance.Config{
 					VotingStartDelay: 100,
@@ -64,7 +62,6 @@ func TestGetterProposal_All(t *testing.T) {
 				42, // configVersion
 				time.Now().Unix(),
 				time.Now().Unix(),
-				runtime.ChainHeight(),
 			),
 			getterFunc:    func(gv *governanceV1, id int64) any {
 				return gv.GetProposalTypeByProposalId(id)

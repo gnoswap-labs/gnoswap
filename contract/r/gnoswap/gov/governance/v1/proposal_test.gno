@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"testing"
 	"time"
 
@@ -92,7 +91,7 @@ func TestProposal_Validation(t *testing.T) {
 				ExecutionWindow:  200,
 				Quorum:           50,
 			}
-			proposal := governance.NewProposal(
+			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
 				tc.metadata,
@@ -101,7 +100,6 @@ func TestProposal_Validation(t *testing.T) {
 				1, // configVersion
 				baseTime,
 				baseTime,
-				runtime.ChainHeight(),
 			)
 
 			// when
@@ -161,7 +159,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposal := governance.NewProposal(
+			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
 				governance.NewProposalMetadata("Test", "Test"),
@@ -170,7 +168,6 @@ func TestProposal_StatusOperations(t *testing.T) {
 				1, // configVersion
 				baseTime.Unix(),
 				baseTime.Unix(),
-				runtime.ChainHeight(),
 			)
 
 			if tc.isExecuted {
@@ -458,7 +455,7 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 				Quorum:           tc.quorum,
 			}
 
-			proposal := governance.NewProposal(
+			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, tc.maxVotingWeight, tc.proposalType.IsExecutable(), baseTime),
 				governance.NewProposalMetadata("Test Title", "Test Description"),
@@ -467,7 +464,6 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 				1,
 				baseTime,
 				baseTime,
-				runtime.ChainHeight(),
 			)
 
 			currentTime := baseTime + tc.currentTimeOffset
@@ -527,7 +523,7 @@ func TestNewProposal(t *testing.T) {
 			}
 
 			// when
-			proposal := governance.NewProposal(
+			proposal := newTestProposal(
 				1,
 				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
 				governance.NewProposalMetadata(tc.title, tc.description),
@@ -536,7 +532,6 @@ func TestNewProposal(t *testing.T) {
 				1, // configVersion
 				baseTime,
 				baseTime,
-				runtime.ChainHeight(),
 			)
 
 			// then
