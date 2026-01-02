@@ -87,7 +87,6 @@ func (p *Proposal) Metadata() *ProposalMetadata {
 	return p.metadata
 }
 
-
 // IsTextType checks if this is a text proposal.
 func (p *Proposal) IsTextType() bool {
 	return p.Type() == Text

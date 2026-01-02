@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"testing"
 	"strings"
+	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"

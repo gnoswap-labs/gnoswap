@@ -49,7 +49,7 @@ func (r *ProposalMetadataResolver) validateTitle(title string) error {
 	if title == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("title is empty"),
+			"title is empty",
 		)
 	}
 
@@ -76,7 +76,7 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 	if description == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("description is empty"),
+			"description is empty",
 		)
 	}
 

@@ -3,12 +3,12 @@ package governance
 // VotingInfo tracks voting-related information for a specific user on a specific proposal.
 // This structure maintains the user's voting eligibility, voting history, and voting power.
 type VotingInfo struct {
-	availableVoteWeight int64   // Total voting weight available to this user for this proposal
-	votedWeight         int64   // Actual weight used when voting (0 if not voted)
-	votedHeight         int64   // Block height when vote was cast
-	votedAt             int64   // Timestamp when vote was cast
-	votedYes            bool    // True if voted "yes", false if voted "no"
-	voted               bool    // True if user has already voted
+	availableVoteWeight int64 // Total voting weight available to this user for this proposal
+	votedWeight         int64 // Actual weight used when voting (0 if not voted)
+	votedHeight         int64 // Block height when vote was cast
+	votedAt             int64 // Timestamp when vote was cast
+	votedYes            bool  // True if voted "yes", false if voted "no"
+	voted               bool  // True if user has already voted
 }
 
 // NewVotingInfo creates a new voting information structure for a user.

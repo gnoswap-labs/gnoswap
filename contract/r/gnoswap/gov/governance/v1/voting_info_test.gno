@@ -15,13 +15,13 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 		expectedVotingInfo *governance.VotingInfo
 	}{
 		{
-			name:            "Create new voting info with positive weight",
-			availableWeight: 100,
+			name:               "Create new voting info with positive weight",
+			availableWeight:    100,
 			expectedVotingInfo: governance.NewVotingInfo(100),
 		},
 		{
-			name:            "Create new voting info with zero weight",
-			availableWeight: 0,
+			name:               "Create new voting info with zero weight",
+			availableWeight:    0,
 			expectedVotingInfo: governance.NewVotingInfo(0),
 		},
 	}
@@ -56,8 +56,8 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 		expectedVoteYes bool
 	}{
 		{
-			name: "Vote yes successfully",
-			votingInfo: governance.NewVotingInfo(100),
+			name:            "Vote yes successfully",
+			votingInfo:      governance.NewVotingInfo(100),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
@@ -67,8 +67,8 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			expectedVoteYes: true,
 		},
 		{
-			name: "Vote no successfully",
-			votingInfo: governance.NewVotingInfo(100),
+			name:            "Vote no successfully",
+			votingInfo:      governance.NewVotingInfo(100),
 			voteYes:         false,
 			weight:          50,
 			height:          1000,
@@ -78,8 +78,8 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			expectedVoteYes: false,
 		},
 		{
-			name: "Cannot vote twice",
-			votingInfo: governance.NewVotingInfo(100),
+			name:            "Cannot vote twice",
+			votingInfo:      governance.NewVotingInfo(100),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
