@@ -128,13 +128,9 @@ func (gv *governanceV1) vote(
 	}
 
 	// Store the user's vote in the proposal voting infos
-	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
-	if votingInfosTree != nil {
-		votingInfosTree.Set(voterAddress.String(), userVote)
-		err := gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
-		if err != nil {
-			return nil, 0, 0, err
-		}
+	err = gv.store.SetProposalVotingInfo(proposalID, voterAddress.String(), userVote)
+	if err != nil {
+		return nil, 0, 0, err
 	}
 
 	// Update proposal vote tallies

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
@@ -398,7 +397,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			if tt.setVotingInfoErr != nil {
 				store, ok := gov.store.(*mockGovernanceStore)
 				uassert.True(t, ok)
-				store.setProposalVotingInfosErr = tt.setVotingInfoErr
+				store.setProposalVotingInfoErr = tt.setVotingInfoErr
 			}
 
 			// when
@@ -831,11 +830,6 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 
 func setupTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
 	gov.addProposal(proposal)
-
-	// Initialize empty voting info tree for the proposal if not exists
-	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {
-		gov.store.SetProposalVotingInfos(proposal.ID(), avl.NewTree())
-	}
 }
 
 func setupVoteTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, proposalID int64, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
@@ -855,16 +849,8 @@ func setupVoteTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, propo
 }
 
 func setupTestVotingInfo(t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo *governance.VotingInfo) {
-	// Get existing voting infos or create new ones
-	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
-
-	if !exists {
-		votingInfos = avl.NewTree()
-	}
-	votingInfos.Set(voter, votingInfo)
-
 	// Set the voting info for the voter
-	gov.store.SetProposalVotingInfos(proposalID, votingInfos)
+	gov.store.SetProposalVotingInfo(proposalID, voter, votingInfo)
 
 	// Set up mock accessor to return the expected delegation amounts for this voter
 	mockAccessor, ok := gov.stakerAccessor.(*mockGovStakerAccessor)

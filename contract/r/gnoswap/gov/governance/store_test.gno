@@ -529,7 +529,7 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
+func TestStoreSetAndGetProposalVotingInfo(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -544,22 +544,18 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 				err := gs.SetProposalUserVotingInfos(votingInfos)
 				uassert.NoError(t, err)
 
-				_, exists := gs.GetProposalVotingInfos(1)
-				uassert.False(t, exists, "proposal voting infos for proposal 1 should not exist")
+				_, exists := gs.GetProposalVotingInfo(1, "user1")
+				uassert.False(t, exists, "proposal voting info for user1 should not exist")
 
-				proposalVotingInfo := avl.NewTree()
-				proposalVotingInfo.Set("user1", "vote_data")
-
-				err = gs.SetProposalVotingInfos(1, proposalVotingInfo)
+				votingInfo := NewVotingInfo(1000)
+				err = gs.SetProposalVotingInfo(1, "user1", votingInfo)
 				uassert.NoError(t, err)
 
-				retrieved, exists := gs.GetProposalVotingInfos(1)
-				uassert.True(t, exists, "proposal voting infos for proposal 1 should exist")
+				retrieved, exists := gs.GetProposalVotingInfo(1, "user1")
+				uassert.True(t, exists, "proposal voting info for user1 should exist")
 				uassert.NotEqual(t, nil, retrieved)
 
-				val, ok := retrieved.Get("user1")
-				uassert.True(t, ok, "user1 voting info should exist")
-				uassert.Equal(t, "vote_data", val)
+				uassert.Equal(t, int64(1000), retrieved.AvailableVoteWeight())
 			},
 		},
 		{
@@ -568,8 +564,8 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				votingInfo := avl.NewTree()
-				err := gs.SetProposalVotingInfos(1, votingInfo)
+				votingInfo := NewVotingInfo(1000)
+				err := gs.SetProposalVotingInfo(1, "user1", votingInfo)
 				uassert.ErrorContains(t, err, "proposal user voting infos store key not found")
 			},
 		},

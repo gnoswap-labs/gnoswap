@@ -118,8 +118,8 @@ type IGovernanceStore interface {
 	HasProposalUserVotingInfosStoreKey() bool
 	GetProposalUserVotingInfos() *avl.Tree
 	SetProposalUserVotingInfos(votingInfos *avl.Tree) error
-	GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool)
-	SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error
+	GetProposalVotingInfo(proposalID int64, voter string) (*VotingInfo, bool)
+	SetProposalVotingInfo(proposalID int64, voter string, votingInfo *VotingInfo) error
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
