@@ -98,7 +98,12 @@ func (r *ProposalResolver) CommunityPoolSpendTokenPath() string {
 		return ""
 	}
 
-	return r.dataResolver.CommunityPoolSpend().TokenPath()
+	communityPoolSpend := r.dataResolver.CommunityPoolSpend()
+	if communityPoolSpend == nil {
+		return ""
+	}
+
+	return communityPoolSpend.TokenPath()
 }
 
 // vote records a vote for this proposal and updates vote tallies.
