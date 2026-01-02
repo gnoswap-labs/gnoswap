@@ -27,16 +27,19 @@ The emission system controls creation and distribution of new GNS tokens with a 
 ## Core Features
 
 ### Emission Schedule
+
 Implements Bitcoin-style halving model:
-- Year 0-2: 100% emission rate
-- Year 2-4: 50% emission rate
-- Year 4-6: 25% emission rate
-- Year 6-8: 12.5% emission rate
-- Year 8-10: 6.25% emission rate
-- Year 10-12: 3.125% emission rate
+
+- Year 1-2: 100% emission rate
+- Year 3-4: 50% emission rate
+- Year 5-6: 25% emission rate
+- Year 7-8: 12.5% emission rate
+- Year 9-12: 6.25% emission rate
 
 ### Distribution Mechanism
+
 When triggered by protocol activity:
+
 1. Calculates elapsed time since last distribution
 2. Mints GNS based on current emission rate
 3. Distributes to targets per configured ratios
@@ -45,31 +48,38 @@ When triggered by protocol activity:
 ## Key Functions
 
 ### `MintAndDistributeGns`
+
 Mints and distributes GNS tokens automatically.
 
 ### `SetDistributionStartTime`
+
 One-time setup of emission start timestamp.
 
-### `SetDistributionRatio`
-Updates distribution percentages (governance only).
+### `ChangeDistributionPct`
 
-### `GetDistributionRatio`
-Returns current distribution ratios.
+Updates distribution percentages (admin or governance only).
+
+### `GetDistributionBpsPct`
+
+Returns current distribution percentage in basis points for a target.
 
 ## Technical Details
 
 ### Timestamp-Based Emission
+
 ```
 emissionPerSecond = baseEmission / (2^halvingCount)
 amountToMint = emissionPerSecond * timeSinceLastMint
 ```
 
 ### Halving Calculation
+
 ```
 halvingCount = floor(timeSinceStart / halvingPeriod)
 ```
 
 ### Distribution Targets
+
 1. **Liquidity Staker**: Rewards for LP providers
 2. **DevOps**: Development and operations fund
 3. **Community Pool**: Community-governed treasury
@@ -82,7 +92,7 @@ halvingCount = floor(timeSinceStart / halvingPeriod)
 SetDistributionStartTime(1704067200) // Jan 1, 2024
 
 // Trigger emission (called automatically)
-amount := MintAndDistributeGns()
+amount, ok := MintAndDistributeGns()
 
 // Update distribution ratios
 ChangeDistributionPct(
