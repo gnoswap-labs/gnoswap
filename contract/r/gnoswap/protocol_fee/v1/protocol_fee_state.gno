@@ -33,10 +33,12 @@ func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
 	return pfs.store.GetAccuToDevOps()
 }
 
+// TokenListWithAmounts returns the map of token paths to their accumulated amounts.
 func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
 	return pfs.store.GetTokenListWithAmounts()
 }
 
+// TokenAmountOfTokenPath returns the accumulated amount for a specific token path.
 func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
 	amount, exists := pfs.store.GetTokenListWithAmountItem(tokenPath)
 	if !exists {
@@ -162,21 +164,9 @@ func (pfs *protocolFeeState) GetDistributedToDevOpsHistoryByTokenPath(tokenPath 
 	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
-func retrieveAmount(tree *avl.Tree, key string) int64 {
-	amountI, exists := tree.Get(key)
-	if !exists {
-		return 0
-	}
-	res, ok := amountI.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast amount to int64: %T", amountI))
-	}
-	return res
-}
-
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
 func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) error {
-	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
+	prevAmount := retrieveAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
 	if err := pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount); err != nil {
@@ -187,26 +177,13 @@ func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath strin
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
 func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) error {
-	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
+	prevAmount := retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
 	if err := pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount); err != nil {
 		return err
 	}
 	return nil
-}
-
-func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
-	if prevAmountI, exists := tree.Get(key); !exists {
-		return 0
-	} else {
-		v, ok := prevAmountI.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast prevAmount to int64: %T", prevAmountI))
-		}
-		amount = v
-	}
-	return
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
@@ -222,4 +199,16 @@ func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *pro
 	return &protocolFeeState{
 		store: protocolFeeStore,
 	}
+}
+
+func retrieveAmount(tree *avl.Tree, key string) int64 {
+	amountI, exists := tree.Get(key)
+	if !exists {
+		return 0
+	}
+	res, ok := amountI.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast amount to int64: %T", amountI))
+	}
+	return res
 }
