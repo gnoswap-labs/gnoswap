@@ -216,13 +216,22 @@ func TestGrc20Methods(t *testing.T) {
 			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not emission`,
 		},
 		{
+			name: "Burn with permission",
+			fn: func() {
+				testing.SetRealm(adminRealm)
+				Burn(cross, adminAddr, int64(1))
+			},
+			shouldPanic: false,
+		},
+		{
 			name: "Burn without permission should panic",
 			fn: func() {
+				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("user")))
 				Burn(cross, adminAddr, int64(1))
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `address(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is not previous realm`,
+			panicMsg:      `unauthorized: caller`,
 		},
 		{
 			name: "Transfer success",
@@ -290,9 +299,9 @@ func TestGrc20Methods(t *testing.T) {
 			if tt.shouldPanic {
 				switch tt.exceptionKind {
 				case "abort":
-					uassert.AbortsWithMessage(t, tt.panicMsg, tt.fn)
+					uassert.AbortsContains(t, tt.panicMsg, tt.fn)
 				case "panic":
-					uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)
+					uassert.PanicsContains(t, tt.panicMsg, tt.fn)
 				default:
 					t.Fatalf("unknown exception kind: %s", tt.exceptionKind)
 				}

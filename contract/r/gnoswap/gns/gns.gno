@@ -131,15 +131,16 @@ func MintGns(cur realm, address address) int64 {
 //   - from: address to burn tokens from
 //   - amount: amount to burn
 //
-// Only callable by contract owner.
+// Only callable by admin.
 func Burn(cur realm, from address, amount int64) {
-	assertAddressIsPreviousRealm(from)
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdmin(caller)
 
 	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount = safeAddInt64(burnAmount, amount)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Burn",
 		"prevAddr", previousRealm.Address().String(),
