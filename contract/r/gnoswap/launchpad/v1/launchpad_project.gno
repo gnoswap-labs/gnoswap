@@ -80,8 +80,9 @@ func (lp *launchpadV1) CreateProject(
 	if tokenBalance < depositAmount {
 		panic(
 			makeErrorWithDetails(
-				errInsufficientBalance,
-				ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount),
+				errInsufficientBalance, ufmt.Sprintf(
+					"caller(%s) balance(%d) < depositAmount(%d)",
+					caller.String(), tokenBalance, depositAmount),
 			),
 		)
 	}
@@ -302,7 +303,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 
 	for _, tier := range project.Tiers() {
 		if !tier.IsEnded(currentTime) {
-			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
+			return 0, ufmt.Errorf("tier(%s) is not ended", tier.ID())
 		}
 
 		// Calculate pending rewards for remaining depositors
