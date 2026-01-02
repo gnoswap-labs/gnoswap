@@ -131,15 +131,16 @@ func MintGns(cur realm, address address) int64 {
 //   - from: address to burn tokens from
 //   - amount: amount to burn
 //
-// Only callable by contract owner.
+// Only callable by admin.
 func Burn(cur realm, from address, amount int64) {
-	assertAddressIsPreviousRealm(from)
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdmin(caller)
 
 	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount = safeAddInt64(burnAmount, amount)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Burn",
 		"prevAddr", previousRealm.Address().String(),
@@ -206,7 +207,9 @@ func checkErr(err error) {
 	}
 }
 
-// calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
+// calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
+// This function has side effects: it updates the accumulated and remaining amounts
+// for each halving year in the emission state.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
 	state := getEmissionState()
@@ -272,6 +275,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 			"toTimestamp", formatInt(currentToTimestamp),
 			"year", formatInt(year),
 			"amountPerSecond", formatInt(amountPerSecond),
+			"mintedAmount", formatInt(yearAmountToMint),
 		)
 
 		fromTimestamp = currentToTimestamp + 1
@@ -282,20 +286,6 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 	}
 
 	return totalAmountToMint, nil
-}
-
-// isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
-func isLastSecondOfHalvingYear(timestamp int64) bool {
-	year := getEmissionState().getCurrentYear(timestamp)
-	lastSecond := GetHalvingYearEndTimestamp(year)
-
-	return timestamp == lastSecond
-}
-
-// skipIfSameHeight returns true if last minted height equals current height,
-// preventing multiple mints in the same block.
-func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
-	return lastMintedHeight == currentHeight
 }
 
 // BurnAmount returns the total amount of GNS tokens burned.

@@ -89,6 +89,7 @@ func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
 }
 
 // setEndTimestamp sets the end timestamp for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setEndTimestamp(year int64, timestamp int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -101,6 +102,7 @@ func (h *HalvingData) setEndTimestamp(year int64, timestamp int64) error {
 }
 
 // setMaxAmount sets the maximum emission amount for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setMaxAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -113,6 +115,7 @@ func (h *HalvingData) setMaxAmount(year, amount int64) error {
 }
 
 // setMintedAmount sets the minted amount for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setMintedAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -125,6 +128,7 @@ func (h *HalvingData) setMintedAmount(year, amount int64) error {
 }
 
 // setAccumAmount sets the accumulated amount for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setAccumAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -137,6 +141,7 @@ func (h *HalvingData) setAccumAmount(year, amount int64) error {
 }
 
 // setLeftAmount sets the remaining amount for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setLeftAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -149,6 +154,7 @@ func (h *HalvingData) setLeftAmount(year, amount int64) error {
 }
 
 // addAccumAmount adds to the accumulated amount for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) addAccumAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
