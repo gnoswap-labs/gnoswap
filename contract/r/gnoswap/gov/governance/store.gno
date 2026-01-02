@@ -197,28 +197,28 @@ func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) erro
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
-func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
+func (s *governanceStore) GetProposalVotingInfo(proposalID int64, voter string) (*VotingInfo, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
-	votingInfo, ok := votingInfos.Get(FormatInt64Key(proposalID))
+	votingInfo, ok := votingInfos.Get(FormatProposalVotingInfoKey(proposalID, voter))
 	if !ok {
 		return nil, false
 	}
 
-	votingInfoTree, ok := votingInfo.(*avl.Tree)
+	info, ok := votingInfo.(*VotingInfo)
 	if !ok {
 		return nil, false
 	}
 
-	return votingInfoTree, true
+	return info, true
 }
 
-func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
+func (s *governanceStore) SetProposalVotingInfo(proposalID int64, voter string, votingInfo *VotingInfo) error {
 	if !s.HasProposalUserVotingInfosStoreKey() {
 		return errors.New("proposal user voting infos store key not found")
 	}
 
 	allVotingInfos := s.GetProposalUserVotingInfos()
-	allVotingInfos.Set(FormatInt64Key(proposalID), votingInfos)
+	allVotingInfos.Set(FormatProposalVotingInfoKey(proposalID, voter), votingInfo)
 
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
 }
@@ -333,4 +333,9 @@ func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
 // FormatInt64Key formats int64 identifiers for storage keys.
 func FormatInt64Key(id int64) string {
 	return strconv.FormatInt(id, 10)
+}
+
+// FormatProposalVotingInfoKey formats the key for proposal voting info storage.
+func FormatProposalVotingInfoKey(proposalID int64, voter string) string {
+	return FormatInt64Key(proposalID) + ":" + voter
 }

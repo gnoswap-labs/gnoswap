@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -104,9 +105,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 				store := newMockGovernanceStore()
 				voterAddr := address("g1voter00000000000000000000000000000001")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := avl.NewTree()
-				votingInfos.Set(voterAddr.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfo(1, voterAddr.String(), votingInfo)
 				return store
 			},
 			proposalID:    1,
@@ -117,7 +116,6 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 			name: "voting info does not exist for user",
 			setupVotingInfos: func() *mockGovernanceStore {
 				store := newMockGovernanceStore()
-				store.SetProposalVotingInfos(1, avl.NewTree())
 				return store
 			},
 			proposalID:    1,
@@ -140,9 +138,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 				store := newMockGovernanceStore()
 				otherUser := address("g1other00000000000000000000000000000002")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := avl.NewTree()
-				votingInfos.Set(otherUser.String(), votingInfo)
-				store.SetProposalVotingInfos(1, votingInfos)
+				store.SetProposalVotingInfo(1, otherUser.String(), votingInfo)
 				return store
 			},
 			proposalID:    1,
@@ -222,9 +218,16 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Verify stored votes
-			storedVotes, exists := store.GetProposalVotingInfos(tt.proposalID)
-			uassert.True(t, exists)
-			uassert.Equal(t, tt.expectedCount, storedVotes.Size())
+			storedVotes := store.GetProposalUserVotingInfos()
+			prefix := governance.FormatProposalVotingInfoKey(tt.proposalID, "")
+			count := 0
+			storedVotes.Iterate("", "", func(key string, _ interface{}) bool {
+				if strings.HasPrefix(key, prefix) {
+					count++
+				}
+				return false
+			})
+			uassert.Equal(t, tt.expectedCount, count)
 		})
 	}
 }

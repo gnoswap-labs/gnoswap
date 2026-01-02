@@ -126,12 +126,28 @@ func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, curr
 }
 
 // Proposal voting info methods
-func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*avl.Tree, bool) {
-	return g.store.GetProposalVotingInfos(proposalID)
-}
-
 func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *avl.Tree) error {
-	return g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
+	if userVotingInfos == nil {
+		return nil
+	}
+
+	var setErr error
+	userVotingInfos.Iterate("", "", func(voter string, value interface{}) bool {
+		votingInfo, ok := value.(*governance.VotingInfo)
+		if !ok {
+			setErr = ufmt.Errorf("invalid voting info type for voter %s", voter)
+			return true
+		}
+
+		if err := g.store.SetProposalVotingInfo(proposal.ID(), voter, votingInfo); err != nil {
+			setErr = err
+			return true
+		}
+
+		return false
+	})
+
+	return setErr
 }
 
 // Helper methods for API
@@ -144,20 +160,5 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 }
 
 func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
-	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
-	if !exists {
-		return nil, false
-	}
-
-	votingInfoRaw, exists := votingInfosTree.Get(addr.String())
-	if !exists {
-		return nil, false
-	}
-
-	votingInfo, ok := votingInfoRaw.(*governance.VotingInfo)
-	if !ok {
-		return nil, false
-	}
-
-	return votingInfo, true
+	return g.store.GetProposalVotingInfo(proposalID, addr.String())
 }
