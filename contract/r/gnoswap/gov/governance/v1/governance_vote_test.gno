@@ -49,7 +49,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
+				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			expectedWeight: "5000000000",
 		},
@@ -75,7 +75,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter").String(): governance.NewVotingInfo(3_000_000_000, testutils.TestAddress("voter")),
+				testutils.TestAddress("voter").String(): governance.NewVotingInfo(3_000_000_000),
 			},
 			expectedWeight: "3000000000",
 		},
@@ -109,7 +109,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter_no_weight").String(): governance.NewVotingInfo(0, testutils.TestAddress("voter_no_weight")),
+				testutils.TestAddress("voter_no_weight").String(): governance.NewVotingInfo(0),
 			},
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight at snapshot time",
@@ -136,7 +136,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
-				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
+				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
@@ -164,7 +164,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
 				testutils.TestAddress("voter_already").String(): func() *governance.VotingInfo {
-					vi := governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter_already"))
+					vi := governance.NewVotingInfo(5_000_000_000)
 					viResolver := NewVotingInfoResolver(vi)
 					viResolver.vote(true, 5_000_000_000, 100, time.Now().Unix()) // Already voted
 					return vi
@@ -260,7 +260,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay,
 				100,
 			),
-			setupVotingInfo:   governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
+			setupVotingInfo:   governance.NewVotingInfo(5_000_000_000),
 			expectedYesWeight: 5_000_000_000,
 			expectedNoWeight:  0,
 		},
@@ -287,7 +287,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay,
 				100,
 			),
-			setupVotingInfo:   governance.NewVotingInfo(3_000_000_000, testutils.TestAddress("voter")),
+			setupVotingInfo:   governance.NewVotingInfo(3_000_000_000),
 			expectedYesWeight: 0,
 			expectedNoWeight:  3_000_000_000,
 		},
@@ -350,7 +350,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay,
 				100,
 			),
-			setupVotingInfo:  governance.NewVotingInfo(0, testutils.TestAddress("voter")),
+			setupVotingInfo:  governance.NewVotingInfo(0),
 			expectedHasError: true,
 			expectedError:    "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight",
 		},
@@ -377,7 +377,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay,
 				100,
 			),
-			setupVotingInfo:  governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
+			setupVotingInfo:  governance.NewVotingInfo(5_000_000_000),
 			setVotingInfoErr: errors.New("set proposal voting infos failed"),
 			expectedHasError: true,
 			expectedError:    "set proposal voting infos failed",
@@ -563,7 +563,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			}()
 			if tt.setupProposal != nil {
 				setupTestProposal(t, gov, tt.setupProposal())
-				setupTestVotingInfo(t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000, tt.voter))
+				setupTestVotingInfo(t, gov, tt.proposalID, tt.voter.String(), governance.NewVotingInfo(5_000_000_000))
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.voter))
@@ -640,7 +640,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			)
 			setupTestProposal(t, gov, proposal)
 			voter := testutils.TestAddress("voter")
-			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(5_000_000_000, voter))
+			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(5_000_000_000))
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 
@@ -731,7 +731,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 				totalWeight = 0 // Simulate launchpad exclusion
 			}
 
-			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(totalWeight, voter))
+			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(totalWeight))
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 

@@ -26,7 +26,7 @@ func TestAPI_createVoteJsonNode(t *testing.T) {
 			addr:       testutils.TestAddress("voter1"),
 			proposalId: 1,
 			setupVotingInfo: func() *governance.VotingInfo {
-				vote := governance.NewVotingInfo(1000, testutils.TestAddress("voter1"))
+				vote := governance.NewVotingInfo(1000)
 				resolver := NewVotingInfoResolver(vote)
 				resolver.vote(true, 1000, 100, 1234567890)
 				return vote
@@ -39,7 +39,7 @@ func TestAPI_createVoteJsonNode(t *testing.T) {
 			addr:       testutils.TestAddress("voter2"),
 			proposalId: 2,
 			setupVotingInfo: func() *governance.VotingInfo {
-				vote := governance.NewVotingInfo(500, testutils.TestAddress("voter2"))
+				vote := governance.NewVotingInfo(500)
 				resolver := NewVotingInfoResolver(vote)
 				resolver.vote(false, 500, 200, 1234567900)
 				return vote
@@ -52,7 +52,7 @@ func TestAPI_createVoteJsonNode(t *testing.T) {
 			addr:       testutils.TestAddress("voter3"),
 			proposalId: 3,
 			setupVotingInfo: func() *governance.VotingInfo {
-				return governance.NewVotingInfo(2000, testutils.TestAddress("voter3"))
+				return governance.NewVotingInfo(2000)
 			},
 			expectedProposalId: "3",
 			expectedVoteYes:    "false",
@@ -62,7 +62,7 @@ func TestAPI_createVoteJsonNode(t *testing.T) {
 			addr:       testutils.TestAddress("voter4"),
 			proposalId: 4,
 			setupVotingInfo: func() *governance.VotingInfo {
-				vote := governance.NewVotingInfo(0, testutils.TestAddress("voter4"))
+				vote := governance.NewVotingInfo(0)
 				resolver := NewVotingInfoResolver(vote)
 				resolver.vote(true, 0, 150, 1234567950)
 				return vote

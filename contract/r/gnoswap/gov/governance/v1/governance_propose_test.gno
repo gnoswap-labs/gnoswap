@@ -48,8 +48,8 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
-				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000, testutils.TestAddress("voter1")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
+				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000),
 			},
 			maxVotingWeight:    8_000_000_000,
 			expectedProposalId: 1,
@@ -71,7 +71,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupGnsBalance:     500_000_000, // Less than threshold
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("poor_proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("poor_proposer")),
+				testutils.TestAddress("poor_proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -94,7 +94,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -117,7 +117,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -140,7 +140,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: true,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("active_proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("active_proposer")),
+				testutils.TestAddress("active_proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -257,8 +257,8 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
-				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000, testutils.TestAddress("voter1")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
+				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000),
 			},
 			maxVotingWeight:    8_000_000_000,
 			expectedProposalId: 1,
@@ -283,7 +283,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -309,7 +309,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -335,7 +335,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -361,7 +361,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -451,8 +451,8 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
-				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000, testutils.TestAddress("voter1")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
+				testutils.TestAddress("voter1").String():   governance.NewVotingInfo(3_000_000_000),
 			},
 			maxVotingWeight:    8_000_000_000,
 			expectedProposalId: 1,
@@ -476,7 +476,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -501,7 +501,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -526,7 +526,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -551,7 +551,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -576,7 +576,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -601,7 +601,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -626,7 +626,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -651,7 +651,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*governance.VotingInfo{
-				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
@@ -782,7 +782,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
-				caller.String(): governance.NewVotingInfo(5_000_000_000, caller),
+				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -1008,7 +1008,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
-				caller.String(): governance.NewVotingInfo(5_000_000_000, caller),
+				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			if tt.setupActiveProposal != nil {
@@ -1123,7 +1123,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
-				caller.String(): governance.NewVotingInfo(5_000_000_000, caller),
+				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -1259,7 +1259,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
-				caller.String(): governance.NewVotingInfo(5_000_000_000, caller),
+				caller.String(): governance.NewVotingInfo(5_000_000_000),
 			}, 5_000_000_000)
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -1312,8 +1312,8 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 		setupTestGnsBalance(t, caller2, 10_000_000_000)
 		setupTestGnsBalance(t, caller3, 10_000_000_000)
 		setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
-			caller1.String(): governance.NewVotingInfo(5_000_000_000, caller1),
-			caller2.String(): governance.NewVotingInfo(5_000_000_000, caller2),
+			caller1.String(): governance.NewVotingInfo(5_000_000_000),
+			caller2.String(): governance.NewVotingInfo(5_000_000_000),
 		}, 10_000_000_000)
 
 		var proposalId1 int64

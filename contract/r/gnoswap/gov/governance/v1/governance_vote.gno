@@ -117,7 +117,7 @@ func (gv *governanceV1) vote(
 
 	// Create or update voting info for this user
 	if userVote == nil {
-		userVote = governance.NewVotingInfo(votingWeight, voterAddress)
+		userVote = governance.NewVotingInfo(votingWeight)
 	}
 
 	userVoteResolver := NewVotingInfoResolver(userVote)

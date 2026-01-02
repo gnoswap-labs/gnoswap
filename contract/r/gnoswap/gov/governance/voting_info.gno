@@ -3,7 +3,6 @@ package governance
 // VotingInfo tracks voting-related information for a specific user on a specific proposal.
 // This structure maintains the user's voting eligibility, voting history, and voting power.
 type VotingInfo struct {
-	voterAddress        address // Address of the voter
 	availableVoteWeight int64   // Total voting weight available to this user for this proposal
 	votedWeight         int64   // Actual weight used when voting (0 if not voted)
 	votedHeight         int64   // Block height when vote was cast
@@ -17,21 +16,15 @@ type VotingInfo struct {
 //
 // Parameters:
 //   - availableVoteWeight: total voting weight available to this user
-//   - voterAddress: address of the voter
 //
 // Returns:
 //   - *VotingInfo: newly created voting information structure
-func NewVotingInfo(availableVoteWeight int64, voterAddress address) *VotingInfo {
+func NewVotingInfo(availableVoteWeight int64) *VotingInfo {
 	return &VotingInfo{
 		availableVoteWeight: availableVoteWeight,
-		voterAddress:        voterAddress,
 		// Other fields are initialized to zero values (false, 0)
 		// voted starts as false, indicating no vote has been cast
 	}
-}
-
-func (v *VotingInfo) VoterAddress() address {
-	return v.voterAddress
 }
 
 // VotingType returns a human-readable string representation of the vote choice.
@@ -123,10 +116,6 @@ func (v *VotingInfo) VotedAt() int64 {
 /* Setter methods */
 func (v *VotingInfo) SetAvailableVoteWeight(availableVoteWeight int64) {
 	v.availableVoteWeight = availableVoteWeight
-}
-
-func (v *VotingInfo) SetVoterAddress(voterAddress address) {
-	v.voterAddress = voterAddress
 }
 
 func (v *VotingInfo) SetVotedWeight(votedWeight int64) {

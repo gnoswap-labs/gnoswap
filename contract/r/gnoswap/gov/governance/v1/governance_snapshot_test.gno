@@ -103,7 +103,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 			setupVotingInfos: func() *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				voterAddr := address("g1voter00000000000000000000000000000001")
-				votingInfo := governance.NewVotingInfo(1000, voterAddr)
+				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := avl.NewTree()
 				votingInfos.Set(voterAddr.String(), votingInfo)
 				store.SetProposalVotingInfos(1, votingInfos)
@@ -139,7 +139,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 			setupVotingInfos: func() *mockGovernanceStore {
 				store := newMockGovernanceStore()
 				otherUser := address("g1other00000000000000000000000000000002")
-				votingInfo := governance.NewVotingInfo(1000, otherUser)
+				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := avl.NewTree()
 				votingInfos.Set(otherUser.String(), votingInfo)
 				store.SetProposalVotingInfos(1, votingInfos)
@@ -212,7 +212,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 			votingInfos := avl.NewTree()
 			for i := 0; i < tt.numVotes; i++ {
 				voterAddr := address("g1voter0000000000000000000000000000000" + formatInt(int64(i)))
-				votingInfo := governance.NewVotingInfo(1000, voterAddr)
+				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos.Set(voterAddr.String(), votingInfo)
 			}
 
