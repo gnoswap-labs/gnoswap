@@ -121,6 +121,32 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	}
 }
 
+func TestLaunchpadProject_CreateProjectUnauthorized(t *testing.T) {
+	initLaunchpadProjectTest(t)
+
+	userAddr := testutils.TestAddress("nonAdminUser")
+	userRealm := testing.NewUserRealm(userAddr)
+	startTime := time.Now().Unix() + projectMinimumStartDelayTime
+
+	testing.SetRealm(userRealm)
+
+	uassert.AbortsContains(t, "not admin or governance", func() {
+		launchpad.CreateProject(
+			cross,
+			"Unauthorized Project",
+			"gno.land/r/onbloc/obl",
+			testutils.TestAddress("projectAddr"),
+			1_000_000,
+			"",
+			"",
+			30,
+			30,
+			40,
+			startTime,
+		)
+	})
+}
+
 func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
@@ -966,6 +992,19 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(50_000), claimableRewards)
+	})
+}
+
+func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.T) {
+	initLaunchpadProjectTest(t)
+
+	userAddr := testutils.TestAddress("nonAdminUser")
+	userRealm := testing.NewUserRealm(userAddr)
+
+	testing.SetRealm(userRealm)
+
+	uassert.AbortsContains(t, "not admin or governance", func() {
+		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
 	})
 }
 

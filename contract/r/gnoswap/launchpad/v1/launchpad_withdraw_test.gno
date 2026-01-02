@@ -94,6 +94,22 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	}
 }
 
+func TestLaunchpadWithdraw_CollectDepositGnsUnauthorized(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	initLaunchpadWithdrawTest(t, testutils.TestAddress("user"))
+	lp := getTestImplementation()
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
+
+	uassert.AbortsWithMessage(t, "caller is not user", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.CollectDepositGns("1")
+		}(cross)
+	})
+}
+
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
 // including both success and error cases across different tier durations.
 func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
