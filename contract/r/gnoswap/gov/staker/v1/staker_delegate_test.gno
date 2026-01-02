@@ -494,6 +494,21 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 				cleanupStakerDelegateTest(t, gs)
 			},
 		},
+		{
+			name:          "Same delegatee should panic",
+			caller:        testutils.TestAddress("alice"),
+			delegator:     testutils.TestAddress("validator1"),
+			delegatee:     testutils.TestAddress("validator1"),
+			amount:        minimumAmount,
+			expectPanic:   true,
+			expectedError: errSameDelegatee.Error(),
+			setupDelegation: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+			cleanupMocks: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+		},
 	}
 
 	for _, tt := range tests {

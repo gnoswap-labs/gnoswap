@@ -191,6 +191,10 @@ func (gs *govStakerV1) Redelegate(
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
+	if delegatee == newDelegatee {
+		panic(errSameDelegatee)
+	}
+
 	assertIsValidDelegateAmount(amount)
 
 	currentHeight := runtime.ChainHeight()
