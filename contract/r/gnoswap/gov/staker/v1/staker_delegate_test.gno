@@ -367,8 +367,9 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
 				}(cross)
 			},
 			undelegateAmt: minimumAmount * 10,
-			expectPanic:   false,
-			description:   "Should return available amount when requested exceeds delegated",
+			expectPanic:   true,
+			expectedError: errNotEnoughDelegated.Error(),
+			description:   "Should reject when requested exceeds delegated",
 		},
 		{
 			name: "Undelegate zero amount",
@@ -465,6 +466,22 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			},
 		},
 		{
+			name:          "Redelegate more than delegated should panic",
+			caller:        testutils.TestAddress("alice"),
+			delegator:     testutils.TestAddress("validator1"),
+			delegatee:     testutils.TestAddress("validator2"),
+			amount:        minimumAmount * 2,
+			expectPanic:   true,
+			expectedError: errNotEnoughDelegated.Error(),
+			setupDelegation: func() {
+				cleanupStakerDelegateTest(t, gs)
+				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+			},
+			cleanupMocks: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+		},
+		{
 			name:          "Invalid delegator address should panic",
 			caller:        testutils.TestAddress("alice"),
 			delegator:     address(""),
@@ -524,6 +541,7 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.Redelegate(tt.delegator, tt.delegatee, tt.amount)
 					}(cross)
 				})

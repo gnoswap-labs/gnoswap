@@ -345,20 +345,25 @@ func (gs *govStakerV1) unDelegate(
 
 	unDelegationAmount := amount
 	lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
-	allDelegations := gs.store.GetAllDelegations()
+	totalDelegated := int64(0)
+	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
-	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		delegation, exists := gs.store.GetDelegation(id)
 		if !exists {
 			continue
 		}
 
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
+		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		delegations = append(delegations, delegation)
+	}
 
+	if amount > totalDelegated {
+		return 0, errNotEnoughDelegated
+	}
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
@@ -422,19 +427,25 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	unDelegationAmount := amount
-	allDelegations := gs.store.GetAllDelegations()
+	totalDelegated := int64(0)
+	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
-	// Process undelegation across multiple delegation records if necessary
 	for _, id := range delegationIDs {
-		delegationRaw, exists := allDelegations.Get(formatInt(id))
+		delegation, exists := gs.store.GetDelegation(id)
 		if !exists {
 			continue
 		}
-		delegation, ok := delegationRaw.(*staker.Delegation)
-		if !ok {
-			continue
-		}
 
+		totalDelegated = safeAddInt64(totalDelegated, NewDelegationResolver(delegation).DelegatedAmount())
+		delegations = append(delegations, delegation)
+	}
+
+	if amount > totalDelegated {
+		return 0, errNotEnoughDelegated
+	}
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
