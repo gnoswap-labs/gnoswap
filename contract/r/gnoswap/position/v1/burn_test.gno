@@ -217,7 +217,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 			shouldPanic:         false,
 		},
 		{
-			name: "Overflow on token0",
+			name: "Overflow on token0 - wraps around (Uniswap V3 behavior)",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
 					"pool:key",
@@ -239,11 +239,13 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.MustFromDecimal("1"),
 				feeGrowthInside1LastX128: u256.Zero(),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed0 + fee0 overflow",
-			shouldPanic:          true,
+			// Uniswap V3 allows overflow: MAX_UINT256 + 1 = 0
+			expectedTokensOwed0: u256.Zero(),
+			expectedTokensOwed1: u256.Zero(),
+			shouldPanic:         false,
 		},
 		{
-			name: "Allow overflow on token1",
+			name: "Overflow on token1 - wraps around (Uniswap V3 behavior)",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
 					"pool:key",
@@ -265,8 +267,10 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.Zero(),
 				feeGrowthInside1LastX128: u256.MustFromDecimal("1"),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed1 + fee1 overflow",
-			shouldPanic:          true,
+			// Uniswap V3 allows overflow: MAX_UINT256 + 1 = 0
+			expectedTokensOwed0: u256.Zero(),
+			expectedTokensOwed1: u256.Zero(),
+			shouldPanic:         false,
 		},
 		{
 			name: "Large fees calculation",
