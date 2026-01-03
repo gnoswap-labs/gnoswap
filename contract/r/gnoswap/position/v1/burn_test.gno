@@ -76,12 +76,36 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			shouldPanic:                     false,
 		},
 		{
-			name:                            "Underflow with zero current",
+			name:                            "Fee growth wraparound - zero minus one",
 			feeGrowthInsideLastX128:         u256.Zero(),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1"),
 			positionLiquidity:               u256.MustFromDecimal("1000000"),
-			expectedPanicMessage:            "[GNOSWAP-POSITION-016] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
-			shouldPanic:                     true,
+			expected:                        u256.MustFromDecimal("340282366920938463463374607431768211455"),
+			shouldPanic:                     false,
+		},
+		{
+			name:                            "Fee growth wraparound - small overflow",
+			feeGrowthInsideLastX128:         u256.MustFromDecimal("100"),
+			positionFeeGrowthInsideLastX128: u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), u256.MustFromDecimal("50")),
+			positionLiquidity:               u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			expected:                        u256.MustFromDecimal("151"),
+			shouldPanic:                     false,
+		},
+		{
+			name:                            "Fee growth wraparound - at boundary",
+			feeGrowthInsideLastX128:         u256.Zero(),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal(MAX_UINT256),
+			positionLiquidity:               u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			expected:                        u256.MustFromDecimal("1"),
+			shouldPanic:                     false,
+		},
+		{
+			name:                            "Fee growth wraparound - large liquidity",
+			feeGrowthInsideLastX128:         u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			positionFeeGrowthInsideLastX128: u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), u256.MustFromDecimal("1000000000000000000000000000000000000")),
+			positionLiquidity:               u256.MustFromDecimal("1000000000000000000"),
+			expected:                        u256.MustFromDecimal("5875397450499325094"),
+			shouldPanic:                     false,
 		},
 	}
 
@@ -193,7 +217,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 			shouldPanic:         false,
 		},
 		{
-			name: "Overflow on token0",
+			name: "Overflow on token0 - wraps around (Uniswap V3 behavior)",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
 					"pool:key",
@@ -215,11 +239,13 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.MustFromDecimal("1"),
 				feeGrowthInside1LastX128: u256.Zero(),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed0 + fee0 overflow",
-			shouldPanic:          true,
+			// Uniswap V3 allows overflow: MAX_UINT256 + 1 = 0
+			expectedTokensOwed0: u256.Zero(),
+			expectedTokensOwed1: u256.Zero(),
+			shouldPanic:         false,
 		},
 		{
-			name: "Allow overflow on token1",
+			name: "Overflow on token1 - wraps around (Uniswap V3 behavior)",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
 					"pool:key",
@@ -241,8 +267,10 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.Zero(),
 				feeGrowthInside1LastX128: u256.MustFromDecimal("1"),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed1 + fee1 overflow",
-			shouldPanic:          true,
+			// Uniswap V3 allows overflow: MAX_UINT256 + 1 = 0
+			expectedTokensOwed0: u256.Zero(),
+			expectedTokensOwed1: u256.Zero(),
+			shouldPanic:         false,
 		},
 		{
 			name: "Large fees calculation",
@@ -315,6 +343,56 @@ func TestBurn_CalculateFees(t *testing.T) {
 				uassert.Equal(t, tt.expectedTokensOwed0.ToString(), tokensOwed0.ToString(), "tokensOwed0 mismatch")
 				uassert.Equal(t, tt.expectedTokensOwed1.ToString(), tokensOwed1.ToString(), "tokensOwed1 mismatch")
 			}
+		})
+	}
+}
+
+func TestFeeCalculation_WraparoundConsistency(t *testing.T) {
+	tests := []struct {
+		name                            string
+		feeGrowthInsideLastX128         *u256.Uint
+		positionFeeGrowthInsideLastX128 *u256.Uint
+		positionLiquidity               *u256.Uint
+		expectedDiff                    *u256.Uint
+		description                     string
+	}{
+		{
+			name:                            "Normal case - no wraparound",
+			feeGrowthInsideLastX128:         u256.MustFromDecimal("1000"),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("500"),
+			positionLiquidity:               u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			expectedDiff:                    u256.MustFromDecimal("500"),
+			description:                     "Standard case: current > last, diff = 500",
+		},
+		{
+			name:                            "Wraparound case - current < last",
+			feeGrowthInsideLastX128:         u256.MustFromDecimal("100"),
+			positionFeeGrowthInsideLastX128: u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), u256.MustFromDecimal("50")),
+			positionLiquidity:               u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			expectedDiff:                    u256.MustFromDecimal("151"),
+			description:                     "Wraparound: 100 - (MAX-50) = 151 via wraparound",
+		},
+		{
+			name:                            "Exact wraparound boundary",
+			feeGrowthInsideLastX128:         u256.Zero(),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal(MAX_UINT256),
+			positionLiquidity:               u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			expectedDiff:                    u256.MustFromDecimal("1"),
+			description:                     "Boundary: 0 - MAX = 1 via wraparound",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			actualDiff := subUint256(tt.feeGrowthInsideLastX128, tt.positionFeeGrowthInsideLastX128)
+			uassert.Equal(t, tt.expectedDiff.ToString(), actualDiff.ToString(), tt.description)
+
+			result := calculateTokensOwed(tt.feeGrowthInsideLastX128, tt.positionFeeGrowthInsideLastX128, tt.positionLiquidity)
+
+			expectedFee := u256.MulDiv(tt.expectedDiff, tt.positionLiquidity, q128)
+			uassert.Equal(t, expectedFee.ToString(), result.ToString(), "calculateTokensOwed result mismatch")
 		})
 	}
 }

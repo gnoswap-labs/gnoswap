@@ -87,7 +87,7 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	if overflow {
 		panic(errOverflow)
 	}
-	unclaimedFee0 := u256.Zero().Div(unclaimedFee0X128, q128)
+	unclaimedFee0 := unclaimedFee0X128.Div(unclaimedFee0X128, q128)
 
 	diffGrowthInside1X128 := subUint256(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	unclaimedFee1X128, overflow := u256.Zero().MulOverflow(liquidity, diffGrowthInside1X128)
@@ -95,7 +95,7 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 		panic(errOverflow)
 	}
 
-	return unclaimedFee0, u256.Zero().Div(unclaimedFee1X128, q128)
+	return unclaimedFee0, unclaimedFee1X128.Div(unclaimedFee1X128, q128)
 }
 
 func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {

@@ -60,6 +60,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
+	// Note: Uniswap V3 allows overflow here - users should withdraw before reaching uint128.max
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)
 	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), burnedAmount1)
 
@@ -137,17 +138,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 	}
 
-	// Check for underflow when subtracting collected amounts from tokens owed
-	newOwed0, underflow0 := u256.Zero().SubOverflow(position.TokensOwed0(), collectAmount0)
-	if underflow0 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%s) < collectAmount0(%s)", position.TokensOwed0().ToString(), collectAmount0.ToString()))
-	}
+	newOwed0 := u256.Zero().Sub(position.TokensOwed0(), collectAmount0)
 	position.SetTokensOwed0(newOwed0)
 
-	newOwed1, underflow1 := u256.Zero().SubOverflow(position.TokensOwed1(), collectAmount1)
-	if underflow1 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%s) < collectAmount1(%s)", position.TokensOwed1().ToString(), collectAmount1.ToString()))
-	}
+	newOwed1 := u256.Zero().Sub(position.TokensOwed1(), collectAmount1)
 	position.SetTokensOwed1(newOwed1)
 
 	if position.IsClear() {
@@ -160,6 +154,11 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 }
 
 // calculateFees calculates the fees for the current position.
+//
+// Note: This function intentionally allows overflow when adding fees to tokensOwed.
+// This matches Uniswap V3 behavior for gas optimization - users are expected to
+// withdraw fees before reaching uint128.max to avoid overflow.
+// Reference: https://github.com/Uniswap/v3-core/blob/main/contracts/NonfungiblePositionManager.sol
 func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
 	fee0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
@@ -173,27 +172,26 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 		position.Liquidity(),
 	)
 
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed0()), fee0)
-	if overflow0 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
-	}
-
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed1()), fee1)
-	if overflow1 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
-	}
+	// Uniswap V3 allows overflow here for gas efficiency
+	// tokensOwed wraps around if it exceeds uint256.max
+	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), fee0)
+	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), fee1)
 
 	return tokensOwed0, tokensOwed1
 }
 
+// calculateTokensOwed calculates the tokens owed based on fee growth delta.
+//
+// Note: This function uses subUint256 which handles wraparound for fee growth values.
+// When feeGrowthInsideLastX128 < positionFeeGrowthInsideLastX128 (due to overflow),
+// subUint256 correctly calculates the wrapped difference.
+// This matches Uniswap V3's intentional overflow design for gas optimization.
+// Reference: https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/Position.sol
 func calculateTokensOwed(
 	feeGrowthInsideLastX128 *u256.Uint,
 	positionFeeGrowthInsideLastX128 *u256.Uint,
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
-	diff, underflow := u256.Zero().SubOverflow(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow"))
-	}
+	diff := subUint256(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
 	return u256.MulDiv(diff, positionLiquidity, q128)
 }
