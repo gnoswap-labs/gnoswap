@@ -60,6 +60,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
+	// Note: Uniswap V3 allows overflow here - users should withdraw before reaching uint128.max
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)
 	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), burnedAmount1)
 
@@ -153,6 +154,11 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 }
 
 // calculateFees calculates the fees for the current position.
+//
+// Note: This function intentionally allows overflow when adding fees to tokensOwed.
+// This matches Uniswap V3 behavior for gas optimization - users are expected to
+// withdraw fees before reaching uint128.max to avoid overflow.
+// Reference: https://github.com/Uniswap/v3-core/blob/main/contracts/NonfungiblePositionManager.sol
 func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
 	fee0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
@@ -166,12 +172,21 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 		position.Liquidity(),
 	)
 
+	// Uniswap V3 allows overflow here for gas efficiency
+	// tokensOwed wraps around if it exceeds uint256.max
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), fee0)
 	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), fee1)
 
 	return tokensOwed0, tokensOwed1
 }
 
+// calculateTokensOwed calculates the tokens owed based on fee growth delta.
+//
+// Note: This function uses subUint256 which handles wraparound for fee growth values.
+// When feeGrowthInsideLastX128 < positionFeeGrowthInsideLastX128 (due to overflow),
+// subUint256 correctly calculates the wrapped difference.
+// This matches Uniswap V3's intentional overflow design for gas optimization.
+// Reference: https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/Position.sol
 func calculateTokensOwed(
 	feeGrowthInsideLastX128 *u256.Uint,
 	positionFeeGrowthInsideLastX128 *u256.Uint,
