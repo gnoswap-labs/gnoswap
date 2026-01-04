@@ -95,6 +95,12 @@
 //   - BalanceOf: Returns token balance for an address
 //   - Allowance: Returns allowance from owner to spender
 //
+// ### Token Transfers (with error handling)
+//
+//   - Transfer: Transfers tokens to address, returns error on failure
+//   - TransferFrom: Transfers tokens from one address to another, returns error on failure
+//   - Approve: Approves spender to use tokens, returns error on failure
+//
 // ### Safe Transfer Functions
 //
 //   - SafeGRC20Transfer: Transfers tokens, panics on failure
