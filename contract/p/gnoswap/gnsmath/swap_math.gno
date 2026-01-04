@@ -27,7 +27,7 @@ func SwapMathComputeSwapStep(
 ) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil ||
 		liquidity == nil || amountRemaining == nil {
-		panic("SwapMathComputeSwapStep: invalid input")
+		panic(errSwapMathInvalidInput)
 	}
 
 	// This function is publicly accessible and can be called by external users or contracts.
@@ -36,7 +36,7 @@ func SwapMathComputeSwapStep(
 	// (1000000 - feePips), so feePips must be strictly less than 1000000 to avoid division by zero.
 	// This follows Uniswap V3's factory-level validation: require(fee < 1000000).
 	if feePips >= denominator {
-		panic("SwapMathComputeSwapStep: feePips must be less than 1000000")
+		panic(errSwapMathInvalidFeePips)
 	}
 
 	// zeroForOne determines swap direction based on the relationship of current vs. target
