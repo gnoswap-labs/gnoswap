@@ -262,7 +262,14 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 // LiquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
 // If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
 // If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
+//
+// Parameters:
+//   - x: current liquidity as unsigned 256-bit integer
+//   - y: delta liquidity as signed 256-bit integer (positive to add, negative to subtract)
+//
 // Returns the new liquidity as a uint256 value.
+//
+// Panics if x or y is nil, or if the operation would result in underflow or overflow.
 func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic("liquidity_math: x or y is nil")
