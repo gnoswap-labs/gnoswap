@@ -21,6 +21,8 @@ const denominator = uint64(1_000_000)
 //   - feePips: fee in hundredths of a bip (3000 = 0.3%)
 //
 // Returns sqrtRatioNextX96, amountIn, amountOut, feeAmount.
+//
+// Panics if any input parameter is nil or if feePips >= 1000000.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,
