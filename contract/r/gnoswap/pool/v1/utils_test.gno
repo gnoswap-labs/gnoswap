@@ -1534,3 +1534,85 @@ func TestSafeSubInt64(t *testing.T) {
 		})
 	}
 }
+
+// TestU256Min_EdgeCases tests the u256Min utility function
+func TestU256Min_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           *u256.Uint
+		b           *u256.Uint
+		expected    *u256.Uint
+		description string
+	}{
+		{
+			name:        "both zero",
+			a:           u256.Zero(),
+			b:           u256.Zero(),
+			expected:    u256.Zero(),
+			description: "Min of two zeros should be zero",
+		},
+		{
+			name:        "first zero",
+			a:           u256.Zero(),
+			b:           u256.NewUint(100),
+			expected:    u256.Zero(),
+			description: "Min of zero and non-zero should be zero",
+		},
+		{
+			name:        "second zero",
+			a:           u256.NewUint(100),
+			b:           u256.Zero(),
+			expected:    u256.Zero(),
+			description: "Min of non-zero and zero should be zero",
+		},
+		{
+			name:        "equal values",
+			a:           u256.NewUint(1000),
+			b:           u256.NewUint(1000),
+			expected:    u256.NewUint(1000),
+			description: "Min of equal values should return that value",
+		},
+		{
+			name:        "first smaller",
+			a:           u256.NewUint(500),
+			b:           u256.NewUint(1000),
+			expected:    u256.NewUint(500),
+			description: "Min should return first when it's smaller",
+		},
+		{
+			name:        "second smaller",
+			a:           u256.NewUint(1000),
+			b:           u256.NewUint(500),
+			expected:    u256.NewUint(500),
+			description: "Min should return second when it's smaller",
+		},
+		{
+			name:        "one unit difference",
+			a:           u256.NewUint(1000),
+			b:           u256.NewUint(1001),
+			expected:    u256.NewUint(1000),
+			description: "Should correctly handle one unit difference",
+		},
+		{
+			name:        "max uint128 vs smaller",
+			a:           u256.MustFromDecimal(MAX_UINT128),
+			b:           u256.NewUint(1000),
+			expected:    u256.NewUint(1000),
+			description: "Min of MAX_UINT128 and smaller value should be smaller value",
+		},
+		{
+			name:        "both max uint128",
+			a:           u256.MustFromDecimal(MAX_UINT128),
+			b:           u256.MustFromDecimal(MAX_UINT128),
+			expected:    u256.MustFromDecimal(MAX_UINT128),
+			description: "Min of two MAX_UINT128 should be MAX_UINT128",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := u256Min(tt.a, tt.b)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
+		})
+	}
+}

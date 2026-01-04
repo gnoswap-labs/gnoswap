@@ -260,3 +260,139 @@ func TestGetPool(t *testing.T) {
 		})
 	}
 }
+
+// TestSetFeeProtocol_BoundaryValues tests edge cases for fee protocol values
+func TestSetFeeProtocol_BoundaryValues(t *testing.T) {
+	tests := []struct {
+		name         string
+		feeProtocol0 uint8
+		feeProtocol1 uint8
+		shouldError  bool
+		expectedFee  uint8
+		description  string
+	}{
+		{
+			name:         "valid - both zero (fees disabled)",
+			feeProtocol0: 0,
+			feeProtocol1: 0,
+			shouldError:  false,
+			expectedFee:  0,
+			description:  "Zero values should disable protocol fees",
+		},
+		{
+			name:         "valid - minimum non-zero values",
+			feeProtocol0: 4,
+			feeProtocol1: 4,
+			shouldError:  false,
+			expectedFee:  68, // 4 + (4 << 4) = 4 + 64 = 68
+			description:  "Minimum non-zero values (4, 4) should be accepted",
+		},
+		{
+			name:         "valid - maximum values",
+			feeProtocol0: 10,
+			feeProtocol1: 10,
+			shouldError:  false,
+			expectedFee:  170, // 10 + (10 << 4) = 10 + 160 = 170
+			description:  "Maximum values (10, 10) should be accepted",
+		},
+		{
+			name:         "valid - asymmetric minimum",
+			feeProtocol0: 4,
+			feeProtocol1: 0,
+			shouldError:  false,
+			expectedFee:  4, // 4 + (0 << 4) = 4
+			description:  "Asymmetric values (4, 0) should be accepted",
+		},
+		{
+			name:         "valid - asymmetric maximum",
+			feeProtocol0: 0,
+			feeProtocol1: 10,
+			shouldError:  false,
+			expectedFee:  160, // 0 + (10 << 4) = 160
+			description:  "Asymmetric values (0, 10) should be accepted",
+		},
+		{
+			name:         "valid - mixed values",
+			feeProtocol0: 4,
+			feeProtocol1: 10,
+			shouldError:  false,
+			expectedFee:  164, // 4 + (10 << 4) = 4 + 160 = 164
+			description:  "Mixed values (4, 10) should be accepted",
+		},
+		{
+			name:         "invalid - just below minimum (token0)",
+			feeProtocol0: 3,
+			feeProtocol1: 5,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 3 for token0 should be rejected",
+		},
+		{
+			name:         "invalid - just below minimum (token1)",
+			feeProtocol0: 5,
+			feeProtocol1: 3,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 3 for token1 should be rejected",
+		},
+		{
+			name:         "invalid - just above maximum (token0)",
+			feeProtocol0: 11,
+			feeProtocol1: 5,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 11 for token0 should be rejected",
+		},
+		{
+			name:         "invalid - just above maximum (token1)",
+			feeProtocol0: 5,
+			feeProtocol1: 11,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 11 for token1 should be rejected",
+		},
+		{
+			name:         "invalid - value 1",
+			feeProtocol0: 1,
+			feeProtocol1: 5,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 1 should be rejected (must be 0 or 4-10)",
+		},
+		{
+			name:         "invalid - value 2",
+			feeProtocol0: 2,
+			feeProtocol1: 5,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Value 2 should be rejected (must be 0 or 4-10)",
+		},
+		{
+			name:         "invalid - max uint8",
+			feeProtocol0: 255,
+			feeProtocol1: 5,
+			shouldError:  true,
+			expectedFee:  0,
+			description:  "Max uint8 value should be rejected",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			newFee, err := getMockInstance().setFeeProtocol(tt.feeProtocol0, tt.feeProtocol1)
+
+			if tt.shouldError {
+				uassert.NotNil(t, err, tt.description)
+			} else {
+				uassert.Nil(t, err, tt.description)
+				uassert.Equal(t, tt.expectedFee, newFee, tt.description)
+
+				// Verify the fee was actually set
+				actualFee := getMockInstance().store.GetSlot0FeeProtocol()
+				uassert.Equal(t, tt.expectedFee, actualFee, "Fee should be persisted correctly")
+			}
+		})
+	}
+}
