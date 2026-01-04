@@ -6,6 +6,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 const (
@@ -1229,6 +1230,306 @@ func TestFormatUint_AdditionalEdgeCases(t *testing.T) {
 			} else {
 				result := formatUint(tt.input)
 				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestSafeAddInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Success cases
+		{
+			name:        "positive + positive",
+			a:           100,
+			b:           200,
+			expected:    300,
+			shouldPanic: false,
+		},
+		{
+			name:        "negative + negative",
+			a:           -100,
+			b:           -200,
+			expected:    -300,
+			shouldPanic: false,
+		},
+		{
+			name:        "positive + negative",
+			a:           100,
+			b:           -50,
+			expected:    50,
+			shouldPanic: false,
+		},
+		{
+			name:        "negative + positive",
+			a:           -100,
+			b:           150,
+			expected:    50,
+			shouldPanic: false,
+		},
+		{
+			name:        "zero + positive",
+			a:           0,
+			b:           100,
+			expected:    100,
+			shouldPanic: false,
+		},
+		{
+			name:        "zero + negative",
+			a:           0,
+			b:           -100,
+			expected:    -100,
+			shouldPanic: false,
+		},
+		{
+			name:        "max + zero",
+			a:           INT64_MAX,
+			b:           0,
+			expected:    INT64_MAX,
+			shouldPanic: false,
+		},
+		{
+			name:        "min + zero",
+			a:           INT64_MIN,
+			b:           0,
+			expected:    INT64_MIN,
+			shouldPanic: false,
+		},
+		{
+			name:        "max + negative (safe)",
+			a:           INT64_MAX,
+			b:           -1,
+			expected:    INT64_MAX - 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "min + positive (safe)",
+			a:           INT64_MIN,
+			b:           1,
+			expected:    INT64_MIN + 1,
+			shouldPanic: false,
+		},
+
+		// Overflow cases
+		{
+			name:        "overflow: max + 1",
+			a:           INT64_MAX,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "overflow: max + positive",
+			a:           INT64_MAX,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "overflow: large + large",
+			a:           INT64_MAX / 2,
+			b:           INT64_MAX/2 + 2,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+
+		// Underflow cases
+		{
+			name:        "underflow: min + (-1)",
+			a:           INT64_MIN,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "underflow: min + negative",
+			a:           INT64_MIN,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "underflow: large negative + large negative",
+			a:           INT64_MIN / 2,
+			b:           INT64_MIN/2 - 1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeAddInt64(tt.a, tt.b)
+				})
+			} else {
+				result := safeAddInt64(tt.a, tt.b)
+				uassert.Equal(t, tt.expected, result,
+					ufmt.Sprintf("safeAddInt64(%d, %d) = %d, want %d", tt.a, tt.b, result, tt.expected))
+			}
+		})
+	}
+}
+
+func TestSafeSubInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Success cases
+		{
+			name:        "positive - positive",
+			a:           200,
+			b:           100,
+			expected:    100,
+			shouldPanic: false,
+		},
+		{
+			name:        "negative - negative",
+			a:           -100,
+			b:           -200,
+			expected:    100,
+			shouldPanic: false,
+		},
+		{
+			name:        "positive - negative",
+			a:           100,
+			b:           -50,
+			expected:    150,
+			shouldPanic: false,
+		},
+		{
+			name:        "negative - positive",
+			a:           -100,
+			b:           50,
+			expected:    -150,
+			shouldPanic: false,
+		},
+		{
+			name:        "zero - positive",
+			a:           0,
+			b:           100,
+			expected:    -100,
+			shouldPanic: false,
+		},
+		{
+			name:        "zero - negative",
+			a:           0,
+			b:           -100,
+			expected:    100,
+			shouldPanic: false,
+		},
+		{
+			name:        "max - zero",
+			a:           INT64_MAX,
+			b:           0,
+			expected:    INT64_MAX,
+			shouldPanic: false,
+		},
+		{
+			name:        "min - zero",
+			a:           INT64_MIN,
+			b:           0,
+			expected:    INT64_MIN,
+			shouldPanic: false,
+		},
+		{
+			name:        "max - positive (safe)",
+			a:           INT64_MAX,
+			b:           1,
+			expected:    INT64_MAX - 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "min - negative (safe)",
+			a:           INT64_MIN,
+			b:           -1,
+			expected:    INT64_MIN + 1,
+			shouldPanic: false,
+		},
+
+		// Underflow cases
+		{
+			name:        "underflow: min - 1",
+			a:           INT64_MIN,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "underflow: min - positive",
+			a:           INT64_MIN,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "underflow: negative - large positive",
+			a:           -100,
+			b:           INT64_MAX,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "underflow: min - max",
+			a:           INT64_MIN,
+			b:           INT64_MAX,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+
+		// Overflow cases
+		{
+			name:        "overflow: max - (-1)",
+			a:           INT64_MAX,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "overflow: max - negative",
+			a:           INT64_MAX,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "overflow: positive - large negative",
+			a:           100,
+			b:           INT64_MIN,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "overflow: max - min",
+			a:           INT64_MAX,
+			b:           INT64_MIN,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeSubInt64(tt.a, tt.b)
+				})
+			} else {
+				result := safeSubInt64(tt.a, tt.b)
+				uassert.Equal(t, tt.expected, result,
+					ufmt.Sprintf("safeSubInt64(%d, %d) = %d, want %d", tt.a, tt.b, result, tt.expected))
 			}
 		})
 	}

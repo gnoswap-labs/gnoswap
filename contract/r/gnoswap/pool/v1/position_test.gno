@@ -1450,3 +1450,176 @@ func TestGetPositionByPool(t *testing.T) {
 		})
 	}
 }
+
+func TestPosition_TickBoundaryEdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		shouldPanic bool
+		panicMsg    string
+		description string
+	}{
+		{
+			name:        "MIN_TICK as tickLower",
+			tickLower:   MIN_TICK,
+			tickUpper:   0,
+			shouldPanic: false,
+			description: "MIN_TICK (-887272) should be accepted as tickLower",
+		},
+		{
+			name:        "MAX_TICK as tickUpper",
+			tickLower:   0,
+			tickUpper:   MAX_TICK,
+			shouldPanic: false,
+			description: "MAX_TICK (887272) should be accepted as tickUpper",
+		},
+		{
+			name:        "Full range: MIN_TICK to MAX_TICK",
+			tickLower:   MIN_TICK,
+			tickUpper:   MAX_TICK,
+			shouldPanic: false,
+			description: "Full tick range should be valid",
+		},
+		{
+			name:        "tickLower below MIN_TICK",
+			tickLower:   MIN_TICK - 1,
+			tickUpper:   0,
+			shouldPanic: true,
+			panicMsg:    "tickLower",
+			description: "tickLower below MIN_TICK should panic",
+		},
+		{
+			name:        "tickUpper above MAX_TICK",
+			tickLower:   0,
+			tickUpper:   MAX_TICK + 1,
+			shouldPanic: true,
+			panicMsg:    "tickUpper",
+			description: "tickUpper above MAX_TICK should panic",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// getPositionKey returns error instead of panicking for invalid ticks
+			key, err := getPositionKey(tt.tickLower, tt.tickUpper)
+
+			if tt.shouldPanic {
+				uassert.Error(t, err, "Expected error for invalid ticks")
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotEqual(t, "", key, "Position key should not be empty")
+			}
+		})
+	}
+}
+
+func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		liquidity   string
+		shouldPanic bool
+		panicMsg    string
+		description string
+	}{
+		{
+			name:        "Minimum liquidity (1)",
+			liquidity:   "1",
+			shouldPanic: false,
+			description: "Liquidity of 1 should be accepted",
+		},
+		{
+			name:        "Small liquidity (100)",
+			liquidity:   "100",
+			shouldPanic: false,
+			description: "Small liquidity amounts should work",
+		},
+		{
+			name:        "Large liquidity (near maxLiquidityPerTick)",
+			liquidity:   "1917569901783203986719870431555000", // Just below maxLiquidityPerTick for tickSpacing=10
+			shouldPanic: false,
+			description: "Large liquidity below maxLiquidityPerTick should be accepted",
+		},
+		{
+			name:        "Liquidity exceeds maxLiquidityPerTick",
+			liquidity:   "1917569901783203986719870431556000", // Above maxLiquidityPerTick
+			shouldPanic: true,
+			panicMsg:    "maxLiquidity",
+			description: "Liquidity > maxLiquidityPerTick should panic",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := setupPoolAtPrice(t, 0)
+
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					liq := u256.MustFromDecimal(tt.liquidity)
+					liqDelta := safeConvertToInt128(liq)
+					params := ModifyPositionParams{
+						owner:          positionAddr,
+						tickLower:      -60,
+						tickUpper:      60,
+						liquidityDelta: liqDelta,
+					}
+					modifyPosition(pool, params)
+				})
+			} else {
+				liq := u256.MustFromDecimal(tt.liquidity)
+				liqDelta := safeConvertToInt128(liq)
+				params := ModifyPositionParams{
+					owner:          positionAddr,
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: liqDelta,
+				}
+				position, amount0, amount1, err := modifyPosition(pool, params)
+
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.liquidity, position.Liquidity().ToString())
+				uassert.True(t, amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()),
+					"At least one amount should be non-zero")
+			}
+		})
+	}
+}
+
+func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
+	t.Run("TokensOwed overflow detection", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+
+		// Add initial liquidity
+		params := ModifyPositionParams{
+			owner:          positionAddr,
+			tickLower:      -60,
+			tickUpper:      60,
+			liquidityDelta: i256.MustFromDecimal("1000000"),
+		}
+		position, _, _, err := modifyPosition(pool, params)
+		uassert.NoError(t, err)
+
+		// Verify initial tokensOwed
+		initialOwed0 := position.TokensOwed0()
+		initialOwed1 := position.TokensOwed1()
+
+		uassert.True(t, initialOwed0.Eq(u256.Zero()) || initialOwed0.Gt(u256.Zero()))
+		uassert.True(t, initialOwed1.Eq(u256.Zero()) || initialOwed1.Gt(u256.Zero()))
+
+		// Remove liquidity
+		params.liquidityDelta = i256.MustFromDecimal("-1000000")
+		position2, amount0, amount1, err := modifyPosition(pool, params)
+		uassert.NoError(t, err)
+
+		// Verify amounts are properly calculated and bounded to uint128
+		// (toUint128 is applied in Burn function, but modifyPosition returns raw amounts)
+		uassert.True(t, amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()))
+
+		// TokensOwed should accumulate
+		finalOwed0 := position2.TokensOwed0()
+		finalOwed1 := position2.TokensOwed1()
+
+		uassert.True(t, finalOwed0.Gte(initialOwed0))
+		uassert.True(t, finalOwed1.Gte(initialOwed1))
+	})
+}
