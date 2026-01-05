@@ -199,7 +199,7 @@ func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistri
 //
 // Parameters:
 // - depositId (string): The ID of the deposit
-// - currentHeight (int64): Current blockchain height
+// - currentTime (int64): Current timestamp
 //
 // Returns:
 // - int64: The amount of reward collected
