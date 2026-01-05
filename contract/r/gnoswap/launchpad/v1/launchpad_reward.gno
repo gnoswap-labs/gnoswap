@@ -40,6 +40,19 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
 		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
+
+		project, err := lp.getProject(deposit.ProjectID())
+		if err != nil {
+			panic(err)
+		}
+
+		projectTier, err := getProjectTier(project, deposit.Tier())
+		if err != nil {
+			panic(err)
+		}
+
+		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+		project.SetTier(deposit.Tier(), projectTier)
 	}
 
 	chain.Emit(
