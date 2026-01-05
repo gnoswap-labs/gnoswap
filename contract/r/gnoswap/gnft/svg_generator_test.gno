@@ -10,7 +10,7 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-func TestSvgGenerator_genImageParams(t *testing.T) {
+func TestSvgGenerator_genImageParamsString(t *testing.T) {
 	seed1 := uint64(time.Now().Unix())
 	seed2 := uint64(time.Now().UnixNano())
 	pcg := rand.NewPCG(seed1, seed2)
@@ -18,7 +18,7 @@ func TestSvgGenerator_genImageParams(t *testing.T) {
 
 	var params string
 	uassert.NotPanics(t, func() {
-		params = genImageParams(r)
+		params = genImageParamsString(r)
 	})
 
 	// Verify params format: "x1,y1,x2,y2,color1,color2"
@@ -199,7 +199,7 @@ func TestSvgGenerator_paramsToImageRaw_CoordinateRanges(t *testing.T) {
 	}
 }
 
-func TestSvgGenerator_genImageParams_CoordinateRanges(t *testing.T) {
+func TestSvgGenerator_genImageParamsString_CoordinateRanges(t *testing.T) {
 	tests := []struct {
 		name  string
 		seed1 uint64
@@ -223,7 +223,7 @@ func TestSvgGenerator_genImageParams_CoordinateRanges(t *testing.T) {
 			r := rand.New(pcg)
 
 			for i := 0; i < 10; i++ {
-				params := genImageParams(r)
+				params := genImageParamsString(r)
 				p, err := parseImageParams(params)
 				uassert.NoError(t, err)
 				svg := p.generateSVG()
@@ -271,7 +271,7 @@ func TestSvgGenerator_roundTrip(t *testing.T) {
 			r := rand.New(pcg)
 
 			// Generate params
-			paramsStr := genImageParams(r)
+			paramsStr := genImageParamsString(r)
 
 			// Parse params
 			params, err := parseImageParams(paramsStr)
@@ -343,7 +343,7 @@ func TestSvgGenerator_uniqueness(t *testing.T) {
 		pcg := rand.NewPCG(seed1, seed2)
 		r := rand.New(pcg)
 
-		params := genImageParams(r)
+		params := genImageParamsString(r)
 
 		// Each params should be unique (different colors/coordinates)
 		_, exists := paramsMap[params]
@@ -392,7 +392,7 @@ func TestSvgGenerator_outputConsistency(t *testing.T) {
 			// Generate using new method (params -> SVG)
 			pcg2 := rand.NewPCG(tc.seed1, tc.seed2)
 			r2 := rand.New(pcg2)
-			params := genImageParams(r2)
+			params := genImageParamsString(r2)
 			p, err := parseImageParams(params)
 			uassert.NoError(t, err)
 			newSVG := p.generateSVG()
@@ -758,9 +758,9 @@ func TestSvgGenerator_isValidHexColor(t *testing.T) {
 	}
 }
 
-// TestSvgGenerator_genImageParams_alwaysProducesValidOutput tests that genImageParams
+// TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput tests that genImageParamsString
 // always produces output that passes validation in paramsToImageRaw.
-func TestSvgGenerator_genImageParams_alwaysProducesValidOutput(t *testing.T) {
+func TestSvgGenerator_genImageParamsString_alwaysProducesValidOutput(t *testing.T) {
 	// Test with many different seeds to ensure robustness
 	for i := 0; i < 100; i++ {
 		seed1 := uint64(i * 12345)
@@ -768,7 +768,7 @@ func TestSvgGenerator_genImageParams_alwaysProducesValidOutput(t *testing.T) {
 		pcg := rand.NewPCG(seed1, seed2)
 		r := rand.New(pcg)
 
-		params := genImageParams(r)
+		params := genImageParamsString(r)
 		p, err := parseImageParams(params)
 		uassert.NoError(t, err)
 

@@ -87,9 +87,9 @@ const (
 	y2Range = y2Max - y2Min + 1
 )
 
-// genImageParams generates random gradient parameters and returns them as a compact string.
+// genImageParamsString generates random gradient parameters and returns them as a compact string.
 // Format: "x1,y1,x2,y2,color1,color2" (e.g., "10,12,125,123,#AABBCC,#DDEEFF")
-func genImageParams(r *rand.Rand) string {
+func genImageParamsString(r *rand.Rand) string {
 	x1 := x1Min + r.Uint64N(x1Range)
 	y1 := y1Min + r.Uint64N(y1Range)
 	x2 := x2Min + r.Uint64N(x2Range)
@@ -131,8 +131,8 @@ func validateCoordinate(value int, min int, max int, name string) error {
 // Returns parsed ImageParams pointer or error.
 // Returns nil on error to avoid allocating zero-value struct.
 // Expected format: "x1,y1,x2,y2,color1,color2"
-func parseImageParams(params string) (*ImageParams, error) {
-	parts := strings.Split(params, ",")
+func parseImageParams(s string) (*ImageParams, error) {
+	parts := strings.Split(s, ",")
 	if len(parts) != 6 {
 		return nil, errInvalidTokenParams
 	}

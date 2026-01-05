@@ -207,7 +207,7 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
 	// Parameters are converted to full SVG on read via TokenURI().
-	imageParams := genImageParams(generateRandInstance())
+	imageParams := genImageParamsString(generateRandInstance())
 	checkErr(setTokenURI(tid, grc721.TokenURI(imageParams)))
 
 	checkErr(nft.TransferFrom(ownerAddress, to, tid))
