@@ -61,6 +61,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 			chain.Emit(
 				eventType,
+				"prevAddr", runtime.PreviousRealm().Address().String(),
 				"address", addrStr,
 				"referral", refAddrStr,
 			)

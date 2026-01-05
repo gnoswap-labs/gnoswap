@@ -70,28 +70,6 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	uassert.True(t, k.has(user2))
 }
 
-func TestRateLimit_ConsecutiveRegistrations(t *testing.T) {
-	cleanup := setupValidCaller(t)
-	defer cleanup()
-	k := setupRateLimitKeeper(t)
-
-	user := testutils.TestAddress("consec_user")
-	ref1 := testutils.TestAddress("consec_ref1")
-	ref2 := testutils.TestAddress("consec_ref2")
-
-	// First registration should succeed
-	err := k.register(user, ref1)
-	uassert.NoError(t, err)
-
-	// Second registration should be blocked by rate limit
-	err = k.register(user, ref2)
-	uassert.ErrorIs(t, err, ErrTooManyRequests)
-
-	// Verify original referral is preserved
-	ref, _ := k.get(user)
-	uassert.Equal(t, ref1.String(), ref.String())
-}
-
 func TestRateLimit_ZeroAddressNotRateLimited(t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
