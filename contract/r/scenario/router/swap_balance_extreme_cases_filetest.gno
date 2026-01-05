@@ -411,7 +411,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: -450000000000
 // [EXPECTED] Pool BAR change: -246357398260
 // [EXPECTED] Pool FOO change: 450000000000
-// [EXPECTED] Balance conservation holds - no value created or destroyed
+// [EXPECTED] Protocol Fee BAR change: 369536097
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified - all tokens accounted for
 //
 // [SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage
 // [INFO] Reverse Swap: Getting 200000000000 FOO back
@@ -430,7 +432,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: 200000000000
 // [EXPECTED] Pool BAR change: 75286230276
 // [EXPECTED] Pool FOO change: -200300450676
-// [EXPECTED] Balance conservation holds - no value created or destroyed
+// [EXPECTED] Protocol Fee BAR change: 0
+// [EXPECTED] Protocol Fee FOO change: 300450676
+// [EXPECTED] Exact balance conservation verified - all tokens accounted for
 //
 // [SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement
 // [INFO] Small Swap: Swapping 1000000 FOO -> BAR (after extreme movement)
@@ -449,7 +453,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: -1000000
 // [EXPECTED] Pool BAR change: -470191
 // [EXPECTED] Pool FOO change: 1000000
-// [EXPECTED] Balance conservation holds - no value created or destroyed
+// [EXPECTED] Protocol Fee BAR change: 705
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified - all tokens accounted for
 // [INFO] Validating small swap impact
 // [EXPECTED] Small swap caused minimal balance change
 // [EXPECTED] User BAR change: 469486

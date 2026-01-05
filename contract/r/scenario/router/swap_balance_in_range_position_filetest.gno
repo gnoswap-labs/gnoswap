@@ -376,7 +376,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: -10000000000
 // [EXPECTED] Pool BAR change: -9266199593
 // [EXPECTED] Pool FOO change: 10000000000
-// [EXPECTED] Balance changes are valid for ExactIn
+// [EXPECTED] Protocol Fee BAR change: 13899299
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified for ExactIn
 //
 // [SCENARIO] 5. Exact Out Swap (BAR -> FOO)
 // [INFO] Swapping BAR -> 5000000000 FOO
@@ -395,6 +397,14 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: 5000000000
 // [EXPECTED] Pool BAR change: 4469297080
 // [EXPECTED] Pool FOO change: -5007511266
-// [EXPECTED] Balance changes are valid for ExactOut
+// [EXPECTED] Protocol Fee BAR change: 0
+// [EXPECTED] Protocol Fee FOO change: 7511266
+// [EXPECTED] Exact balance conservation verified for ExactOut
+//
+// [SCENARIO] 6. System Balance Conservation Check
+// [INFO] Validating system-wide balance conservation
+// [EXPECTED] Total BAR - Initial: 100000000000 Final: 100000000000
+// [EXPECTED] Total FOO - Initial: 100000000000 Final: 100000000000
+// [EXPECTED] System-wide balance perfectly conserved
 //
 // [SCENARIO] Complete - All balance validations passed

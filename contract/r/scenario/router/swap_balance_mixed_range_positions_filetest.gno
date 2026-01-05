@@ -438,7 +438,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: -10000000000
 // [EXPECTED] Pool BAR change: 20428223539
 // [EXPECTED] Pool FOO change: 10000000000
-// [EXPECTED] Balance changes are valid for ExactIn
+// [EXPECTED] Protocol Fee BAR change: 14357664
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified for ExactIn
 //
 // [SCENARIO] 6. Exact Out Swap (BAR -> FOO) - Uses only in-range liquidity
 // [INFO] Swapping BAR -> 5000000000 FOO
@@ -457,6 +459,14 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] User FOO change: 5000000000
 // [EXPECTED] Pool BAR change: 4694301331
 // [EXPECTED] Pool FOO change: -5007511266
-// [EXPECTED] Balance changes are valid for ExactOut
+// [EXPECTED] Protocol Fee BAR change: 0
+// [EXPECTED] Protocol Fee FOO change: 7511266
+// [EXPECTED] Exact balance conservation verified for ExactOut
+//
+// [SCENARIO] 7. System Balance Conservation Check
+// [INFO] Validating system-wide balance conservation
+// [EXPECTED] Total BAR - Initial: 200000000000 Final: 200000000000
+// [EXPECTED] Total FOO - Initial: 200000000000 Final: 200000000000
+// [EXPECTED] System-wide balance perfectly conserved
 //
 // [SCENARIO] Complete - Validated that out-of-range position doesn't affect swaps

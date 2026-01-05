@@ -483,7 +483,7 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 9602386497
 //   User BAZ change: 0
 //   User QUX change: 0
-// [VALIDATION] Balance changes are valid for multi-hop swap
+// [VALIDATION] Exact balance conservation verified for multi-hop swap
 //
 // [SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)
 // [INFO] Two Hop: Swapping 5000000000 BAR -> FOO -> BAZ
@@ -498,7 +498,7 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 4451991291
 //   User QUX change: 0
-// [VALIDATION] Balance changes are valid for multi-hop swap
+// [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
@@ -515,7 +515,7 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 0
 //   User QUX change: 2495426539
-// [VALIDATION] Balance changes are valid for multi-hop swap
+// [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
@@ -532,7 +532,7 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 0
 //   User QUX change: -2000000000
-// [VALIDATION] Balance changes are valid for multi-hop swap
+// [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
 //
