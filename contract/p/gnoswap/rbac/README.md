@@ -83,6 +83,9 @@ Predefined system roles that cannot be removed:
 | `ErrRoleDoesNotExist` | Role not found |
 | `ErrCannotRemoveSystemRole` | Cannot remove system role |
 | `ErrInvalidAddress` | Invalid address format |
+| `ErrUnauthorized` | Caller is not owner |
+| `ErrNoPendingOwner` | No pending owner |
+| `ErrPendingUnauthorized` | Caller is not pending owner |
 
 ## Security
 
