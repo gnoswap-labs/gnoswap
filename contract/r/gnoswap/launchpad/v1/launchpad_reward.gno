@@ -53,6 +53,11 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 
 		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
 		project.SetTier(deposit.Tier(), projectTier)
+
+		projects := lp.store.GetProjects()
+        if err := lp.store.SetProjects(projects); err != nil {
+            panic(err)
+        }
 	}
 
 	chain.Emit(
