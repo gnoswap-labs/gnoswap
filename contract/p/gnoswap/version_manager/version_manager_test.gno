@@ -568,8 +568,9 @@ func TestMakeInitializerSafe_InvalidType(t *testing.T) {
 
 // TestIsContainDomainPath tests boundary conditions for domain path validation
 //
-// Note: The previousRealm.IsUser() check in RegisterInitializer is tested in integration test:
-// tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
+// Note: The previousRealm.IsUser() check in RegisterInitializer is tested in integration tests:
+//   - tests/integration/testdata/upgradable/initializer_security.txtar
+//   - tests/integration/testdata/upgradable/user_cannot_register_initializer.txtar
 func TestIsContainDomainPath(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -766,7 +767,9 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 //   - caller is user (line 80-82)
 //   - caller not in domain path (line 85-87)
 //
-// See: tests/integration/testdata/upgradable/realm_can_register_initializer.txtar
+// See:
+//   - tests/integration/testdata/upgradable/initializer_security.txtar
+//   - tests/integration/testdata/upgradable/user_cannot_register_initializer.txtar
 func TestRegisterInitializer_ErrorBranches(t *testing.T) {
 	t.Run("nil initializer", func(t *testing.T) {
 		kvStore := store.NewKVStore(mockDomainAddr)
