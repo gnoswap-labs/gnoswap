@@ -2,7 +2,6 @@ package referral
 
 import (
 	"chain/runtime"
-	"strings"
 	"testing"
 	"time"
 
@@ -202,10 +201,9 @@ func TestRateLimit_UnauthorizedCallerTakesPrecedence(t *testing.T) {
 	user := testutils.TestAddress("user")
 	referrer := testutils.TestAddress("referrer")
 
-	err := k.register(user, referrer)
-
-	uassert.Error(t, err)
-	uassert.True(t, strings.Contains(err.Error(), "unauthorized caller"))
+	uassert.PanicsContains(t, "unauthorized caller", func() {
+		k.register(user, referrer)
+	})
 }
 
 func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
@@ -221,7 +219,7 @@ func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
 }
 
 func setupRateLimitKeeper(t *testing.T) *keeper {
-    t.Helper()
+	t.Helper()
 	return NewKeeper().(*keeper)
 }
 

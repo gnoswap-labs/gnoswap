@@ -21,21 +21,6 @@ Returns true if the given address has a referral.
 ### `IsEmpty() bool`
 Returns true if no referrals exist in the system.
 
-## Referral Struct Methods
-
-### `NewReferral() *Referral`
-Creates a new Referral instance with the global keeper.
-
-### `Register(addr, refAddr address) error`
-Creates or updates a referral relationship.
-
-
-### `Has(addr address) bool`
-Returns true if a referral exists for the given address.
-
-### `Get(addr address) (address, error)`
-Retrieves the referral address for the given address.
-
 ## Usage
 
 ```go
@@ -47,12 +32,6 @@ referrer := GetReferral(userAddress)
 
 // Check if referral exists
 exists := HasReferral(userAddress)
-
-// Using Referral struct
-r := NewReferral()
-err := r.Register(userAddr, referrerAddr)
-refAddr, err := r.Get(userAddr)
-err = r.Remove(userAddr)
 ```
 
 ## Security

@@ -24,79 +24,74 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 		addr                 address
 		referral             string
 		expectedResult       bool
-		expectedHasPanic     bool
+		expectedPanics       bool
 		expectedPanicMessage string
 	}{
 		{
-			name:             "Success register with valid addresses",
-			callerRealm:      routerRealm,
-			addr:             testutils.TestAddress("test1"),
-			referral:         testutils.TestAddress("referrer1").String(),
-			expectedResult:   true,
-			expectedHasPanic: false,
+			name:                 "Success register with valid addresses",
+			callerRealm:          routerRealm,
+			addr:                 testutils.TestAddress("test1"),
+			referral:             testutils.TestAddress("referrer1").String(),
+			expectedResult:       true,
+			expectedPanics:       false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:             "Success register with zero referral",
-			callerRealm:      routerRealm,
-			addr:             testutils.TestAddress("test2"),
-			referral:         zeroAddress.String(),
-			expectedResult:   true,
-			expectedHasPanic: false,
+			name:                 "Success register with zero referral",
+			callerRealm:          routerRealm,
+			addr:                 testutils.TestAddress("test2"),
+			referral:             zeroAddress.String(),
+			expectedResult:       true,
+			expectedPanics:       false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:             "Fail register with same address as referral",
-			callerRealm:      routerRealm,
-			addr:             testutils.TestAddress("test3"),
-			referral:         testutils.TestAddress("test3").String(),
-			expectedResult:   false,
-			expectedHasPanic: false,
+			name:                 "Fail register with same address as referral",
+			callerRealm:          routerRealm,
+			addr:                 testutils.TestAddress("test3"),
+			referral:             testutils.TestAddress("test3").String(),
+			expectedResult:       false,
+			expectedPanics:       false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:             "Fail register existing referral",
-			callerRealm:      routerRealm,
-			addr:             testutils.TestAddress("test4"),
-			referral:         testutils.TestAddress("referrer2").String(),
-			expectedResult:   false,
-			expectedHasPanic: false,
+			name:                 "Fail register existing referral",
+			callerRealm:          routerRealm,
+			addr:                 testutils.TestAddress("test4"),
+			referral:             testutils.TestAddress("referrer2").String(),
+			expectedResult:       false,
+			expectedPanics:       false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:             "Fail register with unauthorized caller",
-			callerRealm:      userRealm,
-			addr:             testutils.TestAddress("test5"),
-			referral:         testutils.TestAddress("referrer3").String(),
-			expectedResult:   false,
-			expectedHasPanic: false,
+			name:                 "Fail register with unauthorized caller",
+			callerRealm:          userRealm,
+			addr:                 testutils.TestAddress("test5"),
+			referral:             testutils.TestAddress("referrer3").String(),
+			expectedResult:       false,
+			expectedPanics:       false,
+			expectedPanicMessage: "",
 		},
 		{
-			name:             "Fail register with invalid referral - invalid format",
-			callerRealm:      routerRealm,
-			addr:             testutils.TestAddress("test6"),
-			referral:         "invalid_ref",
-			expectedResult:   false,
-			expectedHasPanic: false,
+			name:           "Fail register with invalid referral - invalid format",
+			callerRealm:    routerRealm,
+			addr:           testutils.TestAddress("test6"),
+			referral:       "invalid_ref",
+			expectedResult: false,
+			expectedPanics: false,
 		},
 		{
-			name:             "Fail register with invalid user address",
-			callerRealm:      routerRealm,
-			addr:             zeroAddress,
-			referral:         testutils.TestAddress("referrer4").String(),
-			expectedResult:   false,
-			expectedHasPanic: false,
+			name:           "Fail register with invalid user address",
+			callerRealm:    routerRealm,
+			addr:           zeroAddress,
+			referral:       testutils.TestAddress("referrer4").String(),
+			expectedResult: false,
+			expectedPanics: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.True(t, r != nil)
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
 			cleanup(t)
 
 			// given
@@ -107,13 +102,12 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 				setupExistingReferral(t, tc.addr, testutils.TestAddress("existing"))
 			}
 
-			// when
-			result := TryRegister(cross, tc.addr, tc.referral)
-
-			// then
-			if tc.expectedHasPanic {
-				t.Errorf("[%s] expected panic but none occurred", tc.name)
+			if tc.expectedPanics {
+				uassert.PanicsContains(t, tc.expectedPanicMessage, func() {
+					TryRegister(cross, tc.addr, tc.referral)
+				})
 			} else {
+				result := TryRegister(cross, tc.addr, tc.referral)
 				uassert.Equal(t, tc.expectedResult, result)
 			}
 		})
@@ -316,7 +310,7 @@ func TestGlobalKeeper_getKeeper(t *testing.T) {
 
 // Helper functions
 func cleanup(t *testing.T) {
-    t.Helper()
+	t.Helper()
 	// Reset global keeper
 	gReferralKeeper = NewKeeper()
 }

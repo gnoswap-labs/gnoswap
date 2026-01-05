@@ -41,8 +41,9 @@ func (k *keeper) register(addr, refAddr address) error {
 // Setting refAddr to zero address removes the referral.
 // Rate limiting applies to prevent abuse.
 func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
-	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
-		return err
+	caller := runtime.PreviousRealm().Address()
+	if err := isValidCaller(caller); err != nil {
+		panic("unauthorized caller: " + caller.String())
 	}
 
 	if err := k.validateAddresses(addr, refAddr); err != nil {
@@ -61,7 +62,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 			chain.Emit(
 				eventType,
-				"prevAddr", runtime.PreviousRealm().Address().String(),
+				"prevAddr", caller.String(),
 				"address", addrStr,
 				"referral", refAddrStr,
 			)
@@ -79,6 +80,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 	chain.Emit(
 		eventType,
+		"prevAddr", caller.String(),
 		"address", addrStr,
 		"referral", refAddrStr,
 	)
