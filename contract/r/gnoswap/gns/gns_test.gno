@@ -643,12 +643,15 @@ func TestMintGns_EdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 
+			balanceBefore := BalanceOf(adminAddr)
 			var mintedAmount int64
 			uassert.NotPanics(t, func() {
 				testing.SetRealm(emissionRealm)
 				mintedAmount = MintGns(cross, adminAddr)
 			})
+			balanceAfter := BalanceOf(adminAddr)
 			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
+			uassert.Equal(t, mintedAmount, balanceAfter-balanceBefore)
 		})
 	}
 }
@@ -695,12 +698,17 @@ func TestMintGns_StateUpdates(t *testing.T) {
 			resetObject(t)
 			InitGnsTest(t)
 
+			balanceBefore := BalanceOf(adminAddr)
+
 			var mintedAmount int64
 			uassert.NotPanics(t, func() {
 				testing.SetRealm(emissionRealm)
 				mintedAmount = MintGns(cross, adminAddr)
 			})
 
+			balanceAfter := BalanceOf(adminAddr)
+
+			uassert.Equal(t, mintedAmount, balanceAfter-balanceBefore)
 			tt.validateState(t, mintedAmount)
 		})
 	}
