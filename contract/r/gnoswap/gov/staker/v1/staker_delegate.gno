@@ -468,6 +468,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		// Save updated delegation state after undelegation without lockup
 		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
+		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTime)
+		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
