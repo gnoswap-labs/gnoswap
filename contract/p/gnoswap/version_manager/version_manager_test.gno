@@ -316,8 +316,8 @@ func TestVersionManager_StoragePermission(t *testing.T) {
 	}
 }
 
-// TestVersionManager_DomainPath_EdgeCases tests edge cases for domain paths
-func TestVersionManager_DomainPath_EdgeCases(t *testing.T) {
+// TestVersionManager_DomainPath tests edge cases for domain paths
+func TestVersionManager_GetDomainPath(t *testing.T) {
 	tests := []struct {
 		name       string
 		domainPath string
