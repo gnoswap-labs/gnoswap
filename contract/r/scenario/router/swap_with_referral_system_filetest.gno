@@ -44,8 +44,6 @@ var (
 	maxInt64 int64 = 9223372036854775807
 )
 
-var t *testing.T
-
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
 	initializeSetup()
@@ -199,8 +197,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		wugnotPath,
-		gnsPath,
+		token0Path,
+		token1Path,
 		fee,
 		minTick,
 		maxTick,
