@@ -38,10 +38,7 @@ func BalanceOf(owner address) int64 {
 // VotingSupply returns total supply eligible for voting.
 func VotingSupply() int64 {
 	total := token.TotalSupply()
-	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	if !ok {
-		panic("launchpad address not found")
-	}
+	launchpad := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	return total - token.BalanceOf(launchpad)
 }
@@ -61,6 +58,9 @@ func Render(path string) string {
 		balance := token.BalanceOf(address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
 	case "votingsupply":
+	    if len(parts) != 1 {
+	        return "404\n"
+	    }
 		return ufmt.Sprintf("%d\n", VotingSupply())
 	default:
 		return "404\n"
