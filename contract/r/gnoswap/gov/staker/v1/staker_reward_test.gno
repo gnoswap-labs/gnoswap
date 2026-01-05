@@ -169,7 +169,7 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			caller:        launchpadAddr,
 			to:            testutils.TestAddress("nonexistent"),
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-005] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
+			expectedError: "[GNOSWAP-GOV_STAKER-003] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
 			setupLaunchpad: func(gs *govStakerV1) {
 				cleanupStakerRewardTest(t)
 			},
@@ -340,7 +340,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 			to:           address(""),
 			amount:       100,
 			expectError:  true,
-			expectedMsg:  "[GNOSWAP-GOV_STAKER-008] invalid address",
+			expectedMsg:  "[GNOSWAP-GOV_STAKER-004] invalid address",
 			setupBalance: func() {},
 		},
 		{
@@ -350,7 +350,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 			to:           testutils.TestAddress("to"),
 			amount:       -100,
 			expectError:  true,
-			expectedMsg:  "[GNOSWAP-GOV_STAKER-004] invalid amount",
+			expectedMsg:  "[GNOSWAP-GOV_STAKER-002] invalid amount",
 			setupBalance: func() {},
 		},
 		{
@@ -545,7 +545,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			to:            address(""),
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
-			expectedError: "[GNOSWAP-GOV_STAKER-008] invalid address",
+			expectedError: "[GNOSWAP-GOV_STAKER-004] invalid address",
 			shouldFail:    true,
 		},
 		{
@@ -555,7 +555,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			to:            testutils.TestAddress("to"),
 			amount:        -100_000_000,
 			fromBalance:   500_000_000,
-			expectedError: "[GNOSWAP-GOV_STAKER-004] invalid amount",
+			expectedError: "[GNOSWAP-GOV_STAKER-002] invalid amount",
 			shouldFail:    true,
 		},
 		{
@@ -575,7 +575,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
 			shouldFail:    true,
-			expectedError: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
+			expectedError: "[GNOSWAP-GOV_STAKER-005] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
 		},
 		{
 			name:        "success - WUGNOT native coin transfer",
