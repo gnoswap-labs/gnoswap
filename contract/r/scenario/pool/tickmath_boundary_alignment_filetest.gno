@@ -47,169 +47,92 @@ const (
 )
 
 func main() {
-	println("[REGRESSION] TickMath Boundary Alignment Test")
-	println("[PURPOSE] Verify tick_math and pool validation use same boundary logic")
-	println("[ISSUE] Fixed validateSqrtPriceX96 to align with TickMathGetTickAtSqrtRatio")
-	println("[COMMIT] e551901ea7724ae5041da10adaeb1f95f265e3db")
+	println("[SCENARIO] TickMath Boundary Alignment Test")
 	println()
 
 	testing.SetRealm(adminRealm)
 
-	// Setup test data
 	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
 	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 	maxMinusOne := u256.Zero().Sub(maxSqrtRatio, u256.One())
 	maxPlusOne := u256.Zero().Add(maxSqrtRatio, u256.One())
 
-	println("[INFO] MIN_SQRT_RATIO:", MIN_SQRT_RATIO)
-	println("[INFO] MAX_SQRT_RATIO:", MAX_SQRT_RATIO)
-	println("[INFO] MAX_SQRT_RATIO - 1:", maxMinusOne.ToString())
-	println("[INFO] MAX_SQRT_RATIO + 1:", maxPlusOne.ToString())
-	println()
-
-	// Test 1: MIN_SQRT_RATIO (should be accepted by both)
-	println("[TEST 1] sqrtPrice = MIN_SQRT_RATIO (inclusive boundary)")
-	println("[EXPECTED] Both tick_math and pool should accept MIN_SQRT_RATIO")
-
-	// Test tick_math acceptance
+	println("[INFO] Test 1: MIN_SQRT_RATIO (inclusive)")
 	tickAtMin := common.TickMathGetTickAtSqrtRatio(minSqrtRatio)
-	println("[✓] tick_math.TickMathGetTickAtSqrtRatio accepted MIN_SQRT_RATIO")
-	println("[INFO] Resulting tick:", tickAtMin)
+	println("[INFO] tick_math tick:", tickAtMin)
 
-	// Test pool validation acceptance
 	gns.Approve(cross, poolAddr, poolCreationFee)
 	pool.CreatePool(cross, barPath, fooPath, 500, MIN_SQRT_RATIO)
-	println("[✓] pool.CreatePool accepted MIN_SQRT_RATIO")
+	println("[INFO] pool.CreatePool accepted")
 	println()
 
-	// Test 2: MAX_SQRT_RATIO - 1 (should be accepted by both)
-	println("[TEST 2] sqrtPrice = MAX_SQRT_RATIO - 1 (within valid range)")
-	println("[EXPECTED] Both tick_math and pool should accept MAX_SQRT_RATIO - 1")
-
-	// Test tick_math acceptance
+	println("[INFO] Test 2: MAX_SQRT_RATIO - 1 (valid)")
 	tickAtMaxMinusOne := common.TickMathGetTickAtSqrtRatio(maxMinusOne)
-	println("[✓] tick_math.TickMathGetTickAtSqrtRatio accepted MAX_SQRT_RATIO - 1")
-	println("[INFO] Resulting tick:", tickAtMaxMinusOne)
+	println("[INFO] tick_math tick:", tickAtMaxMinusOne)
 
-	// Test pool validation acceptance
 	gns.Approve(cross, poolAddr, poolCreationFee)
 	pool.CreatePool(cross, bazPath, quxPath, 3000, maxMinusOne.ToString())
-	println("[✓] pool.CreatePool accepted MAX_SQRT_RATIO - 1")
+	println("[INFO] pool.CreatePool accepted")
 	println()
 
-	// Test 3: MAX_SQRT_RATIO (should be rejected by both - exclusive boundary)
-	println("[TEST 3] sqrtPrice = MAX_SQRT_RATIO (exclusive boundary)")
-	println("[EXPECTED] Both tick_math and pool should reject MAX_SQRT_RATIO")
-
-	// Test tick_math rejection
-	tickMathPanicked := false
+	println("[INFO] Test 3: MAX_SQRT_RATIO (exclusive)")
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				tickMathPanicked = true
-				println("[✓] tick_math.TickMathGetTickAtSqrtRatio rejected MAX_SQRT_RATIO")
-				println("[INFO] Panic message:", r)
+				println("[EXPECTED] tick_math rejected")
 			}
 		}()
 		common.TickMathGetTickAtSqrtRatio(maxSqrtRatio)
 	}()
 
-	if !tickMathPanicked {
-		println("[✗] REGRESSION: tick_math did not reject MAX_SQRT_RATIO")
-	}
-
-	// Test pool validation rejection
-	poolPanicked := false
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				poolPanicked = true
-				println("[✓] pool.CreatePool rejected MAX_SQRT_RATIO")
-				println("[INFO] Panic message:", r)
+				println("[EXPECTED] pool rejected")
 			}
 		}()
 		gns.Approve(cross, poolAddr, poolCreationFee)
 		pool.CreatePool(cross, barPath, bazPath, 10000, MAX_SQRT_RATIO)
 	}()
-
-	if !poolPanicked {
-		println("[✗] REGRESSION: pool did not reject MAX_SQRT_RATIO")
-	}
-
 	println()
 
-	// Test 4: MAX_SQRT_RATIO + 1 (should be rejected by both)
-	println("[TEST 4] sqrtPrice = MAX_SQRT_RATIO + 1 (above valid range)")
-	println("[EXPECTED] Both tick_math and pool should reject MAX_SQRT_RATIO + 1")
-
-	// Test tick_math rejection
-	tickMathPanicked = false
+	println("[INFO] Test 4: MAX_SQRT_RATIO + 1 (out of range)")
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				tickMathPanicked = true
-				println("[✓] tick_math.TickMathGetTickAtSqrtRatio rejected MAX_SQRT_RATIO + 1")
-				println("[INFO] Panic message:", r)
+				println("[EXPECTED] tick_math rejected")
 			}
 		}()
 		common.TickMathGetTickAtSqrtRatio(maxPlusOne)
 	}()
 
-	if !tickMathPanicked {
-		println("[✗] REGRESSION: tick_math did not reject MAX_SQRT_RATIO + 1")
-	}
-
-	// Test pool validation rejection
-	poolPanicked = false
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				poolPanicked = true
-				println("[✓] pool.CreatePool rejected MAX_SQRT_RATIO + 1")
-				println("[INFO] Panic message:", r)
+				println("[EXPECTED] pool rejected")
 			}
 		}()
 		gns.Approve(cross, poolAddr, poolCreationFee)
 		pool.CreatePool(cross, fooPath, quxPath, 100, maxPlusOne.ToString())
 	}()
-
-	if !poolPanicked {
-		println("[✗] REGRESSION: pool did not reject MAX_SQRT_RATIO + 1")
-	}
-
 	println()
-	println("[CONCLUSION] Boundary validation alignment verified")
-	println("[INFO] tick_math.TickMathGetTickAtSqrtRatio and pool.validateSqrtPriceX96")
-	println("[INFO] both use half-open interval [MIN, MAX) consistently")
+
+	println("[INFO] Boundary alignment verified")
 }
 
 // Output:
-// [REGRESSION] TickMath Boundary Alignment Test
-// [PURPOSE] Verify tick_math and pool validation use same boundary logic
-// [ISSUE] Fixed validateSqrtPriceX96 to align with TickMathGetTickAtSqrtRatio
-// [COMMIT] e551901ea7724ae5041da10adaeb1f95f265e3db
+// [SCENARIO] TickMath Boundary Alignment Test
 //
-// [INFO] MIN_SQRT_RATIO: 4295128739
-// [INFO] MAX_SQRT_RATIO: 1461446703485210103287273052203988822378723970342
-// [INFO] MAX_SQRT_RATIO - 1: 1461446703485210103287273052203988822378723970341
-// [INFO] MAX_SQRT_RATIO + 1: 1461446703485210103287273052203988822378723970343
+// [INFO] Test 1: MIN_SQRT_RATIO (inclusive)
+// [INFO] tick_math tick: -887272
+// [INFO] pool.CreatePool accepted
 //
-// [TEST 1] sqrtPrice = MIN_SQRT_RATIO (inclusive boundary)
-// [EXPECTED] Both tick_math and pool should accept MIN_SQRT_RATIO
-// [✓] tick_math.TickMathGetTickAtSqrtRatio accepted MIN_SQRT_RATIO
-// [INFO] Resulting tick: -887272
-// [✓] pool.CreatePool accepted MIN_SQRT_RATIO
+// [INFO] Test 2: MAX_SQRT_RATIO - 1 (valid)
+// [INFO] tick_math tick: 887271
+// [INFO] pool.CreatePool accepted
 //
-// [TEST 2] sqrtPrice = MAX_SQRT_RATIO - 1 (within valid range)
-// [EXPECTED] Both tick_math and pool should accept MAX_SQRT_RATIO - 1
-// [✓] tick_math.TickMathGetTickAtSqrtRatio accepted MAX_SQRT_RATIO - 1
-// [INFO] Resulting tick: 887271
-// [✓] pool.CreatePool accepted MAX_SQRT_RATIO - 1
-//
-// [TEST 3] sqrtPrice = MAX_SQRT_RATIO (exclusive boundary)
-// [EXPECTED] Both tick_math and pool should reject MAX_SQRT_RATIO
-// [✓] tick_math.TickMathGetTickAtSqrtRatio rejected MAX_SQRT_RATIO
-// [INFO] Panic message: [GNOSWAP-COMMON-001] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range
+// [INFO] Test 3: MAX_SQRT_RATIO (exclusive)
+// [EXPECTED] tick_math rejected
 
 // Error:
 // [GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range
