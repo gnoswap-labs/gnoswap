@@ -27,6 +27,9 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
+	// capture old value for event
+	oldAddr, _ := roleAddresses[strings.TrimSpace(roleName)]
+
 	if err := setRoleAddress(roleName, roleAddress); err != nil {
 		panic(err)
 	}
@@ -34,7 +37,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	chain.Emit(
 	    "SetRoleAddress",
 		"prevAddr", caller.String(),
-		"roles", roleName,
+		"role", roleName,
+		"prevRoleAddr", oldAddr.String(),
 		"roleAddress", roleAddress.String(),
 	)
 }
