@@ -29,11 +29,6 @@ Creates a new Referral instance with the global keeper.
 ### `Register(addr, refAddr address) error`
 Creates or updates a referral relationship.
 
-### `Update(addr, newAddr address) error`
-Modifies a referral relationship (same behavior as Register).
-
-### `Remove(addr address) error`
-Deletes a referral relationship.
 
 ### `Has(addr address) bool`
 Returns true if a referral exists for the given address.
