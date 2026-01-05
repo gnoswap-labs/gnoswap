@@ -654,14 +654,14 @@ func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
 				if tt.tick == MAX_TICK-1 {
 					recoveredTick := TickMathGetTickAtSqrtRatio(sqrtRatio)
 					uassert.Equal(t, tt.tick, recoveredTick,
-						ufmt.Sprintf("Roundtrip should work for MAX_TICK - 1"))
+						"Roundtrip should work for MAX_TICK - 1")
 				}
 
 				// For MAX_TICK, the sqrt ratio equals MAX_SQRT_RATIO
 				if tt.tick == MAX_TICK {
 					maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 					uassert.True(t, sqrtRatio.Eq(maxSqrtRatio),
-						ufmt.Sprintf("MAX_TICK should produce MAX_SQRT_RATIO"))
+						"MAX_TICK should produce MAX_SQRT_RATIO")
 				}
 			}
 		})
@@ -687,7 +687,7 @@ func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
 			tick := TickMathGetTickAtSqrtRatio(almostMaxSqrtRatio)
 			// Should return MAX_TICK - 1
 			uassert.Equal(t, MAX_TICK-1, tick,
-				ufmt.Sprintf("MAX_SQRT_RATIO - 1 should map to MAX_TICK - 1"))
+				"MAX_SQRT_RATIO - 1 should map to MAX_TICK - 1")
 		})
 	})
 }
