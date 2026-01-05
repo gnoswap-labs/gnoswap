@@ -94,7 +94,7 @@ func (gs *govStakerV1) Delegate(
 // Undelegate undelegates xGNS from the existing delegate.
 //
 // Initiates withdrawal of staked GNS with lockup period.
-// Voting power removed immediately, xGNS burn occurs on collection.
+// Voting power removed immediately, tokens locked for configurable period.
 // Prevents governance attacks through time delay.
 //
 // Parameters:
@@ -103,16 +103,15 @@ func (gs *govStakerV1) Delegate(
 //
 // Process:
 //  1. Removes voting power immediately
-//  2. Burns xGNS tokens
-//  3. Creates withdrawal request with timestamp
-//  4. Locks GNS for a configurable cooldown period (default: 7 days)
+//  2. Creates withdrawal request with timestamp
+//  3. Locks GNS for configurable cooldown period
 //
 // Requirements:
 //   - Must have delegated to target address
 //   - Sufficient delegated amount
 //   - Cannot undelegate during active votes
 //
-// After lockup (default: 7 days), use Collect() to claim GNS and burn xGNS.
+// After lockup period ends, use CollectUndelegatedGns() to claim GNS.
 // Returns undelegated amount.
 func (gs *govStakerV1) Undelegate(
 	from address,
@@ -465,6 +464,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		// Save updated delegation state after undelegation without lockup
 		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegatee, -currentUnDelegationAmount, currentTime)
+		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTime)
+		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTime)
 
 		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
