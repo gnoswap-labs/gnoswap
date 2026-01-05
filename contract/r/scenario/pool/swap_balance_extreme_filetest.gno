@@ -1,9 +1,14 @@
-// PKGPATH: gno.land/r/demo/main
+// Scenario: Swap Balance Validation - Extreme Price Movements
+// Purpose: Validate balance conservation during extreme pool swaps with wide price ranges
 
-package main
+// PKGPATH: gno.land/r/gnoswap/pool/swap_balance_extreme
+
+package swap_balance_extreme
 
 import (
 	"testing"
+
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -27,12 +32,13 @@ const (
 )
 
 var (
-	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = testing.NewUserRealm(adminAddr)
-	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = testing.NewUserRealm(positionAddr)
-	routerRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/router")
-	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	positionAddr, _    = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm           = testing.NewUserRealm(positionAddr)
+	routerRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/router")
+	poolAddr, _        = access.GetAddress(prbac.ROLE_POOL.String())
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 )
 
 var (
@@ -45,19 +51,74 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-func main() {
-	println("[SCENARIO] Extreme Price Movement - Swap Balance Verification")
-	println()
-
-	setupWideRangePool()
-	testExtremePriceDown()
-	testExtremePriceUp()
-	testMaximumSlippage()
-
-	println("[INFO] All extreme price movement balance checks passed")
+// turn protocol fee on
+func init() {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross, 6, 6)
 }
 
-func setupWideRangePool() {
+type BalanceSnapshot struct {
+	userObl        int64
+	userUsdc       int64
+	poolObl        int64
+	poolUsdc       int64
+	protocolFeeObl int64
+	protocolFeeUsdc int64
+}
+
+func main() {
+	println("[SCENARIO] Swap Balance Validation - Extreme Price Movements")
+	println("[INFO] Purpose: Validate balance conservation during extreme pool swaps")
+	println()
+
+	println("[SCENARIO] 1. Setup - Create Pool with Wide Range")
+	initial := setupWideRangePool()
+	printBalanceSnapshot("After Pool Setup", initial)
+	println()
+
+	println("[SCENARIO] 2. Extreme Downward Price Movement")
+	afterDown := testExtremePriceDown(initial)
+	printBalanceSnapshot("After Extreme Down", afterDown)
+	validateBalanceChange(initial, afterDown, "Extreme Down")
+	println()
+
+	println("[SCENARIO] 3. Extreme Upward Price Movement")
+	afterUp := testExtremePriceUp(afterDown)
+	printBalanceSnapshot("After Extreme Up", afterUp)
+	validateBalanceChange(afterDown, afterUp, "Extreme Up")
+	println()
+
+	println("[SCENARIO] 4. Maximum Slippage Test")
+	afterSlippage := testMaximumSlippage(afterUp)
+	printBalanceSnapshot("After Maximum Slippage", afterSlippage)
+	validateBalanceChange(afterUp, afterSlippage, "Maximum Slippage")
+	println()
+
+	println("[SCENARIO] Complete - All extreme price movement validations passed")
+}
+
+func getBalanceSnapshot() BalanceSnapshot {
+	return BalanceSnapshot{
+		userObl:         obl.BalanceOf(adminAddr),
+		userUsdc:        usdc.BalanceOf(adminAddr),
+		poolObl:         obl.BalanceOf(poolAddr),
+		poolUsdc:        usdc.BalanceOf(poolAddr),
+		protocolFeeObl:  obl.BalanceOf(protocolFeeAddr),
+		protocolFeeUsdc: usdc.BalanceOf(protocolFeeAddr),
+	}
+}
+
+func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+	println("[INFO]", step)
+	println("[EXPECTED] User OBL balance:", snapshot.userObl)
+	println("[EXPECTED] User USDC balance:", snapshot.userUsdc)
+	println("[EXPECTED] Pool OBL balance:", snapshot.poolObl)
+	println("[EXPECTED] Pool USDC balance:", snapshot.poolUsdc)
+	println("[EXPECTED] Protocol fee OBL balance:", snapshot.protocolFeeObl)
+	println("[EXPECTED] Protocol fee USDC balance:", snapshot.protocolFeeUsdc)
+}
+
+func setupWideRangePool() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
@@ -80,25 +141,20 @@ func setupWideRangePool() {
 
 	pools := pool.GetPool(oblPath, usdcPath, fee500)
 	println("[INFO] Pool created with wide-range position (-10000 to 10000)")
-	println("[INFO] Initial amounts - obl:", amount0, "usdc:", amount1)
+	println("[INFO] Minted amounts - obl:", amount0, "usdc:", amount1)
 	println("[INFO] Initial tick:", pools.Slot0Tick())
+
+	return getBalanceSnapshot()
 }
 
-func testExtremePriceDown() {
+func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: Extreme downward price movement (obl → usdc, amount: 10000000)")
 
 	pools := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
-	adminBarBefore := obl.BalanceOf(adminAddr)
-	adminFooBefore := usdc.BalanceOf(adminAddr)
-	poolBarBefore := obl.BalanceOf(poolAddr)
-	poolFooBefore := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)")
 
-	testing.SetRealm(adminRealm)
 	obl.Approve(cross, poolAddr, 10000000)
 
 	testing.SetRealm(routerRealm)
@@ -120,41 +176,20 @@ func testExtremePriceDown() {
 	pools = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
-	adminBarAfter := obl.BalanceOf(adminAddr)
-	adminFooAfter := usdc.BalanceOf(adminAddr)
-	poolBarAfter := obl.BalanceOf(poolAddr)
-	poolFooAfter := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
-
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
-
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Obl conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Usdc conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Tick moved from", tickBefore, "to", tickAfter)
-	println("[EXPECTED] Price decreased significantly:", tickAfter-tickBefore, "< -500")
+	return getBalanceSnapshot()
 }
 
-func testExtremePriceUp() {
+func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: Extreme upward price movement (usdc → obl, amount: 5000000)")
 
 	pools := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
-	adminBarBefore := obl.BalanceOf(adminAddr)
-	adminFooBefore := usdc.BalanceOf(adminAddr)
-	poolBarBefore := obl.BalanceOf(poolAddr)
-	poolFooBefore := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)")
 
-	testing.SetRealm(adminRealm)
 	usdc.Approve(cross, poolAddr, 5000000)
 
 	testing.SetRealm(routerRealm)
@@ -176,41 +211,20 @@ func testExtremePriceUp() {
 	pools = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
-	adminBarAfter := obl.BalanceOf(adminAddr)
-	adminFooAfter := usdc.BalanceOf(adminAddr)
-	poolBarAfter := obl.BalanceOf(poolAddr)
-	poolFooAfter := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
-
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
-
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Obl conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Usdc conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Tick moved from", tickBefore, "to", tickAfter)
-	println("[EXPECTED] Price increased significantly:", tickAfter-tickBefore, "> 500")
+	return getBalanceSnapshot()
 }
 
-func testMaximumSlippage() {
+func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: Maximum slippage (obl → usdc, amount: 20000000)")
 
 	pools := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
-	adminBarBefore := obl.BalanceOf(adminAddr)
-	adminFooBefore := usdc.BalanceOf(adminAddr)
-	poolBarBefore := obl.BalanceOf(poolAddr)
-	poolFooBefore := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swapping 20000000 OBL -> USDC (maximum slippage)")
 
-	testing.SetRealm(adminRealm)
 	obl.Approve(cross, poolAddr, 20000000)
 
 	testing.SetRealm(routerRealm)
@@ -232,24 +246,41 @@ func testMaximumSlippage() {
 	pools = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
-	adminBarAfter := obl.BalanceOf(adminAddr)
-	adminFooAfter := usdc.BalanceOf(adminAddr)
-	poolBarAfter := obl.BalanceOf(poolAddr)
-	poolFooAfter := usdc.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick moved from", tickBefore, "to", tickAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
+	return getBalanceSnapshot()
+}
 
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
+func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+	println("[INFO] Validating balance changes for", swapType)
 
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Obl conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Usdc conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] No tokens lost or created:", conservationBar == 0 && conservationFoo == 0)
-	println("[EXPECTED] Tick movement:", tickAfter-tickBefore, "expected: near range boundary")
+	userOblDiff := after.userObl - before.userObl
+	userUsdcDiff := after.userUsdc - before.userUsdc
+	poolOblDiff := after.poolObl - before.poolObl
+	poolUsdcDiff := after.poolUsdc - before.poolUsdc
+	protocolFeeOblDiff := after.protocolFeeObl - before.protocolFeeObl
+	protocolFeeUsdcDiff := after.protocolFeeUsdc - before.protocolFeeUsdc
+
+	println("[EXPECTED] User OBL change:", userOblDiff)
+	println("[EXPECTED] User USDC change:", userUsdcDiff)
+	println("[EXPECTED] Pool OBL change:", poolOblDiff)
+	println("[EXPECTED] Pool USDC change:", poolUsdcDiff)
+	println("[EXPECTED] Protocol Fee OBL change:", protocolFeeOblDiff)
+	println("[EXPECTED] Protocol Fee USDC change:", protocolFeeUsdcDiff)
+
+	// Exact conservation: user + pool + protocol fee changes must sum to 0
+	totalOblChange := userOblDiff + poolOblDiff + protocolFeeOblDiff
+	totalUsdcChange := userUsdcDiff + poolUsdcDiff + protocolFeeUsdcDiff
+
+	if totalOblChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] OBL not conserved! Total change: %d", totalOblChange))
+	}
+	if totalUsdcChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] USDC not conserved! Total change: %d", totalUsdcChange))
+	}
+
+	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
@@ -266,30 +297,79 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 }
 
 // Output:
-// [SCENARIO] Extreme Price Movement - Swap Balance Verification
+// [SCENARIO] Swap Balance Validation - Extreme Price Movements
+// [INFO] Purpose: Validate balance conservation during extreme pool swaps
 //
+// [SCENARIO] 1. Setup - Create Pool with Wide Range
 // [INFO] Pool created with wide-range position (-10000 to 10000)
-// [INFO] Initial amounts - obl: 3934541779 usdc: 3934541779
+// [INFO] Minted amounts - obl: 3934541779 usdc: 3934541779
 // [INFO] Initial tick: 0
+// [INFO] After Pool Setup
+// [EXPECTED] User OBL balance: 99996065458221
+// [EXPECTED] User USDC balance: 99996065458221
+// [EXPECTED] Pool OBL balance: 3934541779
+// [EXPECTED] Pool USDC balance: 3934541779
+// [EXPECTED] Protocol fee OBL balance: 0
+// [EXPECTED] Protocol fee USDC balance: 0
 //
-// [INFO] Test: Extreme downward price movement (obl → usdc, amount: 10000000)
-// [EXPECTED] Swap amounts - amount0: 10000000 amount1: -9985019
-// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Tick moved from 0 to -20
-// [EXPECTED] Price decreased significantly: -20 < -500
+// [SCENARIO] 2. Extreme Downward Price Movement
+// [INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)
+// [INFO] Swap - In: 10000000 Out: -9985019
+// [INFO] Tick moved from 0 to -20
+// [INFO] After Extreme Down
+// [EXPECTED] User OBL balance: 99996055458221
+// [EXPECTED] User USDC balance: 99996075443240
+// [EXPECTED] Pool OBL balance: 3944541779
+// [EXPECTED] Pool USDC balance: 3924556760
+// [EXPECTED] Protocol fee OBL balance: 0
+// [EXPECTED] Protocol fee USDC balance: 0
+// [INFO] Validating balance changes for Extreme Down
+// [EXPECTED] User OBL change: -10000000
+// [EXPECTED] User USDC change: 9985019
+// [EXPECTED] Pool OBL change: 10000000
+// [EXPECTED] Pool USDC change: -9985019
+// [EXPECTED] Protocol Fee OBL change: 0
+// [EXPECTED] Protocol Fee USDC change: 0
+// [EXPECTED] Exact balance conservation verified for Extreme Down
 //
-// [INFO] Test: Extreme upward price movement (usdc → obl, amount: 5000000)
-// [EXPECTED] Swap amounts - amount0: -5004988 amount1: 5000000
-// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Tick moved from -20 to -10
-// [EXPECTED] Price increased significantly: 10 > 500
+// [SCENARIO] 3. Extreme Upward Price Movement
+// [INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)
+// [INFO] Swap - In: -5004988 Out: 5000000
+// [INFO] Tick moved from -20 to -10
+// [INFO] After Extreme Up
+// [EXPECTED] User OBL balance: 99996060463209
+// [EXPECTED] User USDC balance: 99996070443240
+// [EXPECTED] Pool OBL balance: 3939536791
+// [EXPECTED] Pool USDC balance: 3929556760
+// [EXPECTED] Protocol fee OBL balance: 0
+// [EXPECTED] Protocol fee USDC balance: 0
+// [INFO] Validating balance changes for Extreme Up
+// [EXPECTED] User OBL change: 5004988
+// [EXPECTED] User USDC change: -5000000
+// [EXPECTED] Pool OBL change: -5004988
+// [EXPECTED] Pool USDC change: 5000000
+// [EXPECTED] Protocol Fee OBL change: 0
+// [EXPECTED] Protocol Fee USDC change: 0
+// [EXPECTED] Exact balance conservation verified for Extreme Up
 //
-// [INFO] Test: Maximum slippage (obl → usdc, amount: 20000000)
-// [EXPECTED] Swap amounts - amount0: 20000000 amount1: -19930244
-// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
-// [EXPECTED] No tokens lost or created: true
-// [EXPECTED] Tick movement: -40 expected: near range boundary
-// [INFO] All extreme price movement balance checks passed
+// [SCENARIO] 4. Maximum Slippage Test
+// [INFO] Swapping 20000000 OBL -> USDC (maximum slippage)
+// [INFO] Swap - In: 20000000 Out: -19930244
+// [INFO] Tick moved from -10 to -50
+// [INFO] After Maximum Slippage
+// [EXPECTED] User OBL balance: 99996040463209
+// [EXPECTED] User USDC balance: 99996090373484
+// [EXPECTED] Pool OBL balance: 3959536791
+// [EXPECTED] Pool USDC balance: 3909626516
+// [EXPECTED] Protocol fee OBL balance: 0
+// [EXPECTED] Protocol fee USDC balance: 0
+// [INFO] Validating balance changes for Maximum Slippage
+// [EXPECTED] User OBL change: -20000000
+// [EXPECTED] User USDC change: 19930244
+// [EXPECTED] Pool OBL change: 20000000
+// [EXPECTED] Pool USDC change: -19930244
+// [EXPECTED] Protocol Fee OBL change: 0
+// [EXPECTED] Protocol Fee USDC change: 0
+// [EXPECTED] Exact balance conservation verified for Maximum Slippage
+//
+// [SCENARIO] Complete - All extreme price movement validations passed

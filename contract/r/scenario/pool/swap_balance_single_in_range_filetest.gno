@@ -1,9 +1,14 @@
-// PKGPATH: gno.land/r/demo/main
+// Scenario: Swap Balance Validation - Single In-Range Position
+// Purpose: Validate exact balance conservation for basic in-range position swaps
 
-package main
+// PKGPATH: gno.land/r/gnoswap/pool/swap_balance_single
+
+package swap_balance_single
 
 import (
 	"testing"
+
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -27,12 +32,13 @@ const (
 )
 
 var (
-	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = testing.NewUserRealm(adminAddr)
-	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = testing.NewUserRealm(positionAddr)
-	routerRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/router")
-	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	positionAddr, _    = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm           = testing.NewUserRealm(positionAddr)
+	routerRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/router")
+	poolAddr, _        = access.GetAddress(prbac.ROLE_POOL.String())
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 )
 
 var (
@@ -45,18 +51,68 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-func main() {
-	println("[SCENARIO] Single In-Range Position - Swap Balance Verification")
-	println()
-
-	setupPool()
-	testExactInputSwap()
-	testExactOutputSwap()
-
-	println("[INFO] All balance checks passed")
+// turn protocol fee on
+func init() {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross, 6, 6)
 }
 
-func setupPool() {
+type BalanceSnapshot struct {
+	userBar        int64
+	userFoo        int64
+	poolBar        int64
+	poolFoo        int64
+	protocolFeeBar int64
+	protocolFeeFoo int64
+}
+
+func main() {
+	println("[SCENARIO] Swap Balance Validation - Single In-Range Position")
+	println("[INFO] Purpose: Validate exact balance conservation for basic in-range swaps")
+	println()
+
+	println("[SCENARIO] 1. Setup Pool with In-Range Position")
+	initial := setupPool()
+	printBalanceSnapshot("After Pool Setup", initial)
+	println()
+
+	println("[SCENARIO] 2. ExactInput Swap (BAR -> FOO)")
+	afterExactIn := testExactInputSwap(initial)
+	printBalanceSnapshot("After ExactInput Swap", afterExactIn)
+	validateBalanceChange(initial, afterExactIn, "ExactInput")
+	println()
+
+	println("[SCENARIO] 3. ExactOutput Swap (FOO -> BAR)")
+	afterExactOut := testExactOutputSwap(afterExactIn)
+	printBalanceSnapshot("After ExactOutput Swap", afterExactOut)
+	validateBalanceChange(afterExactIn, afterExactOut, "ExactOutput")
+	println()
+
+	println("[SCENARIO] Complete - All in-range position validations passed")
+}
+
+func getBalanceSnapshot() BalanceSnapshot {
+	return BalanceSnapshot{
+		userBar:        bar.BalanceOf(adminAddr),
+		userFoo:        foo.BalanceOf(adminAddr),
+		poolBar:        bar.BalanceOf(poolAddr),
+		poolFoo:        foo.BalanceOf(poolAddr),
+		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
+		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
+	}
+}
+
+func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+	println("[INFO]", step)
+	println("[EXPECTED] User BAR balance:", snapshot.userBar)
+	println("[EXPECTED] User FOO balance:", snapshot.userFoo)
+	println("[EXPECTED] Pool BAR balance:", snapshot.poolBar)
+	println("[EXPECTED] Pool FOO balance:", snapshot.poolFoo)
+	println("[EXPECTED] Protocol fee BAR balance:", snapshot.protocolFeeBar)
+	println("[EXPECTED] Protocol fee FOO balance:", snapshot.protocolFeeFoo)
+}
+
+func setupPool() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
@@ -78,24 +134,20 @@ func setupPool() {
 	)
 
 	println("[INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)")
-	println("[INFO] Initial amounts - bar:", amount0, "foo:", amount1)
+	println("[INFO] Minted amounts - bar:", amount0, "foo:", amount1)
+
+	return getBalanceSnapshot()
 }
 
-func testExactInputSwap() {
+func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: ExactInput swap (bar → foo, amount: 100000)")
 
 	pools := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := pools.Slot0Tick()
+	liquidityBefore := pools.Liquidity().ToString()
 
-	adminBarBefore := bar.BalanceOf(adminAddr)
-	adminFooBefore := foo.BalanceOf(adminAddr)
-	poolBarBefore := bar.BalanceOf(poolAddr)
-	poolFooBefore := foo.BalanceOf(poolAddr)
+	println("[INFO] Swapping 100000 BAR -> FOO (exact input)")
 
-	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 100000)
 
 	testing.SetRealm(routerRealm)
@@ -116,43 +168,24 @@ func testExactInputSwap() {
 
 	pools = pool.GetPool(barPath, fooPath, fee500)
 	tickAfter := pools.Slot0Tick()
+	liquidityAfter := pools.Liquidity().ToString()
 
-	adminBarAfter := bar.BalanceOf(adminAddr)
-	adminFooAfter := foo.BalanceOf(adminAddr)
-	poolBarAfter := bar.BalanceOf(poolAddr)
-	poolFooAfter := foo.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick:", tickBefore, "->", tickAfter)
+	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
-
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
-
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Admin bar balance changed by:", adminBarChange, "expected: -100000")
-	println("[EXPECTED] Pool bar balance changed by:", poolBarChange, "expected: 100000")
-	println("[EXPECTED] Bar conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Foo conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Tick moved from", tickBefore, "to", tickAfter, "expected: price decreased")
+	return getBalanceSnapshot()
 }
 
-func testExactOutputSwap() {
+func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: ExactOutput swap (foo → bar, amount: -50000)")
 
 	pools := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := pools.Slot0Tick()
+	liquidityBefore := pools.Liquidity().ToString()
 
-	adminBarBefore := bar.BalanceOf(adminAddr)
-	adminFooBefore := foo.BalanceOf(adminAddr)
-	poolBarBefore := bar.BalanceOf(poolAddr)
-	poolFooBefore := foo.BalanceOf(poolAddr)
+	println("[INFO] Swapping FOO -> 50000 BAR (exact output)")
 
-	testing.SetRealm(adminRealm)
 	foo.Approve(cross, poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
@@ -173,26 +206,44 @@ func testExactOutputSwap() {
 
 	pools = pool.GetPool(barPath, fooPath, fee500)
 	tickAfter := pools.Slot0Tick()
+	liquidityAfter := pools.Liquidity().ToString()
 
-	adminBarAfter := bar.BalanceOf(adminAddr)
-	adminFooAfter := foo.BalanceOf(adminAddr)
-	poolBarAfter := bar.BalanceOf(poolAddr)
-	poolFooAfter := foo.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick:", tickBefore, "->", tickAfter)
+	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
+	return getBalanceSnapshot()
+}
 
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
+func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+	println("[INFO] Validating balance changes for", swapType)
 
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Admin bar balance changed by:", adminBarChange, "expected: 50000")
-	println("[EXPECTED] Pool bar balance changed by:", poolBarChange, "expected: -50000")
-	println("[EXPECTED] Bar conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Foo conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Tick moved from", tickBefore, "to", tickAfter, "expected: price increased")
+	userBarDiff := after.userBar - before.userBar
+	userFooDiff := after.userFoo - before.userFoo
+	poolBarDiff := after.poolBar - before.poolBar
+	poolFooDiff := after.poolFoo - before.poolFoo
+	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
+	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
+
+	println("[EXPECTED] User BAR change:", userBarDiff)
+	println("[EXPECTED] User FOO change:", userFooDiff)
+	println("[EXPECTED] Pool BAR change:", poolBarDiff)
+	println("[EXPECTED] Pool FOO change:", poolFooDiff)
+	println("[EXPECTED] Protocol Fee BAR change:", protocolFeeBarDiff)
+	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
+
+	// Exact conservation: user + pool + protocol fee changes must sum to 0
+	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
+	totalFooChange := userFooDiff + poolFooDiff + protocolFeeFooDiff
+
+	if totalBarChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR not conserved! Total change: %d", totalBarChange))
+	}
+	if totalFooChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO not conserved! Total change: %d", totalFooChange))
+	}
+
+	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
@@ -209,24 +260,60 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 }
 
 // Output:
-// [SCENARIO] Single In-Range Position - Swap Balance Verification
+// [SCENARIO] Swap Balance Validation - Single In-Range Position
+// [INFO] Purpose: Validate exact balance conservation for basic in-range swaps
 //
+// [SCENARIO] 1. Setup Pool with In-Range Position
 // [INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)
-// [INFO] Initial amounts - bar: 48768198 foo: 48768198
+// [INFO] Minted amounts - bar: 48768198 foo: 48768198
+// [INFO] After Pool Setup
+// [EXPECTED] User BAR balance: 99999951231802
+// [EXPECTED] User FOO balance: 99999951231802
+// [EXPECTED] Pool BAR balance: 48768198
+// [EXPECTED] Pool FOO balance: 48768198
+// [EXPECTED] Protocol fee BAR balance: 0
+// [EXPECTED] Protocol fee FOO balance: 0
 //
-// [INFO] Test: ExactInput swap (bar → foo, amount: 100000)
-// [EXPECTED] Swap amounts - amount0: 100000 amount1: -99940
-// [EXPECTED] Admin bar balance changed by: -100000 expected: -100000
-// [EXPECTED] Pool bar balance changed by: 100000 expected: 100000
-// [EXPECTED] Bar conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Foo conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Tick moved from 0 to -2 expected: price decreased
+// [SCENARIO] 2. ExactInput Swap (BAR -> FOO)
+// [INFO] Swapping 100000 BAR -> FOO (exact input)
+// [INFO] Swap - In: 100000 Out: -99940
+// [INFO] Tick: 0 -> -2
+// [INFO] Liquidity: before: 1000000000 after: 1000000000
+// [INFO] After ExactInput Swap
+// [EXPECTED] User BAR balance: 99999951131802
+// [EXPECTED] User FOO balance: 99999951331742
+// [EXPECTED] Pool BAR balance: 48868198
+// [EXPECTED] Pool FOO balance: 48668258
+// [EXPECTED] Protocol fee BAR balance: 0
+// [EXPECTED] Protocol fee FOO balance: 0
+// [INFO] Validating balance changes for ExactInput
+// [EXPECTED] User BAR change: -100000
+// [EXPECTED] User FOO change: 99940
+// [EXPECTED] Pool BAR change: 100000
+// [EXPECTED] Pool FOO change: -99940
+// [EXPECTED] Protocol Fee BAR change: 0
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified for ExactInput
 //
-// [INFO] Test: ExactOutput swap (foo → bar, amount: -50000)
-// [EXPECTED] Swap amounts - amount0: -50000 amount1: 50019
-// [EXPECTED] Admin bar balance changed by: 50000 expected: 50000
-// [EXPECTED] Pool bar balance changed by: -50000 expected: -50000
-// [EXPECTED] Bar conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Foo conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Tick moved from -2 to -1 expected: price increased
-// [INFO] All balance checks passed
+// [SCENARIO] 3. ExactOutput Swap (FOO -> BAR)
+// [INFO] Swapping FOO -> 50000 BAR (exact output)
+// [INFO] Swap - In: -50000 Out: 50019
+// [INFO] Tick: -2 -> -1
+// [INFO] Liquidity: before: 1000000000 after: 1000000000
+// [INFO] After ExactOutput Swap
+// [EXPECTED] User BAR balance: 99999951181802
+// [EXPECTED] User FOO balance: 99999951281723
+// [EXPECTED] Pool BAR balance: 48818198
+// [EXPECTED] Pool FOO balance: 48718277
+// [EXPECTED] Protocol fee BAR balance: 0
+// [EXPECTED] Protocol fee FOO balance: 0
+// [INFO] Validating balance changes for ExactOutput
+// [EXPECTED] User BAR change: 50000
+// [EXPECTED] User FOO change: -50019
+// [EXPECTED] Pool BAR change: -50000
+// [EXPECTED] Pool FOO change: 50019
+// [EXPECTED] Protocol Fee BAR change: 0
+// [EXPECTED] Protocol Fee FOO change: 0
+// [EXPECTED] Exact balance conservation verified for ExactOutput
+//
+// [SCENARIO] Complete - All in-range position validations passed

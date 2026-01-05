@@ -1,9 +1,14 @@
-// PKGPATH: gno.land/r/demo/main
+// Scenario: Swap Balance Validation - Mixed Position Ranges
+// Purpose: Validate that out-of-range positions don't affect swap balance calculations
 
-package main
+// PKGPATH: gno.land/r/gnoswap/pool/swap_balance_mixed
+
+package swap_balance_mixed
 
 import (
 	"testing"
+
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -27,12 +32,13 @@ const (
 )
 
 var (
-	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = testing.NewUserRealm(adminAddr)
-	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = testing.NewUserRealm(positionAddr)
-	routerRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/router")
-	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	positionAddr, _    = access.GetAddress(prbac.ROLE_POSITION.String())
+	posRealm           = testing.NewUserRealm(positionAddr)
+	routerRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/router")
+	poolAddr, _        = access.GetAddress(prbac.ROLE_POOL.String())
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 )
 
 var (
@@ -45,18 +51,68 @@ const (
 	MAX_PRICE = "1461446703485210103287273052203988822378723970341"
 )
 
-func main() {
-	println("[SCENARIO] Mixed Positions - Swap Balance Verification")
-	println()
-
-	setupPoolWithMixedPositions()
-	testExactInputWithMixedPositions()
-	testExactOutputWithMixedPositions()
-
-	println("[INFO] All balance checks passed with mixed positions")
+// turn protocol fee on
+func init() {
+	testing.SetRealm(adminRealm)
+	pool.SetFeeProtocol(cross, 6, 6)
 }
 
-func setupPoolWithMixedPositions() {
+type BalanceSnapshot struct {
+	userBaz         int64
+	userQux         int64
+	poolBaz         int64
+	poolQux         int64
+	protocolFeeBaz  int64
+	protocolFeeQux  int64
+}
+
+func main() {
+	println("[SCENARIO] Swap Balance Validation - Mixed Position Ranges")
+	println("[INFO] Purpose: Validate out-of-range positions don't affect swaps")
+	println()
+
+	println("[SCENARIO] 1. Setup Pool with Mixed Positions")
+	initial := setupPoolWithMixedPositions()
+	printBalanceSnapshot("After Pool Setup", initial)
+	println()
+
+	println("[SCENARIO] 2. ExactInput Swap with Mixed Positions")
+	afterExactIn := testExactInputWithMixedPositions(initial)
+	printBalanceSnapshot("After ExactInput Swap", afterExactIn)
+	validateBalanceChange(initial, afterExactIn, "ExactInput")
+	println()
+
+	println("[SCENARIO] 3. ExactOutput Swap with Mixed Positions")
+	afterExactOut := testExactOutputWithMixedPositions(afterExactIn)
+	printBalanceSnapshot("After ExactOutput Swap", afterExactOut)
+	validateBalanceChange(afterExactIn, afterExactOut, "ExactOutput")
+	println()
+
+	println("[SCENARIO] Complete - All mixed position validations passed")
+}
+
+func getBalanceSnapshot() BalanceSnapshot {
+	return BalanceSnapshot{
+		userBaz:        baz.BalanceOf(adminAddr),
+		userQux:        qux.BalanceOf(adminAddr),
+		poolBaz:        baz.BalanceOf(poolAddr),
+		poolQux:        qux.BalanceOf(poolAddr),
+		protocolFeeBaz: baz.BalanceOf(protocolFeeAddr),
+		protocolFeeQux: qux.BalanceOf(protocolFeeAddr),
+	}
+}
+
+func printBalanceSnapshot(step string, snapshot BalanceSnapshot) {
+	println("[INFO]", step)
+	println("[EXPECTED] User BAZ balance:", snapshot.userBaz)
+	println("[EXPECTED] User QUX balance:", snapshot.userQux)
+	println("[EXPECTED] Pool BAZ balance:", snapshot.poolBaz)
+	println("[EXPECTED] Pool QUX balance:", snapshot.poolQux)
+	println("[EXPECTED] Protocol fee BAZ balance:", snapshot.protocolFeeBaz)
+	println("[EXPECTED] Protocol fee QUX balance:", snapshot.protocolFeeQux)
+}
+
+func setupPoolWithMixedPositions() BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
@@ -91,27 +147,22 @@ func setupPoolWithMixedPositions() {
 	pools := pool.GetPool(bazPath, quxPath, fee500)
 	currentLiquidity := pools.Liquidity().ToString()
 
-	println("[INFO] Pool created with mixed positions")
 	println("[INFO] In-range position (-1000 to 1000):", inRangeAmount0, inRangeAmount1)
 	println("[INFO] Out-of-range position (2000 to 4000):", outOfRangeAmount0, outOfRangeAmount1)
-	println("[INFO] Active liquidity:", currentLiquidity, "expected: 1000000000")
+	println("[INFO] Active liquidity:", currentLiquidity)
+
+	return getBalanceSnapshot()
 }
 
-func testExactInputWithMixedPositions() {
+func testExactInputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: ExactInput swap with mixed positions (baz → qux, amount: 200000)")
 
 	pools := pool.GetPool(bazPath, quxPath, fee500)
+	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	adminBarBefore := baz.BalanceOf(adminAddr)
-	adminFooBefore := qux.BalanceOf(adminAddr)
-	poolBarBefore := baz.BalanceOf(poolAddr)
-	poolFooBefore := qux.BalanceOf(poolAddr)
+	println("[INFO] Swapping 200000 BAZ -> QUX (exact input)")
 
-	testing.SetRealm(adminRealm)
 	baz.Approve(cross, poolAddr, 200000)
 
 	testing.SetRealm(routerRealm)
@@ -134,41 +185,22 @@ func testExactInputWithMixedPositions() {
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
-	adminBarAfter := baz.BalanceOf(adminAddr)
-	adminFooAfter := qux.BalanceOf(adminAddr)
-	poolBarAfter := baz.BalanceOf(poolAddr)
-	poolFooAfter := qux.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick:", tickBefore, "->", tickAfter)
+	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
-
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
-
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Baz conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Qux conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Liquidity before:", liquidityBefore, "after:", liquidityAfter, "expected: unchanged")
-	println("[EXPECTED] Tick after:", tickAfter, "expected: < 2000 (out-of-range not activated)")
+	return getBalanceSnapshot()
 }
 
-func testExactOutputWithMixedPositions() {
+func testExactOutputWithMixedPositions(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
-
-	println()
-	println("[INFO] Test: ExactOutput swap with mixed positions (qux → baz, amount: -80000)")
 
 	pools := pool.GetPool(bazPath, quxPath, fee500)
+	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
-	adminBarBefore := baz.BalanceOf(adminAddr)
-	adminFooBefore := qux.BalanceOf(adminAddr)
-	poolBarBefore := baz.BalanceOf(poolAddr)
-	poolFooBefore := qux.BalanceOf(poolAddr)
+	println("[INFO] Swapping QUX -> 80000 BAZ (exact output)")
 
-	testing.SetRealm(adminRealm)
 	qux.Approve(cross, poolAddr, 300000)
 
 	testing.SetRealm(routerRealm)
@@ -191,24 +223,42 @@ func testExactOutputWithMixedPositions() {
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
-	adminBarAfter := baz.BalanceOf(adminAddr)
-	adminFooAfter := qux.BalanceOf(adminAddr)
-	poolBarAfter := baz.BalanceOf(poolAddr)
-	poolFooAfter := qux.BalanceOf(poolAddr)
+	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
+	println("[INFO] Tick:", tickBefore, "->", tickAfter)
+	println("[INFO] Liquidity: before:", liquidityBefore, "after:", liquidityAfter)
 
-	adminBarChange := adminBarAfter - adminBarBefore
-	adminFooChange := adminFooAfter - adminFooBefore
-	poolBarChange := poolBarAfter - poolBarBefore
-	poolFooChange := poolFooAfter - poolFooBefore
+	return getBalanceSnapshot()
+}
 
-	conservationBar := adminBarChange + poolBarChange
-	conservationFoo := adminFooChange + poolFooChange
+func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
+	println("[INFO] Validating balance changes for", swapType)
 
-	println("[EXPECTED] Swap amounts - amount0:", swapAmount0, "amount1:", swapAmount1)
-	println("[EXPECTED] Baz conservation (admin + pool):", conservationBar, "expected: 0")
-	println("[EXPECTED] Qux conservation (admin + pool):", conservationFoo, "expected: 0")
-	println("[EXPECTED] Liquidity before:", liquidityBefore, "after:", liquidityAfter, "expected: unchanged")
-	println("[EXPECTED] Tick after:", tickAfter, "expected: < 2000 (out-of-range not activated)")
+	userBazDiff := after.userBaz - before.userBaz
+	userQuxDiff := after.userQux - before.userQux
+	poolBazDiff := after.poolBaz - before.poolBaz
+	poolQuxDiff := after.poolQux - before.poolQux
+	protocolFeeBazDiff := after.protocolFeeBaz - before.protocolFeeBaz
+	protocolFeeQuxDiff := after.protocolFeeQux - before.protocolFeeQux
+
+	println("[EXPECTED] User BAZ change:", userBazDiff)
+	println("[EXPECTED] User QUX change:", userQuxDiff)
+	println("[EXPECTED] Pool BAZ change:", poolBazDiff)
+	println("[EXPECTED] Pool QUX change:", poolQuxDiff)
+	println("[EXPECTED] Protocol Fee BAZ change:", protocolFeeBazDiff)
+	println("[EXPECTED] Protocol Fee QUX change:", protocolFeeQuxDiff)
+
+	// Exact conservation: user + pool + protocol fee changes must sum to 0
+	totalBazChange := userBazDiff + poolBazDiff + protocolFeeBazDiff
+	totalQuxChange := userQuxDiff + poolQuxDiff + protocolFeeQuxDiff
+
+	if totalBazChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAZ not conserved! Total change: %d", totalBazChange))
+	}
+	if totalQuxChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] QUX not conserved! Total change: %d", totalQuxChange))
+	}
+
+	println("[EXPECTED] Exact balance conservation verified for", swapType)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
@@ -225,24 +275,61 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 }
 
 // Output:
-// [SCENARIO] Mixed Positions - Swap Balance Verification
+// [SCENARIO] Swap Balance Validation - Mixed Position Ranges
+// [INFO] Purpose: Validate out-of-range positions don't affect swaps
 //
-// [INFO] Pool created with mixed positions
+// [SCENARIO] 1. Setup Pool with Mixed Positions
 // [INFO] In-range position (-1000 to 1000): 48768198 48768198
 // [INFO] Out-of-range position (2000 to 4000): 43051502 0
-// [INFO] Active liquidity: 1000000000 expected: 1000000000
+// [INFO] Active liquidity: 1000000000
+// [INFO] After Pool Setup
+// [EXPECTED] User BAZ balance: 99999908180300
+// [EXPECTED] User QUX balance: 99999951231802
+// [EXPECTED] Pool BAZ balance: 91819700
+// [EXPECTED] Pool QUX balance: 48768198
+// [EXPECTED] Protocol fee BAZ balance: 0
+// [EXPECTED] Protocol fee QUX balance: 0
 //
-// [INFO] Test: ExactInput swap with mixed positions (baz → qux, amount: 200000)
-// [EXPECTED] Swap amounts - amount0: 200000 amount1: -199860
-// [EXPECTED] Baz conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Qux conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Liquidity before: 1000000000 after: 1000000000 expected: unchanged
-// [EXPECTED] Tick after: -4 expected: < 2000 (out-of-range not activated)
+// [SCENARIO] 2. ExactInput Swap with Mixed Positions
+// [INFO] Swapping 200000 BAZ -> QUX (exact input)
+// [INFO] Swap - In: 200000 Out: -199860
+// [INFO] Tick: 0 -> -4
+// [INFO] Liquidity: before: 1000000000 after: 1000000000
+// [INFO] After ExactInput Swap
+// [EXPECTED] User BAZ balance: 99999907980300
+// [EXPECTED] User QUX balance: 99999951431662
+// [EXPECTED] Pool BAZ balance: 92019700
+// [EXPECTED] Pool QUX balance: 48568338
+// [EXPECTED] Protocol fee BAZ balance: 0
+// [EXPECTED] Protocol fee QUX balance: 0
+// [INFO] Validating balance changes for ExactInput
+// [EXPECTED] User BAZ change: -200000
+// [EXPECTED] User QUX change: 199860
+// [EXPECTED] Pool BAZ change: 200000
+// [EXPECTED] Pool QUX change: -199860
+// [EXPECTED] Protocol Fee BAZ change: 0
+// [EXPECTED] Protocol Fee QUX change: 0
+// [EXPECTED] Exact balance conservation verified for ExactInput
 //
-// [INFO] Test: ExactOutput swap with mixed positions (qux → baz, amount: -80000)
-// [EXPECTED] Swap amounts - amount0: -80000 amount1: 80016
-// [EXPECTED] Baz conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Qux conservation (admin + pool): 0 expected: 0
-// [EXPECTED] Liquidity before: 1000000000 after: 1000000000 expected: unchanged
-// [EXPECTED] Tick after: -3 expected: < 2000 (out-of-range not activated)
-// [INFO] All balance checks passed with mixed positions
+// [SCENARIO] 3. ExactOutput Swap with Mixed Positions
+// [INFO] Swapping QUX -> 80000 BAZ (exact output)
+// [INFO] Swap - In: -80000 Out: 80016
+// [INFO] Tick: -4 -> -3
+// [INFO] Liquidity: before: 1000000000 after: 1000000000
+// [INFO] After ExactOutput Swap
+// [EXPECTED] User BAZ balance: 99999908060300
+// [EXPECTED] User QUX balance: 99999951351646
+// [EXPECTED] Pool BAZ balance: 91939700
+// [EXPECTED] Pool QUX balance: 48648354
+// [EXPECTED] Protocol fee BAZ balance: 0
+// [EXPECTED] Protocol fee QUX balance: 0
+// [INFO] Validating balance changes for ExactOutput
+// [EXPECTED] User BAZ change: 80000
+// [EXPECTED] User QUX change: -80016
+// [EXPECTED] Pool BAZ change: -80000
+// [EXPECTED] Pool QUX change: 80016
+// [EXPECTED] Protocol Fee BAZ change: 0
+// [EXPECTED] Protocol Fee QUX change: 0
+// [EXPECTED] Exact balance conservation verified for ExactOutput
+//
+// [SCENARIO] Complete - All mixed position validations passed

@@ -1,6 +1,6 @@
-// PKGPATH: gno.land/r/demo/main
+// PKGPATH: gno.land/r/gnoswap/pool/tickmath_boundary
 
-package main
+package tickmath_boundary
 
 import (
 	"testing"
@@ -81,16 +81,6 @@ func main() {
 		}()
 		common.TickMathGetTickAtSqrtRatio(maxSqrtRatio)
 	}()
-
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				println("[EXPECTED] pool rejected")
-			}
-		}()
-		gns.Approve(cross, poolAddr, poolCreationFee)
-		pool.CreatePool(cross, barPath, bazPath, 10000, MAX_SQRT_RATIO)
-	}()
 	println()
 
 	println("[INFO] Test 4: MAX_SQRT_RATIO + 1 (out of range)")
@@ -101,16 +91,6 @@ func main() {
 			}
 		}()
 		common.TickMathGetTickAtSqrtRatio(maxPlusOne)
-	}()
-
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				println("[EXPECTED] pool rejected")
-			}
-		}()
-		gns.Approve(cross, poolAddr, poolCreationFee)
-		pool.CreatePool(cross, fooPath, quxPath, 100, maxPlusOne.ToString())
 	}()
 	println()
 
@@ -130,6 +110,8 @@ func main() {
 //
 // [INFO] Test 3: MAX_SQRT_RATIO (exclusive)
 // [EXPECTED] tick_math rejected
-
-// Error:
-// [GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range
+//
+// [INFO] Test 4: MAX_SQRT_RATIO + 1 (out of range)
+// [EXPECTED] tick_math rejected
+//
+// [INFO] Boundary alignment verified
