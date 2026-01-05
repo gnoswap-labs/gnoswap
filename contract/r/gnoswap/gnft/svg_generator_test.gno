@@ -64,7 +64,8 @@ func TestSvgGenerator_generateImageURI(t *testing.T) {
 
 			// Verify base64 decoding works
 			base64Part := strings.TrimPrefix(uri, "data:image/svg+xml;base64,")
-			decoded, _ := b64.StdEncoding.DecodeString(base64Part)
+			decoded, err := b64.StdEncoding.DecodeString(base64Part)
+			uassert.NoError(t, err)
 
 			// Verify decoded content is valid SVG
 			decodedStr := string(decoded)
@@ -283,7 +284,8 @@ func TestSvgGenerator_roundTrip(t *testing.T) {
 			uassert.True(t, strings.HasPrefix(uri, "data:image/svg+xml;base64,"))
 
 			base64Part := strings.TrimPrefix(uri, "data:image/svg+xml;base64,")
-			decoded, _ := b64.StdEncoding.DecodeString(base64Part)
+			decoded, err := b64.StdEncoding.DecodeString(base64Part)
+			uassert.NoError(t, err)
 
 			decodedStr := string(decoded)
 			uassert.True(t, strings.HasPrefix(decodedStr, "<svg"))
