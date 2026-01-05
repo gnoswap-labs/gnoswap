@@ -265,6 +265,33 @@ func TestLaunchpadReward_CollectRewardByDepositId_Success(t *testing.T) {
 	}
 }
 
+// TestCollectRewardByDepositId_UpdatesTotalCollectedAmount ensures collected rewards are reflected in project stats.
+func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t *testing.T) {
+	env := testEnvConfig{initialTime: 15000000}
+	project := testProjectConfig{
+		rewardAmount:    10000000,
+		recipientSuffix: "recv14",
+		tier30Pct:       100,
+	}
+	depositor := testDepositConfig{userSuffix: "statUser1", depositAmount: 1000000, tier: 30}
+
+	launchpadAddr, adminRealm := setupTestEnvironment(t, env)
+	lp := getTestImplementation()
+
+	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, project)
+	userAddr, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, depositor)
+
+	testing.SkipHeights(testSkipTier30Claimable)
+	reward := collectTestReward(t, lp, userAddr, depositID)
+
+	storedProject, err := lp.getProject(projectID)
+	uassert.NoError(t, err)
+
+	stats := getProjectStats(storedProject)
+	uassert.Equal(t, reward, stats.TotalCollectedAmount)
+	uassert.Equal(t, safeSubInt64(storedProject.DepositAmount(), reward), stats.RemainingAmount)
+}
+
 // TestCollectRewardByDepositId_Failure tests error scenarios
 func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 	tests := []struct {
