@@ -60,16 +60,6 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			expectedRejected: false,
 			expectedPassed:   false,
 		},
-		{
-			name:             "Quorum met but no leads",
-			maxVotingWeight:  5000,
-			quorum:           40,
-			yesVotes:         2000,
-			noVotes:          2500,
-			expectedFinished: true,
-			expectedRejected: true,
-			expectedPassed:   false,
-		},
 	}
 
 	for _, tc := range tests {

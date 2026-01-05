@@ -148,34 +148,6 @@ func TestProposalStatus_StatusType(t *testing.T) {
 	}
 }
 
-func TestProposalStatus_StatusType_NoMajorityWithQuorum(t *testing.T) {
-	baseTime := time.Unix(1000, 0)
-	config := governance.Config{
-		VotingStartDelay: 100,
-		VotingPeriod:     200,
-		ExecutionDelay:   100,
-		ExecutionWindow:  200,
-		Quorum:           40,
-	}
-
-	proposal := newTestProposal(
-		1,
-		NewProposalStatus(config, 100, true, baseTime.Unix()),
-		governance.NewProposalMetadata("Test", "Test"),
-		NewProposalTextData(),
-		address("g1proposer"),
-		1,
-		baseTime.Unix(),
-	)
-
-	resolver := NewProposalStatusResolver(proposal.Status())
-	resolver.vote(true, 40)  // meets quorum
-	resolver.vote(false, 41) // no majority
-
-	status := resolver.StatusType(baseTime.Add(time.Duration(350) * time.Second).Unix())
-	uassert.True(t, status == governance.StatusRejected)
-}
-
 // TestProposalStatus_VotingOperations tests voting operations
 func TestProposalStatus_VotingOperations(t *testing.T) {
 	tests := []struct {

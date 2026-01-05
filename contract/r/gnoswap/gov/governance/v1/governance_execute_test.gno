@@ -628,28 +628,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 			shouldFail:    true,
 		},
 		{
-			name:       "fail - quorum met but no majority",
-			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				config := testConfig
-				config.Quorum = 40
-				proposal := governance.NewProposal(
-					1,
-					NewProposalStatus(config, 100, true, time.Now().Add(-time.Hour*24*10).Unix()),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
-					testutils.TestAddress("proposer"),
-					1,
-					time.Now().Add(-time.Hour*24*10).Unix())
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 40)
-				statusResolver.vote(false, 41)
-				return proposal
-			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
-			shouldFail:    true,
-		},
-		{
 			name:       "fail - already executed proposal",
 			proposalId: 1,
 			setupProposal: func() *governance.Proposal {

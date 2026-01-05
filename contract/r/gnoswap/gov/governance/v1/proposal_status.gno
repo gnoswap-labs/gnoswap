@@ -58,7 +58,7 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 	}
 
 	// Check voting outcome after voting period ends
-	if !p.voteStatusResolver.IsPassed() {
+	if p.voteStatusResolver.IsRejected() {
 		return governance.StatusRejected
 	}
 
