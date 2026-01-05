@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+
+	"gno.land/p/nt/ufmt"
 )
 
 // SVG template structure:
@@ -115,6 +117,16 @@ type ImageParams struct {
 	color1, color2 string
 }
 
+// validateCoordinate checks if a coordinate value is within valid range.
+// Returns error with details about which coordinate failed if out of range.
+func validateCoordinate(value int, min int, max int, name string) error {
+	if value < min || value > max {
+		details := ufmt.Sprintf("%s=%d (expected range: [%d, %d])", name, value, min, max)
+		return makeErrorWithDetails(errInvalidTokenParamsRange, details)
+	}
+	return nil
+}
+
 // parseImageParams parses and validates parameters in one step.
 // Returns parsed ImageParams or error.
 // Expected format: "x1,y1,x2,y2,color1,color2"
@@ -144,21 +156,18 @@ func parseImageParams(params string) (ImageParams, error) {
 		return ImageParams{}, errInvalidTokenParams
 	}
 
-	// Validate coordinate ranges
-	if x1 < x1Min || x1 > x1Max {
-		return ImageParams{}, errInvalidTokenParamsRange
+	// Validate coordinate ranges with detailed error messages
+	if err := validateCoordinate(x1, x1Min, x1Max, "x1"); err != nil {
+		return ImageParams{}, err
 	}
-
-	if y1 < y1Min || y1 > y1Max {
-		return ImageParams{}, errInvalidTokenParamsRange
+	if err := validateCoordinate(y1, y1Min, y1Max, "y1"); err != nil {
+		return ImageParams{}, err
 	}
-
-	if x2 < x2Min || x2 > x2Max {
-		return ImageParams{}, errInvalidTokenParamsRange
+	if err := validateCoordinate(x2, x2Min, x2Max, "x2"); err != nil {
+		return ImageParams{}, err
 	}
-
-	if y2 < y2Min || y2 > y2Max {
-		return ImageParams{}, errInvalidTokenParamsRange
+	if err := validateCoordinate(y2, y2Min, y2Max, "y2"); err != nil {
+		return ImageParams{}, err
 	}
 
 	color1 := parts[4]

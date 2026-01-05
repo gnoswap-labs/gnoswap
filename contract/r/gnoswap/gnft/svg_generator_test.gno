@@ -574,7 +574,94 @@ func TestSvgGenerator_outOfRangeValues(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := parseImageParams(tc.params)
 			uassert.Error(t, err)
-			uassert.Equal(t, errInvalidTokenParamsRange.Error(), err.Error())
+			// Error now includes detailed coordinate info, check contains base error
+			uassert.True(t, strings.Contains(err.Error(), errInvalidTokenParamsRange.Error()))
+		})
+	}
+}
+
+// TestSvgGenerator_outOfRangeValues_DetailedErrors verifies that error messages
+// contain specific coordinate information for easier debugging.
+func TestSvgGenerator_outOfRangeValues_DetailedErrors(t *testing.T) {
+	tests := []struct {
+		name              string
+		params            string
+		expectedCoordName string
+		expectedValue     string
+		expectedRange     string
+	}{
+		{
+			name:              "x1 below min shows x1 in error",
+			params:            "5,10,123,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "x1",
+			expectedValue:     "5",
+			expectedRange:     "[7, 13]",
+		},
+		{
+			name:              "x1 above max shows x1 in error",
+			params:            "15,10,123,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "x1",
+			expectedValue:     "15",
+			expectedRange:     "[7, 13]",
+		},
+		{
+			name:              "y1 below min shows y1 in error",
+			params:            "10,5,123,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "y1",
+			expectedValue:     "5",
+			expectedRange:     "[7, 13]",
+		},
+		{
+			name:              "y1 above max shows y1 in error",
+			params:            "10,15,123,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "y1",
+			expectedValue:     "15",
+			expectedRange:     "[7, 13]",
+		},
+		{
+			name:              "x2 below min shows x2 in error",
+			params:            "10,10,120,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "x2",
+			expectedValue:     "120",
+			expectedRange:     "[121, 126]",
+		},
+		{
+			name:              "x2 above max shows x2 in error",
+			params:            "10,10,130,123,#AABBCC,#DDEEFF",
+			expectedCoordName: "x2",
+			expectedValue:     "130",
+			expectedRange:     "[121, 126]",
+		},
+		{
+			name:              "y2 below min shows y2 in error",
+			params:            "10,10,123,100,#AABBCC,#DDEEFF",
+			expectedCoordName: "y2",
+			expectedValue:     "100",
+			expectedRange:     "[121, 126]",
+		},
+		{
+			name:              "y2 above max shows y2 in error",
+			params:            "10,10,123,130,#AABBCC,#DDEEFF",
+			expectedCoordName: "y2",
+			expectedValue:     "130",
+			expectedRange:     "[121, 126]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := parseImageParams(tc.params)
+			uassert.Error(t, err)
+
+			errMsg := err.Error()
+			// Verify error message contains base error
+			uassert.True(t, strings.Contains(errMsg, errInvalidTokenParamsRange.Error()))
+			// Verify error message contains coordinate name
+			uassert.True(t, strings.Contains(errMsg, tc.expectedCoordName+"="))
+			// Verify error message contains the actual value
+			uassert.True(t, strings.Contains(errMsg, tc.expectedValue))
+			// Verify error message contains expected range
+			uassert.True(t, strings.Contains(errMsg, tc.expectedRange))
 		})
 	}
 }
@@ -926,7 +1013,13 @@ func TestSvgGenerator_parseImageParams(t *testing.T) {
 				uassert.NoError(t, err)
 			} else {
 				uassert.Error(t, err)
-				uassert.Equal(t, tc.expectedError.Error(), err.Error())
+				// For range validation errors, check if error contains base error message
+				// (detailed errors include coordinate info)
+				if tc.expectedError == errInvalidTokenParamsRange {
+					uassert.True(t, strings.Contains(err.Error(), tc.expectedError.Error()))
+				} else {
+					uassert.Equal(t, tc.expectedError.Error(), err.Error())
+				}
 			}
 		})
 	}
