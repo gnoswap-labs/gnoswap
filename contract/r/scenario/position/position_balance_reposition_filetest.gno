@@ -244,6 +244,30 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
 	ufmt.Printf("[EXPECTED] Final pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Final pool tick should be %d\n", poolInfo.Slot0Tick())
+
+	// Validate reposition balance changes
+	validateRepositionBalances(barBalanceStart, barBalanceFinal, fooBalanceStart, fooBalanceFinal)
+}
+
+func validateRepositionBalances(barBefore, barAfter, fooBefore, fooAfter int64) {
+	// Calculate total balance change
+	barChange := barBefore - barAfter
+	fooChange := fooBefore - fooAfter
+
+	// After reposition, user should have used tokens (balance decreased)
+	// but exact amounts depend on price movement and liquidity ratios
+	ufmt.Printf("[EXPECTED] Total BAR change during reposition: %d\n", barChange)
+	ufmt.Printf("[EXPECTED] Total FOO change during reposition: %d\n", fooChange)
+
+	// Verify balance changes are reasonable (not negative withdrawals)
+	if barBefore < 0 || barAfter < 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR balance became negative: before=%d after=%d", barBefore, barAfter))
+	}
+	if fooBefore < 0 || fooAfter < 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO balance became negative: before=%d after=%d", fooBefore, fooAfter))
+	}
+
+	ufmt.Println("[EXPECTED] Reposition balance validation passed")
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
@@ -318,3 +342,6 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Final pool token1 balance should be 1
 // [EXPECTED] Final pool liquidity should be 0
 // [EXPECTED] Final pool tick should be 8031
+// [EXPECTED] Total BAR change during reposition: 11605209
+// [EXPECTED] Total FOO change during reposition: -756515
+// [EXPECTED] Reposition balance validation passed

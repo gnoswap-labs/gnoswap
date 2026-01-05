@@ -149,6 +149,29 @@ func testIncreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
+
+	// Validate token conservation and correctness
+	validateIncreaseLiquidityBalances(barChange, fooChange, barBalanceBefore, barBalanceAfter, fooBalanceBefore, fooBalanceAfter)
+}
+
+func validateIncreaseLiquidityBalances(barChange, fooChange, barBefore, barAfter, fooBefore, fooAfter int64) {
+	// User should lose tokens when increasing liquidity
+	if barChange <= 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR balance should decrease (change: %d)", barChange))
+	}
+	if fooChange <= 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO balance should decrease (change: %d)", fooChange))
+	}
+
+	// Verify arithmetic consistency
+	if barBefore-barChange != barAfter {
+		panic(ufmt.Sprintf("[ERROR] BAR balance arithmetic inconsistent: %d - %d != %d", barBefore, barChange, barAfter))
+	}
+	if fooBefore-fooChange != fooAfter {
+		panic(ufmt.Sprintf("[ERROR] FOO balance arithmetic inconsistent: %d - %d != %d", fooBefore, fooChange, fooAfter))
+	}
+
+	ufmt.Println("[EXPECTED] Increase liquidity balance validation passed")
 }
 
 // Output:
@@ -180,3 +203,4 @@ func testIncreaseLiquidityAndBalance() {
 // [EXPECTED] Pool token0 balance should be 36789784
 // [EXPECTED] Pool token1 balance should be 100000000
 // [EXPECTED] Pool liquidity should be 637408784
+// [EXPECTED] Increase liquidity balance validation passed
