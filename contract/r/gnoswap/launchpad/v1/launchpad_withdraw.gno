@@ -16,12 +16,13 @@ import (
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
-// CollectDepositGns collects rewards from a deposit.
+// CollectDepositGns withdraws the original GNS deposit after the lock period ends.
 //
 // Parameters:
-//   - depositID: ID of the deposit to collect from
+//   - depositID: ID of the deposit to withdraw
 //
-// Returns amount collected and any error.
+// Returns amount withdrawn and any error.
+// Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
