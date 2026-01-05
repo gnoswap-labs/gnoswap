@@ -62,6 +62,14 @@ func TestGetAddress(t *testing.T) {
 			expectedAddr:   "",
 			expectedExists: false,
 		},
+		{
+			name:           "role name with leading/trailing whitespace",
+			setupRole:      testRole,
+			setupAddr:      testAddr,
+			queryRole:      "  " + testRole + "  ",
+			expectedAddr:   testAddr,
+			expectedExists: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -227,6 +235,14 @@ func TestIsAuthorized(t *testing.T) {
 			queryAddr:    testAddr,
 			expectedAuth: false,
 		},
+		{
+			name:         "role name with whitespace matches existing role",
+			setupRole:    testRole,
+			setupAddr:    testAddr,
+			queryRole:    "  " + testRole + "  ",
+			queryAddr:    testAddr,
+			expectedAuth: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -339,6 +355,24 @@ func TestSetRoleAddress(t *testing.T) {
 			roleAddress: testutils.TestAddress("valid"),
 			shouldAbort: true,
 			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:        "role name with leading/trailing whitespace gets trimmed",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "  newrole  ",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldAbort: false,
+		},
+		{
+			name:      "update with same address - idempotent",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "admin",
+			roleAddress: testutils.TestAddress("admin"),
+			shouldAbort: false,
 		},
 	}
 
@@ -453,6 +487,15 @@ func TestRemoveRole(t *testing.T) {
 			shouldAbort: true,
 			abortMsg:    "role name cannot be empty",
 		},
+		{
+			name:      "remove role with whitespace-padded name",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"custom": testutils.TestAddress("custom"),
+			},
+			roleName:    "  custom  ",
+			shouldAbort: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -528,6 +571,14 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			queryRole:   testRole,
 			shouldPanic: true,
 			panicMsg:    "not found",
+		},
+		{
+			name:         "whitespace role name maps to existing role",
+			setupRole:    testRole,
+			setupAddr:    testAddr,
+			queryRole:    "  " + testRole + "  ",
+			expectedAddr: testAddr,
+			shouldPanic:  false,
 		},
 	}
 
