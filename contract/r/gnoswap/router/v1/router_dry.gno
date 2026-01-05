@@ -33,6 +33,15 @@ type SwapProcessor struct {
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
+//
+// Parameters:
+//   - route: Single pool path "TOKEN0:TOKEN1:FEE"
+//   - amountSpecified: Input/output amount depending on swap type
+//
+// Returns:
+//   - amountIn: Expected input amount
+//   - amountOut: Expected output amount
+//   - err: Error if swap simulation fails
 func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (amountIn, amountOut int64, err error) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -47,6 +56,17 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 }
 
 // ProcessMultiSwap handles a multi-hop swap simulation.
+//
+// Parameters:
+//   - swapType: ExactIn or ExactOut
+//   - route: Multi-hop route with POOL_SEPARATOR
+//   - numHops: Number of hops in the route
+//   - amountSpecified: Input/output amount depending on swap type
+//
+// Returns:
+//   - amountIn: Expected input amount
+//   - amountOut: Expected output amount
+//   - err: Error if swap simulation fails
 func (p *SwapProcessor) ProcessMultiSwap(
 	swapType SwapType,
 	route string,
@@ -70,6 +90,18 @@ func (p *SwapProcessor) ProcessMultiSwap(
 }
 
 // ValidateSwapResults checks if the swap results meet the required constraints.
+//
+// Parameters:
+//   - swapType: ExactIn or ExactOut
+//   - resultAmountIn, resultAmountOut: Swap simulation results
+//   - amountSpecified: User's specified exact amount
+//   - amountLimit: Slippage protection limit
+//   - swapCount: Number of swap operations (for tolerance)
+//
+// Returns:
+//   - amountIn: Input amount (same as resultAmountIn)
+//   - amountOut: Output amount (same as resultAmountOut)
+//   - success: true if slippage constraints are met, false otherwise
 func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut int64,
@@ -96,6 +128,15 @@ func (p *SwapProcessor) ValidateSwapResults(
 }
 
 // AddSwapResults safely adds swap result amounts, checking for overflow.
+//
+// Parameters:
+//   - resultAmountIn, resultAmountOut: Accumulated results from previous routes
+//   - amountIn, amountOut: Results from current route
+//
+// Returns:
+//   - newAmountIn: resultAmountIn + amountIn
+//   - newAmountOut: resultAmountOut + amountOut
+//   - err: Always nil (uses safe addition that panics on overflow)
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut int64,
 ) (int64, int64, error) {
@@ -106,7 +147,24 @@ func (p *SwapProcessor) AddSwapResults(
 }
 
 // DrySwapRoute simulates a token swap route without executing the swap.
-// It calculates the expected outcome based on the current state of liquidity pools.
+//
+// Calculates expected amounts without modifying any state.
+// Useful for price quotes, UI previews, and slippage estimation.
+//
+// Parameters:
+//   - inputToken, outputToken: Token contract paths
+//   - specifiedAmount: Input amount (ExactIn) or output amount (ExactOut)
+//   - swapTypeStr: "EXACT_IN" or "EXACT_OUT"
+//   - strRouteArr: Swap routes (comma-separated, max 7)
+//   - quoteArr: Route split percentages (must sum to 100)
+//   - tokenAmountLimit: Min output (ExactIn) or max input (ExactOut)
+//
+// Returns:
+//   - amountIn: Expected input amount as string
+//   - amountOut: Expected output amount as string
+//   - success: true if swap would succeed, false if slippage/validation fails
+//
+// Note: Does not validate deadline or execute actual transfers.
 func (r *routerV1) DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,

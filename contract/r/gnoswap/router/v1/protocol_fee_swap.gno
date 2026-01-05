@@ -21,8 +21,25 @@ func (r *routerV1) GetSwapFee() uint64 {
 	return r.store.GetSwapFee()
 }
 
-// SetSwapFee sets the swap fee rate in basis points.
-// Only admin or governance can call this function.
+// SetSwapFee sets the protocol swap fee rate.
+//
+// Fee is deducted from swap output and sent to protocol fee contract.
+// Only callable by admin or governance.
+//
+// Parameters:
+//   - fee: Fee rate in basis points (0-1000 = 0%-10%)
+//
+// Access:
+//   - Requires: Admin or Governance role
+//   - Halt check: Router and ProtocolFee must not be halted
+//
+// Events:
+//   - SetSwapFee: Emits previous and new fee values
+//
+// Reverts if:
+//   - Caller is not admin/governance
+//   - Fee > 1000 bps (10%)
+//   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(fee uint64) {
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
