@@ -292,10 +292,8 @@ func formatInt64(v any) string {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
+	if overflow || res > uint64(9223372036854775807) {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max 9223372036854775807)",
 			value.ToString(),
