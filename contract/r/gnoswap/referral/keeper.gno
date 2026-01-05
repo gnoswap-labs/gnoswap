@@ -30,16 +30,11 @@ func NewKeeper() ReferralKeeper {
 	}
 }
 
-// register creates a new referral relationship between addresses.
+// register creates or updates a referral relationship between addresses.
+// Setting refAddr to zero address removes the referral.
 // Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr address) error {
 	return k.setReferral(addr, refAddr, EventTypeRegister)
-}
-
-// update modifies an existing referral address.
-// Caller must have valid permissions.
-func (k *keeper) update(addr, newRefAddr address) error {
-	return k.setReferral(addr, newRefAddr, EventTypeUpdate)
 }
 
 // setReferral handles common logic for registering and updating referrals.
@@ -98,36 +93,6 @@ func (k *keeper) validateAddresses(addr, refAddr address) error {
 	if addr == refAddr {
 		return ErrSelfReferral
 	}
-	return nil
-}
-
-// remove deletes a referral relationship.
-// Caller must have valid permissions and rate limiting applies.
-func (k *keeper) remove(target address) error {
-	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
-		return err
-	}
-
-	if err := k.validateAddresses(target, zeroAddress); err != nil {
-		return err
-	}
-
-	tgt := target.String()
-
-	if err := k.checkRateLimit(tgt); err != nil {
-		return err
-	}
-
-	_, ok := k.store.Remove(tgt)
-	if !ok {
-		return ErrNotFound
-	}
-
-	chain.Emit(
-		EventTypeRemove,
-		"removedAddress", tgt,
-	)
-
 	return nil
 }
 

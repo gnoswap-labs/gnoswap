@@ -42,7 +42,8 @@ func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
 
 	k.register(userAddr, referrerAddr)
 
-	err := k.update(userAddr, newReferrerAddr)
+	// Second register attempt should be blocked by rate limit
+	err := k.register(userAddr, newReferrerAddr)
 
 	uassert.ErrorIs(t, err, ErrTooManyRequests)
 	// verify original referral is preserved
@@ -69,77 +70,26 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	uassert.True(t, k.has(user2))
 }
 
-func TestRateLimit_OperationCombinations(t *testing.T) {
-	tests := []struct {
-		name     string
-		prefix   string
-		firstOp  func(k *keeper, user, ref1, ref2 address) error
-		secondOp func(k *keeper, user, ref1, ref2 address) error
-		wantErr  error
-	}{
-		{
-			name:   "register then update",
-			prefix: "reg_upd",
-			firstOp: func(k *keeper, user, ref1, _ address) error {
-				return k.register(user, ref1)
-			},
-			secondOp: func(k *keeper, user, _, ref2 address) error {
-				return k.update(user, ref2)
-			},
-			wantErr: ErrTooManyRequests,
-		},
-		{
-			name:   "update then register",
-			prefix: "upd_reg",
-			firstOp: func(k *keeper, user, ref1, _ address) error {
-				return k.update(user, ref1)
-			},
-			secondOp: func(k *keeper, user, _, ref2 address) error {
-				return k.register(user, ref2)
-			},
-			wantErr: ErrTooManyRequests,
-		},
-		{
-			name:   "update then update",
-			prefix: "upd_upd",
-			firstOp: func(k *keeper, user, ref1, _ address) error {
-				return k.update(user, ref1)
-			},
-			secondOp: func(k *keeper, user, _, ref2 address) error {
-				return k.update(user, ref2)
-			},
-			wantErr: ErrTooManyRequests,
-		},
-		{
-			name:   "register then remove",
-			prefix: "reg_rem",
-			firstOp: func(k *keeper, user, ref1, _ address) error {
-				return k.register(user, ref1)
-			},
-			secondOp: func(k *keeper, user, _, _ address) error {
-				return k.remove(user)
-			},
-			wantErr: ErrTooManyRequests,
-		},
-	}
+func TestRateLimit_ConsecutiveRegistrations(t *testing.T) {
+	cleanup := setupValidCaller(t)
+	defer cleanup()
+	k := setupRateLimitKeeper(t)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup := setupValidCaller(t)
-			defer cleanup()
-			k := setupRateLimitKeeper(t)
+	user := testutils.TestAddress("consec_user")
+	ref1 := testutils.TestAddress("consec_ref1")
+	ref2 := testutils.TestAddress("consec_ref2")
 
-			user := testutils.TestAddress(tc.prefix + "_user")
-			ref1 := testutils.TestAddress(tc.prefix + "_ref1")
-			ref2 := testutils.TestAddress(tc.prefix + "_ref2")
+	// First registration should succeed
+	err := k.register(user, ref1)
+	uassert.NoError(t, err)
 
-			err := tc.firstOp(k, user, ref1, ref2)
-			uassert.NoError(t, err)
+	// Second registration should be blocked by rate limit
+	err = k.register(user, ref2)
+	uassert.ErrorIs(t, err, ErrTooManyRequests)
 
-			err = tc.secondOp(k, user, ref1, ref2)
-			uassert.ErrorIs(t, err, tc.wantErr)
-		})
-	}
+	// Verify original referral is preserved
+	ref, _ := k.get(user)
+	uassert.Equal(t, ref1.String(), ref.String())
 }
 
 func TestRateLimit_ZeroAddressNotRateLimited(t *testing.T) {
@@ -201,7 +151,8 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 			now := time.Now().Unix()
 			k.lastOps.Set(user.String(), now-tc.timeSinceLastOp)
 
-			err := k.update(user, ref2)
+			// Try to register again (simulating update)
+			err := k.register(user, ref2)
 
 			if tc.wantErr != nil {
 				uassert.ErrorIs(t, err, tc.wantErr)

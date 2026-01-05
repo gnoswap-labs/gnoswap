@@ -245,6 +245,102 @@ func TestKeeper_NewKeeper(t *testing.T) {
 	uassert.True(t, k.isEmpty())
 }
 
+func TestKeeper_ZeroAddressRemoval(t *testing.T) {
+	t.Run("Remove existing referral with zero address", func(t *testing.T) {
+		cleanupKeeper(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user1")
+		referrer := testutils.TestAddress("referrer1")
+
+		// Register referral first
+		success := TryRegister(cross, user, referrer.String())
+		uassert.True(t, success, "Initial registration should succeed")
+		uassert.True(t, HasReferral(user.String()), "Referral should exist after registration")
+
+		// Simulate time passage to bypass rate limit
+		k := gReferralKeeper.(*keeper)
+		k.lastOps.Set(user.String(), int64(0))
+
+		// Remove by registering with zero address
+		success = TryRegister(cross, user, zeroAddress.String())
+		uassert.True(t, success, "Removal with zero address should succeed")
+		uassert.False(t, HasReferral(user.String()), "Referral should not exist after removal")
+	})
+
+	t.Run("Zero address removal is not rate limited", func(t *testing.T) {
+		cleanupKeeper(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user2")
+		referrer := testutils.TestAddress("referrer2")
+
+		// Register referral
+		success := TryRegister(cross, user, referrer.String())
+		uassert.True(t, success)
+		uassert.True(t, HasReferral(user.String()))
+
+		// Immediately try to remove with zero address (no time passage)
+		// This should succeed because zero address removal bypasses rate limit
+		success = TryRegister(cross, user, zeroAddress.String())
+		uassert.True(t, success, "Zero address removal should bypass rate limit")
+		uassert.False(t, HasReferral(user.String()))
+	})
+
+	t.Run("Re-register after zero address removal", func(t *testing.T) {
+		cleanupKeeper(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user3")
+		referrer1 := testutils.TestAddress("referrer3a")
+		referrer2 := testutils.TestAddress("referrer3b")
+
+		// Register first referral
+		success := TryRegister(cross, user, referrer1.String())
+		uassert.True(t, success)
+		uassert.Equal(t, referrer1.String(), GetReferral(user.String()))
+
+		// Remove with zero address (bypasses rate limit)
+		success = TryRegister(cross, user, zeroAddress.String())
+		uassert.True(t, success)
+		uassert.False(t, HasReferral(user.String()))
+
+		// Re-register with new referrer should be rate limited
+		// because lastOps was set during first registration
+		success = TryRegister(cross, user, referrer2.String())
+		uassert.False(t, success, "Re-registration should be rate limited")
+	})
+
+	t.Run("Zero address on non-existent referral is no-op", func(t *testing.T) {
+		cleanupKeeper(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user4")
+
+		// Try to remove non-existent referral
+		success := TryRegister(cross, user, zeroAddress.String())
+		uassert.True(t, success, "Zero address on non-existent should succeed (no-op)")
+		uassert.False(t, HasReferral(user.String()))
+	})
+
+	t.Run("Multiple zero address removals are allowed", func(t *testing.T) {
+		cleanupKeeper(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user5")
+		referrer := testutils.TestAddress("referrer5")
+
+		// Register
+		TryRegister(cross, user, referrer.String())
+
+		// Multiple zero address calls should all succeed
+		for i := 0; i < 3; i++ {
+			success := TryRegister(cross, user, zeroAddress.String())
+			uassert.True(t, success, "Multiple zero address calls should succeed")
+		}
+	})
+}
+
 func cleanupKeeper(t *testing.T) {
     t.Helper()
 

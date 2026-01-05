@@ -5,20 +5,13 @@ var zeroAddress = address("")
 // Event types for referral actions.
 const (
 	EventTypeRegister = "RegisterReferral"
-	EventTypeUpdate   = "UpdateReferral"
-	EventTypeRemove   = "RemoveReferral"
 )
 
 // ReferralKeeper defines the interface for managing referral relationships.
 type ReferralKeeper interface {
-	// register creates a new referral relationship between addresses.
+	// register creates or updates a referral relationship between addresses.
+	// Setting refAddr to zero address removes the referral.
 	register(addr, refAddr address) error
-
-	// update modifies an existing referral address.
-	update(addr, newRefAddr address) error
-
-	// remove deletes a referral relationship.
-	remove(addr address) error
 
 	// has returns true if a referral exists for the given address.
 	has(addr address) bool
