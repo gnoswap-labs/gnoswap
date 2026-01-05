@@ -762,8 +762,6 @@ func TestLiquidityAmounts_NilParameterHandling(t *testing.T) {
 
 // TestLiquidityAmounts_ExtremePriceRanges tests extreme price ranges with MIN and MAX SQRT_RATIO
 func TestLiquidityAmounts_ExtremePriceRanges(t *testing.T) {
-	minSqrtRatio := u256.MustFromDecimal("4295128739")                                        // MIN_SQRT_RATIO
-	maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342") // MAX_SQRT_RATIO
 	q96 := u256.MustFromDecimal(Q96)
 
 	tests := []struct {
