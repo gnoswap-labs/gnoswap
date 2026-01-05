@@ -62,8 +62,6 @@ type BalanceSnapshot struct {
 	protocolFeeFoo   int64
 }
 
-var t *testing.T
-
 func main() {
 	println("[SCENARIO] Swap Balance Validation - Mixed Range Positions")
 	println("[INFO] Purpose: Validate swaps with both in-range and out-of-range positions")
@@ -100,6 +98,10 @@ func main() {
 	afterExactOut := performExactOutSwap()
 	printBalanceSnapshot("After Exact Out Swap", afterExactOut)
 	validateBalanceChange(afterExactIn, afterExactOut, "ExactOut")
+	println()
+
+	println("[SCENARIO] 7. System Balance Conservation Check")
+	validateSystemBalance(initial, afterExactOut)
 	println()
 
 	println("[SCENARIO] Complete - Validated that out-of-range position doesn't affect swaps")
@@ -322,6 +324,31 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	}
 
 	println("[EXPECTED] Balance changes are valid for", swapType)
+}
+
+func validateSystemBalance(initial, final BalanceSnapshot) {
+	println("[INFO] Validating system-wide balance conservation")
+
+	// Total supply in system should be conserved
+	// User + Pool + Router + ProtocolFee = Initial Supply
+	totalBarInitial := initial.userBar + initial.poolBar + initial.routerBar + initial.protocolFeeBar
+	totalBarFinal := final.userBar + final.poolBar + final.routerBar + final.protocolFeeBar
+
+	totalFooInitial := initial.userFoo + initial.poolFoo + initial.routerFoo + initial.protocolFeeFoo
+	totalFooFinal := final.userFoo + final.poolFoo + final.routerFoo + final.protocolFeeFoo
+
+	println("[EXPECTED] Total BAR - Initial:", totalBarInitial, "Final:", totalBarFinal)
+	println("[EXPECTED] Total FOO - Initial:", totalFooInitial, "Final:", totalFooFinal)
+
+	if totalBarInitial != totalBarFinal {
+		panic("[ERROR] BAR tokens were created or destroyed!")
+	}
+
+	if totalFooInitial != totalFooFinal {
+		panic("[ERROR] FOO tokens were created or destroyed!")
+	}
+
+	println("[EXPECTED] System-wide balance perfectly conserved")
 }
 
 // Output:

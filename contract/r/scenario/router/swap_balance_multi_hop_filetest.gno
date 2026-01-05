@@ -76,8 +76,6 @@ type BalanceSnapshot struct {
 	protocolFeeQux   int64
 }
 
-var t *testing.T
-
 func main() {
 	println("[SCENARIO] Swap Balance Validation - Multi-Hop Swaps")
 	println("[INFO] Purpose: Validate balance changes across multiple pool hops")

@@ -62,8 +62,6 @@ type BalanceSnapshot struct {
 	protocolFeeFoo   int64
 }
 
-var t *testing.T
-
 func main() {
 	println("[SCENARIO] Swap Balance Validation - Extreme Cases")
 	println("[INFO] Purpose: Validate balance changes in extreme swap scenarios")
