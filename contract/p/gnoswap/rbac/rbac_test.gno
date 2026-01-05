@@ -254,7 +254,23 @@ func TestRbac_UpdateRoleAddress(t *testing.T) {
 			roleName:    "",
 			newAddr:     userAddr,
 			shouldError: true,
-			errorMsg:    ErrRoleDoesNotExist.Error(),
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Update with whitespace-only role name fails",
+			setup:       func(rb *RBAC) {},
+			roleName:    "   ",
+			newAddr:     userAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
+		},
+		{
+			name:        "Update with tab and space role name fails",
+			setup:       func(rb *RBAC) {},
+			roleName:    " \t ",
+			newAddr:     userAddr,
+			shouldError: true,
+			errorMsg:    ErrInvalidRoleName.Error(),
 		},
 		{
 			name: "Update with same address succeeds (idempotent)",
@@ -344,7 +360,21 @@ func TestRbac_RemoveRole(t *testing.T) {
 		manager := New()
 		err := manager.RemoveRole("")
 		uassert.Error(t, err)
-		uassert.ErrorContains(t, err, ErrRoleDoesNotExist.Error())
+		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
+	})
+
+	t.Run("remove role with whitespace-only name fails", func(t *testing.T) {
+		manager := New()
+		err := manager.RemoveRole("   ")
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
+	})
+
+	t.Run("remove role with tab and space name fails", func(t *testing.T) {
+		manager := New()
+		err := manager.RemoveRole(" \t ")
+		uassert.Error(t, err)
+		uassert.ErrorContains(t, err, ErrInvalidRoleName.Error())
 	})
 }
 

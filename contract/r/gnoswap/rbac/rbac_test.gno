@@ -140,6 +140,30 @@ func TestRbac_RegisterRole(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
+			name: "Register role with whitespace-only name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "   ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Register role with tab and space name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      " \t ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
 			name: "Register role with invalid address format fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
@@ -234,7 +258,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 			},
 			roleName:    "",
 			shouldError: true,
-			errorMsg:    "does not exist",
+			errorMsg:    "invalid role name",
 		},
 		{
 			name: "Remove role multiple times should error on second attempt",

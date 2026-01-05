@@ -64,9 +64,14 @@ func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 // UpdateRoleAddress assigns addr to roleName.
 //
 // Errors:
+//   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
 //   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
 //   - `ErrInvalidAddress`: addr is empty or has an invalid format
 func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
+	if strings.TrimSpace(roleName) == "" {
+		return ErrInvalidRoleName
+	}
+
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ErrRoleDoesNotExist
@@ -84,9 +89,14 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 // RemoveRole removes roleName from the RBAC system.
 //
 // Errors:
+//   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
 //   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
 //   - `ErrCannotRemoveSystemRole`: attempting to remove a system role (e.g., admin, governance, pool, etc.)
 func (rb *RBAC) RemoveRole(roleName string) error {
+	if strings.TrimSpace(roleName) == "" {
+		return ErrInvalidRoleName
+	}
+
 	if !rb.existsRole(roleName) {
 		return ErrRoleDoesNotExist
 	}
