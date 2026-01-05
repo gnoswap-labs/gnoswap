@@ -23,11 +23,8 @@ func GetReferral(addr string) string {
 
 // HasReferral returns true if the given address has a referral.
 func HasReferral(addr string) bool {
-	referral, err := gReferralKeeper.get(address(addr))
-	if err != nil {
-		return false
-	}
-	return referral != zeroAddress
+	_, err := gReferralKeeper.get(address(addr))
+	return err == nil
 }
 
 // IsEmpty returns true if no referrals exist in the system.

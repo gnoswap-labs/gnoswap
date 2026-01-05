@@ -322,5 +322,6 @@ func cleanup(t *testing.T) {
 }
 
 func setupExistingReferral(t *testing.T, addr, referralAddr address) {
+	t.Helper()
 	TryRegister(cross, addr, referralAddr.String())
 }

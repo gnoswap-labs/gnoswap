@@ -54,7 +54,7 @@ func TestKeeper_Register(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper(t)
+			cleanup(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
@@ -104,7 +104,7 @@ func TestKeeper_Has(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper(t)
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -158,7 +158,7 @@ func TestKeeper_Get(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper(t)
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -218,7 +218,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper(t)
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -247,7 +247,7 @@ func TestKeeper_NewKeeper(t *testing.T) {
 
 func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	t.Run("Remove existing referral with zero address", func(t *testing.T) {
-		cleanupKeeper(t)
+		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		user := testutils.TestAddress("user1")
@@ -269,7 +269,7 @@ func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	})
 
 	t.Run("Zero address removal is not rate limited", func(t *testing.T) {
-		cleanupKeeper(t)
+		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		user := testutils.TestAddress("user2")
@@ -288,7 +288,7 @@ func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	})
 
 	t.Run("Re-register after zero address removal", func(t *testing.T) {
-		cleanupKeeper(t)
+		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		user := testutils.TestAddress("user3")
@@ -312,7 +312,7 @@ func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	})
 
 	t.Run("Zero address on non-existent referral is no-op", func(t *testing.T) {
-		cleanupKeeper(t)
+		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		user := testutils.TestAddress("user4")
@@ -324,7 +324,7 @@ func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	})
 
 	t.Run("Multiple zero address removals are allowed", func(t *testing.T) {
-		cleanupKeeper(t)
+		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		user := testutils.TestAddress("user5")
@@ -341,9 +341,3 @@ func TestKeeper_ZeroAddressRemoval(t *testing.T) {
 	})
 }
 
-func cleanupKeeper(t *testing.T) {
-    t.Helper()
-
-	// Reset global keeper
-	gReferralKeeper = NewKeeper()
-}
