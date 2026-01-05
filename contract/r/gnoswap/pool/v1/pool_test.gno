@@ -635,10 +635,10 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 			token0Path:      fooTokenPath,
 			token1Path:      barTokenPath,
 			fee:             FeeTier3000,
-			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342",
+			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO
 			expectSuccess:   false,
-			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
-			businessContext: "Extreme high price causes calculation overflow risk",
+			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range",
+			businessContext: "Extreme high price at boundary (MAX_SQRT_RATIO is excluded)",
 		},
 		{
 			name:            "minimum_valid_price",

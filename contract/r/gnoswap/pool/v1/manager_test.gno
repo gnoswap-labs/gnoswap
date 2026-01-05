@@ -129,6 +129,40 @@ func TestCreatePool(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(0) is out of range",
 		},
+		{
+			name:        "fail - sqrtPrice above MAX_SQRT_RATIO",
+			token0Path:  barPath,
+			token1Path:  quxPath,
+			fee:         3000,
+			sqrtPrice:   "1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
+		},
+		{
+			name:        "success - sqrtPrice at MIN_SQRT_RATIO",
+			token0Path:  fooPath,
+			token1Path:  quxPath,
+			fee:         500,
+			sqrtPrice:   "4295128739", // MIN_SQRT_RATIO
+			shouldPanic: false,
+		},
+		{
+			name:        "fail - sqrtPrice at MAX_SQRT_RATIO (boundary excluded)",
+			token0Path:  bazPath,
+			token1Path:  quxPath,
+			fee:         10000,
+			sqrtPrice:   "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range",
+		},
+		{
+			name:        "success - sqrtPrice just below MAX_SQRT_RATIO",
+			token0Path:  barPath,
+			token1Path:  bazPath,
+			fee:         100,
+			sqrtPrice:   "1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
+			shouldPanic: false,
+		},
 	}
 
 	initPoolTest(t)

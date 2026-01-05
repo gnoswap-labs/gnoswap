@@ -450,9 +450,9 @@ func TestValidateSqrtPriceX96(t *testing.T) {
 			shouldError:  false,
 		},
 		{
-			name:         "valid - at MAX_SQRT_RATIO",
+			name:         "invalid - at MAX_SQRT_RATIO (boundary excluded)",
 			sqrtPriceX96: u256.MustFromDecimal(MAX_SQRT_RATIO),
-			shouldError:  false,
+			shouldError:  true,
 		},
 		{
 			name:         "valid - just below MAX_SQRT_RATIO",
