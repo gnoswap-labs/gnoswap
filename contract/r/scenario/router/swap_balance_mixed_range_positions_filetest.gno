@@ -251,7 +251,9 @@ func performExactInSwap() BalanceSnapshot {
 
 	println("[INFO] Exact In - In:", amountIn, "Out:", amountOut)
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performExactOutSwap() BalanceSnapshot {
@@ -277,7 +279,9 @@ func performExactOutSwap() BalanceSnapshot {
 
 	println("[INFO] Exact Out - In:", amountIn, "Out:", amountOut)
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func validateOutOfRange(snapshot BalanceSnapshot) {
@@ -295,35 +299,40 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	userFooDiff := after.userFoo - before.userFoo
 	poolBarDiff := after.poolBar - before.poolBar
 	poolFooDiff := after.poolFoo - before.poolFoo
+	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
+	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
 
 	println("[EXPECTED] User BAR change:", userBarDiff)
 	println("[EXPECTED] User FOO change:", userFooDiff)
 	println("[EXPECTED] Pool BAR change:", poolBarDiff)
 	println("[EXPECTED] Pool FOO change:", poolFooDiff)
+	println("[EXPECTED] Protocol Fee BAR change:", protocolFeeBarDiff)
+	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
 
 	// Router should have zero balance
-	if after.routerBar != 0 || after.routerFoo != 0 {
-		panic("[ERROR] Router has remaining balance after swap")
+	assertRouterIsEmpty(after)
+
+	// Exact conservation: user + pool + protocol fee changes must sum to 0
+	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
+	totalFooChange := userFooDiff + poolFooDiff + protocolFeeFooDiff
+
+	if totalBarChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR not conserved in swap! Total change: %d", totalBarChange))
+	}
+	if totalFooChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO not conserved in swap! Total change: %d", totalFooChange))
 	}
 
-	// Balance conservation check
-	if swapType == "ExactIn" {
-		if userFooDiff >= 0 {
-			panic("[ERROR] User FOO should decrease in ExactIn swap")
-		}
-		if poolFooDiff <= 0 {
-			panic("[ERROR] Pool FOO should increase in ExactIn swap")
-		}
-	} else if swapType == "ExactOut" {
-		if userFooDiff <= 0 {
-			panic("[ERROR] User FOO should increase in ExactOut swap")
-		}
-		if poolFooDiff >= 0 {
-			panic("[ERROR] Pool FOO should decrease in ExactOut swap")
-		}
-	}
+	println("[EXPECTED] Exact balance conservation verified for", swapType)
+}
 
-	println("[EXPECTED] Balance changes are valid for", swapType)
+func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+	if snapshot.routerBar != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
+	}
+	if snapshot.routerFoo != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has FOO balance: %d - funds stuck!", snapshot.routerFoo))
+	}
 }
 
 func validateSystemBalance(initial, final BalanceSnapshot) {

@@ -206,7 +206,9 @@ func performLargeSwap(before BalanceSnapshot) BalanceSnapshot {
 	println("[INFO] Large Swap - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Expected: Massive price impact and slippage")
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
@@ -232,7 +234,9 @@ func performReverseSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Reverse Swap - In:", amountIn, "Out:", amountOut)
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
@@ -258,7 +262,9 @@ func performSmallSwap(before BalanceSnapshot) BalanceSnapshot {
 
 	println("[INFO] Small Swap - In:", amountIn, "Out:", amountOut)
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
@@ -268,30 +274,31 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	userFooDiff := after.userFoo - before.userFoo
 	poolBarDiff := after.poolBar - before.poolBar
 	poolFooDiff := after.poolFoo - before.poolFoo
+	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
+	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
 
 	println("[EXPECTED] User BAR change:", userBarDiff)
 	println("[EXPECTED] User FOO change:", userFooDiff)
 	println("[EXPECTED] Pool BAR change:", poolBarDiff)
 	println("[EXPECTED] Pool FOO change:", poolFooDiff)
+	println("[EXPECTED] Protocol Fee BAR change:", protocolFeeBarDiff)
+	println("[EXPECTED] Protocol Fee FOO change:", protocolFeeFooDiff)
 
 	// Router must be empty
-	if after.routerBar != 0 || after.routerFoo != 0 {
-		panic("[ERROR] Router has remaining balance - funds stuck!")
+	assertRouterIsEmpty(after)
+
+	// Exact conservation: user + pool + protocol fee changes must sum to 0
+	totalBarChange := userBarDiff + poolBarDiff + protocolFeeBarDiff
+	totalFooChange := userFooDiff + poolFooDiff + protocolFeeFooDiff
+
+	if totalBarChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR not conserved in swap! Total change: %d", totalBarChange))
+	}
+	if totalFooChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO not conserved in swap! Total change: %d", totalFooChange))
 	}
 
-	// User gains must come from pool (conservation of mass)
-	// Pool BAR decrease should roughly equal User BAR increase (minus fees)
-	// Pool FOO increase should roughly equal User FOO decrease (plus fees)
-
-	// Check direction is correct
-	if userBarDiff > 0 && poolBarDiff > 0 {
-		panic("[ERROR] Both user and pool gained BAR - impossible!")
-	}
-	if userFooDiff > 0 && poolFooDiff > 0 {
-		panic("[ERROR] Both user and pool gained FOO - impossible!")
-	}
-
-	println("[EXPECTED] Balance conservation holds - no value created or destroyed")
+	println("[EXPECTED] Exact balance conservation verified - all tokens accounted for")
 }
 
 func validateSmallSwapImpact(before, after BalanceSnapshot) {
@@ -304,12 +311,29 @@ func validateSmallSwapImpact(before, after BalanceSnapshot) {
 	println("[EXPECTED] User BAR change:", userBarDiff)
 	println("[EXPECTED] User FOO change:", userFooDiff)
 
-	// Small swap should have proportionally less impact
+	// Small swap should have actual token movements
 	if userBarDiff == 0 && userFooDiff == 0 {
 		panic("[ERROR] Small swap had no effect")
 	}
 
+	// Verify swap direction is correct (FOO in, BAR out)
+	if userFooDiff >= 0 {
+		panic("[ERROR] User FOO should decrease in small swap")
+	}
+	if userBarDiff <= 0 {
+		panic("[ERROR] User BAR should increase in small swap")
+	}
+
 	println("[EXPECTED] Small swap executed correctly despite extreme price")
+}
+
+func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+	if snapshot.routerBar != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
+	}
+	if snapshot.routerFoo != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has FOO balance: %d - funds stuck!", snapshot.routerFoo))
+	}
 }
 
 func validateSystemBalance(initial, final BalanceSnapshot) {

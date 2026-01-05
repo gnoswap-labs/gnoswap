@@ -222,7 +222,9 @@ func performSingleHopSwap() BalanceSnapshot {
 
 	println("[INFO] Single Hop - In:", amountIn, "Out:", amountOut)
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performTwoHopSwap() BalanceSnapshot {
@@ -249,7 +251,9 @@ func performTwoHopSwap() BalanceSnapshot {
 	println("[INFO] Two Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)")
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performThreeHopSwap() BalanceSnapshot {
@@ -276,7 +280,9 @@ func performThreeHopSwap() BalanceSnapshot {
 	println("[INFO] Three Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)")
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func performReverseThreeHopSwap() BalanceSnapshot {
@@ -303,7 +309,9 @@ func performReverseThreeHopSwap() BalanceSnapshot {
 	println("[INFO] Reverse Three Hop - In:", amountIn, "Out:", amountOut)
 	println("[INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)")
 
-	return getBalanceSnapshot()
+	snapshot := getBalanceSnapshot()
+	assertRouterIsEmpty(snapshot)
+	return snapshot
 }
 
 func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
@@ -314,10 +322,18 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	userFooDiff := after.userFoo - before.userFoo
 	userQuxDiff := after.userQux - before.userQux
 
+	protocolFeeBarDiff := after.protocolFeeBar - before.protocolFeeBar
+	protocolFeeBazDiff := after.protocolFeeBaz - before.protocolFeeBaz
+	protocolFeeFooDiff := after.protocolFeeFoo - before.protocolFeeFoo
+	protocolFeeQuxDiff := after.protocolFeeQux - before.protocolFeeQux
+
 	println("  User BAR change:", userBarDiff)
 	println("  User FOO change:", userFooDiff)
 	println("  User BAZ change:", userBazDiff)
 	println("  User QUX change:", userQuxDiff)
+
+	// Router must be empty
+	assertRouterIsEmpty(after)
 
 	// At least one token must decrease (input) and one must increase (output)
 	changedTokens := 0
@@ -338,7 +354,42 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 		panic("[ERROR] Multi-hop swap should change at least 2 token balances")
 	}
 
-	println("[VALIDATION] Balance changes are valid for multi-hop swap")
+	// Exact conservation for each token: user + pools + protocol fee + router changes must sum to 0
+	// Note: pools share same address so we can't separate them, but the total should still be conserved
+	totalBarChange := userBarDiff + (after.poolBarFooBar - before.poolBarFooBar) + protocolFeeBarDiff + (after.routerBar - before.routerBar)
+	totalFooChange := userFooDiff + (after.poolFooBazFoo - before.poolFooBazFoo) + protocolFeeFooDiff + (after.routerFoo - before.routerFoo)
+	totalBazChange := userBazDiff + (after.poolBazQuxBaz - before.poolBazQuxBaz) + protocolFeeBazDiff + (after.routerBaz - before.routerBaz)
+	totalQuxChange := userQuxDiff + (after.poolBazQuxQux - before.poolBazQuxQux) + protocolFeeQuxDiff + (after.routerQux - before.routerQux)
+
+	if totalBarChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAR not conserved! Total change: %d", totalBarChange))
+	}
+	if totalFooChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] FOO not conserved! Total change: %d", totalFooChange))
+	}
+	if totalBazChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] BAZ not conserved! Total change: %d", totalBazChange))
+	}
+	if totalQuxChange != 0 {
+		panic(ufmt.Sprintf("[ERROR] QUX not conserved! Total change: %d", totalQuxChange))
+	}
+
+	println("[VALIDATION] Exact balance conservation verified for multi-hop swap")
+}
+
+func assertRouterIsEmpty(snapshot BalanceSnapshot) {
+	if snapshot.routerBar != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BAR balance: %d - funds stuck!", snapshot.routerBar))
+	}
+	if snapshot.routerFoo != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has FOO balance: %d - funds stuck!", snapshot.routerFoo))
+	}
+	if snapshot.routerBaz != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has BAZ balance: %d - funds stuck!", snapshot.routerBaz))
+	}
+	if snapshot.routerQux != 0 {
+		panic(ufmt.Sprintf("[ERROR] Router has QUX balance: %d - funds stuck!", snapshot.routerQux))
+	}
 }
 
 func validateNoIntermediateBalance(snapshot BalanceSnapshot) {
