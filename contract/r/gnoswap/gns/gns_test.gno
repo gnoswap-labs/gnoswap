@@ -584,3 +584,483 @@ func TestMintGns(t *testing.T) {
 		})
 	}
 }
+
+func TestMintGns_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setup                func()
+		expectedMintedAmount int64
+	}{
+		{
+			name: "returns zero when lastMintedTimestamp equals currentTime",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				// Set lastMintedTimestamp to current time
+				setLastMintedTimestamp(time.Now().Unix())
+			},
+			expectedMintedAmount: 0,
+		},
+		{
+			name: "returns zero when lastMintedTimestamp >= emissionEndTimestamp",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				// Set lastMintedTimestamp past emission end
+				setLastMintedTimestamp(GetEmissionEndTimestamp() + 1)
+			},
+			expectedMintedAmount: 0,
+		},
+		{
+			name: "mints correctly after skipping multiple blocks",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+			},
+			expectedMintedAmount: 7134703, // 1 second worth
+		},
+		{
+			name: "updates MintedEmissionAmount correctly",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				uassert.Equal(t, int64(0), MintedEmissionAmount())
+			},
+			expectedMintedAmount: 7134703,
+		},
+		{
+			name: "updates LeftEmissionAmount correctly",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				uassert.Equal(t, MAX_EMISSION_AMOUNT, LeftEmissionAmount())
+			},
+			expectedMintedAmount: 7134703,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			var mintedAmount int64
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				mintedAmount = MintGns(cross, adminAddr)
+			})
+			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
+		})
+	}
+}
+
+func TestMintGns_StateUpdates(t *testing.T) {
+	tests := []struct {
+		name          string
+		validateState func(t *testing.T, mintedAmount int64)
+	}{
+		{
+			name: "MintedEmissionAmount increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, mintedAmount, MintedEmissionAmount())
+			},
+		},
+		{
+			name: "LeftEmissionAmount decreases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, MAX_EMISSION_AMOUNT-mintedAmount, LeftEmissionAmount())
+			},
+		},
+		{
+			name: "LastMintedTimestamp updates to current time",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, time.Now().Unix(), LastMintedTimestamp())
+			},
+		},
+		{
+			name: "TotalSupply increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, INITIAL_MINT_AMOUNT+mintedAmount, TotalSupply())
+			},
+		},
+		{
+			name: "recipient balance increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, INITIAL_MINT_AMOUNT+mintedAmount, BalanceOf(adminAddr))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			InitGnsTest(t)
+
+			var mintedAmount int64
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				mintedAmount = MintGns(cross, adminAddr)
+			})
+
+			tt.validateState(t, mintedAmount)
+		})
+	}
+}
+
+func TestInitEmissionState(t *testing.T) {
+	tests := []struct {
+		name          string
+		realm         runtime.Realm
+		height        int64
+		timestamp     int64
+		shouldAbort   bool
+		abortContains string
+		validateState func(t *testing.T)
+	}{
+		{
+			name:          "should abort when caller is not emission realm",
+			realm:         userRealm,
+			height:        100,
+			timestamp:     1000,
+			shouldAbort:   true,
+			abortContains: "not emission",
+		},
+		{
+			name:          "should abort when caller is admin realm",
+			realm:         adminRealm,
+			height:        100,
+			timestamp:     1000,
+			shouldAbort:   true,
+			abortContains: "not emission",
+		},
+		{
+			name:        "should succeed when caller is emission realm",
+			realm:       emissionRealm,
+			height:      100,
+			timestamp:   1000,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				uassert.True(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(100), GetEmissionStartHeight())
+				uassert.Equal(t, int64(1000), GetEmissionStartTimestamp())
+			},
+		},
+		{
+			name:        "should initialize with zero height and timestamp",
+			realm:       emissionRealm,
+			height:      0,
+			timestamp:   0,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				// With height=0 and timestamp=0, isInitialized returns false
+				uassert.False(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(0), GetEmissionStartHeight())
+				uassert.Equal(t, int64(0), GetEmissionStartTimestamp())
+			},
+		},
+		{
+			name:        "should initialize with large timestamp",
+			realm:       emissionRealm,
+			height:      1000000,
+			timestamp:   1700000000,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				uassert.True(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(1000000), GetEmissionStartHeight())
+				uassert.Equal(t, int64(1700000000), GetEmissionStartTimestamp())
+				// Verify end timestamp calculation
+				expectedEnd := int64(1700000000) + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
+				uassert.Equal(t, expectedEnd, GetEmissionEndTimestamp())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					testing.SetRealm(tt.realm)
+					InitEmissionState(cross, tt.height, tt.timestamp)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					testing.SetRealm(tt.realm)
+					InitEmissionState(cross, tt.height, tt.timestamp)
+				})
+
+				if tt.validateState != nil {
+					tt.validateState(t)
+				}
+			}
+		})
+	}
+}
+
+func TestInitEmissionState_Reinitialize(t *testing.T) {
+	resetObject(t)
+
+	// First initialization
+	uassert.NotPanics(t, func() {
+		testing.SetRealm(emissionRealm)
+		InitEmissionState(cross, 50, 500)
+	})
+	uassert.Equal(t, int64(50), GetEmissionStartHeight())
+	uassert.Equal(t, int64(500), GetEmissionStartTimestamp())
+
+	// Reinitialize with new values
+	uassert.NotPanics(t, func() {
+		testing.SetRealm(emissionRealm)
+		InitEmissionState(cross, 200, 2000)
+	})
+	// Should be overwritten with new values
+	uassert.Equal(t, int64(200), GetEmissionStartHeight())
+	uassert.Equal(t, int64(2000), GetEmissionStartTimestamp())
+}
+
+func TestInitEmissionState_HalvingDataInitialization(t *testing.T) {
+	tests := []struct {
+		name          string
+		timestamp     int64
+		validateYear  int64
+		expectedStart int64
+		expectedEnd   int64
+	}{
+		{
+			name:          "year 1 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  1,
+			expectedStart: 1000,
+			expectedEnd:   1000 + SECONDS_IN_YEAR - 1,
+		},
+		{
+			name:          "year 6 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  6,
+			expectedStart: 1000 + (SECONDS_IN_YEAR * 5),
+			expectedEnd:   1000 + (SECONDS_IN_YEAR * 6) - 1,
+		},
+		{
+			name:          "year 12 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  12,
+			expectedStart: 1000 + (SECONDS_IN_YEAR * 11),
+			expectedEnd:   1000 + (SECONDS_IN_YEAR * 12) - 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				InitEmissionState(cross, 100, tt.timestamp)
+			})
+
+			actualStart := GetHalvingYearStartTimestamp(tt.validateYear)
+			actualEnd := GetHalvingYearEndTimestamp(tt.validateYear)
+
+			uassert.Equal(t, tt.expectedStart, actualStart)
+			uassert.Equal(t, tt.expectedEnd, actualEnd)
+		})
+	}
+}
+
+func TestBurn(t *testing.T) {
+	tests := []struct {
+		name          string
+		isAdmin       bool
+		realm         runtime.Realm
+		burnFrom      address
+		burnAmount    int64
+		shouldAbort   bool
+		abortContains string
+		validateState func(t *testing.T, initialBalance, initialBurnAmount int64)
+	}{
+		{
+			name:          "should abort when caller is not admin",
+			isAdmin:       false,
+			realm:         userRealm,
+			burnFrom:      adminAddr,
+			burnAmount:    100,
+			shouldAbort:   true,
+			abortContains: "unauthorized",
+		},
+		{
+			name:          "should abort when caller is emission realm",
+			isAdmin:       false,
+			realm:         emissionRealm,
+			burnFrom:      adminAddr,
+			burnAmount:    100,
+			shouldAbort:   true,
+			abortContains: "unauthorized",
+		},
+		{
+			name:        "should succeed when caller is admin",
+			isAdmin:     true,
+			realm:       adminRealm,
+			burnFrom:    adminAddr,
+			burnAmount:  1000,
+			shouldAbort: false,
+			validateState: func(t *testing.T, initialBalance, initialBurnAmount int64) {
+				uassert.Equal(t, initialBalance-1000, BalanceOf(adminAddr))
+				uassert.Equal(t, initialBurnAmount+1000, BurnAmount())
+			},
+		},
+		{
+			name:          "should abort when burning more than balance",
+			isAdmin:       true,
+			realm:         adminRealm,
+			burnFrom:      adminAddr,
+			burnAmount:    INITIAL_MINT_AMOUNT + 1,
+			shouldAbort:   true,
+			abortContains: "insufficient",
+		},
+		{
+			name:        "should succeed with zero amount",
+			isAdmin:     true,
+			realm:       adminRealm,
+			burnFrom:    adminAddr,
+			burnAmount:  0,
+			shouldAbort: false,
+			validateState: func(t *testing.T, initialBalance, initialBurnAmount int64) {
+				uassert.Equal(t, initialBalance, BalanceOf(adminAddr))
+				uassert.Equal(t, initialBurnAmount, BurnAmount())
+			},
+		},
+		{
+			name:          "should abort when burning from address with zero balance",
+			isAdmin:       true,
+			realm:         adminRealm,
+			burnFrom:      alice,
+			burnAmount:    100,
+			shouldAbort:   true,
+			abortContains: "insufficient",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			initialBalance := BalanceOf(tt.burnFrom)
+			initialBurnAmount := BurnAmount()
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					if tt.isAdmin {
+						testing.SetOriginCaller(adminAddr)
+					}
+					testing.SetRealm(tt.realm)
+					Burn(cross, tt.burnFrom, tt.burnAmount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					if tt.isAdmin {
+						testing.SetOriginCaller(adminAddr)
+					}
+					testing.SetRealm(tt.realm)
+					Burn(cross, tt.burnFrom, tt.burnAmount)
+				})
+
+				if tt.validateState != nil {
+					tt.validateState(t, initialBalance, initialBurnAmount)
+				}
+			}
+		})
+	}
+}
+
+func TestBurn_StateUpdates(t *testing.T) {
+	tests := []struct {
+		name          string
+		burnAmount    int64
+		validateState func(t *testing.T, initialTotalSupply int64)
+	}{
+		{
+			name:       "TotalSupply decreases after burn",
+			burnAmount: 1000,
+			validateState: func(t *testing.T, initialTotalSupply int64) {
+				uassert.Equal(t, initialTotalSupply-1000, TotalSupply())
+			},
+		},
+		{
+			name:       "BurnAmount accumulates correctly",
+			burnAmount: 5000,
+			validateState: func(t *testing.T, initialTotalSupply int64) {
+				uassert.Equal(t, int64(5000), BurnAmount())
+			},
+		},
+		{
+			name:       "balance decreases after burn",
+			burnAmount: 2000,
+			validateState: func(t *testing.T, initialTotalSupply int64) {
+				uassert.Equal(t, INITIAL_MINT_AMOUNT-2000, BalanceOf(adminAddr))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			initialTotalSupply := TotalSupply()
+
+			uassert.NotPanics(t, func() {
+				testing.SetOriginCaller(adminAddr)
+				testing.SetRealm(adminRealm)
+				Burn(cross, adminAddr, tt.burnAmount)
+			})
+
+			tt.validateState(t, initialTotalSupply)
+		})
+	}
+}
+
+func TestBurn_MultipleBurns(t *testing.T) {
+	tests := []struct {
+		name        string
+		burnAmounts []int64
+		expectedSum int64
+	}{
+		{
+			name:        "single burn",
+			burnAmounts: []int64{1000},
+			expectedSum: 1000,
+		},
+		{
+			name:        "multiple burns accumulate",
+			burnAmounts: []int64{1000, 2000, 3000},
+			expectedSum: 6000,
+		},
+		{
+			name:        "burns with zero amount",
+			burnAmounts: []int64{1000, 0, 2000, 0},
+			expectedSum: 3000,
+		},
+		{
+			name:        "many small burns",
+			burnAmounts: []int64{100, 100, 100, 100, 100},
+			expectedSum: 500,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			for _, amount := range tt.burnAmounts {
+				uassert.NotPanics(t, func() {
+					testing.SetOriginCaller(adminAddr)
+					testing.SetRealm(adminRealm)
+					Burn(cross, adminAddr, amount)
+				})
+			}
+
+			uassert.Equal(t, tt.expectedSum, BurnAmount())
+			uassert.Equal(t, INITIAL_MINT_AMOUNT-tt.expectedSum, BalanceOf(adminAddr))
+			uassert.Equal(t, INITIAL_MINT_AMOUNT-tt.expectedSum, TotalSupply())
+		})
+	}
+}
