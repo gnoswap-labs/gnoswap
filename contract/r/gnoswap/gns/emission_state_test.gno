@@ -7,43 +7,78 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// NewEmissionState Tests
-
 func TestNewEmissionState(t *testing.T) {
 	tests := []struct {
 		name           string
 		startHeight    int64
 		startTimestamp int64
 		wantEndTs      int64
+		shouldPanic    bool
+		panicMsg       string
 	}{
+		// Success cases
 		{
-			name:           "zero values",
+			name:           "success - zero values",
 			startHeight:    0,
 			startTimestamp: 0,
 			wantEndTs:      SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
-			name:           "positive values",
+			name:           "success - positive values",
 			startHeight:    100,
 			startTimestamp: 1000,
 			wantEndTs:      1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
-			name:           "large timestamp",
+			name:           "success - large timestamp",
 			startHeight:    999999,
 			startTimestamp: 1700000000,
 			wantEndTs:      1700000000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
-			name:           "negative height",
+			name:           "success - negative height",
 			startHeight:    -100,
 			startTimestamp: 1000,
 			wantEndTs:      1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
+		},
+		{
+			name:           "success - negative timestamp",
+			startHeight:    1,
+			startTimestamp: -1000,
+			wantEndTs:      -1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
+		},
+		{
+			name:           "success - max safe timestamp",
+			startHeight:    1,
+			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR),
+			wantEndTs:      math.MaxInt64 - 1,
+		},
+		// Panic cases
+		{
+			name:           "panic - overflow near MaxInt64",
+			startHeight:    1,
+			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR) + 2,
+			shouldPanic:    true,
+			panicMsg:       "int64 addition overflow",
+		},
+		{
+			name:           "panic - overflow at MaxInt64",
+			startHeight:    1,
+			startTimestamp: math.MaxInt64,
+			shouldPanic:    true,
+			panicMsg:       "int64 addition overflow",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					NewEmissionState(tt.startHeight, tt.startTimestamp)
+				})
+				return
+			}
+
 			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
 
 			uassert.Equal(t, tt.startHeight, es.getStartHeight())
@@ -54,35 +89,6 @@ func TestNewEmissionState(t *testing.T) {
 	}
 }
 
-func TestNewEmissionStateOverflowPanic(t *testing.T) {
-	tests := []struct {
-		name           string
-		startTimestamp int64
-		panicMsg       string
-	}{
-		{
-			name:           "overflow near MaxInt64",
-			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR) + 2,
-			panicMsg:       "int64 addition overflow",
-		},
-		{
-			name:           "overflow at MaxInt64",
-			startTimestamp: math.MaxInt64,
-			panicMsg:       "int64 addition overflow",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-				NewEmissionState(1, tt.startTimestamp)
-			})
-		})
-	}
-}
-
-// isInitialized Tests
-
 func TestIsInitialized(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -91,39 +97,51 @@ func TestIsInitialized(t *testing.T) {
 		want           bool
 	}{
 		{
-			name:           "both zero - not initialized",
+			name:           "not initialized - both zero",
 			startHeight:    0,
 			startTimestamp: 0,
 			want:           false,
 		},
 		{
-			name:           "only height set - not initialized",
+			name:           "not initialized - only height set",
 			startHeight:    100,
 			startTimestamp: 0,
 			want:           false,
 		},
 		{
-			name:           "only timestamp set - not initialized",
+			name:           "not initialized - only timestamp set",
 			startHeight:    0,
 			startTimestamp: 1000,
 			want:           false,
 		},
 		{
-			name:           "both set - initialized",
+			name:           "initialized - both positive",
 			startHeight:    100,
 			startTimestamp: 1000,
 			want:           true,
 		},
 		{
-			name:           "negative height with positive timestamp - initialized",
+			name:           "initialized - negative height with positive timestamp",
 			startHeight:    -1,
 			startTimestamp: 1000,
 			want:           true,
 		},
 		{
-			name:           "positive height with negative timestamp - initialized",
+			name:           "initialized - positive height with negative timestamp",
 			startHeight:    100,
 			startTimestamp: -1,
+			want:           true,
+		},
+		{
+			name:           "initialized - both negative",
+			startHeight:    -1,
+			startTimestamp: -1,
+			want:           true,
+		},
+		{
+			name:           "initialized - min int64 values",
+			startHeight:    math.MinInt64,
+			startTimestamp: 1,
 			want:           true,
 		},
 	}
@@ -137,8 +155,6 @@ func TestIsInitialized(t *testing.T) {
 	}
 }
 
-// isActive Tests
-
 func TestIsActive(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
@@ -150,25 +166,26 @@ func TestIsActive(t *testing.T) {
 		want      bool
 	}{
 		// Before emission period
-		{"far before start", startTs - 10000, false},
-		{"one second before start", startTs - 1, false},
+		{"not active - far before start", startTs - 10000, false},
+		{"not active - one second before start", startTs - 1, false},
 
 		// At boundaries
-		{"exactly at start", startTs, true},
-		{"one second after start", startTs + 1, true},
-		{"one second before end", endTs - 1, true},
-		{"exactly at end", endTs, true},
-		{"one second after end", endTs + 1, false},
+		{"active - exactly at start", startTs, true},
+		{"active - one second after start", startTs + 1, true},
+		{"active - one second before end", endTs - 1, true},
+		{"active - exactly at end", endTs, true},
+		{"not active - one second after end", endTs + 1, false},
 
 		// Middle of period
-		{"middle of emission", startTs + (endTs-startTs)/2, true},
+		{"active - middle of emission", startTs + (endTs-startTs)/2, true},
 
 		// Far after emission
-		{"far after end", endTs + 10000, false},
+		{"not active - far after end", endTs + 10000, false},
 
 		// Edge cases with extreme values
-		{"negative timestamp", -1, false},
-		{"zero timestamp", 0, false},
+		{"not active - negative timestamp", -1, false},
+		{"not active - zero timestamp", 0, false},
+		{"not active - max int64", math.MaxInt64, false},
 	}
 
 	for _, tt := range tests {
@@ -179,16 +196,49 @@ func TestIsActive(t *testing.T) {
 	}
 }
 
-func TestIsActiveUninitializedState(t *testing.T) {
+func TestIsActive_UninitializedState(t *testing.T) {
 	es := NewEmissionState(0, 0) // uninitialized
 
-	timestamps := []int64{-1000, 0, 1, 1000, 999999999}
-	for _, ts := range timestamps {
-		uassert.False(t, es.isActive(ts), "uninitialized state should never be active")
+	tests := []struct {
+		name      string
+		timestamp int64
+	}{
+		{"negative timestamp", -1000},
+		{"zero", 0},
+		{"one", 1},
+		{"large positive", 1000},
+		{"very large", 999999999},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uassert.False(t, es.isActive(tt.timestamp), "uninitialized state should never be active")
+		})
 	}
 }
 
-// isEnded Tests
+func TestIsActive_NegativeStartTimestamp(t *testing.T) {
+	es := NewEmissionState(1, -1000)
+
+	tests := []struct {
+		name      string
+		timestamp int64
+		want      bool
+	}{
+		{"active - at start", -1000, true},
+		{"active - after start", -500, true},
+		{"not active - before start", -1001, false},
+		{"active - at zero", 0, true},
+		{"active - positive", 1000, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.isActive(tt.timestamp)
+			uassert.Equal(t, tt.want, got)
+		})
+	}
+}
 
 func TestIsEnded(t *testing.T) {
 	startTs := int64(10000)
@@ -201,18 +251,18 @@ func TestIsEnded(t *testing.T) {
 		want      bool
 	}{
 		// Before emission ends
-		{"far before start", startTs - 10000, false},
-		{"at start", startTs, false},
-		{"middle of emission", startTs + (endTs-startTs)/2, false},
-		{"one second before end", endTs - 1, false},
-		{"exactly at end", endTs, false},
+		{"not ended - far before start", startTs - 10000, false},
+		{"not ended - at start", startTs, false},
+		{"not ended - middle of emission", startTs + (endTs-startTs)/2, false},
+		{"not ended - one second before end", endTs - 1, false},
+		{"not ended - exactly at end", endTs, false},
 
 		// After emission ends
-		{"one second after end", endTs + 1, true},
-		{"far after end", endTs + 1000000, true},
+		{"ended - one second after end", endTs + 1, true},
+		{"ended - far after end", endTs + 1000000, true},
 
 		// Edge cases
-		{"max int64", math.MaxInt64, true},
+		{"ended - max int64", math.MaxInt64, true},
 	}
 
 	for _, tt := range tests {
@@ -222,8 +272,6 @@ func TestIsEnded(t *testing.T) {
 		})
 	}
 }
-
-// getCurrentYear Tests
 
 func TestGetCurrentYear(t *testing.T) {
 	startTs := int64(10000)
@@ -235,29 +283,29 @@ func TestGetCurrentYear(t *testing.T) {
 		want      int64
 	}{
 		// Before emission
-		{"before start", startTs - 1, 0},
-		{"far before start", startTs - 10000, 0},
+		{"year 0 - before start", startTs - 1, 0},
+		{"year 0 - far before start", startTs - 10000, 0},
 
 		// Year 1 boundaries
-		{"first second of year 1", startTs, 1},
-		{"middle of year 1", startTs + SECONDS_IN_YEAR/2, 1},
-		{"last second of year 1", startTs + SECONDS_IN_YEAR - 1, 1},
+		{"year 1 - first second", startTs, 1},
+		{"year 1 - middle", startTs + SECONDS_IN_YEAR/2, 1},
+		{"year 1 - last second", startTs + SECONDS_IN_YEAR - 1, 1},
 
 		// Year 2 boundaries
-		{"first second of year 2", startTs + SECONDS_IN_YEAR, 2},
-		{"last second of year 2", startTs + (2*SECONDS_IN_YEAR - 1), 2},
+		{"year 2 - first second", startTs + SECONDS_IN_YEAR, 2},
+		{"year 2 - last second", startTs + (2*SECONDS_IN_YEAR - 1), 2},
 
 		// Year transitions
-		{"year 6 to 7 boundary - end of year 6", startTs + (6*SECONDS_IN_YEAR - 1), 6},
-		{"year 6 to 7 boundary - start of year 7", startTs + (6 * SECONDS_IN_YEAR), 7},
+		{"year 6 - last second", startTs + (6*SECONDS_IN_YEAR - 1), 6},
+		{"year 7 - first second", startTs + (6 * SECONDS_IN_YEAR), 7},
 
 		// Year 12 (last year)
-		{"first second of year 12", startTs + (11 * SECONDS_IN_YEAR), 12},
-		{"last second of year 12", startTs + (12*SECONDS_IN_YEAR - 1), 12},
+		{"year 12 - first second", startTs + (11 * SECONDS_IN_YEAR), 12},
+		{"year 12 - last second", startTs + (12*SECONDS_IN_YEAR - 1), 12},
 
 		// After emission
-		{"exactly after year 12", startTs + (12 * SECONDS_IN_YEAR), 0},
-		{"far after emission", startTs + (15 * SECONDS_IN_YEAR), 0},
+		{"year 0 - exactly after year 12", startTs + (12 * SECONDS_IN_YEAR), 0},
+		{"year 0 - far after emission", startTs + (15 * SECONDS_IN_YEAR), 0},
 	}
 
 	for _, tt := range tests {
@@ -268,7 +316,7 @@ func TestGetCurrentYear(t *testing.T) {
 	}
 }
 
-func TestGetCurrentYearAllYears(t *testing.T) {
+func TestGetCurrentYear_AllYearBoundaries(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
@@ -276,22 +324,25 @@ func TestGetCurrentYearAllYears(t *testing.T) {
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
 		yearStartTs := startTs + (year-1)*SECONDS_IN_YEAR
 		yearEndTs := startTs + year*SECONDS_IN_YEAR - 1
+		yearMidTs := yearStartTs + SECONDS_IN_YEAR/2
 
-		// Test at year start
-		gotStart := es.getCurrentYear(yearStartTs)
-		uassert.Equal(t, year, gotStart, "year start mismatch for year "+formatInt(year))
+		tests := []struct {
+			name string
+			ts   int64
+		}{
+			{"start", yearStartTs},
+			{"middle", yearMidTs},
+			{"end", yearEndTs},
+		}
 
-		// Test at year end
-		gotEnd := es.getCurrentYear(yearEndTs)
-		uassert.Equal(t, year, gotEnd, "year end mismatch for year "+formatInt(year))
-
-		// Test at year middle
-		gotMid := es.getCurrentYear(yearStartTs + SECONDS_IN_YEAR/2)
-		uassert.Equal(t, year, gotMid, "year middle mismatch for year "+formatInt(year))
+		for _, tt := range tests {
+			t.Run("year_"+formatInt(year)+"_"+tt.name, func(t *testing.T) {
+				got := es.getCurrentYear(tt.ts)
+				uassert.Equal(t, year, got)
+			})
+		}
 	}
 }
-
-// Getter Tests (getStartHeight, getStartTimestamp, getEndTimestamp, getHalvingData)
 
 func TestGetters(t *testing.T) {
 	tests := []struct {
@@ -303,6 +354,7 @@ func TestGetters(t *testing.T) {
 		{"positive values", 100, 1000},
 		{"large values", 1000000, 1700000000},
 		{"negative height", -100, 1000},
+		{"negative timestamp", 100, -1000},
 	}
 
 	for _, tt := range tests {
@@ -314,51 +366,69 @@ func TestGetters(t *testing.T) {
 
 			expectedEnd := tt.startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
 			uassert.Equal(t, expectedEnd, es.getEndTimestamp())
-
 			uassert.True(t, es.getHalvingData() != nil)
 		})
 	}
 }
 
-// getHalvingYearStartTimestamp Tests
-
 func TestGetHalvingYearStartTimestamp(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Valid years
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		expected := startTs + (year-1)*SECONDS_IN_YEAR
-		got := es.getHalvingYearStartTimestamp(year)
-		uassert.Equal(t, expected, got, "start timestamp mismatch for year "+formatInt(year))
+	tests := []struct {
+		name     string
+		year     int64
+		expected int64
+	}{
+		// Valid years
+		{"year 1", 1, startTs},
+		{"year 2", 2, startTs + SECONDS_IN_YEAR},
+		{"year 6", 6, startTs + 5*SECONDS_IN_YEAR},
+		{"year 12", 12, startTs + 11*SECONDS_IN_YEAR},
+
+		// Invalid years
+		{"invalid year 0", 0, 0},
+		{"invalid year -1", -1, 0},
+		{"invalid year 13", 13, 0},
+		{"invalid year 100", 100, 0},
+		{"invalid year -100", -100, 0},
 	}
 
-	// Invalid years - should return 0
-	invalidYears := []int64{0, -1, 13, 100, -100}
-	for _, year := range invalidYears {
-		got := es.getHalvingYearStartTimestamp(year)
-		uassert.Equal(t, int64(0), got, "invalid year "+formatInt(year)+" should return 0")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearStartTimestamp(tt.year)
+			uassert.Equal(t, tt.expected, got)
+		})
 	}
 }
-
-// getHalvingYearEndTimestamp Tests
 
 func TestGetHalvingYearEndTimestamp(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Valid years
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		expected := startTs + year*SECONDS_IN_YEAR - 1
-		got := es.getHalvingYearEndTimestamp(year)
-		uassert.Equal(t, expected, got, "end timestamp mismatch for year "+formatInt(year))
+	tests := []struct {
+		name     string
+		year     int64
+		expected int64
+	}{
+		// Valid years
+		{"year 1", 1, startTs + SECONDS_IN_YEAR - 1},
+		{"year 2", 2, startTs + 2*SECONDS_IN_YEAR - 1},
+		{"year 6", 6, startTs + 6*SECONDS_IN_YEAR - 1},
+		{"year 12", 12, startTs + 12*SECONDS_IN_YEAR - 1},
+
+		// Invalid years
+		{"invalid year 0", 0, 0},
+		{"invalid year -1", -1, 0},
+		{"invalid year 13", 13, 0},
+		{"invalid year 100", 100, 0},
 	}
 
-	// Invalid years - should return 0
-	invalidYears := []int64{0, -1, 13, 100, -100}
-	for _, year := range invalidYears {
-		got := es.getHalvingYearEndTimestamp(year)
-		uassert.Equal(t, int64(0), got, "invalid year "+formatInt(year)+" should return 0")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearEndTimestamp(tt.year)
+			uassert.Equal(t, tt.expected, got)
+		})
 	}
 }
 
@@ -368,33 +438,43 @@ func TestHalvingYearTimestampContinuity(t *testing.T) {
 
 	// Verify that year boundaries are continuous
 	for year := int64(1); year < HALVING_END_YEAR; year++ {
-		endTs := es.getHalvingYearEndTimestamp(year)
-		nextStartTs := es.getHalvingYearStartTimestamp(year + 1)
+		t.Run("year_"+formatInt(year)+"_to_"+formatInt(year+1), func(t *testing.T) {
+			endTs := es.getHalvingYearEndTimestamp(year)
+			nextStartTs := es.getHalvingYearStartTimestamp(year + 1)
 
-		uassert.Equal(t, endTs+1, nextStartTs,
-			"year "+formatInt(year)+" end should be followed by year "+formatInt(year+1)+" start")
+			uassert.Equal(t, endTs+1, nextStartTs)
+		})
 	}
 }
-
-// getHalvingYearAmountPerSecond Tests
 
 func TestGetHalvingYearAmountPerSecond(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Valid years
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		yearAmount := GetHalvingAmountsPerYear(year)
-		expected := yearAmount / SECONDS_IN_YEAR
-		got := es.getHalvingYearAmountPerSecond(year)
-		uassert.Equal(t, expected, got, "amount per second mismatch for year "+formatInt(year))
+	tests := []struct {
+		name     string
+		year     int64
+		expected int64
+	}{
+		// Valid years - calculated from halving amounts
+		{"year 1", 1, GetHalvingAmountsPerYear(1) / SECONDS_IN_YEAR},
+		{"year 2", 2, GetHalvingAmountsPerYear(2) / SECONDS_IN_YEAR},
+		{"year 3", 3, GetHalvingAmountsPerYear(3) / SECONDS_IN_YEAR},
+		{"year 6", 6, GetHalvingAmountsPerYear(6) / SECONDS_IN_YEAR},
+		{"year 12", 12, GetHalvingAmountsPerYear(12) / SECONDS_IN_YEAR},
+
+		// Invalid years
+		{"invalid year 0", 0, 0},
+		{"invalid year -1", -1, 0},
+		{"invalid year 13", 13, 0},
+		{"invalid year 100", 100, 0},
 	}
 
-	// Invalid years - should return 0
-	invalidYears := []int64{0, -1, 13, 100}
-	for _, year := range invalidYears {
-		got := es.getHalvingYearAmountPerSecond(year)
-		uassert.Equal(t, int64(0), got, "invalid year "+formatInt(year)+" should return 0")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearAmountPerSecond(tt.year)
+			uassert.Equal(t, tt.expected, got)
+		})
 	}
 }
 
@@ -402,59 +482,88 @@ func TestHalvingRates(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Verify halving pattern: years 1-2 same, 3-4 half, 5-6 quarter, etc.
+	tests := []struct {
+		name       string
+		year       int64
+		compareTo  int64
+		multiplier int64 // year rate should be year1Rate / multiplier
+	}{
+		{"years 1 and 2 same rate", 2, 1, 1},
+		{"year 3 half of year 1", 3, 1, 2},
+		{"year 4 half of year 1", 4, 1, 2},
+		{"year 5 quarter of year 1", 5, 1, 4},
+		{"year 7 eighth of year 1", 7, 1, 8},
+		{"year 11 sixty-fourth of year 1", 11, 1, 16},
+	}
+
 	year1Rate := es.getHalvingYearAmountPerSecond(1)
-	year2Rate := es.getHalvingYearAmountPerSecond(2)
-	year3Rate := es.getHalvingYearAmountPerSecond(3)
-	year7Rate := es.getHalvingYearAmountPerSecond(7)
 
-	uassert.Equal(t, year1Rate, year2Rate, "years 1 and 2 should have same rate")
-	uassert.Equal(t, year1Rate/2, year3Rate, "year 3 rate should be half of year 1")
-	uassert.Equal(t, year1Rate/8, year7Rate, "year 7 rate should be 1/8 of year 1")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearAmountPerSecond(tt.year)
+			expected := year1Rate / tt.multiplier
+			uassert.Equal(t, expected, got)
+		})
+	}
 }
-
-// getHalvingYearAccumulatedAmount Tests
 
 func TestGetHalvingYearAccumulatedAmount(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Initial accumulated amounts should be 0
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		got := es.getHalvingYearAccumulatedAmount(year)
-		uassert.Equal(t, int64(0), got, "initial accumulated amount for year "+formatInt(year)+" should be 0")
+	tests := []struct {
+		name     string
+		year     int64
+		expected int64
+	}{
+		// Valid years - initial value should be 0
+		{"year 1 initial", 1, 0},
+		{"year 6 initial", 6, 0},
+		{"year 12 initial", 12, 0},
+
+		// Invalid years
+		{"invalid year 0", 0, 0},
+		{"invalid year -1", -1, 0},
+		{"invalid year 13", 13, 0},
+		{"invalid year 100", 100, 0},
 	}
 
-	// Invalid years - should return 0
-	invalidYears := []int64{0, -1, 13, 100}
-	for _, year := range invalidYears {
-		got := es.getHalvingYearAccumulatedAmount(year)
-		uassert.Equal(t, int64(0), got, "invalid year "+formatInt(year)+" should return 0")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearAccumulatedAmount(tt.year)
+			uassert.Equal(t, tt.expected, got)
+		})
 	}
 }
-
-// getHalvingYearLeftAmount Tests
 
 func TestGetHalvingYearLeftAmount(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
-	// Initial left amounts should equal max amounts
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		expected := GetHalvingAmountsPerYear(year)
-		got := es.getHalvingYearLeftAmount(year)
-		uassert.Equal(t, expected, got, "initial left amount for year "+formatInt(year)+" should equal max")
+	tests := []struct {
+		name     string
+		year     int64
+		expected int64
+	}{
+		// Valid years - initial left should equal max
+		{"year 1 initial", 1, GetHalvingAmountsPerYear(1)},
+		{"year 6 initial", 6, GetHalvingAmountsPerYear(6)},
+		{"year 12 initial", 12, GetHalvingAmountsPerYear(12)},
+
+		// Invalid years
+		{"invalid year 0", 0, 0},
+		{"invalid year -1", -1, 0},
+		{"invalid year 13", 13, 0},
+		{"invalid year 100", 100, 0},
 	}
 
-	// Invalid years - should return 0
-	invalidYears := []int64{0, -1, 13, 100}
-	for _, year := range invalidYears {
-		got := es.getHalvingYearLeftAmount(year)
-		uassert.Equal(t, int64(0), got, "invalid year "+formatInt(year)+" should return 0")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := es.getHalvingYearLeftAmount(tt.year)
+			uassert.Equal(t, tt.expected, got)
+		})
 	}
 }
-
-// addHalvingYearAccumulatedAmount Tests
 
 func TestAddHalvingYearAccumulatedAmount(t *testing.T) {
 	tests := []struct {
@@ -463,11 +572,14 @@ func TestAddHalvingYearAccumulatedAmount(t *testing.T) {
 		amount      int64
 		shouldError bool
 	}{
+		// Valid cases
 		{"valid year 1", 1, 1000, false},
 		{"valid year 6", 6, 5000, false},
 		{"valid year 12", 12, 10000, false},
 		{"zero amount", 5, 0, false},
 		{"large amount", 3, 999999999, false},
+
+		// Invalid year cases
 		{"invalid year 0", 0, 1000, true},
 		{"invalid year 13", 13, 1000, true},
 		{"invalid negative year", -1, 1000, true},
@@ -490,35 +602,65 @@ func TestAddHalvingYearAccumulatedAmount(t *testing.T) {
 	}
 }
 
-func TestAddHalvingYearAccumulatedAmountCumulative(t *testing.T) {
-	es := NewEmissionState(1, 10000)
+func TestAddHalvingYearAccumulatedAmount_Cumulative(t *testing.T) {
+	tests := []struct {
+		name    string
+		amounts []int64
+	}{
+		{"single add", []int64{100}},
+		{"multiple adds", []int64{100, 200, 300, 400, 500}},
+		{"add zeros", []int64{0, 100, 0, 200, 0}},
+		{"large amounts", []int64{1000000, 2000000, 3000000}},
+	}
 
-	// Add amounts cumulatively
-	amounts := []int64{100, 200, 300, 400, 500}
-	expectedTotal := int64(0)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := NewEmissionState(1, 10000)
+			expectedTotal := int64(0)
 
-	for _, amount := range amounts {
-		err := es.addHalvingYearAccumulatedAmount(1, amount)
-		uassert.NoError(t, err)
-		expectedTotal += amount
-		got := es.getHalvingYearAccumulatedAmount(1)
-		uassert.Equal(t, expectedTotal, got)
+			for _, amount := range tt.amounts {
+				err := es.addHalvingYearAccumulatedAmount(1, amount)
+				uassert.NoError(t, err)
+				expectedTotal += amount
+				got := es.getHalvingYearAccumulatedAmount(1)
+				uassert.Equal(t, expectedTotal, got)
+			}
+		})
 	}
 }
 
-func TestAddHalvingYearAccumulatedAmountOverflowPanic(t *testing.T) {
-	es := NewEmissionState(1, 10000)
+func TestAddHalvingYearAccumulatedAmount_Overflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		initialValue int64
+		addAmount    int64
+		panicMsg     string
+	}{
+		{
+			name:         "overflow at boundary",
+			initialValue: math.MaxInt64 - 100,
+			addAmount:    200,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow with max value",
+			initialValue: math.MaxInt64,
+			addAmount:    1,
+			panicMsg:     "int64 addition overflow",
+		},
+	}
 
-	// Set initial value close to MaxInt64
-	es.halvingData.setAccumAmount(1, math.MaxInt64-100)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := NewEmissionState(1, 10000)
+			es.halvingData.setAccumAmount(1, tt.initialValue)
 
-	// Adding more should panic
-	uassert.PanicsWithMessage(t, "int64 addition overflow", func() {
-		es.addHalvingYearAccumulatedAmount(1, 200)
-	})
+			uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				es.addHalvingYearAccumulatedAmount(1, tt.addAmount)
+			})
+		})
+	}
 }
-
-// subHalvingYearLeftAmount Tests
 
 func TestSubHalvingYearLeftAmount(t *testing.T) {
 	tests := []struct {
@@ -531,6 +673,8 @@ func TestSubHalvingYearLeftAmount(t *testing.T) {
 		{"valid year 6", 6, 5000, false},
 		{"valid year 12", 12, 10000, false},
 		{"zero amount", 5, 0, false},
+
+		// Invalid year cases
 		{"invalid year 0", 0, 1000, true},
 		{"invalid year 13", 13, 1000, true},
 		{"invalid negative year", -1, 1000, true},
@@ -553,67 +697,94 @@ func TestSubHalvingYearLeftAmount(t *testing.T) {
 	}
 }
 
-func TestSubHalvingYearLeftAmountUnderflowPanic(t *testing.T) {
-	es := NewEmissionState(1, 10000)
+func TestSubHalvingYearLeftAmount_Underflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		initialValue int64
+		subAmount    int64
+		panicMsg     string
+	}{
+		{
+			name:         "underflow at boundary",
+			initialValue: math.MinInt64 + 100,
+			subAmount:    200,
+			panicMsg:     "int64 subtraction underflow",
+		},
+		{
+			name:         "underflow with min value",
+			initialValue: math.MinInt64,
+			subAmount:    1,
+			panicMsg:     "int64 subtraction underflow",
+		},
+	}
 
-	// Set left amount to MinInt64 + 100
-	es.halvingData.setLeftAmount(1, math.MinInt64+100)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := NewEmissionState(1, 10000)
+			es.halvingData.setLeftAmount(1, tt.initialValue)
 
-	// Subtracting more should panic
-	uassert.PanicsWithMessage(t, "int64 subtraction underflow", func() {
-		es.subHalvingYearLeftAmount(1, 200)
-	})
-}
-
-func TestAddSubConsistency(t *testing.T) {
-	es := NewEmissionState(1, 10000)
-
-	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		maxAmount := GetHalvingAmountsPerYear(year)
-		emitAmount := int64(1000000)
-
-		// Add to accumulated
-		err := es.addHalvingYearAccumulatedAmount(year, emitAmount)
-		uassert.NoError(t, err)
-
-		// Subtract from left
-		err = es.subHalvingYearLeftAmount(year, emitAmount)
-		uassert.NoError(t, err)
-
-		// Verify consistency: accum + left = max
-		accum := es.getHalvingYearAccumulatedAmount(year)
-		left := es.getHalvingYearLeftAmount(year)
-		uassert.Equal(t, maxAmount, accum+left, "accum + left should equal max for year "+formatInt(year))
+			uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				es.subHalvingYearLeftAmount(1, tt.subAmount)
+			})
+		})
 	}
 }
 
-// getEmissionState Tests (Singleton pattern)
-func TestGetEmissionState(t *testing.T) {
-	// Reset global state
-	resetEmissionState(t)
+func TestAddSubConsistency(t *testing.T) {
+	tests := []struct {
+		name       string
+		year       int64
+		emitAmount int64
+	}{
+		{"year 1 small amount", 1, 1000000},
+		{"year 6 medium amount", 6, 5000000},
+		{"year 12 large amount", 12, 10000000},
+	}
 
-	// Get emission state
-	es := getEmissionState()
-	uassert.True(t, es != nil)
-	uassert.True(t, es.isInitialized())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset emission state for each test
+			es := NewEmissionState(1, 10000)
+			maxAmount := GetHalvingAmountsPerYear(tt.year)
 
-	// Getting again should return same instance
-	es2 := getEmissionState()
-	uassert.Equal(t, es.getStartHeight(), es2.getStartHeight())
-	uassert.Equal(t, es.getStartTimestamp(), es2.getStartTimestamp())
+			// Add to accumulated
+			err := es.addHalvingYearAccumulatedAmount(tt.year, tt.emitAmount)
+			uassert.NoError(t, err)
+
+			// Subtract from left
+			err = es.subHalvingYearLeftAmount(tt.year, tt.emitAmount)
+			uassert.NoError(t, err)
+
+			// Verify consistency: accum + left = max
+			accum := es.getHalvingYearAccumulatedAmount(tt.year)
+			left := es.getHalvingYearLeftAmount(tt.year)
+			uassert.Equal(t, maxAmount, accum+left)
+		})
+	}
 }
 
-func TestEmissionStateWithNegativeTimestamp(t *testing.T) {
-	es := NewEmissionState(1, -1000)
+func TestGetEmissionState(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"first call returns initialized state"},
+		{"second call returns same instance"},
+	}
 
-	// Negative start timestamp should still work for calculations
-	uassert.Equal(t, int64(-1000), es.getStartTimestamp())
-	uassert.True(t, es.isInitialized())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetEmissionState(t)
 
-	// isActive should handle negative ranges
-	uassert.True(t, es.isActive(-1000))
-	uassert.True(t, es.isActive(-500))
-	uassert.False(t, es.isActive(-1001))
+			es := getEmissionState()
+			uassert.True(t, es != nil)
+			uassert.True(t, es.isInitialized())
+
+			// Getting again should return same instance
+			es2 := getEmissionState()
+			uassert.Equal(t, es.getStartHeight(), es2.getStartHeight())
+			uassert.Equal(t, es.getStartTimestamp(), es2.getStartTimestamp())
+		})
+	}
 }
 
 func TestEmissionStateYearBoundaryPrecision(t *testing.T) {
@@ -622,19 +793,21 @@ func TestEmissionStateYearBoundaryPrecision(t *testing.T) {
 
 	// Test exact second transitions
 	for year := int64(1); year < HALVING_END_YEAR; year++ {
-		lastSecondOfYear := es.getHalvingYearEndTimestamp(year)
-		firstSecondOfNextYear := es.getHalvingYearStartTimestamp(year + 1)
+		t.Run("year_"+formatInt(year)+"_to_"+formatInt(year+1), func(t *testing.T) {
+			lastSecondOfYear := es.getHalvingYearEndTimestamp(year)
+			firstSecondOfNextYear := es.getHalvingYearStartTimestamp(year + 1)
 
-		// Last second should be year N
-		gotYear := es.getCurrentYear(lastSecondOfYear)
-		uassert.Equal(t, year, gotYear)
+			// Last second should be year N
+			gotYear := es.getCurrentYear(lastSecondOfYear)
+			uassert.Equal(t, year, gotYear)
 
-		// First second of next year should be year N+1
-		gotNextYear := es.getCurrentYear(firstSecondOfNextYear)
-		uassert.Equal(t, year+1, gotNextYear)
+			// First second of next year should be year N+1
+			gotNextYear := es.getCurrentYear(firstSecondOfNextYear)
+			uassert.Equal(t, year+1, gotNextYear)
 
-		// Difference should be exactly 1 second
-		uassert.Equal(t, int64(1), firstSecondOfNextYear-lastSecondOfYear)
+			// Difference should be exactly 1 second
+			uassert.Equal(t, int64(1), firstSecondOfNextYear-lastSecondOfYear)
+		})
 	}
 }
 
@@ -652,17 +825,19 @@ func TestEmissionStateTotalEmission(t *testing.T) {
 func TestEmissionStateHalvingDataIntegrity(t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
-
 	halvingData := es.getHalvingData()
+
 	uassert.True(t, halvingData != nil)
 
-	// Verify halving data matches emission state getters
+	// Verify halving data matches emission state getters for all years
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		uassert.Equal(t, halvingData.getStartTimestamp(year), es.getHalvingYearStartTimestamp(year))
-		uassert.Equal(t, halvingData.getEndTimestamp(year), es.getHalvingYearEndTimestamp(year))
-		uassert.Equal(t, halvingData.getAmountPerSecond(year), es.getHalvingYearAmountPerSecond(year))
-		uassert.Equal(t, halvingData.getAccumAmount(year), es.getHalvingYearAccumulatedAmount(year))
-		uassert.Equal(t, halvingData.getLeftAmount(year), es.getHalvingYearLeftAmount(year))
+		t.Run("year_"+formatInt(year), func(t *testing.T) {
+			uassert.Equal(t, halvingData.getStartTimestamp(year), es.getHalvingYearStartTimestamp(year))
+			uassert.Equal(t, halvingData.getEndTimestamp(year), es.getHalvingYearEndTimestamp(year))
+			uassert.Equal(t, halvingData.getAmountPerSecond(year), es.getHalvingYearAmountPerSecond(year))
+			uassert.Equal(t, halvingData.getAccumAmount(year), es.getHalvingYearAccumulatedAmount(year))
+			uassert.Equal(t, halvingData.getLeftAmount(year), es.getHalvingYearLeftAmount(year))
+		})
 	}
 }
 
@@ -674,6 +849,7 @@ func TestEmissionStateEndTimestampCalculation(t *testing.T) {
 		{"zero", 0},
 		{"positive", 1000},
 		{"large", 1700000000},
+		{"negative", -1000},
 	}
 
 	for _, tt := range tests {
@@ -691,25 +867,35 @@ func TestEmissionStateEndTimestampCalculation(t *testing.T) {
 	}
 }
 
-// Stress Tests
-
 func TestEmissionStateRepeatedOperations(t *testing.T) {
-	es := NewEmissionState(1, 10000)
-
-	// Perform many add/sub operations
-	for i := 0; i < 100; i++ {
-		amount := int64(1000 + i)
-		err := es.addHalvingYearAccumulatedAmount(1, amount)
-		uassert.NoError(t, err)
-		err = es.subHalvingYearLeftAmount(1, amount)
-		uassert.NoError(t, err)
+	tests := []struct {
+		name       string
+		iterations int
+	}{
+		{"10 iterations", 10},
+		{"50 iterations", 50},
+		{"100 iterations", 100},
 	}
 
-	// Verify final state
-	maxAmount := GetHalvingAmountsPerYear(1)
-	accum := es.getHalvingYearAccumulatedAmount(1)
-	left := es.getHalvingYearLeftAmount(1)
-	uassert.Equal(t, maxAmount, accum+left)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := NewEmissionState(1, 10000)
+
+			for i := 0; i < tt.iterations; i++ {
+				amount := int64(1000 + i)
+				err := es.addHalvingYearAccumulatedAmount(1, amount)
+				uassert.NoError(t, err)
+				err = es.subHalvingYearLeftAmount(1, amount)
+				uassert.NoError(t, err)
+			}
+
+			// Verify final state
+			maxAmount := GetHalvingAmountsPerYear(1)
+			accum := es.getHalvingYearAccumulatedAmount(1)
+			left := es.getHalvingYearLeftAmount(1)
+			uassert.Equal(t, maxAmount, accum+left)
+		})
+	}
 }
 
 func TestEmissionStateAllYearsIndependent(t *testing.T) {
@@ -724,8 +910,10 @@ func TestEmissionStateAllYearsIndependent(t *testing.T) {
 
 	// Verify each year was modified independently
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
-		expected := year * 1000
-		got := es.getHalvingYearAccumulatedAmount(year)
-		uassert.Equal(t, expected, got)
+		t.Run("year_"+formatInt(year), func(t *testing.T) {
+			expected := year * 1000
+			got := es.getHalvingYearAccumulatedAmount(year)
+			uassert.Equal(t, expected, got)
+		})
 	}
 }
