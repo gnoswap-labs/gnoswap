@@ -128,46 +128,47 @@ func validateCoordinate(value int, min int, max int, name string) error {
 }
 
 // parseImageParams parses and validates parameters in one step.
-// Returns parsed ImageParams or error.
+// Returns parsed ImageParams pointer or error.
+// Returns nil on error to avoid allocating zero-value struct.
 // Expected format: "x1,y1,x2,y2,color1,color2"
-func parseImageParams(params string) (ImageParams, error) {
+func parseImageParams(params string) (*ImageParams, error) {
 	parts := strings.Split(params, ",")
 	if len(parts) != 6 {
-		return ImageParams{}, errInvalidTokenParams
+		return nil, errInvalidTokenParams
 	}
 
 	x1, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return ImageParams{}, errInvalidTokenParams
+		return nil, errInvalidTokenParams
 	}
 
 	y1, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return ImageParams{}, errInvalidTokenParams
+		return nil, errInvalidTokenParams
 	}
 
 	x2, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return ImageParams{}, errInvalidTokenParams
+		return nil, errInvalidTokenParams
 	}
 
 	y2, err := strconv.Atoi(parts[3])
 	if err != nil {
-		return ImageParams{}, errInvalidTokenParams
+		return nil, errInvalidTokenParams
 	}
 
 	// Validate coordinate ranges with detailed error messages
 	if err := validateCoordinate(x1, x1Min, x1Max, "x1"); err != nil {
-		return ImageParams{}, err
+		return nil, err
 	}
 	if err := validateCoordinate(y1, y1Min, y1Max, "y1"); err != nil {
-		return ImageParams{}, err
+		return nil, err
 	}
 	if err := validateCoordinate(x2, x2Min, x2Max, "x2"); err != nil {
-		return ImageParams{}, err
+		return nil, err
 	}
 	if err := validateCoordinate(y2, y2Min, y2Max, "y2"); err != nil {
-		return ImageParams{}, err
+		return nil, err
 	}
 
 	color1 := parts[4]
@@ -175,10 +176,10 @@ func parseImageParams(params string) (ImageParams, error) {
 
 	// Validate color format (#XXXXXX)
 	if !isValidHexColor(color1) || !isValidHexColor(color2) {
-		return ImageParams{}, errInvalidColorFormat
+		return nil, errInvalidColorFormat
 	}
 
-	return ImageParams{
+	return &ImageParams{
 		x1:     x1,
 		y1:     y1,
 		x2:     x2,
