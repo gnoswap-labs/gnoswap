@@ -914,8 +914,8 @@ func TestAssertValidOperatorAddress(t *testing.T) {
 					assertValidOperatorAddress(tt.operator)
 				})
 			} else {
+				// Should not panic for valid operators
 				assertValidOperatorAddress(tt.operator)
-				uassert.Equal(t, true, true)
 			}
 		})
 	}
