@@ -23,10 +23,7 @@ import (
 	_ "gno.land/r/onbloc/qux"
 )
 
-const (
-	maxApprove      int64 = 9223372036854775806
-	poolCreationFee int64 = 100_000_000
-)
+const poolCreationFee int64 = 100_000_000
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
