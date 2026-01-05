@@ -97,9 +97,9 @@ func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 						t.Errorf("Expected panic but got none")
 					}
 				}()
-				safeConvertToUint128(tt.input)
+				SafeConvertToUint128(tt.input)
 			} else {
-				got := safeConvertToUint128(tt.input)
+				got := SafeConvertToUint128(tt.input)
 				if !got.Eq(tt.expected) {
 					t.Errorf("Expected %s, got %s", tt.expected.ToString(), got.ToString())
 				}
@@ -736,9 +736,9 @@ func TestLiquidityAmounts_NilParameterHandling(t *testing.T) {
 			wantPanic: true,
 		},
 		{
-			name: "safeConvertToUint128 with nil",
+			name: "SafeConvertToUint128 with nil",
 			fn: func() {
-				safeConvertToUint128(nil)
+				SafeConvertToUint128(nil)
 			},
 			wantPanic: true,
 		},
