@@ -48,7 +48,8 @@ func (rb *RBAC) IsAuthorized(roleName string, addr address) bool {
 //    Since system roles are registered through `initRbac`, attempting to register
 //    a new role with a system role name will return an `ErrRoleAlreadyExists` error.
 func (rb *RBAC) RegisterRole(roleName string, addr address) error {
-	if strings.TrimSpace(roleName) == "" {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
 		return ErrInvalidRoleName
 	}
 
@@ -68,7 +69,8 @@ func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 //   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
 //   - `ErrInvalidAddress`: addr is empty or has an invalid format
 func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
-	if strings.TrimSpace(roleName) == "" {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
 		return ErrInvalidRoleName
 	}
 
@@ -93,7 +95,8 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 //   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
 //   - `ErrCannotRemoveSystemRole`: attempting to remove a system role (e.g., admin, governance, pool, etc.)
 func (rb *RBAC) RemoveRole(roleName string) error {
-	if strings.TrimSpace(roleName) == "" {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
 		return ErrInvalidRoleName
 	}
 
