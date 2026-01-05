@@ -98,6 +98,8 @@ func setupPoolWithMixedPositions() {
 }
 
 func testExactInputWithMixedPositions() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: ExactInput swap with mixed positions (baz → qux, amount: 200000)")
 
@@ -153,6 +155,8 @@ func testExactInputWithMixedPositions() {
 }
 
 func testExactOutputWithMixedPositions() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: ExactOutput swap with mixed positions (qux → baz, amount: -80000)")
 
@@ -220,5 +224,25 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	return nil
 }
 
-// Error:
-// read permission denied
+// Output:
+// [SCENARIO] Mixed Positions - Swap Balance Verification
+//
+// [INFO] Pool created with mixed positions
+// [INFO] In-range position (-1000 to 1000): 48768198 48768198
+// [INFO] Out-of-range position (2000 to 4000): 43051502 0
+// [INFO] Active liquidity: 1000000000 expected: 1000000000
+//
+// [INFO] Test: ExactInput swap with mixed positions (baz → qux, amount: 200000)
+// [EXPECTED] Swap amounts - amount0: 200000 amount1: -199860
+// [EXPECTED] Baz conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Qux conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Liquidity before: 1000000000 after: 1000000000 expected: unchanged
+// [EXPECTED] Tick after: -4 expected: < 2000 (out-of-range not activated)
+//
+// [INFO] Test: ExactOutput swap with mixed positions (qux → baz, amount: -80000)
+// [EXPECTED] Swap amounts - amount0: -80000 amount1: 80016
+// [EXPECTED] Baz conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Qux conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Liquidity before: 1000000000 after: 1000000000 expected: unchanged
+// [EXPECTED] Tick after: -3 expected: < 2000 (out-of-range not activated)
+// [INFO] All balance checks passed with mixed positions

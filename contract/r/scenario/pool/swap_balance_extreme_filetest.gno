@@ -85,6 +85,8 @@ func setupWideRangePool() {
 }
 
 func testExtremePriceDown() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: Extreme downward price movement (obl → usdc, amount: 10000000)")
 
@@ -139,6 +141,8 @@ func testExtremePriceDown() {
 }
 
 func testExtremePriceUp() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: Extreme upward price movement (usdc → obl, amount: 5000000)")
 
@@ -193,6 +197,8 @@ func testExtremePriceUp() {
 }
 
 func testMaximumSlippage() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: Maximum slippage (obl → usdc, amount: 20000000)")
 
@@ -259,5 +265,31 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	return nil
 }
 
-// Error:
-// read permission denied
+// Output:
+// [SCENARIO] Extreme Price Movement - Swap Balance Verification
+//
+// [INFO] Pool created with wide-range position (-10000 to 10000)
+// [INFO] Initial amounts - obl: 3934541779 usdc: 3934541779
+// [INFO] Initial tick: 0
+//
+// [INFO] Test: Extreme downward price movement (obl → usdc, amount: 10000000)
+// [EXPECTED] Swap amounts - amount0: 10000000 amount1: -9985019
+// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Tick moved from 0 to -20
+// [EXPECTED] Price decreased significantly: -20 < -500
+//
+// [INFO] Test: Extreme upward price movement (usdc → obl, amount: 5000000)
+// [EXPECTED] Swap amounts - amount0: -5004988 amount1: 5000000
+// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Tick moved from -20 to -10
+// [EXPECTED] Price increased significantly: 10 > 500
+//
+// [INFO] Test: Maximum slippage (obl → usdc, amount: 20000000)
+// [EXPECTED] Swap amounts - amount0: 20000000 amount1: -19930244
+// [EXPECTED] Obl conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Usdc conservation (admin + pool): 0 expected: 0
+// [EXPECTED] No tokens lost or created: true
+// [EXPECTED] Tick movement: -40 expected: near range boundary
+// [INFO] All extreme price movement balance checks passed

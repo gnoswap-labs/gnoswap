@@ -82,6 +82,8 @@ func setupPool() {
 }
 
 func testExactInputSwap() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: ExactInput swap (bar → foo, amount: 100000)")
 
@@ -137,6 +139,8 @@ func testExactInputSwap() {
 }
 
 func testExactOutputSwap() {
+	testing.SetRealm(adminRealm)
+
 	println()
 	println("[INFO] Test: ExactOutput swap (foo → bar, amount: -50000)")
 
@@ -204,5 +208,25 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	return nil
 }
 
-// Error:
-// read permission denied
+// Output:
+// [SCENARIO] Single In-Range Position - Swap Balance Verification
+//
+// [INFO] Pool created at 1:1 price with in-range position (-1000 to 1000)
+// [INFO] Initial amounts - bar: 48768198 foo: 48768198
+//
+// [INFO] Test: ExactInput swap (bar → foo, amount: 100000)
+// [EXPECTED] Swap amounts - amount0: 100000 amount1: -99940
+// [EXPECTED] Admin bar balance changed by: -100000 expected: -100000
+// [EXPECTED] Pool bar balance changed by: 100000 expected: 100000
+// [EXPECTED] Bar conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Foo conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Tick moved from 0 to -2 expected: price decreased
+//
+// [INFO] Test: ExactOutput swap (foo → bar, amount: -50000)
+// [EXPECTED] Swap amounts - amount0: -50000 amount1: 50019
+// [EXPECTED] Admin bar balance changed by: 50000 expected: 50000
+// [EXPECTED] Pool bar balance changed by: -50000 expected: -50000
+// [EXPECTED] Bar conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Foo conservation (admin + pool): 0 expected: 0
+// [EXPECTED] Tick moved from -2 to -1 expected: price increased
+// [INFO] All balance checks passed
