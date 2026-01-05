@@ -9,7 +9,7 @@ Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs t
 ## Configuration
 
 - **Pool Creation Fee**: 100 GNS (default)
-- **Protocol Fee**: 0-10% of swap fees per token
+- **Protocol Fee**: 0% or 4-10% of swap fees per token
 - **Withdrawal Fee**: 1% on collected fees
 - **Fee Tiers**: 0.01%, 0.05%, 0.3%, 1%
 - **Tick Spacing**: Auto-set by fee tier
@@ -187,7 +187,7 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 
 **Protocol fees**:
 
-- Optional 0-10% of swap fees
+- Optional 0% or 4-10% of swap fees
 - Configurable per pool
 - Sent to protocol fee contract
 
