@@ -93,12 +93,16 @@ func genImageParams(r *rand.Rand) string {
 	x2 := x2Min + r.Uint64N(x2Range)
 	y2 := y2Min + r.Uint64N(y2Range)
 
-	color1 := "#"
-	color2 := "#"
-	for i := 0; i < 6; i++ {
-		color1 += string(charset[r.IntN(16)])
-		color2 += string(charset[r.IntN(16)])
+	var buf1 [7]byte
+	var buf2 [7]byte
+	buf1[0] = '#'
+	buf2[0] = '#'
+	for i := 1; i < 7; i++ {
+		buf1[i] = charset[r.IntN(16)]
+		buf2[i] = charset[r.IntN(16)]
 	}
+	color1 := string(buf1[:])
+	color2 := string(buf2[:])
 
 	return strconv.Itoa(int(x1)) + "," + strconv.Itoa(int(y1)) + "," +
 		strconv.Itoa(int(x2)) + "," + strconv.Itoa(int(y2)) + "," +
