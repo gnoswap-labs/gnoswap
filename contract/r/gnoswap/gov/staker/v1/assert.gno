@@ -77,3 +77,9 @@ func assertNoActiveProposal() {
 		panic(errActiveProposal)
 	}
 }
+
+func assertNoSelfDelegation(delegatee, newDelegatee address) {
+	if delegatee == newDelegatee {
+		panic(errSameDelegatee)
+	}
+}
