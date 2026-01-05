@@ -58,8 +58,11 @@ sqrtPriceNext, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep
 
 // Bit operations for tick bitmap
 tickBitmap := u256.NewUint(0xFF00)
-msb := gnsmath.BitMathMostSignificantBit(tickBitmap) // Returns 15
-lsb := gnsmath.BitMathLeastSignificantBit(tickBitmap) // Returns 8
+msb := gnsmath.BitMathMostSignificantBit(tickBitmap)
+println(msb) // Output: 15
+
+lsb := gnsmath.BitMathLeastSignificantBit(tickBitmap)
+println(lsb) // Output: 8
 ```
 
 ## API
