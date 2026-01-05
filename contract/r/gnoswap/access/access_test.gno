@@ -304,6 +304,24 @@ func TestSetRoleAddress(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "invalid address for role invalid",
 		},
+		{
+			name: "empty role name - should work (no validation)",
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "",
+			roleAddress: testutils.TestAddress("test"),
+			shouldPanic: false,
+		},
+		{
+			name: "update with same address - idempotent",
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "admin",
+			roleAddress: testutils.TestAddress("admin"),
+			shouldPanic: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -311,30 +329,19 @@ func TestSetRoleAddress(t *testing.T) {
 			// Setup initial roles
 			roleAddresses = tt.setupRoles
 
+			// Call actual implementation
+			err := setRoleAddress(tt.roleName, tt.roleAddress)
+
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			// Simulate SetRoleAddress logic
-			if tt.roleAddress == address("") {
-				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
-			}
-
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				roleAddresses[tt.roleName] = address("")
-			}
-
-			roleAddresses[tt.roleName] = tt.roleAddress
-
-			if !tt.shouldPanic {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				} else if tt.panicMsg != "" && !containsString(err, tt.panicMsg) {
+					t.Errorf("Expected error containing %q, got %v", tt.panicMsg, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got %v", err)
+				}
 				// Verify set operation
 				addr, ok := GetAddress(tt.roleName)
 				if !ok {
@@ -382,7 +389,7 @@ func TestRemoveRole(t *testing.T) {
 			},
 			roleName:    "nonexistent",
 			shouldPanic: true,
-			panicMsg:    "role nonexistent does not exist",
+			panicMsg:    "role nonexistent not found",
 		},
 	}
 
@@ -391,26 +398,19 @@ func TestRemoveRole(t *testing.T) {
 			// Setup roles
 			roleAddresses = tt.setupRoles
 
+			// Call actual implementation
+			err := removeRole(tt.roleName)
+
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			// Simulate RemoveRole logic
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				panic(ufmt.Errorf("role %s does not exist", tt.roleName))
-			}
-
-			delete(roleAddresses, tt.roleName)
-
-			if !tt.shouldPanic {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				} else if tt.panicMsg != "" && !containsString(err, tt.panicMsg) {
+					t.Errorf("Expected error containing %q, got %v", tt.panicMsg, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got %v", err)
+				}
 				// Verify removal
 				_, ok := GetAddress(tt.roleName)
 				if ok {
