@@ -557,9 +557,20 @@ func (p *positionV1) SetPositionOperator(
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
 	position := p.mustGetPosition(id)
+	prevOperator := position.Operator()
 	position.SetOperator(operator)
 
 	p.mustUpdatePosition(id, *position)
+
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
+		"SetPositionOperator",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpPositionId", formatUint(id),
+		"prevOperator", prevOperator.String(),
+		"newOperator", operator.String(),
+	)
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
