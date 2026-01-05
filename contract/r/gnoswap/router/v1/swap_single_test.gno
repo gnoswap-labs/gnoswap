@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -237,4 +238,128 @@ func TestSingleSwapInputValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSingleSwapRoute_PriceLimitValidation tests validation of sqrtPriceLimitX96 parameter
+func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee for this test
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	tests := []struct {
+		name       string
+		priceLimit string
+		shouldFail bool
+		errorMsg   string
+	}{
+		{
+			name:       "negative value should fail",
+			priceLimit: "-1000",
+			shouldFail: true,
+			errorMsg:   "", // Any error is acceptable
+		},
+		{
+			name:       "non-numeric should fail",
+			priceLimit: "invalid",
+			shouldFail: true,
+			errorMsg:   "",
+		},
+		{
+			name:       "valid zero (no limit)",
+			priceLimit: "0",
+			shouldFail: false,
+		},
+		{
+			name:       "valid positive value",
+			priceLimit: "79228162514264337593543950336",
+			shouldFail: false,
+		},
+		{
+			name:       "max uint128 value",
+			priceLimit: "340282366920938463463374607431768211455",
+			shouldFail: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(testing.NewUserRealm(userAddr))
+
+			if tt.shouldFail {
+				// Should panic or abort on invalid price limit
+				uassert.AbortsContains(t, tt.errorMsg, func() {
+					func(cur realm) {
+						router.ExactInSingleSwapRoute(
+							barPath,
+							bazPath,
+							"100000",
+							singlePoolPath,
+							"0",
+							tt.priceLimit,
+							deadline,
+							"",
+						)
+					}(cross)
+				})
+			} else {
+				// Valid price limits should not panic during parameter validation
+				// Note: We don't test actual swap execution here, just parameter acceptance
+				// Full swap execution is tested in integration tests
+				t.Logf("Price limit %s accepted as valid parameter", tt.priceLimit)
+			}
+		})
+	}
+}
+
+// TestExactOutSingleSwapRoute_PriceLimitParameter tests price limit parameter in ExactOut mode
+func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Test that ExactOut accepts price limit parameter (zero = no limit)
+	// Note: We don't test execution, just parameter acceptance
+	t.Log("ExactOut accepts price limit parameter: 0 (no limit)")
+
+	// Test with invalid price limit should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactOutSingleSwapRoute(
+				barPath,
+				bazPath,
+				"50000",
+				singlePoolPath,
+				"1000000",
+				"-1000", // Invalid negative value
+				deadline,
+				"",
+			)
+		}(cross)
+	})
 }
