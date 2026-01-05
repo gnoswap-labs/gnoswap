@@ -556,6 +556,8 @@ func (p *positionV1) SetPositionOperator(
 
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
+	assertValidOperatorAddress(operator)
+
 	position := p.mustGetPosition(id)
 	prevOperator := position.Operator()
 	position.SetOperator(operator)
