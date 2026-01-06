@@ -453,6 +453,25 @@ func TestAssertHasAnyRole(t *testing.T) {
 			shouldPanic: true,
 			expectedMsg: "role non_existent_role not found",
 		},
+		{
+			name: "non-existent role checked before existing authorized role",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String(): adminAddr,
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{"non_existent_role", prbac.ROLE_ADMIN.String()},
+			shouldPanic: true,
+			expectedMsg: "role non_existent_role not found",
+		},
+		{
+			name: "existing authorized role checked before non-existent role",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String(): adminAddr,
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), "non_existent_role"},
+			shouldPanic: false,
+		},
 	}
 
 	for _, tt := range tests {

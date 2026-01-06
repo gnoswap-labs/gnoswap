@@ -5,6 +5,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// denominator represents 100% in the fee calculation basis (1,000,000 = 100%).
+// Fee calculations use this to convert feePips to actual percentages.
+// For example, feePips=3000 means 3000/1000000 = 0.3% fee.
 const denominator = uint64(1_000_000)
 
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
@@ -18,6 +21,8 @@ const denominator = uint64(1_000_000)
 //   - feePips: fee in hundredths of a bip (3000 = 0.3%)
 //
 // Returns sqrtRatioNextX96, amountIn, amountOut, feeAmount.
+//
+// Panics if any input parameter is nil or if feePips >= 1000000.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,
@@ -27,7 +32,7 @@ func SwapMathComputeSwapStep(
 ) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	if sqrtRatioCurrentX96 == nil || sqrtRatioTargetX96 == nil ||
 		liquidity == nil || amountRemaining == nil {
-		panic("SwapMathComputeSwapStep: invalid input")
+		panic("SwapMathComputeSwapStep: input parameters cannot be nil")
 	}
 
 	// This function is publicly accessible and can be called by external users or contracts.
