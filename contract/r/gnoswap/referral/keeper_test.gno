@@ -44,11 +44,12 @@ func TestKeeper_Register(t *testing.T) {
 			expectedSuccess: false,
 		},
 		{
-			name:            "Fail register with unauthorized caller",
-			callerRealm:     userRealm,
-			addr:            testutils.TestAddress("user4"),
-			refAddr:         testutils.TestAddress("referrer2"),
-			expectedSuccess: false,
+			name:                 "Panic with unauthorized caller",
+			callerRealm:          userRealm,
+			addr:                 testutils.TestAddress("user4"),
+			refAddr:              testutils.TestAddress("referrer2"),
+			expectedSuccess:      false,
+			expectedPanicMessage: "unauthorized caller",
 		},
 	}
 
@@ -59,11 +60,15 @@ func TestKeeper_Register(t *testing.T) {
 			// given
 			testing.SetRealm(tc.callerRealm)
 
-			// when
-			success := TryRegister(cross, tc.addr, tc.refAddr.String())
-
-			// then
-			uassert.Equal(t, tc.expectedSuccess, success)
+			// when/then
+			if tc.expectedPanicMessage != "" {
+				uassert.AbortsContains(t, tc.expectedPanicMessage, func() {
+					TryRegister(cross, tc.addr, tc.refAddr.String())
+				})
+			} else {
+				success := TryRegister(cross, tc.addr, tc.refAddr.String())
+				uassert.Equal(t, tc.expectedSuccess, success)
+			}
 		})
 	}
 }
@@ -340,4 +345,3 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		}
 	})
 }
-

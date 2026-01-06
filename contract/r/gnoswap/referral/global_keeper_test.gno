@@ -64,13 +64,13 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			expectedPanicMessage: "",
 		},
 		{
-			name:                 "Fail register with unauthorized caller",
+			name:                 "Panic with unauthorized caller",
 			callerRealm:          userRealm,
 			addr:                 testutils.TestAddress("test5"),
 			referral:             testutils.TestAddress("referrer3").String(),
 			expectedResult:       false,
-			expectedPanics:       false,
-			expectedPanicMessage: "",
+			expectedPanics:       true,
+			expectedPanicMessage: "unauthorized caller",
 		},
 		{
 			name:           "Fail register with invalid referral - invalid format",
@@ -103,7 +103,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			}
 
 			if tc.expectedPanics {
-				uassert.PanicsContains(t, tc.expectedPanicMessage, func() {
+				uassert.AbortsContains(t, tc.expectedPanicMessage, func() {
 					TryRegister(cross, tc.addr, tc.referral)
 				})
 			} else {

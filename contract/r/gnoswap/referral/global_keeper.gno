@@ -45,27 +45,8 @@ func ContractAddress() string {
 //   - referral: referral address string
 //
 // Returns true on success, false on failure.
-func TryRegister(cur realm, addr address, referral string) (success bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			var errMsg string
-			switch v := r.(type) {
-			case string:
-				errMsg = v
-			case error:
-				errMsg = v.Error()
-			default:
-				errMsg = "unknown error"
-			}
-			chain.Emit(
-				EventRegisterFailed,
-				"address", addr.String(),
-				"error", errMsg,
-			)
-			success = false
-		}
-	}()
-
+// Panics if the caller is not authorized.
+func TryRegister(cur realm, addr address, referral string) bool {
 	refAddr := address(referral)
 
 	err := gReferralKeeper.register(addr, refAddr)
