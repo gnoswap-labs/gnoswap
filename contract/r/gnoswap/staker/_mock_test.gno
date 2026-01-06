@@ -176,16 +176,16 @@ func (m *MockStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return res[0].(string)
 }
 
-func (m *MockStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
-	res, ok := m.Response.Get("GetDepositStakeTime")
+func (m *MockStaker) GetDepositOwner(lpTokenId uint64) address {
+	res, ok := m.Response.Get("GetDepositOwner")
 	if !ok {
-		return 0
+		return address("")
 	}
-	return res[0].(int64)
+	return res[0].(address)
 }
 
-func (m *MockStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	res, ok := m.Response.Get("GetDepositStakeTimestamp")
+func (m *MockStaker) GetDepositStakeTime(lpTokenId uint64) int64 {
+	res, ok := m.Response.Get("GetDepositStakeTime")
 	if !ok {
 		return 0
 	}
@@ -216,12 +216,36 @@ func (m *MockStaker) GetDepositTickUpper(lpTokenId uint64) int32 {
 	return res[0].(int32)
 }
 
+func (m *MockStaker) GetDepositWarmUp(lpTokenId uint64) []Warmup {
+	res, ok := m.Response.Get("GetDepositWarmUp")
+	if !ok {
+		return nil
+	}
+	return res[0].([]Warmup)
+}
+
+func (m *MockStaker) GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
+	res, ok := m.Response.Get("GetExternalIncentiveByPoolPath")
+	if !ok {
+		return nil
+	}
+	return res[0].([]ExternalIncentive)
+}
+
 func (m *MockStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetIncentiveEndTimestamp")
 	if !ok {
 		return 0
 	}
 	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+	res, ok := m.Response.Get("GetIncentiveRefundee")
+	if !ok {
+		return address("")
+	}
+	return res[0].(address)
 }
 
 func (m *MockStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
