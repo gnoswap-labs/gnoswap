@@ -46,7 +46,7 @@ SetDevOpsPct(2000)     // 20% to DevOps
 SetGovStakerPct(8000)  // 80% to xGNS holders
 
 // View accumulated fees
-GetProtocolFee(tokenPath)
+GetAmountOfToken(tokenPath)
 ```
 
 ## Security
