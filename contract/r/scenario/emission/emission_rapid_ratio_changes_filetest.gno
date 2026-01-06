@@ -24,6 +24,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 )
@@ -75,13 +76,15 @@ func testSingleBlockPrecision() {
 
 	println("[SCENARIO] 4. Change distribution ratio to 40/30/20/10")
 	testing.SetRealm(adminRealm)
-	emission.ChangeDistributionPct(
-		cross,
-		emission.LIQUIDITY_STAKER, 4000,
-		emission.DEVOPS, 3000,
-		emission.COMMUNITY_POOL, 2000,
-		emission.GOV_STAKER, 1000,
-	)
+	getBalanceChanges(func() {
+		emission.ChangeDistributionPct(
+			cross,
+			emission.LIQUIDITY_STAKER, 4000,
+			emission.DEVOPS, 3000,
+			emission.COMMUNITY_POOL, 2000,
+			emission.GOV_STAKER, 1000,
+		)
+	})
 
 	period1Staker := emission.GetDistributedToStaker()
 	period1Devops := emission.GetDistributedToDevOps()
@@ -91,10 +94,6 @@ func testSingleBlockPrecision() {
 
 	println(ufmt.Sprintf("[INFO] Period 1 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		period1Staker, period1Devops, period1Community, period1Gov))
-	println("[INFO] expected Staker: 8918378 (25%)")
-	println("[INFO] expected DevOps: 8918378 (25%)")
-	println("[INFO] expected Community: 8918378 (25%)")
-	println("[INFO] expected Gov: 8918378 (25%)")
 	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker: %d", period1Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps: %d", period1Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 Community: %d", period1Community))
@@ -118,13 +117,15 @@ func testSingleBlockPrecision() {
 
 	println("[SCENARIO] 6. Change distribution ratio to 70/15/10/5")
 	testing.SetRealm(adminRealm)
-	emission.ChangeDistributionPct(
-		cross,
-		emission.LIQUIDITY_STAKER, 7000,
-		emission.DEVOPS, 1500,
-		emission.COMMUNITY_POOL, 1000,
-		emission.GOV_STAKER, 500,
-	)
+	getBalanceChanges(func() {
+		emission.ChangeDistributionPct(
+			cross,
+			emission.LIQUIDITY_STAKER, 7000,
+			emission.DEVOPS, 1500,
+			emission.COMMUNITY_POOL, 1000,
+			emission.GOV_STAKER, 500,
+		)
+	})
 
 	totalStaker := emission.GetDistributedToStaker()
 	totalDevops := emission.GetDistributedToDevOps()
@@ -139,10 +140,6 @@ func testSingleBlockPrecision() {
 
 	println(ufmt.Sprintf("[INFO] Period 2 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		period2Staker, period2Devops, period2Community, period2Gov))
-	println("[INFO] expected Staker: 14269407 (40%)")
-	println("[INFO] expected DevOps: 10702055 (30%)")
-	println("[INFO] expected Community: 7134703 (20%)")
-	println("[INFO] expected Gov: 3567351 (10%)")
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker: %d", period2Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps: %d", period2Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Community: %d", period2Community))
@@ -164,7 +161,7 @@ func testSingleBlockPrecision() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond3, elapsedSeconds3, expectedTotalEmission3))
 	println()
 
-	emission.MintAndDistributeGns(cross)
+	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
 	finalStaker := emission.GetDistributedToStaker()
 	finalDevops := emission.GetDistributedToDevOps()
 	finalCommunity := emission.GetDistributedToCommunityPool()
@@ -178,10 +175,6 @@ func testSingleBlockPrecision() {
 
 	println(ufmt.Sprintf("[INFO] Period 3 distributed: Staker=%d, DevOps=%d, Community=%d, Gov=%d",
 		period3Staker, period3Devops, period3Community, period3Gov))
-	println("[INFO] expected Staker: 24971461 (70%)")
-	println("[INFO] expected DevOps: 5351027 (15%)")
-	println("[INFO] expected Community: 3567351 (10%)")
-	println("[INFO] expected Gov: 1783675 (5%)")
 	println(ufmt.Sprintf("[EXPECTED] Period 3 Staker: %d", period3Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 DevOps: %d", period3Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 Community: %d", period3Community))
@@ -190,8 +183,32 @@ func testSingleBlockPrecision() {
 
 	println()
 	totalDistributed := finalStaker + finalDevops + finalCommunity + finalGov
-	println("[INFO] expected total distributed: 107020542")
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
+}
+
+func getBalanceChanges(fn func()) {
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	devopsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	gnsPath := "gno.land/r/gnoswap/gns"
+
+	beforeStakerBalance := common.BalanceOf(gnsPath, stakerAddr)
+	beforeDevopsBalance := common.BalanceOf(gnsPath, devopsAddr)
+	beforeCommunityPoolBalance := common.BalanceOf(gnsPath, communityPoolAddr)
+	beforeGovStakerBalance := common.BalanceOf(gnsPath, govStakerAddr)
+
+	fn()
+
+	afterStakerBalance := common.BalanceOf(gnsPath, stakerAddr)
+	afterDevopsBalance := common.BalanceOf(gnsPath, devopsAddr)
+	afterCommunityPoolBalance := common.BalanceOf(gnsPath, communityPoolAddr)
+	afterGovStakerBalance := common.BalanceOf(gnsPath, govStakerAddr)
+
+	ufmt.Printf("[EXPECTED] Staker balance changed: %d\n", afterStakerBalance-beforeStakerBalance)
+	ufmt.Printf("[EXPECTED] Devops balance changed: %d\n", afterDevopsBalance-beforeDevopsBalance)
+	ufmt.Printf("[EXPECTED] Community pool balance changed: %d\n", afterCommunityPoolBalance-beforeCommunityPoolBalance)
+	ufmt.Printf("[EXPECTED] Gov staker balance changed: %d\n", afterGovStakerBalance-beforeGovStakerBalance)
 }
 
 // Output:
@@ -209,11 +226,11 @@ func testSingleBlockPrecision() {
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
 // [SCENARIO] 4. Change distribution ratio to 40/30/20/10
+// [EXPECTED] Staker balance changed: 8918378
+// [EXPECTED] Devops balance changed: 8918378
+// [EXPECTED] Community pool balance changed: 8918378
+// [EXPECTED] Gov staker balance changed: 8918378
 // [INFO] Period 1 distributed: Staker=8918378, DevOps=8918378, Community=8918378, Gov=8918378
-// [INFO] expected Staker: 8918378 (25%)
-// [INFO] expected DevOps: 8918378 (25%)
-// [INFO] expected Community: 8918378 (25%)
-// [INFO] expected Gov: 8918378 (25%)
 // [EXPECTED] Period 1 Staker: 8918378
 // [EXPECTED] Period 1 DevOps: 8918378
 // [EXPECTED] Period 1 Community: 8918378
@@ -226,11 +243,11 @@ func testSingleBlockPrecision() {
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
 // [SCENARIO] 6. Change distribution ratio to 70/15/10/5
+// [EXPECTED] Staker balance changed: 14269407
+// [EXPECTED] Devops balance changed: 10702055
+// [EXPECTED] Community pool balance changed: 7134703
+// [EXPECTED] Gov staker balance changed: 3567351
 // [INFO] Period 2 distributed: Staker=14269407, DevOps=10702055, Community=7134703, Gov=3567351
-// [INFO] expected Staker: 14269407 (40%)
-// [INFO] expected DevOps: 10702055 (30%)
-// [INFO] expected Community: 7134703 (20%)
-// [INFO] expected Gov: 3567351 (10%)
 // [EXPECTED] Period 2 Staker: 14269407
 // [EXPECTED] Period 2 DevOps: 10702055
 // [EXPECTED] Period 2 Community: 7134703
@@ -242,16 +259,15 @@ func testSingleBlockPrecision() {
 // [INFO] elapsed seconds: 5 (1 block)
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
+// [EXPECTED] Staker balance changed: 24971461
+// [EXPECTED] Devops balance changed: 5351027
+// [EXPECTED] Community pool balance changed: 3567351
+// [EXPECTED] Gov staker balance changed: 1783675
 // [INFO] Period 3 distributed: Staker=24971461, DevOps=5351027, Community=3567351, Gov=1783675
-// [INFO] expected Staker: 24971461 (70%)
-// [INFO] expected DevOps: 5351027 (15%)
-// [INFO] expected Community: 3567351 (10%)
-// [INFO] expected Gov: 1783675 (5%)
 // [EXPECTED] Period 3 Staker: 24971461
 // [EXPECTED] Period 3 DevOps: 5351027
 // [EXPECTED] Period 3 Community: 3567351
 // [EXPECTED] Period 3 Gov: 1783675
 // [EXPECTED] Period 3 total: 35673514
 //
-// [INFO] expected total distributed: 107020542
 // [EXPECTED] Total distributed: 107020542
