@@ -26,18 +26,57 @@ Returns the address of the referral contract. Use this address as the referral p
 
 ## Usage
 
+### Registering a Referral
+
 ```go
-// Register referral (returns bool)
-success := TryRegister(cross, userAddr, referrerAddr.String())
+package example
 
-// Remove referral (pass contract address as referral)
-success := TryRegister(cross, userAddr, ContractAddress())
+import (
+    "gno.land/r/gnoswap/referral"
+)
 
-// Query referral
-referrer := GetReferral(userAddress)
+// RegisterUserReferral registers a referral relationship for a user.
+// Must be called from an authorized realm (router, staker, etc.)
+func RegisterUserReferral(userAddr, referrerAddr address) bool {
+    return referral.TryRegister(cross, userAddr, referrerAddr.String())
+}
+```
 
-// Check if referral exists
-exists := HasReferral(userAddress)
+### Removing a Referral
+
+```go
+package example
+
+import (
+    "gno.land/r/gnoswap/referral"
+)
+
+// RemoveUserReferral removes the referral relationship for a user.
+// Pass the contract's own address as the referral to indicate removal.
+func RemoveUserReferral(userAddr address) bool {
+    return referral.TryRegister(cross, userAddr, referral.ContractAddress())
+}
+```
+
+### Querying Referrals
+
+```go
+package example
+
+import (
+    "gno.land/r/gnoswap/referral"
+)
+
+// GetUserReferrer returns the referrer address for a user.
+// Returns empty string if no referral exists.
+func GetUserReferrer(userAddr string) string {
+    return referral.GetReferral(userAddr)
+}
+
+// CheckUserHasReferral returns true if the user has a registered referral.
+func CheckUserHasReferral(userAddr string) bool {
+    return referral.HasReferral(userAddr)
+}
 ```
 
 ## Security
