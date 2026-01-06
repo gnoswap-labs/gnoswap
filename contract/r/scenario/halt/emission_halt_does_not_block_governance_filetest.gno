@@ -230,10 +230,8 @@ func executeProposalWithEmissionHalted() {
 	ufmt.Printf("[INFO] Config BEFORE Execute - ExecutionWindow: %d\n", configBefore.ExecutionWindow)
 
 	testing.SetRealm(adminRealm)
-	// Execute should work even with emission halted
 	governance.Execute(cross, proposalId)
 
-	// Log config AFTER Execute
 	configAfter := governance.GetLatestConfig()
 	ufmt.Printf("[INFO] Config AFTER Execute - ExecutionWindow: %d\n", configAfter.ExecutionWindow)
 
