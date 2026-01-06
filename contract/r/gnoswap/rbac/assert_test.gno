@@ -176,11 +176,12 @@ func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
 
-	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
-	if err != nil {
-		t.Fatalf("Failed to update admin role address: %v", err)
-	}
+	// Change admin role via ownership transfer
+	testing.SetRealm(testing.NewUserRealm(ADMIN))
+	TransferOwnership(cross, DEV_OPS)
+
+	testing.SetRealm(testing.NewUserRealm(DEV_OPS))
+	AcceptOwnership(cross)
 
 	tests := []struct {
 		name        string
@@ -420,5 +421,3 @@ func TestAssert_assertIsAdminOrGovernance(t *testing.T) {
 		})
 	}
 }
-
-// Note: contains function is defined in rbac_test.gno to avoid duplication

@@ -862,6 +862,18 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
 			callerRealm: ADMIN,
 			shouldPanic: false,
 		},
+		{
+			name: "Update admin role via UpdateRoleAddress fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      prbac.ROLE_ADMIN.String(),
+			newAddr:       testutils.TestAddress("new_admin"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "admin role is managed by owner",
+		},
 	}
 
 	for _, tt := range tests {

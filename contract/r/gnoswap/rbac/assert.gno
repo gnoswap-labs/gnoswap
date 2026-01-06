@@ -51,10 +51,19 @@ func assertIsValidRoleName(roleName string) {
 }
 
 func assertIsValidAddress(addr address) {
-	if addr == "" || !addr.IsValid() {
+	if !addr.IsValid() {
 		panic(makeErrorWithDetails(
 			errInvalidAddress,
 			ufmt.Sprintf("address: %s", addr.String()),
+		))
+	}
+}
+
+func assertIsAdminRoleMutable(roleName string) {
+	if roleName == prbac.ROLE_ADMIN.String() {
+		panic(makeErrorWithDetails(
+			errAdminRoleUpdateForbidden,
+			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}
 }

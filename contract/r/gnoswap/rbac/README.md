@@ -11,6 +11,7 @@ RBAC realm manages role addresses and permissions for the GnoSwap protocol, inte
 - **Admin/Governance Control**: Role management by admin or governance
 - **Dynamic Roles**: Add/remove at runtime
 - **Access Integration**: Syncs with access package
+- **Owner-Managed Admin Role**: `admin` role is bound to RBAC owner and cannot be updated via `UpdateRoleAddress`
 
 ## Key Functions
 
@@ -25,6 +26,7 @@ Removes existing role. Only callable by admin or governance. System roles cannot
 ### `UpdateRoleAddress(cur realm, roleName string, addr address)`
 
 Updates address for role. Only callable by admin or governance.
+The `admin` role is not updatable via this function and is managed through ownership transfer.
 
 ### `GetRoleAddress(roleName string) (address, error)`
 
@@ -53,6 +55,7 @@ Initiates two-step ownership transfer. Only callable by current owner.
 ### `AcceptOwnership(cur realm)`
 
 Accepts pending ownership transfer. Only callable by pending owner.
+Also updates the `admin` role address and syncs it to the access package.
 
 ## Usage
 
@@ -62,6 +65,10 @@ RegisterRole(cross, "new_role", roleAddress)
 
 // Update role address
 UpdateRoleAddress(cross, "staker", newAddress)
+
+// Admin role is updated via ownership transfer
+TransferOwnership(cross, newAdmin)
+AcceptOwnership(cross)
 
 // Get role address
 addr, err := GetRoleAddress("router")

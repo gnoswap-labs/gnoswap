@@ -83,8 +83,10 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
     prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
+
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
+	assertIsAdminRoleMutable(roleName)
 
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
