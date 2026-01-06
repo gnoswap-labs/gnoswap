@@ -63,47 +63,6 @@ func TestLiquidityAmounts_ToAscendingOrder(t *testing.T) {
 	}
 }
 
-func TestLiquidityAmounts_ToUint128(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "Value within uint128 range",
-			input:    "100000000",
-			expected: "100000000",
-		},
-		{
-			name:     "Exactly MAX_UINT128",
-			input:    MAX_UINT128,
-			expected: MAX_UINT128,
-		},
-		{
-			name:     "Value exceeding uint128 - should mask",
-			input:    "680564733841876926926749214863536422912", // MAX_UINT128 * 2
-			expected: "0",                                       // Masked to lower 128 bits
-		},
-		{
-			name:     "MAX_UINT256 - extreme masking",
-			input:    "115792089237316195423570985008687907853269984665640564039457584007913129639935",
-			expected: MAX_UINT128,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			input := u256.MustFromDecimal(tt.input)
-			result := toUint128(input)
-			expected := u256.MustFromDecimal(tt.expected)
-
-			if !result.Eq(expected) {
-				t.Errorf("Expected %s, got %s", expected.ToString(), result.ToString())
-			}
-		})
-	}
-}
-
 func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -138,9 +97,9 @@ func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 						t.Errorf("Expected panic but got none")
 					}
 				}()
-				safeConvertToUint128(tt.input)
+				SafeConvertToUint128(tt.input)
 			} else {
-				got := safeConvertToUint128(tt.input)
+				got := SafeConvertToUint128(tt.input)
 				if !got.Eq(tt.expected) {
 					t.Errorf("Expected %s, got %s", tt.expected.ToString(), got.ToString())
 				}
@@ -713,6 +672,87 @@ func TestLiquidityAmounts_LiquidityMathAddDelta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantPanic != "" {
 				uassert.PanicsContains(t, tt.wantPanic, tt.fn)
+			} else {
+				tt.fn()
+			}
+		})
+	}
+}
+
+// TestLiquidityAmounts_NilParameterHandling tests nil parameter handling for all public functions
+func TestLiquidityAmounts_NilParameterHandling(t *testing.T) {
+	tests := []struct {
+		name      string
+		fn        func()
+		wantPanic bool
+	}{
+		{
+			name: "GetLiquidityForAmounts with nil sqrtRatioX96",
+			fn: func() {
+				GetLiquidityForAmounts(nil, u256.NewUint(100), u256.NewUint(200), u256.NewUint(1000), u256.NewUint(2000))
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetLiquidityForAmounts with nil sqrtRatioAX96",
+			fn: func() {
+				GetLiquidityForAmounts(u256.NewUint(150), nil, u256.NewUint(200), u256.NewUint(1000), u256.NewUint(2000))
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetLiquidityForAmounts with nil sqrtRatioBX96",
+			fn: func() {
+				GetLiquidityForAmounts(u256.NewUint(150), u256.NewUint(100), nil, u256.NewUint(1000), u256.NewUint(2000))
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetLiquidityForAmounts with nil amount0",
+			fn: func() {
+				GetLiquidityForAmounts(u256.NewUint(150), u256.NewUint(100), u256.NewUint(200), nil, u256.NewUint(2000))
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetLiquidityForAmounts with nil amount1",
+			fn: func() {
+				GetLiquidityForAmounts(u256.NewUint(150), u256.NewUint(100), u256.NewUint(200), u256.NewUint(1000), nil)
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetAmountsForLiquidity with nil sqrtRatioX96",
+			fn: func() {
+				GetAmountsForLiquidity(nil, u256.NewUint(100), u256.NewUint(200), u256.NewUint(1000))
+			},
+			wantPanic: true,
+		},
+		{
+			name: "GetAmountsForLiquidity with nil liquidity",
+			fn: func() {
+				GetAmountsForLiquidity(u256.NewUint(150), u256.NewUint(100), u256.NewUint(200), nil)
+			},
+			wantPanic: true,
+		},
+		{
+			name: "SafeConvertToUint128 with nil",
+			fn: func() {
+				SafeConvertToUint128(nil)
+			},
+			wantPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic but got none")
+					}
+				}()
+				tt.fn()
 			} else {
 				tt.fn()
 			}
