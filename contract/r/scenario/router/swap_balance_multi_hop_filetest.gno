@@ -331,6 +331,10 @@ func validateBalanceChange(before, after BalanceSnapshot, swapType string) {
 	println("  User FOO change:", userFooDiff)
 	println("  User BAZ change:", userBazDiff)
 	println("  User QUX change:", userQuxDiff)
+	println("  Protocol Fee BAR change:", protocolFeeBarDiff)
+	println("  Protocol Fee FOO change:", protocolFeeFooDiff)
+	println("  Protocol Fee BAZ change:", protocolFeeBazDiff)
+	println("  Protocol Fee QUX change:", protocolFeeQuxDiff)
 
 	// Router must be empty
 	assertRouterIsEmpty(after)
@@ -483,6 +487,10 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 9602386497
 //   User BAZ change: 0
 //   User QUX change: 0
+//   Protocol Fee BAR change: 0
+//   Protocol Fee FOO change: 14425217
+//   Protocol Fee BAZ change: 0
+//   Protocol Fee QUX change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 //
 // [SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)
@@ -498,6 +506,10 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 4451991291
 //   User QUX change: 0
+//   Protocol Fee BAR change: 0
+//   Protocol Fee FOO change: 0
+//   Protocol Fee BAZ change: 6688018
+//   Protocol Fee QUX change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
@@ -515,6 +527,10 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 0
 //   User QUX change: 2495426539
+//   Protocol Fee BAR change: 0
+//   Protocol Fee FOO change: 0
+//   Protocol Fee BAZ change: 0
+//   Protocol Fee QUX change: 3748762
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution
@@ -532,6 +548,10 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //   User FOO change: 0
 //   User BAZ change: 0
 //   User QUX change: -2000000000
+//   Protocol Fee BAR change: 3612648
+//   Protocol Fee FOO change: 0
+//   Protocol Fee BAZ change: 0
+//   Protocol Fee QUX change: 0
 // [VALIDATION] Exact balance conservation verified for multi-hop swap
 // [VALIDATION] Checking for stuck intermediate tokens
 // [VALIDATION] No intermediate tokens stuck - clean multi-hop execution

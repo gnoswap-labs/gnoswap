@@ -91,7 +91,7 @@ func main() {
 	println("[SCENARIO] 5. Exact In Swap (FOO -> BAR) - Uses only in-range liquidity")
 	afterExactIn := performExactInSwap()
 	printBalanceSnapshot("After Exact In Swap", afterExactIn)
-	validateBalanceChange(afterInRange, afterExactIn, "ExactIn")
+	validateBalanceChange(afterOutRange, afterExactIn, "ExactIn")
 	println()
 
 	println("[SCENARIO] 6. Exact Out Swap (BAR -> FOO) - Uses only in-range liquidity")
@@ -434,9 +434,9 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 // [EXPECTED] Protocol fee BAR balance: 14357664
 // [EXPECTED] Protocol fee FOO balance: 0
 // [INFO] Validating balance changes for ExactIn
-// [EXPECTED] User BAR change: -20442581203
+// [EXPECTED] User BAR change: 9557418797
 // [EXPECTED] User FOO change: -10000000000
-// [EXPECTED] Pool BAR change: 20428223539
+// [EXPECTED] Pool BAR change: -9571776461
 // [EXPECTED] Pool FOO change: 10000000000
 // [EXPECTED] Protocol Fee BAR change: 14357664
 // [EXPECTED] Protocol Fee FOO change: 0
