@@ -100,7 +100,15 @@ func TestOracle_SwapScenarios(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := createTestPoolWithLiquidity()
 
-			increaseObservationCardinalityLimitByPool(pool, 10)
+			// Gradually increase cardinality as needed
+			observationState := pool.ObservationState()
+			currentCard := observationState.Cardinality()
+			neededCard := uint16(len(tt.scenarios) + 1) // +1 for initial observation
+			if neededCard > currentCard {
+				_, err := grow(observationState, currentCard, neededCard)
+				uassert.NoError(t, err, "Should grow cardinality")
+				observationState.SetCardinalityLimit(neededCard)
+			}
 
 			// Process scenarios
 			for i, scenario := range tt.scenarios {
@@ -169,8 +177,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 	t.Run("Cardinality=1", func(t *testing.T) {
 		os := pl.NewObservationState(currentTime)
 
-		// Test target < observation timestamp
-		beforeOrAt, afterOrAt, err := getSurroundingObservations(
+		// Test target < observation timestamp (should error with OLD)
+		_, _, err := getSurroundingObservations(
 			os,
 			currentTime-100, // target before first observation
 			currentTime+100,
@@ -180,9 +188,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 			1,
 		)
 
-		uassert.NoError(t, err, "Should not error with single cardinality")
-		uassert.Equal(t, beforeOrAt.BlockTimestamp(), afterOrAt.BlockTimestamp(), "Should return same observation for both")
-		uassert.Equal(t, currentTime, beforeOrAt.BlockTimestamp(), "Should return first observation")
+		uassert.Error(t, err, "Should error when target before oldest observation")
+		uassert.ErrorContains(t, err, "[GNOSWAP-POOL-028]", "Should return observation too old error")
 
 		// Test target = observation timestamp
 		beforeOrAt2, afterOrAt2, err := getSurroundingObservations(
@@ -265,15 +272,16 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 
 	// Verify all slots are created
 	for i := uint16(0); i < nextCard; i++ {
-		obs, _ := observationAt(os, i)
+		obs := os.Observations()[i]
+		uassert.NotNil(t, obs, "Observation slot should exist")
 
 		// Check initialization status
 		if i == 0 {
 			// First slot should be initialized from newObservationState
 			uassert.True(t, obs.Initialized(), "Slot 0 should be initialized")
 		} else if i >= currentCard && i < nextCard {
-			// New slots should be marked as initialized by grow
-			uassert.True(t, obs.Initialized(), "New slot should be initialized")
+			// New slots should NOT be initialized by grow
+			uassert.False(t, obs.Initialized(), "New slot should not be initialized")
 		}
 	}
 
@@ -285,8 +293,9 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 
 	// Verify new slots
 	for i := nextCard; i < newCard2; i++ {
-		obs, _ := observationAt(os, i)
-		uassert.True(t, obs.Initialized(), "New slot should be initialized")
+		obs := os.Observations()[i]
+		uassert.NotNil(t, obs, "Observation slot should exist")
+		uassert.False(t, obs.Initialized(), "New slot should not be initialized")
 	}
 }
 
@@ -417,17 +426,11 @@ func TestObservationState_ObservationAt(t *testing.T) {
 	})
 
 	t.Run("Uninitialized observation", func(t *testing.T) {
-		// Grow to create slots
+		// Grow to create slots (new slots are created with initialized=false)
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		// Manually set initialized to false for testing
-		obs, err := observationAt(os, 3)
-		uassert.NoError(t, err, "Should return observation at index 3")
-		if obs != nil {
-			obs.SetInitialized(false)
-		}
-
+		// observationAt should error for uninitialized observation
 		_, err = observationAt(os, 3)
 		uassert.Error(t, err, "Should error for uninitialized observation")
 	})
@@ -454,8 +457,10 @@ func TestObservationState_Transform(t *testing.T) {
 		obs, err := transform(os, currentTime+100, 100, u256.Zero())
 		uassert.NoError(t, err, "Should handle zero liquidity")
 		uassert.NotNil(t, obs, "Should return observation")
-		// With zero liquidity, secondsPerLiquidity should not change
-		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
+		// With zero liquidity, use max(1, liquidity) = 1
+		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
+		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
+		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
 	})
 }
 

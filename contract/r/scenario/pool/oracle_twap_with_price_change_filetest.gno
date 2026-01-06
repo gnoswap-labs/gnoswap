@@ -75,8 +75,14 @@ func main() {
 	bar.Approve(cross, poolAddr, maxApprove)
 	println()
 
+	// Increase observation cardinality to store multiple observations
+	println("[SCENARIO] 2. Increase Observation Cardinality")
+	println("[INFO] Increasing observation cardinality limit to 100")
+	pool.IncreaseObservationCardinalityLimit(cross, barPath, fooPath, fee500, 100)
+	println()
+
 	// Add liquidity
-	println("[SCENARIO] 2. Add Liquidity")
+	println("[SCENARIO] 3. Add Liquidity")
 	testing.SetRealm(posRealm)
 	println("[INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000")
 	pool.Mint(
@@ -96,13 +102,13 @@ func main() {
 	println()
 
 	// Wait 2 hours (1440 blocks) - First half
-	println("[SCENARIO] 3. Wait 2 Hours (First Half)")
+	println("[SCENARIO] 4. Wait 2 Hours (First Half)")
 	println("[INFO] Skipping 1440 blocks (2 hours = 7200 seconds)")
 	testing.SkipHeights(halfBlocks)
 	println()
 
 	// Perform swap to change price at midpoint
-	println("[SCENARIO] 4. Swap to Change Price at Midpoint")
+	println("[SCENARIO] 5. Swap to Change Price at Midpoint")
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	println("[INFO] Executing swap: zeroForOne=true, amountSpecified=10000000")
 	pool.Swap(
@@ -126,13 +132,13 @@ func main() {
 	println()
 
 	// Wait another 2 hours (1440 blocks) - Second half
-	println("[SCENARIO] 5. Wait Another 2 Hours (Second Half)")
+	println("[SCENARIO] 6. Wait Another 2 Hours (Second Half)")
 	println("[INFO] Skipping 1440 blocks (2 hours = 7200 seconds)")
 	testing.SkipHeights(halfBlocks)
 	println()
 
 	// Query TWAP at different intervals
-	println("[SCENARIO] 6. TWAP Queries After Price Change")
+	println("[SCENARIO] 7. TWAP Queries After Price Change")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
 	println("[INFO] Querying TWAP for last 1 hour")
@@ -179,22 +185,25 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Creating bar-foo pool (fee: 500, initial tick: 0)
 // [INFO] Approving tokens for pool operations
 //
-// [SCENARIO] 2. Add Liquidity
+// [SCENARIO] 2. Increase Observation Cardinality
+// [INFO] Increasing observation cardinality limit to 100
+//
+// [SCENARIO] 3. Add Liquidity
 // [INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000
 // [INFO] Pool liquidity: 100000000
 // [INFO] Initial pool tick: 0
 //
-// [SCENARIO] 3. Wait 2 Hours (First Half)
+// [SCENARIO] 4. Wait 2 Hours (First Half)
 // [INFO] Skipping 1440 blocks (2 hours = 7200 seconds)
 //
-// [SCENARIO] 4. Swap to Change Price at Midpoint
+// [SCENARIO] 5. Swap to Change Price at Midpoint
 // [INFO] Executing swap: zeroForOne=true, amountSpecified=10000000
 // [INFO] Pool tick after swap: -1906
 //
-// [SCENARIO] 5. Wait Another 2 Hours (Second Half)
+// [SCENARIO] 6. Wait Another 2 Hours (Second Half)
 // [INFO] Skipping 1440 blocks (2 hours = 7200 seconds)
 //
-// [SCENARIO] 6. TWAP Queries After Price Change
+// [SCENARIO] 7. TWAP Queries After Price Change
 // [INFO] Querying TWAP for last 1 hour
 // [EXPECTED] TWAP for last 1 hour (recent price):
 // {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-1906","secondsAgo":"3600"}}

@@ -126,18 +126,20 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 
 	// calculate seconds per liquidity
 	secondsPerLiquidityCumulativeX128 := lastObservation.SecondsPerLiquidityCumulativeX128().Clone()
-	if !liquidity.IsZero() {
-		// secondsPerLiquidity += timeDelta * 2^128 / liquidity
-		secondsPerLiquidityDelta := u256.MulDiv(
-			u256.NewUintFromInt64(timeDelta),
-			q128FromDecimal,
-			liquidity,
-		)
-		secondsPerLiquidityCumulativeX128 = u256.Zero().Add(
-			secondsPerLiquidityCumulativeX128,
-			secondsPerLiquidityDelta,
-		)
+	liquidityForCalc := liquidity
+	if liquidity.IsZero() {
+		liquidityForCalc = u256.One()
 	}
+	// secondsPerLiquidity += timeDelta * 2^128 / max(1, liquidity)
+	secondsPerLiquidityDelta := u256.MulDiv(
+		u256.NewUintFromInt64(timeDelta),
+		q128FromDecimal,
+		liquidityForCalc,
+	)
+	secondsPerLiquidityCumulativeX128 = u256.Zero().Add(
+		secondsPerLiquidityCumulativeX128,
+		secondsPerLiquidityDelta,
+	)
 
 	return pl.NewObservation(
 		currentTime,
@@ -161,9 +163,8 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 		return currentCardinality, errors.New("nextCardinality exceeds maximum")
 	}
 
-	// Ensure all slots from 0 to nextCardinality are initialized
-	// This prevents gaps in the circular buffer
-	for i := uint16(0); i < nextCardinality; i++ {
+	// This is more efficient than checking all slots from 0
+	for i := currentCardinality; i < nextCardinality; i++ {
 		if _, ok := os.Observations()[i]; !ok {
 			// Create new observation slot
 			os.Observations()[i] = pl.NewDefaultObservation()
@@ -363,12 +364,33 @@ func getSurroundingObservations(os *pl.ObservationState,
 
 	// Handle single cardinality case
 	if cardinality == 1 {
+		// Check if target is before the oldest (and only) observation
+		if target < latest.BlockTimestamp() {
+			return nil, nil, errObservationTooOld
+		}
 		return latest, latest, nil
 	}
 
 	// Binary search over the logical time-ordered circular buffer
 	// start points to the oldest observation: (index + 1) % cardinality
 	start := (index + 1) % cardinality
+
+	// Get oldest observation
+	// If the oldest slot is not initialized, use slot 0 (like Uniswap V3)
+	oldest, err := observationAt(os, start)
+	if err != nil {
+		// If uninitialized, fall back to slot 0
+		oldest, err = observationAt(os, 0)
+		if err != nil {
+			return nil, nil, err
+		}
+		start = 0
+	}
+
+	// Check if target is before the oldest observation
+	if target < oldest.BlockTimestamp() {
+		return nil, nil, errObservationTooOld
+	}
 
 	// Helper function to access observations in logical order
 	at := func(k uint16) (*pl.Observation, error) {

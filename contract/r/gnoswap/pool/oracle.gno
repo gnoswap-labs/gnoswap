@@ -115,6 +115,6 @@ func NewDefaultObservation() *Observation {
 		0,
 		u256.Zero(),
 		u256.Zero(),
-		true,
+		false,
 	)
 }
