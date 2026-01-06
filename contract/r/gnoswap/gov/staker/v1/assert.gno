@@ -71,14 +71,7 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 	}
 }
 
-func assertNoActiveProposal() {
-	_, hasActiveProposal := governance.GetOldestActiveProposalSnapshotTime()
-	if hasActiveProposal {
-		panic(errActiveProposal)
-	}
-}
-
-func assertNoSelfDelegation(delegatee, newDelegatee address) {
+func assertNoSameDelegatee(delegatee, newDelegatee address) {
 	if delegatee == newDelegatee {
 		panic(errSameDelegatee)
 	}

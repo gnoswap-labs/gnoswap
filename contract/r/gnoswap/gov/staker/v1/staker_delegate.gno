@@ -109,7 +109,6 @@ func (gs *govStakerV1) Delegate(
 // Requirements:
 //   - Must have delegated to target address
 //   - Sufficient delegated amount
-//   - Cannot undelegate during active votes
 //
 // After lockup period ends, use CollectUndelegatedGns() to claim GNS.
 // Returns undelegated amount.
@@ -124,7 +123,6 @@ func (gs *govStakerV1) Undelegate(
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
-	assertNoActiveProposal()
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
@@ -192,7 +190,7 @@ func (gs *govStakerV1) Redelegate(
 	access.AssertIsValidAddress(newDelegatee)
 
 	assertIsValidDelegateAmount(amount)
-	assertNoSelfDelegation(delegatee, newDelegatee)
+	assertNoSameDelegatee(delegatee, newDelegatee)
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
