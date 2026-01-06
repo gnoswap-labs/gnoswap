@@ -31,10 +31,11 @@ import (
 const INT64_MAX int64 = 9223372036854775807
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm       = testing.NewUserRealm(adminAddr)
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	poolAddr, _      = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
+
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	poolAddr      = access.MustGetAddress(prbac.ROLE_POOL.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)

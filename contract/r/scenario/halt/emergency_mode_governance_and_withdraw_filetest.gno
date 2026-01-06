@@ -68,11 +68,12 @@ const INT64_MAX int64 = 9223372036854775807
 var t *testing.T
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm       = testing.NewUserRealm(adminAddr)
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	poolAddr, _      = access.GetAddress(prbac.ROLE_POOL.String())
-	routerAddr, _    = access.GetAddress(prbac.ROLE_ROUTER.String())
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
+
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	poolAddr      = access.MustGetAddress(prbac.ROLE_POOL.String())
+	routerAddr    = access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
