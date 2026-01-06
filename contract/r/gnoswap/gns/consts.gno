@@ -7,9 +7,6 @@ const (
 
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
-
-	// Maximum allowed block time in milliseconds (1 second)
-	MAX_BLOCK_TIME_MS = 1e9
 )
 
 // Annual halving amount - maximum issuance per year
