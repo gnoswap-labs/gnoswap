@@ -21,11 +21,17 @@ Returns true if the given address has a referral.
 ### `IsEmpty() bool`
 Returns true if no referrals exist in the system.
 
+### `ContractAddress() string`
+Returns the address of the referral contract. Use this address as the referral parameter in `TryRegister` to remove an existing referral.
+
 ## Usage
 
 ```go
 // Register referral (returns bool)
 success := TryRegister(cross, userAddr, referrerAddr.String())
+
+// Remove referral (pass contract address as referral)
+success := TryRegister(cross, userAddr, ContractAddress())
 
 // Query referral
 referrer := GetReferral(userAddress)

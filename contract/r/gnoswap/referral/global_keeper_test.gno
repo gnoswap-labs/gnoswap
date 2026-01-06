@@ -37,10 +37,10 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			expectedPanicMessage: "",
 		},
 		{
-			name:                 "Success register with zero referral",
+			name:                 "Success register with contract address referral (removal)",
 			callerRealm:          routerRealm,
 			addr:                 testutils.TestAddress("test2"),
-			referral:             zeroAddress.String(),
+			referral:             contractAddress().String(),
 			expectedResult:       true,
 			expectedPanics:       false,
 			expectedPanicMessage: "",

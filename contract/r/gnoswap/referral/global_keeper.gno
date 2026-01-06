@@ -32,6 +32,12 @@ func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
+// ContractAddress returns the address of the referral contract.
+// Use this address as the referral parameter in TryRegister to remove an existing referral.
+func ContractAddress() string {
+	return selfAddress.String()
+}
+
 // TryRegister attempts to register a new referral.
 //
 // Parameters:

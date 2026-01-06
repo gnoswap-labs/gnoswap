@@ -69,16 +69,16 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	uassert.True(t, k.has(user2))
 }
 
-func TestRateLimit_ZeroAddressNotRateLimited(t *testing.T) {
+func TestRateLimit_ContractAddressNotRateLimited(t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 	k := setupRateLimitKeeper(t)
 
 	userAddr := testutils.TestAddress("user1")
 
-	// zero address registration is not rate limited
+	// contract address registration (removal) is not rate limited
 	for i := 0; i < 3; i++ {
-		err := k.register(userAddr, zeroAddress)
+		err := k.register(userAddr, contractAddress())
 		uassert.NoError(t, err)
 	}
 

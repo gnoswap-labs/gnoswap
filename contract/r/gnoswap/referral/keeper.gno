@@ -31,14 +31,14 @@ func NewKeeper() ReferralKeeper {
 }
 
 // register creates or updates a referral relationship between addresses.
-// Setting refAddr to zero address removes the referral.
+// Setting refAddr to the contract's own address removes the referral.
 // Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr address) error {
 	return k.setReferral(addr, refAddr, EventTypeRegister)
 }
 
 // setReferral handles common logic for registering and updating referrals.
-// Setting refAddr to zero address removes the referral.
+// Setting refAddr to the contract's own address removes the referral.
 // Rate limiting applies to prevent abuse.
 func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 	caller := runtime.PreviousRealm().Address()
@@ -53,7 +53,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 	addrStr := addr.String()
 	refAddrStr := refAddr.String()
 
-	if refAddr == zeroAddress {
+	if isRemovalRequest(refAddr) {
 		if k.has(addr) {
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
@@ -90,7 +90,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 // validateAddresses validates that addresses are properly formatted and not self-referencing.
 func (k *keeper) validateAddresses(addr, refAddr address) error {
-	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
+	if !addr.IsValid() || (!isRemovalRequest(refAddr) && !refAddr.IsValid()) {
 		return ErrInvalidAddress
 	}
 	if addr == refAddr {

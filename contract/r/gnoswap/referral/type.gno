@@ -1,11 +1,33 @@
 package referral
 
-var zeroAddress = address("")
+import "chain/runtime"
+
+var (
+	zeroAddress = address("")
+	// selfAddress is cached at package initialization to ensure consistent comparison.
+	selfAddress address
+)
 
 // Event types for referral actions.
 const (
 	EventTypeRegister = "RegisterReferral"
 )
+
+func init() {
+	selfAddress = runtime.CurrentRealm().Address()
+}
+
+// contractAddress returns the address of the referral contract.
+// This is used as a sentinel value for removing referrals.
+func contractAddress() address {
+	return selfAddress
+}
+
+// isRemovalRequest checks if the given address indicates a removal request.
+// Removal is indicated by passing the contract's own address as the referral.
+func isRemovalRequest(refAddr address) bool {
+	return refAddr == selfAddress
+}
 
 // ReferralKeeper defines the interface for managing referral relationships.
 type ReferralKeeper interface {
