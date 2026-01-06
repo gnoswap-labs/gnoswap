@@ -8,6 +8,10 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+// rbacPackagePath is the package path of the RBAC contract
+// Used to verify that role management functions are called only by RBAC
+const rbacPackagePath = "gno.land/r/gnoswap/rbac"
+
 // AssertIsAdminOrGovernance panics if the caller is not admin or governance.
 // Used for functions that require elevated privileges.
 func AssertIsAdminOrGovernance(caller address) {

@@ -2,6 +2,8 @@ package uint256
 
 import (
 	"testing"
+
+	"gno.land/p/nt/uassert"
 )
 
 // TestZeroOneReturnsFreshCopies verifies that Zero() and One() return fresh copies
@@ -72,4 +74,17 @@ func TestZeroOneUsageInArithmetic(t *testing.T) {
 	if One().Uint64() != 1 {
 		t.Error("One() corrupted after arithmetic operations")
 	}
+}
+
+func TestSetAllOneAndSetOne(t *testing.T) {
+	t.Run("SetAllOne sets max", func(t *testing.T) {
+		z := new(Uint).SetAllOne()
+		uassert.Equal(t, MAX_UINT256, z.ToString())
+	})
+
+	t.Run("SetOne sets one", func(t *testing.T) {
+		z := new(Uint).SetAllOne() // start dirty
+		z.SetOne()
+		uassert.Equal(t, "1", z.ToString())
+	})
 }

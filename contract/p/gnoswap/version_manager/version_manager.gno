@@ -70,6 +70,11 @@ type versionManager struct {
 //
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath)
 func (vm *versionManager) RegisterInitializer(initializer func(store any) any) error {
+	// Validate initializer is not nil to prevent panic during initialization
+	if initializer == nil {
+		return errors.New("version_manager: initializer cannot be nil")
+	}
+
 	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
 	previousRealm := runtime.PreviousRealm()
 	if previousRealm.IsUser() {
@@ -190,6 +195,9 @@ func (vm *versionManager) GetCurrentImplementation() any {
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"
 //   - Invalid callers: "gno.land/r/gnoswap/other", "gno.land/r/attacker/malicious"
 func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
+    // `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
+    // Therefore, there is no need for a separate trailing slash check,
+    // and the prefix is determined by directly appending `/` for version detection.
 	prefix := vm.domainPath + "/"
 
 	return strings.HasPrefix(targetPackagePath, prefix)
