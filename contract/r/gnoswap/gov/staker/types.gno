@@ -31,19 +31,33 @@ type IGovStakerReward interface {
 
 // Getter interface for read operations
 type IGovStakerGetter interface {
+	// Store data getters
+	GetUnDelegationLockupPeriod() int64
+	GetEmissionRewardBalance() int64
+
 	// Delegation getters
 	GetTotalxGnsSupply() int64
 	GetTotalVoteWeight() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
+	GetDelegationCount() int
+	GetDelegationIDs(offset, count int) []int64
+	ExistsDelegation(delegationID int64) bool
+	GetDelegation(delegationID int64) (*Delegation, error)
+	GetDelegatorDelegationCount(delegator address) int
+	GetDelegatorDelegationIDs(delegator address, offset, count int) []int64
+	HasDelegationSnapshotsKey() bool
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// Reward getters
-	GetClaimableRewardByAddress(addr address) string
-	GetClaimableRewardByLaunchpad(addr address) string
-	GetClaimableRewardByRewardID(rewardID string) string
+	GetClaimableRewardByAddress(addr address) (int64, map[string]int64)
+	GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64)
+	GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64)
+
+	// Launchpad getters
+	GetLaunchpadProjectDeposit(projectAddr string) (int64, bool)
 }
 
 // Admin interface for administrative functions
