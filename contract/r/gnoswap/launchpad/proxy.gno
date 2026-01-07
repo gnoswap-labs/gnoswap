@@ -53,42 +53,55 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	return getImplementation().CollectRewardByDepositId(depositID)
 }
 
-// ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.
-func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-	return getImplementation().ApiGetProjectAndTierStatisticsByProjectId(projectId)
+// GetProjectCount returns the total number of projects.
+func GetProjectCount() int64 {
+	return getImplementation().GetProjectCount()
 }
 
-// ApiGetProjectStatisticsByProjectId retrieves project statistics by project ID.
-func ApiGetProjectStatisticsByProjectId(projectId string) string {
-	return getImplementation().ApiGetProjectStatisticsByProjectId(projectId)
+// GetDepositCount returns the total number of deposits.
+func GetDepositCount() int64 {
+	return getImplementation().GetDepositCount()
 }
 
-// ApiGetTierStatisticsByProjectId retrieves tier statistics by project ID.
-func ApiGetTierStatisticsByProjectId(projectId string) string {
-	return getImplementation().ApiGetTierStatisticsByProjectId(projectId)
+// GetProject retrieves a project by its ID.
+// Returns a cloned project to prevent external modification.
+func GetProject(projectId string) (*Project, error) {
+	return getImplementation().GetProject(projectId)
 }
 
-// ApiGetProjectStatisticsByProjectTierId retrieves project statistics by project tier ID.
-func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	return getImplementation().ApiGetProjectStatisticsByProjectTierId(tierId)
+// GetDeposit retrieves a deposit by its ID.
+// Returns a cloned deposit to prevent external modification.
+func GetDeposit(depositId string) (*Deposit, error) {
+	return getImplementation().GetDeposit(depositId)
 }
 
-// ApiGetProjectActiveOf retrieves project active status by project ID.
-func ApiGetProjectActiveOf(projectId string) string {
-	return getImplementation().ApiGetProjectActiveOf(projectId)
+// GetProjectTier retrieves a specific tier of a project.
+// Returns a cloned tier to prevent external modification.
+func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
+	return getImplementation().GetProjectTier(projectId, tier)
 }
 
-// ApiGetDepositByDepositId retrieves deposit information by deposit ID.
-func ApiGetDepositByDepositId(depositId string) string {
-	return getImplementation().ApiGetDepositByDepositId(depositId)
+// GetClaimableRewardByProjectId returns the claimable reward for a project's recipient.
+func GetClaimableRewardByProjectId(projectId string) (string, error) {
+	return getImplementation().GetClaimableRewardByProjectId(projectId)
 }
 
-// ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
-func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
-	return getImplementation().ApiGetProjectRecipientRewardByProjectId(projectId)
+// GetClaimableRewardByAddress returns the claimable reward for a specific address.
+func GetClaimableRewardByAddress(addr address) string {
+	return getImplementation().GetClaimableRewardByAddress(addr)
 }
 
-// ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.
-func ApiGetProjectRecipientRewardByAddress(address address) string {
-	return getImplementation().ApiGetProjectRecipientRewardByAddress(address)
+// GetProjectActiveStatus returns whether a project is currently active.
+func GetProjectActiveStatus(projectId string) (bool, error) {
+	return getImplementation().GetProjectActiveStatus(projectId)
+}
+
+// GetProjects returns a paginated list of project IDs.
+func GetProjects(offset, limit int64) []string {
+	return getImplementation().GetProjects(offset, limit)
+}
+
+// GetDeposits returns a paginated list of deposit IDs.
+func GetDeposits(offset, limit int64) []string {
+	return getImplementation().GetDeposits(offset, limit)
 }

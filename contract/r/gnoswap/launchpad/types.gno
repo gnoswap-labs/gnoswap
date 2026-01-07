@@ -5,7 +5,7 @@ import "gno.land/p/nt/avl"
 type ILaunchpad interface {
 	ILaunchpadProject
 	ILaunchpadDeposit
-	ILaunchpadApi
+	ILaunchpadGetter
 }
 
 type ILaunchpadProject interface {
@@ -31,15 +31,24 @@ type ILaunchpadDeposit interface {
 	CollectRewardByDepositId(depositID string) int64
 }
 
-type ILaunchpadApi interface {
-	ApiGetProjectAndTierStatisticsByProjectId(projectId string) string
-	ApiGetProjectStatisticsByProjectId(projectId string) string
-	ApiGetTierStatisticsByProjectId(projectId string) string
-	ApiGetProjectStatisticsByProjectTierId(tierId string) string
-	ApiGetProjectActiveOf(projectId string) string
-	ApiGetDepositByDepositId(depositId string) string
-	ApiGetProjectRecipientRewardByProjectId(projectId string) string
-	ApiGetProjectRecipientRewardByAddress(address address) string
+type ILaunchpadGetter interface {
+	// Store data getters
+	GetProjectCount() int64
+	GetDepositCount() int64
+
+	// Domain type getters (single query)
+	GetProject(projectId string) (*Project, error)
+	GetDeposit(depositId string) (*Deposit, error)
+	GetProjectTier(projectId string, tier int64) (*ProjectTier, error)
+
+	// Logic query getters
+	GetClaimableRewardByProjectId(projectId string) (string, error)
+	GetClaimableRewardByAddress(addr address) string
+	GetProjectActiveStatus(projectId string) (bool, error)
+
+	// Pagination getters
+	GetProjects(offset, limit int64) []string
+	GetDeposits(offset, limit int64) []string
 }
 
 type ILaunchpadStore interface {

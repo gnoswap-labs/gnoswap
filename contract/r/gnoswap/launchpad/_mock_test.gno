@@ -100,68 +100,99 @@ func (m *MockLaunchpad) CollectRewardByDepositId(depositID string) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockLaunchpad) ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-	res, ok := m.Response.Get("ApiGetProjectAndTierStatisticsByProjectId")
+func (m *MockLaunchpad) GetProjectCount() int64 {
+	res, ok := m.Response.Get("GetProjectCount")
 	if !ok {
-		return ""
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockLaunchpad) GetDepositCount() int64 {
+	res, ok := m.Response.Get("GetDepositCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockLaunchpad) GetProject(projectId string) (*Project, error) {
+	res, ok := m.Response.Get("GetProject")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*Project), nil
+	}
+	return res[0].(*Project), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDeposit(depositId string) (*Deposit, error) {
+	res, ok := m.Response.Get("GetDeposit")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*Deposit), nil
+	}
+	return res[0].(*Deposit), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
+	res, ok := m.Response.Get("GetProjectTier")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*ProjectTier), nil
+	}
+	return res[0].(*ProjectTier), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetClaimableRewardByProjectId(projectId string) (string, error) {
+	res, ok := m.Response.Get("GetClaimableRewardByProjectId")
+	if !ok {
+		return "0", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(string), nil
+	}
+	return res[0].(string), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetClaimableRewardByAddress(addr address) string {
+	res, ok := m.Response.Get("GetClaimableRewardByAddress")
+	if !ok {
+		return "0"
 	}
 	return res[0].(string)
 }
 
-func (m *MockLaunchpad) ApiGetProjectStatisticsByProjectId(projectId string) string {
-	res, ok := m.Response.Get("ApiGetProjectStatisticsByProjectId")
+func (m *MockLaunchpad) GetProjectActiveStatus(projectId string) (bool, error) {
+	res, ok := m.Response.Get("GetProjectActiveStatus")
 	if !ok {
-		return ""
+		return false, nil
 	}
-	return res[0].(string)
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(bool), nil
+	}
+	return res[0].(bool), res[1].(error)
 }
 
-func (m *MockLaunchpad) ApiGetTierStatisticsByProjectId(projectId string) string {
-	res, ok := m.Response.Get("ApiGetTierStatisticsByProjectId")
+func (m *MockLaunchpad) GetProjects(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetProjects")
 	if !ok {
-		return ""
+		return []string{}
 	}
-	return res[0].(string)
+	return res[0].([]string)
 }
 
-func (m *MockLaunchpad) ApiGetProjectStatisticsByProjectTierId(tierId string) string {
-	res, ok := m.Response.Get("ApiGetProjectStatisticsByProjectTierId")
+func (m *MockLaunchpad) GetDeposits(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetDeposits")
 	if !ok {
-		return ""
+		return []string{}
 	}
-	return res[0].(string)
-}
-
-func (m *MockLaunchpad) ApiGetProjectActiveOf(projectId string) string {
-	res, ok := m.Response.Get("ApiGetProjectActiveOf")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockLaunchpad) ApiGetDepositByDepositId(depositId string) string {
-	res, ok := m.Response.Get("ApiGetDepositByDepositId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockLaunchpad) ApiGetProjectRecipientRewardByProjectId(projectId string) string {
-	res, ok := m.Response.Get("ApiGetProjectRecipientRewardByProjectId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockLaunchpad) ApiGetProjectRecipientRewardByAddress(address address) string {
-	res, ok := m.Response.Get("ApiGetProjectRecipientRewardByAddress")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
+	return res[0].([]string)
 }
 
 func newMockLaunchpad(version string) *MockLaunchpad {
