@@ -216,7 +216,7 @@ func NewParameterRegistry() *ParameterRegistry {
 // Returns:
 //   - string: unique key in format "pkgPath:function"
 func makeHandlerKey(pkgPath, function string) string {
-	return ufmt.Sprintf("%s:%s", pkgPath, function)
+	return pkgPath + ":" + function
 }
 
 // createParameterHandlers initializes and configures all supported parameter handlers.
