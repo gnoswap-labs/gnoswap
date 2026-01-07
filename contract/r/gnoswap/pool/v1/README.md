@@ -105,7 +105,7 @@ For `zeroForOne = false` (token1 → token0):
 **Callback Implementation Example**:
 
 ```go
-func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
+func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
     caller := runtime.PreviousRealm().Address()
     poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
 
