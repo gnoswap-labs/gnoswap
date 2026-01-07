@@ -127,12 +127,27 @@ func (k *keeper) get(addr address) (address, error) {
 
 // isEmpty returns true if no referrals exist in the store.
 func (k *keeper) isEmpty() bool {
-	empty := true
-	k.store.Iterate("", "", func(key string, value any) bool {
-		empty = false
-		return true // stop iteration on first item
-	})
-	return empty
+	return k.store.Size() == 0
+}
+
+// getLastOpTimestamp retrieves the last operation timestamp for a given address.
+// Returns ErrNotFound if no operation exists.
+func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
+	if !addr.IsValid() {
+		return 0, ErrInvalidAddress
+	}
+
+	val, ok := k.lastOps.Get(addr.String())
+	if !ok {
+		return 0, ErrNotFound
+	}
+
+	ts, ok := val.(int64)
+	if !ok {
+		return 0, ErrInvalidTime
+	}
+
+	return ts, nil
 }
 
 // checkRateLimit verifies if enough time has passed since the last operation.

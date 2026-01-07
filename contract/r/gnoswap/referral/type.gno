@@ -43,4 +43,7 @@ type ReferralKeeper interface {
 
 	// isEmpty returns true if no referrals exist in the system.
 	isEmpty() bool
+
+	// getLastOpTimestamp returns the last operation timestamp for an address.
+	getLastOpTimestamp(addr address) (int64, error)
 }

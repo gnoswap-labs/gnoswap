@@ -3,6 +3,7 @@ package referral
 import (
 	"chain/runtime"
 	"testing"
+	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -276,6 +277,66 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 
 			// then
 			uassert.Equal(t, tc.expectedIsEmpty, result)
+		})
+	}
+}
+
+func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
+	tests := []struct {
+		name           string
+		addr           string
+		setupReferral  bool
+		expectedErr    error
+	}{
+		{
+			name:           "Success get last op timestamp",
+			addr:           testutils.TestAddress("user1").String(),
+			setupReferral:  true,
+			expectedErr:    nil,
+		},
+		{
+			name:           "ErrNotFound for non-existing",
+			addr:           testutils.TestAddress("user2").String(),
+			setupReferral:  false,
+			expectedErr:    ErrNotFound,
+		},
+		{
+			name:           "ErrInvalidAddress for empty string",
+			addr:           "",
+			setupReferral:  false,
+			expectedErr:    ErrInvalidAddress,
+		},
+		{
+			name:           "ErrInvalidAddress for invalid format",
+			addr:           "invalid",
+			setupReferral:  false,
+			expectedErr:    ErrInvalidAddress,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+
+			testing.SetRealm(routerRealm)
+
+			var before, after int64
+			if tc.setupReferral {
+				userAddr := address(tc.addr)
+				refAddr := testutils.TestAddress("referrer1")
+				before = time.Now().Unix()
+				uassert.True(t, TryRegister(cross, userAddr, refAddr.String()))
+				after = time.Now().Unix()
+			}
+
+			got, err := GetLastOpTimestamp(tc.addr)
+
+			if tc.expectedErr == nil {
+				uassert.NoError(t, err)
+				uassert.True(t, got >= before && got <= after)
+			} else {
+				uassert.ErrorIs(t, err, tc.expectedErr)
+			}
 		})
 	}
 }
