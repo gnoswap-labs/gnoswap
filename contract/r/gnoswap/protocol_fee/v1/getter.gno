@@ -15,6 +15,17 @@ func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
 	return pf.getProtocolFeeState().TokenListWithAmounts()
 }
 
+// GetTokenList returns the list of token paths without amounts.
+func (pf *protocolFeeV1) GetTokenList() []string {
+	tokenListWithAmount := pf.getProtocolFeeState().TokenListWithAmounts()
+	tokens := make([]string, 0, len(tokenListWithAmount))
+	for token := range tokenListWithAmount {
+		tokens = append(tokens, token)
+	}
+
+	return tokens
+}
+
 // GetAmountOfToken returns the amount of token.
 func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
 	amount, exists := pf.getProtocolFeeState().TokenListWithAmounts()[tokenPath]
@@ -56,6 +67,40 @@ func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	})
 
 	return accuTransfers
+}
+
+// GetTotalAccuTransfersToGovStaker returns total accumulated transfers to gov/staker.
+func (pf *protocolFeeV1) GetTotalAccuTransfersToGovStaker() int64 {
+	total := int64(0)
+
+	pf.getProtocolFeeState().AccuToGovStaker().Iterate("", "", func(key string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			return false
+		}
+
+		total = safeAddInt64(total, amount)
+		return false
+	})
+
+	return total
+}
+
+// GetTotalAccuTransfersToDevOps returns total accumulated transfers to devOps.
+func (pf *protocolFeeV1) GetTotalAccuTransfersToDevOps() int64 {
+	total := int64(0)
+
+	pf.getProtocolFeeState().AccuToDevOps().Iterate("", "", func(key string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			return false
+		}
+
+		total = safeAddInt64(total, amount)
+		return false
+	})
+
+	return total
 }
 
 // GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.

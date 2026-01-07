@@ -5,7 +5,7 @@ import "gno.land/p/nt/avl"
 type IProtocolFee interface {
 	IProtocolFeeManager
 	IProtocolFeeGetter
-	IProtocolFeeApi
+	// IProtocolFeeApi
 }
 
 type IProtocolFeeManager interface {
@@ -21,24 +21,27 @@ type IProtocolFeeGetter interface {
 	GetDevOpsPct() int64
 	GetGovStakerPct() int64
 	GetTokenListWithAmount() map[string]int64
+	GetTokenList() []string
 	GetAmountOfToken(tokenPath string) int64
 	GetAccuTransfersToGovStaker() map[string]int64
 	GetAccuTransfersToDevOps() map[string]int64
+	GetTotalAccuTransfersToGovStaker() int64
+	GetTotalAccuTransfersToDevOps() int64
 	GetAccuTransferToGovStakerByTokenPath(path string) int64
 	GetAccuTransferToDevOpsByTokenPath(path string) int64
 	GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64
 	GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64
 }
 
-type IProtocolFeeApi interface {
-	ApiGetAccuTransferToGovStaker() string
-	ApiGetAccuTransferToDevOps() string
-	ApiGetHistoryTransferToGovStaker() string
-	ApiGetHistoryTransferToDevOps() string
-	ApiGetActualBalance() string
-	ApiGetRecordedBalance() string
-	ApiGetUnrecordedBalance() string
-}
+// type IProtocolFeeApi interface {
+// 	ApiGetAccuTransferToGovStaker() string
+// 	ApiGetAccuTransferToDevOps() string
+// 	ApiGetHistoryTransferToGovStaker() string
+// 	ApiGetHistoryTransferToDevOps() string
+// 	ApiGetActualBalance() string
+// 	ApiGetRecordedBalance() string
+// 	ApiGetUnrecordedBalance() string
+// }
 
 type IProtocolFeeStore interface {
 	HasDevOpsPctStoreKey() bool

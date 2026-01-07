@@ -141,6 +141,47 @@ func TestGetTokenListWithAmount(t *testing.T) {
 	}
 }
 
+func TestGetTokenList(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func() *protocolFeeV1
+		expected map[string]bool
+	}{
+		{
+			name: "success - get empty token list",
+			setupFn: func() *protocolFeeV1 {
+				return createTestProtocolFee(t)
+			},
+			expected: map[string]bool{},
+		},
+		{
+			name: "success - get token list with multiple tokens",
+			setupFn: func() *protocolFeeV1 {
+				pf := createTestProtocolFee(t)
+				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
+				pf.store.SetTokenListWithAmountItem("gno.land/r/bar", 2000)
+				return pf
+			},
+			expected: map[string]bool{
+				"gno.land/r/foo": true,
+				"gno.land/r/bar": true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pf := tt.setupFn()
+			result := pf.GetTokenList()
+
+			uassert.Equal(t, len(result), len(tt.expected))
+			for _, token := range result {
+				uassert.True(t, tt.expected[token])
+			}
+		})
+	}
+}
+
 func TestGetAmountOfToken(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -285,6 +326,74 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 			for k, v := range tt.expected {
 				uassert.Equal(t, result[k], v)
 			}
+		})
+	}
+}
+
+func TestGetTotalAccuTransfersToGovStaker(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func() *protocolFeeV1
+		expected int64
+	}{
+		{
+			name: "success - empty totals",
+			setupFn: func() *protocolFeeV1 {
+				return createTestProtocolFee(t)
+			},
+			expected: 0,
+		},
+		{
+			name: "success - total with multiple tokens",
+			setupFn: func() *protocolFeeV1 {
+				pf := createTestProtocolFee(t)
+				pf.store.SetAccuToGovStakerItem("gno.land/r/foo", 1000)
+				pf.store.SetAccuToGovStakerItem("gno.land/r/bar", 2000)
+				return pf
+			},
+			expected: 3000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pf := tt.setupFn()
+			result := pf.GetTotalAccuTransfersToGovStaker()
+			uassert.Equal(t, result, tt.expected)
+		})
+	}
+}
+
+func TestGetTotalAccuTransfersToDevOps(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func() *protocolFeeV1
+		expected int64
+	}{
+		{
+			name: "success - empty totals",
+			setupFn: func() *protocolFeeV1 {
+				return createTestProtocolFee(t)
+			},
+			expected: 0,
+		},
+		{
+			name: "success - total with multiple tokens",
+			setupFn: func() *protocolFeeV1 {
+				pf := createTestProtocolFee(t)
+				pf.store.SetAccuToDevOpsItem("gno.land/r/foo", 500)
+				pf.store.SetAccuToDevOpsItem("gno.land/r/bar", 700)
+				return pf
+			},
+			expected: 1200,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pf := tt.setupFn()
+			result := pf.GetTotalAccuTransfersToDevOps()
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }

@@ -422,6 +422,35 @@ func TestGetTokenListWithAmount(t *testing.T) {
 	}
 }
 
+func TestGetTokenList(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "get token list is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
+			GetTokenList()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetTokenList") != 1 {
+				t.Error("GetTokenList was not called on the implementation")
+			}
+		})
+	}
+}
+
 func TestGetAmountOfToken(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -506,6 +535,64 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 			mockProtocolFee := implementation.(*MockProtocolFee)
 			if mockProtocolFee.Response.CallCount("GetAccuTransfersToDevOps") != 1 {
 				t.Error("GetAccuTransfersToDevOps was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetTotalAccuTransfersToGovStaker(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "get total accu transfers to gov staker is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
+			GetTotalAccuTransfersToGovStaker()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetTotalAccuTransfersToGovStaker") != 1 {
+				t.Error("GetTotalAccuTransfersToGovStaker was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetTotalAccuTransfersToDevOps(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "get total accu transfers to dev ops is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
+			GetTotalAccuTransfersToDevOps()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetTotalAccuTransfersToDevOps") != 1 {
+				t.Error("GetTotalAccuTransfersToDevOps was not called on the implementation")
 			}
 		})
 	}
