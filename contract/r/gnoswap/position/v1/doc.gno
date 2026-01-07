@@ -1,5 +1,6 @@
 // package v1 manages liquidity positions as NFTs in GnoSwap pools.
-// It provides functionality for minting, burning, and managing concentrated liquidity positions,
-// handling position ownership through GNFT tokens, and managing wrapped/unwrapped native tokens.
-// Each position represents liquidity provided within a specific price range in a pool.
+//
+// Each position is represented as a non-transferable GRC721 NFT with concentrated
+// liquidity within a specific tick range. The package handles position lifecycle
+// including minting, liquidity adjustments, fee collection, and repositioning.
 package v1
