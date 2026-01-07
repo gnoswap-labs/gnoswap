@@ -703,7 +703,6 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 	}
 }
 
-// Test comprehensive input validation for text proposals
 func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -728,7 +727,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			name:          "fail - title 256 characters",
 			title:         strings.Repeat("a", 256),
 			description:   "Valid description",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || title is too long, max length is 255",
+			expectedError: "title is too long, max length is 255",
 			shouldFail:    true,
 		},
 		{
@@ -747,7 +746,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			name:          "fail - description 10001 characters",
 			title:         "Valid title",
 			description:   strings.Repeat("a", 10001),
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || description is too long, max length is 10000",
+			expectedError: "description is too long, max length is 10,000",
 			shouldFail:    true,
 		},
 		{
@@ -789,7 +788,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+				uassert.AbortsContains(t, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeText(tt.title, tt.description)

@@ -3,8 +3,6 @@ package v1
 import (
 	"strings"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -47,17 +45,14 @@ func (r *ProposalMetadataResolver) Validate() error {
 func (r *ProposalMetadataResolver) validateTitle(title string) error {
 	// Title cannot be empty
 	if title == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"title is empty",
-		)
+		return makeErrorWithDetails(errInvalidInput, "title is empty")
 	}
 
 	// Title cannot exceed maximum length
 	if len(title) > maxTitleLength {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("title is too long, max length is %d", maxTitleLength),
+			"title is too long, max length is 255 characters",
 		)
 	}
 
@@ -84,7 +79,7 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 	if len(description) > maxDescriptionLength {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("description is too long, max length is %d", maxDescriptionLength),
+			"description is too long, max length is 10,000 characters",
 		)
 	}
 
@@ -191,27 +186,18 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 
 	// Validate execution count matches message count
 	if len(msgs) != int(num) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"executions is not equal to numToExecute",
-		)
+		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
 	}
 
 	// Validate execution count doesn't exceed maximum
 	if num > maxNumberOfExecution {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("numToExecute is greater than %d", maxNumberOfExecution),
-		)
+		return makeErrorWithDetails(errInvalidInput, "numToExecute is greater than 10")
 	}
 
 	// Validate parameter change message format
 	parameterChangesInfos := r.ParameterChangesInfos()
 	if len(parameterChangesInfos) != int(num) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"invalid parameter change info",
-		)
+		return makeErrorWithDetails(errInvalidInput, "invalid parameter change info")
 	}
 
 	return nil
@@ -234,7 +220,7 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 	// Parse each execution message
 	for _, msg := range execution.Msgs() {
 		// Split message into components: pkgPath, function, params
-		params := strings.Split(msg, parameterSeparator)
+		params := strings.SplitN(msg, parameterSeparator, 3)
 		if len(params) != 3 {
 			// validation rejects mismatched counts upstream.
 			continue
