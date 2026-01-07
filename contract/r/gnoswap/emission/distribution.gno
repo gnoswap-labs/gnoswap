@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	LIQUIDITY_STAKER int = iota + 1
+	_ int = iota
+	LIQUIDITY_STAKER
 	DEVOPS
 	COMMUNITY_POOL
 	GOV_STAKER
