@@ -130,7 +130,10 @@ func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
 }
 
 func TestGetHalvingInfo(t *testing.T) {
-	jsonStr, err := json.Unmarshal([]byte(GetHalvingInfo()))
+	info, err := GetHalvingInfo()
+	uassert.NoError(t, err)
+
+	jsonStr, err := json.Unmarshal([]byte(info))
 	uassert.NoError(t, err)
 
 	halving := jsonStr.MustKey("halvings").MustArray()

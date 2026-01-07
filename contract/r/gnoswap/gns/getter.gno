@@ -8,6 +8,26 @@ import (
 	"gno.land/p/onbloc/json"
 )
 
+// GetMaxEmissionAmount returns the maximum amount of emission allowed.
+func GetMaxEmissionAmount() int64 {
+	return MAX_EMISSION_AMOUNT
+}
+
+// GetMaximumSupply returns the maximum supply of gns tokens.
+func GetMaximumSupply() int64 {
+	return MAXIMUM_SUPPLY
+}
+
+// GetInitialMintAmount returns the initial amount of gns tokens to be minted.
+func GetInitialMintAmount() int64 {
+	return INITIAL_MINT_AMOUNT
+}
+
+// GetMaxEmissionAmount returns the maximum amount of emission allowed.
+func GetMaxEmissionAmount() int64 {
+	return MAX_EMISSION_AMOUNT
+}
+
 // IsEmissionInitialized returns true if emission schedule has been initialized.
 func IsEmissionInitialized() bool {
 	return getEmissionState().isInitialized()
@@ -165,7 +185,7 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 
 // GetHalvingInfo returns comprehensive halving information as JSON string.
 // Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
-func GetHalvingInfo() string {
+func GetHalvingInfo() ([]byte, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 	halvingData := getEmissionState().getHalvingData()
@@ -186,10 +206,64 @@ func GetHalvingInfo() string {
 		"halvings":    json.ArrayNode("", halvings),
 	})
 
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
+	return json.Marshal(node)
+}
+
+// EmissionStateView is a read-only snapshot of emission state.
+type EmissionStateView struct {
+	StartHeight    int64
+	StartTimestamp int64
+	EndTimestamp   int64
+	CurrentYear    int64
+	IsInitialized  bool
+	IsActive       bool
+	IsEnded        bool
+}
+
+// HalvingYearView is a read-only snapshot of a halving year's emission data.
+type HalvingYearView struct {
+	Year            int64
+	StartTimestamp  int64
+	EndTimestamp    int64
+	MaxAmount       int64
+	MintedAmount    int64
+	LeftAmount      int64
+	AccumAmount     int64
+	AmountPerSecond int64
+}
+
+// GetEmissionStateView returns a snapshot of the current emission state.
+func GetEmissionStateView() EmissionStateView {
+	state := getEmissionState()
+	now := time.Now().Unix()
+
+	return EmissionStateView{
+		StartHeight:    state.getStartHeight(),
+		StartTimestamp: state.getStartTimestamp(),
+		EndTimestamp:   state.getEndTimestamp(),
+		CurrentYear:    state.getCurrentYear(now),
+		IsInitialized:  state.isInitialized(),
+		IsActive:       state.isActive(now),
+		IsEnded:        state.isEnded(now),
+	}
+}
+
+// GetHalvingYearData returns a snapshot of emission data for a specific halving year.
+func GetHalvingYearData(year int64) (HalvingYearView, error) {
+	if err := validYear(year); err != nil {
+		return HalvingYearView{}, err
 	}
 
-	return string(b)
+	halvingData := getEmissionState().getHalvingData()
+
+	return HalvingYearView{
+		Year:            year,
+		StartTimestamp:  halvingData.getStartTimestamp(year),
+		EndTimestamp:    halvingData.getEndTimestamp(year),
+		MaxAmount:       halvingData.getMaxAmount(year),
+		MintedAmount:    halvingData.getMintedAmount(year),
+		LeftAmount:      halvingData.getLeftAmount(year),
+		AccumAmount:     halvingData.getAccumAmount(year),
+		AmountPerSecond: halvingData.getAmountPerSecond(year),
+	}, nil
 }

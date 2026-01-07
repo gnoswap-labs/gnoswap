@@ -2,6 +2,7 @@ package gns
 
 import (
 	"testing"
+	"time"
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
@@ -138,6 +139,46 @@ func TestValidYearEdgeCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetEmissionStateView(t *testing.T) {
+	now := time.Now().Unix()
+	startTimestamp := now - (2 * SECONDS_IN_YEAR)
+	emissionState = NewEmissionState(123, startTimestamp)
+
+	view := GetEmissionStateView()
+
+	uassert.Equal(t, int64(123), view.StartHeight)
+	uassert.Equal(t, startTimestamp, view.StartTimestamp)
+	uassert.Equal(t, startTimestamp+(SECONDS_IN_YEAR*HALVING_END_YEAR)-1, view.EndTimestamp)
+	uassert.Equal(t, int64(3), view.CurrentYear)
+	uassert.True(t, view.IsInitialized)
+	uassert.True(t, view.IsActive)
+	uassert.False(t, view.IsEnded)
+}
+
+func TestGetHalvingYearData(t *testing.T) {
+	startTimestamp := int64(1000)
+	emissionState = NewEmissionState(1, startTimestamp)
+
+	view, err := GetHalvingYearData(1)
+	uassert.NoError(t, err)
+
+	uassert.Equal(t, int64(1), view.Year)
+	uassert.Equal(t, GetHalvingYearStartTimestamp(1), view.StartTimestamp)
+	uassert.Equal(t, GetHalvingYearEndTimestamp(1), view.EndTimestamp)
+	uassert.Equal(t, GetHalvingYearMaxAmount(1), view.MaxAmount)
+	uassert.Equal(t, GetHalvingYearMintAmount(1), view.MintedAmount)
+	uassert.Equal(t, GetHalvingYearLeftAmount(1), view.LeftAmount)
+	uassert.Equal(t, GetHalvingYearAccuAmount(1), view.AccumAmount)
+	uassert.Equal(t, GetAmountPerSecondPerHalvingYear(1), view.AmountPerSecond)
+}
+
+func TestGetHalvingYearData_InvalidYear(t *testing.T) {
+	emissionState = NewEmissionState(1, 1000)
+
+	_, err := GetHalvingYearData(0)
+	uassert.ErrorContains(t, err, errInvalidYear.Error())
 }
 
 func TestValidEmissionAmountEdgeCases(t *testing.T) {
