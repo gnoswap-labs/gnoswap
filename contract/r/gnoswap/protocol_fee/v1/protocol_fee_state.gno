@@ -23,6 +23,18 @@ func (pfs *protocolFeeState) GovStakerPct() int64 {
 	return 10000 - pfs.store.GetDevOpsPct()
 }
 
+// DustClaimMinAmount returns the minimum claimable dust amount.
+func (pfs *protocolFeeState) DustClaimMinAmount(tokenPath string) int64 {
+	// Token-specific logic can be added later with minimal changes.
+	return pfs.store.GetDustClaimMinAmount()
+}
+
+// DustClaimMaxAmount returns the maximum claimable dust amount.
+func (pfs *protocolFeeState) DustClaimMaxAmount(tokenPath string) int64 {
+	// Token-specific logic can be added later with minimal changes.
+	return pfs.store.GetDustClaimMaxAmount()
+}
+
 // AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
 func (pfs *protocolFeeState) AccuToGovStaker() *avl.Tree {
 	return pfs.store.GetAccuToGovStaker()
@@ -118,6 +130,38 @@ func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 	}
 
 	return pct, nil
+}
+
+// setDustClaimMinAmount sets the global minimum dust claim amount.
+func (pfs *protocolFeeState) setDustClaimMinAmount(amount int64) (int64, error) {
+	if amount < 0 {
+		return 0, makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("amount(%d) should not be negative", amount),
+		)
+	}
+
+	if err := pfs.store.SetDustClaimMinAmount(amount); err != nil {
+		return 0, err
+	}
+
+	return amount, nil
+}
+
+// setDustClaimMaxAmount sets the global maximum dust claim amount.
+func (pfs *protocolFeeState) setDustClaimMaxAmount(amount int64) (int64, error) {
+	if amount <= 0 {
+		return 0, makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("amount(%d) should be positive", amount),
+		)
+	}
+
+	if err := pfs.store.SetDustClaimMaxAmount(amount); err != nil {
+		return 0, err
+	}
+
+	return amount, nil
 }
 
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.

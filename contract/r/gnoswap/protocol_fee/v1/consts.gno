@@ -10,3 +10,7 @@ var (
 	govStakerAddr   = access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
 	devOpsAddr      = access.MustGetAddress(prabc.ROLE_DEVOPS.String())
 )
+
+const (
+	gnsTokenPath = "gno.land/r/gnoswap/gns"
+)

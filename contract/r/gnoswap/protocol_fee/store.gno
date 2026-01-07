@@ -19,6 +19,10 @@ const (
 	// This percentage can be modified through governance.
 	StoreKeyDevOpsPct StoreKey = "devOpsPct"
 
+	// dust claim min/max amount (global)
+	StoreKeyDustClaimMinAmount StoreKey = "dustClaimMinAmount"
+	StoreKeyDustClaimMaxAmount StoreKey = "dustClaimMaxAmount"
+
 	// accumulated amount distributed to gov/staker by token path
 	StoreKeyAccuToGovStaker StoreKey = "accuToGovStaker" // tokenPath -> amount
 	StoreKeyAccuToDevOps    StoreKey = "accuToDevOps"    // tokenPath -> amount
@@ -33,6 +37,8 @@ const (
 
 const (
 	defaultDevOpsPct = int64(0)
+	defaultDustClaimMinAmount = int64(1)
+	defaultDustClaimMaxAmount = int64(1<<63 - 1)
 )
 
 type protocolFeeStore struct {
@@ -59,6 +65,50 @@ func (s *protocolFeeStore) GetDevOpsPct() int64 {
 
 func (s *protocolFeeStore) SetDevOpsPct(pct int64) error {
 	return s.kvStore.Set(StoreKeyDevOpsPct.String(), pct)
+}
+
+// handle dust claim min amount store data
+func (s *protocolFeeStore) HasDustClaimMinAmountStoreKey() bool {
+	return s.kvStore.Has(StoreKeyDustClaimMinAmount.String())
+}
+
+func (s *protocolFeeStore) InitializeDustClaimMinAmount() error {
+	return s.kvStore.Set(StoreKeyDustClaimMinAmount.String(), defaultDustClaimMinAmount)
+}
+
+func (s *protocolFeeStore) GetDustClaimMinAmount() int64 {
+	amount, err := s.kvStore.GetInt64(StoreKeyDustClaimMinAmount.String())
+	if err != nil {
+		panic(err)
+	}
+
+	return amount
+}
+
+func (s *protocolFeeStore) SetDustClaimMinAmount(amount int64) error {
+	return s.kvStore.Set(StoreKeyDustClaimMinAmount.String(), amount)
+}
+
+// handle dust claim max amount store data
+func (s *protocolFeeStore) HasDustClaimMaxAmountStoreKey() bool {
+	return s.kvStore.Has(StoreKeyDustClaimMaxAmount.String())
+}
+
+func (s *protocolFeeStore) InitializeDustClaimMaxAmount() error {
+	return s.kvStore.Set(StoreKeyDustClaimMaxAmount.String(), defaultDustClaimMaxAmount)
+}
+
+func (s *protocolFeeStore) GetDustClaimMaxAmount() int64 {
+	amount, err := s.kvStore.GetInt64(StoreKeyDustClaimMaxAmount.String())
+	if err != nil {
+		panic(err)
+	}
+
+	return amount
+}
+
+func (s *protocolFeeStore) SetDustClaimMaxAmount(amount int64) error {
+	return s.kvStore.Set(StoreKeyDustClaimMaxAmount.String(), amount)
 }
 
 // handle accuToGovStaker store data

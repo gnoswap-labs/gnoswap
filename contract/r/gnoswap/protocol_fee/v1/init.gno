@@ -27,6 +27,20 @@ func initStoreData(protocolFeeStore protocol_fee.IProtocolFeeStore) error {
 		}
 	}
 
+	if !protocolFeeStore.HasDustClaimMinAmountStoreKey() {
+		err := protocolFeeStore.InitializeDustClaimMinAmount()
+		if err != nil {
+			return err
+		}
+	}
+
+	if !protocolFeeStore.HasDustClaimMaxAmountStoreKey() {
+		err := protocolFeeStore.InitializeDustClaimMaxAmount()
+		if err != nil {
+			return err
+		}
+	}
+
 	if !protocolFeeStore.HasAccuToGovStakerStoreKey() {
 		err := protocolFeeStore.InitializeAccuToGovStaker()
 		if err != nil {

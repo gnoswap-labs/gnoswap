@@ -33,6 +33,21 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	getImplementation().AddToProtocolFee(tokenPath, amount)
 }
 
+// SetDustClaimMinAmount sets the minimum amount eligible for dust claim.
+func SetDustClaimMinAmount(cur realm, amount int64) {
+	getImplementation().SetDustClaimMinAmount(amount)
+}
+
+// SetDustClaimMaxAmount sets the maximum amount eligible for dust claim.
+func SetDustClaimMaxAmount(cur realm, amount int64) {
+	getImplementation().SetDustClaimMaxAmount(amount)
+}
+
+// ClaimDustToGns swaps eligible dust tokens to GNS and transfers total GNS to recipient.
+func ClaimDustToGns(cur realm, tokenPaths []string, amounts []int64, routeArrs []string, quoteArrs []string, amountOutMins []string, deadline int64, referrer string, recipient address) int64 {
+	return getImplementation().ClaimDustToGns(tokenPaths, amounts, routeArrs, quoteArrs, amountOutMins, deadline, referrer, recipient)
+}
+
 // ClearTokenListWithAmount clears the token list with amounts.
 func ClearTokenListWithAmount(cur realm) {
 	getImplementation().ClearTokenListWithAmount()
@@ -51,6 +66,16 @@ func GetDevOpsPct() int64 {
 // GetGovStakerPct returns the GovStaker fee percentage.
 func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
+}
+
+// GetDustClaimMinAmount returns the minimum amount eligible for dust claim.
+func GetDustClaimMinAmount() int64 {
+	return getImplementation().GetDustClaimMinAmount()
+}
+
+// GetDustClaimMaxAmount returns the maximum amount eligible for dust claim.
+func GetDustClaimMaxAmount() int64 {
+	return getImplementation().GetDustClaimMaxAmount()
 }
 
 // GetTokenListWithAmount returns the list of tokens with their amounts.

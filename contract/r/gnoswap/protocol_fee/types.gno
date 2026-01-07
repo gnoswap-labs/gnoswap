@@ -13,6 +13,9 @@ type IProtocolFeeManager interface {
 	SetDevOpsPct(pct int64)
 	SetGovStakerPct(pct int64)
 	AddToProtocolFee(tokenPath string, amount int64)
+	SetDustClaimMinAmount(amount int64)
+	SetDustClaimMaxAmount(amount int64)
+	ClaimDustToGns(tokenPaths []string, amounts []int64, routeArrs []string, quoteArrs []string, amountOutMins []string, deadline int64, referrer string, recipient address) int64
 	ClearTokenListWithAmount()
 	ClearAccuTransferToGovStaker()
 }
@@ -20,6 +23,8 @@ type IProtocolFeeManager interface {
 type IProtocolFeeGetter interface {
 	GetDevOpsPct() int64
 	GetGovStakerPct() int64
+	GetDustClaimMinAmount() int64
+	GetDustClaimMaxAmount() int64
 	GetTokenListWithAmount() map[string]int64
 	GetAmountOfToken(tokenPath string) int64
 	GetAccuTransfersToGovStaker() map[string]int64
@@ -45,6 +50,16 @@ type IProtocolFeeStore interface {
 	InitializeDevOpsPct() error
 	GetDevOpsPct() int64
 	SetDevOpsPct(pct int64) error
+
+	HasDustClaimMinAmountStoreKey() bool
+	InitializeDustClaimMinAmount() error
+	GetDustClaimMinAmount() int64
+	SetDustClaimMinAmount(amount int64) error
+
+	HasDustClaimMaxAmountStoreKey() bool
+	InitializeDustClaimMaxAmount() error
+	GetDustClaimMaxAmount() int64
+	SetDustClaimMaxAmount(amount int64) error
 
 	HasAccuToGovStakerStoreKey() bool
 	InitializeAccuToGovStaker() error

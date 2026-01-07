@@ -8,6 +8,8 @@ import (
 
 type mockProtocolFeeStore struct {
 	devOpsPct                     int64
+	dustClaimMinAmount            int64
+	dustClaimMaxAmount            int64
 	accuToGovStaker               *avl.Tree
 	accuToDevOps                  *avl.Tree
 	distributedToGovStakerHistory *avl.Tree
@@ -31,6 +33,44 @@ func (s *mockProtocolFeeStore) GetDevOpsPct() int64 {
 
 func (s *mockProtocolFeeStore) SetDevOpsPct(pct int64) error {
 	s.devOpsPct = pct
+	return nil
+}
+
+// handle dust claim min amount store data
+func (s *mockProtocolFeeStore) HasDustClaimMinAmountStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeDustClaimMinAmount() error {
+	s.dustClaimMinAmount = 0
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetDustClaimMinAmount() int64 {
+	return s.dustClaimMinAmount
+}
+
+func (s *mockProtocolFeeStore) SetDustClaimMinAmount(amount int64) error {
+	s.dustClaimMinAmount = amount
+	return nil
+}
+
+// handle dust claim max amount store data
+func (s *mockProtocolFeeStore) HasDustClaimMaxAmountStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeDustClaimMaxAmount() error {
+	s.dustClaimMaxAmount = 0
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetDustClaimMaxAmount() int64 {
+	return s.dustClaimMaxAmount
+}
+
+func (s *mockProtocolFeeStore) SetDustClaimMaxAmount(amount int64) error {
+	s.dustClaimMaxAmount = amount
 	return nil
 }
 
@@ -207,6 +247,8 @@ func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amou
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
+		dustClaimMinAmount:            0,
+		dustClaimMaxAmount:            0,
 		accuToGovStaker:               avl.NewTree(),
 		accuToDevOps:                  avl.NewTree(),
 		distributedToGovStakerHistory: avl.NewTree(),

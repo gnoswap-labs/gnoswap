@@ -10,6 +10,16 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 	return pf.getProtocolFeeState().GovStakerPct()
 }
 
+// GetDustClaimMinAmount returns the minimum claimable dust amount.
+func (pf *protocolFeeV1) GetDustClaimMinAmount() int64 {
+	return pf.getProtocolFeeState().DustClaimMinAmount("")
+}
+
+// GetDustClaimMaxAmount returns the maximum claimable dust amount.
+func (pf *protocolFeeV1) GetDustClaimMaxAmount() int64 {
+	return pf.getProtocolFeeState().DustClaimMaxAmount("")
+}
+
 // GetTokenListWithAmount returns the token path and amount.
 func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
 	return pf.getProtocolFeeState().TokenListWithAmounts()

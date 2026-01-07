@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/router"
 )
 
 // DistributeProtocolFee distributes collected protocol fees.
@@ -197,6 +198,190 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
 }
 
+// SetDustClaimMinAmount sets the minimum amount eligible for dust claim.
+//
+// Only callable by admin or governance.
+func (pf *protocolFeeV1) SetDustClaimMinAmount(amount int64) {
+	halt.AssertIsNotHaltedProtocolFee()
+
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	currentMax := pf.getProtocolFeeState().DustClaimMaxAmount("")
+	if amount > currentMax {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("min(%d) should be less than or equal to max(%d)", amount, currentMax),
+		))
+	}
+
+	if _, err := pf.getProtocolFeeState().setDustClaimMinAmount(amount); err != nil {
+		panic(err)
+	}
+}
+
+// SetDustClaimMaxAmount sets the maximum amount eligible for dust claim.
+//
+// Only callable by admin or governance.
+func (pf *protocolFeeV1) SetDustClaimMaxAmount(amount int64) {
+	halt.AssertIsNotHaltedProtocolFee()
+
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	currentMin := pf.getProtocolFeeState().DustClaimMinAmount("")
+	if amount < currentMin {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("max(%d) should be greater than or equal to min(%d)", amount, currentMin),
+		))
+	}
+
+	if _, err := pf.getProtocolFeeState().setDustClaimMaxAmount(amount); err != nil {
+		panic(err)
+	}
+}
+
+// ClaimDustToGns swaps eligible dust tokens into GNS and transfers the total GNS to recipient.
+//
+// Parameters:
+//   - tokenPaths: list of input token paths
+//   - amounts: list of amounts to swap per token
+//   - routeArrs: route strings per token (router format)
+//   - quoteArrs: quote strings per token (router format; empty defaults to "100")
+//   - amountOutMins: minimum output per token (empty defaults to "1")
+//   - deadline: swap deadline
+//   - referrer: referrer address string (router)
+//   - recipient: address to receive total GNS
+//
+// Only callable by admin or gov/staker.
+func (pf *protocolFeeV1) ClaimDustToGns(
+	tokenPaths []string,
+	amounts []int64,
+	routeArrs []string,
+	quoteArrs []string,
+	amountOutMins []string,
+	deadline int64,
+	referrer string,
+	recipient address,
+) int64 {
+	halt.AssertIsNotHaltedProtocolFee()
+
+	caller := runtime.PreviousRealm().Address()
+	assertIsAdminOrGovStaker(caller)
+
+	if len(tokenPaths) != len(amounts) || len(tokenPaths) != len(routeArrs) || len(tokenPaths) != len(quoteArrs) || len(tokenPaths) != len(amountOutMins) {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("length mismatch: tokens(%d), amounts(%d), routes(%d), quotes(%d), mins(%d)", len(tokenPaths), len(amounts), len(routeArrs), len(quoteArrs), len(amountOutMins)),
+		))
+	}
+
+	totalGnsOut := int64(0)
+	processedForEvent := make([]string, 0)
+
+	for i, tokenPath := range tokenPaths {
+		amount := amounts[i]
+		if amount <= 0 {
+			continue
+		}
+
+		minAmount := pf.getProtocolFeeState().DustClaimMinAmount(tokenPath)
+		maxAmount := pf.getProtocolFeeState().DustClaimMaxAmount(tokenPath)
+		if amount < minAmount || amount > maxAmount {
+			continue
+		}
+
+		recordedAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
+		if !exists {
+			continue
+		}
+
+		if amount > recordedAmount {
+			panic(makeErrorWithDetail(
+				errInvalidAmount,
+				ufmt.Sprintf("amount(%d) should be less than or equal to recorded(%d)", amount, recordedAmount),
+			))
+		}
+
+		balance := common.BalanceOf(tokenPath, protocolFeeAddr)
+		if amount > balance {
+			panic(makeErrorWithDetail(
+				errInvalidAmount,
+				ufmt.Sprintf("amount(%d) should be less than or equal to balance(%d)", amount, balance),
+			))
+		}
+
+		if tokenPath == gnsTokenPath {
+			totalGnsOut = safeAddInt64(totalGnsOut, amount)
+			newAmount := safeSubInt64(recordedAmount, amount)
+			pf.store.SetTokenListWithAmountItem(tokenPath, newAmount)
+			processedForEvent = append(processedForEvent, makeDustClaimEventString(tokenPath, amount))
+			continue
+		}
+
+		routeArr := routeArrs[i]
+		if routeArr == "" {
+			panic(makeErrorWithDetail(
+				errInvalidAmount,
+				ufmt.Sprintf("routeArr should not be empty for token(%s)", tokenPath),
+			))
+		}
+
+		quoteArr := quoteArrs[i]
+		if quoteArr == "" {
+			quoteArr = "100"
+		}
+
+		amountOutMin := amountOutMins[i]
+		if amountOutMin == "" {
+			amountOutMin = "1"
+		}
+
+		_, outputAmountStr := router.ExactInSwapRoute(
+			cross,
+			tokenPath,
+			gnsTokenPath,
+			strconv.FormatInt(amount, 10),
+			routeArr,
+			quoteArr,
+			amountOutMin,
+			deadline,
+			referrer,
+		)
+
+		outputAmount, err := strconv.ParseInt(outputAmountStr, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		if outputAmount < 0 {
+			outputAmount = -outputAmount
+		}
+
+		totalGnsOut = safeAddInt64(totalGnsOut, outputAmount)
+		newAmount := safeSubInt64(recordedAmount, amount)
+		pf.store.SetTokenListWithAmountItem(tokenPath, newAmount)
+		processedForEvent = append(processedForEvent, makeDustClaimEventString(tokenPath, amount))
+	}
+
+	if totalGnsOut > 0 {
+		common.SafeGRC20Transfer(cross, gnsTokenPath, recipient, totalGnsOut)
+	}
+
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
+		"ClaimDustToGns",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"recipient", recipient.String(),
+		"totalGnsOut", strconv.FormatInt(totalGnsOut, 10),
+		"processed", strings.Join(processedForEvent, ","),
+	)
+
+	return totalGnsOut
+}
+
 // ClearTokenListWithAmount clears the tokenListWithAmount.
 //
 // Resets all accumulated token amounts to zero.
@@ -231,4 +416,8 @@ func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
 
 func makeEventString(tokenPath string, amount int64) string {
 	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
+}
+
+func makeDustClaimEventString(tokenPath string, amount int64) string {
+	return tokenPath + "*DUST*" + strconv.FormatInt(amount, 10)
 }
