@@ -163,6 +163,40 @@ func TestCreatePool(t *testing.T) {
 			sqrtPrice:   "1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
 			shouldPanic: false,
 		},
+		{
+			name:        "fail - sqrtPrice just below MIN_SQRT_RATIO",
+			token0Path:  oblPath,
+			token1Path:  barPath,
+			fee:         500,
+			sqrtPrice:   "4295128738", // MIN_SQRT_RATIO - 1
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
+		},
+		{
+			name:        "success - sqrtPrice just above MIN_SQRT_RATIO",
+			token0Path:  fooPath,
+			token1Path:  oblPath,
+			fee:         3000,
+			sqrtPrice:   "4295128740", // MIN_SQRT_RATIO + 1
+			shouldPanic: false,
+		},
+		{
+			name:        "fail - sqrtPrice one",
+			token0Path:  oblPath,
+			token1Path:  quxPath,
+			fee:         500,
+			sqrtPrice:   "1",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1) is out of range",
+		},
+		{
+			name:        "success - mid-range sqrtPrice",
+			token0Path:  bazPath,
+			token1Path:  oblPath,
+			fee:         10000,
+			sqrtPrice:   "79228162514264337593543950337", // sqrt(1) * 2^96
+			shouldPanic: false,
+		},
 	}
 
 	initPoolTest(t)
