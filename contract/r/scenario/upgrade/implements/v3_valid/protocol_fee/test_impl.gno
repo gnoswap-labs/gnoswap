@@ -40,6 +40,18 @@ func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
+func (t *TestProtocolFee) SetDustClaimMinAmount(amount int64) {
+	t.instance.SetDustClaimMinAmount(amount)
+}
+
+func (t *TestProtocolFee) SetDustClaimMaxAmount(amount int64) {
+	t.instance.SetDustClaimMaxAmount(amount)
+}
+
+func (t *TestProtocolFee) ClaimDustToGns(tokenPaths []string, amounts []int64, routeArrs []string, quoteArrs []string, amountOutMins []string, deadline int64, referrer string, recipient address) int64 {
+	return t.instance.ClaimDustToGns(tokenPaths, amounts, routeArrs, quoteArrs, amountOutMins, deadline, referrer, recipient)
+}
+
 func (t *TestProtocolFee) ClearTokenListWithAmount() {
 	t.instance.ClearTokenListWithAmount()
 }
@@ -55,6 +67,14 @@ func (t *TestProtocolFee) GetDevOpsPct() int64 {
 
 func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	return t.instance.GetGovStakerPct()
+}
+
+func (t *TestProtocolFee) GetDustClaimMinAmount() int64 {
+	return t.instance.GetDustClaimMinAmount()
+}
+
+func (t *TestProtocolFee) GetDustClaimMaxAmount() int64 {
+	return t.instance.GetDustClaimMaxAmount()
 }
 
 func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {

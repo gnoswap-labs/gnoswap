@@ -65,6 +65,27 @@ func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
+func (t *TestProtocolFee) SetDustClaimMinAmount(amount int64) {
+	if !t.isActive("SetDustClaimMinAmount") {
+		panic("test implementation: SetDustClaimMinAmount not supported")
+	}
+	t.instance.SetDustClaimMinAmount(amount)
+}
+
+func (t *TestProtocolFee) SetDustClaimMaxAmount(amount int64) {
+	if !t.isActive("SetDustClaimMaxAmount") {
+		panic("test implementation: SetDustClaimMaxAmount not supported")
+	}
+	t.instance.SetDustClaimMaxAmount(amount)
+}
+
+func (t *TestProtocolFee) ClaimDustToGns(tokenPaths []string, amounts []int64, routeArrs []string, quoteArrs []string, amountOutMins []string, deadline int64, referrer string, recipient address) int64 {
+	if !t.isActive("ClaimDustToGns") {
+		panic("test implementation: ClaimDustToGns not supported")
+	}
+	return t.instance.ClaimDustToGns(tokenPaths, amounts, routeArrs, quoteArrs, amountOutMins, deadline, referrer, recipient)
+}
+
 func (t *TestProtocolFee) ClearTokenListWithAmount() {
 	if !t.isActive("ClearTokenListWithAmount") {
 		panic("test implementation: ClearTokenListWithAmount not supported")
@@ -92,6 +113,20 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 		panic("test implementation: GetGovStakerPct not supported")
 	}
 	return t.instance.GetGovStakerPct()
+}
+
+func (t *TestProtocolFee) GetDustClaimMinAmount() int64 {
+	if !t.isActive("GetDustClaimMinAmount") {
+		panic("test implementation: GetDustClaimMinAmount not supported")
+	}
+	return t.instance.GetDustClaimMinAmount()
+}
+
+func (t *TestProtocolFee) GetDustClaimMaxAmount() int64 {
+	if !t.isActive("GetDustClaimMaxAmount") {
+		panic("test implementation: GetDustClaimMaxAmount not supported")
+	}
+	return t.instance.GetDustClaimMaxAmount()
 }
 
 func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {

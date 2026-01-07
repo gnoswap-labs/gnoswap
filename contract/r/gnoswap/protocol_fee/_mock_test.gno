@@ -59,6 +59,22 @@ func (m *MockProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	m.Response.Get("AddToProtocolFee")
 }
 
+func (m *MockProtocolFee) SetDustClaimMinAmount(amount int64) {
+	m.Response.Get("SetDustClaimMinAmount")
+}
+
+func (m *MockProtocolFee) SetDustClaimMaxAmount(amount int64) {
+	m.Response.Get("SetDustClaimMaxAmount")
+}
+
+func (m *MockProtocolFee) ClaimDustToGns(tokenPaths []string, amounts []int64, routeArrs []string, quoteArrs []string, amountOutMins []string, deadline int64, referrer string, recipient address) int64 {
+	res, ok := m.Response.Get("ClaimDustToGns")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockProtocolFee) ClearTokenListWithAmount() {
 	m.Response.Get("ClearTokenListWithAmount")
 }
@@ -77,6 +93,22 @@ func (m *MockProtocolFee) GetDevOpsPct() int64 {
 
 func (m *MockProtocolFee) GetGovStakerPct() int64 {
 	res, ok := m.Response.Get("GetGovStakerPct")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) GetDustClaimMinAmount() int64 {
+	res, ok := m.Response.Get("GetDustClaimMinAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) GetDustClaimMaxAmount() int64 {
+	res, ok := m.Response.Get("GetDustClaimMaxAmount")
 	if !ok {
 		return 0
 	}
