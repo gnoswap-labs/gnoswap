@@ -150,26 +150,6 @@ gnft.TransferFrom(cur, fromAddress, toAddress, tokenId)
 gnft.Burn(cur, tokenId)
 ```
 
-## Storage Optimization
-
-### Before Optimization
-- Full base64 SVG stored per token
-- ~4,200 bytes per token
-- High storage fees
-
-### After Optimization
-- Compact parameters stored per token
-- ~30-40 bytes per token
-- **~100x storage reduction**
-- SVG generated on-demand
-
-Example storage comparison:
-```
-Full SVG:  4,200 bytes → 4,200,000 ugnot storage fee
-Parameters:   40 bytes →    40,000 ugnot storage fee
-Savings: 99% reduction
-```
-
 ## Security
 
 - Only position contract can mint NFTs
