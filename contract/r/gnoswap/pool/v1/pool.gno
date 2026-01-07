@@ -154,10 +154,7 @@ func (i *poolV1) Burn(
 		position.SetTokensOwed1(tokensOwed1)
 	}
 
-	positionKey, err := getPositionKey(tickLower, tickUpper)
-	if err != nil {
-		panic(err)
-	}
+	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
 	mustGetPositionByPool(pool, positionKey)
@@ -211,11 +208,7 @@ func (i *poolV1) Collect(
 	// Generate position key by combining position contract path with tick range
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
-	positionKey, err := getPositionKey(tickLower, tickUpper)
-	if err != nil {
-		panic(err)
-	}
-
+	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
 	var amount0, amount1 *u256.Uint
@@ -262,8 +255,7 @@ func (i *poolV1) Collect(
 
 	setPosition(pool, positionKey, *position)
 
-	err = i.savePool(pool)
-	if err != nil {
+	if err := i.savePool(pool); err != nil {
 		panic(err)
 	}
 

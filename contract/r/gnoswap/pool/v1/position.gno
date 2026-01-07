@@ -31,23 +31,15 @@ const positionPackagePath = "gno.land/r/gnoswap/position"
 //
 //	base64(position_package_path + "__" + tickLower + "__" + tickUpper)
 //
-// Requirements:
-//   - tickLower < tickUpper
-//   - Both ticks within valid range [-887272, 887272]
-//
 // Returns base64-encoded position key or error.
 // Combines position package path, tickLower, and tickUpper.
 func getPositionKey(
 	tickLower int32,
 	tickUpper int32,
-) (string, error) {
-	if err := validateTicks(tickLower, tickUpper); err != nil {
-		return "", err
-	}
-
+) string {
 	positionKey := positionPackagePath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
-	return encodedPositionKey, nil
+	return encodedPositionKey
 }
 
 // positionUpdate updates a position's liquidity and calculates fees owed.
@@ -383,10 +375,7 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 		feeGrowthGlobal1X128,
 	)
 
-	positionKey, err := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
-	if err != nil {
-		return pl.NewDefaultPositionInfo(), err
-	}
+	positionKey := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
 
 	position, err := positionUpdateWithKey(
 		p,
