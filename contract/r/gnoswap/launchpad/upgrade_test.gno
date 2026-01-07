@@ -325,3 +325,349 @@ func TestCollectRewardByDepositId(t *testing.T) {
 		})
 	}
 }
+
+// ==================================
+// Getter Tests
+// ==================================
+
+func TestGetProjectCount(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "get project count is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetProjectCount()
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetProjectCount") != 1 {
+				t.Error("GetProjectCount was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetDepositCount(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "get deposit count is success",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetDepositCount()
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetDepositCount") != 1 {
+				t.Error("GetDepositCount was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetProject(t *testing.T) {
+	tests := []struct {
+		name      string
+		projectId string
+	}{
+		{
+			name:      "get project is success",
+			projectId: "project1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetProject(tt.projectId)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetProject") != 1 {
+				t.Error("GetProject was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetDeposit(t *testing.T) {
+	tests := []struct {
+		name      string
+		depositId string
+	}{
+		{
+			name:      "get deposit is success",
+			depositId: "deposit1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetDeposit(tt.depositId)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetDeposit") != 1 {
+				t.Error("GetDeposit was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetProjectTier(t *testing.T) {
+	tests := []struct {
+		name      string
+		projectId string
+		tier      int64
+	}{
+		{
+			name:      "get project tier is success",
+			projectId: "project1",
+			tier:      30,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetProjectTier(tt.projectId, tt.tier)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetProjectTier") != 1 {
+				t.Error("GetProjectTier was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetClaimableRewardByProjectId(t *testing.T) {
+	tests := []struct {
+		name      string
+		projectId string
+	}{
+		{
+			name:      "get claimable reward by project id is success",
+			projectId: "project1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetClaimableRewardByProjectId(tt.projectId)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetClaimableRewardByProjectId") != 1 {
+				t.Error("GetClaimableRewardByProjectId was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetClaimableRewardByAddress(t *testing.T) {
+	tests := []struct {
+		name string
+		addr address
+	}{
+		{
+			name: "get claimable reward by address is success",
+			addr: "g1test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetClaimableRewardByAddress(tt.addr)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetClaimableRewardByAddress") != 1 {
+				t.Error("GetClaimableRewardByAddress was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetProjectActiveStatus(t *testing.T) {
+	tests := []struct {
+		name      string
+		projectId string
+	}{
+		{
+			name:      "get project active status is success",
+			projectId: "project1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetProjectActiveStatus(tt.projectId)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetProjectActiveStatus") != 1 {
+				t.Error("GetProjectActiveStatus was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetProjects(t *testing.T) {
+	tests := []struct {
+		name   string
+		offset int64
+		limit  int64
+	}{
+		{
+			name:   "get projects is success",
+			offset: 0,
+			limit:  10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetProjects(tt.offset, tt.limit)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetProjects") != 1 {
+				t.Error("GetProjects was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetDeposits(t *testing.T) {
+	tests := []struct {
+		name   string
+		offset int64
+		limit  int64
+	}{
+		{
+			name:   "get deposits is success",
+			offset: 0,
+			limit:  10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// Action
+			GetDeposits(tt.offset, tt.limit)
+
+			// Assert
+			mockLaunchpad := implementation.(*MockLaunchpad)
+			if mockLaunchpad.Response.CallCount("GetDeposits") != 1 {
+				t.Error("GetDeposits was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestGetImplementationPackagePath(t *testing.T) {
+	tests := []struct {
+		name         string
+		packagePath  string
+		expectedPath string
+	}{
+		{
+			name:         "get package path after v1 registration",
+			packagePath:  "gno.land/r/gnoswap/launchpad/v1",
+			expectedPath: "gno.land/r/gnoswap/launchpad/v1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm(tt.packagePath))
+			RegisterInitializer(cross, makeMockInitializer(tt.packagePath))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+
+			// when
+			path := GetImplementationPackagePath()
+
+			// then
+			uassert.Equal(t, path, tt.expectedPath)
+		})
+	}
+}

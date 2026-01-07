@@ -25,6 +25,30 @@ func getProjectRemainingAmount(p *launchpad.Project) int64 {
 	return remainingAmount
 }
 
+type ProjectStats struct {
+	RemainingAmount       int64
+	TotalDepositCount     int64
+	CurrentDepositCount   int64
+	TotalDepositAmount    int64
+	CurrentDepositAmount  int64
+	TotalCollectedAmount  int64
+}
+
+func getProjectStats(p *launchpad.Project) ProjectStats {
+	stats := ProjectStats{}
+
+	for _, tier := range p.Tiers() {
+		stats.RemainingAmount = safeAddInt64(stats.RemainingAmount, getCalculatedLeftReward(tier))
+		stats.TotalDepositCount = safeAddInt64(stats.TotalDepositCount, tier.TotalDepositCount())
+		stats.CurrentDepositCount = safeAddInt64(stats.CurrentDepositCount, tier.TotalDepositCount()-tier.TotalWithdrawCount())
+		stats.TotalDepositAmount = safeAddInt64(stats.TotalDepositAmount, tier.TotalDepositAmount())
+		stats.CurrentDepositAmount = safeAddInt64(stats.CurrentDepositAmount, tier.TotalDepositAmount()-tier.TotalWithdrawAmount())
+		stats.TotalCollectedAmount = safeAddInt64(stats.TotalCollectedAmount, tier.TotalCollectedAmount())
+	}
+
+	return stats
+}
+
 func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
 	conditions := p.Conditions()
 	if conditions == nil {
