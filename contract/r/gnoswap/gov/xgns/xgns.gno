@@ -37,10 +37,9 @@ func BalanceOf(owner address) int64 {
 
 // VotingSupply returns total supply eligible for voting.
 func VotingSupply() int64 {
-	total := token.TotalSupply()
 	launchpad := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
-	return total - token.BalanceOf(launchpad)
+	return token.TotalSupply() - token.BalanceOf(launchpad)
 }
 
 // Render returns a formatted representation of the token state.
@@ -58,9 +57,9 @@ func Render(path string) string {
 		balance := token.BalanceOf(address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
 	case "votingsupply":
-	    if len(parts) != 1 {
-	        return "404\n"
-	    }
+		if len(parts) != 1 {
+			return "404\n"
+		}
 		return ufmt.Sprintf("%d\n", VotingSupply())
 	default:
 		return "404\n"
@@ -80,10 +79,7 @@ func Mint(cur realm, to address, amount int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
-	err := ledger.Mint(to, amount)
-	if err != nil {
-		panic(err)
-	}
+	checkErr(ledger.Mint(to, amount))
 }
 
 // Burn burns tokens from address.
@@ -99,7 +95,10 @@ func Burn(cur realm, from address, amount int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
-	err := ledger.Burn(from, amount)
+	checkErr(ledger.Burn(from, amount))
+}
+
+func checkErr(err error) {
 	if err != nil {
 		panic(err)
 	}
