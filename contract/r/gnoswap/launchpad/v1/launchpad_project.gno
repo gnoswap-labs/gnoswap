@@ -71,22 +71,24 @@ func (lp *launchpadV1) CreateProject(
 		minimumStartDelayTime: projectMinimumStartDelayTime,
 	}
 
+	// Checks: validate balance before creating project
+	tokenBalance := common.BalanceOf(tokenPath, caller)
+	if tokenBalance < depositAmount {
+		panic(makeErrorWithDetails(
+			errInsufficientBalance, ufmt.Sprintf(
+				"caller(%s) balance(%d) < depositAmount(%d)",
+				caller.String(), tokenBalance, depositAmount),
+			),
+		)
+	}
+
+	// Effects: create project and save state
 	project, err := lp.createProject(params)
 	if err != nil {
 		panic(err)
 	}
 
-	tokenBalance := common.BalanceOf(tokenPath, caller)
-	if tokenBalance < depositAmount {
-		panic(
-			makeErrorWithDetails(
-				errInsufficientBalance, ufmt.Sprintf(
-					"caller(%s) balance(%d) < depositAmount(%d)",
-					caller.String(), tokenBalance, depositAmount),
-			),
-		)
-	}
-
+	// Interactions: transfer tokens
 	common.SafeGRC20TransferFrom(
 		cross,
 		tokenPath,
