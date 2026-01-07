@@ -832,7 +832,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
 			shouldFail:    true,
@@ -849,7 +851,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					createTime-testConfig.VotingWeightSmoothingDuration)
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					100)
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
 			shouldFail:    true,
@@ -866,7 +870,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					createTime-testConfig.VotingWeightSmoothingDuration)
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					createTime-testConfig.VotingWeightSmoothingDuration,
+					100)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
@@ -885,7 +891,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*12).Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Add(-time.Hour*24*12).Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Add(-time.Hour*24*12).Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
@@ -904,7 +912,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*20).Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Add(-time.Hour*24*20).Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Add(-time.Hour*24*20).Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				statusResolver.vote(true, 6_000_000_000)
 				statusResolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
@@ -923,7 +933,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				statusResolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("proposer"))
 				return proposal
@@ -941,7 +953,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 			},
 			shouldFail:  false,
 			description: "Expired status allows new proposal",
@@ -956,7 +970,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration)
+					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
+					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
+					100)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				statusResolver.vote(false, 6_000_000_000) // Majority no votes
 				return proposal
@@ -1372,7 +1388,9 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 		NewProposalTextData(),
 		proposerAddress,
 		gov.getCurrentConfigVersion(),
-		time.Now().Unix()-testConfig.VotingWeightSmoothingDuration)
+		time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+		time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
+		100)
 
 	gov.addProposal(proposal)
 }

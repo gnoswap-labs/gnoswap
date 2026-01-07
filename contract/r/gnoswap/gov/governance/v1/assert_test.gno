@@ -31,7 +31,9 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					NewProposalTextData(),
 					proposer,
 					1, // configVersion
-					time.Now().Unix())
+					time.Now().Unix(),
+					time.Now().Unix(),
+					100)
 				gv.addProposal(proposal)
 				return 1
 			},
@@ -60,7 +62,9 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					NewProposalTextData(),
 					proposer,
 					1, // configVersion
-					time.Now().Unix())
+					time.Now().Unix(),
+					time.Now().Unix(),
+					100)
 				gv.addProposal(proposal)
 				return 2
 			},
@@ -80,7 +84,9 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					NewProposalTextData(),
 					proposer,
 					1, // configVersion
-					time.Now().Unix())
+					time.Now().Unix(),
+					time.Now().Unix(),
+					100)
 				gv.addProposal(proposal)
 				return 3
 			},

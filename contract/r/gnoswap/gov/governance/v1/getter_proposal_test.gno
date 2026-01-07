@@ -138,7 +138,10 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer"),
 					1,
-					baseTime-1000)
+					baseTime-1000,
+					baseTime,
+					100,
+				)
 				gv.addProposal(proposal)
 			},
 			expectedSnapshotTime:      baseTime - 1000,
@@ -165,7 +168,10 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer1"),
 					1,
-					baseTime-2000)
+					baseTime-2000,
+					baseTime,
+					100,
+				)
 				gv.addProposal(proposal1)
 
 				// Proposal 2: snapshotTime = baseTime - 500 (newer)
@@ -178,7 +184,10 @@ func TestGetOldestActiveProposalSnapshotTime(t *testing.T) {
 					governance.NewProposalData(governance.Text, nil, nil),
 					address("g1proposer2"),
 					1,
-					baseTime-500)
+					baseTime-500,
+					baseTime,
+					100,
+				)
 				gv.addProposal(proposal2)
 			},
 			expectedSnapshotTime:      baseTime - 2000, // should return oldest

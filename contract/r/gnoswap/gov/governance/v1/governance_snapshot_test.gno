@@ -249,5 +249,8 @@ func createTestProposal(id int64) *governance.Proposal {
 		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),
 		1,
-		createdAt-config.VotingWeightSmoothingDuration)
+		createdAt-config.VotingWeightSmoothingDuration,
+		createdAt-config.VotingWeightSmoothingDuration,
+		100,
+	)
 }

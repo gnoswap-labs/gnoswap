@@ -96,6 +96,7 @@ func newTestProposal(
 	configVersion int64,
 	snapshotTime int64,
 ) *governance.Proposal {
+	// Use snapshotTime as createdAt and 100 as default createdHeight for tests
 	return governance.NewProposal(
 		id,
 		status,
@@ -104,5 +105,7 @@ func newTestProposal(
 		proposer,
 		configVersion,
 		snapshotTime,
+		snapshotTime, // createdAt
+		100,          // createdHeight
 	)
 }
