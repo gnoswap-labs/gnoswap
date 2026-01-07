@@ -245,7 +245,7 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			amountRemaining:  nil,
 			feePips:          600,
 			shouldPanic:      true,
-			panicMsg:         "SwapMathComputeSwapStep: invalid input",
+			panicMsg:         "SwapMathComputeSwapStep: input parameters cannot be nil",
 		},
 		{
 			name:             "fee_pips_exceeds_maximum",
