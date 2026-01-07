@@ -27,13 +27,12 @@ func TotalSupply() int64 {
 
 // VotingSupply returns total supply eligible for voting.
 func VotingSupply() int64 {
-	total := token.TotalSupply()
-	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	if !ok {
-		panic("launchpad address not found")
+	launchpad, err := getLaunchpadAddress()
+	if err != nil {
+		panic(err)
 	}
 
-	return total - token.BalanceOf(launchpad)
+	return token.TotalSupply() - token.BalanceOf(launchpad)
 }
 
 // BalanceOf returns token balance for address.
