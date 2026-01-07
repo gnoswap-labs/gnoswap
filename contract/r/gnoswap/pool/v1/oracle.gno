@@ -130,6 +130,7 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 	if liquidity.IsZero() {
 		liquidityForCalc = u256.One()
 	}
+
 	// secondsPerLiquidity += timeDelta * 2^128 / max(1, liquidity)
 	secondsPerLiquidityDelta := u256.MulDiv(
 		u256.NewUintFromInt64(timeDelta),
@@ -220,7 +221,7 @@ func writeObservation(
 
 func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 	observation, ok := os.Observations()[os.Index()]
-	if !ok || observation == nil || !observation.Initialized() {
+	if !ok || observation == nil {
 		return nil, errNotInitializedObservation
 	}
 
@@ -228,15 +229,10 @@ func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 }
 
 // observationAt returns the observation at a specific index
-// Returns error if the observation doesn't exist or is not initialized
+// Returns error if the observation doesn't exist
 func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
 	obs, ok := os.Observations()[index]
 	if !ok || obs == nil {
-		return nil, errNotInitializedObservation
-	}
-
-	// Check if the observation is properly initialized
-	if !obs.Initialized() {
 		return nil, errNotInitializedObservation
 	}
 
@@ -340,120 +336,90 @@ func getSurroundingObservations(os *pl.ObservationState,
 	liquidity *u256.Uint,
 	cardinality uint16,
 ) (*pl.Observation, *pl.Observation, error) {
-	// Get the latest observation
-	latest, err := observationAt(os, index)
+	// Optimistically set before to the newest observation
+	beforeOrAt, err := observationAt(os, index)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// If target is at or after the latest observation, extrapolate to current time
-	if target >= latest.BlockTimestamp() {
-		// If latest is already at current time, return it as both before and after
-		if latest.BlockTimestamp() == currentTime {
-			return latest, latest, nil
+	// If the target is chronologically at or after the newest observation, we can early return
+	if beforeOrAt.BlockTimestamp() <= target {
+		if beforeOrAt.BlockTimestamp() == target {
+			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
+			return beforeOrAt, nil, nil
 		}
-
-		// Create a virtual observation for current time
-		afterOrAt, err := transform(os, currentTime, tick, liquidity)
+		// Otherwise, we need to transform
+		atOrAfter, err := transform(os, target, tick, liquidity)
 		if err != nil {
 			return nil, nil, err
 		}
-
-		return latest, afterOrAt, nil
+		return beforeOrAt, atOrAfter, nil
 	}
 
-	// Handle single cardinality case
-	if cardinality == 1 {
-		// Check if target is before the oldest (and only) observation
-		if target < latest.BlockTimestamp() {
-			return nil, nil, errObservationTooOld
-		}
-		return latest, latest, nil
-	}
-
-	// Binary search over the logical time-ordered circular buffer
-	// start points to the oldest observation: (index + 1) % cardinality
+	// Now, set before to the oldest observation
 	start := (index + 1) % cardinality
-
-	// Get oldest observation
-	// If the oldest slot is not initialized, use slot 0 (like Uniswap V3)
-	oldest, err := observationAt(os, start)
-	if err != nil {
-		// If uninitialized, fall back to slot 0
-		oldest, err = observationAt(os, 0)
+	beforeOrAt, err = observationAt(os, start)
+	if err != nil || beforeOrAt.Initialized() == false {
+		beforeOrAt, err = observationAt(os, 0)
 		if err != nil {
 			return nil, nil, err
 		}
-		start = 0
 	}
 
-	// Check if target is before the oldest observation
-	if target < oldest.BlockTimestamp() {
+	// Ensure that the target is chronologically at or after the oldest observation
+	if beforeOrAt.BlockTimestamp() > target {
 		return nil, nil, errObservationTooOld
 	}
 
-	// Helper function to access observations in logical order
-	at := func(k uint16) (*pl.Observation, error) {
-		physicalIdx := (start + k) % cardinality
-		return observationAt(os, physicalIdx)
-	}
+	// If we've reached this point, we have to binary search
+	return binarySearch(os, currentTime, target, index, cardinality)
+}
 
-	// Binary search range: [0, cardinality-1] in logical ordering
-	lo, hi := uint16(0), cardinality-1
+func binarySearch(os *pl.ObservationState,
+	currentTime int64,
+	target int64,
+	index uint16,
+	cardinality uint16,
+) (*pl.Observation, *pl.Observation, error) {
+	l := uint64((index + 1) % cardinality) // oldest observation
+	r := l + uint64(cardinality) - 1       // newest observation
+	var i uint64
+	var beforeOrAt, atOrAfter *pl.Observation
 
-	for lo < hi {
-		mid := lo + (hi-lo)/2
-		obs, err := at(mid)
+	for {
+		i = (l + r) / 2
+
+		beforeIndex := uint16(i % uint64(cardinality))
+		obs, err := observationAt(os, beforeIndex)
+		if err != nil || !obs.Initialized() {
+			// we've landed on an uninitialized tick, keep searching higher (more recently)
+			l = i + 1
+			continue
+		}
+		beforeOrAt = obs
+
+		afterIndex := uint16((i + 1) % uint64(cardinality))
+		atOrAfter, err = observationAt(os, afterIndex)
 		if err != nil {
-			// Uninitialized observation: assume initialized observations are at the beginning
-			if mid == 0 {
-				break
-			}
-			hi = mid - 1
+			l = i + 1
 			continue
 		}
 
-		if obs.BlockTimestamp() <= target {
-			// Target is at or after mid, search in upper half
-			lo = mid + 1
+		targetAtOrAfter := beforeOrAt.BlockTimestamp() <= target
+
+		// check if we've found the answer!
+		if targetAtOrAfter && target <= atOrAfter.BlockTimestamp() {
+			break
+		}
+
+		if !targetAtOrAfter {
+			r = i - 1
 		} else {
-			// Target is before mid, search in lower half
-			hi = mid
+			l = i + 1
 		}
 	}
 
-	var beforeIdx uint16
-
-	// Calculate before index
-	if lo == 0 {
-		beforeIdx = 0
-	} else {
-		beforeIdx = lo - 1
-	}
-
-	// Get the observation before or at target
-	beforeOrAt, err := at(beforeIdx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Get the observation after target
-	afterIndex := lo % cardinality
-
-	afterOrAt, err := at(afterIndex)
-	if err != nil {
-		// If after observation is not initialized, use the latest observation
-		afterOrAt = latest
-	}
-
-	// Boundary correction: ensure beforeOrAt is actually before or at target
-	if beforeOrAt.BlockTimestamp() > target {
-		// This shouldn't happen in normal cases, but handle it defensively
-		// If the first observation is after target, use it for both
-		afterOrAt = beforeOrAt
-	}
-
-	return beforeOrAt, afterOrAt, nil
+	return beforeOrAt, atOrAfter, nil
 }
 
 // observe returns the cumulative tick and liquidity as of each timestamp secondsAgo from the current time.

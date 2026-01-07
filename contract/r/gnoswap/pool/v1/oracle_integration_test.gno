@@ -203,8 +203,10 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 		)
 
 		uassert.NoError(t, err, "Should not error when target equals observation")
-		uassert.Equal(t, beforeOrAt2.BlockTimestamp(), afterOrAt2.BlockTimestamp(), "Should return same observation")
 		uassert.Equal(t, currentTime, beforeOrAt2.BlockTimestamp(), "Should return exact observation")
+		if afterOrAt2 != nil {
+			t.Fatalf("afterOrAt should be nil when target equals newest observation")
+		}
 
 		// Test target > observation timestamp
 		beforeOrAt3, afterOrAt3, err := getSurroundingObservations(
@@ -219,7 +221,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 
 		uassert.NoError(t, err, "Should create virtual observation")
 		uassert.Equal(t, currentTime, beforeOrAt3.BlockTimestamp(), "Before should be first observation")
-		uassert.Equal(t, currentTime+100, afterOrAt3.BlockTimestamp(), "After should be virtual observation")
+		uassert.Equal(t, currentTime+50, afterOrAt3.BlockTimestamp(), "After should be virtual observation at target")
 	})
 
 	t.Run("Cardinality=N", func(t *testing.T) {
@@ -430,9 +432,11 @@ func TestObservationState_ObservationAt(t *testing.T) {
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		// observationAt should error for uninitialized observation
-		_, err = observationAt(os, 3)
-		uassert.Error(t, err, "Should error for uninitialized observation")
+		// observationAt should return uninitialized observation (without error)
+		obs, err := observationAt(os, 3)
+		uassert.NoError(t, err, "Should return observation even if uninitialized")
+		uassert.NotNil(t, obs, "Observation should not be nil")
+		uassert.False(t, obs.Initialized(), "Observation should be uninitialized")
 	})
 }
 
