@@ -1,7 +1,7 @@
 package rbac
 
 import (
-    "chain"
+	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
@@ -44,7 +44,7 @@ func initRbac() {
 //
 // Only callable by admin or governance.
 func RegisterRole(cur realm, roleName string, roleAddress address) {
-    prevRealm := runtime.PreviousRealm()
+	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
@@ -80,7 +80,7 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 //
 // Only callable by admin or governance.
 func UpdateRoleAddress(cur realm, roleName string, addr address) {
-    prevRealm := runtime.PreviousRealm()
+	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 
@@ -115,7 +115,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 //
 // Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
-    prevRealm := runtime.PreviousRealm()
+	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)

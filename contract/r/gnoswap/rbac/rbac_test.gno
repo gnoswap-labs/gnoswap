@@ -282,9 +282,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 
 			if tt.shouldError {
 				uassert.Error(t, err)
-				if tt.errorMsg != "" && err != nil {
-					uassert.True(t, contains(err.Error(), tt.errorMsg))
-				}
+				uassert.ErrorContains(t, err, tt.errorMsg)
 			} else {
 				uassert.NoError(t, err)
 				// Verify role was actually removed (if not empty string)
@@ -562,13 +560,13 @@ func TestAddressChangeComplete(t *testing.T) {
 
 func TestRBACToAccessSync(t *testing.T) {
 	tests := []struct {
-		name              string
-		operations        []struct {
+		name       string
+		operations []struct {
 			action   string // "register", "update", "remove"
 			roleName string
 			address  address
 		}
-		verifyRoles       map[string]address // Expected final state (roles that SHOULD exist)
+		verifyRoles         map[string]address // Expected final state (roles that SHOULD exist)
 		verifyRolesNotExist []string           // Roles that should NOT exist
 	}{
 		{
@@ -610,7 +608,7 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
 				{action: "remove", roleName: "temp_role"},
 			},
-			verifyRoles: map[string]address{},
+			verifyRoles:         map[string]address{},
 			verifyRolesNotExist: []string{"temp_role"},
 		},
 		{
@@ -624,7 +622,7 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role_2", address: testutils.TestAddress("updated_addr")},
 				{action: "remove", roleName: "temp_role_2"},
 			},
-			verifyRoles: map[string]address{},
+			verifyRoles:         map[string]address{},
 			verifyRolesNotExist: []string{"temp_role_2"},
 		},
 		{
@@ -1013,20 +1011,4 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr ||
-		(len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
-		(len(s) > len(substr) && findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
