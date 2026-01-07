@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
@@ -12,9 +14,9 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 // GetPool retrieves a pool instance based on the provided token paths and fee tier.
-func (i *poolV1) GetPool(token0Path, token1Path string, fee uint32) *pl.Pool {
+func (i *poolV1) GetPool(token0Path, token1Path string, fee uint32) (*pl.Pool, error) {
 	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
-	return i.mustGetPool(poolPath)
+	return i.getPool(poolPath)
 }
 
 // GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
@@ -231,4 +233,178 @@ func (i *poolV1) GetPoolCreationFee() int64 {
 
 func (i *poolV1) GetWithdrawalFee() uint64 {
 	return i.store.GetWithdrawalFeeBPS()
+}
+
+// GetTWAP returns the time-weighted average price for a pool over a specified period
+//
+// Parameters:
+//   - poolPath: The path of the pool (e.g., "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+//   - secondsAgo: Number of seconds ago to calculate TWAP from
+//
+// Returns TWAP tick and error
+func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return 0, err
+	}
+
+	return getTWAP(pool, secondsAgo)
+}
+
+// GetPoolCount returns the total number of pools.
+func (i *poolV1) GetPoolCount() int {
+	pools := i.store.GetPools()
+	return pools.Size()
+}
+
+// GetPoolPaths returns a paginated list of pool paths.
+func (i *poolV1) GetPoolPaths(offset, count int) []string {
+	pools := i.store.GetPools()
+	poolPaths := make([]string, 0)
+
+	pools.IterateByOffset(offset, count, func(key string, _ any) bool {
+		poolPaths = append(poolPaths, key)
+		return false
+	})
+
+	return poolPaths
+}
+
+// GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
+func (i *poolV1) GetFeeAmountTickSpacings() map[uint32]int32 {
+	return i.store.GetFeeAmountTickSpacing()
+}
+
+// GetPoolPositionCount returns the number of positions in a pool.
+func (i *poolV1) GetPoolPositionCount(poolPath string) int {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return 0
+	}
+
+	return pool.Positions().Size()
+}
+
+// GetPoolPositionKeys returns a paginated list of position keys in a pool.
+func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return []string{}
+	}
+
+	positionKeys := make([]string, 0)
+
+	pool.Positions().IterateByOffset(offset, count, func(key string, _ any) bool {
+		positionKeys = append(positionKeys, key)
+		return false
+	})
+
+	return positionKeys
+}
+
+// Tick enumeration
+
+// GetInitializedTicksInRange returns initialized ticks within the given range.
+func (i *poolV1) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return []int32{}
+	}
+
+	ticks := make([]int32, 0)
+
+	tickLowerStr := strconv.FormatInt(int64(tickLower), 10)
+	tickUpperStr := strconv.FormatInt(int64(tickUpper), 10)
+
+	pool.Ticks().Iterate(tickLowerStr, tickUpperStr, func(key string, _ any) bool {
+		tick, err := strconv.ParseInt(key, 10, 32)
+		if err != nil {
+			return false
+		}
+
+		ticks = append(ticks, int32(tick))
+		return false
+	})
+
+	return ticks
+}
+
+// Structure getters
+
+// GetTickInfo returns the tick info for a given tick.
+func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return pl.TickInfo{}, err
+	}
+
+	tickStr := strconv.Itoa(int(tick))
+	iTickInfo, ok := pool.Ticks().Get(tickStr)
+	if !ok {
+		return pl.TickInfo{}, ufmt.Errorf("tick %d not found", tick)
+	}
+
+	tickInfo, ok := iTickInfo.(pl.TickInfo)
+	if !ok {
+		return pl.TickInfo{}, ufmt.Errorf("failed to cast tickInfo: %T", iTickInfo)
+	}
+
+	return tickInfo, nil
+}
+
+// GetTickBitmaps returns the tick bitmap for a given word position.
+func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	wordPosStr := strconv.Itoa(int(wordPos))
+
+	iTickBitmap, ok := pool.TickBitmaps().Get(wordPosStr)
+	if !ok {
+		return nil, ufmt.Errorf("tick bitmap %d not found", wordPos)
+	}
+
+	tickBitmap, ok := iTickBitmap.(*u256.Uint)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast tick bitmap: %T", iTickBitmap)
+	}
+
+	return tickBitmap, nil
+}
+
+// GetPosition returns the position info for a given key.
+func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return pl.PositionInfo{}, err
+	}
+
+	iPositionInfo, ok := pool.Positions().Get(key)
+	if !ok {
+		return pl.PositionInfo{}, ufmt.Errorf("position %s not found", key)
+	}
+
+	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
+	if !ok {
+		return pl.PositionInfo{}, ufmt.Errorf("failed to cast positionInfo: %T", iPositionInfo)
+	}
+
+	return positionInfo, nil
+}
+
+// GetObservationState returns the observation state for a pool.
+func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+	}
+
+	return observationState, nil
 }
