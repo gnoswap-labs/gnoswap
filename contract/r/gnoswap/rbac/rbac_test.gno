@@ -970,7 +970,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
-			name: "Remove system role fails",
+			name: "Remove admin role fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
@@ -978,7 +978,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			roleName:      prbac.ROLE_ADMIN.String(),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
-			panicContains: "cannot remove system role",
+			panicContains: "admin role is managed by owner",
 		},
 		{
 			name: "Remove non-existent role fails",

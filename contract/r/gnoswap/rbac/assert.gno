@@ -59,7 +59,7 @@ func assertIsValidAddress(addr address) {
 	}
 }
 
-func assertIsAdminRoleMutable(roleName string) {
+func assertNotAdminRole(roleName string) {
 	if roleName == prbac.ROLE_ADMIN.String() {
 		panic(makeErrorWithDetails(
 			errAdminRoleUpdateForbidden,

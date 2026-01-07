@@ -86,7 +86,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
-	assertIsAdminRoleMutable(roleName)
+	assertNotAdminRole(roleName)
 
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
@@ -119,6 +119,7 @@ func RemoveRole(cur realm, roleName string) {
 	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
+	assertNotAdminRole(roleName)
 
 	err := manager.RemoveRole(roleName)
 	if err != nil {
