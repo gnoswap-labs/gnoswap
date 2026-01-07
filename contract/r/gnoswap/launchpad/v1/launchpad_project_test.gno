@@ -904,7 +904,7 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.T) {
 	t.Run("calculate claimable rewards with active deposits", func(t *testing.T) {
 		// Create reward manager with accumulated rewards
-		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm := newRewardManager(100_000, 1000, 2000, 0, 100, 1000)
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
 
 		// Add reward state for deposit with priceDebt = 0.5
@@ -927,7 +927,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 	})
 
 	t.Run("no active deposits returns zero", func(t *testing.T) {
-		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm := newRewardManager(100_000, 1000, 2000, 0, 100, 1000)
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
 
 		// No reward states added
@@ -937,7 +937,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 	})
 
 	t.Run("multiple deposits with different claimable rewards", func(t *testing.T) {
-		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm := newRewardManager(100_000, 1000, 2000, 0, 100, 1000)
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
 
 		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
@@ -977,7 +977,7 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 
 		// Setup reward manager with claimable rewards
 		projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-		rm := newRewardManager(100_000, 1000, 2000, 100, 1000)
+		rm := newRewardManager(100_000, 1000, 2000, 0, 100, 1000)
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
 
 		rewardState := newRewardState(
@@ -1102,7 +1102,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 
 			// Setup reward manager with pending claimable rewards
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0, 100, 1000)
 
 			// Set accumulated reward: Q128 / accumulatedRewardRatio
 			accumulatedReward := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.accumulatedRewardRatio)))
@@ -1223,7 +1223,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			// Setup reward manager with multiple deposits
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0, 100, 1000)
 			rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 accumulated
 
 			for i, dep := range tt.deposits {
@@ -1314,7 +1314,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 
 			// Setup empty reward manager
 			projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 100, 1000)
+			rm := newRewardManager(tt.totalDistributeAmount, 1000, 2000, 0, 100, 1000)
 			rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
 			// No reward states added
 

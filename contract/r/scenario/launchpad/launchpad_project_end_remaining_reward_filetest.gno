@@ -53,12 +53,12 @@ func main() {
 	depositGns(bobAddr, projectTier30Id, int64(1_000_000))
 	println()
 
-	println("[SCENARIO] 3. Skip blocks to accumulate rewards")
-	println("[INFO] Skipping 1000 blocks")
-	testing.SkipHeights(1000)
+	println("[SCENARIO] 3. Skip blocks to pass collect wait duration")
+	println("[INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration")
+	testing.SkipHeights(51840) // 3 days for tier 30 collect wait duration
 	println()
 
-	println("[SCENARIO] 4. Depositors collect their rewards before project ends")
+	println("[SCENARIO] 4. Depositors collect their rewards")
 	println("[INFO] Alice collecting reward")
 	collectReward(aliceAddr, "1")
 	println()
@@ -241,21 +241,21 @@ func transferRemainingRewards(projectId string) {
 // [INFO] Depositor approving launchpad to spend GNS
 // [INFO] Deposit created with ID: 2
 //
-// [SCENARIO] 3. Skip blocks to accumulate rewards
-// [INFO] Skipping 1000 blocks
+// [SCENARIO] 3. Skip blocks to pass collect wait duration
+// [INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration
 //
-// [SCENARIO] 4. Depositors collect their rewards before project ends
+// [SCENARIO] 4. Depositors collect their rewards
 // [INFO] Alice collecting reward
 // [INFO] Collecting reward for deposit ID: 1
 // [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 96739
-// [INFO] Reward collected: 96739
+// [INFO] OBL balance after: 5000289
+// [INFO] Reward collected: 5000289
 //
 // [INFO] Bob collecting reward
 // [INFO] Collecting reward for deposit ID: 2
 // [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 96547
-// [INFO] Reward collected: 96547
+// [INFO] OBL balance after: 5000096
+// [INFO] Reward collected: 5000096
 //
 // [SCENARIO] 5. Skip blocks to end project
 // [INFO] Project duration is 180 days (7776000 blocks at 5 sec/block)
@@ -264,15 +264,15 @@ func transferRemainingRewards(projectId string) {
 // [SCENARIO] 6. Depositors collect final rewards after project ends
 // [INFO] Alice collecting final reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 96739
+// [INFO] OBL balance before: 5000289
 // [INFO] OBL balance after: 50000096
-// [INFO] Reward collected: 49903357
+// [INFO] Reward collected: 44999807
 //
 // [INFO] Bob collecting final reward
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 96547
+// [INFO] OBL balance before: 5000096
 // [INFO] OBL balance after: 49999903
-// [INFO] Reward collected: 49903356
+// [INFO] Reward collected: 44999807
 //
 // [SCENARIO] 7. Depositors withdraw their GNS deposits
 // [INFO] Alice withdrawing deposit

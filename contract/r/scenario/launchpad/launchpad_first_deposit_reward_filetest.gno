@@ -51,8 +51,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Skip blocks for reward accumulation")
-	println("[INFO] Skipping 100 blocks (500 seconds)")
-	testing.SkipHeights(100)
+	println("[INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration")
+	testing.SkipHeights(51840) // 3 days for tier 30 collect wait duration
 	println()
 
 	println("[SCENARIO] 4. Alice collects first deposit reward")
@@ -155,17 +155,17 @@ func collectReward(ownerAddr address, depositId string) {
 // [INFO] Deposit amount: 1000000
 //
 // [SCENARIO] 3. Skip blocks for reward accumulation
-// [INFO] Skipping 100 blocks (500 seconds)
+// [INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration
 //
 // [SCENARIO] 4. Alice collects first deposit reward
 // [INFO] Collecting reward for deposit ID: 1
 // [INFO] OBL balance before collection: 0
-// [INFO] OBL balance after collection: 19483
-// [INFO] Reward collected: 19483
+// [INFO] OBL balance after collection: 10000192
+// [INFO] Reward collected: 10000192
 //
 // [SCENARIO] 5. Skip more blocks and collect again
 // [INFO] Skipping 200 blocks (1000 seconds)
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before collection: 19483
-// [INFO] OBL balance after collection: 58063
-// [INFO] Reward collected: 38580
+// [INFO] OBL balance before collection: 10000192
+// [INFO] OBL balance after collection: 10038773
+// [INFO] Reward collected: 38581

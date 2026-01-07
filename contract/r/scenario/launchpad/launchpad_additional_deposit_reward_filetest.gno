@@ -74,9 +74,9 @@ func main() {
 	println("[INFO] Share distribution: Alice 25%, Bob 25%, Charlie 50%")
 	println()
 
-	println("[SCENARIO] 7. Skip 100 blocks - rewards split by deposit ratio")
-	println("[INFO] Skipping 100 blocks (500 seconds)")
-	testing.SkipHeights(100)
+	println("[SCENARIO] 7. Skip blocks to pass collect wait duration")
+	println("[INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration")
+	testing.SkipHeights(51840) // 3 days for tier 30 collect wait duration
 	println()
 
 	println("[SCENARIO] 8. Collect rewards for all depositors")
@@ -221,45 +221,45 @@ func collectReward(ownerAddr address, depositId string) {
 // [INFO] Deposit amount: 2000000 GNS
 // [INFO] Share distribution: Alice 25%, Bob 25%, Charlie 50%
 //
-// [SCENARIO] 7. Skip 100 blocks - rewards split by deposit ratio
-// [INFO] Skipping 100 blocks (500 seconds)
+// [SCENARIO] 7. Skip blocks to pass collect wait duration
+// [INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration
 //
 // [SCENARIO] 8. Collect rewards for all depositors
 // [INFO] Collecting Alice's reward (deposit ID: 1)
 // [INFO] Collecting reward for deposit ID: 1
 // [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 34095
-// [INFO] Reward collected: 34095
+// [INFO] OBL balance after: 2529272
+// [INFO] Reward collected: 2529272
 //
 // [INFO] Collecting Bob's reward (deposit ID: 2)
 // [INFO] Collecting reward for deposit ID: 2
 // [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 14612
-// [INFO] Reward collected: 14612
+// [INFO] OBL balance after: 2509789
+// [INFO] Reward collected: 2509789
 //
 // [INFO] Collecting Charlie's reward (deposit ID: 3)
 // [INFO] Collecting reward for deposit ID: 3
 // [INFO] OBL balance before: 0
-// [INFO] OBL balance after: 9741
-// [INFO] Reward collected: 9741
+// [INFO] OBL balance after: 5000096
+// [INFO] Reward collected: 5000096
 //
 // [SCENARIO] 9. Skip more blocks and collect again to verify ongoing distribution
 // [INFO] Skipping 50 blocks (250 seconds)
 //
 // [INFO] Alice collecting additional reward
 // [INFO] Collecting reward for deposit ID: 1
-// [INFO] OBL balance before: 34095
-// [INFO] OBL balance after: 36506
-// [INFO] Reward collected: 2411
+// [INFO] OBL balance before: 2529272
+// [INFO] OBL balance after: 2531684
+// [INFO] Reward collected: 2412
 //
 // [INFO] Bob collecting additional reward
 // [INFO] Collecting reward for deposit ID: 2
-// [INFO] OBL balance before: 14612
-// [INFO] OBL balance after: 17023
-// [INFO] Reward collected: 2411
+// [INFO] OBL balance before: 2509789
+// [INFO] OBL balance after: 2512201
+// [INFO] Reward collected: 2412
 //
 // [INFO] Charlie collecting additional reward
 // [INFO] Collecting reward for deposit ID: 3
-// [INFO] OBL balance before: 9741
-// [INFO] OBL balance after: 14564
-// [INFO] Reward collected: 4823
+// [INFO] OBL balance before: 5000096
+// [INFO] OBL balance after: 5004918
+// [INFO] Reward collected: 4822

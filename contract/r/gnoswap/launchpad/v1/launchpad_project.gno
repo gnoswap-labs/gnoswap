@@ -200,7 +200,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 
 		projectTier := newProjectTier(
 			project.ID(),
-			rewardCollectableDuration,
+			duration,
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
@@ -211,11 +211,13 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
+			rewardCollectableDuration,
 			params.startTime,
 			params.startTime+tierDurationTime,
 		))
 	}
 
+	project.SetTiersRatios(projectTierRatios)
 	projects.Set(project.ID(), project)
 
 	// Save the modified state back
