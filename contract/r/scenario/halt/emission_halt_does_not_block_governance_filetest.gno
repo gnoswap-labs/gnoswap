@@ -92,17 +92,16 @@ func initGovernanceAndTokens() {
 	gns.Transfer(cross, bobAddr, defaultTokenAmount)
 
 	// Delegate GNS tokens for voting power (leave some for proposal creation)
-	// Alice delegates more than Bob to ensure YES > NO when they vote differently
-	aliceDelegateAmount := defaultTokenAmount * 3 / 10 // 30% = 600M
-	bobDelegateAmount := defaultTokenAmount * 2 / 10   // 20% = 400M
+	// Delegate less to ensure enough balance remains for proposal creation
+	delegatedAmount := defaultTokenAmount / 4 // Delegate only 25% instead of 50%
 
 	testing.SetRealm(aliceRealm)
 	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, aliceAddr, aliceDelegateAmount, "")
+	gs.Delegate(cross, aliceAddr, delegatedAmount, "")
 
 	testing.SetRealm(bobRealm)
 	gns.Approve(cross, govStakerAddr, INT64_MAX)
-	gs.Delegate(cross, bobAddr, bobDelegateAmount, "")
+	gs.Delegate(cross, bobAddr, delegatedAmount, "")
 
 	ufmt.Printf("[INFO] Alice GNS balance: %d\n", gns.BalanceOf(aliceAddr))
 	ufmt.Printf("[INFO] Bob GNS balance: %d\n", gns.BalanceOf(bobAddr))
@@ -276,8 +275,8 @@ func resetProposalVotesWithEmissionHalted() {
 
 // Output:
 // [SCENARIO] 1. Initialize governance and tokens
-// [INFO] Alice GNS balance: 1400000000
-// [INFO] Bob GNS balance: 1600000000
+// [INFO] Alice GNS balance: 1500000000
+// [INFO] Bob GNS balance: 1500000000
 // [INFO] Governance and tokens initialized
 //
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
@@ -305,7 +304,7 @@ func resetProposalVotesWithEmissionHalted() {
 // [INFO] Voting on proposal with emission HALTED...
 // [EXPECTED] Alice voted YES successfully despite emission halt
 // [EXPECTED] Bob voted NO successfully despite emission halt
-// [INFO] Vote status: {"height":"432123","now":"1236727890","proposalId":"2","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNjAwMDAwMDAwIiwibm8iOiI0MDAwMDAwMDAifQ=="}
+// [INFO] Vote status: {"height":"432123","now":"1236727890","proposalId":"2","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNTAwMDAwMDAwIiwibm8iOiI1MDAwMDAwMDAifQ=="}
 // [SUCCESS] Governance voting not blocked by emission halt
 //
 // [SCENARIO] 7. Execute proposal with emission halted
@@ -318,5 +317,5 @@ func resetProposalVotesWithEmissionHalted() {
 // [SCENARIO] 8. Test vote integrity with emission halted
 // [INFO] Testing double voting protection with emission HALTED...
 // [INFO] Vote status: %s
-//  {"height":"777723","now":"1238455890","proposalId":"3","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNjAwMDAwMDAwIiwibm8iOiIwIn0="}
+//  {"height":"777723","now":"1238455890","proposalId":"3","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNTAwMDAwMDAwIiwibm8iOiIwIn0="}
 // [SUCCESS] Double voting protection works with emission halted
