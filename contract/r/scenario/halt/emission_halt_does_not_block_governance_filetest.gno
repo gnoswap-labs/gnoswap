@@ -134,8 +134,9 @@ func createAndVoteProposalWithEmissionEnabled() {
 	ufmt.Println("[EXPECTED] Bob voted YES on proposal")
 
 	// Check voting info
-	voteStatus := governance.GetVoteStatusFromProposalById(proposalId)
-	ufmt.Printf("[INFO] Vote status: %s\n", voteStatus)
+	yea := governance.GetYeaByProposalId(proposalId)
+	nay := governance.GetNayByProposalId(proposalId)
+	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 
 	// Move past voting period so the proposal becomes inactive and won't block the next one
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
@@ -213,8 +214,9 @@ func voteOnProposalWithEmissionHalted() {
 	println("[EXPECTED] Bob voted NO successfully despite emission halt")
 
 	// Check voting results
-	voteStatus := governance.GetVoteStatusFromProposalById(proposalId)
-	ufmt.Printf("[INFO] Vote status: %s\n", voteStatus)
+	yea := governance.GetYeaByProposalId(proposalId)
+	nay := governance.GetNayByProposalId(proposalId)
+	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 	println("[SUCCESS] Governance voting not blocked by emission halt")
 }
 
@@ -268,8 +270,9 @@ func resetProposalVotesWithEmissionHalted() {
 	println("[INFO] Testing double voting protection with emission HALTED...")
 
 	// get vote status
-	voteStatus := governance.GetVoteStatusFromProposalById(resetProposalId)
-	println("[INFO] Vote status: %s\n", voteStatus)
+	yea := governance.GetYeaByProposalId(resetProposalId)
+	nay := governance.GetNayByProposalId(resetProposalId)
+	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 	println("[SUCCESS] Double voting protection works with emission halted")
 }
 
@@ -285,7 +288,7 @@ func resetProposalVotesWithEmissionHalted() {
 // [EXPECTED] Proposal created successfully with ID: 1
 // [EXPECTED] Alice voted YES on proposal
 // [EXPECTED] Bob voted YES on proposal
-// [INFO] Vote status: {"height":"86523","now":"1234999890","proposalId":"1","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
+// [INFO] Vote status - Yea: 1000000000, Nay: 0
 // [INFO] Advanced past voting period; first proposal is now inactive
 //
 // [SCENARIO] 4. Set halt level to halt emission only
@@ -304,7 +307,7 @@ func resetProposalVotesWithEmissionHalted() {
 // [INFO] Voting on proposal with emission HALTED...
 // [EXPECTED] Alice voted YES successfully despite emission halt
 // [EXPECTED] Bob voted NO successfully despite emission halt
-// [INFO] Vote status: {"height":"432123","now":"1236727890","proposalId":"2","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNTAwMDAwMDAwIiwibm8iOiI1MDAwMDAwMDAifQ=="}
+// [INFO] Vote status - Yea: 500000000, Nay: 500000000
 // [SUCCESS] Governance voting not blocked by emission halt
 //
 // [SCENARIO] 7. Execute proposal with emission halted
@@ -316,6 +319,5 @@ func resetProposalVotesWithEmissionHalted() {
 //
 // [SCENARIO] 8. Test vote integrity with emission halted
 // [INFO] Testing double voting protection with emission HALTED...
-// [INFO] Vote status: %s
-//  {"height":"777723","now":"1238455890","proposalId":"3","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiNTAwMDAwMDAwIiwibm8iOiIwIn0="}
+// [INFO] Vote status - Yea: 500000000, Nay: 0
 // [SUCCESS] Double voting protection works with emission halted

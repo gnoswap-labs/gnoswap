@@ -140,30 +140,6 @@ func (t *TestGovernance) GetNayByProposalId(id int64) int64 {
 	).(int64)
 }
 
-func (t *TestGovernance) GetProposalById(id int64) string {
-	return t.ExecuteFn(
-		"GetProposalById",
-		t.instance.GetProposalById, // actualFn
-		id,                         // args
-	).(string)
-}
-
-func (t *TestGovernance) GetVoteStatusFromProposalById(id int64) string {
-	return t.ExecuteFn(
-		"GetVoteStatusFromProposalById",
-		t.instance.GetVoteStatusFromProposalById, // actualFn
-		id,                                       // args
-	).(string)
-}
-
-func (t *TestGovernance) GetVoteByAddressFromProposalById(addr address, id int64) string {
-	return t.ExecuteFn(
-		"GetVoteByAddressFromProposalById",
-		t.instance.GetVoteByAddressFromProposalById, // actualFn
-		addr, id, // args
-	).(string)
-}
-
 func (t *TestGovernance) GetConfigVersionByProposalId(id int64) int64 {
 	return t.ExecuteFn(
 		"GetConfigVersionByProposalId",
@@ -242,6 +218,22 @@ func (t *TestGovernance) GetVotedAt(proposalID int64, address address) int64 {
 		t.instance.GetVotedAt, // actualFn
 		proposalID, address,   // args
 	).(int64)
+}
+
+func (t *TestGovernance) GetProposal(id int64) (*governance.Proposal, bool) {
+	return t.instance.GetProposal(id)
+}
+
+func (t *TestGovernance) GetProposalVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
+	return t.instance.GetProposalVotingInfo(proposalID, addr)
+}
+
+func (t *TestGovernance) GetCurrentProposalID() int64 {
+	return t.instance.GetCurrentProposalID()
+}
+
+func (t *TestGovernance) GetCurrentConfigVersion() int64 {
+	return t.instance.GetCurrentConfigVersion()
 }
 
 type stakerAccessor struct {

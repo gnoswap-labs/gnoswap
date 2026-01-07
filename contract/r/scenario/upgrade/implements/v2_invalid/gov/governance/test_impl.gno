@@ -115,27 +115,6 @@ func (t *TestGovernance) GetNayByProposalId(id int64) int64 {
 	return t.instance.GetNayByProposalId(id)
 }
 
-func (t *TestGovernance) GetProposalById(id int64) string {
-	if !t.isActive("GetProposalById") {
-		panic("test implementation: GetProposalById not supported")
-	}
-	return t.instance.GetProposalById(id)
-}
-
-func (t *TestGovernance) GetVoteStatusFromProposalById(id int64) string {
-	if !t.isActive("GetVoteStatusFromProposalById") {
-		panic("test implementation: GetVoteStatusFromProposalById not supported")
-	}
-	return t.instance.GetVoteStatusFromProposalById(id)
-}
-
-func (t *TestGovernance) GetVoteByAddressFromProposalById(addr address, id int64) string {
-	if !t.isActive("GetVoteByAddressFromProposalById") {
-		panic("test implementation: GetVoteByAddressFromProposalById not supported")
-	}
-	return t.instance.GetVoteByAddressFromProposalById(addr, id)
-}
-
 func (t *TestGovernance) GetConfigVersionByProposalId(id int64) int64 {
 	if !t.isActive("GetConfigVersionByProposalId") {
 		panic("test implementation: GetConfigVersionByProposalId not supported")
@@ -219,4 +198,32 @@ func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 		panic("test implementation: GetOldestActiveProposalSnapshotTime not supported")
 	}
 	return t.instance.GetOldestActiveProposalSnapshotTime()
+}
+
+func (t *TestGovernance) GetProposal(id int64) (*governance.Proposal, bool) {
+	if !t.isActive("GetProposal") {
+		panic("test implementation: GetProposal not supported")
+	}
+	return t.instance.GetProposal(id)
+}
+
+func (t *TestGovernance) GetProposalVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
+	if !t.isActive("GetProposalVotingInfo") {
+		panic("test implementation: GetProposalVotingInfo not supported")
+	}
+	return t.instance.GetProposalVotingInfo(proposalID, addr)
+}
+
+func (t *TestGovernance) GetCurrentProposalID() int64 {
+	if !t.isActive("GetCurrentProposalID") {
+		panic("test implementation: GetCurrentProposalID not supported")
+	}
+	return t.instance.GetCurrentProposalID()
+}
+
+func (t *TestGovernance) GetCurrentConfigVersion() int64 {
+	if !t.isActive("GetCurrentConfigVersion") {
+		panic("test implementation: GetCurrentConfigVersion not supported")
+	}
+	return t.instance.GetCurrentConfigVersion()
 }
