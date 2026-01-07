@@ -162,6 +162,11 @@ func (lp *launchpadV1) depositGns(
 		return nil, nil, false, "", err
 	}
 
+	projects := lp.store.GetProjects()
+	if err := lp.store.SetProjects(projects); err != nil {
+		return nil, nil, false, "", err
+	}
+
 	return deposit,
 		rewardState,
 		isFirstDeposit,

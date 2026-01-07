@@ -123,6 +123,11 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 		return "", 0, err
 	}
 
+	projects := lp.store.GetProjects()
+	if err := lp.store.SetProjects(projects); err != nil {
+		return "", 0, err
+	}
+
 	return project.Recipient(), withdrawalAmount, nil
 }
 
