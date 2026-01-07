@@ -67,3 +67,17 @@ func NewProposalVoteStatus(
 		quorumAmount:    quorumAmount,    // Set required votes for passage
 	}
 }
+
+// Clone creates a deep copy of the ProposalVoteStatus.
+func (p *ProposalVoteStatus) Clone() *ProposalVoteStatus {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalVoteStatus{
+		yea:             p.yea,
+		nay:             p.nay,
+		maxVotingWeight: p.maxVotingWeight,
+		quorumAmount:    p.quorumAmount,
+	}
+}

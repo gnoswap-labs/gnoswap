@@ -6,8 +6,7 @@ import (
 
 type IGovernance interface {
 	IGovernanceManager
-	IGovernanceApi
-	IVoteApi
+	IGovernanceGetter
 }
 
 type IGovernanceManager interface {
@@ -59,36 +58,47 @@ type IGovernanceManager interface {
 	) int64
 }
 
-type IGovernanceApi interface {
-	GetProposerByProposalId(id int64) string
-	GetProposalTypeByProposalId(id int64) string
-
-	GetYeaByProposalId(id int64) int64
-	GetNayByProposalId(id int64) int64
-
-	GetProposalById(id int64) string
-	GetVoteStatusFromProposalById(id int64) string
-	GetVoteByAddressFromProposalById(addr address, id int64) string
-
-	GetConfigVersionByProposalId(id int64) int64
-	GetQuorumAmountByProposalId(id int64) int64
-	GetTitleByProposalId(id int64) string
-	GetDescriptionByProposalId(id int64) string
-
-	GetExecutionStateByProposalId(id int64) string
-	GetLatestConfig() Config
-	GetConfig(configVersion int64) Config
-}
-
-type IVoteApi interface {
-	GetVoteWeight(proposalID int64, address address) int64
-	GetVotedHeight(proposalID int64, address address) int64
-	GetVotedAt(proposalID int64, address address) int64
-
-	// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+// IGovernanceGetter provides read-only access to governance data.
+type IGovernanceGetter interface {
+	// Store data getters
+	GetLatestConfigVersion() int64
+	GetCurrentProposalID() int64
 	GetMaxSmoothingPeriod() int64
 
-	// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
+	// Config getters
+	GetLatestConfig() Config
+	GetConfig(configVersion int64) (Config, error)
+
+	// Proposal getters
+	GetProposalCount() int
+	GetProposalIDs(offset, count int) []int64
+	ExistsProposal(proposalID int64) bool
+	GetProposal(proposalID int64) (*Proposal, error)
+	GetProposerByProposalId(proposalId int64) (address, error)
+	GetProposalTypeByProposalId(proposalId int64) (ProposalType, error)
+	GetYeaByProposalId(proposalId int64) (int64, error)
+	GetNayByProposalId(proposalId int64) (int64, error)
+	GetConfigVersionByProposalId(proposalId int64) (int64, error)
+	GetQuorumAmountByProposalId(proposalId int64) (int64, error)
+	GetTitleByProposalId(proposalId int64) (string, error)
+	GetDescriptionByProposalId(proposalId int64) (string, error)
+	GetProposalStatusByProposalId(proposalId int64) (string, error)
+
+	// Vote getters
+	GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeight int64, err error)
+	GetVotingInfoCount(proposalID int64) int
+	GetVotingInfoAddresses(proposalID int64, offset, count int) []address
+	ExistsVotingInfo(proposalID int64, addr address) bool
+	GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error)
+	GetVoteWeight(proposalID int64, addr address) (int64, error)
+	GetVotedHeight(proposalID int64, addr address) (int64, error)
+	GetVotedAt(proposalID int64, addr address) (int64, error)
+
+	// User proposal getters
+	GetUserProposalCount(user address) int
+	GetUserProposalIDs(user address, offset, count int) []int64
+
+	// Active proposal query
 	GetOldestActiveProposalSnapshotTime() (int64, bool)
 }
 
@@ -110,6 +120,7 @@ type IGovernanceStore interface {
 
 	// Proposal methods
 	HasProposalsStoreKey() bool
+	GetProposals() *avl.Tree
 	GetProposal(proposalID int64) (*Proposal, bool)
 	SetProposal(proposalID int64, proposal *Proposal) error
 	SetProposals(proposals *avl.Tree) error

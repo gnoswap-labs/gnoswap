@@ -145,3 +145,22 @@ func NewProposal(
 		createdHeight: createdHeight,
 	}
 }
+
+// Clone creates a deep copy of the Proposal.
+func (p *Proposal) Clone() *Proposal {
+	if p == nil {
+		return nil
+	}
+
+	return &Proposal{
+		id:            p.id,
+		proposer:      p.proposer,
+		configVersion: p.configVersion,
+		status:        p.status.Clone(),
+		metadata:      p.metadata.Clone(),
+		data:          p.data.Clone(),
+		snapshotTime:  p.snapshotTime,
+		createdAt:     p.createdAt,
+		createdHeight: p.createdHeight,
+	}
+}
