@@ -76,6 +76,10 @@ func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
 	return m.proposals != nil
 }
 
+func (m *mockGovernanceStore) GetProposals() *avl.Tree {
+	return m.proposals
+}
+
 func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposal, bool) {
 	if m.proposals == nil {
 		return nil, false

@@ -1,64 +1,27 @@
 package governance
 
-// GetProposerByProposalId returns the proposer address of a proposal.
-func GetProposerByProposalId(id int64) string {
-	return getImplementation().GetProposerByProposalId(id)
+// ==================================
+// Store Data Getters
+// ==================================
+
+// GetLatestConfigVersion returns the current config version.
+func GetLatestConfigVersion() int64 {
+	return getImplementation().GetLatestConfigVersion()
 }
 
-// GetProposalTypeByProposalId returns the type of a proposal.
-func GetProposalTypeByProposalId(id int64) string {
-	return getImplementation().GetProposalTypeByProposalId(id)
+// GetCurrentProposalID returns the current proposal ID counter.
+func GetCurrentProposalID() int64 {
+	return getImplementation().GetCurrentProposalID()
 }
 
-// GetYeaByProposalId returns the yes vote count of a proposal.
-func GetYeaByProposalId(id int64) int64 {
-	return getImplementation().GetYeaByProposalId(id)
+// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
+func GetMaxSmoothingPeriod() int64 {
+	return getImplementation().GetMaxSmoothingPeriod()
 }
 
-// GetNayByProposalId returns the no vote count of a proposal.
-func GetNayByProposalId(id int64) int64 {
-	return getImplementation().GetNayByProposalId(id)
-}
-
-// GetProposalById returns the complete proposal data as JSON.
-func GetProposalById(id int64) string {
-	return getImplementation().GetProposalById(id)
-}
-
-// GetVoteStatusFromProposalById returns the voting status of a proposal.
-func GetVoteStatusFromProposalById(id int64) string {
-	return getImplementation().GetVoteStatusFromProposalById(id)
-}
-
-// GetVoteByAddressFromProposalById returns a user's vote on a proposal.
-func GetVoteByAddressFromProposalById(addr address, id int64) string {
-	return getImplementation().GetVoteByAddressFromProposalById(addr, id)
-}
-
-// GetConfigVersionByProposalId returns the config version used by a proposal.
-func GetConfigVersionByProposalId(id int64) int64 {
-	return getImplementation().GetConfigVersionByProposalId(id)
-}
-
-// GetQuorumAmountByProposalId returns the quorum requirement for a proposal.
-func GetQuorumAmountByProposalId(id int64) int64 {
-	return getImplementation().GetQuorumAmountByProposalId(id)
-}
-
-// GetTitleByProposalId returns the title of a proposal.
-func GetTitleByProposalId(id int64) string {
-	return getImplementation().GetTitleByProposalId(id)
-}
-
-// GetDescriptionByProposalId returns the description of a proposal.
-func GetDescriptionByProposalId(id int64) string {
-	return getImplementation().GetDescriptionByProposalId(id)
-}
-
-// GetExecutionStateByProposalId returns the execution state of a proposal.
-func GetExecutionStateByProposalId(id int64) string {
-	return getImplementation().GetExecutionStateByProposalId(id)
-}
+// ==================================
+// Config Getters
+// ==================================
 
 // GetLatestConfig returns the latest governance configuration.
 func GetLatestConfig() Config {
@@ -66,29 +29,156 @@ func GetLatestConfig() Config {
 }
 
 // GetConfig returns a specific governance configuration by version.
-func GetConfig(configVersion int64) Config {
+func GetConfig(configVersion int64) (Config, error) {
 	return getImplementation().GetConfig(configVersion)
 }
 
+// ==================================
+// Proposal Getters
+// ==================================
+
+// GetProposalCount returns the total number of proposals.
+func GetProposalCount() int {
+	return getImplementation().GetProposalCount()
+}
+
+// GetProposalIDs returns a paginated list of proposal IDs.
+func GetProposalIDs(offset, count int) []int64 {
+	return getImplementation().GetProposalIDs(offset, count)
+}
+
+// ExistsProposal checks if a proposal exists.
+func ExistsProposal(proposalID int64) bool {
+	return getImplementation().ExistsProposal(proposalID)
+}
+
+// GetProposal returns a proposal by ID.
+// Returns a clone to prevent external modification.
+func GetProposal(proposalID int64) (*Proposal, error) {
+	proposal, err := getImplementation().GetProposal(proposalID)
+	if err != nil {
+		return nil, err
+	}
+	return proposal.Clone(), nil
+}
+
+// GetProposerByProposalId returns the proposer address of a proposal.
+func GetProposerByProposalId(proposalId int64) (address, error) {
+	return getImplementation().GetProposerByProposalId(proposalId)
+}
+
+// GetProposalTypeByProposalId returns the type of a proposal.
+func GetProposalTypeByProposalId(proposalId int64) (ProposalType, error) {
+	return getImplementation().GetProposalTypeByProposalId(proposalId)
+}
+
+// GetYeaByProposalId returns the yes vote weight of a proposal.
+func GetYeaByProposalId(proposalId int64) (int64, error) {
+	return getImplementation().GetYeaByProposalId(proposalId)
+}
+
+// GetNayByProposalId returns the no vote weight of a proposal.
+func GetNayByProposalId(proposalId int64) (int64, error) {
+	return getImplementation().GetNayByProposalId(proposalId)
+}
+
+// GetConfigVersionByProposalId returns the config version used by a proposal.
+func GetConfigVersionByProposalId(proposalId int64) (int64, error) {
+	return getImplementation().GetConfigVersionByProposalId(proposalId)
+}
+
+// GetQuorumAmountByProposalId returns the quorum requirement for a proposal.
+func GetQuorumAmountByProposalId(proposalId int64) (int64, error) {
+	return getImplementation().GetQuorumAmountByProposalId(proposalId)
+}
+
+// GetTitleByProposalId returns the title of a proposal.
+func GetTitleByProposalId(proposalId int64) (string, error) {
+	return getImplementation().GetTitleByProposalId(proposalId)
+}
+
+// GetDescriptionByProposalId returns the description of a proposal.
+func GetDescriptionByProposalId(proposalId int64) (string, error) {
+	return getImplementation().GetDescriptionByProposalId(proposalId)
+}
+
+// GetProposalStatusByProposalId returns the current status of a proposal.
+func GetProposalStatusByProposalId(proposalId int64) (string, error) {
+	return getImplementation().GetProposalStatusByProposalId(proposalId)
+}
+
+// ==================================
+// Vote Getters
+// ==================================
+
+// GetVoteStatus returns the vote status of a proposal.
+//
+// Returns:
+//   - quorum: minimum vote weight required for proposal to pass
+//   - maxVotingWeight: maximum possible voting weight
+//   - yesWeight: total weight of "yes" votes
+//   - noWeight: total weight of "no" votes
+func GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeight int64, err error) {
+	return getImplementation().GetVoteStatus(proposalId)
+}
+
+// GetVotingInfoCount returns the number of voters for a proposal.
+func GetVotingInfoCount(proposalID int64) int {
+	return getImplementation().GetVotingInfoCount(proposalID)
+}
+
+// GetVotingInfoAddresses returns a paginated list of voter addresses for a proposal.
+func GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
+	return getImplementation().GetVotingInfoAddresses(proposalID, offset, count)
+}
+
+// ExistsVotingInfo checks if a voting info exists for a user on a proposal.
+func ExistsVotingInfo(proposalID int64, addr address) bool {
+	return getImplementation().ExistsVotingInfo(proposalID, addr)
+}
+
+// GetVotingInfo returns the voting info for a user on a proposal.
+// Returns a clone to prevent external modification.
+func GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
+	votingInfo, err := getImplementation().GetVotingInfo(proposalID, addr)
+	if err != nil {
+		return nil, err
+	}
+	return votingInfo.Clone(), nil
+}
+
 // GetVoteWeight returns the voting weight of an address for a proposal.
-func GetVoteWeight(proposalID int64, address address) int64 {
-	return getImplementation().GetVoteWeight(proposalID, address)
+func GetVoteWeight(proposalID int64, addr address) (int64, error) {
+	return getImplementation().GetVoteWeight(proposalID, addr)
 }
 
 // GetVotedHeight returns the block height when an address voted on a proposal.
-func GetVotedHeight(proposalID int64, address address) int64 {
-	return getImplementation().GetVotedHeight(proposalID, address)
+func GetVotedHeight(proposalID int64, addr address) (int64, error) {
+	return getImplementation().GetVotedHeight(proposalID, addr)
 }
 
 // GetVotedAt returns the timestamp when an address voted on a proposal.
-func GetVotedAt(proposalID int64, address address) int64 {
-	return getImplementation().GetVotedAt(proposalID, address)
+func GetVotedAt(proposalID int64, addr address) (int64, error) {
+	return getImplementation().GetVotedAt(proposalID, addr)
 }
 
-// GetMaxSmoothingPeriod returns the maximum smoothing period for delegation history cleanup.
-func GetMaxSmoothingPeriod() int64 {
-	return getImplementation().GetMaxSmoothingPeriod()
+// ==================================
+// User Proposal Getters
+// ==================================
+
+// GetUserProposalCount returns the number of proposals created by a user.
+func GetUserProposalCount(user address) int {
+	return getImplementation().GetUserProposalCount(user)
 }
+
+// GetUserProposalIDs returns a paginated list of proposal IDs created by a user.
+func GetUserProposalIDs(user address, offset, count int) []int64 {
+	return getImplementation().GetUserProposalIDs(user, offset, count)
+}
+
+// ==================================
+// Active Proposal Query
+// ==================================
 
 // GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
 func GetOldestActiveProposalSnapshotTime() (int64, bool) {
