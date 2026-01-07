@@ -17,8 +17,8 @@ func tid(id uint64) grc721.TokenID {
 
 // generateRandInstance generates a new random instance.
 func generateRandInstance() *rand.Rand {
-	seed1 := time.Now().Unix() + TotalSupply()
-	seed2 := time.Now().UnixNano() + TotalSupply()
+	seed1 := time.Now().Unix() + GetTotalSupply()
+	seed2 := time.Now().UnixNano() + GetTotalSupply()
 	pcg := rand.NewPCG(uint64(seed1), uint64(seed2))
 	return rand.New(pcg)
 }

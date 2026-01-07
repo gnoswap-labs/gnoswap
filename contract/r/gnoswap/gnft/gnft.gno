@@ -20,21 +20,6 @@ var (
 	owner = ownable.NewWithAddress(positionAddr)
 )
 
-// Name returns the NFT collection name.
-func Name() string {
-	return nft.Name()
-}
-
-// Symbol returns the NFT symbol.
-func Symbol() string {
-	return nft.Symbol()
-}
-
-// TotalSupply returns the total number of NFTs minted.
-func TotalSupply() int64 {
-	return nft.TokenCount()
-}
-
 // TokenURI returns the metadata URI for the specified token ID.
 // If stored value is in parameter format (x1,y1,x2,y2,color1,color2),
 // it converts to full base64-encoded SVG image URI on read.
@@ -57,12 +42,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 // BalanceOf returns the number of NFTs owned by the specified address.
 func BalanceOf(owner address) (int64, error) {
 	assertIsValidAddress(owner)
-
-	balance, err := nft.BalanceOf(owner)
-	if err != nil {
-		return 0, err
-	}
-	return balance, nil
+	return nft.BalanceOf(owner)
 }
 
 // OwnerOf returns the owner address for the specified token ID.
@@ -184,27 +164,6 @@ func SetApprovalForAll(cur realm, operator address, approved bool) error {
 
 	checkErr(nft.SetApprovalForAll(operator, approved))
 	return nil
-}
-
-// GetApproved returns approved address for token ID.
-//
-// Parameters:
-//   - tid: token ID to check
-//
-// Returns approved address and error if token doesn't exist.
-func GetApproved(tid grc721.TokenID) (address, error) {
-	return nft.GetApproved(tid)
-}
-
-// IsApprovedForAll checks if operator can manage all owner's tokens.
-//
-// Parameters:
-//   - owner: token owner address
-//   - operator: operator address to check
-//
-// Returns true if operator is approved for all owner's tokens.
-func IsApprovedForAll(owner, operator address) bool {
-	return nft.IsApprovedForAll(owner, operator)
 }
 
 // Mint creates new NFT and transfers to address.

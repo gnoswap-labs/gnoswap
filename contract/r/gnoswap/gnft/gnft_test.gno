@@ -37,8 +37,8 @@ func TestMetadata(t *testing.T) {
 		fn       func() string
 		expected string
 	}{
-		{"Name()", Name, "GNOSWAP NFT"},
-		{"Symbol()", Symbol, "GNFT"},
+		{"GetName()", GetName, "GNOSWAP NFT"},
+		{"GetSymbol()", GetSymbol, "GNFT"},
 	}
 
 	for _, tt := range tests {
@@ -171,7 +171,7 @@ func TestTotalSupply(t *testing.T) {
 				testing.SetRealm(positionRealm)
 				tt.setup(cross)
 			}
-			uassert.Equal(t, tt.expected, TotalSupply())
+			uassert.Equal(t, tt.expected, GetTotalSupply())
 		})
 	}
 }
