@@ -4,45 +4,12 @@ import (
 	"chain/runtime"
 	"testing"
 
-	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
-
-	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 )
-
-var (
-	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	adminRealm    = testing.NewUserRealm(adminAddr)
-	adminUser     = adminAddr
-	dummyRealm    = testing.NewCodeRealm("gno.land/r/dummy")
-	aliceAddr     = testutils.TestAddress("alice")
-
-	// contract paths
-	poolPath      = "gno.land/r/gnoswap/pool"
-	positionPath  = "gno.land/r/gnoswap/position"
-	routerPath    = "gno.land/r/gnoswap/router"
-	stakerPath    = "gno.land/r/gnoswap/staker"
-	govStakerPath = "gno.land/r/gnoswap/gov/staker"
-
-	stakerRealm    = testing.NewCodeRealm(stakerPath)
-	govStakerRealm = testing.NewCodeRealm(govStakerPath)
-)
-
-// createTestProtocolFee creates a fresh protocolFeeV1 instance for testing
-func createTestProtocolFee(t *testing.T) *protocolFeeV1 {
-	t.Helper()
-
-	return &protocolFeeV1{
-		store: newMockProtocolFeeStore(),
-	}
-}
 
 func TestDistributeProtocolFee(t *testing.T) {
 	tests := []struct {
@@ -159,7 +126,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 			beforeDevOpsBalances := make(map[string]int64)
 			beforeGovStakerBalances := make(map[string]int64)
 
-			for token, _ := range test.depositedBalances {
+			for token := range test.depositedBalances {
 				beforeDevOpsBalances[token] = common.BalanceOf(token, devOpsAddr)
 				beforeGovStakerBalances[token] = common.BalanceOf(token, govStakerAddr)
 			}
