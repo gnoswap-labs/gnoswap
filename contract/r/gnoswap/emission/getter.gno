@@ -55,19 +55,3 @@ func GetDistributionEndTimestamp() int64 {
 
 	return safeAddInt64(distributionStartTimestamp, totalDistributionDuration-1)
 }
-
-// DistributionSummaryView is a read-only snapshot of distribution state.
-type DistributionSummaryView struct {
-	DistributionBpsPct map[int]int64
-	PendingTotal       int64
-	AccuTotal          int64
-}
-
-// GetDistributionSummaryView returns a snapshot of distribution ratios and totals.
-func GetDistributionSummaryView() DistributionSummaryView {
-	return DistributionSummaryView{
-		DistributionBpsPct: GetAllDistributionBpsPct(),
-		PendingTotal:       GetTotalDistributed(),
-		AccuTotal:          GetTotalAccuDistributed(),
-	}
-}
