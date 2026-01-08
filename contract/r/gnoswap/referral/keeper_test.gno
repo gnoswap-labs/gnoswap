@@ -30,10 +30,10 @@ func TestKeeper_Register(t *testing.T) {
 			expectedSuccess: true,
 		},
 		{
-			name:            "Success register with zero address referral",
+			name:            "Success register with contract address referral (removal)",
 			callerRealm:     routerRealm,
 			addr:            testutils.TestAddress("user2"),
-			refAddr:         zeroAddress,
+			refAddr:         contractAddress(),
 			expectedSuccess: true,
 		},
 		{
@@ -44,26 +44,31 @@ func TestKeeper_Register(t *testing.T) {
 			expectedSuccess: false,
 		},
 		{
-			name:            "Fail register with unauthorized caller",
-			callerRealm:     userRealm,
-			addr:            testutils.TestAddress("user4"),
-			refAddr:         testutils.TestAddress("referrer2"),
-			expectedSuccess: false,
+			name:                 "Panic with unauthorized caller",
+			callerRealm:          userRealm,
+			addr:                 testutils.TestAddress("user4"),
+			refAddr:              testutils.TestAddress("referrer2"),
+			expectedSuccess:      false,
+			expectedPanicMessage: "unauthorized caller",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(tc.callerRealm)
 
-			// when
-			success := TryRegister(cross, tc.addr, tc.refAddr.String())
-
-			// then
-			uassert.Equal(t, tc.expectedSuccess, success)
+			// when/then
+			if tc.expectedPanicMessage != "" {
+				uassert.AbortsContains(t, tc.expectedPanicMessage, func() {
+					TryRegister(cross, tc.addr, tc.refAddr.String())
+				})
+			} else {
+				success := TryRegister(cross, tc.addr, tc.refAddr.String())
+				uassert.Equal(t, tc.expectedSuccess, success)
+			}
 		})
 	}
 }
@@ -94,17 +99,17 @@ func TestKeeper_Has(t *testing.T) {
 			expectedHas:   false,
 		},
 		{
-			name:          "False for zero address referral", // Zero address means no referral
+			name:          "False for contract address referral", // Contract address means removal
 			addr:          testutils.TestAddress("user3"),
 			setupReferral: true,
-			refAddr:       zeroAddress,
+			refAddr:       contractAddress(),
 			expectedHas:   false, // This should be false, not true
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -147,18 +152,18 @@ func TestKeeper_Get(t *testing.T) {
 			expectedError: false, // GetReferral returns empty string, not error
 		},
 		{
-			name:          "Empty result for zero address referral",
+			name:          "Empty result for contract address referral",
 			addr:          testutils.TestAddress("user3"),
 			setupReferral: true,
-			refAddr:       zeroAddress,
-			expectedAddr:  "", // Zero address returns empty string
+			refAddr:       contractAddress(),
+			expectedAddr:  "", // Contract address means removal, returns empty string
 			expectedError: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -218,7 +223,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanupKeeper()
+			cleanup(t)
 
 			// given
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -236,12 +241,107 @@ func TestKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
-// Helper functions
-func setupKeeperTest() *keeper {
-	return NewKeeper().(*keeper)
+func TestKeeper_NewKeeper(t *testing.T) {
+	k := NewKeeper().(*keeper)
+	if k == nil {
+		t.Fatal("keeper should not be nil")
+	}
+
+	uassert.True(t, k.isEmpty())
 }
 
-func cleanupKeeper() {
-	// Reset global keeper
-	gReferralKeeper = NewKeeper()
+func TestKeeper_ContractAddressRemoval(t *testing.T) {
+	t.Run("Remove existing referral with contract address", func(t *testing.T) {
+		cleanup(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user1")
+		referrer := testutils.TestAddress("referrer1")
+
+		// Register referral first
+		success := TryRegister(cross, user, referrer.String())
+		uassert.True(t, success, "Initial registration should succeed")
+		uassert.True(t, HasReferral(user.String()), "Referral should exist after registration")
+
+		// Simulate time passage to bypass rate limit
+		k := gReferralKeeper.(*keeper)
+		k.lastOps.Set(user.String(), int64(0))
+
+		// Remove by registering with contract address
+		success = TryRegister(cross, user, contractAddress().String())
+		uassert.True(t, success, "Removal with contract address should succeed")
+		uassert.False(t, HasReferral(user.String()), "Referral should not exist after removal")
+	})
+
+	t.Run("Contract address removal is not rate limited", func(t *testing.T) {
+		cleanup(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user2")
+		referrer := testutils.TestAddress("referrer2")
+
+		// Register referral
+		success := TryRegister(cross, user, referrer.String())
+		uassert.True(t, success)
+		uassert.True(t, HasReferral(user.String()))
+
+		// Immediately try to remove with contract address (no time passage)
+		// This should succeed because contract address removal bypasses rate limit
+		success = TryRegister(cross, user, contractAddress().String())
+		uassert.True(t, success, "Contract address removal should bypass rate limit")
+		uassert.False(t, HasReferral(user.String()))
+	})
+
+	t.Run("Re-register after contract address removal", func(t *testing.T) {
+		cleanup(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user3")
+		referrer1 := testutils.TestAddress("referrer3a")
+		referrer2 := testutils.TestAddress("referrer3b")
+
+		// Register first referral
+		success := TryRegister(cross, user, referrer1.String())
+		uassert.True(t, success)
+		uassert.Equal(t, referrer1.String(), GetReferral(user.String()))
+
+		// Remove with contract address (bypasses rate limit)
+		success = TryRegister(cross, user, contractAddress().String())
+		uassert.True(t, success)
+		uassert.False(t, HasReferral(user.String()))
+
+		// Re-register with new referrer should be rate limited
+		// because lastOps was set during first registration
+		success = TryRegister(cross, user, referrer2.String())
+		uassert.False(t, success, "Re-registration should be rate limited")
+	})
+
+	t.Run("Contract address on non-existent referral is no-op", func(t *testing.T) {
+		cleanup(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user4")
+
+		// Try to remove non-existent referral
+		success := TryRegister(cross, user, contractAddress().String())
+		uassert.True(t, success, "Contract address on non-existent should succeed (no-op)")
+		uassert.False(t, HasReferral(user.String()))
+	})
+
+	t.Run("Multiple contract address removals are allowed", func(t *testing.T) {
+		cleanup(t)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+
+		user := testutils.TestAddress("user5")
+		referrer := testutils.TestAddress("referrer5")
+
+		// Register
+		TryRegister(cross, user, referrer.String())
+
+		// Multiple contract address calls should all succeed
+		for i := 0; i < 3; i++ {
+			success := TryRegister(cross, user, contractAddress().String())
+			uassert.True(t, success, "Multiple contract address calls should succeed")
+		}
+	})
 }
