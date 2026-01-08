@@ -172,10 +172,10 @@ func voteProposal(proposalId int64, addr address) {
 
 func checkQuorumAmountAndVotingPower(proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
-	votingPower := governance.GetVoteWeight(proposalId, aliceAddr)
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
+	votingPower, _ := governance.GetVoteWeight(proposalId, aliceAddr)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] Proposal %d's quorum amount: %d\n", proposalId, quorumAmount)
 	ufmt.Printf("[EXPECTED] Proposal %d's alice voting power: %d\n", proposalId, votingPower)
 	ufmt.Printf("[EXPECTED] Proposal %d's yea weight: %d, nay weight: %d\n", proposalId, yeaWeight, nayWeight)

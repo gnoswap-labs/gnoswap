@@ -85,3 +85,16 @@ func (s *ProposalStatus) YesWeight() int64 {
 func (s *ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
 }
+
+// Clone creates a deep copy of the ProposalStatus.
+func (s *ProposalStatus) Clone() *ProposalStatus {
+	if s == nil {
+		return nil
+	}
+
+	return &ProposalStatus{
+		schedule:     s.schedule.Clone(),
+		actionStatus: s.actionStatus.Clone(),
+		voteStatus:   s.voteStatus.Clone(),
+	}
+}
