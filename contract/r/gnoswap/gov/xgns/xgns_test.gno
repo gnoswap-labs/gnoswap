@@ -793,6 +793,94 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 	}
 }
 
+func TestXgns_SupplyInfo(t *testing.T) {
+	tests := []struct {
+		name                       string
+		mintToGovStaker            int64
+		mintToLaunchpad            int64
+		expectedTotalIssued        int64
+		expectedIssuedByDelegate   int64
+		expectedIssuedByDepositGns int64
+	}{
+		{
+			name:                       "Zero supply",
+			mintToGovStaker:            0,
+			mintToLaunchpad:            0,
+			expectedTotalIssued:        0,
+			expectedIssuedByDelegate:   0,
+			expectedIssuedByDepositGns: 0,
+		},
+		{
+			name:                       "Only governance issued",
+			mintToGovStaker:            1000,
+			mintToLaunchpad:            0,
+			expectedTotalIssued:        1000,
+			expectedIssuedByDelegate:   1000,
+			expectedIssuedByDepositGns: 0,
+		},
+		{
+			name:                       "Only launchpad issued",
+			mintToGovStaker:            0,
+			mintToLaunchpad:            500,
+			expectedTotalIssued:        500,
+			expectedIssuedByDelegate:   0,
+			expectedIssuedByDepositGns: 500,
+		},
+		{
+			name:                       "Both governance and launchpad issued",
+			mintToGovStaker:            800,
+			mintToLaunchpad:            200,
+			expectedTotalIssued:        1000,
+			expectedIssuedByDelegate:   800,
+			expectedIssuedByDepositGns: 200,
+		},
+		{
+			name:                       "Large amounts",
+			mintToGovStaker:            1000000000,
+			mintToLaunchpad:            500000000,
+			expectedTotalIssued:        1500000000,
+			expectedIssuedByDelegate:   1000000000,
+			expectedIssuedByDepositGns: 500000000,
+		},
+		{
+			name:                       "Equal distribution",
+			mintToGovStaker:            500,
+			mintToLaunchpad:            500,
+			expectedTotalIssued:        1000,
+			expectedIssuedByDelegate:   500,
+			expectedIssuedByDepositGns: 500,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+
+			// given
+			testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+
+			if tc.mintToGovStaker > 0 {
+				Mint(cross, govStakerAddress, tc.mintToGovStaker)
+			}
+			if tc.mintToLaunchpad > 0 {
+				Mint(cross, launchpadAddress, tc.mintToLaunchpad)
+			}
+
+			// when
+			totalIssued, issuedByDelegate, issuedByDepositGns, err := SupplyInfo()
+
+			// then
+			uassert.NoError(t, err)
+			uassert.Equal(t, tc.expectedTotalIssued, totalIssued)
+			uassert.Equal(t, tc.expectedIssuedByDelegate, issuedByDelegate)
+			uassert.Equal(t, tc.expectedIssuedByDepositGns, issuedByDepositGns)
+
+			// verify invariant: governance + launchpad == total issued
+			uassert.Equal(t, totalIssued, issuedByDelegate+issuedByDepositGns)
+		})
+	}
+}
+
 // Helper functions
 
 func getContractAddress(roleName string) address {

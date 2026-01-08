@@ -31,3 +31,23 @@ func getLaunchpadAddress() (address, error) {
 	}
 	return launchpad, nil
 }
+
+// SupplyInfo returns supply breakdown information.
+//
+// Returns:
+//   - totalIssued: total xGNS tokens issued
+//   - issuedByDelegate: tokens issued through governance delegation
+//   - issuedByDepositGns: tokens issued through launchpad deposit
+//   - error: error if launchpad address not found
+func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err error) {
+	launchpad, err := getLaunchpadAddress()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	totalIssued = token.TotalSupply()
+	issuedByDepositGns = token.BalanceOf(launchpad)
+	issuedByDelegate = totalIssued - issuedByDepositGns
+
+	return totalIssued, issuedByDelegate, issuedByDepositGns, nil
+}
