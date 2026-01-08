@@ -540,3 +540,494 @@ func shouldPanic(t *testing.T, fn func()) {
 	}()
 	fn()
 }
+
+func TestGetPoolCount(t *testing.T) {
+	testCases := []struct {
+		name     string
+		setup    func(t *testing.T)
+		expected int
+	}{
+		{
+			name: "empty store returns zero",
+			setup: func(t *testing.T) {
+				resetObject(t)
+			},
+			expected: 0,
+		},
+		{
+			name: "returns correct count after adding pool",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			expected: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			count := getMockInstance().GetPoolCount()
+			uassert.Equal(t, tc.expected, count)
+		})
+	}
+}
+
+func TestGetPoolPaths(t *testing.T) {
+	testCases := []struct {
+		name           string
+		setup          func(t *testing.T)
+		offset         int
+		count          int
+		expectedLength int
+	}{
+		{
+			name: "empty store returns empty slice",
+			setup: func(t *testing.T) {
+				resetObject(t)
+			},
+			offset:         0,
+			count:          10,
+			expectedLength: 0,
+		},
+		{
+			name: "returns pool paths",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			offset:         0,
+			count:          10,
+			expectedLength: 1,
+		},
+		{
+			name: "offset beyond range returns empty",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			offset:         100,
+			count:          10,
+			expectedLength: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			paths := getMockInstance().GetPoolPaths(tc.offset, tc.count)
+			uassert.Equal(t, tc.expectedLength, len(paths))
+		})
+	}
+}
+
+func TestExistsPoolPath(t *testing.T) {
+	testCases := []struct {
+		name     string
+		setup    func(t *testing.T)
+		poolPath string
+		expected bool
+	}{
+		{
+			name: "existing pool returns true",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath: "token0:token1:3000",
+			expected: true,
+		},
+		{
+			name: "non-existent pool returns false",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath: "nonexistent:pool:path",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			exists := getMockInstance().ExistsPoolPath(tc.poolPath)
+			uassert.Equal(t, tc.expected, exists)
+		})
+	}
+}
+
+func TestGetFeeAmountTickSpacings(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns all fee tier mappings", func(t *testing.T) {
+		mappings := getMockInstance().GetFeeAmountTickSpacings()
+		uassert.True(t, len(mappings) > 0)
+	})
+}
+
+func TestGetFeeAmountTickSpacing(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T)
+		fee         uint32
+		expected    int32
+		shouldPanic bool
+	}{
+		{
+			name: "valid fee tier 500 returns tick spacing 10",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			fee:         500,
+			expected:    10,
+			shouldPanic: false,
+		},
+		{
+			name: "valid fee tier 3000 returns tick spacing 60",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			fee:         3000,
+			expected:    60,
+			shouldPanic: false,
+		},
+		{
+			name: "invalid fee tier panics",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			fee:         9999,
+			expected:    0,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			if tc.shouldPanic {
+				shouldPanic(t, func() {
+					getMockInstance().GetFeeAmountTickSpacing(tc.fee)
+				})
+			} else {
+				spacing := getMockInstance().GetFeeAmountTickSpacing(tc.fee)
+				uassert.Equal(t, tc.expected, spacing)
+			}
+		})
+	}
+}
+
+func TestGetPoolPositionCount(t *testing.T) {
+	testCases := []struct {
+		name     string
+		setup    func(t *testing.T)
+		poolPath string
+		expected int
+	}{
+		{
+			name: "valid pool with positions",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath: "token0:token1:3000",
+			expected: 1,
+		},
+		{
+			name: "non-existent pool returns zero",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath: "nonexistent:pool:path",
+			expected: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			count := getMockInstance().GetPoolPositionCount(tc.poolPath)
+			uassert.Equal(t, tc.expected, count)
+		})
+	}
+}
+
+func TestGetPoolPositionKeys(t *testing.T) {
+	testCases := []struct {
+		name           string
+		setup          func(t *testing.T)
+		poolPath       string
+		offset         int
+		count          int
+		expectedLength int
+	}{
+		{
+			name: "valid pool returns position keys",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:       "token0:token1:3000",
+			offset:         0,
+			count:          10,
+			expectedLength: 1,
+		},
+		{
+			name: "non-existent pool returns empty",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:       "nonexistent:pool:path",
+			offset:         0,
+			count:          10,
+			expectedLength: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			keys := getMockInstance().GetPoolPositionKeys(tc.poolPath, tc.offset, tc.count)
+			uassert.Equal(t, tc.expectedLength, len(keys))
+		})
+	}
+}
+
+func TestGetInitializedTicksInRange(t *testing.T) {
+	testCases := []struct {
+		name           string
+		setup          func(t *testing.T)
+		poolPath       string
+		tickLower      int32
+		tickUpper      int32
+		expectedLength int
+	}{
+		{
+			name: "valid range with initialized tick",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:       "token0:token1:3000",
+			tickLower:      -10,
+			tickUpper:      10,
+			expectedLength: 1,
+		},
+		{
+			name: "range without initialized ticks",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:       "token0:token1:3000",
+			tickLower:      100,
+			tickUpper:      200,
+			expectedLength: 0,
+		},
+		{
+			name: "non-existent pool returns empty",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:       "nonexistent:pool:path",
+			tickLower:      -10,
+			tickUpper:      10,
+			expectedLength: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			ticks := getMockInstance().GetInitializedTicksInRange(tc.poolPath, tc.tickLower, tc.tickUpper)
+			uassert.Equal(t, tc.expectedLength, len(ticks))
+		})
+	}
+}
+
+func TestGetPoolWithError(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T)
+		token0Path  string
+		token1Path  string
+		fee         uint32
+		expectError bool
+	}{
+		{
+			name: "valid pool returns no error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			token0Path:  "token0",
+			token1Path:  "token1",
+			fee:         3000,
+			expectError: false,
+		},
+		{
+			name: "non-existent pool returns error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			token0Path:  "nonexistent",
+			token1Path:  "pool",
+			fee:         3000,
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			pool, err := getMockInstance().GetPool(tc.token0Path, tc.token1Path, tc.fee)
+			if tc.expectError {
+				uassert.True(t, err != nil)
+			} else {
+				uassert.True(t, err == nil)
+				uassert.True(t, pool != nil)
+			}
+		})
+	}
+}
+
+func TestGetTickInfoWithError(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T)
+		poolPath    string
+		tick        int32
+		expectError bool
+	}{
+		{
+			name: "valid tick returns no error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "token0:token1:3000",
+			tick:        0,
+			expectError: false,
+		},
+		{
+			name: "non-existent tick returns error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "token0:token1:3000",
+			tick:        999,
+			expectError: true,
+		},
+		{
+			name: "non-existent pool returns error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "nonexistent:pool:path",
+			tick:        0,
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			tickInfo, err := getMockInstance().GetTickInfo(tc.poolPath, tc.tick)
+			if tc.expectError {
+				uassert.True(t, err != nil)
+			} else {
+				uassert.True(t, err == nil)
+				uassert.Equal(t, "1000000", tickInfo.LiquidityGross().ToString())
+			}
+		})
+	}
+}
+
+func TestGetPositionWithError(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T)
+		poolPath    string
+		key         string
+		expectError bool
+	}{
+		{
+			name: "valid position returns no error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "token0:token1:3000",
+			key:         "test_position",
+			expectError: false,
+		},
+		{
+			name: "non-existent position returns error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "token0:token1:3000",
+			key:         "nonexistent_position",
+			expectError: true,
+		},
+		{
+			name: "non-existent pool returns error",
+			setup: func(t *testing.T) {
+				testInitData(t)
+			},
+			poolPath:    "nonexistent:pool:path",
+			key:         "test_position",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup(t)
+			positionInfo, err := getMockInstance().GetPosition(tc.poolPath, tc.key)
+			if tc.expectError {
+				uassert.True(t, err != nil)
+			} else {
+				uassert.True(t, err == nil)
+				uassert.Equal(t, "1000000", positionInfo.Liquidity().ToString())
+			}
+		})
+	}
+}
+
+func TestGetFeeGrowthGlobalX128(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns both fee growth values", func(t *testing.T) {
+		feeGrowth0, feeGrowth1 := getMockInstance().GetFeeGrowthGlobalX128("token0:token1:3000")
+		uassert.Equal(t, "1000000000000000000", feeGrowth0.ToString())
+		uassert.Equal(t, "2000000000000000000", feeGrowth1.ToString())
+	})
+}
+
+func TestGetTickFeeGrowthOutsideX128(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns both fee growth outside values", func(t *testing.T) {
+		feeGrowth0, feeGrowth1 := getMockInstance().GetTickFeeGrowthOutsideX128("token0:token1:3000", 0)
+		uassert.Equal(t, "3000000", feeGrowth0.ToString())
+		uassert.Equal(t, "4000000", feeGrowth1.ToString())
+	})
+}
+
+func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns both fee growth inside values", func(t *testing.T) {
+		feeGrowth0, feeGrowth1 := getMockInstance().GetPositionFeeGrowthInsideLastX128("token0:token1:3000", "test_position")
+		uassert.Equal(t, "2000000", feeGrowth0.ToString())
+		uassert.Equal(t, "3000000", feeGrowth1.ToString())
+	})
+}
+
+func TestGetPoolCreationFee(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns pool creation fee", func(t *testing.T) {
+		fee := getMockInstance().GetPoolCreationFee()
+		uassert.True(t, fee >= 0)
+	})
+}
+
+func TestGetWithdrawalFee(t *testing.T) {
+	testInitData(t)
+
+	t.Run("returns withdrawal fee", func(t *testing.T) {
+		fee := getMockInstance().GetWithdrawalFee()
+		uassert.True(t, fee >= 0)
+	})
+}

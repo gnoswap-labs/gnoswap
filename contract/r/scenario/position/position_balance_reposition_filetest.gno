@@ -76,7 +76,7 @@ func initPool() {
 		"130621891405341611593710811006",
 	)
 
-	poolInfo := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Current tick should be %d\n", poolInfo.Slot0Tick())
 }
 
@@ -113,7 +113,7 @@ func executeSwapForFees() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, INT64_MAX)
 
-	poolInfo := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := poolInfo.Slot0Tick()
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -134,7 +134,7 @@ func executeSwapForFees() {
 	)
 
 	testing.SetRealm(adminRealm)
-	poolInfo = pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ = pool.GetPool(barPath, fooPath, fee500)
 	tickAfter := poolInfo.Slot0Tick()
 
 	ufmt.Printf("[EXPECTED] Tick before swap should be %d\n", tickBefore)
@@ -239,7 +239,7 @@ func testRepositionAndBalance() {
 	ufmt.Printf("[EXPECTED] Final position token0 balance should be %s\n", pos.Token0Balance().ToString())
 	ufmt.Printf("[EXPECTED] Final position token1 balance should be %s\n", pos.Token1Balance().ToString())
 
-	poolInfo := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Final pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
 	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
 	ufmt.Printf("[EXPECTED] Final pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
