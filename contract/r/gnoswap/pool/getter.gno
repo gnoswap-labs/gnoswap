@@ -44,6 +44,11 @@ func ExistsPoolPath(poolPath string) bool {
 	return getImplementation().ExistsPoolPath(poolPath)
 }
 
+// GetBalances returns the balances of the pool.
+func GetBalances(poolPath string) (string, string) {
+	return getImplementation().GetBalanceToken0(poolPath), getImplementation().GetBalanceToken1(poolPath)
+}
+
 // GetBalanceToken0 returns the balance of token0 in the pool.
 func GetBalanceToken0(poolPath string) string {
 	return getImplementation().GetBalanceToken0(poolPath)
@@ -81,7 +86,14 @@ func GetFeeGrowthGlobal1X128(poolPath string) string {
 
 // GetFeeGrowthGlobalX128 returns the global fee growth for both tokens.
 func GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
-	return getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	return feeGrowthGlobal0.Clone(), feeGrowthGlobal1.Clone()
+}
+
+// GetFeeGrowthGlobals returns the global fee growth for both tokens.
+func GetFeeGrowthGlobals(poolPath string) (string, string) {
+	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	return feeGrowthGlobal0.ToString(), feeGrowthGlobal1.ToString()
 }
 
 // GetLiquidity returns the current liquidity in the pool.
@@ -116,7 +128,14 @@ func GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
 func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
-	return getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
+	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
+	return feeGrowthInside0.Clone(), feeGrowthInside1.Clone()
+}
+
+// GetPositionFeeGrowthInsideLasts returns the last recorded fee growth inside for both tokens.
+func GetPositionFeeGrowthInsideLasts(poolPath, key string) (string, string) {
+	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
+	return feeGrowthInside0.ToString(), feeGrowthInside1.ToString()
 }
 
 // GetPoolPositionCount returns the number of positions in a pool.
@@ -144,6 +163,11 @@ func GetPositionTokensOwed1(poolPath, key string) string {
 	return getImplementation().GetPositionTokensOwed1(poolPath, key)
 }
 
+// GetPositionTokensOwedInfos returns the amount of tokens owed for both tokens.
+func GetPositionTokensOwed(poolPath, key string) (string, string) {
+	return getImplementation().GetPositionTokensOwed0(poolPath, key), getImplementation().GetPositionTokensOwed1(poolPath, key)
+}
+
 // GetProtocolFeesToken0 returns accumulated protocol fees for token0.
 func GetProtocolFeesToken0(poolPath string) string {
 	return getImplementation().GetProtocolFeesToken0(poolPath)
@@ -152,6 +176,11 @@ func GetProtocolFeesToken0(poolPath string) string {
 // GetProtocolFeesToken1 returns accumulated protocol fees for token1.
 func GetProtocolFeesToken1(poolPath string) string {
 	return getImplementation().GetProtocolFeesToken1(poolPath)
+}
+
+// GetProtocolFeesTokens returns the accumulated protocol fees for both tokens.
+func GetProtocolFeesTokens(poolPath string) (string, string) {
+	return getImplementation().GetProtocolFeesToken0(poolPath), getImplementation().GetProtocolFeesToken1(poolPath)
 }
 
 // GetSlot0FeeProtocol returns the protocol fee rate from slot0.
@@ -191,7 +220,14 @@ func GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
 
 // GetTickFeeGrowthOutsideX128 returns fee growth outside for both tokens at a tick.
 func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
-	return getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
+	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
+	return feeGrowthOutside0.Clone(), feeGrowthOutside1.Clone()
+}
+
+// GetTickFeeGrowthOutsides returns fee growth outside for both tokens at a tick.
+func GetTickFeeGrowthOutsides(poolPath string, tick int32) (string, string) {
+	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
+	return feeGrowthOutside0.ToString(), feeGrowthOutside1.ToString()
 }
 
 // GetTickInitialized returns whether a tick is initialized.
