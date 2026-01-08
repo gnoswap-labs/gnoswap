@@ -12,6 +12,7 @@
 package main
 
 import (
+	"chain"
 	"strconv"
 	"testing"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -37,9 +39,6 @@ import (
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
 )
 
 const (
@@ -59,11 +58,11 @@ var (
 	emissionAddr, _    = access.GetAddress(prbac.ROLE_EMISSION.String())
 	routerRealm        = testing.NewUserRealm(routerAddr)
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
-	fee500  uint32 = 500
+	wugnotPath        = "gno.land/r/gnoland/wugnot"
+	gnsPath           = "gno.land/r/gnoswap/gns"
+	fee3000    uint32 = 3000
 
-	barFooPoolPath = ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	wugnotGnsPoolPath = ufmt.Sprintf("%s:%s:%d", wugnotPath, gnsPath, fee3000)
 )
 
 func main() {
@@ -85,11 +84,9 @@ func main() {
 
 	ufmt.Println("[SCENARIO] 4. Set emission halt")
 	setEmissionHaltState(true)
-	testing.SkipHeights(1)
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Collect rewards after halt")
-	collectRewards(1)
 	testing.SkipHeights(1)
 	println()
 
@@ -123,30 +120,32 @@ func initPool() {
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
-		fee500,
+		wugnotPath,
+		gnsPath,
+		fee3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	staker.SetPoolTier(cross, barFooPoolPath, 1)
-
-	ufmt.Println("[INFO] Pool created: %s (tier: 1)", barFooPoolPath)
+	ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)
 }
 
 func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting and staking position")
+	testing.SetOriginSend(chain.Coins{{}})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
-		fee500,
-		-1000,
-		1000,
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		-6960,
+		6960,
 		"50000000",
 		"50000000",
 		"0",
@@ -176,30 +175,26 @@ func setEmissionHaltState(halted bool) {
 func collectRewards(positionIds ...uint64) {
 	testing.SetRealm(adminRealm)
 
-	var rewardAmountAccumulated int64
-	var rewardAmountPerBlock int64
+	var totalAdminRewards int64
+	var totalStakerBalanceChanges int64
 
 	checkEmissionDistributionChangesFn(func() {
-		for _, positionId := range positionIds {
-			beforeCollectedGns := gns.BalanceOf(adminAddr)
-			staker.CollectReward(cross, positionId, false)
-			afterCollectedGns := gns.BalanceOf(adminAddr)
-			rewardAmountAccumulated += (afterCollectedGns - beforeCollectedGns)
-			ufmt.Printf("[INFO] reward accumulated for position %d: %d\n", positionId, afterCollectedGns-beforeCollectedGns)
-		}
-		testing.SkipHeights(1)
+		stakerBalanceBeforeMint := gns.BalanceOf(stakerAddr)
+		emission.MintAndDistributeGns(cross)
+		totalStakerBalanceChanges = gns.BalanceOf(stakerAddr) - stakerBalanceBeforeMint
 
 		for _, positionId := range positionIds {
 			beforeCollectedGns := gns.BalanceOf(adminAddr)
 			staker.CollectReward(cross, positionId, false)
 			afterCollectedGns := gns.BalanceOf(adminAddr)
-			rewardAmountAccumulated += (afterCollectedGns - beforeCollectedGns)
-			ufmt.Printf("[INFO] reward per block for position %d: %d\n", positionId, afterCollectedGns-beforeCollectedGns)
+
+			totalAdminRewards += (afterCollectedGns - beforeCollectedGns)
+			ufmt.Printf("[INFO] reward accumulated for position %d: %d\n", positionId, afterCollectedGns-beforeCollectedGns)
 		}
 	})
 
-	ufmt.Printf("[EXPECTED] reward accumulated: %d, reward per block: %d\n", rewardAmountAccumulated, rewardAmountPerBlock)
-	ufmt.Printf("[EXPECTED] total reward: %d\n", rewardAmountAccumulated+rewardAmountPerBlock)
+	ufmt.Printf("[EXPECTED] total staker balance changes: %d\n", totalStakerBalanceChanges)
+	ufmt.Printf("[EXPECTED] total reward: %d\n", totalAdminRewards)
 }
 
 func checkEmissionDistributionChangesFn(fn func()) {
@@ -216,38 +211,31 @@ func checkEmissionDistributionChangesFn(fn func()) {
 // Output:
 // [SCENARIO] 1. Initialize emission state and pool
 // [INFO] Initializing emission state
-// [INFO] Pool created: %s (tier: 1) gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [INFO] Pool created: %s (tier: 1) gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 //
 // [SCENARIO] 2. Mint position and stake
 // [INFO] Minting and staking position
 // [EXPECTED] Position ID should be 1
-// [EXPECTED] Liquidity should be 1025258313
+// [EXPECTED] Liquidity should be 170132354
 // [EXPECTED] Amount0 should be 50000000
 // [EXPECTED] Amount1 should be 50000000
 //
 // [SCENARIO] 3. Collect rewards before halt
-// [INFO] reward accumulated for position 1: 3973137
-// [INFO] reward per block for position 1: 3973137
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567905)
-// [INFO] Emission distribution balance changed: 53510274 (5 seconds)
-// [EXPECTED] reward accumulated: 7946274, reward per block: 0
-// [EXPECTED] total reward: 7946274
+// [INFO] reward accumulated for position 1: 7946275
+// [INFO] Check emission distribution amount to staker (last distributed: 1234567900)
+// [INFO] Emission distribution balance changed: 26755137 (0 seconds)
+// [EXPECTED] total staker balance changes: 26755137
+// [EXPECTED] total reward: 7946275
 //
 // [SCENARIO] 4. Set emission halt
 // [INFO] Emission halt state set to true
 //
 // [SCENARIO] 5. Collect rewards after halt
-// [INFO] reward accumulated for position 1: 7946273
-// [INFO] reward per block for position 1: 3973137
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567905)
-// [INFO] Emission distribution balance changed: 0 (5 seconds)
-// [EXPECTED] reward accumulated: 11919410, reward per block: 0
-// [EXPECTED] total reward: 11919410
 //
 // [SCENARIO] 5. Mint position and stake after halt
 // [INFO] Minting and staking position
 // [EXPECTED] Position ID should be 2
-// [EXPECTED] Liquidity should be 1025258313
+// [EXPECTED] Liquidity should be 170132354
 // [EXPECTED] Amount0 should be 50000000
 // [EXPECTED] Amount1 should be 50000000
 //
@@ -255,11 +243,9 @@ func checkEmissionDistributionChangesFn(fn func()) {
 // [INFO] Emission halt state set to false
 //
 // [SCENARIO] 7. Collect rewards after resume
-// [INFO] reward accumulated for position 1: 5959705
-// [INFO] reward accumulated for position 2: 1986568
-// [INFO] reward per block for position 1: 1986568
-// [INFO] reward per block for position 2: 1986568
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567935)
-// [INFO] Emission distribution balance changed: 160530819 (5 seconds)
-// [EXPECTED] reward accumulated: 11919409, reward per block: 0
-// [EXPECTED] total reward: 11919409
+// [INFO] reward accumulated for position 1: 19865688
+// [INFO] reward accumulated for position 2: 3973138
+// [INFO] Check emission distribution amount to staker (last distributed: 1234567915)
+// [INFO] Emission distribution balance changed: 80265409 (0 seconds)
+// [EXPECTED] total staker balance changes: 80265409
+// [EXPECTED] total reward: 23838826

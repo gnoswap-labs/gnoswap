@@ -12,6 +12,7 @@
 package main
 
 import (
+	"chain"
 	"strconv"
 	"testing"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -37,9 +39,6 @@ import (
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
 )
 
 const (
@@ -59,11 +58,11 @@ var (
 	emissionAddr, _    = access.GetAddress(prbac.ROLE_EMISSION.String())
 	routerRealm        = testing.NewUserRealm(routerAddr)
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
-	fee500  uint32 = 500
+	wugnotPath        = "gno.land/r/gnoland/wugnot"
+	gnsPath           = "gno.land/r/gnoswap/gns"
+	fee3000    uint32 = 3000
 
-	barFooPoolPath = ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	wugnotGnsPoolPath = ufmt.Sprintf("%s:%s:%d", wugnotPath, gnsPath, fee3000)
 )
 
 func main() {
@@ -117,30 +116,32 @@ func initPool() {
 
 	pool.CreatePool(
 		cross,
-		barPath,
-		fooPath,
-		fee500,
+		wugnotPath,
+		gnsPath,
+		fee3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
 
-	staker.SetPoolTier(cross, barFooPoolPath, 1)
-
-	ufmt.Println("[INFO] Pool created: %s (tier: 1)", barFooPoolPath)
+	ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)
 }
 
 func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting and staking position")
+	testing.SetOriginSend(chain.Coins{{}})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		barPath,
-		fooPath,
-		fee500,
-		-1000,
-		1000,
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		-6960,
+		6960,
 		"50000000",
 		"50000000",
 		"0",
@@ -170,69 +171,55 @@ func setEmissionHaltState(halted bool) {
 func collectRewards(positionId uint64) {
 	testing.SetRealm(adminRealm)
 
-	var rewardAmountAccumulated int64
-	var rewardAmountPerBlock int64
+	var totalAdminRewards int64
+	var totalStakerBalanceChanges int64
 
 	checkEmissionDistributionChangesFn(func() {
-		initializedGns := gns.BalanceOf(adminAddr)
-		staker.CollectReward(cross, positionId, false)
-		testing.SkipHeights(1)
-
+		stakerBalanceBeforeMint := gns.BalanceOf(stakerAddr)
 		beforeGns := gns.BalanceOf(adminAddr)
-		staker.CollectReward(cross, positionId, false)
-		afterGns := gns.BalanceOf(adminAddr)
 
-		rewardAmountAccumulated = beforeGns - initializedGns
-		rewardAmountPerBlock = afterGns - beforeGns
+		emission.MintAndDistributeGns(cross)
+		totalStakerBalanceChanges = totalStakerBalanceChanges + gns.BalanceOf(stakerAddr) - stakerBalanceBeforeMint
+
+		staker.CollectReward(cross, positionId, false)
+		totalAdminRewards = gns.BalanceOf(adminAddr) - beforeGns
 	})
 
-	ufmt.Printf("[EXPECTED] reward accumulated: %d, reward per block: %d\n", rewardAmountAccumulated, rewardAmountPerBlock)
-	ufmt.Printf("[EXPECTED] total reward: %d\n", rewardAmountAccumulated+rewardAmountPerBlock)
+	ufmt.Printf("[EXPECTED] total staker balance changes: %d\n", totalStakerBalanceChanges)
+	ufmt.Printf("[EXPECTED] total reward: %d\n", totalAdminRewards)
 }
 
 func checkEmissionDistributionChangesFn(fn func()) {
-	beforeTimestamp := time.Now().Unix()
 	beforeEmissionDistributionBalance := emission.GetDistributedToStaker()
 	fn()
-	afterTimestamp := time.Now().Unix()
 	afterEmissionDistributionBalance := emission.GetDistributedToStaker()
 	lastDistributedTimestamp := emission.GetLastExecutedTimestamp()
 	ufmt.Printf("[INFO] Check emission distribution amount to staker (last distributed: %d)\n", lastDistributedTimestamp)
-	ufmt.Printf("[INFO] Emission distribution balance changed: %d (%d seconds)\n", afterEmissionDistributionBalance-beforeEmissionDistributionBalance, afterTimestamp-beforeTimestamp)
+	ufmt.Printf("[INFO] Emission distribution balance changed: %d\n", afterEmissionDistributionBalance-beforeEmissionDistributionBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Initialize emission state and pool
 // [INFO] Initializing emission state
-// [INFO] Pool created: %s (tier: 1) gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [INFO] Pool created: %s (tier: 1) gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 //
 // [SCENARIO] 2. Mint position and stake
 // [INFO] Minting and staking position
 // [EXPECTED] Position ID should be 1
-// [EXPECTED] Liquidity should be 1025258313
+// [EXPECTED] Liquidity should be 170132354
 // [EXPECTED] Amount0 should be 50000000
 // [EXPECTED] Amount1 should be 50000000
 //
 // [SCENARIO] 3. Collect rewards before halt
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567905)
-// [INFO] Emission distribution balance changed: 53510274 (5 seconds)
-// [EXPECTED] reward accumulated: 3973137, reward per block: 3973137
-// [EXPECTED] total reward: 7946274
+// [INFO] Check emission distribution amount to staker (last distributed: 1234567900)
+// [INFO] Emission distribution balance changed: 26755137
+// [EXPECTED] total staker balance changes: 26755137
+// [EXPECTED] total reward: 7946275
 //
 // [SCENARIO] 4. Set emission halt
 // [INFO] Emission halt state set to true
 //
 // [SCENARIO] 5. Collect rewards after halt
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567905)
-// [INFO] Emission distribution balance changed: 0 (5 seconds)
-// [EXPECTED] reward accumulated: 3973137, reward per block: 3973137
-// [EXPECTED] total reward: 7946274
-//
-// [SCENARIO] 6. Resume emission
-// [INFO] Emission halt state set to false
-//
-// [SCENARIO] 7. Collect rewards after resume
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567925)
-// [INFO] Emission distribution balance changed: 107020546 (5 seconds)
-// [EXPECTED] reward accumulated: 3973137, reward per block: 3973137
-// [EXPECTED] total reward: 7946274
+
+// Error:
+// insufficient balance
