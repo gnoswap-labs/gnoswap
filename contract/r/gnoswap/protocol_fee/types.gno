@@ -24,8 +24,6 @@ type IProtocolFeeGetter interface {
 	GetAmountOfToken(tokenPath string) int64
 	GetAccuTransfersToGovStaker() map[string]int64
 	GetAccuTransfersToDevOps() map[string]int64
-	GetTotalAccuTransfersToGovStaker() int64
-	GetTotalAccuTransfersToDevOps() int64
 	GetAccuTransferToGovStakerByTokenPath(path string) int64
 	GetAccuTransferToDevOpsByTokenPath(path string) int64
 	GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64

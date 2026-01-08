@@ -540,64 +540,6 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 	}
 }
 
-func TestGetTotalAccuTransfersToGovStaker(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get total accu transfers to gov staker is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			GetTotalAccuTransfersToGovStaker()
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetTotalAccuTransfersToGovStaker") != 1 {
-				t.Error("GetTotalAccuTransfersToGovStaker was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetTotalAccuTransfersToDevOps(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get total accu transfers to dev ops is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			GetTotalAccuTransfersToDevOps()
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetTotalAccuTransfersToDevOps") != 1 {
-				t.Error("GetTotalAccuTransfersToDevOps was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 	tests := []struct {
 		name      string

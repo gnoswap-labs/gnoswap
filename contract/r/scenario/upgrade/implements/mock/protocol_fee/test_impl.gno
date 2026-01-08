@@ -130,20 +130,6 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	).(map[string]int64)
 }
 
-func (t *TestProtocolFee) GetTotalAccuTransfersToGovStaker() int64 {
-	return t.ExecuteFn(
-		"GetTotalAccuTransfersToGovStaker",
-		func(args ...any) any { return t.instance.GetTotalAccuTransfersToGovStaker() },
-	).(int64)
-}
-
-func (t *TestProtocolFee) GetTotalAccuTransfersToDevOps() int64 {
-	return t.ExecuteFn(
-		"GetTotalAccuTransfersToDevOps",
-		func(args ...any) any { return t.instance.GetTotalAccuTransfersToDevOps() },
-	).(int64)
-}
-
 func (t *TestProtocolFee) GetTokenList() []string {
 	return t.ExecuteFn(
 		"GetTokenList",

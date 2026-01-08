@@ -73,14 +73,6 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	return t.instance.GetAccuTransfersToDevOps()
 }
 
-func (t *TestProtocolFee) GetTotalAccuTransfersToGovStaker() int64 {
-	return t.instance.GetTotalAccuTransfersToGovStaker()
-}
-
-func (t *TestProtocolFee) GetTotalAccuTransfersToDevOps() int64 {
-	return t.instance.GetTotalAccuTransfersToDevOps()
-}
-
 func (t *TestProtocolFee) GetTokenList() []string {
 	return t.instance.GetTokenList()
 }

@@ -69,40 +69,6 @@ func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	return accuTransfers
 }
 
-// GetTotalAccuTransfersToGovStaker returns total accumulated transfers to gov/staker.
-func (pf *protocolFeeV1) GetTotalAccuTransfersToGovStaker() int64 {
-	total := int64(0)
-
-	pf.getProtocolFeeState().AccuToGovStaker().Iterate("", "", func(key string, value any) bool {
-		amount, ok := value.(int64)
-		if !ok {
-			return false
-		}
-
-		total = safeAddInt64(total, amount)
-		return false
-	})
-
-	return total
-}
-
-// GetTotalAccuTransfersToDevOps returns total accumulated transfers to devOps.
-func (pf *protocolFeeV1) GetTotalAccuTransfersToDevOps() int64 {
-	total := int64(0)
-
-	pf.getProtocolFeeState().AccuToDevOps().Iterate("", "", func(key string, value any) bool {
-		amount, ok := value.(int64)
-		if !ok {
-			return false
-		}
-
-		total = safeAddInt64(total, amount)
-		return false
-	})
-
-	return total
-}
-
 // GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.
 func (pf *protocolFeeV1) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetAccuTransferToGovStakerByTokenPath(path)
