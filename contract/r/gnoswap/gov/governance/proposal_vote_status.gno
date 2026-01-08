@@ -59,7 +59,6 @@ func NewProposalVoteStatus(
 	maxVotingWeight int64,
 	quorumAmount int64,
 ) *ProposalVoteStatus {
-
 	return &ProposalVoteStatus{
 		yea:             0,               // Start with no "yes" votes
 		nay:             0,               // Start with no "no" votes
