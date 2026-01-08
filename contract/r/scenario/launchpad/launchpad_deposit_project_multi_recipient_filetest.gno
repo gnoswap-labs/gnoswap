@@ -18,11 +18,8 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
-
-	"gno.land/r/gnoswap/gov/staker"
 
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
@@ -37,8 +34,8 @@ var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
-	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	launchpadRealm = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
+	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
 
 	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm        = testing.NewUserRealm(stakerAddr)
@@ -143,26 +140,24 @@ func createOBLProject() {
 
 	// [INFO] Validate project info
 	testing.SetRealm(launchpadRealm)
-	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
-	println("[EXPECTED] Project name:", projectStats["name"])
-	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
-	println("[EXPECTED] Project deposit amount:", projectStats["depositAmount"])
-	println("[EXPECTED] Project tier30 ratio:", projectStats["tier30Ratio"])
-	println("[EXPECTED] Project tier90 ratio:", projectStats["tier90Ratio"])
-	println("[EXPECTED] Project tier180 ratio:", projectStats["tier180Ratio"])
+	project, _ := launchpad.GetProject(projectId)
+	println("[EXPECTED] Project name:", project.Name())
+	println("[EXPECTED] Project token path:", project.TokenPath())
+	println("[EXPECTED] Project deposit amount:", project.DepositAmount())
+	tiersRatios := project.TiersRatios()
+	println("[EXPECTED] Project tier30 ratio:", tiersRatios[30])
+	println("[EXPECTED] Project tier90 ratio:", tiersRatios[90])
+	println("[EXPECTED] Project tier180 ratio:", tiersRatios[180])
 
 	// [INFO] Validate tier info
-	tier30Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
-	println("[EXPECTED] Tier 30 amount:", tier30Stats["tierAmount"])
-	println("[EXPECTED] Tier 30 collect wait duration:", tier30Stats["collectWaitDuration"])
+	tier30, _ := launchpad.GetProjectTier(projectId, 30)
+	println("[EXPECTED] Tier 30 amount:", tier30.TotalDistributeAmount())
 
-	tier90Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
-	println("[EXPECTED] Tier 90 amount:", tier90Stats["tierAmount"])
-	println("[EXPECTED] Tier 90 collect wait duration:", tier90Stats["collectWaitDuration"])
+	tier90, _ := launchpad.GetProjectTier(projectId, 90)
+	println("[EXPECTED] Tier 90 amount:", tier90.TotalDistributeAmount())
 
-	tier180Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
-	println("[EXPECTED] Tier 180 amount:", tier180Stats["tierAmount"])
-	println("[EXPECTED] Tier 180 collect wait duration:", tier180Stats["collectWaitDuration"])
+	tier180, _ := launchpad.GetProjectTier(projectId, 180)
+	println("[EXPECTED] Tier 180 amount:", tier180.TotalDistributeAmount())
 }
 
 // Mock protocol fee setup
@@ -220,10 +215,10 @@ func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmo
 
 	// validate deposit
 	testing.SetRealm(launchpadRealm)
-	depositStats := unmarshal(launchpad.ApiGetDepositByDepositId(depositId))
-	println("[EXPECTED] Deposit amount:", depositStats["amount"])
-	println("[EXPECTED] Deposit tier:", depositStats["tier"])
-	println("[EXPECTED] Deposit depositor:", depositStats["depositor"])
+	deposit, _ := launchpad.GetDeposit(depositId)
+	println("[EXPECTED] Deposit amount:", deposit.DepositAmount())
+	println("[EXPECTED] Deposit tier:", deposit.Tier())
+	println("[EXPECTED] Deposit depositor:", deposit.Depositor())
 
 	testing.SkipHeights(1)
 }
@@ -273,33 +268,6 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 	testing.SkipHeights(1)
 }
 
-// Helper functions
-func unmarshal(data string) map[string]interface{} {
-	// This is a simplified unmarshal function for demonstration
-	// In a real implementation, you would use proper JSON unmarshaling
-	return map[string]interface{}{
-		"height":                 "123",
-		"now":                    "1234567890",
-		"depositAmount":          "1000000000",
-		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
-		"conditionPath":          "gno.land/r/gnoswap/gov/xgns",
-		"conditionsAmount":       "1000000",
-		"tier30Ratio":            "10",
-		"tier90Ratio":            "20",
-		"tier180Ratio":           "70",
-		"tierAmount":             "100000000",
-		"collectWaitDuration":    "129600",
-		"tierAmountPerBlockX128": "26256355472294634526494954277142608908641",
-		"name":                   "OBL Launchpad Project",
-		"tokenPath":              "gno.land/r/onbloc/obl",
-		"amount":                 "1000000",
-		"tier":                   "30",
-		"depositor":              "g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu",
-		"gno.land/r/onbloc/bar":  "1000",
-		"gno.land/r/onbloc/qux":  "2500",
-	}
-}
-
 // Output:
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
@@ -313,11 +281,8 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Project tier90 ratio: 20
 // [EXPECTED] Project tier180 ratio: 70
 // [EXPECTED] Tier 30 amount: 100000000
-// [EXPECTED] Tier 30 collect wait duration: 129600
-// [EXPECTED] Tier 90 amount: 100000000
-// [EXPECTED] Tier 90 collect wait duration: 129600
-// [EXPECTED] Tier 180 amount: 100000000
-// [EXPECTED] Tier 180 collect wait duration: 129600
+// [EXPECTED] Tier 90 amount: 200000000
+// [EXPECTED] Tier 180 amount: 700000000
 //
 // [SCENARIO] 2. Protocol fee setup
 // [INFO] Setting up mock protocol fees
@@ -337,7 +302,7 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Deposit created with ID: 1
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
-// [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
+// [EXPECTED] Deposit depositor: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 //
 // [SCENARIO] 4. Deposit GNS to OBL project tier 30 by user2
 // [INFO] Depositing GNS to OBL project tier 30
@@ -375,7 +340,7 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Deposit created with ID: 3
 // [EXPECTED] Deposit amount: 1000000
 // [EXPECTED] Deposit tier: 30
-// [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
+// [EXPECTED] Deposit depositor: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 // [INFO] Depositing GNS to OBL project tier 30
 // [INFO] Admin transferring GNS to depositor for deposit
 // [INFO] Depositor delegating GNS to gov staker
