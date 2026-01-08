@@ -86,7 +86,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			// Setup reward manager if needed
 			if tt.setupManager {
 				rewardManagers := getTestProjectTierRewardManagers()
-				rewardManager := launchpad.NewRewardManager(1000, 40, 200, 50, 50)
+				rewardManager := launchpad.NewRewardManager(1000, 40, 200, 0, 50, 50)
 				rewardManager.SetRewards(avl.NewTree())
 				rewardManager.SetAccumulatedRewardPerDepositX128(u256.Zero())
 				rewardManager.SetDistributeAmountPerSecondX128(u256.NewUintFromInt64(1))
