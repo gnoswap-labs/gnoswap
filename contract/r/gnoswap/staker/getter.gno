@@ -281,7 +281,7 @@ func GetTotalStakedPositionCount() uint64 {
 	return getImplementation().GetTotalStakedPositionCount()
 }
 
-// GetStakedPositionsByOwner returns staked position IDs for an owner.
-func GetStakedPositionsByOwner(owner address) []uint64 {
-	return getImplementation().GetStakedPositionsByOwner(owner)
+// GetStakedPositionsByUser returns staked position IDs for a user with pagination.
+func GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
+	return getImplementation().GetStakedPositionsByUser(owner, offset, count)
 }

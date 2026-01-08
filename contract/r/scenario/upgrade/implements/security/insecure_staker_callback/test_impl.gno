@@ -527,9 +527,9 @@ func (t *TestStaker) GetTotalStakedPositionCount() uint64 {
 	return t.instance.GetTotalStakedPositionCount()
 }
 
-func (t *TestStaker) GetStakedPositionsByOwner(owner address) []uint64 {
-	if !t.isActive("GetStakedPositionsByOwner") {
-		panic("test implementation: GetStakedPositionsByOwner not supported")
+func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
+	if !t.isActive("GetStakedPositionsByUser") {
+		panic("test implementation: GetStakedPositionsByUser not supported")
 	}
-	return t.instance.GetStakedPositionsByOwner(owner)
+	return t.instance.GetStakedPositionsByUser(owner, offset, count)
 }

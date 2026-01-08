@@ -302,6 +302,6 @@ func (t *TestStaker) GetTotalStakedPositionCount() uint64 {
 	return t.instance.GetTotalStakedPositionCount()
 }
 
-func (t *TestStaker) GetStakedPositionsByOwner(owner address) []uint64 {
-	return t.instance.GetStakedPositionsByOwner(owner)
+func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
+	return t.instance.GetStakedPositionsByUser(owner, offset, count)
 }

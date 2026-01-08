@@ -532,16 +532,16 @@ func TestGetterStakedPositionCount(t *testing.T) {
 	uassert.Equal(t, uint64(2), count)
 }
 
-func TestGetterStakedPositionsByOwner(t *testing.T) {
+func TestGetterStakedPositionsByUser(t *testing.T) {
 	state := setupBasicTestState(t)
 
 	// Test owner with positions
-	positions := state.instance.GetStakedPositionsByOwner(state.owner)
+	positions := state.instance.GetStakedPositionsByUser(state.owner, 0, 10)
 	uassert.Equal(t, 1, len(positions))
 	uassert.Equal(t, state.positionId, positions[0])
 
 	// Test owner without positions
-	positionsEmpty := state.instance.GetStakedPositionsByOwner(addr02)
+	positionsEmpty := state.instance.GetStakedPositionsByUser(addr02, 0, 10)
 	uassert.Equal(t, 0, len(positionsEmpty))
 }
 
@@ -604,8 +604,12 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 	depositTree := depositTreeI.(*avl.Tree)
 	depositTree.Set(sr.EncodeUint(positionId2), deposit2)
 
-	positions := state.instance.GetStakedPositionsByOwner(state.owner)
-	uassert.Equal(t, 2, len(positions))
+	positionsPage1 := state.instance.GetStakedPositionsByUser(state.owner, 0, 1)
+	positionsPage2 := state.instance.GetStakedPositionsByUser(state.owner, 1, 1)
+	uassert.Equal(t, 1, len(positionsPage1))
+	uassert.Equal(t, 1, len(positionsPage2))
+	uassert.Equal(t, state.positionId, positionsPage1[0])
+	uassert.Equal(t, positionId2, positionsPage2[0])
 
 	// Verify both positions can be queried
 	owner1 := state.instance.GetDepositOwner(state.positionId)

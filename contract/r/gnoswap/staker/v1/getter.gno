@@ -413,16 +413,23 @@ func (s *stakerV1) GetTotalStakedPositionCount() uint64 {
 	return total
 }
 
-// GetStakedPositionsByOwner returns staked position IDs for an owner.
-func (s *stakerV1) GetStakedPositionsByOwner(owner address) []uint64 {
+// GetStakedPositionsByUser returns staked position IDs for a user with pagination.
+func (s *stakerV1) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
+	if count <= 0 {
+		return []uint64{}
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
 	depositTreeI, ok := s.getStakers().tree.Get(owner.String())
 	if !ok {
 		return []uint64{}
 	}
 
 	depositTree := retrieveDepositTree(depositTreeI)
-	positions := make([]uint64, 0, depositTree.Size())
-	depositTree.Iterate("", "", func(depositId string, _ any) bool {
+	positions := make([]uint64, 0, count)
+	depositTree.IterateByOffset(offset, count, func(depositId string, _ any) bool {
 		positions = append(positions, sr.DecodeUint(depositId))
 		return false
 	})

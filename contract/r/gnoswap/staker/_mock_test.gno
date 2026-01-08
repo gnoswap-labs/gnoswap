@@ -552,8 +552,8 @@ func (m *MockStaker) GetTotalStakedPositionCount() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockStaker) GetStakedPositionsByOwner(owner address) []uint64 {
-	res, ok := m.Response.Get("GetStakedPositionsByOwner")
+func (m *MockStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
+	res, ok := m.Response.Get("GetStakedPositionsByUser")
 	if !ok {
 		return nil
 	}

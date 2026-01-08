@@ -104,7 +104,7 @@ type IStakerGetter interface {
 	GetAllowedTokens() []string
 	GetWarmupTemplate() []Warmup
 	GetTotalStakedPositionCount() uint64
-	GetStakedPositionsByOwner(owner address) []uint64
+	GetStakedPositionsByUser(owner address, offset, count int) []uint64
 }
 
 type IStakerStore interface {

@@ -627,10 +627,12 @@ func (t *TestStaker) GetTotalStakedPositionCount() uint64 {
 	).(uint64)
 }
 
-func (t *TestStaker) GetStakedPositionsByOwner(owner address) []uint64 {
+func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
 	return t.ExecuteFn(
-		"GetStakedPositionsByOwner",
-		func(args ...any) any { return t.instance.GetStakedPositionsByOwner(args[0].(address)) },
-		owner,
+		"GetStakedPositionsByUser",
+		func(args ...any) any {
+			return t.instance.GetStakedPositionsByUser(args[0].(address), args[1].(int), args[2].(int))
+		},
+		owner, offset, count,
 	).([]uint64)
 }
