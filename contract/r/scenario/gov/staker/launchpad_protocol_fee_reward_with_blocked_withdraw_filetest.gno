@@ -142,7 +142,7 @@ func protocolFeeRewardProjectRecipient() {
 
 func checkBlockedWithLaunchpadCollectDepositGns() {
 	testing.SetRealm(adminRealm)
-	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-019] invalid reward state", func() {
 		lp.CollectDepositGns(cross, "1")
 	})
 	ufmt.Printf("[INFO] blocked launchpad collect deposit gns by not yet ended project\n")
