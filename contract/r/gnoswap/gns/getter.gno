@@ -23,11 +23,6 @@ func GetInitialMintAmount() int64 {
 	return INITIAL_MINT_AMOUNT
 }
 
-// GetMaxEmissionAmount returns the maximum amount of emission allowed.
-func GetMaxEmissionAmount() int64 {
-	return MAX_EMISSION_AMOUNT
-}
-
 // IsEmissionInitialized returns true if emission schedule has been initialized.
 func IsEmissionInitialized() bool {
 	return getEmissionState().isInitialized()
