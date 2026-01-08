@@ -90,6 +90,12 @@ func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
 	return state.getHalvingYearAccumulatedAmount(year)
 }
 
+// SimulateMintGns returns the amount of GNS that would be minted right now
+// without mutating state.
+func SimulateMintGns() (int64, error) {
+	return simulateMintGnsAt(time.Now().Unix())
+}
+
 // GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
 func GetHalvingYearStartTimestamp(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
@@ -170,4 +176,24 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	// Use cached timestamps from HalvingData
 	halvingData := state.getHalvingData()
 	return year, halvingData.getStartTimestamp(year), halvingData.getEndTimestamp(year)
+}
+
+func simulateMintGnsAt(currentTime int64) (int64, error) {
+	lastGNSMintedTimestamp := LastMintedTimestamp()
+
+	if lastGNSMintedTimestamp == currentTime || lastGNSMintedTimestamp >= GetEmissionEndTimestamp() {
+		return 0, nil
+	}
+
+	// Start from the next second after the last mint to avoid double-counting.
+	amountToMint, err := calculateAmountToMintView(lastGNSMintedTimestamp+1, currentTime)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := validEmissionAmount(amountToMint); err != nil {
+		return 0, err
+	}
+
+	return amountToMint, nil
 }

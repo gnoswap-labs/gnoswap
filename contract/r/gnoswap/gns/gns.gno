@@ -211,6 +211,16 @@ func checkErr(err error) {
 // This function has side effects: it updates the accumulated and remaining amounts
 // for each halving year in the emission state.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
+	return calculateAmountToMintInternal(fromTimestamp, toTimestamp, true)
+}
+
+// calculateAmountToMintView calculates the amount to mint for a time range
+// without mutating emission state.
+func calculateAmountToMintView(fromTimestamp, toTimestamp int64) (int64, error) {
+	return calculateAmountToMintInternal(fromTimestamp, toTimestamp, false)
+}
+
+func calculateAmountToMintInternal(fromTimestamp, toTimestamp int64, mutate bool) (int64, error) {
 	// Cache state to avoid repeated lookups
 	state := getEmissionState()
 
@@ -260,23 +270,25 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 
 		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
-		if err != nil {
-			return 0, err
-		}
-		err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
-		if err != nil {
-			return 0, err
-		}
+		if mutate {
+			err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+			if err != nil {
+				return 0, err
+			}
+			err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
+			if err != nil {
+				return 0, err
+			}
 
-		chain.Emit(
-			"CalculateAmountToMint",
-			"fromTimestamp", formatInt(fromTimestamp),
-			"toTimestamp", formatInt(currentToTimestamp),
-			"year", formatInt(year),
-			"amountPerSecond", formatInt(amountPerSecond),
-			"mintedAmount", formatInt(yearAmountToMint),
-		)
+			chain.Emit(
+				"CalculateAmountToMint",
+				"fromTimestamp", formatInt(fromTimestamp),
+				"toTimestamp", formatInt(currentToTimestamp),
+				"year", formatInt(year),
+				"amountPerSecond", formatInt(amountPerSecond),
+				"mintedAmount", formatInt(yearAmountToMint),
+			)
+		}
 
 		fromTimestamp = currentToTimestamp + 1
 
