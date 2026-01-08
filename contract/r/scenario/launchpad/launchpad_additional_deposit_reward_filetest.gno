@@ -17,6 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -28,15 +29,20 @@ import (
 	"gno.land/r/onbloc/obl"
 )
 
+var t *testing.T
+
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
-	aliceAddr = testutils.TestAddress("alice")
-	bobAddr   = testutils.TestAddress("bob")
+	aliceAddr   = testutils.TestAddress("alice")
+	bobAddr     = testutils.TestAddress("bob")
 	charlieAddr = testutils.TestAddress("charlie")
+	davidAddr   = testutils.TestAddress("david")
+	erinAddr    = testutils.TestAddress("erin")
+	frankAddr   = testutils.TestAddress("frank")
 
 	projectAddr = testutils.TestAddress("project-owner")
 )
@@ -45,6 +51,8 @@ func main() {
 	println("[SCENARIO] 1. Create OBL launchpad project")
 	createOBLProject()
 	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	projectTier90Id := "gno.land/r/onbloc/obl:123:90"
+	projectTier180Id := "gno.land/r/onbloc/obl:123:180"
 	println()
 
 	println("[SCENARIO] 2. First deposit by Alice (1,000,000 GNS)")
@@ -108,6 +116,8 @@ func main() {
 	println("[INFO] Charlie collecting additional reward")
 	collectReward(charlieAddr, "3")
 	println()
+
+	validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id)
 }
 
 func createOBLProject() {
@@ -182,6 +192,57 @@ func collectReward(ownerAddr address, depositId string) {
 	afterOblBalance := obl.BalanceOf(ownerAddr)
 	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
 	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
+}
+
+func validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id string) {
+	validateCollectableDurationForTier(davidAddr, projectTier30Id, 51840)   // 3 days
+	validateCollectableDurationForTier(erinAddr, projectTier90Id, 120960)   // 7 days
+	validateCollectableDurationForTier(frankAddr, projectTier180Id, 241920) // 14 days
+}
+
+func validateCollectableDurationForTier(depositorAddr address, projectTierId string, claimableBlocks int64) {
+	depositId := depositGnsSilent(depositorAddr, projectTierId, int64(1_000_000))
+
+	skipBeforeAssert := claimableBlocks - 2 // depositGnsSilent already advanced 1 block
+	if skipBeforeAssert > 0 {
+		testing.SkipHeights(skipBeforeAssert)
+	}
+	assertCollectNotYetClaimable(depositorAddr, depositId)
+
+	testing.SkipHeights(1)
+	collectRewardSilent(depositorAddr, depositId)
+}
+
+func depositGnsSilent(depositorAddr address, projectTierId string, depositAmount int64) string {
+	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, depositorAddr, depositAmount)
+
+	testing.SetRealm(testing.NewUserRealm(depositorAddr))
+	gns.Approve(cross, launchpadAddr, depositAmount)
+	depositId := launchpad.DepositGns(
+		cross,
+		projectTierId,
+		depositAmount,
+		"",
+	)
+
+	testing.SkipHeights(1)
+	return depositId
+}
+
+func collectRewardSilent(ownerAddr address, depositId string) {
+	testing.SetRealm(testing.NewUserRealm(ownerAddr))
+	launchpad.CollectRewardByDepositId(cross, depositId)
+}
+
+func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-019] invalid reward state"
+	uassert.AbortsContains(t, expectedPanicMessage, func() {
+		testing.SetRealm(testing.NewUserRealm(ownerAddr))
+		launchpad.CollectRewardByDepositId(cross, depositId)
+	})
+	ufmt.Printf("[EXPECTED] Collect should abort before claimable time: %s\n", expectedPanicMessage)
 }
 
 // Output:
@@ -263,3 +324,7 @@ func collectReward(ownerAddr address, depositId string) {
 // [INFO] OBL balance before: 5000096
 // [INFO] OBL balance after: 5004918
 // [INFO] Reward collected: 4822
+//
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state

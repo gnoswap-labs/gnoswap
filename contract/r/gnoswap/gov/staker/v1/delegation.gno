@@ -119,14 +119,6 @@ func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
 	return safeAddInt64(collectedAmount, amount), nil
 }
 
-// min returns the smaller of two int64 values
-func min(a, b int64) int64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // NewDelegation creates a new delegation.
 // This is a convenience wrapper around staker.NewDelegation.
 //

@@ -113,12 +113,12 @@ func setupProtocolFeeDeposit() {
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 
-	ufmt.Printf("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
+	println("[INFO] protocol fee deposited: bar(1000), qux(2500)")
 }
 
 func skipBlocksAndDistribute() {
 	testing.SkipHeights(10)
-	ufmt.Printf("[INFO] skipped 10 blocks\n")
+	println("[INFO] skipped 10 blocks")
 }
 
 func protocolFeeRewardProjectRecipient() {
@@ -135,17 +135,17 @@ func protocolFeeRewardProjectRecipient() {
 	afterBarBalance := bar.BalanceOf(projectAddr)
 	afterQuxBalance := qux.BalanceOf(projectAddr)
 
-	ufmt.Printf("[INFO] collected protocol fee reward for project recipient\n")
+	println("[INFO] collected protocol fee reward for project recipient")
 	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
 func checkBlockedWithLaunchpadCollectDepositGns() {
 	testing.SetRealm(adminRealm)
-	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-019] invalid reward state", func() {
 		lp.CollectDepositGns(cross, "1")
 	})
-	ufmt.Printf("[INFO] blocked launchpad collect deposit gns by not yet ended project\n")
+	println("[INFO] blocked launchpad collect deposit gns by not yet ended project")
 }
 
 // Output:

@@ -17,6 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -367,8 +368,9 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
 				}(cross)
 			},
 			undelegateAmt: minimumAmount * 10,
-			expectPanic:   false,
-			description:   "Should return available amount when requested exceeds delegated",
+			expectPanic:   true,
+			expectedError: errNotEnoughDelegated.Error(),
+			description:   "Should reject when requested exceeds delegated",
 		},
 		{
 			name: "Undelegate zero amount",
@@ -465,6 +467,22 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			},
 		},
 		{
+			name:          "Redelegate more than delegated should panic",
+			caller:        testutils.TestAddress("alice"),
+			delegator:     testutils.TestAddress("validator1"),
+			delegatee:     testutils.TestAddress("validator2"),
+			amount:        minimumAmount * 2,
+			expectPanic:   true,
+			expectedError: errNotEnoughDelegated.Error(),
+			setupDelegation: func() {
+				cleanupStakerDelegateTest(t, gs)
+				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+			},
+			cleanupMocks: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+		},
+		{
 			name:          "Invalid delegator address should panic",
 			caller:        testutils.TestAddress("alice"),
 			delegator:     address(""),
@@ -494,6 +512,21 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 				cleanupStakerDelegateTest(t, gs)
 			},
 		},
+		{
+			name:          "Same delegatee should panic",
+			caller:        testutils.TestAddress("alice"),
+			delegator:     testutils.TestAddress("validator1"),
+			delegatee:     testutils.TestAddress("validator1"),
+			amount:        minimumAmount,
+			expectPanic:   true,
+			expectedError: errSameDelegatee.Error(),
+			setupDelegation: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+			cleanupMocks: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -509,6 +542,7 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.Redelegate(tt.delegator, tt.delegatee, tt.amount)
 					}(cross)
 				})
@@ -521,6 +555,48 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerDelegate_XgnsBurnOccursOnCollect(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	user := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	amount := int64(minimumAmount)
+
+	testing.SetRealm(testing.NewUserRealm(admin))
+	func(cur realm) {
+		gs.SetUnDelegationLockupPeriodByAdmin(0)
+	}(cross)
+
+	initialSupply := xgns.TotalSupply()
+	initialBalance := xgns.BalanceOf(user)
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.Delegate(validator, amount, "")
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.Undelegate(validator, amount)
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), safeAddInt64(initialSupply, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), safeAddInt64(initialBalance, amount))
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.CollectUndelegatedGns()
+	}(cross)
+
+	uassert.Equal(t, xgns.TotalSupply(), initialSupply)
+	uassert.Equal(t, xgns.BalanceOf(user), initialBalance)
 }
 
 // Test CollectUndelegatedGns function
@@ -1130,7 +1206,8 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when - call registerReferrer
+		    // when - call registerReferrer
+		    testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			result := registerReferrer(tc.caller, tc.referrer)
 
 			// then - should return a referrer string (actual referrer may differ based on referral module logic)

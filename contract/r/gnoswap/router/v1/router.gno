@@ -62,6 +62,14 @@ func (h *GnotSwapHandler) UpdateNewBalance() {
 }
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens.
+//
+// When user sends native GNOT for swap:
+// 1. GNOT was wrapped to WUGNOT at start
+// 2. Swap consumed some WUGNOT
+// 3. Remaining WUGNOT must be unwrapped back to GNOT
+//
+// Returns:
+//   - error: overflow/insufficient balance errors, or unwrap errors
 func (h *GnotSwapHandler) HandleInputSwap() error {
 	// Check for overflow when adding balances
 	if h.BeforeBalance > 0 && h.WrappedAmount > 0 {
@@ -205,9 +213,9 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 		}
 		intQuote := int8(qt)
 
-		// Even if quoteArr itself contains 0, there's no problem as long as the sum equals 100,
-		// but since quote generally won't be 0, we check if it's less than or equal to minQuote.
-		if intQuote <= minQuote {
+		// Quote must be positive (> 0) as each route needs a non-zero allocation.
+		// A quote of 0 would mean no swap through that route, which is invalid.
+		if intQuote <= minQuote { // minQuote = 0, so this rejects quote = 0
 			return ufmt.Errorf(errInvalidQuoteValue, quote, i)
 		}
 

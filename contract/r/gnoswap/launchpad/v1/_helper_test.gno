@@ -394,3 +394,49 @@ func getDeposit(depositID string) (*launchpad.Deposit, error) {
 	lp := getTestImplementation()
 	return lp.getDeposit(depositID)
 }
+
+func createProjectTest(
+	t *testing.T,
+	projectName string,
+	tokenPath string,
+	recipient address,
+	rewardAmount int64,
+	tier30Pct int64,
+	tier90Pct int64,
+	tier180Pct int64,
+	startTime int64,
+) string {
+	return func(cur realm) string {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+
+		return testImpl.CreateProject(
+			projectName,
+			tokenPath,
+			recipient,
+			rewardAmount,
+			"", "",
+			tier30Pct, tier90Pct, tier180Pct,
+			startTime,
+		)
+	}(cross)
+}
+
+func depositGnsTest(t *testing.T, depositID string, depositAmount int64) string {
+	return func(cur realm) string {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+
+		return testImpl.DepositGns(
+			depositID,
+			depositAmount,
+			"",
+		)
+	}(cross)
+}
+
+func collectRewardTest(t *testing.T, depositID string) int64 {
+	return func(cur realm) int64 {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+
+		return testImpl.CollectRewardByDepositId(depositID)
+	}(cross)
+}

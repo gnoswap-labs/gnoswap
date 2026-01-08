@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// swapCallback implements the pool's SwapCallback interface.
+// SwapCallback implements the pool's SwapCallback interface.
 // This is called by the pool after it has sent output tokens to the recipient.
 // The router must transfer the required input tokens to the pool.
 //
@@ -18,7 +18,18 @@ import (
 // 2. Just-in-time token transfers
 // 3. Complex multi-hop swaps without intermediate transfers
 //
-// Parameters follow the Uniswap V3 convention:
+// Parameters:
+//   - token0Path, token1Path: Pool token paths
+//   - amount0Delta, amount1Delta: Token deltas (positive = owe, negative = received)
+//   - payer: Address that will pay for the swap
+//
+// Access:
+//   - Only callable by Router v1 address (self-callback from pool)
+//
+// Returns:
+//   - error: nil on success, error if transfer fails
+//
+// Delta convention (Uniswap V3):
 //   - Positive delta: tokens the pool must receive (input token)
 //   - Negative delta: tokens the pool has sent (output token)
 func (r *routerV1) SwapCallback(
