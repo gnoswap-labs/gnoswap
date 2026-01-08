@@ -134,8 +134,8 @@ func createAndVoteProposalWithEmissionEnabled() {
 	ufmt.Println("[EXPECTED] Bob voted YES on proposal")
 
 	// Check voting info
-	yea := governance.GetYeaByProposalId(proposalId)
-	nay := governance.GetNayByProposalId(proposalId)
+	yea, _ := governance.GetYeaByProposalId(proposalId)
+	nay, _ := governance.GetNayByProposalId(proposalId)
 	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 
 	// Move past voting period so the proposal becomes inactive and won't block the next one
@@ -214,8 +214,8 @@ func voteOnProposalWithEmissionHalted() {
 	println("[EXPECTED] Bob voted NO successfully despite emission halt")
 
 	// Check voting results
-	yea := governance.GetYeaByProposalId(proposalId)
-	nay := governance.GetNayByProposalId(proposalId)
+	yea, _ := governance.GetYeaByProposalId(proposalId)
+	nay, _ := governance.GetNayByProposalId(proposalId)
 	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 	println("[SUCCESS] Governance voting not blocked by emission halt")
 }
@@ -270,8 +270,8 @@ func resetProposalVotesWithEmissionHalted() {
 	println("[INFO] Testing double voting protection with emission HALTED...")
 
 	// get vote status
-	yea := governance.GetYeaByProposalId(resetProposalId)
-	nay := governance.GetNayByProposalId(resetProposalId)
+	yea, _ := governance.GetYeaByProposalId(resetProposalId)
+	nay, _ := governance.GetNayByProposalId(resetProposalId)
 	ufmt.Printf("[INFO] Vote status - Yea: %d, Nay: %d\n", yea, nay)
 	println("[SUCCESS] Double voting protection works with emission halted")
 }

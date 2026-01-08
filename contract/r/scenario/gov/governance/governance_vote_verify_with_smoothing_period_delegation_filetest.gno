@@ -203,29 +203,29 @@ func voteProposals(proposalId int64, hasVoter2VotingWeight bool) {
 		ufmt.Printf("[INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time\n")
 	}
 
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state: %s\n", state)
 }
 
 func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 	// Get vote weights
-	voter1Weight := governance.GetVoteWeight(proposalId, voter1Addr)
+	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
 	voter2Weight := int64(0)
 
 	if hasVoter2VotingWeight {
-		voter2Weight = governance.GetVoteWeight(proposalId, voter2Addr)
+		voter2Weight, _ = governance.GetVoteWeight(proposalId, voter2Addr)
 	} else {
-		uassert.AbortsContains(t, "[GNOSWAP-GOVERNANCE-003] requested data not found", func() {
-			governance.GetVoteWeight(proposalId, voter2Addr)
-		})
+		// GetVoteWeight returns error instead of panicking for non-existent voting info
+		_, err := governance.GetVoteWeight(proposalId, voter2Addr)
+		uassert.Error(t, err, "voter2 should have no voting weight")
 
 		ufmt.Printf("[INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time\n")
 	}
 
 	// Get proposal totals
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get xGNS balances
 	voter1Xgns := xgns.BalanceOf(voter1Addr)

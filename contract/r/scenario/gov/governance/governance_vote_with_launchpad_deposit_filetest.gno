@@ -179,18 +179,18 @@ func proposeText() int64 {
 func voteProposalWithDummy(proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Vote submitted, proposal state: %s\n", state)
 }
 
 func verifyVotingWeight(proposalId int64, projectTierId string) {
 	// Get vote info
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get dummy's voted weight
-	dummyVoteWeight := governance.GetVoteWeight(proposalId, dummyAddr)
+	dummyVoteWeight, _ := governance.GetVoteWeight(proposalId, dummyAddr)
 
 	// Get xGNS info
 	totalXgns := xgns.TotalSupply()
