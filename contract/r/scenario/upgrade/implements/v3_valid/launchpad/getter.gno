@@ -183,9 +183,9 @@ func (lp *launchpadV1) GetProjectActiveStatus(projectId string) (bool, error) {
 	return isProjectActive(project, currentTime), nil
 }
 
-// GetProjects returns a paginated list of project IDs.
+// GetProjectIDs returns a paginated list of project IDs.
 // Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetProjects(offset, limit int64) []string {
+func (lp *launchpadV1) GetProjectIDs(offset, limit int64) []string {
 	if offset < 0 || limit <= 0 {
 		return []string{}
 	}
@@ -214,9 +214,9 @@ func (lp *launchpadV1) GetProjects(offset, limit int64) []string {
 	return projectIds
 }
 
-// GetDeposits returns a paginated list of deposit IDs.
+// GetDepositIDs returns a paginated list of deposit IDs.
 // Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetDeposits(offset, limit int64) []string {
+func (lp *launchpadV1) GetDepositIDs(offset, limit int64) []string {
 	if offset < 0 || limit <= 0 {
 		return []string{}
 	}
@@ -245,9 +245,9 @@ func (lp *launchpadV1) GetDeposits(offset, limit int64) []string {
 	return depositIds
 }
 
-// GetRewardManagers returns a paginated list of project tier IDs (reward manager keys).
+// GetRewardManagerIDs returns a paginated list of project tier IDs (reward manager keys).
 // Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetRewardManagers(offset, limit int64) []string {
+func (lp *launchpadV1) GetRewardManagerIDs(offset, limit int64) []string {
 	if offset < 0 || limit <= 0 {
 		return []string{}
 	}

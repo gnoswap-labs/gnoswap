@@ -52,9 +52,9 @@ type ILaunchpadGetter interface {
 	GetProjectActiveStatus(projectId string) (bool, error)
 
 	// Pagination getters
-	GetProjects(offset, limit int64) []string
-	GetDeposits(offset, limit int64) []string
-	GetRewardManagers(offset, limit int64) []string
+	GetProjectIDs(offset, limit int64) []string
+	GetDepositIDs(offset, limit int64) []string
+	GetRewardManagerIDs(offset, limit int64) []string
 }
 
 type ILaunchpadStore interface {

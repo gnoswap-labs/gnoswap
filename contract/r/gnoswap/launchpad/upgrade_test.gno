@@ -576,7 +576,7 @@ func TestGetProjectActiveStatus(t *testing.T) {
 	}
 }
 
-func TestGetProjects(t *testing.T) {
+func TestGetProjectIDs(t *testing.T) {
 	tests := []struct {
 		name   string
 		offset int64
@@ -598,18 +598,18 @@ func TestGetProjects(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjects(tt.offset, tt.limit)
+			GetProjectIDs(tt.offset, tt.limit)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjects") != 1 {
-				t.Error("GetProjects was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectIDs") != 1 {
+				t.Error("GetProjectIDs was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestGetDeposits(t *testing.T) {
+func TestGetDepositIDs(t *testing.T) {
 	tests := []struct {
 		name   string
 		offset int64
@@ -631,12 +631,12 @@ func TestGetDeposits(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetDeposits(tt.offset, tt.limit)
+			GetDepositIDs(tt.offset, tt.limit)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetDeposits") != 1 {
-				t.Error("GetDeposits was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetDepositIDs") != 1 {
+				t.Error("GetDepositIDs was not called on the implementation")
 			}
 		})
 	}
@@ -797,7 +797,7 @@ func TestGetRewardState(t *testing.T) {
 	}
 }
 
-func TestGetRewardManagers(t *testing.T) {
+func TestGetRewardManagerIDs(t *testing.T) {
 	tests := []struct {
 		name   string
 		offset int64
@@ -819,12 +819,12 @@ func TestGetRewardManagers(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetRewardManagers(tt.offset, tt.limit)
+			GetRewardManagerIDs(tt.offset, tt.limit)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetRewardManagers") != 1 {
-				t.Error("GetRewardManagers was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetRewardManagerIDs") != 1 {
+				t.Error("GetRewardManagerIDs was not called on the implementation")
 			}
 		})
 	}

@@ -228,24 +228,24 @@ func (m *MockLaunchpad) GetProjectActiveStatus(projectId string) (bool, error) {
 	return res[0].(bool), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjects(offset, limit int64) []string {
-	res, ok := m.Response.Get("GetProjects")
+func (m *MockLaunchpad) GetProjectIDs(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetProjectIDs")
 	if !ok {
 		return []string{}
 	}
 	return res[0].([]string)
 }
 
-func (m *MockLaunchpad) GetDeposits(offset, limit int64) []string {
-	res, ok := m.Response.Get("GetDeposits")
+func (m *MockLaunchpad) GetDepositIDs(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetDepositIDs")
 	if !ok {
 		return []string{}
 	}
 	return res[0].([]string)
 }
 
-func (m *MockLaunchpad) GetRewardManagers(offset, limit int64) []string {
-	res, ok := m.Response.Get("GetRewardManagers")
+func (m *MockLaunchpad) GetRewardManagerIDs(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetRewardManagerIDs")
 	if !ok {
 		return []string{}
 	}

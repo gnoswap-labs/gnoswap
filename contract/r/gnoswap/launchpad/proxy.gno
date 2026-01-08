@@ -124,17 +124,17 @@ func GetProjectActiveStatus(projectId string) (bool, error) {
 	return getImplementation().GetProjectActiveStatus(projectId)
 }
 
-// GetProjects returns a paginated list of project IDs.
-func GetProjects(offset, limit int64) []string {
-	return getImplementation().GetProjects(offset, limit)
+// GetProjectIDs returns a paginated list of project IDs.
+func GetProjectIDs(offset, limit int64) []string {
+	return getImplementation().GetProjectIDs(offset, limit)
 }
 
-// GetDeposits returns a paginated list of deposit IDs.
-func GetDeposits(offset, limit int64) []string {
-	return getImplementation().GetDeposits(offset, limit)
+// GetDepositIDs returns a paginated list of deposit IDs.
+func GetDepositIDs(offset, limit int64) []string {
+	return getImplementation().GetDepositIDs(offset, limit)
 }
 
-// GetRewardManagers returns a paginated list of project tier IDs (reward manager keys).
-func GetRewardManagers(offset, limit int64) []string {
-	return getImplementation().GetRewardManagers(offset, limit)
+// GetRewardManagerIDs returns a paginated list of project tier IDs (reward manager keys).
+func GetRewardManagerIDs(offset, limit int64) []string {
+	return getImplementation().GetRewardManagerIDs(offset, limit)
 }
