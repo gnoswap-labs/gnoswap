@@ -2,6 +2,7 @@
 package v2_invalid
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/gov/staker"
 	v1 "gno.land/r/gnoswap/gov/staker/v1"
 )
@@ -226,6 +227,69 @@ func (t *TestGovStaker) GetLaunchpadProjectDeposit(projectAddr string) (int64, b
 		panic("test implementation: GetLaunchpadProjectDeposit not supported")
 	}
 	return t.instance.GetLaunchpadProjectDeposit(projectAddr)
+}
+
+func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
+	if !t.isActive("GetDelegationWithdrawCount") {
+		panic("test implementation: GetDelegationWithdrawCount not supported")
+	}
+	return t.instance.GetDelegationWithdrawCount(delegationID)
+}
+
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+	if !t.isActive("GetDelegationWithdraws") {
+		panic("test implementation: GetDelegationWithdraws not supported")
+	}
+	return t.instance.GetDelegationWithdraws(delegationID, offset, count)
+}
+
+func (t *TestGovStaker) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	if !t.isActive("GetCollectableWithdrawAmount") {
+		panic("test implementation: GetCollectableWithdrawAmount not supported")
+	}
+	return t.instance.GetCollectableWithdrawAmount(delegationID)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
+	if !t.isActive("GetProtocolFeeAccumulatedX128PerStake") {
+		panic("test implementation: GetProtocolFeeAccumulatedX128PerStake not supported")
+	}
+	return t.instance.GetProtocolFeeAccumulatedX128PerStake(tokenPath)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
+	if !t.isActive("GetProtocolFeeAmounts") {
+		panic("test implementation: GetProtocolFeeAmounts not supported")
+	}
+	return t.instance.GetProtocolFeeAmounts(tokenPath)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {
+	if !t.isActive("GetProtocolFeeAccumulatedTimestamp") {
+		panic("test implementation: GetProtocolFeeAccumulatedTimestamp not supported")
+	}
+	return t.instance.GetProtocolFeeAccumulatedTimestamp()
+}
+
+func (t *TestGovStaker) GetEmissionAccumulatedX128PerStake() *u256.Uint {
+	if !t.isActive("GetEmissionAccumulatedX128PerStake") {
+		panic("test implementation: GetEmissionAccumulatedX128PerStake not supported")
+	}
+	return t.instance.GetEmissionAccumulatedX128PerStake()
+}
+
+func (t *TestGovStaker) GetEmissionDistributedAmount() int64 {
+	if !t.isActive("GetEmissionDistributedAmount") {
+		panic("test implementation: GetEmissionDistributedAmount not supported")
+	}
+	return t.instance.GetEmissionDistributedAmount()
+}
+
+func (t *TestGovStaker) GetEmissionAccumulatedTimestamp() int64 {
+	if !t.isActive("GetEmissionAccumulatedTimestamp") {
+		panic("test implementation: GetEmissionAccumulatedTimestamp not supported")
+	}
+	return t.instance.GetEmissionAccumulatedTimestamp()
 }
 
 // IGovStakerAdmin interface
