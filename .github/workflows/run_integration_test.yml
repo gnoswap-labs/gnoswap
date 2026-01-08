@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  run-integration-test:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - name: Check out gnoswap repo
@@ -24,18 +24,63 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Build gno binary
+        run: |
+          cd gno
+          go build -o gno-binary ./gnovm/cmd/gno
+
+      - name: Upload gno artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gno-integration-build
+          path: |
+            gno/
+          retention-days: 1
+
+  run-integration-test:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "base"
+            categories: "base"
+          - name: "upgradable"
+            categories: "upgradable"
+          - name: "gov-launchpad"
+            categories: "gov,launchpad"
+          - name: "others"
+            categories: "router,pool,position,staker,root"
+    steps:
+      - name: Check out gnoswap repo
+        uses: actions/checkout@v4
+
+      - name: Download gno artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gno-integration-build
+          path: ./gno
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+          cache-dependency-path: gno/go.sum
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install gno
+      - name: Install gno from artifacts
         run: |
-          cd gno
-          make install.gno
+          chmod +x gno/gno-binary
+          sudo mv gno/gno-binary /usr/local/bin/gno
 
       - name: Run setup.py
         run: python3 setup.py --exclude-tests -w .
 
-      - name: Run integration tests
-        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip
+      - name: "Run integration tests (${{ matrix.name }})"
+        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip --category=${{ matrix.categories }}

@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/test/fuzz/math"
+gno = "0.9"
