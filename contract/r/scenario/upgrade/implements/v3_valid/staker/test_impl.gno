@@ -298,8 +298,12 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	return t.instance.GetWarmupTemplate()
 }
 
-func (t *TestStaker) GetTotalStakedPositionCount() uint64 {
-	return t.instance.GetTotalStakedPositionCount()
+func (t *TestStaker) GetTotalStakedUserCount() uint64 {
+	return t.instance.GetTotalStakedUserCount()
+}
+
+func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
+	return t.instance.GetTotalStakedUserPositionCount(user)
 }
 
 func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {

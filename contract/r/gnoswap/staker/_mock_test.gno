@@ -544,8 +544,16 @@ func (m *MockStaker) GetWarmupTemplate() []Warmup {
 	return res[0].([]Warmup)
 }
 
-func (m *MockStaker) GetTotalStakedPositionCount() uint64 {
-	res, ok := m.Response.Get("GetTotalStakedPositionCount")
+func (m *MockStaker) GetTotalStakedUserCount() uint64 {
+	res, ok := m.Response.Get("GetTotalStakedUserCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetTotalStakedUserPositionCount(user address) uint64 {
+	res, ok := m.Response.Get("GetTotalStakedUserPositionCount")
 	if !ok {
 		return 0
 	}

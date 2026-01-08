@@ -103,7 +103,8 @@ type IStakerGetter interface {
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
 	GetWarmupTemplate() []Warmup
-	GetTotalStakedPositionCount() uint64
+	GetTotalStakedUserCount() uint64
+	GetTotalStakedUserPositionCount(user address) uint64
 	GetStakedPositionsByUser(owner address, offset, count int) []uint64
 }
 

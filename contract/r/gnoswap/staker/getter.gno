@@ -276,9 +276,14 @@ func GetWarmupTemplate() []Warmup {
 	return getImplementation().GetWarmupTemplate()
 }
 
-// GetTotalStakedPositionCount returns the total staked position count.
-func GetTotalStakedPositionCount() uint64 {
-	return getImplementation().GetTotalStakedPositionCount()
+// GetTotalStakedUserCount returns the total number of staked users.
+func GetTotalStakedUserCount() uint64 {
+	return getImplementation().GetTotalStakedUserCount()
+}
+
+// GetTotalStakedUserPositionCount returns the staked position count for a user.
+func GetTotalStakedUserPositionCount(user address) uint64 {
+	return getImplementation().GetTotalStakedUserPositionCount(user)
 }
 
 // GetStakedPositionsByUser returns staked position IDs for a user with pagination.

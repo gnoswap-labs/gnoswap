@@ -620,10 +620,18 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	).([]staker.Warmup)
 }
 
-func (t *TestStaker) GetTotalStakedPositionCount() uint64 {
+func (t *TestStaker) GetTotalStakedUserCount() uint64 {
 	return t.ExecuteFn(
-		"GetTotalStakedPositionCount",
-		func(args ...any) any { return t.instance.GetTotalStakedPositionCount() },
+		"GetTotalStakedUserCount",
+		func(args ...any) any { return t.instance.GetTotalStakedUserCount() },
+	).(uint64)
+}
+
+func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
+	return t.ExecuteFn(
+		"GetTotalStakedUserPositionCount",
+		func(args ...any) any { return t.instance.GetTotalStakedUserPositionCount(args[0].(address)) },
+		user,
 	).(uint64)
 }
 

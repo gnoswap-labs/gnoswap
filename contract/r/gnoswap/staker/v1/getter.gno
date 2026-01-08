@@ -402,15 +402,20 @@ func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
 	return result
 }
 
-// GetTotalStakedPositionCount returns the total staked position count.
-func (s *stakerV1) GetTotalStakedPositionCount() uint64 {
-	total := uint64(0)
-	s.getStakers().tree.Iterate("", "", func(_ string, value any) bool {
-		depositTree := retrieveDepositTree(value)
-		total += uint64(depositTree.Size())
-		return false
-	})
-	return total
+// GetTotalStakedUserCount returns the total number of users with staked positions.
+func (s *stakerV1) GetTotalStakedUserCount() uint64 {
+	return uint64(s.getStakers().tree.Size())
+}
+
+// GetTotalStakedUserPositionCount returns the staked position count for a user.
+func (s *stakerV1) GetTotalStakedUserPositionCount(user address) uint64 {
+	depositTreeI, ok := s.getStakers().tree.Get(user.String())
+	if !ok {
+		return 0
+	}
+
+	depositTree := retrieveDepositTree(depositTreeI)
+	return uint64(depositTree.Size())
 }
 
 // GetStakedPositionsByUser returns staked position IDs for a user with pagination.

@@ -505,14 +505,20 @@ func TestGetterWarmupTemplate(t *testing.T) {
 	uassert.Equal(t, originalLen, len(newWarmups))
 }
 
-func TestGetterStakedPositionCount(t *testing.T) {
+func TestGetterStakedUserCounts(t *testing.T) {
 	state := setupBasicTestState(t)
 
-	// Initial count should be 1
-	count := state.instance.GetTotalStakedPositionCount()
-	uassert.Equal(t, uint64(1), count)
+	// Initial user count should be 1
+	userCount := state.instance.GetTotalStakedUserCount()
+	uassert.Equal(t, uint64(1), userCount)
 
-	// Add another deposit
+	userPositionCount := state.instance.GetTotalStakedUserPositionCount(state.owner)
+	uassert.Equal(t, uint64(1), userPositionCount)
+
+	userPositionCountEmpty := state.instance.GetTotalStakedUserPositionCount(addr02)
+	uassert.Equal(t, uint64(0), userPositionCountEmpty)
+
+	// Add another user with one deposit
 	deposit2 := sr.NewDeposit(
 		addr02,
 		state.poolPath,
@@ -528,8 +534,11 @@ func TestGetterStakedPositionCount(t *testing.T) {
 	depositTree2.Set(sr.EncodeUint(uint64(2)), deposit2)
 	state.instance.store.GetStakers().Set(addr02.String(), depositTree2)
 
-	count = state.instance.GetTotalStakedPositionCount()
-	uassert.Equal(t, uint64(2), count)
+	userCount = state.instance.GetTotalStakedUserCount()
+	uassert.Equal(t, uint64(2), userCount)
+
+	userPositionCount = state.instance.GetTotalStakedUserPositionCount(addr02)
+	uassert.Equal(t, uint64(1), userPositionCount)
 }
 
 func TestGetterStakedPositionsByUser(t *testing.T) {
