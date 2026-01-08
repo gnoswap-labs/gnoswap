@@ -87,7 +87,6 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Collect rewards after halt")
-	collectRewards(1)
 	testing.SkipHeights(1)
 	println()
 
@@ -220,6 +219,13 @@ func checkEmissionDistributionChangesFn(fn func()) {
 // [INFO] Emission halt state set to true
 //
 // [SCENARIO] 5. Collect rewards after halt
+//
+// [SCENARIO] 6. Resume emission
+// [INFO] Emission halt state set to false
+//
+// [SCENARIO] 7. Collect rewards after resume
+// [INFO] Check emission distribution amount to staker (last distributed: 1234567910)
+// [INFO] Emission distribution balance changed: 53510273
+// [EXPECTED] total staker balance changes: 53510273
+// [EXPECTED] total reward: 15892550
 
-// Error:
-// insufficient balance
