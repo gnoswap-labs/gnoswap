@@ -31,9 +31,6 @@ func resetGnsTokenObject(t *testing.T) {
 	owner = ownable.NewWithAddress(adminAddr)
 
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
-
-	// Reset burn amount to ensure tests start with clean state
-	burnAmount = 0
 }
 
 // resetEmissionState resets the emission state to a clean state for testing
@@ -53,7 +50,6 @@ func InitGnsTest(t *testing.T) {
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
 	setLastMintedTimestamp(0)
-	burnAmount = 0
 
 	resetEmissionState(t)
 }

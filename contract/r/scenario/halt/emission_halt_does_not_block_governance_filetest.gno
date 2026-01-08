@@ -31,10 +31,11 @@ import (
 const INT64_MAX int64 = 9223372036854775807
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm       = testing.NewUserRealm(adminAddr)
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	poolAddr, _      = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
+
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	poolAddr      = access.MustGetAddress(prbac.ROLE_POOL.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -232,10 +233,8 @@ func executeProposalWithEmissionHalted() {
 	ufmt.Printf("[INFO] Config BEFORE Execute - ExecutionWindow: %d\n", configBefore.ExecutionWindow)
 
 	testing.SetRealm(adminRealm)
-	// Execute should work even with emission halted
 	governance.Execute(cross, proposalId)
 
-	// Log config AFTER Execute
 	configAfter := governance.GetLatestConfig()
 	ufmt.Printf("[INFO] Config AFTER Execute - ExecutionWindow: %d\n", configAfter.ExecutionWindow)
 
