@@ -1,44 +1,33 @@
 package xgns
 
 import (
-    "errors"
+	"errors"
 
-    "gno.land/p/demo/tokens/grc20"
+	"gno.land/p/demo/tokens/grc20"
 
-    prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac"
 
-    "gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access"
 )
 
-func GetAdmin() address {
-    return admin.Owner()
-}
-
-func GetToken() *grc20.Token {
-    return token
-}
-
-func GetTotalSupply() int64 {
-    return TotalSupply()
-}
-
-func GetBalanceOf(addr address) int64 {
-    return token.BalanceOf(addr)
-}
+func GetAdmin() address               { return admin.Owner() }
+func GetToken() *grc20.Token          { return token }
+func GetTotalSupply() int64           { return TotalSupply() }
+func GetBalanceOf(addr address) int64 { return token.BalanceOf(addr) }
 
 func GetVotingSupply() (int64, error) {
-	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	if !ok {
-		return 0, errors.New("launchpad address not found")
+	launchpad, err := getLaunchpadAddress()
+	if err != nil {
+		return 0, err
 	}
 
 	return token.TotalSupply() - token.BalanceOf(launchpad), nil
 }
 
 func getLaunchpadAddress() (address, error) {
-    launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-    if !ok {
-        return "", errors.New("launchpad address not found")
-    }
-    return launchpad, nil
+	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !ok {
+		return "", errors.New("launchpad address not found")
+	}
+	return launchpad, nil
 }
