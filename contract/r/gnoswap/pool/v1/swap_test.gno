@@ -508,6 +508,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 		name            string
 		description     string
 		setupScenario   func(t *testing.T)
+		fee             uint32
 		swapParams      SwapScenario
 		consistencyGoal string
 	}{
@@ -520,6 +521,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 				TokenFaucet(t, gnsPath, routerAddr)
 				TokenApprove(t, gnsPath, routerAddr, poolAddr, 1000)
 			},
+			fee: STANDARD_FEE_TIER,
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: DUST_SWAP_AMOUNT,
@@ -536,12 +538,153 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 				TokenFaucet(t, gnsPath, routerAddr)
 				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 			},
+			fee: STANDARD_FEE_TIER,
 			swapParams: SwapScenario{
 				zeroForOne:      false,
 				amountSpecified: EXTREME_SWAP_AMOUNT,
 				priceLimit:      maxSqrtPriceLimitX96,
 			},
 			consistencyGoal: "Accurate prediction of price impact even in large trades",
+		},
+		{
+			name:        "small_exact_input_zeroForOne",
+			description: "Small swap exact input token0 to token1",
+			setupScenario: func(t *testing.T) {
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: SMALL_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+			},
+			consistencyGoal: "Minimal price impact with small amount",
+		},
+		{
+			name:        "large_exact_input_approaching_limits",
+			description: "Large swap approaching liquidity limits",
+			setupScenario: func(t *testing.T) {
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: LARGE_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+			},
+			consistencyGoal: "Significant price impact with large amount",
+		},
+		{
+			name:        "small_exact_output_oneForZero",
+			description: "Small exact output swap token1 to token0",
+			setupScenario: func(t *testing.T) {
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      false,
+				amountSpecified: "-" + SMALL_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+			},
+			consistencyGoal: "Small input required for small output",
+		},
+		{
+			name:        "medium_exact_output_near_limit",
+			description: "Medium exact output approaching limits",
+			setupScenario: func(t *testing.T) {
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "-" + MEDIUM_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+			},
+			consistencyGoal: "Large input required due to price impact",
+		},
+		{
+			name:        "ultra_low_fee_stablecoin_consistency",
+			description: "Ultra-low fee tier (0.01%) stablecoin swap",
+			setupScenario: func(t *testing.T) {
+				setupUltraLowFeePool(t)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+			},
+			fee: ULTRA_LOW_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: MEDIUM_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+			},
+			consistencyGoal: "Minimal fee impact on stablecoin swap",
+		},
+		{
+			name:        "scattered_liquidity_consistency",
+			description: "Swap through scattered liquidity positions",
+			setupScenario: func(t *testing.T) {
+				setupScatteredLiquidityPool(t)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      false,
+				amountSpecified: SMALL_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(11040).ToString(),
+			},
+			consistencyGoal: "Navigation across multiple liquidity ranges",
+		},
+		{
+			name:        "extreme_price_range_consistency",
+			description: "Extreme price range traversal",
+			setupScenario: func(t *testing.T) {
+				setupExtremePriceRangePool(t)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: SMALL_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-100080).ToString(),
+			},
+			consistencyGoal: "Large price movement in extreme volatility",
+		},
+		{
+			name:        "wide_range_low_concentration_consistency",
+			description: "Wide range position with low concentration",
+			setupScenario: func(t *testing.T) {
+				setupWideRangePositionPool(t)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: MEDIUM_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+			},
+			consistencyGoal: "Lower price impact due to wide liquidity distribution",
+		},
+		{
+			name:        "narrow_range_high_concentration_consistency",
+			description: "Narrow range position with high concentration",
+			setupScenario: func(t *testing.T) {
+				setupNarrowRangePositionPool(t)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      false,
+				amountSpecified: SMALL_SWAP_AMOUNT,
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+			},
+			consistencyGoal: "Better execution due to concentrated liquidity",
 		},
 	}
 
@@ -556,7 +699,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 
 			// When: DrySwap for pre-calculation
 			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
-				wugnotPath, gnsPath, STANDARD_FEE_TIER,
+				wugnotPath, gnsPath, test.fee,
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit)
 
@@ -568,7 +711,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, test.fee,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
@@ -593,6 +736,64 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 				test.description, dryAmount0, dryAmount1, actualAmount0, actualAmount1, test.consistencyGoal)
 		})
 	}
+}
+
+func setupWideRangePositionPool(t *testing.T) {
+	t.Helper()
+
+	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
+	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+	mockInstanceCreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
+
+	testing.SetRealm(posRealm)
+	// Wide range position (low concentration)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -887220, 887220, "100000000", adminAddr)
+
+	// Prepare tokens
+	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetOriginCaller(routerAddr)
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+}
+
+func setupNarrowRangePositionPool(t *testing.T) {
+	t.Helper()
+
+	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
+	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
+	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
+
+	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+
+	mockInstanceCreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER, EQUAL_PRICE_RATIO)
+
+	testing.SetRealm(posRealm)
+	// Narrow range position (high concentration)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -60, 60, "100000000", adminAddr)
+
+	// Prepare tokens
+	testing.SetOriginCaller(adminAddr)
+	testing.SetRealm(adminRealm)
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetOriginCaller(routerAddr)
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 }
 
 func TestSwap_TradingPatterns(t *testing.T) {

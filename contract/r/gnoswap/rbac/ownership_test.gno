@@ -4,9 +4,12 @@ import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/access"
+
+	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestIsOwner(t *testing.T) {
@@ -323,6 +326,10 @@ func TestAcceptOwnership(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// reset manager for test
 			manager = prbac.NewRBACWithAddress(tt.ownerAddr)
+			err := manager.RegisterRole(prbac.ROLE_ADMIN.String(), tt.ownerAddr)
+			if err != nil {
+				t.Fatalf("Failed to register admin role: %v", err)
+			}
 
 			// setup transfer ownership
 			testing.SetOriginCaller(tt.ownerAddr)
@@ -346,6 +353,24 @@ func TestAcceptOwnership(t *testing.T) {
 
 			if GetOwner() != tt.expectedOwner {
 				t.Errorf("Owner not changed correctly, got %s, want %s", GetOwner(), tt.expectedOwner)
+			}
+
+			if !tt.expectedHasAborted {
+				adminAddr, err := manager.GetRoleAddress(prbac.ROLE_ADMIN.String())
+				if err != nil {
+					t.Fatalf("Failed to get admin role address: %v", err)
+				}
+				if adminAddr != tt.expectedOwner {
+					t.Errorf("Admin role address mismatch: got %s, want %s", adminAddr, tt.expectedOwner)
+				}
+
+				accessAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String())
+				if !ok {
+					t.Fatal("Admin role not found in access")
+				}
+				if accessAddr != tt.expectedOwner {
+					t.Errorf("Access admin address mismatch: got %s, want %s", accessAddr, tt.expectedOwner)
+				}
 			}
 		})
 	}

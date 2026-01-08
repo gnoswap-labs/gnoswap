@@ -11,7 +11,9 @@ import (
 	"gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/gov/governance"
+	lp "gno.land/r/gnoswap/launchpad"
 	pl "gno.land/r/gnoswap/pool"
+	pos "gno.land/r/gnoswap/position"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	rr "gno.land/r/gnoswap/router"
 	sr "gno.land/r/gnoswap/staker"
@@ -36,8 +38,10 @@ const (
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/pool"
+	POSITION_PATH       = "gno.land/r/gnoswap/position"
 	ROUTER_PATH         = "gno.land/r/gnoswap/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/staker"
+	LAUNCHPAD_PATH      = "gno.land/r/gnoswap/launchpad"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/gov/governance"
@@ -212,7 +216,7 @@ func NewParameterRegistry() *ParameterRegistry {
 // Returns:
 //   - string: unique key in format "pkgPath:function"
 func makeHandlerKey(pkgPath, function string) string {
-	return ufmt.Sprintf("%s:%s", pkgPath, function)
+	return pkgPath + ":" + function
 }
 
 // createParameterHandlers initializes and configures all supported parameter handlers.
@@ -668,6 +672,151 @@ func CreateParameterHandlers() *ParameterRegistry {
 				// Remove role
 				rbac.RemoveRole(cross, roleName)
 
+				return nil
+			},
+		},
+
+		// Protocol fee - SetGovStakerPct
+		{
+			pkgPath:    PROTOCOL_FEE_PATH,
+			function:   "SetGovStakerPct",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // pct
+			},
+			handlerFunc: func(params []string) error {
+				// Set percentage of protocol fees going to governance stakers
+				pf.SetGovStakerPct(cross, parseInt64(params[0])) // pct
+				return nil
+			},
+		},
+
+		// Staker - Token list management
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "AddToken",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // tokenPath
+			},
+			handlerFunc: func(params []string) error {
+				// Add token to allowed token list for external incentives
+				sr.AddToken(cross, params[0]) // tokenPath
+				return nil
+			},
+		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "RemoveToken",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // tokenPath
+			},
+			handlerFunc: func(params []string) error {
+				// Remove token from allowed token list
+				sr.RemoveToken(cross, params[0]) // tokenPath
+				return nil
+			},
+		},
+
+		// Launchpad - Project management
+		{
+			pkgPath:    LAUNCHPAD_PATH,
+			function:   "CreateProject",
+			paramCount: 10,
+			paramValidators: []paramValidator{
+				stringValidator,            // name
+				stringValidator,            // tokenPath
+				addressValidator,           // recipient
+				numberValidator(kindInt64), // depositAmount
+				stringValidator,            // conditionTokens
+				stringValidator,            // conditionAmounts
+				numberValidator(kindInt64), // tier30Ratio
+				numberValidator(kindInt64), // tier90Ratio
+				numberValidator(kindInt64), // tier180Ratio
+				numberValidator(kindInt64), // startTime
+			},
+			handlerFunc: func(params []string) error {
+				// Create a new launchpad project
+				lp.CreateProject(
+					cross,
+					params[0],                                     // name
+					params[1],                                     // tokenPath
+					address(params[2]),                            // recipient
+					parseNumber(params[3], kindInt64).(int64),     // depositAmount
+					params[4],                                     // conditionTokens
+					params[5],                                     // conditionAmounts
+					parseNumber(params[6], kindInt64).(int64),     // tier30Ratio
+					parseNumber(params[7], kindInt64).(int64),     // tier90Ratio
+					parseNumber(params[8], kindInt64).(int64),     // tier180Ratio
+					parseNumber(params[9], kindInt64).(int64),     // startTime
+				)
+				return nil
+			},
+		},
+		// Upgrade handlers for various domains
+		{
+			pkgPath:    POOL_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade pool implementation
+				pl.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    POSITION_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade position implementation
+				pos.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade staker implementation
+				sr.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    LAUNCHPAD_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade launchpad implementation
+				lp.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    GOV_GOVERNANCE_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // targetPackagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade governance implementation
+				governance.UpgradeImpl(cross, params[0]) // targetPackagePath
 				return nil
 			},
 		},

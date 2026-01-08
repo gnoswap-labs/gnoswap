@@ -3,8 +3,6 @@ package v1
 import (
 	"strings"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -47,17 +45,14 @@ func (r *ProposalMetadataResolver) Validate() error {
 func (r *ProposalMetadataResolver) validateTitle(title string) error {
 	// Title cannot be empty
 	if title == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("title is empty"),
-		)
+		return makeErrorWithDetails(errInvalidInput, "title is empty")
 	}
 
 	// Title cannot exceed maximum length
 	if len(title) > maxTitleLength {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("title is too long, max length is %d", maxTitleLength),
+			"title is too long, max length is 255 characters",
 		)
 	}
 
@@ -76,7 +71,7 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 	if description == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("description is empty"),
+			"description is empty",
 		)
 	}
 
@@ -84,7 +79,7 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 	if len(description) > maxDescriptionLength {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("description is too long, max length is %d", maxDescriptionLength),
+			"description is too long, max length is 10,000 characters",
 		)
 	}
 
@@ -136,6 +131,10 @@ func (r *ProposalDataResolver) validateText() error {
 func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	// Validate recipient address
 	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
+	if communityPoolSpend == nil {
+		return makeErrorWithDetails(
+			errInvalidInput, "community pool spend info is missing")
+	}
 
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
@@ -160,6 +159,12 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 //   - error: validation error if parameter change data structure is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
+	if execution == nil {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			"execution info is missing",
+		)
+	}
 	num := execution.Num()
 	msgs := execution.Msgs()
 
@@ -167,7 +172,7 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 	if num <= 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("numToExecute is less than or equal to 0"),
+			"numToExecute is less than or equal to 0",
 		)
 	}
 
@@ -175,33 +180,24 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 	if len(msgs) == 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("executions is empty"),
+			"executions is empty",
 		)
 	}
 
 	// Validate execution count matches message count
 	if len(msgs) != int(num) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("executions is not equal to numToExecute"),
-		)
+		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
 	}
 
 	// Validate execution count doesn't exceed maximum
 	if num > maxNumberOfExecution {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("numToExecute is greater than %d", maxNumberOfExecution),
-		)
+		return makeErrorWithDetails(errInvalidInput, "numToExecute is greater than 10")
 	}
 
 	// Validate parameter change message format
 	parameterChangesInfos := r.ParameterChangesInfos()
 	if len(parameterChangesInfos) != int(num) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("invalid parameter change info"),
-		)
+		return makeErrorWithDetails(errInvalidInput, "invalid parameter change info")
 	}
 
 	return nil
@@ -216,16 +212,18 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 	infos := make([]governance.ParameterChangeInfo, 0)
 
 	// Return empty slice if no executions
-	if r.Execution().Num() <= 0 {
+	execution := r.Execution()
+	if execution == nil || execution.Num() <= 0 {
 		return infos
 	}
 
 	// Parse each execution message
-	for _, msg := range r.Execution().Msgs() {
+	for _, msg := range execution.Msgs() {
 		// Split message into components: pkgPath, function, params
 		params := strings.Split(msg, parameterSeparator)
 		if len(params) != 3 {
-			continue // Skip malformed messages
+			// validation rejects mismatched counts upstream.
+			continue
 		}
 
 		pkgPath := params[0]
@@ -246,11 +244,7 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 // Returns:
 //   - *ProposalData: proposal data configured for text proposal
 func NewProposalTextData() *governance.ProposalData {
-	return governance.NewProposalData(
-		governance.Text,
-		&governance.CommunityPoolSpendInfo{},
-		&governance.ExecutionInfo{},
-	)
+	return governance.NewProposalData(governance.Text, nil, nil)
 }
 
 // NewProposalCommunityPoolSpendData creates proposal data for a community pool spend proposal.
@@ -299,7 +293,7 @@ func NewProposalExecutionData(numToExecute int64, executions string) *governance
 
 	return governance.NewProposalData(
 		governance.ParameterChange,
-		governance.NewCommunityPoolSpendInfo(address(""), "", 0),
+		nil,
 		governance.NewExecutionInfo(numToExecute, msgs),
 	)
 }

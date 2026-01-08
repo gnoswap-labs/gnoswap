@@ -95,7 +95,7 @@ func createOBLProject() string {
 	tier30Ratio := int64(30)
 	tier90Ratio := int64(30)
 	tier180Ratio := int64(40)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour from now
+	startTime := int64(time.Now().Unix() + 604800) // 7 days from now
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
@@ -114,8 +114,8 @@ func createOBLProject() string {
 		startTime,
 	)
 
-	println("[INFO] Skipping 3600 blocks to activate project")
-	testing.SkipHeights(3600)
+	println("[INFO] Skipping 120960 blocks to activate project")
+	testing.SkipHeights(120960)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 	return projectId
@@ -256,7 +256,7 @@ func depositGnsFailNonExistent() {
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [INFO] Skipping 3600 blocks to activate project
+// [INFO] Skipping 120960 blocks to activate project
 // [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
 //
 // [SCENARIO] 2. Successful deposit with valid project and tier (30 days)
