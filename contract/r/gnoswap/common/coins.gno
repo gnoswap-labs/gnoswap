@@ -2,22 +2,39 @@ package common
 
 import "chain/banker"
 
-// IsGNOTPath checks if the given path is either native gnot or wrapped ugnot path
+// IsGNOTPath checks if the given path is either native gnot or wrapped ugnot path.
+//
+// Parameters:
+//   - path: token path to check
+//
+// Returns true if the path matches either GNOT_DENOM ("ugnot") or WUGNOT_PATH.
 func IsGNOTPath(path string) bool {
 	return path == GNOT_DENOM || path == WUGNOT_PATH
 }
 
-// IsGNOTNativePath checks if the given path is the native gnot path
+// IsGNOTNativePath checks if the given path is the native gnot path.
+//
+// Parameters:
+//   - path: token path to check
+//
+// Returns true if the path matches GNOT_DENOM ("ugnot").
 func IsGNOTNativePath(path string) bool {
 	return path == GNOT_DENOM
 }
 
-// IsGNOTWrappedPath checks if the given path is the wrapped ugnot path
+// IsGNOTWrappedPath checks if the given path is the wrapped ugnot path.
+//
+// Parameters:
+//   - path: token path to check
+//
+// Returns true if the path matches WUGNOT_PATH.
 func IsGNOTWrappedPath(path string) bool {
 	return path == WUGNOT_PATH
 }
 
-// ExistsUserSendCoins checks if the user has sent any coins with the transaction
+// ExistsUserSendCoins checks if the user has sent any coins with the transaction.
+//
+// Returns true if any coins (with positive amount) were sent with the transaction.
 func ExistsUserSendCoins() bool {
 	return len(getUserSendCoins()) > 0
 }

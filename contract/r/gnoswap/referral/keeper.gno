@@ -16,8 +16,8 @@ const (
 // keeper implements ReferralKeeper using AVL tree storage.
 // It includes rate limiting to prevent abuse.
 type keeper struct {
-	store   *avl.Tree
-	lastOps map[string]int64
+	store   *avl.Tree // address(string) -> referral address(string)
+	lastOps *avl.Tree // address(string) -> last operation timestamp(int64)
 }
 
 var _ ReferralKeeper = &keeper{}
@@ -26,28 +26,24 @@ var _ ReferralKeeper = &keeper{}
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   avl.NewTree(),
-		lastOps: make(map[string]int64),
+		lastOps: avl.NewTree(),
 	}
 }
 
-// register creates a new referral relationship between addresses.
+// register creates or updates a referral relationship between addresses.
+// Setting refAddr to the contract's own address removes the referral.
 // Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr address) error {
-	return k.setReferral(addr, refAddr, EventTypeRegister)
-}
-
-// update modifies an existing referral address.
-// Caller must have valid permissions.
-func (k *keeper) update(addr, newRefAddr address) error {
-	return k.setReferral(addr, newRefAddr, EventTypeUpdate)
+	return k.setReferral(addr, refAddr, "RegisterReferral")
 }
 
 // setReferral handles common logic for registering and updating referrals.
-// Setting refAddr to zero address removes the referral.
+// Setting refAddr to the contract's own address removes the referral.
 // Rate limiting applies to prevent abuse.
 func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
-	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
-		return err
+	caller := runtime.PreviousRealm().Address()
+	if err := isValidCaller(caller); err != nil {
+		panic("unauthorized caller: " + caller.String())
 	}
 
 	if err := k.validateAddresses(addr, refAddr); err != nil {
@@ -57,7 +53,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 	addrStr := addr.String()
 	refAddrStr := refAddr.String()
 
-	if refAddr == zeroAddress {
+	if isRemovalRequest(refAddr) {
 		if k.has(addr) {
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
@@ -66,6 +62,7 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 			chain.Emit(
 				eventType,
+				"prevAddr", caller.String(),
 				"address", addrStr,
 				"referral", refAddrStr,
 			)
@@ -79,10 +76,11 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 	}
 
 	k.store.Set(addrStr, refAddrStr)
-	k.lastOps[addrStr] = time.Now().Unix()
+	k.lastOps.Set(addrStr, time.Now().Unix())
 
 	chain.Emit(
 		eventType,
+		"prevAddr", caller.String(),
 		"address", addrStr,
 		"referral", refAddrStr,
 	)
@@ -92,42 +90,12 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 // validateAddresses validates that addresses are properly formatted and not self-referencing.
 func (k *keeper) validateAddresses(addr, refAddr address) error {
-	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
+	if !addr.IsValid() || (!isRemovalRequest(refAddr) && !refAddr.IsValid()) {
 		return ErrInvalidAddress
 	}
 	if addr == refAddr {
 		return ErrSelfReferral
 	}
-	return nil
-}
-
-// remove deletes a referral relationship.
-// Caller must have valid permissions and rate limiting applies.
-func (k *keeper) remove(target address) error {
-	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
-		return err
-	}
-
-	if err := k.validateAddresses(target, zeroAddress); err != nil {
-		return err
-	}
-
-	tgt := target.String()
-
-	if err := k.checkRateLimit(tgt); err != nil {
-		return err
-	}
-
-	_, ok := k.store.Remove(tgt)
-	if !ok {
-		return ErrNotFound
-	}
-
-	chain.Emit(
-		EventTypeRemove,
-		"removedAddress", tgt,
-	)
-
 	return nil
 }
 
@@ -172,12 +140,19 @@ func (k *keeper) isEmpty() bool {
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 
-	if lastOpTime, exists := k.lastOps[addr]; exists {
-		timeSinceLastOp := now - lastOpTime
+	lastOpTimeRaw, exists := k.lastOps.Get(addr)
+	if !exists {
+		return nil
+	}
 
-		if timeSinceLastOp < MinTimeBetweenUpdates {
-			return ErrTooManyRequests
-		}
+	lastOpTime, ok := lastOpTimeRaw.(int64)
+	if !ok {
+		return ErrInvalidTime
+	}
+
+	timeSinceLastOp := now - lastOpTime
+	if timeSinceLastOp < MinTimeBetweenUpdates {
+		return ErrTooManyRequests
 	}
 
 	return nil

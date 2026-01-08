@@ -86,3 +86,26 @@ func createMockGovernanceStore() *mockGovernanceStore {
 		userProposals:           avl.NewTree(),
 	}
 }
+
+func newTestProposal(
+	id int64,
+	status *governance.ProposalStatus,
+	metadata *governance.ProposalMetadata,
+	data *governance.ProposalData,
+	proposer address,
+	configVersion int64,
+	snapshotTime int64,
+) *governance.Proposal {
+	// Use snapshotTime as createdAt and 100 as default createdHeight for tests
+	return governance.NewProposal(
+		id,
+		status,
+		metadata,
+		data,
+		proposer,
+		configVersion,
+		snapshotTime,
+		snapshotTime, // createdAt
+		100,          // createdHeight
+	)
+}

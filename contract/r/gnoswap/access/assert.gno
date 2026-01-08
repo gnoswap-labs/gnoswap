@@ -8,6 +8,10 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+// rbacPackagePath is the package path of the RBAC contract
+// Used to verify that role management functions are called only by RBAC
+const rbacPackagePath = "gno.land/r/gnoswap/rbac"
+
 // AssertIsAdminOrGovernance panics if the caller is not admin or governance.
 // Used for functions that require elevated privileges.
 func AssertIsAdminOrGovernance(caller address) {
@@ -15,7 +19,7 @@ func AssertIsAdminOrGovernance(caller address) {
 		return
 	}
 
-	panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	panic(ufmt.Errorf(errUnauthorizedAdminOrGov, caller))
 }
 
 // AssertIsAdmin panics if the caller is not admin.
@@ -87,12 +91,13 @@ func AssertIsGovXGNS(caller address) {
 // AssertIsAuthorized panics if the caller does not have the specified role.
 // Also panics if the role does not exist.
 func AssertIsAuthorized(roleName string, caller address) {
-	if !IsAuthorized(roleName, caller) {
-		if _, ok := GetAddress(roleName); !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
-		}
+	addr, ok := GetAddress(roleName)
+	if !ok {
+		panic(ufmt.Errorf(errRoleNotFound, roleName))
+	}
 
-		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
+	if caller != addr {
+		panic(ufmt.Errorf(errUnauthorized, caller, roleName))
 	}
 }
 
@@ -100,22 +105,23 @@ func AssertIsAuthorized(roleName string, caller address) {
 // Also panics if any of the roles do not exist.
 func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
-		if _, ok := GetAddress(roleName); !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
+		addr, ok := GetAddress(roleName)
+		if !ok {
+			panic(ufmt.Errorf(errRoleNotFound, roleName))
 		}
 
-		if IsAuthorized(roleName, caller) {
+		if caller == addr {
 			return
 		}
 	}
 
-	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
+	panic(ufmt.Errorf(errUnauthorizedAnyRole, caller, roleNames))
 }
 
 // AssertIsValidAddress panics if the provided address is invalid.
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
-		panic(ufmt.Errorf("invalid address: %s", addr))
+		panic(ufmt.Errorf(errInvalidAddressShort, addr))
 	}
 }
 
@@ -123,7 +129,7 @@ func AssertIsValidAddress(addr address) {
 // Used to ensure calls come from user accounts, not other contracts.
 func AssertIsUser(r runtime.Realm) {
 	if !r.IsUser() {
-		panic(ufmt.Errorf("caller is not user"))
+		panic(errCallerNotUser)
 	}
 }
 
@@ -133,6 +139,6 @@ func assertIsRBAC(caller address) {
 	rbacAddress := chain.PackageAddress(rbacPackagePath)
 
 	if caller != rbacAddress {
-		panic(ufmt.Errorf("unauthorized: caller %s is not rbac", caller))
+		panic(ufmt.Errorf(errUnauthorizedRBAC, caller))
 	}
 }

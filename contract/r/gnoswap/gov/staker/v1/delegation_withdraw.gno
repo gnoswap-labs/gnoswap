@@ -82,9 +82,12 @@ func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) er
 		return staker.ErrWithdrawNotCollectable
 	}
 
-	r.withdraw.SetCollected(true)
-	r.withdraw.SetCollectedAt(currentTime)
 	r.withdraw.SetCollectedAmount(safeAddInt64(r.withdraw.CollectedAmount(), amount))
+
+	if r.withdraw.UnDelegateAmount() == r.withdraw.CollectedAmount() {
+		r.withdraw.SetCollected(true)
+		r.withdraw.SetCollectedAt(currentTime)
+	}
 
 	return nil
 }
