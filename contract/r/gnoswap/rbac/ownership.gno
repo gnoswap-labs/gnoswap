@@ -1,6 +1,13 @@
 package rbac
 
-import "chain/runtime"
+import (
+	"chain/runtime"
+
+	"gno.land/p/nt/ufmt"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
+)
 
 // IsOwner returns true if addr is the current owner.
 func IsOwner(addr address) bool {
@@ -32,6 +39,18 @@ func AcceptOwnership(cur realm) {
 	if err != nil {
 		panic(err)
 	}
+
+	newOwner := manager.Owner()
+	err = manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), newOwner)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf(
+				"role name: %s, address: %s",
+				prbac.ROLE_ADMIN.String(), newOwner.String()),
+		))
+	}
+	access.SetRoleAddress(cross, prbac.ROLE_ADMIN.String(), newOwner)
 }
 
 // TransferOwnership initiates the ownership transfer process.

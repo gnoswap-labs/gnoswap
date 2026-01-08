@@ -7,8 +7,6 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-var errNotClaimable = errors.New("not claimable")
-
 type EmissionRewardStateResolver struct {
 	*staker.EmissionRewardState
 }
@@ -129,7 +127,7 @@ func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
 //   - error: nil on success, error if claiming is not allowed
 func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (int64, error) {
 	if !self.IsClaimable(currentTimestamp) {
-		return 0, errNotClaimable
+		return 0, errors.New("not claimable")
 	}
 
 	accumulatedRewardAmount := self.GetAccumulatedRewardAmount()

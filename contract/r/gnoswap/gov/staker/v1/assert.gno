@@ -70,3 +70,9 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 		))
 	}
 }
+
+func assertNoSameDelegatee(delegatee, newDelegatee address) {
+	if delegatee == newDelegatee {
+		panic(errSameDelegatee)
+	}
+}
