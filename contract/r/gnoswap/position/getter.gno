@@ -35,6 +35,16 @@ func IsInRange(positionId uint64) bool {
 	return getImplementation().IsInRange(positionId)
 }
 
+// GetPositionTokenBalances returns the token0 balance of a position.
+func GetPositionTokenBalances(positionId uint64) (string, string) {
+	position, err := GetPosition(positionId)
+	if err != nil {
+		return "", ""
+	}
+
+	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
+}
+
 func GetPositionToken0Balance(positionId uint64) *u256.Uint {
 	position, err := GetPosition(positionId)
 	if err != nil {
@@ -63,6 +73,16 @@ func GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
 	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId).Clone()
 }
 
+// GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
+func GetPositionFeeGrowthInsideLastX128(positionId uint64) (*u256.Uint, *u256.Uint) {
+	position, err := GetPosition(positionId)
+	if err != nil {
+		return u256.Zero(), u256.Zero()
+	}
+
+	return position.FeeGrowthInside0LastX128().Clone(), position.FeeGrowthInside1LastX128().Clone()
+}
+
 // GetPositionLiquidity returns the liquidity amount of a position.
 func GetPositionLiquidity(positionId uint64) *u256.Uint {
 	return getImplementation().GetPositionLiquidity(positionId).Clone()
@@ -88,6 +108,16 @@ func GetPositionTickUpper(positionId uint64) int32 {
 	return getImplementation().GetPositionTickUpper(positionId)
 }
 
+// GetPositionTicks returns the lower and upper ticks of a position.
+func GetPositionTicks(positionId uint64) (int32, int32) {
+	position, err := GetPosition(positionId)
+	if err != nil {
+		return 0, 0
+	}
+
+	return position.TickLower(), position.TickUpper()
+}
+
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
 func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
 	return getImplementation().GetPositionTokensOwed0(positionId).Clone()
@@ -96,6 +126,16 @@ func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
 func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
 	return getImplementation().GetPositionTokensOwed1(positionId).Clone()
+}
+
+// GetPositionTokensOwed returns the amount of tokens owed to a position.
+func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
+	position, err := GetPosition(positionId)
+	if err != nil {
+		return u256.Zero(), u256.Zero()
+	}
+
+	return position.TokensOwed0().Clone(), position.TokensOwed1().Clone()
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
