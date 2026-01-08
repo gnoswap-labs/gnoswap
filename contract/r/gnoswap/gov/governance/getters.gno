@@ -1,5 +1,7 @@
 package governance
 
+import "gno.land/p/nt/ufmt"
+
 // ==================================
 // Store Data Getters
 // ==================================
@@ -107,6 +109,26 @@ func GetProposalStatusByProposalId(proposalId int64) (string, error) {
 	return getImplementation().GetProposalStatusByProposalId(proposalId)
 }
 
+// GetProposalCreatedAt returns the creation timestamp of a proposal.
+func GetProposalCreatedAt(proposalId int64) (int64, error) {
+	proposal, err := getImplementation().GetProposal(proposalId)
+	if err != nil {
+		return 0, err
+	}
+
+	return proposal.CreatedAt(), nil
+}
+
+// GetProposalCreatedHeight returns the creation block height of a proposal.
+func GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	proposal, err := getImplementation().GetProposal(proposalId)
+	if err != nil {
+		return 0, err
+	}
+
+	return proposal.createdHeight, nil
+}
+
 // ==================================
 // Vote Getters
 // ==================================
@@ -160,6 +182,37 @@ func GetVotedHeight(proposalID int64, addr address) (int64, error) {
 // GetVotedAt returns the timestamp when an address voted on a proposal.
 func GetVotedAt(proposalID int64, addr address) (int64, error) {
 	return getImplementation().GetVotedAt(proposalID, addr)
+}
+
+// GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
+func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
+	proposal, err := getImplementation().GetProposal(proposalID)
+	if err != nil {
+		return nil, err
+	}
+
+	proposalData := proposal.Data()
+	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
+		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
+	}
+
+	return proposalData.CommunityPoolSpend().Clone(), nil
+}
+
+// GetProposalExecutionInfo returns the execution info for a proposal.
+func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
+	proposal, err := getImplementation().GetProposal(proposalID)
+	if err != nil {
+		return nil, err
+	}
+
+	proposalData := proposal.Data()
+
+	if proposalData == nil || proposalData.Execution() == nil {
+		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
+	}
+
+	return proposalData.Execution().Clone(), nil
 }
 
 // ==================================
