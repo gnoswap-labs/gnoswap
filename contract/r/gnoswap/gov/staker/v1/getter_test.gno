@@ -1,12 +1,10 @@
 package v1
 
 import (
-	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/testutils"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -735,10 +733,10 @@ func TestGetter_HasDelegationSnapshotsKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Setup store
-			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.(*mockGovStakerStore).hasTotalDelegationHistoryKey = tt.hasTotalDelegationKey
+			mockStore := newMockGovStakerStore().(*mockGovStakerStore)
+			mockStore.hasTotalDelegationHistoryKey = tt.hasTotalDelegationKey
 
-			gs := &govStakerV1{store: store}
+			gs := &govStakerV1{store: mockStore}
 
 			// When: Check if snapshots key exists
 			result := gs.HasDelegationSnapshotsKey()
