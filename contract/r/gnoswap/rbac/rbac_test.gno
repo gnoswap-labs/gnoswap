@@ -140,6 +140,30 @@ func TestRbac_RegisterRole(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
+			name: "Register role with whitespace-only name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "   ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Register role with tab and space name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      " \t ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
 			name: "Register role with invalid address format fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
@@ -234,7 +258,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 			},
 			roleName:    "",
 			shouldError: true,
-			errorMsg:    "does not exist",
+			errorMsg:    "invalid role name",
 		},
 		{
 			name: "Remove role multiple times should error on second attempt",
@@ -258,9 +282,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 
 			if tt.shouldError {
 				uassert.Error(t, err)
-				if tt.errorMsg != "" && err != nil {
-					uassert.True(t, contains(err.Error(), tt.errorMsg))
-				}
+				uassert.ErrorContains(t, err, tt.errorMsg)
 			} else {
 				uassert.NoError(t, err)
 				// Verify role was actually removed (if not empty string)
@@ -538,13 +560,13 @@ func TestAddressChangeComplete(t *testing.T) {
 
 func TestRBACToAccessSync(t *testing.T) {
 	tests := []struct {
-		name              string
-		operations        []struct {
+		name       string
+		operations []struct {
 			action   string // "register", "update", "remove"
 			roleName string
 			address  address
 		}
-		verifyRoles       map[string]address // Expected final state (roles that SHOULD exist)
+		verifyRoles         map[string]address // Expected final state (roles that SHOULD exist)
 		verifyRolesNotExist []string           // Roles that should NOT exist
 	}{
 		{
@@ -586,7 +608,7 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
 				{action: "remove", roleName: "temp_role"},
 			},
-			verifyRoles: map[string]address{},
+			verifyRoles:         map[string]address{},
 			verifyRolesNotExist: []string{"temp_role"},
 		},
 		{
@@ -600,7 +622,7 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role_2", address: testutils.TestAddress("updated_addr")},
 				{action: "remove", roleName: "temp_role_2"},
 			},
-			verifyRoles: map[string]address{},
+			verifyRoles:         map[string]address{},
 			verifyRolesNotExist: []string{"temp_role_2"},
 		},
 		{
@@ -838,6 +860,18 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
 			callerRealm: ADMIN,
 			shouldPanic: false,
 		},
+		{
+			name: "Update admin role via UpdateRoleAddress fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      prbac.ROLE_ADMIN.String(),
+			newAddr:       testutils.TestAddress("new_admin"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "admin role is managed by owner",
+		},
 	}
 
 	for _, tt := range tests {
@@ -934,7 +968,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
-			name: "Remove system role fails",
+			name: "Remove admin role fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
@@ -942,7 +976,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			roleName:      prbac.ROLE_ADMIN.String(),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
-			panicContains: "cannot remove system role",
+			panicContains: "admin role is managed by owner",
 		},
 		{
 			name: "Remove non-existent role fails",
@@ -977,20 +1011,4 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr ||
-		(len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
-		(len(s) > len(substr) && findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
