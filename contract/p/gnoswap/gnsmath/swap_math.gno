@@ -10,6 +10,8 @@ import (
 // For example, feePips=3000 means 3000/1000000 = 0.3% fee.
 const denominator = uint64(1_000_000)
 
+var denominatorU256 = u256.NewUint(denominator)
+
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
 // for a swap step within a single tick range.
 //
@@ -165,7 +167,7 @@ func handleExactIn(
 	amountRemainingLessFee := u256.MulDiv(
 		amountRemainingAbs,
 		withoutFeeRateInPips,
-		u256.NewUint(denominator),
+		denominatorU256,
 	)
 
 	// Special case:
