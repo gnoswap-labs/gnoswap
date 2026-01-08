@@ -47,15 +47,23 @@ func BalanceOf(owner address) int64 {
 
 // Render returns a formatted representation of the token state.
 func Render(path string) string {
-	parts := strings.Split(path, "/")
-	c := len(parts)
-
-	switch {
-	case path == "":
+	if path == "" {
 		return token.RenderHome()
-	case c == 2 && parts[0] == "balance":
+	}
+
+	parts := strings.Split(path, "/")
+	switch parts[0] {
+	case "balance":
+		if len(parts) != 2 {
+			return "404\n"
+		}
 		balance := token.BalanceOf(address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
+	case "votingsupply":
+		if len(parts) != 1 {
+			return "404\n"
+		}
+		return ufmt.Sprintf("%d\n", VotingSupply())
 	default:
 		return "404\n"
 	}
@@ -91,4 +99,10 @@ func Burn(cur realm, from address, amount int64) {
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Burn(from, amount))
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
