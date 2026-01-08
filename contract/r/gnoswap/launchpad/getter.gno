@@ -21,6 +21,9 @@ func GetProject(projectId string) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
+	if project == nil {
+		return nil, nil
+	}
 	return project.Clone(), nil
 }
 
@@ -51,6 +54,9 @@ func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition,
 	if err != nil {
 		return nil, err
 	}
+	if condition == nil {
+		return nil, nil
+	}
 	return condition.Clone(), nil
 }
 
@@ -75,6 +81,9 @@ func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
 	projectTier, err := getImplementation().GetProjectTier(projectId, tier)
 	if err != nil {
 		return nil, err
+	}
+	if projectTier == nil {
+		return nil, nil
 	}
 	return projectTier.Clone(), nil
 }
@@ -207,6 +216,9 @@ func GetRewardManager(projectTierId string) (*RewardManager, error) {
 	if err != nil {
 		return nil, err
 	}
+	if manager == nil {
+		return nil, nil
+	}
 	return manager.Clone(), nil
 }
 
@@ -266,6 +278,9 @@ func GetRewardState(projectTierId string, depositId string) (*RewardState, error
 	rewardState, err := getImplementation().GetRewardState(projectTierId, depositId)
 	if err != nil {
 		return nil, err
+	}
+	if rewardState == nil {
+		return nil, nil
 	}
 	return rewardState.Clone(), nil
 }
