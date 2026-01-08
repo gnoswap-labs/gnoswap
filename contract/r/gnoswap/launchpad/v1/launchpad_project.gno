@@ -71,21 +71,24 @@ func (lp *launchpadV1) CreateProject(
 		minimumStartDelayTime: projectMinimumStartDelayTime,
 	}
 
+	// Checks: validate balance before creating project
+	tokenBalance := common.BalanceOf(tokenPath, caller)
+	if tokenBalance < depositAmount {
+		panic(makeErrorWithDetails(
+			errInsufficientBalance, ufmt.Sprintf(
+				"caller(%s) balance(%d) < depositAmount(%d)",
+				caller.String(), tokenBalance, depositAmount),
+			),
+		)
+	}
+
+	// Effects: create project and save state
 	project, err := lp.createProject(params)
 	if err != nil {
 		panic(err)
 	}
 
-	tokenBalance := common.BalanceOf(tokenPath, caller)
-	if tokenBalance < depositAmount {
-		panic(
-			makeErrorWithDetails(
-				errInsufficientBalance,
-				ufmt.Sprintf("caller(%s) balance(%d) < depositAmount(%d)", launchpadAddr.String(), tokenBalance, depositAmount),
-			),
-		)
-	}
-
+	// Interactions: transfer tokens
 	common.SafeGRC20TransferFrom(
 		cross,
 		tokenPath,
@@ -197,7 +200,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 
 		projectTier := newProjectTier(
 			project.ID(),
-			rewardCollectableDuration,
+			duration,
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
@@ -208,11 +211,13 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
+			rewardCollectableDuration,
 			params.startTime,
 			params.startTime+tierDurationTime,
 		))
 	}
 
+	project.SetTiersRatios(projectTierRatios)
 	projects.Set(project.ID(), project)
 
 	// Save the modified state back
@@ -302,7 +307,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 
 	for _, tier := range project.Tiers() {
 		if !tier.IsEnded(currentTime) {
-			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
+			return 0, ufmt.Errorf("tier(%s) is not ended", tier.ID())
 		}
 
 		// Calculate pending rewards for remaining depositors

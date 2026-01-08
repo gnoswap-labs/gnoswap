@@ -20,11 +20,11 @@ import (
 )
 
 var (
-	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
+	admin      = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(admin)
 
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm  = testing.NewUserRealm(govStakerAddr)
+	govStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm = testing.NewUserRealm(govStakerAddr)
 
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = testing.NewUserRealm(dummyToAddr)
@@ -69,7 +69,7 @@ func changeEmissionDistribution() {
 		int(3), 500,
 		int(4), 500,
 	)
-	ufmt.Printf("[INFO] emission distribution ratio changed: staker 70%%, devops 20%%, community 5%%, govstaker 5%%\n")
+	println("[INFO] emission distribution ratio changed: staker 70%, devops 20%, community 5%, govstaker 5%")
 }
 
 // Admin delegates GNS to dummyTo
@@ -96,7 +96,7 @@ func skipBlocksAndDistribute() {
 	// skip blocks and distribute emission
 	testing.SkipHeights(10)
 	en.MintAndDistributeGns(cross)
-	ufmt.Printf("[INFO] skipped 10 blocks and distributed emission\n")
+	println("[INFO] skipped 10 blocks and distributed emission")
 }
 
 // check and collect emission reward for dummy
@@ -108,7 +108,7 @@ func emissionRewardScenario() {
 	// Collect reward
 	testing.SetOriginCaller(dummyAddr)
 	staker.CollectReward(cross)
-	ufmt.Printf("[INFO] collected emission reward for dummy\n")
+	println("[INFO] collected emission reward for dummy")
 	after := gns.BalanceOf(dummyAddr)
 	ufmt.Printf("[EXPECTED] dummy GNS balance after collect: %d\n", after)
 }

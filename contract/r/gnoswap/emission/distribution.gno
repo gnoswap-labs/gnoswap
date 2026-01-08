@@ -317,6 +317,7 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
+// GetEmissionAmountPerSecondBy returns the emission amount per second for a given timestamp and distribution percentage.
 func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
 }

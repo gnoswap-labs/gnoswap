@@ -231,3 +231,94 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 	}
 }
 
+func TestCommunityPool_GetBalanceOf(t *testing.T) {
+	tests := []struct {
+		name            string
+		setup           func()
+		tokenPath       string
+		expectedBalance int64
+		shouldPanic     bool
+		panicMsg        string
+	}{
+		{
+			name: "returns zero when pool has no tokens",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+				// transfer all tokens from community pool to admin first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
+			},
+			tokenPath:       gnsPath,
+			expectedBalance: 0,
+		},
+		{
+			name: "returns correct balance after transfer to pool",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+				// clear pool first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
+				// transfer tokens to pool
+				gns.Transfer(cross, communityPoolAddr, 5_000)
+			},
+			tokenPath:       gnsPath,
+			expectedBalance: 5_000,
+		},
+		{
+			name: "returns updated balance after multiple transfers",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+				// clear pool first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
+				// transfer tokens to pool multiple times
+				gns.Transfer(cross, communityPoolAddr, 1_000)
+				gns.Transfer(cross, communityPoolAddr, 2_000)
+				gns.Transfer(cross, communityPoolAddr, 3_000)
+			},
+			tokenPath:       gnsPath,
+			expectedBalance: 6_000,
+		},
+		{
+			name: "panics with unregistered token path",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+			},
+			tokenPath:   "gno.land/r/demo/unregistered_token",
+			shouldPanic: true,
+			panicMsg:    "unknown token",
+		},
+		{
+			name: "panics with empty token path",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+			},
+			tokenPath:   "",
+			shouldPanic: true,
+			panicMsg:    "unknown token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					GetBalanceOf(tt.tokenPath)
+				})
+			} else {
+				balance := GetBalanceOf(tt.tokenPath)
+				uassert.Equal(t, tt.expectedBalance, balance)
+			}
+		})
+	}
+}
