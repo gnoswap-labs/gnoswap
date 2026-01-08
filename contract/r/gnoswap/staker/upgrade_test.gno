@@ -559,3 +559,87 @@ func TestIsStaked(t *testing.T) {
 		}
 	}
 }
+
+func TestGetTotalEmissionSent(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func(t *testing.T)
+		expected int64
+	}{
+		{
+			name: "get total emission sent delegates to implementation",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+			},
+			expected: 500000,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockStaker := implementation.(*MockStaker)
+		mockStaker.Response.Set("GetTotalEmissionSent", tt.expected)
+
+		// Action
+		result := GetTotalEmissionSent()
+
+		// Assert
+		if mockStaker.Response.CallCount("GetTotalEmissionSent") != 1 {
+			t.Error("GetTotalEmissionSent was not called on the implementation")
+		}
+		if result != tt.expected {
+			t.Errorf("GetTotalEmissionSent() = %v, want %v", result, tt.expected)
+		}
+	}
+}
+
+func TestGetAllowedTokens(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func(t *testing.T)
+		expected []string
+	}{
+		{
+			name: "get allowed tokens delegates to implementation",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
+			},
+			expected: []string{"gno.land/r/gnoswap/gns", "gno.land/r/onbloc/bar"},
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockStaker := implementation.(*MockStaker)
+		mockStaker.Response.Set("GetAllowedTokens", tt.expected)
+
+		// Action
+		result := GetAllowedTokens()
+
+		// Assert
+		if mockStaker.Response.CallCount("GetAllowedTokens") != 1 {
+			t.Error("GetAllowedTokens was not called on the implementation")
+		}
+		if len(result) != len(tt.expected) {
+			t.Errorf("GetAllowedTokens() returned %d items, want %d", len(result), len(tt.expected))
+		}
+	}
+}
