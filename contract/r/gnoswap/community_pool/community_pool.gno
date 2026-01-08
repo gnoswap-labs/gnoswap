@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"strconv"
 
+	prbac "gno.land/p/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -17,7 +19,9 @@ import (
 //
 // Returns the balance of the specified token held by the community pool.
 func GetBalanceOf(tokenPath string) int64 {
-	return common.BalanceOf(tokenPath, runtime.CurrentRealm().Address())
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+
+	return common.BalanceOf(tokenPath, communityPoolAddr)
 }
 
 // TransferToken transfers tokens from the community pool.
