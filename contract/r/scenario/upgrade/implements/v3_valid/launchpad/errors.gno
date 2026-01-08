@@ -39,10 +39,6 @@ var (
 	errNotYetEndedProject  = errors.New("[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet")
 	errTransferFailed      = errors.New("[GNOSWAP-LAUNCHPAD-031] transfer failed")
 	errOverflow            = errors.New("[GNOSWAP-LAUNCHPAD-032] overflow")
-	errProjectNotFound     = errors.New("[GNOSWAP-LAUNCHPAD-033] project not found")
-	errDepositNotFound     = errors.New("[GNOSWAP-LAUNCHPAD-034] deposit not found")
-	errInvalidProjectType  = errors.New("[GNOSWAP-LAUNCHPAD-035] invalid project type")
-	errInvalidDepositType  = errors.New("[GNOSWAP-LAUNCHPAD-036] invalid deposit type")
 )
 
 // makeErrorWithDetails creates an error with additional context.

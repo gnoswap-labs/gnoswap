@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	gs "gno.land/r/gnoswap/gov/staker"
@@ -38,12 +39,12 @@ func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) 
 	projects := lp.store.GetProjects()
 	value, exists := projects.Get(projectId)
 	if !exists {
-		return nil, errProjectNotFound
+		return nil, errors.New("project not found")
 	}
 
 	project, ok := value.(*launchpad.Project)
 	if !ok {
-		return nil, errInvalidProjectType
+		return nil, errors.New("invalid project type")
 	}
 
 	return project.Clone(), nil
@@ -56,12 +57,12 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return nil, errDepositNotFound
+		return nil, errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
 	if !ok {
-		return nil, errInvalidDepositType
+		return nil, errors.New("invalid deposit type")
 	}
 
 	return deposit.Clone(), nil
@@ -96,7 +97,7 @@ func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, errConditionNotFound
+		return nil, errors.New("condition not found")
 	}
 
 	return condition.Clone(), nil
@@ -109,12 +110,12 @@ func (lp *launchpadV1) GetRewardManager(projectTierId string) (*launchpad.Reward
 	managers := lp.store.GetProjectTierRewardManagers()
 	value, exists := managers.Get(projectTierId)
 	if !exists {
-		return nil, errRewardManagerNotFound
+		return nil, errors.New("reward manager not found")
 	}
 
 	manager, ok := value.(*launchpad.RewardManager)
 	if !ok {
-		return nil, errInvalidRewardManagerType
+		return nil, errors.New("invalid reward manager type")
 	}
 
 	return manager.Clone(), nil
@@ -127,23 +128,23 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	managers := lp.store.GetProjectTierRewardManagers()
 	value, exists := managers.Get(projectTierId)
 	if !exists {
-		return nil, errRewardManagerNotFound
+		return nil, errors.New("reward manager not found")
 	}
 
 	manager, ok := value.(*launchpad.RewardManager)
 	if !ok {
-		return nil, errInvalidRewardManagerType
+		return nil, errors.New("invalid reward manager type")
 	}
 
 	rewards := manager.Rewards()
 	rewardValue, exists := rewards.Get(depositId)
 	if !exists {
-		return nil, errRewardStateNotFound
+		return nil, errors.New("reward state not found")
 	}
 
 	rewardState, ok := rewardValue.(*launchpad.RewardState)
 	if !ok {
-		return nil, errInvalidRewardStateType
+		return nil, errors.New("invalid reward state type")
 	}
 
 	return rewardState.Clone(), nil
@@ -155,12 +156,12 @@ func (lp *launchpadV1) GetClaimableRewardByProjectId(projectId string) (string, 
 	projects := lp.store.GetProjects()
 	value, exists := projects.Get(projectId)
 	if !exists {
-		return "0", errProjectNotFound
+		return "0", errors.New("project not found")
 	}
 
 	project, ok := value.(*launchpad.Project)
 	if !ok {
-		return "0", errInvalidProjectType
+		return "0", errors.New("invalid project type")
 	}
 
 	return gs.GetClaimableRewardByAddress(project.Recipient()), nil

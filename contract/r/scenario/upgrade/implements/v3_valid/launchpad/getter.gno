@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"errors"
 	"time"
 
 	gs "gno.land/r/gnoswap/gov/staker"
@@ -26,12 +27,12 @@ func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) 
 	projects := lp.store.GetProjects()
 	value, exists := projects.Get(projectId)
 	if !exists {
-		return nil, errProjectNotFound
+		return nil, errors.New("project not found")
 	}
 
 	project, ok := value.(*launchpad.Project)
 	if !ok {
-		return nil, errInvalidProjectType
+		return nil, errors.New("invalid project type")
 	}
 
 	return project.Clone(), nil
@@ -44,12 +45,12 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return nil, errDepositNotFound
+		return nil, errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
 	if !ok {
-		return nil, errInvalidDepositType
+		return nil, errors.New("invalid deposit type")
 	}
 
 	return deposit.Clone(), nil
@@ -78,12 +79,12 @@ func (lp *launchpadV1) GetClaimableRewardByProjectId(projectId string) (string, 
 	projects := lp.store.GetProjects()
 	value, exists := projects.Get(projectId)
 	if !exists {
-		return "0", errProjectNotFound
+		return "0", errors.New("project not found")
 	}
 
 	project, ok := value.(*launchpad.Project)
 	if !ok {
-		return "0", errInvalidProjectType
+		return "0", errors.New("invalid project type")
 	}
 
 	return gs.GetClaimableRewardByAddress(project.Recipient()), nil
