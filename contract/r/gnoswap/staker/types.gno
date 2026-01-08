@@ -8,7 +8,6 @@ import (
 type IStaker interface {
 	IStakerManager
 	IStakerGetter
-	IStakerApi
 }
 
 type IStakerManager interface {
@@ -101,18 +100,6 @@ type IStakerGetter interface {
 	GetWarmupTemplate() []Warmup
 	GetTotalStakedPositionCount() uint64
 	GetStakedPositionsByOwner(owner address) []uint64
-}
-
-type IStakerApi interface {
-	ApiGetExternalIncentiveById(poolPath, incentiveId string) string
-	ApiGetExternalIncentives() string
-	ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string
-	ApiGetInternalIncentives() string
-	ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string
-	ApiGetInternalIncentivesByTiers(targetTier uint64) string
-	ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string
-	ApiGetRewardTokensByPoolPath(targetPoolPath string) string
-	ApiGetStakesByLpTokenId(targetLpTokenId uint64) string
 }
 
 type IStakerStore interface {

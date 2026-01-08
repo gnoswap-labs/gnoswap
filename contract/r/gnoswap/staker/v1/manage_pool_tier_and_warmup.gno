@@ -35,8 +35,8 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"tier", formatUint(tier),
-		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(runtime.ChainHeight()),
+		"currentTime", formatAnyInt(currentTime),
+		"currentHeight", formatAnyInt(runtime.ChainHeight()),
 	)
 }
 
@@ -62,8 +62,8 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 		"poolPath", poolPath,
 		"prevTier", formatUint(previousTier),
 		"newTier", formatUint(newTier),
-		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(runtime.ChainHeight()),
+		"currentTime", formatAnyInt(currentTime),
+		"currentHeight", formatAnyInt(runtime.ChainHeight()),
 	)
 }
 
@@ -86,8 +86,8 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
-		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(runtime.ChainHeight()),
+		"currentTime", formatAnyInt(currentTime),
+		"currentHeight", formatAnyInt(runtime.ChainHeight()),
 	)
 }
 
@@ -106,8 +106,8 @@ func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 		"SetWarmUp",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"pct", formatInt(pct),
-		"timeDuration", formatInt(timeDuration),
+		"pct", formatAnyInt(pct),
+		"timeDuration", formatAnyInt(timeDuration),
 	)
 }
 
