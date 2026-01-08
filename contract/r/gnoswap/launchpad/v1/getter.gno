@@ -46,7 +46,6 @@ func (lp *launchpadV1) GetProjectIDs(offset, limit int64) []string {
 }
 
 // GetProject retrieves a project by its ID.
-// Returns a cloned project to prevent external modification.
 // Returns nil and error if project not found.
 func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
@@ -60,7 +59,7 @@ func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) 
 		return nil, errors.New("invalid project type")
 	}
 
-	return project.Clone(), nil
+	return project, nil
 }
 
 // GetProjectName returns the name of a project by its ID.
@@ -108,7 +107,6 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 }
 
 // GetProjectCondition retrieves a specific condition of a project.
-// Returns a cloned condition to prevent external modification.
 // Returns nil and error if project or condition not found.
 func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
 	project, err := lp.getProject(projectId)
@@ -122,7 +120,7 @@ func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (
 		return nil, errors.New("condition not found")
 	}
 
-	return condition.Clone(), nil
+	return condition, nil
 }
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.
@@ -159,7 +157,6 @@ func (lp *launchpadV1) GetProjectCreatedAt(projectId string) (int64, error) {
 }
 
 // GetProjectTier retrieves a specific tier of a project.
-// Returns a cloned tier to prevent external modification.
 // Returns nil and error if project or tier not found.
 func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.ProjectTier, error) {
 	project, err := lp.getProject(projectId)
@@ -172,7 +169,7 @@ func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.
 		return nil, err
 	}
 
-	return projectTier.Clone(), nil
+	return projectTier, nil
 }
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
@@ -526,7 +523,6 @@ func (lp *launchpadV1) GetRewardManagerIDs(offset, limit int64) []string {
 }
 
 // GetRewardManager retrieves a reward manager by project tier ID.
-// Returns a cloned reward manager to prevent external modification.
 // Returns nil and error if reward manager not found.
 func (lp *launchpadV1) GetRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
@@ -540,7 +536,7 @@ func (lp *launchpadV1) GetRewardManager(projectTierId string) (*launchpad.Reward
 		return nil, errors.New("invalid reward manager type")
 	}
 
-	return manager.Clone(), nil
+	return manager, nil
 }
 
 // GetRewardManagerDistibuteAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
@@ -654,7 +650,6 @@ func (lp *launchpadV1) GetRewardManagerRewardClaimableDuration(projectTierId str
 }
 
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
-// Returns a cloned reward state to prevent external modification.
 // Returns nil and error if reward manager or reward state not found.
 func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
@@ -679,7 +674,7 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 		return nil, errors.New("invalid reward state type")
 	}
 
-	return rewardState.Clone(), nil
+	return rewardState, nil
 }
 
 // GetProjectActiveStatus returns whether a project is currently active.

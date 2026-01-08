@@ -17,7 +17,11 @@ func GetProjectIDs(offset, limit int64) []string {
 // GetProject retrieves a project by its ID.
 // Returns a cloned project to prevent external modification.
 func GetProject(projectId string) (*Project, error) {
-	return getImplementation().GetProject(projectId)
+	project, err := getImplementation().GetProject(projectId)
+	if err != nil {
+		return nil, err
+	}
+	return project.Clone(), nil
 }
 
 // GetProjectName returns the name of a project by its ID.
@@ -43,7 +47,11 @@ func GetProjectRecipient(projectId string) (address, error) {
 // GetProjectCondition retrieves a specific condition of a project.
 // Returns a cloned condition to prevent external modification.
 func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
-	return getImplementation().GetProjectCondition(projectId, tokenPath)
+	condition, err := getImplementation().GetProjectCondition(projectId, tokenPath)
+	if err != nil {
+		return nil, err
+	}
+	return condition.Clone(), nil
 }
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.
@@ -64,7 +72,11 @@ func GetProjectCreatedAt(projectId string) (int64, error) {
 // GetProjectTier retrieves a specific tier of a project.
 // Returns a cloned tier to prevent external modification.
 func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
-	return getImplementation().GetProjectTier(projectId, tier)
+	projectTier, err := getImplementation().GetProjectTier(projectId, tier)
+	if err != nil {
+		return nil, err
+	}
+	return projectTier.Clone(), nil
 }
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
@@ -191,7 +203,11 @@ func GetRewardManagerIDs(offset, limit int64) []string {
 // GetRewardManager retrieves a reward manager by project tier ID.
 // Returns a cloned reward manager to prevent external modification.
 func GetRewardManager(projectTierId string) (*RewardManager, error) {
-	return getImplementation().GetRewardManager(projectTierId)
+	manager, err := getImplementation().GetRewardManager(projectTierId)
+	if err != nil {
+		return nil, err
+	}
+	return manager.Clone(), nil
 }
 
 // GetRewardManagerDistibuteAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
@@ -247,7 +263,11 @@ func GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
 // Returns a cloned reward state to prevent external modification.
 func GetRewardState(projectTierId string, depositId string) (*RewardState, error) {
-	return getImplementation().GetRewardState(projectTierId, depositId)
+	rewardState, err := getImplementation().GetRewardState(projectTierId, depositId)
+	if err != nil {
+		return nil, err
+	}
+	return rewardState.Clone(), nil
 }
 
 // GetProjectActiveStatus returns whether a project is currently active.
