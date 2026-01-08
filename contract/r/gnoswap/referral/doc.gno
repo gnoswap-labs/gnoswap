@@ -70,20 +70,17 @@
 // The package emits the following events:
 //
 //   - RegisterReferral: Emitted when a new referral is created
-//   - UpdateReferral: Emitted when an existing referral is modified
-//   - RemoveReferral: Emitted when a referral is deleted
 //   - ReferralRegistrationFailed: Emitted when TryRegister fails
 //
 // ## Error Handling
 //
-// The package defines the following error types:
-//
-//   - ErrInvalidAddress: Returned when an address format is invalid
-//   - ErrSelfReferral: Returned when attempting to set self as referrer
-//   - ErrUnauthorized: Returned when the caller lacks permission
-//   - ErrTooManyRequests: Returned when rate limit is exceeded
-//   - ErrNotFound: Returned when a referral does not exist
-//   - ErrCyclicReference: Reserved for cyclic reference detection
+// The package defines several error types:
+//   - `ErrInvalidAddress`: Returned when an address format is invalid
+//   - `ErrSelfReferral`: Returned when attempting to set self as referrer
+//   - `ErrUnauthorized`: Returned when the caller lacks permission
+//   - `ErrTooManyRequests`: Returned when rate limit is exceeded (24-hour cooldown)
+//   - `ErrNotFound`: Returned when attempting to get a non-existent referral
+//   - `ErrInvalidTime`: Returned when the stored timestamp format is invalid
 //
 // ## Example: Integration with Router Contract
 //
@@ -92,13 +89,23 @@
 // ```go
 //
 //	import (
+//	    "chain/runtime"
+//
 //	    "gno.land/r/gnoswap/referral"
 //	)
 //
-//	func SwapWithReferral(user std.Address, referralCode string, ...) {
+//	func SwapWithReferral(cur realm, referralCode string, ...) {
+//	    // Get the caller address
+//	    caller := runtime.PreviousRealm().Address()
+//
 //	    // Register the referral if provided
 //	    if referralCode != "" {
-//	        referral.TryRegister(std.CurrentRealm(), user, referralCode)
+//	        success := referral.TryRegister(cross, caller, referralCode)
+//	        actualReferrer := referralCode
+//	        if !success {
+//	            // Get existing referral if registration failed
+//	            actualReferrer = referral.GetReferral(caller.String())
+//	        }
 //	    }
 //
 //	    // Continue with swap logic...
@@ -116,13 +123,13 @@
 //	    "gno.land/r/gnoswap/referral"
 //	)
 //
-//	func DistributeRewards(user std.Address, amount uint64) {
+//	func DistributeRewards(user address, amount uint64) {
 //	    // Check if user has a referrer
 //	    if referral.HasReferral(user.String()) {
 //	        referrerAddr := referral.GetReferral(user.String())
 //	        // Calculate and distribute referral bonus
 //	        referrerBonus := amount * referralRate / 100
-//	        sendReward(std.Address(referrerAddr), referrerBonus)
+//	        sendReward(address(referrerAddr), referrerBonus)
 //	    }
 //	}
 //
