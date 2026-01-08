@@ -2,14 +2,20 @@ package v1
 
 import (
 	"chain/runtime"
+	"math"
 	"testing"
+	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -106,6 +112,129 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				uassert.Equal(t, tt.expectedError, err.Error())
 			} else {
 				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
+	const secondsPerDay = int64(60 * 60 * 24)
+
+	tests := []struct {
+		name                 string
+		projectID            string
+		tier                 int64
+		depositAmount        int64
+		skipSeconds          int64
+		expectedHasPanic     bool
+		expectedPanicMessage string
+	}{
+		{
+			name:             "success - 30 tier claimable wait 3 days",
+			projectID:        "project_1",
+			tier:             30,
+			depositAmount:    1000000,
+			skipSeconds:      3 * secondsPerDay,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "success - 90 tier claimable wait 7 days",
+			projectID:        "project_1",
+			tier:             90,
+			depositAmount:    1000000,
+			skipSeconds:      7 * secondsPerDay,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "success - 180 tier claimable wait 14 days",
+			projectID:        "project_1",
+			tier:             180,
+			depositAmount:    1000000,
+			skipSeconds:      14 * secondsPerDay,
+			expectedHasPanic: false,
+		},
+		{
+			name:                 "fail - 30 tier claimable duration not reached",
+			projectID:            "project_1",
+			tier:                 30,
+			depositAmount:        1000000,
+			skipSeconds:          0,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:                 "fail - 30 tier claimable wait 3 days - 1 second",
+			projectID:            "project_1",
+			tier:                 30,
+			depositAmount:        1000000,
+			skipSeconds:          (3 * secondsPerDay) - 1,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:                 "fail - 90 tier claimable wait 7 days - 1 second",
+			projectID:            "project_1",
+			tier:                 90,
+			depositAmount:        1000000,
+			skipSeconds:          (7 * secondsPerDay) - 1,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:                 "fail - 180 tier claimable wait 14 days - 1 second",
+			projectID:            "project_1",
+			tier:                 180,
+			depositAmount:        1000000,
+			skipSeconds:          (14 * secondsPerDay) - 1,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			resetTestStore()
+
+			currentTime := time.Now().Unix()
+			secondsOf7Days := 7 * secondsPerDay
+
+			adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+			launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+			gns.Approve(cross, launchpadAddr, math.MaxInt64)
+
+			projectID := createProjectTest(
+				t,
+				"Test Project",
+				GNS_PATH,
+				testutils.TestAddress("recipient"),
+				1000000,
+				33,
+				33,
+				34,
+				currentTime+secondsOf7Days,
+			)
+
+			// Skip to start project
+			testing.SkipHeights(secondsOf7Days / 5)
+
+			// Create deposit
+			projectTierID := ufmt.Sprintf("%s:%d", projectID, tt.tier)
+			depositID := depositGnsTest(t, projectTierID, tt.depositAmount)
+
+			// Skip to test time
+			testing.SkipHeights(tt.skipSeconds / 5) // 5 seconds per block
+
+			// Execute
+			if tt.expectedHasPanic {
+				uassert.AbortsContains(t, tt.expectedPanicMessage, func() {
+					collectRewardTest(t, depositID)
+				})
+			} else {
+				rewardAmount := collectRewardTest(t, depositID)
+				uassert.True(t, rewardAmount > 0, "reward amount should be > 0")
 			}
 		})
 	}
