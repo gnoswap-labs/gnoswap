@@ -393,6 +393,24 @@ func TestXgns_Render(t *testing.T) {
 			expectedResult: "1000\n",
 		},
 		{
+			name:           "Invalid balance path",
+			path:           "balance",
+			mintAmount:     0,
+			expectedResult: "404\n",
+		},
+		{
+			name:           "Voting supply path",
+			path:           "votingsupply",
+			mintAmount:     1000,
+			expectedResult: "1000\n",
+		},
+		{
+			name:           "Invalid voting supply path",
+			path:           "votingsupply/invalid",
+			mintAmount:     0,
+			expectedResult: "404\n",
+		},
+		{
 			name:           "Invalid path returns 404",
 			path:           "invalid/path",
 			mintAmount:     0,
@@ -482,39 +500,39 @@ func TestXgns_Halted(t *testing.T) {
 // TestXgns_MintThenBurnAll tests minting and then burning the entire amount
 func TestXgns_MintThenBurnAll(t *testing.T) {
 	tests := []struct {
-		name                   string
-		mintAmount             int64
-		burnAmount             int64
-		expectedFinalBalance   int64
-		expectedFinalSupply    int64
+		name                 string
+		mintAmount           int64
+		burnAmount           int64
+		expectedFinalBalance int64
+		expectedFinalSupply  int64
 	}{
 		{
-			name:                   "Mint and burn entire amount",
-			mintAmount:             1000,
-			burnAmount:             1000,
-			expectedFinalBalance:   0,
-			expectedFinalSupply:    0,
+			name:                 "Mint and burn entire amount",
+			mintAmount:           1000,
+			burnAmount:           1000,
+			expectedFinalBalance: 0,
+			expectedFinalSupply:  0,
 		},
 		{
-			name:                   "Mint large amount and burn all",
-			mintAmount:             1000000000,
-			burnAmount:             1000000000,
-			expectedFinalBalance:   0,
-			expectedFinalSupply:    0,
+			name:                 "Mint large amount and burn all",
+			mintAmount:           1000000000,
+			burnAmount:           1000000000,
+			expectedFinalBalance: 0,
+			expectedFinalSupply:  0,
 		},
 		{
-			name:                   "Mint minimum and burn all",
-			mintAmount:             1,
-			burnAmount:             1,
-			expectedFinalBalance:   0,
-			expectedFinalSupply:    0,
+			name:                 "Mint minimum and burn all",
+			mintAmount:           1,
+			burnAmount:           1,
+			expectedFinalBalance: 0,
+			expectedFinalSupply:  0,
 		},
 		{
-			name:                   "Mint and burn partial amount",
-			mintAmount:             1000,
-			burnAmount:             600,
-			expectedFinalBalance:   400,
-			expectedFinalSupply:    400,
+			name:                 "Mint and burn partial amount",
+			mintAmount:           1000,
+			burnAmount:           600,
+			expectedFinalBalance: 400,
+			expectedFinalSupply:  400,
 		},
 	}
 
@@ -661,10 +679,10 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                 string
-		operations           []operation
-		expectedFinalSupply  int64
-		expectedGovBalance   int64
+		name                  string
+		operations            []operation
+		expectedFinalSupply   int64
+		expectedGovBalance    int64
 		expectedLaunchBalance int64
 	}{
 		{
@@ -675,8 +693,8 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 				{"mint", govStakerAddress, 500},
 				{"burn", govStakerAddress, 300},
 			},
-			expectedFinalSupply:  1000,
-			expectedGovBalance:   1000,
+			expectedFinalSupply:   1000,
+			expectedGovBalance:    1000,
 			expectedLaunchBalance: 0,
 		},
 		{
@@ -688,8 +706,8 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 				{"burn", govStakerAddress, 150},
 				{"burn", govStakerAddress, 250},
 			},
-			expectedFinalSupply:  200,
-			expectedGovBalance:   200,
+			expectedFinalSupply:   200,
+			expectedGovBalance:    200,
 			expectedLaunchBalance: 0,
 		},
 		{
@@ -712,8 +730,8 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 				{"burn", govStakerAddress, 1000},
 				{"mint", govStakerAddress, 500},
 			},
-			expectedFinalSupply:  500,
-			expectedGovBalance:   500,
+			expectedFinalSupply:   500,
+			expectedGovBalance:    500,
 			expectedLaunchBalance: 0,
 		},
 		{
@@ -740,8 +758,8 @@ func TestXgns_SequentialMintBurn(t *testing.T) {
 				{"mint", govStakerAddress, 1},
 				{"burn", govStakerAddress, 1},
 			},
-			expectedFinalSupply:  2,
-			expectedGovBalance:   2,
+			expectedFinalSupply:   2,
+			expectedGovBalance:    2,
 			expectedLaunchBalance: 0,
 		},
 	}

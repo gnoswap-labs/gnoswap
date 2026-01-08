@@ -40,7 +40,7 @@ var (
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm  = testing.NewUserRealm(govStakerAddr)
+	govStakerRealm   = testing.NewUserRealm(govStakerAddr)
 
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = testing.NewUserRealm(projectAddr)
@@ -105,12 +105,12 @@ func setupProtocolFeeDeposit() {
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 
-	ufmt.Printf("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
+	println("[INFO] protocol fee deposited: bar(1000), qux(2500)")
 }
 
 func skipBlocksAndDistribute() {
 	testing.SkipHeights(10)
-	ufmt.Printf("[INFO] skipped 10 blocks\n")
+	println("[INFO] skipped 10 blocks")
 }
 
 func protocolFeeRewardProjectRecipient() {
@@ -127,7 +127,7 @@ func protocolFeeRewardProjectRecipient() {
 	afterBarBalance := bar.BalanceOf(projectAddr)
 	afterQuxBalance := qux.BalanceOf(projectAddr)
 
-	ufmt.Printf("[INFO] collected protocol fee reward for project recipient\n")
+	println("[INFO] collected protocol fee reward for project recipient")
 	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
