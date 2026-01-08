@@ -353,9 +353,10 @@ func testGovernanceVoteTextWorks() {
 	governance.Vote(cross, textProposalId, true)
 	ufmt.Println("[SUCCESS] Bob voted YES on TextProposal in Emergency Mode")
 
-	// Check voting info
-	voteStatus := governance.GetVoteStatusFromProposalById(textProposalId)
-	ufmt.Printf("[INFO] TextProposal vote status: %s\n", voteStatus)
+	// Check voting info using non-JSON getters
+	yeaVotes := governance.GetYeaByProposalId(textProposalId)
+	nayVotes := governance.GetNayByProposalId(textProposalId)
+	ufmt.Printf("[INFO] TextProposal vote count - Yea: %d, Nay: %d\n", yeaVotes, nayVotes)
 	ufmt.Println("[SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode")
 }
 
@@ -412,9 +413,10 @@ func testGovernanceVoteParameterChangeWorks() {
 	governance.Vote(cross, parameterChangeProposalId, true)
 	ufmt.Println("[SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode")
 
-	// Check voting info
-	voteStatus := governance.GetVoteStatusFromProposalById(parameterChangeProposalId)
-	ufmt.Printf("[INFO] ParameterChange proposal vote status: %s\n", voteStatus)
+	// Check voting info using non-JSON getters
+	yeaVotes := governance.GetYeaByProposalId(parameterChangeProposalId)
+	nayVotes := governance.GetNayByProposalId(parameterChangeProposalId)
+	ufmt.Printf("[INFO] ParameterChange proposal vote count - Yea: %d, Nay: %d\n", yeaVotes, nayVotes)
 	ufmt.Println("[SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode")
 }
 
@@ -515,7 +517,7 @@ func verifyHaltStatusSummary() {
 // [INFO] Attempting to vote on TextProposal in Emergency Mode...
 // [SUCCESS] Alice voted YES on TextProposal in Emergency Mode
 // [SUCCESS] Bob voted YES on TextProposal in Emergency Mode
-// [INFO] TextProposal vote status: {"height":"86524","now":"1234999895","proposalId":"1","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
+// [INFO] TextProposal vote count - Yea: 1000000000, Nay: 0
 // [SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode
 //
 // [STEP 9] Test: TextProposal execute FAILS (text proposals cannot be executed)
@@ -532,7 +534,7 @@ func verifyHaltStatusSummary() {
 // [INFO] Attempting to vote on ParameterChange proposal in Emergency Mode...
 // [SUCCESS] Alice voted YES on ParameterChange proposal in Emergency Mode
 // [SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode
-// [INFO] ParameterChange proposal vote status: {"height":"432124","now":"1236727895","proposalId":"2","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
+// [INFO] ParameterChange proposal vote count - Yea: 1000000000, Nay: 0
 // [SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode
 //
 // [STEP 12] Test: ParameterChange proposal execute SUCCEEDS in Emergency Mode
