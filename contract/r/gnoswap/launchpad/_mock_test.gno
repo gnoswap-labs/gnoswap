@@ -1,5 +1,9 @@
 package launchpad
 
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
 // MockResponse is a simple mock response helper
 type MockResponse struct {
 	data      map[string][]any
@@ -250,6 +254,391 @@ func (m *MockLaunchpad) GetRewardManagerIDs(offset, limit int64) []string {
 		return []string{}
 	}
 	return res[0].([]string)
+}
+
+func (m *MockLaunchpad) GetProjectName(projectId string) (string, error) {
+	res, ok := m.Response.Get("GetProjectName")
+	if !ok {
+		return "", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(string), nil
+	}
+	return res[0].(string), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTokenPath(projectId string) (string, error) {
+	res, ok := m.Response.Get("GetProjectTokenPath")
+	if !ok {
+		return "", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(string), nil
+	}
+	return res[0].(string), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectDepositAmount(projectId string) (int64, error) {
+	res, ok := m.Response.Get("GetProjectDepositAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectRecipient(projectId string) (address, error) {
+	res, ok := m.Response.Get("GetProjectRecipient")
+	if !ok {
+		return "", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(address), nil
+	}
+	return res[0].(address), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTiersRatios(projectId string) (map[int64]int64, error) {
+	res, ok := m.Response.Get("GetProjectTiersRatios")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(map[int64]int64), nil
+	}
+	return res[0].(map[int64]int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectCreatedHeight(projectId string) (int64, error) {
+	res, ok := m.Response.Get("GetProjectCreatedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectCreatedAt(projectId string) (int64, error) {
+	res, ok := m.Response.Get("GetProjectCreatedAt")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
+	res, ok := m.Response.Get("GetProjectTierDistributeAmountPerSecondX128")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*u256.Uint), nil
+	}
+	return res[0].(*u256.Uint), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalDistributeAmount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalDistributeAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalDepositAmount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalDepositAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalWithdrawAmount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalWithdrawAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalDepositCount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalDepositCount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalWithdrawCount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalWithdrawCount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierTotalCollectedAmount(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierTotalCollectedAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierStartTime(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierStartTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectTierEndTime(projectId string, tier int64) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierEndTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositProjectID(depositId string) (string, error) {
+	res, ok := m.Response.Get("GetDepositProjectID")
+	if !ok {
+		return "", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(string), nil
+	}
+	return res[0].(string), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositTier(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositTier")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositProjectTierID(depositId string) (string, error) {
+	res, ok := m.Response.Get("GetDepositProjectTierID")
+	if !ok {
+		return "", nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(string), nil
+	}
+	return res[0].(string), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositAmount(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositWithdrawnHeight(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositWithdrawnHeight")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositWithdrawnTime(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositWithdrawnTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositCreatedHeight(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositCreatedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositCreatedAt(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositCreatedAt")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetDepositEndTime(depositId string) (int64, error) {
+	res, ok := m.Response.Get("GetDepositEndTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerDistibuteAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
+	res, ok := m.Response.Get("GetRewardManagerDistibuteAmountPerSecondX128")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*u256.Uint), nil
+	}
+	return res[0].(*u256.Uint), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
+	res, ok := m.Response.Get("GetRewardManagerAccumulatedRewardPerDepositX128")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*u256.Uint), nil
+	}
+	return res[0].(*u256.Uint), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerTotalDistributeAmount(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerTotalDistributeAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerTotalClaimedAmount(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerTotalClaimedAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerDistributeStartTime(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerDistributeStartTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerDistributeEndTime(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerDistributeEndTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerAccumulatedDistributeAmount(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerAccumulatedDistributeAmount")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerAccumulatedHeight(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerAccumulatedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerAccumulatedTime(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerAccumulatedTime")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetRewardManagerRewardClaimableDuration")
+	if !ok {
+		return 0, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(int64), nil
+	}
+	return res[0].(int64), res[1].(error)
 }
 
 func newMockLaunchpad(version string) *MockLaunchpad {
