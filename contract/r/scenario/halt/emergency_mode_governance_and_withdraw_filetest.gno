@@ -354,8 +354,8 @@ func testGovernanceVoteTextWorks() {
 	ufmt.Println("[SUCCESS] Bob voted YES on TextProposal in Emergency Mode")
 
 	// Check voting info using non-JSON getters
-	yeaVotes := governance.GetYeaByProposalId(textProposalId)
-	nayVotes := governance.GetNayByProposalId(textProposalId)
+	yeaVotes, _ := governance.GetYeaByProposalId(textProposalId)
+	nayVotes, _ := governance.GetNayByProposalId(textProposalId)
 	ufmt.Printf("[INFO] TextProposal vote count - Yea: %d, Nay: %d\n", yeaVotes, nayVotes)
 	ufmt.Println("[SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode")
 }
@@ -414,8 +414,8 @@ func testGovernanceVoteParameterChangeWorks() {
 	ufmt.Println("[SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode")
 
 	// Check voting info using non-JSON getters
-	yeaVotes := governance.GetYeaByProposalId(parameterChangeProposalId)
-	nayVotes := governance.GetNayByProposalId(parameterChangeProposalId)
+	yeaVotes, _ := governance.GetYeaByProposalId(parameterChangeProposalId)
+	nayVotes, _ := governance.GetNayByProposalId(parameterChangeProposalId)
 	ufmt.Printf("[INFO] ParameterChange proposal vote count - Yea: %d, Nay: %d\n", yeaVotes, nayVotes)
 	ufmt.Println("[SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode")
 }
@@ -430,7 +430,7 @@ func testParameterChangeProposalExecuteWorks() {
 	ufmt.Printf("[INFO] ParameterChange proposal ID: %d\n", parameterChangeProposalId)
 
 	// Get state before execution
-	executionStateBefore := governance.GetExecutionStateByProposalId(parameterChangeProposalId)
+	executionStateBefore, _ := governance.GetProposalStatusByProposalId(parameterChangeProposalId)
 	ufmt.Printf("[INFO] Execution state BEFORE: %s\n", executionStateBefore)
 
 	// Execute the ParameterChange proposal
@@ -446,11 +446,11 @@ func verifyProposalStatusAfterExecution() {
 	ufmt.Println("[INFO] Verifying proposal execution state after execution...")
 
 	// Check TextProposal execution state (should still be executable/passed, not executed)
-	textExecutionState := governance.GetExecutionStateByProposalId(textProposalId)
+	textExecutionState, _ := governance.GetProposalStatusByProposalId(textProposalId)
 	ufmt.Printf("[INFO] TextProposal (ID: %d) - Execution State: %s\n", textProposalId, textExecutionState)
 
 	// Check ParameterChange proposal execution state (should be executed)
-	paramChangeExecutionState := governance.GetExecutionStateByProposalId(parameterChangeProposalId)
+	paramChangeExecutionState, _ := governance.GetProposalStatusByProposalId(parameterChangeProposalId)
 	ufmt.Printf("[INFO] ParameterChange Proposal (ID: %d) - Execution State: %s\n", parameterChangeProposalId, paramChangeExecutionState)
 
 	ufmt.Println("[SUCCESS] Proposal execution state verification completed")
