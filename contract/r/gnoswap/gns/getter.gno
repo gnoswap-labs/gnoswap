@@ -1,12 +1,6 @@
 package gns
 
-import (
-	"chain/runtime"
-	"strconv"
-	"time"
-
-	"gno.land/p/onbloc/json"
-)
+import "time"
 
 // GetMaxEmissionAmount returns the maximum amount of emission allowed.
 func GetMaxEmissionAmount() int64 {
@@ -176,32 +170,6 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	// Use cached timestamps from HalvingData
 	halvingData := state.getHalvingData()
 	return year, halvingData.getStartTimestamp(year), halvingData.getEndTimestamp(year)
-}
-
-// GetHalvingInfo returns comprehensive halving information as JSON string.
-// Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
-func GetHalvingInfo() ([]byte, error) {
-	currentTime := time.Now().Unix()
-	currentHeight := runtime.ChainHeight()
-	halvingData := getEmissionState().getHalvingData()
-
-	halvings := make([]*json.Node, 0, HALVING_END_YEAR)
-
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
-			"year":      json.StringNode("year", strconv.FormatInt(year, 10)),
-			"timestamp": json.NumberNode("timestamp", float64(halvingData.getStartTimestamp(year))),
-			"amount":    json.NumberNode("amount", float64(halvingData.getAmountPerSecond(year))),
-		}))
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":      json.NumberNode("height", float64(currentHeight)),
-		"currentTime": json.NumberNode("timestamp", float64(currentTime)),
-		"halvings":    json.ArrayNode("", halvings),
-	})
-
-	return json.Marshal(node)
 }
 
 // EmissionStateView is a read-only snapshot of emission state.
