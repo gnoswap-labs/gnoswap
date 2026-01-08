@@ -322,6 +322,14 @@ func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
+func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
+    toStaker = GetDistributedToStaker()
+    toDevOps = GetDistributedToDevOps()
+    toCommunityPool = GetDistributedToCommunityPool()
+    toGovStaker = GetDistributedToGovStaker()
+    return
+}
+
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
