@@ -321,8 +321,8 @@ func TestCollectBarBazFees() {
 func TestBurnFooBarLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolOldLiquidity := pool.GetPool(fooPath, barPath, fee500).
-		Liquidity()
+	poolData, _ := pool.GetPool(fooPath, barPath, fee500)
+	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
 		cross,
@@ -338,7 +338,8 @@ func TestBurnFooBarLiquidity() {
 	println("[EXPECTED] b0:", b0, "expected: should not be 0")
 	println("[EXPECTED] b1:", b1, "expected: should not be 0")
 
-	poolNewLiquidity := pool.GetPool(fooPath, barPath, fee500).Liquidity()
+	poolData, _ = pool.GetPool(fooPath, barPath, fee500)
+	poolNewLiquidity := poolData.Liquidity()
 
 	expected := u256.Zero().Sub(poolOldLiquidity, poolNewLiquidity).ToString()
 	println("[EXPECTED] expected:", expected, "expected: should be", test_liquidityExpect256.ToString())
@@ -348,7 +349,8 @@ func TestBurnFooBarLiquidity() {
 func TestBurnBarBazLiquidity() {
 	testing.SetRealm(posRealm)
 
-	poolOldLiquidity := pool.GetPool(barPath, bazPath, fee500).Liquidity()
+	poolData, _ := pool.GetPool(barPath, bazPath, fee500)
+	poolOldLiquidity := poolData.Liquidity()
 
 	b0, b1 := pool.Burn(
 		cross,
@@ -364,7 +366,8 @@ func TestBurnBarBazLiquidity() {
 	println("[EXPECTED] b0:", b0, "expected: should not be 0")
 	println("[EXPECTED] b1:", b1, "expected: should not be 0")
 
-	poolNewLiquidity := pool.GetPool(barPath, bazPath, fee500).Liquidity()
+	poolData, _ = pool.GetPool(barPath, bazPath, fee500)
+	poolNewLiquidity := poolData.Liquidity()
 
 	expected := u256.Zero().Sub(poolOldLiquidity, poolNewLiquidity).ToString()
 	println("[EXPECTED] expected:", expected, "expected: should be 0")

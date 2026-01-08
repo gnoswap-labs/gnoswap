@@ -16,6 +16,7 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 		name                 string
 		setupFunc            func()
 		callerAddress        address
+		callerIsUser         bool
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
@@ -25,8 +26,19 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 				resetTestStore()
 			},
 			callerAddress:        userWithoutProject,
+			callerIsUser:         true,
 			expectedHasPanic:     true,
 			expectedPanicMessage: "is not the owner of any project",
+		},
+		{
+			name: "panic when caller is not user",
+			setupFunc: func() {
+				resetTestStore()
+			},
+			callerAddress:        testutils.TestAddress("contract"),
+			callerIsUser:         false,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "caller is not user",
 		},
 	}
 
@@ -37,7 +49,11 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 			impl := getTestImplementation()
 
 			// Set realm for the test
-			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
+			if tt.callerIsUser {
+				testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
+			} else {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
+			}
 
 			// Execute
 			collectFn := func() {

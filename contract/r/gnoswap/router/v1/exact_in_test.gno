@@ -1087,3 +1087,224 @@ func TestExactOutSwapOperation_MultiRoute(t *testing.T) {
 		})
 	}
 }
+// TestSwapRoute_EmptyRoute tests validation of empty route parameter
+func TestSwapRoute_EmptyRoute(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Empty route should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				bazPath,
+				"100000",
+				"", // Empty route
+				"100",
+				"0",
+				deadline,
+				"",
+			)
+		}(cross)
+	})
+}
+
+// TestSwapRoute_EmptyQuote tests validation of empty quote parameter
+func TestSwapRoute_EmptyQuote(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Empty quote should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				bazPath,
+				"100000",
+				singlePoolPath,
+				"", // Empty quote
+				"0",
+				deadline,
+				"",
+			)
+		}(cross)
+	})
+}
+
+// TestSwapRoute_ZeroAmountIn tests validation of zero amount input
+func TestSwapRoute_ZeroAmountIn(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Zero amount should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				bazPath,
+				"0", // Zero amount
+				singlePoolPath,
+				"100",
+				"0",
+				deadline,
+				"",
+			)
+		}(cross)
+	})
+}
+
+// TestSwapRoute_SameTokenSwap tests validation of same input/output token
+func TestSwapRoute_SameTokenSwap(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Same input and output token should fail
+	uassert.AbortsContains(t, "invalid route", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				barPath, // Same as input
+				"100000",
+				singlePoolPath,
+				"100",
+				"0",
+				deadline,
+				"",
+			)
+		}(cross)
+	})
+}
+
+// TestSwapRoute_InvalidQuoteSum tests that quotes not summing to 100 should fail
+func TestSwapRoute_InvalidQuoteSum(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Quotes summing to 90 instead of 100 should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				bazPath,
+				"100000",
+				singlePoolPath+","+singlePoolPath, // Two routes
+				"50,40", // Sum = 90, not 100
+				"0",
+				deadline,
+				"",
+			)
+		}(cross)
+	})
+}
+
+// TestSwapRoute_NegativeDeadline tests validation of past deadline
+func TestSwapRoute_NegativeDeadline(t *testing.T) {
+	initRouterTest(t)
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
+
+	userAddr := testutils.TestAddress("user1")
+	TokenFaucet(t, barPath, userAddr)
+	TokenApprove(t, barPath, userAddr, routerAddr, maxApprove)
+
+	router := mockRouter()
+
+	// Disable swap fee
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(0)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+
+	// Past deadline should fail
+	uassert.AbortsContains(t, "", func() {
+		func(cur realm) {
+			router.ExactInSwapRoute(
+				barPath,
+				bazPath,
+				"100000",
+				singlePoolPath,
+				"100",
+				"0",
+				0, // Past deadline
+				"",
+			)
+		}(cross)
+	})
+}

@@ -1,2 +1,2 @@
-module = "gno.land/r/scenario/getter"
+module = "gno.land/r/gnoswap/scenario/getter"
 gno = "0.9"

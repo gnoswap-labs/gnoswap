@@ -71,10 +71,9 @@ func main() {
 	depositGnsTo(bobAddr, projectId, projectTier30Id, int64(1_000_000))
 	println()
 
-	println("[SCENARIO] 4. Skip blocks after deposit")
-	testing.SkipHeights(1)
-	println("[INFO] Alice second distribute amount: 385.802469136 (38.5802469136 * 5 sec + 19.2901234568 * 10 sec)")
-	println("[INFO] Bob second distribute amount: 192.901234568 (19.2901234568 * 10 sec)")
+	println("[SCENARIO] 4. Skip blocks to pass collect wait duration")
+	println("[INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration")
+	testing.SkipHeights(51840) // 3 days for tier 30 collect wait duration
 	println()
 
 	println("[SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward")
@@ -105,7 +104,7 @@ func createOBLProject() {
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
@@ -124,8 +123,8 @@ func createOBLProject() {
 		startTime,    // 5 block later
 	)
 
-	println("[INFO] Skipping 3600 blocks")
-	testing.SkipHeights(3600 / 5)
+	println("[INFO] Skipping 120960 blocks")
+	testing.SkipHeights(120960)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 
@@ -228,7 +227,7 @@ func unmarshal(data string) map[string]interface{} {
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [INFO] Skipping 3600 blocks
+// [INFO] Skipping 120960 blocks
 // [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
 // [EXPECTED] Project name: OBL Launchpad Project
 // [EXPECTED] Project token path: gno.land/r/onbloc/obl
@@ -266,20 +265,19 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Deposit tier: 30
 // [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
 //
-// [SCENARIO] 4. Skip blocks after deposit
-// [INFO] Alice second distribute amount: 385.802469136 (38.5802469136 * 5 sec + 19.2901234568 * 10 sec)
-// [INFO] Bob second distribute amount: 192.901234568 (19.2901234568 * 10 sec)
+// [SCENARIO] 4. Skip blocks to pass collect wait duration
+// [INFO] Skipping 51840 blocks (259200 seconds = 3 days) to pass collect wait duration
 //
 // [SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward
 // [INFO] Collecting launchpad reward for Deposit ID: 1
-// [EXPECTED] Obl balance after collection: 385
+// [EXPECTED] Obl balance after collection: 5000289
 //
 // [SCENARIO] 6. Collect launchpad reward for second Deposit
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 192
+// [EXPECTED] Obl balance after collection: 5000096
 //
 // [SCENARIO] 7. Skip blocks after reward collection
 // [INFO] Collecting launchpad reward for Deposit ID: 1
-// [EXPECTED] Obl balance after collection: 97
+// [EXPECTED] Obl balance after collection: 96
 // [INFO] Collecting launchpad reward for Deposit ID: 2
-// [EXPECTED] Obl balance after collection: 97
+// [EXPECTED] Obl balance after collection: 96

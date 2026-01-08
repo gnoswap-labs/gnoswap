@@ -86,7 +86,7 @@ func mintPosition() {
 
 	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
-	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }

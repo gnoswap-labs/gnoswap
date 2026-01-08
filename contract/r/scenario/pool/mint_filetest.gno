@@ -71,7 +71,7 @@ func main() {
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 
 	println("[SCENARIO] 1. returns 0 before initialization")
 	println("[EXPECTED] liquidity:", thisPool.Liquidity().ToString(), "expected: 0")

@@ -125,7 +125,7 @@ func TestMint() {
 }
 
 func TestSwapBuyNative() {
-	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
+	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
@@ -161,7 +161,7 @@ func TestSwapBuyNative() {
 }
 
 func TestSwapSellNative() {
-	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
+	pools, _ := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)

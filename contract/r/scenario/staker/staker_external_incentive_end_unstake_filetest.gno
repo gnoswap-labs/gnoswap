@@ -306,12 +306,12 @@ func verifyPositionsRecovered() {
 
 	// Verify positions can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position1, found1 := pn.GetPosition(1)
-	if !found1 {
+	position1, err1 := pn.GetPosition(1)
+	if err1 != nil {
 		panic("position 1 should still exist")
 	}
-	position2, found2 := pn.GetPosition(2)
-	if !found2 {
+	position2, err2 := pn.GetPosition(2)
+	if err2 != nil {
 		panic("position 2 should still exist")
 	}
 

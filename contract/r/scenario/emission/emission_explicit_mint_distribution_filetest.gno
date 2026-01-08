@@ -24,6 +24,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 )
@@ -47,7 +48,7 @@ func testExplicitMintDistribution() {
 		emission.COMMUNITY_POOL, 500,
 		emission.GOV_STAKER, 0,
 	)
-	println("[INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/xGNS)")
+	println("[INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/GovStaker)")
 	println()
 
 	println("[SCENARIO] 2. Set distribution start time")
@@ -71,23 +72,19 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond1, elapsedSeconds1, expectedTotalEmission1))
 	println()
 
-	emission.MintAndDistributeGns(cross)
+	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
 	period1Staker := emission.GetDistributedToStaker()
 	period1Devops := emission.GetDistributedToDevOps()
 	period1Pool := emission.GetDistributedToCommunityPool()
-	period1XGns := emission.GetDistributedToGovStaker()
-	totalPeriod1 := period1Staker + period1Devops + period1Pool + period1XGns
+	period1GovStaker := emission.GetDistributedToGovStaker()
+	totalPeriod1 := period1Staker + period1Devops + period1Pool + period1GovStaker
 
-	println(ufmt.Sprintf("[INFO] Period 1 distributed: Staker=%d, DevOps=%d, Pool=%d, xGNS=%d",
-		period1Staker, period1Devops, period1Pool, period1XGns))
-	println("[INFO] expected Staker: 24971460 (70%)")
-	println("[INFO] expected DevOps: 8918378 (25%)")
-	println("[INFO] expected Community: 1783675 (5%)")
-	println("[INFO] expected xGNS: 0 (0%)")
+	println(ufmt.Sprintf("[INFO] Period 1 distributed: Staker=%d, DevOps=%d, Pool=%d, GovStaker=%d",
+		period1Staker, period1Devops, period1Pool, period1GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 Staker: %d", period1Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 DevOps: %d", period1Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 Pool: %d", period1Pool))
-	println(ufmt.Sprintf("[EXPECTED] Period 1 xGNS: %d", period1XGns))
+	println(ufmt.Sprintf("[EXPECTED] Period 1 GovStaker: %d", period1GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 1 total: %d", totalPeriod1))
 	println()
 
@@ -117,28 +114,24 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond2, elapsedSeconds2, expectedTotalEmission2))
 	println()
 
-	emission.MintAndDistributeGns(cross)
+	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
 	totalStaker := emission.GetDistributedToStaker()
 	totalDevops := emission.GetDistributedToDevOps()
 	totalPool := emission.GetDistributedToCommunityPool()
-	totalXGns := emission.GetDistributedToGovStaker()
+	totalGovStaker := emission.GetDistributedToGovStaker()
 
 	period2Staker := totalStaker - period1Staker
 	period2Devops := totalDevops - period1Devops
 	period2Pool := totalPool - period1Pool
-	period2XGns := totalXGns - period1XGns
-	totalPeriod2 := period2Staker + period2Devops + period2Pool + period2XGns
+	period2GovStaker := totalGovStaker - period1GovStaker
+	totalPeriod2 := period2Staker + period2Devops + period2Pool + period2GovStaker
 
-	println(ufmt.Sprintf("[INFO] Period 2 distributed: Staker=%d, DevOps=%d, Pool=%d, xGNS=%d",
-		period2Staker, period2Devops, period2Pool, period2XGns))
-	println("[INFO] expected Staker: 0 (0%)")
-	println("[INFO] expected DevOps: 17836758 (50%)")
-	println("[INFO] expected Pool: 0 (0%)")
-	println("[INFO] expected xGNS: 17836758 (50%)")
+	println(ufmt.Sprintf("[INFO] Period 2 distributed: Staker=%d, DevOps=%d, Pool=%d, GovStaker=%d",
+		period2Staker, period2Devops, period2Pool, period2GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Staker: %d", period2Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 DevOps: %d", period2Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 Pool: %d", period2Pool))
-	println(ufmt.Sprintf("[EXPECTED] Period 2 xGNS: %d", period2XGns))
+	println(ufmt.Sprintf("[EXPECTED] Period 2 GovStaker: %d", period2GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 2 total: %d", totalPeriod2))
 	println()
 
@@ -168,39 +161,60 @@ func testExplicitMintDistribution() {
 	println(ufmt.Sprintf("[INFO] calculated total emission: %d * %d = %d", emissionPerSecond3, elapsedSeconds3, expectedTotalEmission3))
 	println()
 
-	emission.MintAndDistributeGns(cross)
+	getBalanceChanges(func() { emission.MintAndDistributeGns(cross) })
+
 	finalStaker := emission.GetDistributedToStaker()
 	finalDevops := emission.GetDistributedToDevOps()
 	finalPool := emission.GetDistributedToCommunityPool()
-	finalXGns := emission.GetDistributedToGovStaker()
+	finalGovStaker := emission.GetDistributedToGovStaker()
 
 	period3Staker := finalStaker - totalStaker
 	period3Devops := finalDevops - totalDevops
 	period3Pool := finalPool - totalPool
-	period3XGns := finalXGns - totalXGns
-	totalPeriod3 := period3Staker + period3Devops + period3Pool + period3XGns
+	period3GovStaker := finalGovStaker - totalGovStaker
+	totalPeriod3 := period3Staker + period3Devops + period3Pool + period3GovStaker
 
-	println(ufmt.Sprintf("[INFO] Period 3 distributed: Staker=%d, DevOps=%d, Pool=%d, xGNS=%d",
-		period3Staker, period3Devops, period3Pool, period3XGns))
-	println("[INFO] expected Staker: 10702054 (30%)")
-	println("[INFO] expected DevOps: 10702054 (30%)")
-	println("[INFO] expected Pool: 10702054 (30%)")
-	println("[INFO] expected xGNS: 3567351 (10%)")
+	println(ufmt.Sprintf("[INFO] Period 3 distributed: Staker=%d, DevOps=%d, Pool=%d, GovStaker=%d",
+		period3Staker, period3Devops, period3Pool, period3GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 Staker: %d", period3Staker))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 DevOps: %d", period3Devops))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 Pool: %d", period3Pool))
-	println(ufmt.Sprintf("[EXPECTED] Period 3 xGNS: %d", period3XGns))
+	println(ufmt.Sprintf("[EXPECTED] Period 3 GovStaker: %d", period3GovStaker))
 	println(ufmt.Sprintf("[EXPECTED] Period 3 total: %d", totalPeriod3))
 
 	println()
-	totalDistributed := finalStaker + finalDevops + finalPool + finalXGns
-	println("[INFO] expected total distributed: 107020542")
+	totalDistributed := finalStaker + finalDevops + finalPool + finalGovStaker
 	println(ufmt.Sprintf("[EXPECTED] Total distributed: %d", totalDistributed))
+}
+
+func getBalanceChanges(fn func()) {
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	devopsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	gnsPath := "gno.land/r/gnoswap/gns"
+
+	beforeStakerBalance := common.BalanceOf(gnsPath, stakerAddr)
+	beforeDevopsBalance := common.BalanceOf(gnsPath, devopsAddr)
+	beforeCommunityPoolBalance := common.BalanceOf(gnsPath, communityPoolAddr)
+	beforeGovStakerBalance := common.BalanceOf(gnsPath, govStakerAddr)
+
+	fn()
+
+	afterStakerBalance := common.BalanceOf(gnsPath, stakerAddr)
+	afterDevopsBalance := common.BalanceOf(gnsPath, devopsAddr)
+	afterCommunityPoolBalance := common.BalanceOf(gnsPath, communityPoolAddr)
+	afterGovStakerBalance := common.BalanceOf(gnsPath, govStakerAddr)
+
+	ufmt.Printf("[EXPECTED] Staker balance changed: %d\n", afterStakerBalance-beforeStakerBalance)
+	ufmt.Printf("[EXPECTED] Devops balance changed: %d\n", afterDevopsBalance-beforeDevopsBalance)
+	ufmt.Printf("[EXPECTED] Community pool balance changed: %d\n", afterCommunityPoolBalance-beforeCommunityPoolBalance)
+	ufmt.Printf("[EXPECTED] Gov staker balance changed: %d\n", afterGovStakerBalance-beforeGovStakerBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Setup initial 70/25/5/0 distribution ratio
-// [INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/xGNS)
+// [INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/GovStaker)
 //
 // [SCENARIO] 2. Set distribution start time
 // [INFO] initial distribution: all recipients = 0
@@ -210,15 +224,15 @@ func testExplicitMintDistribution() {
 // [INFO] elapsed seconds: 5 (1 block)
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
-// [INFO] Period 1 distributed: Staker=24971460, DevOps=8918378, Pool=1783675, xGNS=0
-// [INFO] expected Staker: 24971460 (70%)
-// [INFO] expected DevOps: 8918378 (25%)
-// [INFO] expected Community: 1783675 (5%)
-// [INFO] expected xGNS: 0 (0%)
+// [EXPECTED] Staker balance changed: 24971460
+// [EXPECTED] Devops balance changed: 8918378
+// [EXPECTED] Community pool balance changed: 1783675
+// [EXPECTED] Gov staker balance changed: 0
+// [INFO] Period 1 distributed: Staker=24971460, DevOps=8918378, Pool=1783675, GovStaker=0
 // [EXPECTED] Period 1 Staker: 24971460
 // [EXPECTED] Period 1 DevOps: 8918378
 // [EXPECTED] Period 1 Pool: 1783675
-// [EXPECTED] Period 1 xGNS: 0
+// [EXPECTED] Period 1 GovStaker: 0
 // [EXPECTED] Period 1 total: 35673513
 //
 // [SCENARIO] 4. Change ratio to 0/50/0/50
@@ -229,15 +243,15 @@ func testExplicitMintDistribution() {
 // [INFO] elapsed seconds: 5 (1 block)
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
-// [INFO] Period 2 distributed: Staker=0, DevOps=17836758, Pool=0, xGNS=17836758
-// [INFO] expected Staker: 0 (0%)
-// [INFO] expected DevOps: 17836758 (50%)
-// [INFO] expected Pool: 0 (0%)
-// [INFO] expected xGNS: 17836758 (50%)
+// [EXPECTED] Staker balance changed: 0
+// [EXPECTED] Devops balance changed: 17836758
+// [EXPECTED] Community pool balance changed: 0
+// [EXPECTED] Gov staker balance changed: 17836758
+// [INFO] Period 2 distributed: Staker=0, DevOps=17836758, Pool=0, GovStaker=17836758
 // [EXPECTED] Period 2 Staker: 0
 // [EXPECTED] Period 2 DevOps: 17836758
 // [EXPECTED] Period 2 Pool: 0
-// [EXPECTED] Period 2 xGNS: 17836758
+// [EXPECTED] Period 2 GovStaker: 17836758
 // [EXPECTED] Period 2 total: 35673516
 //
 // [SCENARIO] 6. Change ratio to 30/30/30/10
@@ -248,16 +262,15 @@ func testExplicitMintDistribution() {
 // [INFO] elapsed seconds: 5 (1 block)
 // [INFO] calculated total emission: 7134703 * 5 = 35673515
 //
-// [INFO] Period 3 distributed: Staker=10702054, DevOps=10702054, Pool=10702054, xGNS=3567351
-// [INFO] expected Staker: 10702054 (30%)
-// [INFO] expected DevOps: 10702054 (30%)
-// [INFO] expected Pool: 10702054 (30%)
-// [INFO] expected xGNS: 3567351 (10%)
+// [EXPECTED] Staker balance changed: 10702054
+// [EXPECTED] Devops balance changed: 10702054
+// [EXPECTED] Community pool balance changed: 10702054
+// [EXPECTED] Gov staker balance changed: 3567351
+// [INFO] Period 3 distributed: Staker=10702054, DevOps=10702054, Pool=10702054, GovStaker=3567351
 // [EXPECTED] Period 3 Staker: 10702054
 // [EXPECTED] Period 3 DevOps: 10702054
 // [EXPECTED] Period 3 Pool: 10702054
-// [EXPECTED] Period 3 xGNS: 3567351
+// [EXPECTED] Period 3 GovStaker: 3567351
 // [EXPECTED] Period 3 total: 35673513
 //
-// [INFO] expected total distributed: 107020542
 // [EXPECTED] Total distributed: 107020542
