@@ -54,7 +54,6 @@ func main() {
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	// Scenario 3: First swap with referrer
 	println("[SCENARIO] 3. First User Swap with Referrer (should register referrer)")
 	user1Addr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
@@ -71,16 +70,14 @@ func main() {
 	ufmt.Printf("[EXPECTED] User1 referral after first swap: '%s'\n", afterReferral)
 	println()
 
-	// Scenario 4: Swap with empty referrer - should DELETE existing referrer
-	println("[SCENARIO] 4. Same User Swap with Empty Referrer (should delete existing referrer)")
-	swapWithReferrer(user1Addr, "")
+	println("[SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)")
+	swapWithReferrer(user1Addr, referral.ContractAddress())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
 	stillReferral := referral.GetReferral(user1Addr.String())
 	ufmt.Printf("[EXPECTED] User1 referral after swap with empty referrer: '%s'\n", stillReferral)
 	println()
 
-	// Scenario 5: Register again and try with different referrer
 	println("[SCENARIO] 5. Register Referrer Again and Swap with Different Referrer")
 
 	// Register referrer again
@@ -99,7 +96,6 @@ func main() {
 	ufmt.Printf("[EXPECTED] User1 referral after swap with different referrer: '%s'\n", unchangedReferral)
 	println()
 
-	// Scenario 6: New user with referrer
 	println("[SCENARIO] 6. New User Swap with Referrer (should register new referrer)")
 	user2Addr := testutils.TestAddress("user2")
 	referrer2Addr := testutils.TestAddress("referrer3")
@@ -116,7 +112,6 @@ func main() {
 	ufmt.Printf("[EXPECTED] User2 referral after swap: '%s'\n", afterUser2Referral)
 	println()
 
-	// Scenario 7: Rate limit expiration - successful re-registration after 24 hours
 	println("[SCENARIO] 7. Rate Limit Expiration - Re-registration After 24 Hours")
 
 	// Skip 17280 blocks = 24 hours (5 seconds per block)
@@ -249,67 +244,66 @@ func swapWithReferrer(userAddr address, referrer string) {
 }
 
 // Output:
-//[SCENARIO] 1. Initialize Setup
-//[INFO] GNS Balance of admin: 100000000000000
-//[INFO] WUGNOT Balance of admin: 100000000000000
+// [SCENARIO] 1. Initialize Setup
+// [INFO] GNS Balance of admin: 100000000000000
+// [INFO] WUGNOT Balance of admin: 100000000000000
 //
-//[SCENARIO] 2. Create Pool And Mint Position (WUGNOT:GNS:500)
-//[EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
-//[INFO] Minting position
-//[EXPECTED] positionId: 1
-//[EXPECTED] liquidity: 340264708
-//[EXPECTED] amount0: 100000000
-//[EXPECTED] amount1: 100000000
+// [SCENARIO] 2. Create Pool And Mint Position (WUGNOT:GNS:500)
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [INFO] Minting position
+// [EXPECTED] positionId: 1
+// [EXPECTED] liquidity: 340264708
+// [EXPECTED] amount0: 100000000
+// [EXPECTED] amount1: 100000000
 //
-//[SCENARIO] 3. First User Swap with Referrer (should register referrer)
-//[INFO] User g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn setup complete - WUGNOT: 100000000
-//[INFO] User1 referral before swap: ''
-//[INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -995078
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 995078
-//[EXPECTED] User1 referral after first swap: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
+// [SCENARIO] 3. First User Swap with Referrer (should register referrer)
+// [INFO] User g1w4ek2u33ta047h6lta047h6lta047h6ldvdwpn setup complete - WUGNOT: 100000000
+// [INFO] User1 referral before swap: ''
+// [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -995078
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 995078
+// [EXPECTED] User1 referral after first swap: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 //
-//[SCENARIO] 4. Same User Swap with Empty Referrer (should delete existing referrer)
-//[INFO] Swapping with referrer: ''
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -989266
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 989266
-//[EXPECTED] User1 referral after swap with empty referrer: ''
+// [SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)
+// [INFO] Swapping with referrer: 'g1u0p5ld4aq6sk5l26ys27wk8nftj080l3era4wn'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -989266
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 989266
+// [EXPECTED] User1 referral after swap with empty referrer: ''
 //
-//[SCENARIO] 5. Register Referrer Again and Swap with Different Referrer
-//[INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -983505
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 983505
-//[INFO] User1 referral after re-registration: ''
-//[INFO] Swapping with referrer: 'g1wfjkvetjwfjhyvjlta047h6lta047h6l2tdl74'
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -977795
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 977795
-//[EXPECTED] User1 referral after swap with different referrer: ''
+// [SCENARIO] 5. Register Referrer Again and Swap with Different Referrer
+// [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -983505
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 983505
+// [INFO] User1 referral after re-registration: ''
+// [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyvjlta047h6lta047h6l2tdl74'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -977795
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 977795
+// [EXPECTED] User1 referral after swap with different referrer: ''
 //
-//[SCENARIO] 6. New User Swap with Referrer (should register new referrer)
-//[INFO] User g1w4ek2u3jta047h6lta047h6lta047h6l9huexc setup complete - WUGNOT: 100000000
-//[INFO] User2 referral before swap: ''
-//[INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -972133
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 972133
-//[EXPECTED] User2 referral after swap: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
+// [SCENARIO] 6. New User Swap with Referrer (should register new referrer)
+// [INFO] User g1w4ek2u3jta047h6lta047h6lta047h6l9huexc setup complete - WUGNOT: 100000000
+// [INFO] User2 referral before swap: ''
+// [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -972133
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 972133
+// [EXPECTED] User2 referral after swap: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
 //
-//[SCENARIO] 7. Rate Limit Expiration - Re-registration After 24 Hours
-//[INFO] Skipped 17280 blocks (24 hours)
-//[INFO] User1 referral before re-registration: ''
-//[INFO] Swapping with referrer: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
-//[EXPECTED] inputAmount: 1000000
-//[EXPECTED] outputAmount: -966521
-//[EXPECTED] WUGNOT balance changed: -1000000
-//[EXPECTED] GNS balance changed: 966521
-//[EXPECTED] User1 referral after 24h and re-registration: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
-//
+// [SCENARIO] 7. Rate Limit Expiration - Re-registration After 24 Hours
+// [INFO] Skipped 17280 blocks (24 hours)
+// [INFO] User1 referral before re-registration: ''
+// [INFO] Swapping with referrer: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
+// [EXPECTED] inputAmount: 1000000
+// [EXPECTED] outputAmount: -966521
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNS balance changed: 966521
+// [EXPECTED] User1 referral after 24h and re-registration: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
