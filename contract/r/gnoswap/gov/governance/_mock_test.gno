@@ -400,6 +400,15 @@ func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	return res[0].(int64), res[1].(bool)
 }
 
+// Voting weight snapshot getters
+func (m *MockGovernance) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
+	res, ok := m.Response.Get("GetCurrentVotingWeightSnapshot")
+	if !ok {
+		return 0, 0, nil
+	}
+	return res[0].(int64), res[1].(int64), nil
+}
+
 func newMockGovernance(version string) *MockGovernance {
 	return &MockGovernance{
 		Version:  version,

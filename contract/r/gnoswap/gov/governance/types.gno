@@ -100,6 +100,9 @@ type IGovernanceGetter interface {
 
 	// Active proposal query
 	GetOldestActiveProposalSnapshotTime() (int64, bool)
+
+	// Voting weight snapshot getters
+	GetCurrentVotingWeightSnapshot() (int64, int64, error)
 }
 
 type IGovernanceStore interface {

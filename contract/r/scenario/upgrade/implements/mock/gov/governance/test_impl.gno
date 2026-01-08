@@ -187,6 +187,11 @@ func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	return t.instance.GetOldestActiveProposalSnapshotTime()
 }
 
+// Voting weight snapshot getters
+func (t *TestGovernance) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
+	return t.instance.GetCurrentVotingWeightSnapshot()
+}
+
 type stakerAccessor struct {
 	userDelegationAmounts  map[address]*avl.Tree
 	totalDelegationAmounts *avl.Tree

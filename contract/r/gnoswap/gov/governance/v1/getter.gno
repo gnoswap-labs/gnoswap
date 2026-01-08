@@ -347,3 +347,18 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 
 	return oldestSnapshotTime, hasActiveProposal
 }
+
+// ==================================
+// Voting weight snapshot getters
+// ==================================
+
+// GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
+func (gv *governanceV1) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
+	current := time.Now().Unix()
+	config, ok := gv.getCurrentConfig()
+	if !ok {
+		return 0, 0, ufmt.Errorf("current config not found")
+	}
+
+	return gv.getVotingWeightSnapshot(current, config.VotingWeightSmoothingDuration)
+}

@@ -237,3 +237,12 @@ func GetUserProposalIDs(user address, offset, count int) []int64 {
 func GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	return getImplementation().GetOldestActiveProposalSnapshotTime()
 }
+
+// ==================================
+// Voting weight snapshot getters
+// ==================================
+
+// GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
+func GetCurrentVotingWeightSnapshot() (int64, int64, error) {
+	return getImplementation().GetCurrentVotingWeightSnapshot()
+}
