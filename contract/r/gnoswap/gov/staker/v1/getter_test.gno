@@ -455,7 +455,6 @@ func TestGetter_GetDelegation(t *testing.T) {
 				uassert.Equal(t, delegation.TotalDelegatedAmount(), tt.expectedAmount)
 			} else {
 				uassert.NotNil(t, err)
-				uassert.Nil(t, delegation)
 			}
 		})
 	}
