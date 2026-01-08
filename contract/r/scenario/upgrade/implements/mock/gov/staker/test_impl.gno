@@ -151,28 +151,40 @@ func (t *TestGovStaker) GetDelegationSnapshots(snapshotTime int64) (staker.Deleg
 	return result[0].(staker.DelegationSnapshot), result[1].(bool)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) string {
-	return t.ExecuteFn(
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+	result := t.ExecuteFn(
 		"GetClaimableRewardByAddress",
-		func(args ...any) any { return t.instance.GetClaimableRewardByAddress(args[0].(address)) },
+		func(args ...any) any {
+			emission, fees := t.instance.GetClaimableRewardByAddress(args[0].(address))
+			return []any{emission, fees}
+		},
 		addr,
-	).(string)
+	).([]any)
+	return result[0].(int64), result[1].(map[string]int64)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) string {
-	return t.ExecuteFn(
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+	result := t.ExecuteFn(
 		"GetClaimableRewardByLaunchpad",
-		func(args ...any) any { return t.instance.GetClaimableRewardByLaunchpad(args[0].(address)) },
+		func(args ...any) any {
+			emission, fees := t.instance.GetClaimableRewardByLaunchpad(args[0].(address))
+			return []any{emission, fees}
+		},
 		addr,
-	).(string)
+	).([]any)
+	return result[0].(int64), result[1].(map[string]int64)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
-	return t.ExecuteFn(
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+	result := t.ExecuteFn(
 		"GetClaimableRewardByRewardID",
-		func(args ...any) any { return t.instance.GetClaimableRewardByRewardID(args[0].(string)) },
+		func(args ...any) any {
+			emission, fees := t.instance.GetClaimableRewardByRewardID(args[0].(string))
+			return []any{emission, fees}
+		},
 		rewardID,
-	).(string)
+	).([]any)
+	return result[0].(int64), result[1].(map[string]int64)
 }
 
 // IGovStakerAdmin interface

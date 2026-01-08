@@ -99,11 +99,28 @@ func skipBlocksAndDistribute() {
 	println("[INFO] skipped 10 blocks and distributed emission")
 }
 
+func formatProtocolFees(fees map[string]int64) string {
+	if len(fees) == 0 {
+		return "map[]"
+	}
+	result := "map["
+	first := true
+	for k, v := range fees {
+		if !first {
+			result += " "
+		}
+		result += k + ":" + ufmt.Sprintf("%d", v)
+		first = false
+	}
+	result += "]"
+	return result
+}
+
 // check and collect emission reward for dummy
 func emissionRewardScenario() {
 	testing.SetRealm(govStakerRealm)
-	gcr := staker.GetClaimableRewardByAddress(dummyAddr)
-	ufmt.Printf("[INFO] claimable reward (dummy): %s\n", gcr)
+	emissionReward, protocolFees := staker.GetClaimableRewardByAddress(dummyAddr)
+	ufmt.Printf("[INFO] claimable reward (dummy): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	// Collect reward
 	testing.SetOriginCaller(dummyAddr)
@@ -127,6 +144,6 @@ func emissionRewardScenario() {
 // [INFO] skipped 10 blocks and distributed emission
 //
 // [SCENARIO] 5. Check and collect emission reward
-// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"14863964","protocolFees":[]}
+// [INFO] claimable reward (dummy): emissionReward=14863964, protocolFees=map[]
 // [INFO] collected emission reward for dummy
 // [EXPECTED] dummy GNS balance after collect: 14863964

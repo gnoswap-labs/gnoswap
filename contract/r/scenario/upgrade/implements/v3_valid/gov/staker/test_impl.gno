@@ -82,15 +82,15 @@ func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snap
 	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) string {
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
 	return t.instance.GetClaimableRewardByAddress(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) string {
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
 	return t.instance.GetClaimableRewardByLaunchpad(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
 	return t.instance.GetClaimableRewardByRewardID(rewardID)
 }
 
