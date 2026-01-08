@@ -22,7 +22,9 @@
 //   3. Router swap is blocked (router halted)
 //   4. Governance propose works (governance not halted)
 //   5. Governance vote works (governance not halted)
-//   6. Governance execute works (governance not halted)
+//   6. TextProposal execute fails (text proposals cannot be executed)
+//   7. ParameterChange proposal works and can be executed
+//   8. Proposal status is correctly updated after execution
 
 package main
 
@@ -85,8 +87,10 @@ var (
 	fooPath = "gno.land/r/onbloc/foo"
 	fee     = uint32(3000)
 
+	textProposalId            int64
+	parameterChangeProposalId int64
+
 	currentBlockTime = int64(2)
-	proposalId       int64
 )
 
 func main() {
@@ -117,15 +121,35 @@ func main() {
 	testRouterSwapBlocked()
 	println()
 
-	ufmt.Println("[STEP 7] Test: Governance propose works in Emergency Mode")
-	testGovernanceProposeWorks()
+	ufmt.Println("[STEP 7] Test: Governance propose works in Emergency Mode (TextProposal)")
+	testGovernanceProposeTextWorks()
 	println()
 
-	ufmt.Println("[STEP 8] Test: Governance vote works in Emergency Mode")
-	testGovernanceVoteWorks()
+	ufmt.Println("[STEP 8] Test: Governance vote works in Emergency Mode (TextProposal)")
+	testGovernanceVoteTextWorks()
 	println()
 
-	ufmt.Println("[STEP 9] Verify halt status summary")
+	ufmt.Println("[STEP 9] Test: TextProposal execute FAILS (text proposals cannot be executed)")
+	testTextProposalExecuteFails()
+	println()
+
+	ufmt.Println("[STEP 10] Test: Governance propose works in Emergency Mode (ParameterChange)")
+	testGovernanceProposeParameterChangeWorks()
+	println()
+
+	ufmt.Println("[STEP 11] Test: Governance vote works in Emergency Mode (ParameterChange)")
+	testGovernanceVoteParameterChangeWorks()
+	println()
+
+	ufmt.Println("[STEP 12] Test: ParameterChange proposal execute SUCCEEDS in Emergency Mode")
+	testParameterChangeProposalExecuteWorks()
+	println()
+
+	ufmt.Println("[STEP 13] Verify proposal status after execution")
+	verifyProposalStatusAfterExecution()
+	println()
+
+	ufmt.Println("[STEP 14] Verify halt status summary")
 	verifyHaltStatusSummary()
 	println()
 }
@@ -295,44 +319,139 @@ func testRouterSwapBlocked() {
 	ufmt.Println("[SUCCESS] Router swap correctly blocked with 'halted: router'")
 }
 
-func testGovernanceProposeWorks() {
+func testGovernanceProposeTextWorks() {
 	testing.SetRealm(aliceRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 
-	ufmt.Println("[INFO] Attempting to create proposal in Emergency Mode...")
+	ufmt.Println("[INFO] Attempting to create TextProposal in Emergency Mode...")
 
-	proposalId = governance.ProposeText(
+	textProposalId = governance.ProposeText(
 		cross,
 		"Emergency Recovery Proposal",
 		"This proposal is created during Emergency Mode to test governance functionality",
 	)
 
-	ufmt.Printf("[SUCCESS] Proposal created in Emergency Mode! ID: %d\n", proposalId)
-	ufmt.Println("[SUCCESS] Governance propose correctly works in Emergency Mode")
+	ufmt.Printf("[SUCCESS] TextProposal created in Emergency Mode! ID: %d\n", textProposalId)
+	ufmt.Println("[SUCCESS] Governance propose (TextProposal) correctly works in Emergency Mode")
 }
 
-func testGovernanceVoteWorks() {
+func testGovernanceVoteTextWorks() {
 	// Skip to voting start
 	testing.SetRealm(adminRealm)
 	config := governance.GetLatestConfig()
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
-	ufmt.Println("[INFO] Attempting to vote in Emergency Mode...")
+	ufmt.Println("[INFO] Attempting to vote on TextProposal in Emergency Mode...")
 
 	// Alice votes YES
 	testing.SetRealm(aliceRealm)
-	governance.Vote(cross, proposalId, true)
-	ufmt.Println("[SUCCESS] Alice voted YES in Emergency Mode")
+	governance.Vote(cross, textProposalId, true)
+	ufmt.Println("[SUCCESS] Alice voted YES on TextProposal in Emergency Mode")
 
 	// Bob votes YES
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, proposalId, true)
-	ufmt.Println("[SUCCESS] Bob voted YES in Emergency Mode")
+	governance.Vote(cross, textProposalId, true)
+	ufmt.Println("[SUCCESS] Bob voted YES on TextProposal in Emergency Mode")
 
 	// Check voting info
-	voteStatus := governance.GetVoteStatusFromProposalById(proposalId)
-	ufmt.Printf("[INFO] Vote status: %s\n", voteStatus)
-	ufmt.Println("[SUCCESS] Governance voting correctly works in Emergency Mode")
+	voteStatus := governance.GetVoteStatusFromProposalById(textProposalId)
+	ufmt.Printf("[INFO] TextProposal vote status: %s\n", voteStatus)
+	ufmt.Println("[SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode")
+}
+
+func testTextProposalExecuteFails() {
+	// Skip voting period for ready to execute
+	testing.SetRealm(adminRealm)
+	config := governance.GetLatestConfig()
+	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
+
+	ufmt.Println("[INFO] Attempting to execute TextProposal in Emergency Mode (should fail)...")
+	ufmt.Printf("[INFO] TextProposal ID: %d\n", textProposalId)
+
+	// TextProposal execution should fail because text proposals cannot be executed
+	uassert.AbortsContains(t, "cannot execute text proposal", func() {
+		governance.Execute(cross, textProposalId)
+	})
+
+	ufmt.Println("[SUCCESS] TextProposal execution correctly failed with 'cannot execute text proposal'")
+}
+
+func testGovernanceProposeParameterChangeWorks() {
+	testing.SetRealm(aliceRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+
+	ufmt.Println("[INFO] Attempting to create ParameterChange proposal in Emergency Mode...")
+
+	parameterChangeProposalId = governance.ProposeParameterChange(
+		cross,
+		"Emergency Parameter Change",
+		"This ParameterChange proposal is created during Emergency Mode to test execute functionality",
+		1,
+		"gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,86400,50,1000000000,86400,2592000",
+	)
+
+	ufmt.Printf("[SUCCESS] ParameterChange proposal created in Emergency Mode! ID: %d\n", parameterChangeProposalId)
+	ufmt.Println("[SUCCESS] Governance propose (ParameterChange) correctly works in Emergency Mode")
+}
+
+func testGovernanceVoteParameterChangeWorks() {
+	// Skip to voting start
+	testing.SetRealm(adminRealm)
+	config := governance.GetLatestConfig()
+	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
+
+	ufmt.Println("[INFO] Attempting to vote on ParameterChange proposal in Emergency Mode...")
+
+	// Alice votes YES
+	testing.SetRealm(aliceRealm)
+	governance.Vote(cross, parameterChangeProposalId, true)
+	ufmt.Println("[SUCCESS] Alice voted YES on ParameterChange proposal in Emergency Mode")
+
+	// Bob votes YES
+	testing.SetRealm(bobRealm)
+	governance.Vote(cross, parameterChangeProposalId, true)
+	ufmt.Println("[SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode")
+
+	// Check voting info
+	voteStatus := governance.GetVoteStatusFromProposalById(parameterChangeProposalId)
+	ufmt.Printf("[INFO] ParameterChange proposal vote status: %s\n", voteStatus)
+	ufmt.Println("[SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode")
+}
+
+func testParameterChangeProposalExecuteWorks() {
+	// Skip voting period for ready to execute
+	testing.SetRealm(adminRealm)
+	config := governance.GetLatestConfig()
+	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
+
+	ufmt.Println("[INFO] Attempting to execute ParameterChange proposal in Emergency Mode...")
+	ufmt.Printf("[INFO] ParameterChange proposal ID: %d\n", parameterChangeProposalId)
+
+	// Get state before execution
+	executionStateBefore := governance.GetExecutionStateByProposalId(parameterChangeProposalId)
+	ufmt.Printf("[INFO] Execution state BEFORE: %s\n", executionStateBefore)
+
+	// Execute the ParameterChange proposal
+	testing.SetRealm(aliceRealm)
+	result := governance.Execute(cross, parameterChangeProposalId)
+
+	ufmt.Printf("[SUCCESS] ParameterChange proposal executed in Emergency Mode! Result: %d\n", result)
+	ufmt.Println("[SUCCESS] Governance execute (ParameterChange) correctly works in Emergency Mode")
+}
+
+func verifyProposalStatusAfterExecution() {
+	testing.SetRealm(adminRealm)
+	ufmt.Println("[INFO] Verifying proposal execution state after execution...")
+
+	// Check TextProposal execution state (should still be executable/passed, not executed)
+	textExecutionState := governance.GetExecutionStateByProposalId(textProposalId)
+	ufmt.Printf("[INFO] TextProposal (ID: %d) - Execution State: %s\n", textProposalId, textExecutionState)
+
+	// Check ParameterChange proposal execution state (should be executed)
+	paramChangeExecutionState := governance.GetExecutionStateByProposalId(parameterChangeProposalId)
+	ufmt.Printf("[INFO] ParameterChange Proposal (ID: %d) - Execution State: %s\n", parameterChangeProposalId, paramChangeExecutionState)
+
+	ufmt.Println("[SUCCESS] Proposal execution state verification completed")
 }
 
 func verifyHaltStatusSummary() {
@@ -387,19 +506,49 @@ func verifyHaltStatusSummary() {
 // [INFO] Attempting router swap in Emergency Mode (should abort)...
 // [SUCCESS] Router swap correctly blocked with 'halted: router'
 //
-// [STEP 7] Test: Governance propose works in Emergency Mode
-// [INFO] Attempting to create proposal in Emergency Mode...
-// [SUCCESS] Proposal created in Emergency Mode! ID: 1
-// [SUCCESS] Governance propose correctly works in Emergency Mode
+// [STEP 7] Test: Governance propose works in Emergency Mode (TextProposal)
+// [INFO] Attempting to create TextProposal in Emergency Mode...
+// [SUCCESS] TextProposal created in Emergency Mode! ID: 1
+// [SUCCESS] Governance propose (TextProposal) correctly works in Emergency Mode
 //
-// [STEP 8] Test: Governance vote works in Emergency Mode
-// [INFO] Attempting to vote in Emergency Mode...
-// [SUCCESS] Alice voted YES in Emergency Mode
-// [SUCCESS] Bob voted YES in Emergency Mode
-// [INFO] Vote status: {"height":"86524","now":"1234999895","proposalId":"1","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
-// [SUCCESS] Governance voting correctly works in Emergency Mode
+// [STEP 8] Test: Governance vote works in Emergency Mode (TextProposal)
+// [INFO] Attempting to vote on TextProposal in Emergency Mode...
+// [SUCCESS] Alice voted YES on TextProposal in Emergency Mode
+// [SUCCESS] Bob voted YES on TextProposal in Emergency Mode
+// [INFO] TextProposal vote status: {"height":"86524","now":"1234999895","proposalId":"1","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
+// [SUCCESS] Governance voting (TextProposal) correctly works in Emergency Mode
 //
-// [STEP 9] Verify halt status summary
+// [STEP 9] Test: TextProposal execute FAILS (text proposals cannot be executed)
+// [INFO] Attempting to execute TextProposal in Emergency Mode (should fail)...
+// [INFO] TextProposal ID: 1
+// [SUCCESS] TextProposal execution correctly failed with 'cannot execute text proposal'
+//
+// [STEP 10] Test: Governance propose works in Emergency Mode (ParameterChange)
+// [INFO] Attempting to create ParameterChange proposal in Emergency Mode...
+// [SUCCESS] ParameterChange proposal created in Emergency Mode! ID: 2
+// [SUCCESS] Governance propose (ParameterChange) correctly works in Emergency Mode
+//
+// [STEP 11] Test: Governance vote works in Emergency Mode (ParameterChange)
+// [INFO] Attempting to vote on ParameterChange proposal in Emergency Mode...
+// [SUCCESS] Alice voted YES on ParameterChange proposal in Emergency Mode
+// [SUCCESS] Bob voted YES on ParameterChange proposal in Emergency Mode
+// [INFO] ParameterChange proposal vote status: {"height":"432124","now":"1236727895","proposalId":"2","votes":"eyJxdW9ydW0iOiI1MDAwMDAwMDAiLCJtYXgiOiIxMDAwMDAwMDAwIiwieWVzIjoiMTAwMDAwMDAwMCIsIm5vIjoiMCJ9"}
+// [SUCCESS] Governance voting (ParameterChange) correctly works in Emergency Mode
+//
+// [STEP 12] Test: ParameterChange proposal execute SUCCEEDS in Emergency Mode
+// [INFO] Attempting to execute ParameterChange proposal in Emergency Mode...
+// [INFO] ParameterChange proposal ID: 2
+// [INFO] Execution state BEFORE: executable
+// [SUCCESS] ParameterChange proposal executed in Emergency Mode! Result: 2
+// [SUCCESS] Governance execute (ParameterChange) correctly works in Emergency Mode
+//
+// [STEP 13] Verify proposal status after execution
+// [INFO] Verifying proposal execution state after execution...
+// [INFO] TextProposal (ID: 1) - Execution State: passed
+// [INFO] ParameterChange Proposal (ID: 2) - Execution State: executed
+// [SUCCESS] Proposal execution state verification completed
+//
+// [STEP 14] Verify halt status summary
 // [INFO] Final halt status summary:
 //   Operations BLOCKED (halted: true):
 //     - Pool: true
