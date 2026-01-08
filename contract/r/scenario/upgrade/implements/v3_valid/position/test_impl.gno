@@ -25,7 +25,7 @@ func (n *gnftAccessor) Burn(tid grc721.TokenID) {
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {
-	return gnft.TotalSupply()
+	return gnft.GetTotalSupply()
 }
 
 func (n *gnftAccessor) Exists(tid grc721.TokenID) bool {

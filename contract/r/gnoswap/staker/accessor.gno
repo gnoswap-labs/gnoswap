@@ -127,7 +127,7 @@ func (n *gnftAccessor) TransferFrom(from, to address, tid grc721.TokenID) error 
 }
 
 func (n *gnftAccessor) TotalSupply() int64 {
-	return gnft.TotalSupply()
+	return gnft.GetTotalSupply()
 }
 
 func (n *gnftAccessor) Exists(tid grc721.TokenID) bool {
