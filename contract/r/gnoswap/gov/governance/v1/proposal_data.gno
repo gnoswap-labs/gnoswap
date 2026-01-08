@@ -220,7 +220,7 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 	// Parse each execution message
 	for _, msg := range execution.Msgs() {
 		// Split message into components: pkgPath, function, params
-		params := strings.SplitN(msg, parameterSeparator, 3)
+		params := strings.Split(msg, parameterSeparator)
 		if len(params) != 3 {
 			// validation rejects mismatched counts upstream.
 			continue
