@@ -55,3 +55,18 @@ func GetDistributionEndTimestamp() int64 {
 
 	return safeAddInt64(distributionStartTimestamp, totalDistributionDuration-1)
 }
+
+// GetDistributableAmount returns distribution amounts by target and the remainder.
+// If timestamp is outside the distribution window, it returns an empty map and the full amount as left.
+func GetDistributableAmount(amount, timestamp int64) (map[int]int64, int64) {
+	if distributionStartTimestamp == 0 || timestamp < distributionStartTimestamp {
+		return make(map[int]int64), amount
+	}
+
+	endTimestamp := GetDistributionEndTimestamp()
+	if endTimestamp != 0 && timestamp > endTimestamp {
+		return make(map[int]int64), amount
+	}
+
+	return calculateDistributableAmounts(amount, distributionBpsPct)
+}
