@@ -48,8 +48,6 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 		return governance.StatusCanceled
 	}
 
-	// schedule := p.Schedule()
-
 	// Check time-based statuses
 	if !p.scheduleResolver.IsPassedActiveAt(current) {
 		return governance.StatusUpcoming
@@ -59,7 +57,7 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 		return governance.StatusActive
 	}
 
-	// Check voting outcome
+	// Check voting outcome after voting period ends
 	if p.voteStatusResolver.IsRejected() {
 		return governance.StatusRejected
 	}

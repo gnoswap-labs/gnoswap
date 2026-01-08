@@ -198,7 +198,7 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
-	if overflow {
+	if overflow || res > 9223372036854775807 {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),

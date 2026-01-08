@@ -77,39 +77,6 @@ func TestValidEmissionAmount(t *testing.T) {
 	}
 }
 
-func TestIsLastSecondOfHalvingYear(t *testing.T) {
-	resetEmissionState(t)
-	InitGnsTest(t)
-
-	type testdata struct {
-		name      string
-		timestamp int64
-		want      bool
-	}
-
-	tests := make([]testdata, 0, 24)
-
-	for i := HALVING_START_YEAR; i <= HALVING_END_YEAR; i++ {
-		tests = append(tests, testdata{
-			name:      ufmt.Sprintf("last second of halving year %d", i),
-			timestamp: GetHalvingYearEndTimestamp(i),
-			want:      true,
-		})
-
-		tests = append(tests, testdata{
-			name:      ufmt.Sprintf("second-to-last of halving year %d", i),
-			timestamp: GetHalvingYearEndTimestamp(i) - 1,
-			want:      false,
-		})
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.want, isLastSecondOfHalvingYear(tt.timestamp))
-		})
-	}
-}
-
 func TestHandleLeftEmissionAmount(t *testing.T) {
 	type testdata struct {
 		name      string
@@ -216,15 +183,6 @@ func TestGrc20Methods(t *testing.T) {
 			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not emission`,
 		},
 		{
-			name: "Burn without permission should panic",
-			fn: func() {
-				Burn(cross, adminAddr, int64(1))
-			},
-			shouldPanic:   true,
-			exceptionKind: "abort",
-			panicMsg:      `address(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is not previous realm`,
-		},
-		{
 			name: "Transfer success",
 			fn: func() {
 				testing.SetOriginCaller(adminAddr)
@@ -290,9 +248,9 @@ func TestGrc20Methods(t *testing.T) {
 			if tt.shouldPanic {
 				switch tt.exceptionKind {
 				case "abort":
-					uassert.AbortsWithMessage(t, tt.panicMsg, tt.fn)
+					uassert.AbortsContains(t, tt.panicMsg, tt.fn)
 				case "panic":
-					uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)
+					uassert.PanicsContains(t, tt.panicMsg, tt.fn)
 				default:
 					t.Fatalf("unknown exception kind: %s", tt.exceptionKind)
 				}
@@ -605,6 +563,296 @@ func TestMintGns(t *testing.T) {
 				uassert.Equal(t, tt.expectedMintedAmount1, firstMintedAmount, "first mint should return the expected amount")
 				uassert.Equal(t, tt.expectedMintedAmount2, secondMintedAmount, "second mint should return the expected amount")
 			}
+		})
+	}
+}
+
+func TestMintGns_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setup                func()
+		expectedMintedAmount int64
+	}{
+		{
+			name: "returns zero when lastMintedTimestamp equals currentTime",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				// Set lastMintedTimestamp to current time
+				setLastMintedTimestamp(time.Now().Unix())
+			},
+			expectedMintedAmount: 0,
+		},
+		{
+			name: "returns zero when lastMintedTimestamp >= emissionEndTimestamp",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				// Set lastMintedTimestamp past emission end
+				setLastMintedTimestamp(GetEmissionEndTimestamp() + 1)
+			},
+			expectedMintedAmount: 0,
+		},
+		{
+			name: "mints correctly after skipping multiple blocks",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+			},
+			expectedMintedAmount: 7134703, // 1 second worth
+		},
+		{
+			name: "updates MintedEmissionAmount correctly",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				uassert.Equal(t, int64(0), MintedEmissionAmount())
+			},
+			expectedMintedAmount: 7134703,
+		},
+		{
+			name: "updates LeftEmissionAmount correctly",
+			setup: func() {
+				InitGnsTest(t)
+				resetEmissionState(t)
+				uassert.Equal(t, MAX_EMISSION_AMOUNT, LeftEmissionAmount())
+			},
+			expectedMintedAmount: 7134703,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			balanceBefore := BalanceOf(adminAddr)
+			var mintedAmount int64
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				mintedAmount = MintGns(cross, adminAddr)
+			})
+			balanceAfter := BalanceOf(adminAddr)
+			uassert.Equal(t, tt.expectedMintedAmount, mintedAmount)
+			uassert.Equal(t, mintedAmount, balanceAfter-balanceBefore)
+		})
+	}
+}
+
+func TestMintGns_StateUpdates(t *testing.T) {
+	tests := []struct {
+		name          string
+		validateState func(t *testing.T, mintedAmount int64)
+	}{
+		{
+			name: "MintedEmissionAmount increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, mintedAmount, MintedEmissionAmount())
+			},
+		},
+		{
+			name: "LeftEmissionAmount decreases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, MAX_EMISSION_AMOUNT-mintedAmount, LeftEmissionAmount())
+			},
+		},
+		{
+			name: "LastMintedTimestamp updates to current time",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, time.Now().Unix(), LastMintedTimestamp())
+			},
+		},
+		{
+			name: "TotalSupply increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, INITIAL_MINT_AMOUNT+mintedAmount, TotalSupply())
+			},
+		},
+		{
+			name: "recipient balance increases after mint",
+			validateState: func(t *testing.T, mintedAmount int64) {
+				uassert.Equal(t, INITIAL_MINT_AMOUNT+mintedAmount, BalanceOf(adminAddr))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			InitGnsTest(t)
+
+			balanceBefore := BalanceOf(adminAddr)
+
+			var mintedAmount int64
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				mintedAmount = MintGns(cross, adminAddr)
+			})
+
+			balanceAfter := BalanceOf(adminAddr)
+
+			uassert.Equal(t, mintedAmount, balanceAfter-balanceBefore)
+			tt.validateState(t, mintedAmount)
+		})
+	}
+}
+
+func TestInitEmissionState(t *testing.T) {
+	tests := []struct {
+		name          string
+		realm         runtime.Realm
+		height        int64
+		timestamp     int64
+		shouldAbort   bool
+		abortContains string
+		validateState func(t *testing.T)
+	}{
+		{
+			name:          "should abort when caller is not emission realm",
+			realm:         userRealm,
+			height:        100,
+			timestamp:     1000,
+			shouldAbort:   true,
+			abortContains: "not emission",
+		},
+		{
+			name:          "should abort when caller is admin realm",
+			realm:         adminRealm,
+			height:        100,
+			timestamp:     1000,
+			shouldAbort:   true,
+			abortContains: "not emission",
+		},
+		{
+			name:        "should succeed when caller is emission realm",
+			realm:       emissionRealm,
+			height:      100,
+			timestamp:   1000,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				uassert.True(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(100), GetEmissionStartHeight())
+				uassert.Equal(t, int64(1000), GetEmissionStartTimestamp())
+			},
+		},
+		{
+			name:        "should initialize with zero height and timestamp",
+			realm:       emissionRealm,
+			height:      0,
+			timestamp:   0,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				// With height=0 and timestamp=0, isInitialized returns false
+				uassert.False(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(0), GetEmissionStartHeight())
+				uassert.Equal(t, int64(0), GetEmissionStartTimestamp())
+			},
+		},
+		{
+			name:        "should initialize with large timestamp",
+			realm:       emissionRealm,
+			height:      1000000,
+			timestamp:   1700000000,
+			shouldAbort: false,
+			validateState: func(t *testing.T) {
+				uassert.True(t, IsEmissionInitialized())
+				uassert.Equal(t, int64(1000000), GetEmissionStartHeight())
+				uassert.Equal(t, int64(1700000000), GetEmissionStartTimestamp())
+				// Verify end timestamp calculation
+				expectedEnd := int64(1700000000) + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
+				uassert.Equal(t, expectedEnd, GetEmissionEndTimestamp())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					testing.SetRealm(tt.realm)
+					InitEmissionState(cross, tt.height, tt.timestamp)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					testing.SetRealm(tt.realm)
+					InitEmissionState(cross, tt.height, tt.timestamp)
+				})
+
+				if tt.validateState != nil {
+					tt.validateState(t)
+				}
+			}
+		})
+	}
+}
+
+func TestInitEmissionState_Reinitialize(t *testing.T) {
+	resetObject(t)
+
+	// First initialization
+	uassert.NotPanics(t, func() {
+		testing.SetRealm(emissionRealm)
+		InitEmissionState(cross, 50, 500)
+	})
+	uassert.Equal(t, int64(50), GetEmissionStartHeight())
+	uassert.Equal(t, int64(500), GetEmissionStartTimestamp())
+
+	// Reinitialize with new values
+	uassert.NotPanics(t, func() {
+		testing.SetRealm(emissionRealm)
+		InitEmissionState(cross, 200, 2000)
+	})
+	// Should be overwritten with new values
+	uassert.Equal(t, int64(200), GetEmissionStartHeight())
+	uassert.Equal(t, int64(2000), GetEmissionStartTimestamp())
+}
+
+func TestInitEmissionState_HalvingDataInitialization(t *testing.T) {
+	tests := []struct {
+		name          string
+		timestamp     int64
+		validateYear  int64
+		expectedStart int64
+		expectedEnd   int64
+	}{
+		{
+			name:          "year 1 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  1,
+			expectedStart: 1000,
+			expectedEnd:   1000 + SECONDS_IN_YEAR - 1,
+		},
+		{
+			name:          "year 6 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  6,
+			expectedStart: 1000 + (SECONDS_IN_YEAR * 5),
+			expectedEnd:   1000 + (SECONDS_IN_YEAR * 6) - 1,
+		},
+		{
+			name:          "year 12 timestamps calculated correctly",
+			timestamp:     1000,
+			validateYear:  12,
+			expectedStart: 1000 + (SECONDS_IN_YEAR * 11),
+			expectedEnd:   1000 + (SECONDS_IN_YEAR * 12) - 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+
+			uassert.NotPanics(t, func() {
+				testing.SetRealm(emissionRealm)
+				InitEmissionState(cross, 100, tt.timestamp)
+			})
+
+			actualStart := GetHalvingYearStartTimestamp(tt.validateYear)
+			actualEnd := GetHalvingYearEndTimestamp(tt.validateYear)
+
+			uassert.Equal(t, tt.expectedStart, actualStart)
+			uassert.Equal(t, tt.expectedEnd, actualEnd)
 		})
 	}
 }

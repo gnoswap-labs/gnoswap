@@ -13,12 +13,12 @@ import (
 // TestAssert_assertCallerIsProposer tests the private assertCallerIsProposer function
 func TestAssert_assertCallerIsProposer(t *testing.T) {
 	tests := []struct {
-		name              string
-		setupProposal     func(*governanceV1) int64
-		caller            address
-		proposalID        int64
-		expectedPanic     bool
-		expectedPanicMsg  string
+		name             string
+		setupProposal    func(*governanceV1) int64
+		caller           address
+		proposalID       int64
+		expectedPanic    bool
+		expectedPanicMsg string
 	}{
 		{
 			name: "success - caller is proposer",
@@ -112,8 +112,8 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-                    assertCallerIsProposer(gv, tt.proposalID, tt.caller)
-                })
+					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
+				})
 			}
 		})
 	}

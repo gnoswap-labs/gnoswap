@@ -50,7 +50,6 @@ func InitGnsTest(t *testing.T) {
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
 	setLastMintedTimestamp(0)
-	burnAmount = 0
 
 	resetEmissionState(t)
 }
