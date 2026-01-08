@@ -862,3 +862,61 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 		})
 	}
 }
+
+func TestAssertValidOperatorAddress(t *testing.T) {
+	tests := []struct {
+		name                 string
+		operator             address
+		expectedPanicMessage string
+		shouldPanic          bool
+	}{
+		{
+			name:        "Valid operator address",
+			operator:    alice,
+			shouldPanic: false,
+		},
+		{
+			name:        "Valid operator address - admin",
+			operator:    adminAddr,
+			shouldPanic: false,
+		},
+		{
+			name:        "Empty address - operator removal",
+			operator:    address(""),
+			shouldPanic: false,
+		},
+		{
+			name:                 "Invalid operator address",
+			operator:             address("invalid_address"),
+			expectedPanicMessage: "[GNOSWAP-POSITION-011] invalid address || operator(invalid_address)",
+			shouldPanic:          true,
+		},
+		{
+			name:                 "Invalid operator address - short",
+			operator:             address("g1"),
+			expectedPanicMessage: "[GNOSWAP-POSITION-011] invalid address || operator(g1)",
+			shouldPanic:          true,
+		},
+		{
+			name:                 "Invalid operator address - malformed",
+			operator:             address("not_a_valid_gnosis_address"),
+			expectedPanicMessage: "[GNOSWAP-POSITION-011] invalid address || operator(not_a_valid_gnosis_address)",
+			shouldPanic:          true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					assertValidOperatorAddress(tt.operator)
+				})
+			} else {
+				// Should not panic for valid operators
+				assertValidOperatorAddress(tt.operator)
+			}
+		})
+	}
+}

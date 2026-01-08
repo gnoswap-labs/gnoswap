@@ -415,6 +415,84 @@ func TestSplitOf(t *testing.T) {
 	}
 }
 
+func TestSafeConvertToInt64(t *testing.T) {
+	tests := []struct {
+		name          string
+		value         *u256.Uint
+		expected      int64
+		shouldPanic   bool
+		expectedError string
+	}{
+		{
+			name:        "Normal case: small positive value",
+			value:       u256.NewUint(1000),
+			expected:    1000,
+			shouldPanic: false,
+		},
+		{
+			name:        "Normal case: zero",
+			value:       u256.NewUint(0),
+			expected:    0,
+			shouldPanic: false,
+		},
+		{
+			name:        "Boundary: int64 max",
+			value:       u256.MustFromDecimal("9223372036854775807"),
+			expected:    9223372036854775807,
+			shouldPanic: false,
+		},
+		{
+			name:          "Overflow: int64 max + 1",
+			value:         u256.MustFromDecimal("9223372036854775808"),
+			shouldPanic:   true,
+			expectedError: "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
+		},
+		{
+			name:          "Overflow: uint64 max (2^64 - 1)",
+			value:         u256.MustFromDecimal("18446744073709551615"),
+			shouldPanic:   true,
+			expectedError: "amount(18446744073709551615) overflows int64 range (max: 9223372036854775807)",
+		},
+		{
+			name:          "Overflow: beyond uint64 (2^64)",
+			value:         u256.MustFromDecimal("18446744073709551616"),
+			shouldPanic:   true,
+			expectedError: "amount(18446744073709551616) overflows int64 range (max: 9223372036854775807)",
+		},
+		{
+			name:          "Overflow: large value in uint64 range but beyond int64",
+			value:         u256.MustFromDecimal("10000000000000000000"),
+			shouldPanic:   true,
+			expectedError: "amount(10000000000000000000) overflows int64 range (max: 9223372036854775807)",
+		},
+		{
+			name:        "Normal case: typical token amount",
+			value:       u256.MustFromDecimal("1000000000000000000"),
+			expected:    1000000000000000000,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but got none")
+					} else if r != tt.expectedError {
+						t.Errorf("expected panic %v, got %v", tt.expectedError, r)
+					}
+				}()
+				safeConvertToInt64(tt.value)
+			} else {
+				result := safeConvertToInt64(tt.value)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
 func TestSubUint256(t *testing.T) {
 	tests := []struct {
 		name     string
