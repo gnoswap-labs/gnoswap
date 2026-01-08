@@ -116,6 +116,22 @@ func (m *MockLaunchpad) GetDepositCount() int64 {
 	return res[0].(int64)
 }
 
+func (m *MockLaunchpad) GetRewardManagerCount() int64 {
+	res, ok := m.Response.Get("GetRewardManagerCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockLaunchpad) GetCurrentDepositId() int64 {
+	res, ok := m.Response.Get("GetCurrentDepositId")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockLaunchpad) GetProject(projectId string) (*Project, error) {
 	res, ok := m.Response.Get("GetProject")
 	if !ok {
@@ -147,6 +163,39 @@ func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (*ProjectTi
 		return res[0].(*ProjectTier), nil
 	}
 	return res[0].(*ProjectTier), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
+	res, ok := m.Response.Get("GetProjectCondition")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*ProjectCondition), nil
+	}
+	return res[0].(*ProjectCondition), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardManager(projectTierId string) (*RewardManager, error) {
+	res, ok := m.Response.Get("GetRewardManager")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*RewardManager), nil
+	}
+	return res[0].(*RewardManager), res[1].(error)
+}
+
+func (m *MockLaunchpad) GetRewardState(projectTierId string, depositId string) (*RewardState, error) {
+	res, ok := m.Response.Get("GetRewardState")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*RewardState), nil
+	}
+	return res[0].(*RewardState), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetClaimableRewardByProjectId(projectId string) (string, error) {
@@ -189,6 +238,14 @@ func (m *MockLaunchpad) GetProjects(offset, limit int64) []string {
 
 func (m *MockLaunchpad) GetDeposits(offset, limit int64) []string {
 	res, ok := m.Response.Get("GetDeposits")
+	if !ok {
+		return []string{}
+	}
+	return res[0].([]string)
+}
+
+func (m *MockLaunchpad) GetRewardManagers(offset, limit int64) []string {
+	res, ok := m.Response.Get("GetRewardManagers")
 	if !ok {
 		return []string{}
 	}

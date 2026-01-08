@@ -63,6 +63,16 @@ func GetDepositCount() int64 {
 	return getImplementation().GetDepositCount()
 }
 
+// GetRewardManagerCount returns the total number of reward managers.
+func GetRewardManagerCount() int64 {
+	return getImplementation().GetRewardManagerCount()
+}
+
+// GetCurrentDepositId returns the current deposit counter value.
+func GetCurrentDepositId() int64 {
+	return getImplementation().GetCurrentDepositId()
+}
+
 // GetProject retrieves a project by its ID.
 // Returns a cloned project to prevent external modification.
 func GetProject(projectId string) (*Project, error) {
@@ -79,6 +89,24 @@ func GetDeposit(depositId string) (*Deposit, error) {
 // Returns a cloned tier to prevent external modification.
 func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
 	return getImplementation().GetProjectTier(projectId, tier)
+}
+
+// GetProjectCondition retrieves a specific condition of a project.
+// Returns a cloned condition to prevent external modification.
+func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
+	return getImplementation().GetProjectCondition(projectId, tokenPath)
+}
+
+// GetRewardManager retrieves a reward manager by project tier ID.
+// Returns a cloned reward manager to prevent external modification.
+func GetRewardManager(projectTierId string) (*RewardManager, error) {
+	return getImplementation().GetRewardManager(projectTierId)
+}
+
+// GetRewardState retrieves a reward state by project tier ID and deposit ID.
+// Returns a cloned reward state to prevent external modification.
+func GetRewardState(projectTierId string, depositId string) (*RewardState, error) {
+	return getImplementation().GetRewardState(projectTierId, depositId)
 }
 
 // GetClaimableRewardByProjectId returns the claimable reward for a project's recipient.
@@ -104,4 +132,9 @@ func GetProjects(offset, limit int64) []string {
 // GetDeposits returns a paginated list of deposit IDs.
 func GetDeposits(offset, limit int64) []string {
 	return getImplementation().GetDeposits(offset, limit)
+}
+
+// GetRewardManagers returns a paginated list of project tier IDs (reward manager keys).
+func GetRewardManagers(offset, limit int64) []string {
+	return getImplementation().GetRewardManagers(offset, limit)
 }

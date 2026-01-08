@@ -35,11 +35,16 @@ type ILaunchpadGetter interface {
 	// Store data getters
 	GetProjectCount() int64
 	GetDepositCount() int64
+	GetRewardManagerCount() int64
+	GetCurrentDepositId() int64
 
 	// Domain type getters (single query)
 	GetProject(projectId string) (*Project, error)
 	GetDeposit(depositId string) (*Deposit, error)
 	GetProjectTier(projectId string, tier int64) (*ProjectTier, error)
+	GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error)
+	GetRewardManager(projectTierId string) (*RewardManager, error)
+	GetRewardState(projectTierId string, depositId string) (*RewardState, error)
 
 	// Logic query getters
 	GetClaimableRewardByProjectId(projectId string) (string, error)
@@ -49,6 +54,7 @@ type ILaunchpadGetter interface {
 	// Pagination getters
 	GetProjects(offset, limit int64) []string
 	GetDeposits(offset, limit int64) []string
+	GetRewardManagers(offset, limit int64) []string
 }
 
 type ILaunchpadStore interface {
