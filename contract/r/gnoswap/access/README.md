@@ -7,6 +7,7 @@ Centralized role-based access control system for GnoSwap protocol contracts.
 The Access package provides a unified permission management system for all GnoSwap protocol contracts. It manages role-to-address mappings and provides convenient assertion functions for authorization checks throughout the protocol.
 
 This package acts as a centralized registry where each protocol component (pool, router, staker, etc.) registers its address under a specific role. Other contracts can then query this registry to verify permissions before executing privileged operations.
+Admin role ownership is managed by the RBAC realm and is updated on ownership transfer; this package only stores the latest role address.
 
 ## Architecture
 
@@ -41,6 +42,7 @@ The following roles are used across the GnoSwap protocol:
 #### `SetRoleAddress`
 
 Sets or updates a role's address. Creates new role if it doesn't exist.
+The `admin` role is updated by RBAC ownership transfers and should not be managed directly by other contracts.
 
 ```go
 // Only callable by RBAC contract
