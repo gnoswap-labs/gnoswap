@@ -176,6 +176,46 @@ func (t *TestStaker) SetUnStakingFee(fee int64) {
 }
 
 // IStakerGetter interface
+func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
+	return t.ExecuteFn(
+		"GetPool",
+		func(args ...any) any { return t.instance.GetPool(args[0].(string)) },
+		poolPath,
+	).(*staker.Pool)
+}
+
+func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
+	return t.ExecuteFn(
+		"GetIncentive",
+		func(args ...any) any { return t.instance.GetIncentive(args[0].(string), args[1].(string)) },
+		poolPath, incentiveId,
+	).(*staker.ExternalIncentive)
+}
+
+func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
+	return t.ExecuteFn(
+		"GetDeposit",
+		func(args ...any) any { return t.instance.GetDeposit(args[0].(uint64)) },
+		lpTokenId,
+	).(*staker.Deposit)
+}
+
+func (t *TestStaker) CollectableEmissionReward(positionId uint64) int64 {
+	return t.ExecuteFn(
+		"CollectableEmissionReward",
+		func(args ...any) any { return t.instance.CollectableEmissionReward(args[0].(uint64)) },
+		positionId,
+	).(int64)
+}
+
+func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	return t.ExecuteFn(
+		"CollectableExternalIncentiveReward",
+		func(args ...any) any { return t.instance.CollectableExternalIncentiveReward(args[0].(uint64), args[1].(string)) },
+		positionId, incentiveId,
+	).(int64)
+}
+
 func (t *TestStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 	return t.ExecuteFn(
 		"GetCreatedHeightOfIncentive",

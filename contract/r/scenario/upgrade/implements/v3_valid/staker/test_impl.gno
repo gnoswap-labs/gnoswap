@@ -90,6 +90,26 @@ func (t *TestStaker) SetUnStakingFee(fee int64) {
 }
 
 // IStakerGetter interface
+func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
+	return t.instance.GetPool(poolPath)
+}
+
+func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
+	return t.instance.GetIncentive(poolPath, incentiveId)
+}
+
+func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
+	return t.instance.GetDeposit(lpTokenId)
+}
+
+func (t *TestStaker) CollectableEmissionReward(positionId uint64) int64 {
+	return t.instance.CollectableEmissionReward(positionId)
+}
+
+func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	return t.instance.CollectableExternalIncentiveReward(positionId, incentiveId)
+}
+
 func (t *TestStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 	return t.instance.GetCreatedHeightOfIncentive(poolPath, incentiveId)
 }

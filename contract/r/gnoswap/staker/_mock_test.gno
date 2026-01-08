@@ -128,6 +128,46 @@ func (m *MockStaker) SetUnStakingFee(fee int64) {
 }
 
 // Getter methods
+func (m *MockStaker) GetPool(poolPath string) *Pool {
+	res, ok := m.Response.Get("GetPool")
+	if !ok {
+		return nil
+	}
+	return res[0].(*Pool)
+}
+
+func (m *MockStaker) GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
+	res, ok := m.Response.Get("GetIncentive")
+	if !ok {
+		return nil
+	}
+	return res[0].(*ExternalIncentive)
+}
+
+func (m *MockStaker) GetDeposit(lpTokenId uint64) *Deposit {
+	res, ok := m.Response.Get("GetDeposit")
+	if !ok {
+		return nil
+	}
+	return res[0].(*Deposit)
+}
+
+func (m *MockStaker) CollectableEmissionReward(positionId uint64) int64 {
+	res, ok := m.Response.Get("CollectableEmissionReward")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	res, ok := m.Response.Get("CollectableExternalIncentiveReward")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetCreatedHeightOfIncentive")
 	if !ok {

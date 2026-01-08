@@ -51,6 +51,11 @@ type IStakerManager interface {
 }
 
 type IStakerGetter interface {
+	GetPool(poolPath string) *Pool
+	GetIncentive(poolPath string, incentiveId string) *ExternalIncentive
+	GetDeposit(lpTokenId uint64) *Deposit
+	CollectableEmissionReward(positionId uint64) int64
+	CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64
 	GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64
 	GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64
 	GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64

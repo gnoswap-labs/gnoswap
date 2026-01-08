@@ -4,6 +4,43 @@ import u256 "gno.land/p/gnoswap/uint256"
 
 // IStakerGetter functions
 
+// GetPool returns a copy of the pool for the given path.
+func GetPool(poolPath string) *Pool {
+	pool := getImplementation().GetPool(poolPath)
+	if pool == nil {
+		return nil
+	}
+	return pool.Clone()
+}
+
+// GetIncentive returns a copy of the incentive for the given pool and ID.
+func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
+	incentive := getImplementation().GetIncentive(poolPath, incentiveId)
+	if incentive == nil {
+		return nil
+	}
+	return incentive.Clone()
+}
+
+// GetDeposit returns a copy of the deposit for the given position ID.
+func GetDeposit(lpTokenId uint64) *Deposit {
+	deposit := getImplementation().GetDeposit(lpTokenId)
+	if deposit == nil {
+		return nil
+	}
+	return deposit.Clone()
+}
+
+// CollectableEmissionReward returns the claimable internal reward amount.
+func CollectableEmissionReward(positionId uint64) int64 {
+	return getImplementation().CollectableEmissionReward(positionId)
+}
+
+// CollectableExternalIncentiveReward returns the claimable external reward amount.
+func CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	return getImplementation().CollectableExternalIncentiveReward(positionId, incentiveId)
+}
+
 // GetCreatedHeightOfIncentive returns the block height when an incentive was created.
 func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetCreatedHeightOfIncentive(poolPath, incentiveId)

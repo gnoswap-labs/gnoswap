@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -29,6 +30,11 @@ func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
 	}
 
 	return pool
+}
+
+// GetPool returns the pool for the given path.
+func (s *stakerV1) GetPool(poolPath string) *sr.Pool {
+	return s.getPoolByPoolPath(poolPath)
 }
 
 // GetPoolIncentiveIdList returns all incentive IDs for a pool.
@@ -61,6 +67,11 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
 	}
 	return ictv
+}
+
+// GetIncentive returns the incentive for the given pool and ID.
+func (s *stakerV1) GetIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
+	return s.getIncentive(poolPath, incentiveId)
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
@@ -139,7 +150,7 @@ func (s *stakerV1) IsIncentiveActive(poolPath string, incentiveId string) bool {
 	currentTime := time.Now().Unix()
 
 	resolver := NewExternalIncentiveResolver(incentive)
-	return resolver.IsStarted(currentTime) && !resolver.IsEnded(currentTime) && !resolver.Refunded()
+	return resolver.isActive(currentTime) && !resolver.Refunded()
 }
 
 // GetIncentiveRewardToken returns the reward token of an incentive.
@@ -188,6 +199,31 @@ func (s *stakerV1) getDeposit(lpTokenId uint64) *sr.Deposit {
 	}
 
 	return deposit
+}
+
+// GetDeposit returns the deposit for the given LP token ID.
+func (s *stakerV1) GetDeposit(lpTokenId uint64) *sr.Deposit {
+	return s.getDeposit(lpTokenId)
+}
+
+// CollectableEmissionReward returns the claimable internal reward amount for a position.
+func (s *stakerV1) CollectableEmissionReward(positionId uint64) int64 {
+	currentTime := time.Now().Unix()
+	currentHeight := runtime.ChainHeight()
+	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	return reward.Internal
+}
+
+// CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
+func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	currentTime := time.Now().Unix()
+	currentHeight := runtime.ChainHeight()
+	reward := s.calcPositionReward(currentHeight, currentTime, positionId)
+	amount, ok := reward.External[incentiveId]
+	if !ok {
+		return 0
+	}
+	return amount
 }
 
 // GetDepositOwner returns the owner of a deposit.

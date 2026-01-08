@@ -164,6 +164,25 @@ func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
 	p.historicalTick = historicalTick
 }
 
+// Clone returns a deep copy of the pool.
+func (p *Pool) Clone() *Pool {
+	if p == nil {
+		return nil
+	}
+
+	return &Pool{
+		poolPath:                   p.poolPath,
+		stakedLiquidity:            p.stakedLiquidity.Clone(),
+		lastUnclaimableTime:        p.lastUnclaimableTime,
+		unclaimableAcc:             p.unclaimableAcc,
+		rewardCache:                p.rewardCache.Clone(),
+		incentives:                 p.incentives.Clone(),
+		ticks:                      p.ticks.Clone(),
+		globalRewardRatioAccumulation: p.globalRewardRatioAccumulation.Clone(),
+		historicalTick:             p.historicalTick.Clone(),
+	}
+}
+
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
@@ -268,6 +287,29 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 		}
 		return false
 	})
+}
+
+// Clone returns a deep copy of the incentives.
+func (i *Incentives) Clone() *Incentives {
+	if i == nil {
+		return nil
+	}
+
+	incentives := avl.NewTree()
+	i.incentives.Iterate("", "", func(key string, value any) bool {
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+		incentives.Set(key, incentive.Clone())
+		return false
+	})
+
+	return &Incentives{
+		incentives:         incentives,
+		targetPoolPath:     i.targetPoolPath,
+		unclaimablePeriods: i.unclaimablePeriods.Clone(),
+	}
 }
 
 func NewIncentives(targetPoolPath string) *Incentives {
@@ -460,6 +502,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		startTimestamp:          e.startTimestamp,
 		endTimestamp:            e.endTimestamp,
 		createdHeight:           e.createdHeight,
+		createdTimestamp:        e.createdTimestamp,
 		depositGnsAmount:        e.depositGnsAmount,
 		targetPoolPath:          e.targetPoolPath,
 		rewardToken:             e.rewardToken,
@@ -469,6 +512,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		refundee:                e.refundee,
 		refunded:                e.refunded,
 		distributedRewardAmount: e.distributedRewardAmount,
+		isRequestUnwrap:         e.isRequestUnwrap,
 	}
 }
 
@@ -573,8 +617,22 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false // skip invalid keys
 		}
 
-		return fn(int32(tickId), tick)
+	return fn(int32(tickId), tick)
 	})
+}
+
+// Clone returns a deep copy of ticks.
+func (t Ticks) Clone() Ticks {
+	cloned := avl.NewTree()
+	t.tree.Iterate("", "", func(key string, value any) bool {
+		tick, ok := value.(*Tick)
+		if !ok {
+			panic("failed to cast value to *Tick")
+		}
+		cloned.Set(key, tick.Clone())
+		return false
+	})
+	return Ticks{tree: cloned}
 }
 
 func NewTicks() Ticks {
@@ -644,6 +702,20 @@ func (t *Tick) OutsideAccumulation() *UintTree {
 // SetOutsideAccumulation sets the outside accumulation tree
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
+}
+
+// Clone returns a deep copy of the tick.
+func (t *Tick) Clone() *Tick {
+	if t == nil {
+		return nil
+	}
+
+	return &Tick{
+		id:                   t.id,
+		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
+		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
+		outsideAccumulation:  t.outsideAccumulation.Clone(),
+	}
 }
 
 func NewTick(tickId int32) *Tick {

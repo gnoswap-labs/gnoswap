@@ -211,6 +211,31 @@ func TestGetterIncentiveRewardAmounts(t *testing.T) {
 	uassert.Equal(t, "10000000", rewardAmountStr)
 }
 
+func TestGetterPoolIncentiveDepositObjects(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	pool := state.instance.GetPool(state.poolPath)
+	uassert.Equal(t, state.poolPath, pool.PoolPath())
+
+	incentive := state.instance.GetIncentive(state.poolPath, state.incentiveId)
+	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
+	uassert.Equal(t, barPath, incentive.RewardToken())
+
+	deposit := state.instance.GetDeposit(state.positionId)
+	uassert.Equal(t, state.owner, deposit.Owner())
+	uassert.Equal(t, state.poolPath, deposit.TargetPoolPath())
+}
+
+func TestGetterCollectableRewards(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	internal := state.instance.CollectableEmissionReward(state.positionId)
+	uassert.Equal(t, int64(0), internal)
+
+	external := state.instance.CollectableExternalIncentiveReward(state.positionId, state.incentiveId)
+	uassert.Equal(t, int64(0), external)
+}
+
 func TestGetterPoolIncentiveIdList(t *testing.T) {
 	state := setupBasicTestState(t)
 

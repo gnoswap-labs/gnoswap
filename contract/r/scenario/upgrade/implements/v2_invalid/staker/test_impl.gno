@@ -151,6 +151,41 @@ func (t *TestStaker) SetUnStakingFee(fee int64) {
 }
 
 // IStakerGetter interface
+func (t *TestStaker) GetPool(poolPath string) *staker.Pool {
+	if !t.isActive("GetPool") {
+		panic("test implementation: GetPool not supported")
+	}
+	return t.instance.GetPool(poolPath)
+}
+
+func (t *TestStaker) GetIncentive(poolPath string, incentiveId string) *staker.ExternalIncentive {
+	if !t.isActive("GetIncentive") {
+		panic("test implementation: GetIncentive not supported")
+	}
+	return t.instance.GetIncentive(poolPath, incentiveId)
+}
+
+func (t *TestStaker) GetDeposit(lpTokenId uint64) *staker.Deposit {
+	if !t.isActive("GetDeposit") {
+		panic("test implementation: GetDeposit not supported")
+	}
+	return t.instance.GetDeposit(lpTokenId)
+}
+
+func (t *TestStaker) CollectableEmissionReward(positionId uint64) int64 {
+	if !t.isActive("CollectableEmissionReward") {
+		panic("test implementation: CollectableEmissionReward not supported")
+	}
+	return t.instance.CollectableEmissionReward(positionId)
+}
+
+func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
+	if !t.isActive("CollectableExternalIncentiveReward") {
+		panic("test implementation: CollectableExternalIncentiveReward not supported")
+	}
+	return t.instance.CollectableExternalIncentiveReward(positionId, incentiveId)
+}
+
 func (t *TestStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
 	if !t.isActive("GetCreatedHeightOfIncentive") {
 		panic("test implementation: GetCreatedHeightOfIncentive not supported")
