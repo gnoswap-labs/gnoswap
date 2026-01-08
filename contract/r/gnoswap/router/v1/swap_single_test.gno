@@ -313,11 +313,6 @@ func TestSingleSwapRoute_PriceLimitValidation(t *testing.T) {
 						)
 					}(cross)
 				})
-			} else {
-				// Valid price limits should not panic during parameter validation
-				// Note: We don't test actual swap execution here, just parameter acceptance
-				// Full swap execution is tested in integration tests
-				t.Logf("Price limit %s accepted as valid parameter", tt.priceLimit)
 			}
 		})
 	}
@@ -342,10 +337,6 @@ func TestExactOutSingleSwapRoute_PriceLimitParameter(t *testing.T) {
 	}(cross)
 
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-
-	// Test that ExactOut accepts price limit parameter (zero = no limit)
-	// Note: We don't test execution, just parameter acceptance
-	t.Log("ExactOut accepts price limit parameter: 0 (no limit)")
 
 	// Test with invalid price limit should fail
 	uassert.AbortsContains(t, "", func() {
