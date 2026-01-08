@@ -29,8 +29,6 @@ var (
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
-
-	burnAmount int64 // amount of GNS that has been burned
 )
 
 func init() {
@@ -43,7 +41,6 @@ func init() {
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
 	setLastMintedTimestamp(0)
-	burnAmount = 0
 }
 
 // Name returns the name of the GNS token.
@@ -79,7 +76,8 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // to allow graceful handling. This function assumes caller has already verified
 // halt status before invoking.
 func MintGns(cur realm, address address) int64 {
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsEmission(caller)
 
 	lastGNSMintedTimestamp := LastMintedTimestamp()
@@ -90,8 +88,12 @@ func MintGns(cur realm, address address) int64 {
 		return 0
 	}
 
-	amountToMint := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
-	err := validEmissionAmount(amountToMint)
+	amountToMint, err := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	err = validEmissionAmount(amountToMint)
 	if err != nil {
 		panic(err)
 	}
@@ -105,10 +107,9 @@ func MintGns(cur realm, address address) int64 {
 		panic(err.Error())
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"MintGNS",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"mintedBlockTime", formatInt(currentTime),
 		"mintedGNSAmount", formatInt(amountToMint),
@@ -117,32 +118,6 @@ func MintGns(cur realm, address address) int64 {
 	)
 
 	return amountToMint
-}
-
-// Burn permanently removes GNS tokens from circulation.
-//
-// Parameters:
-//   - from: address to burn tokens from
-//   - amount: amount to burn
-//
-// Only callable by contract owner.
-func Burn(cur realm, from address, amount int64) {
-	assertAddressIsPreviousRealm(from)
-
-	checkErr(privateLedger.Burn(from, amount))
-
-	burnAmount = safeAddInt64(burnAmount, amount)
-
-	previousRealm := runtime.PreviousRealm()
-	chain.Emit(
-		"Burn",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"burnedBlockHeight", formatInt(runtime.ChainHeight()),
-		"burnFrom", from.String(),
-		"burnedGNSAmount", formatInt(amount),
-		"accumBurnedGNSAmount", formatInt(BurnAmount()),
-	)
 }
 
 // Transfer transfers GNS tokens from caller to recipient.
@@ -200,37 +175,42 @@ func checkErr(err error) {
 	}
 }
 
-// calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
-func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
-	endTimestamp := GetEmissionEndTimestamp()
+// calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
+// This function has side effects: it updates the accumulated and remaining amounts
+// for each halving year in the emission state.
+func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
+	// Cache state to avoid repeated lookups
+	state := getEmissionState()
+
+	endTimestamp := state.getEndTimestamp()
 	if toTimestamp > endTimestamp {
 		toTimestamp = endTimestamp
 	}
 
 	if fromTimestamp > toTimestamp {
-		return 0
+		return 0, nil
 	}
 
-	startTimestamp := getEmissionState().getStartTimestamp()
+	startTimestamp := state.getStartTimestamp()
 	if fromTimestamp < startTimestamp {
 		fromTimestamp = startTimestamp
 	}
 
 	if toTimestamp < startTimestamp {
-		return 0
+		return 0, nil
 	}
 
-	fromYear := getEmissionState().getCurrentYear(fromTimestamp)
-	toYear := getEmissionState().getCurrentYear(toTimestamp)
+	fromYear := state.getCurrentYear(fromTimestamp)
+	toYear := state.getCurrentYear(toTimestamp)
 
 	if fromYear == 0 || toYear == 0 {
-		return 0
+		return 0, nil
 	}
 
 	totalAmountToMint := int64(0)
 
 	for year := fromYear; year <= toYear; year++ {
-		yearEndTimestamp := GetHalvingYearEndTimestamp(year)
+		yearEndTimestamp := state.getHalvingYearEndTimestamp(year)
 		currentToTimestamp := i64Min(toTimestamp, yearEndTimestamp)
 
 		seconds := currentToTimestamp - fromTimestamp + 1
@@ -238,19 +218,24 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 			break
 		}
 
-		amountPerSecond := GetAmountPerSecondPerHalvingYear(year)
-
+		amountPerSecond := state.getHalvingYearAmountPerSecond(year)
 		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
-			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
+			leftover := safeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
 			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
 		}
 
 		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		getEmissionState().addHalvingYearAccumulatedAmount(year, yearAmountToMint)
-		getEmissionState().subHalvingYearLeftAmount(year, yearAmountToMint)
+		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
+		}
+		err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
+		}
 
 		chain.Emit(
 			"CalculateAmountToMint",
@@ -258,6 +243,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 			"toTimestamp", formatInt(currentToTimestamp),
 			"year", formatInt(year),
 			"amountPerSecond", formatInt(amountPerSecond),
+			"mintedAmount", formatInt(yearAmountToMint),
 		)
 
 		fromTimestamp = currentToTimestamp + 1
@@ -267,30 +253,8 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		}
 	}
 
-	return totalAmountToMint
+	return totalAmountToMint, nil
 }
-
-// isLastSecondOfHalvingYear returns true if timestamp is the last second of a halving year.
-func isLastSecondOfHalvingYear(timestamp int64) bool {
-	year := getEmissionState().getCurrentYear(timestamp)
-	lastSecond := GetHalvingYearEndTimestamp(year)
-
-	return timestamp == lastSecond
-}
-
-// handleLeftEmissionAmount returns the remaining emission amount for a halving year.
-func handleLeftEmissionAmount(year, amount int64) int64 {
-	return safeSubInt64(GetHalvingYearLeftAmount(year), amount)
-}
-
-// skipIfSameHeight returns true if last minted height equals current height,
-// preventing multiple mints in the same block.
-func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
-	return lastMintedHeight == currentHeight
-}
-
-// BurnAmount returns the total amount of GNS tokens burned.
-func BurnAmount() int64 { return burnAmount }
 
 // LastMintedTimestamp returns the timestamp of the last GNS emission mint.
 func LastMintedTimestamp() int64 { return lastMintedTimestamp }

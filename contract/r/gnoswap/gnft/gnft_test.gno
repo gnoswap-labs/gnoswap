@@ -742,7 +742,8 @@ func TestBurn(t *testing.T) {
 		panicMsg        string
 	}{
 		{
-			name:            "burn success",
+			name:            "burn success and verify complete cleanup",
+			callerRealm:     positionRealm,
 			tokenIdToBurn:   1,
 			shouldPanic:     false,
 			expectedBalance: 0,
@@ -797,6 +798,20 @@ func TestBurn(t *testing.T) {
 				})
 			} else {
 				Burn(cross, tid(tt.tokenIdToBurn))
+
+				// Verify complete AVL tree cleanup after burn
+				// 1. OwnerOf should return error for burned token
+				_, err := OwnerOf(tid(tt.tokenIdToBurn))
+				uassert.Error(t, err)
+				uassert.Equal(t, errInvalidTokenId, err.Error())
+
+				// 2. Exists should return false (token completely removed from AVL tree)
+				exists := Exists(tid(tt.tokenIdToBurn))
+				uassert.False(t, exists)
+
+				// 3. TotalSupply should be decremented
+				totalSupply := TotalSupply()
+				uassert.Equal(t, int64(0), totalSupply)
 			}
 
 			balance, _ := BalanceOf(testutils.TestAddress("human"))

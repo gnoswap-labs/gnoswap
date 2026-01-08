@@ -7,78 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestRegistryHandler_NewRegistryHandler tests the creation of registry handler
-func TestRegistryHandler_NewRegistryHandler(t *testing.T) {
-	tests := []struct {
-		name          string
-		handlerFn     func(params []string) error
-		testParams    []string
-		expectedError bool
-	}{
-		{
-			name: "create handler with successful function",
-			handlerFn: func(params []string) error {
-				return nil
-			},
-			testParams:    []string{"param1", "param2"},
-			expectedError: false,
-		},
-		{
-			name: "create handler with failing function",
-			handlerFn: func(params []string) error {
-				return errors.New("handler error")
-			},
-			testParams:    []string{"param1"},
-			expectedError: true,
-		},
-		{
-			name: "create handler with nil params",
-			handlerFn: func(params []string) error {
-				if len(params) == 0 {
-					return errors.New("no params")
-				}
-				return nil
-			},
-			testParams:    []string{},
-			expectedError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// when
-			handler := NewRegistryHandler(tt.handlerFn)
-
-			// then
-			uassert.NotNil(t, handler)
-
-			// Verify it implements ParameterRegistryHandler
-			registryHandler, ok := handler.(ParameterRegistryHandler)
-			uassert.True(t, ok)
-
-			// Verify it implements ParameterHandler (embedded interface)
-			paramHandler, ok := handler.(ParameterHandler)
-			uassert.True(t, ok)
-
-			// Test Execute method via ParameterHandler interface
-			err := paramHandler.Execute(tt.testParams)
-			if tt.expectedError {
-				uassert.NotNil(t, err)
-			} else {
-				uassert.Nil(t, err)
-			}
-
-			// Test GetState (should return nil for simple handler)
-			state := registryHandler.GetState()
-			uassert.Nil(t, state)
-
-			// Test RestoreState (should not error for simple handler)
-			err = registryHandler.RestoreState(nil)
-			uassert.Nil(t, err)
-		})
-	}
-}
-
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
 func TestRegistryHandler_Execute(t *testing.T) {
 	tests := []struct {
@@ -174,6 +102,88 @@ func TestRegistryHandler_Execute(t *testing.T) {
 				uassert.ErrorContains(t, err, tc.expectedErrMsg)
 			} else {
 				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
+// TestParameterRegistryHandler_registerHandlers tests the private registerHandlers function
+func TestParameterRegistryHandler_registerHandlers(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupHandlers func() ([]*ParameterHandlerOptions, []string)
+		expectedCount int
+	}{
+		{
+			name: "register multiple handlers",
+			setupHandlers: func() ([]*ParameterHandlerOptions, []string) {
+				handlers := []*ParameterHandlerOptions{
+					NewParameterHandlerOptions(
+						"gno.land/r/test/package1",
+						"TestFunction1",
+						2,
+						func(args []string) error { return nil },
+					).(*ParameterHandlerOptions),
+					NewParameterHandlerOptions(
+						"gno.land/r/test/package2",
+						"TestFunction2",
+						1,
+						func(args []string) error { return nil },
+					).(*ParameterHandlerOptions),
+				}
+				keys := []string{
+					makeHandlerKey("gno.land/r/test/package1", "TestFunction1"),
+					makeHandlerKey("gno.land/r/test/package2", "TestFunction2"),
+				}
+				return handlers, keys
+			},
+			expectedCount: 2,
+		},
+		{
+			name: "register single handler",
+			setupHandlers: func() ([]*ParameterHandlerOptions, []string) {
+				handlers := []*ParameterHandlerOptions{
+					NewParameterHandlerOptions(
+						"gno.land/r/test/package",
+						"TestFunction",
+						0,
+						func(args []string) error { return nil },
+					).(*ParameterHandlerOptions),
+				}
+				keys := []string{
+					makeHandlerKey("gno.land/r/test/package", "TestFunction"),
+				}
+				return handlers, keys
+			},
+			expectedCount: 1,
+		},
+		{
+			name: "register empty handlers",
+			setupHandlers: func() ([]*ParameterHandlerOptions, []string) {
+				return []*ParameterHandlerOptions{}, []string{}
+			},
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			registry := NewParameterRegistry()
+			handlers, keys := tt.setupHandlers()
+
+			// when
+			registerHandlers(registry, handlers)
+
+			// then
+			// Verify handlers were registered by checking registry size
+			uassert.NotNil(t, registry)
+
+			// Verify each handler can be retrieved
+			for _, key := range keys {
+				retrievedHandler, err := registry.Handler(key)
+				uassert.Nil(t, err)
+				uassert.NotNil(t, retrievedHandler)
 			}
 		})
 	}

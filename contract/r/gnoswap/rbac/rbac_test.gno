@@ -140,6 +140,30 @@ func TestRbac_RegisterRole(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
+			name: "Register role with whitespace-only name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "   ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Register role with tab and space name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      " \t ",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
 			name: "Register role with invalid address format fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
@@ -234,7 +258,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 			},
 			roleName:    "",
 			shouldError: true,
-			errorMsg:    "does not exist",
+			errorMsg:    "invalid role name",
 		},
 		{
 			name: "Remove role multiple times should error on second attempt",
@@ -258,9 +282,7 @@ func TestRbac_RemoveRole(t *testing.T) {
 
 			if tt.shouldError {
 				uassert.Error(t, err)
-				if tt.errorMsg != "" && err != nil {
-					uassert.True(t, contains(err.Error(), tt.errorMsg))
-				}
+				uassert.ErrorContains(t, err, tt.errorMsg)
 			} else {
 				uassert.NoError(t, err)
 				// Verify role was actually removed (if not empty string)
@@ -291,6 +313,11 @@ func TestRbac_GetRoleAddress(t *testing.T) {
 		{
 			name:      "Get non-existent role should return error",
 			roleName:  "non_existent_role",
+			shouldErr: true,
+		},
+		{
+			name:      "Get role with empty string should return error",
+			roleName:  "",
 			shouldErr: true,
 		},
 	}
@@ -539,10 +566,11 @@ func TestRBACToAccessSync(t *testing.T) {
 			roleName string
 			address  address
 		}
-		verifyRoles map[string]address // Expected final state
+		verifyRoles         map[string]address // Expected final state (roles that SHOULD exist)
+		verifyRolesNotExist []string           // Roles that should NOT exist
 	}{
 		{
-			name: "Register new role updates access package",
+			name: "Register new role updates access package (empty address)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -556,7 +584,21 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 		},
 		{
-			name: "Remove role updates access package",
+			name: "Register new role with initial address then update",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "test_role_2", address: testutils.TestAddress("initial_addr")},
+				{action: "update", roleName: "test_role_2", address: testutils.TestAddress("updated_addr")},
+			},
+			verifyRoles: map[string]address{
+				"test_role_2": testutils.TestAddress("updated_addr"),
+			},
+		},
+		{
+			name: "Remove role updates access package (empty address)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -566,12 +608,25 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
 				{action: "remove", roleName: "temp_role"},
 			},
-			verifyRoles: map[string]address{
-				// temp_role should not exist
-			},
+			verifyRoles:         map[string]address{},
+			verifyRolesNotExist: []string{"temp_role"},
 		},
 		{
-			name: "Multiple operations sync correctly",
+			name: "Remove role updates access package (with initial address)",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "temp_role_2", address: testutils.TestAddress("initial_addr")},
+				{action: "update", roleName: "temp_role_2", address: testutils.TestAddress("updated_addr")},
+				{action: "remove", roleName: "temp_role_2"},
+			},
+			verifyRoles:         map[string]address{},
+			verifyRolesNotExist: []string{"temp_role_2"},
+		},
+		{
+			name: "Multiple operations sync correctly (empty addresses)",
 			operations: []struct {
 				action   string
 				roleName string
@@ -586,8 +641,25 @@ func TestRBACToAccessSync(t *testing.T) {
 			},
 			verifyRoles: map[string]address{
 				"role_a": testutils.TestAddress("role_a_new"),
-				// role_b should not exist
 			},
+			verifyRolesNotExist: []string{"role_b"},
+		},
+		{
+			name: "Multiple operations sync correctly (with initial addresses)",
+			operations: []struct {
+				action   string
+				roleName string
+				address  address
+			}{
+				{action: "register", roleName: "role_c", address: testutils.TestAddress("role_c_init")},
+				{action: "register", roleName: "role_d", address: testutils.TestAddress("role_d_init")},
+				{action: "update", roleName: "role_c", address: testutils.TestAddress("role_c_new")}, // Update to new
+				{action: "remove", roleName: "role_d"},
+			},
+			verifyRoles: map[string]address{
+				"role_c": testutils.TestAddress("role_c_new"),
+			},
+			verifyRolesNotExist: []string{"role_d"},
 		},
 	}
 
@@ -634,14 +706,11 @@ func TestRBACToAccessSync(t *testing.T) {
 				}
 			}
 
-			// Verify removed roles don't exist
-			for _, op := range tt.operations {
-				if op.action == "remove" {
-					_, exists := allRoles[op.roleName]
-					if exists {
-						t.Errorf("Role %s should not exist after removal", op.roleName)
-						continue
-					}
+			// Verify roles that should NOT exist
+			for _, roleName := range tt.verifyRolesNotExist {
+				_, exists := allRoles[roleName]
+				if exists {
+					t.Errorf("Role %s should not exist, but it does", roleName)
 				}
 			}
 		})
@@ -778,6 +847,31 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
 			shouldPanic:   true,
 			panicContains: "does not exist",
 		},
+		{
+			name: "Update role with same address succeeds (idempotent)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_idempotent_role", testutils.TestAddress("same_addr"))
+			},
+			roleName:    "test_idempotent_role",
+			newAddr:     testutils.TestAddress("same_addr"),
+			callerRealm: ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name: "Update admin role via UpdateRoleAddress fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      prbac.ROLE_ADMIN.String(),
+			newAddr:       testutils.TestAddress("new_admin"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "admin role is managed by owner",
+		},
 	}
 
 	for _, tt := range tests {
@@ -874,7 +968,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			panicContains: "invalid role name",
 		},
 		{
-			name: "Remove system role fails",
+			name: "Remove admin role fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
@@ -882,7 +976,7 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			roleName:      prbac.ROLE_ADMIN.String(),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
-			panicContains: "cannot remove system role",
+			panicContains: "admin role is managed by owner",
 		},
 		{
 			name: "Remove non-existent role fails",
@@ -917,20 +1011,4 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr ||
-		(len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
-		(len(s) > len(substr) && findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

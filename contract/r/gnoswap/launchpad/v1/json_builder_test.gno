@@ -83,7 +83,8 @@ func TestJsonBuilder_projectStatsBuilder(t *testing.T) {
 
 			// Execute
 			builder := json.Builder()
-			projectStatsBuilder(builder, project)
+			stats := getProjectStats(project)
+			projectStatsBuilder(builder, stats)
 			result := marshal(builder.Node())
 
 			// Verify
@@ -136,7 +137,8 @@ func TestJsonBuilder_refundInfoBuilder(t *testing.T) {
 
 			// Execute
 			builder := json.Builder()
-			refundInfoBuilder(builder, project)
+			stats := getProjectStats(project)
+			refundInfoBuilder(builder, stats)
 			result := marshal(builder.Node())
 
 			// Verify

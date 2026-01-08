@@ -70,13 +70,21 @@ type versionManager struct {
 //
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath)
 func (vm *versionManager) RegisterInitializer(initializer func(store any) any) error {
-	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
-	if !vm.isContainDomainPath() {
-		return errors.New("version_manager: caller is not in the domain path")
+	// Validate initializer is not nil to prevent panic during initialization
+	if initializer == nil {
+		return errors.New("version_manager: initializer cannot be nil")
 	}
 
+	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
 	previousRealm := runtime.PreviousRealm()
+	if previousRealm.IsUser() {
+		return errors.New("version_manager: caller cannot be user")
+	}
+
 	targetPackagePath := previousRealm.PkgPath()
+	if !vm.isContainDomainPath(targetPackagePath) {
+		return errors.New("version_manager: caller is not in the domain path")
+	}
 
 	// Check if this package path has already been registered
 	if vm.initializers.Has(targetPackagePath) {
@@ -180,22 +188,19 @@ func (vm *versionManager) GetCurrentImplementation() any {
 // registering implementations.
 //
 // Validation rules:
-//   - Caller must be a realm (contract), not a user
-//   - Caller's package path must start with domainPath + "/"
+//   - Package path must start with domainPath + "/"
 //
 // Example:
 //   - domainPath: "gno.land/r/gnoswap/protocol_fee"
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"
 //   - Invalid callers: "gno.land/r/gnoswap/other", "gno.land/r/attacker/malicious"
-func (vm *versionManager) isContainDomainPath() bool {
-	previousRealm := runtime.PreviousRealm()
-	if previousRealm.IsUser() {
-		return false
-	}
+func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
+    // `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
+    // Therefore, there is no need for a separate trailing slash check,
+    // and the prefix is determined by directly appending `/` for version detection.
+	prefix := vm.domainPath + "/"
 
-	prefix := ufmt.Sprintf("%s/", vm.domainPath)
-
-	return strings.HasPrefix(previousRealm.PkgPath(), prefix)
+	return strings.HasPrefix(targetPackagePath, prefix)
 }
 
 // NewVersionManager creates a new version manager instance for a specific domain.

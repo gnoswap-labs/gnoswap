@@ -617,3 +617,135 @@ func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 		})
 	}
 }
+
+// TestTickMath_MaxTickBoundaryBehavior explicitly tests MAX_TICK boundary behavior
+func TestTickMath_MaxTickBoundaryBehavior(t *testing.T) {
+	tests := []struct {
+		name             string
+		tick             int32
+		expectPanic      bool
+		expectedPanicMsg string
+		description      string
+	}{
+		{
+			name:        "MAX_TICK can convert to sqrt ratio",
+			tick:        MAX_TICK,
+			expectPanic: false,
+			description: "TickMathGetSqrtRatioAtTick should accept MAX_TICK",
+		},
+		{
+			name:        "MAX_TICK - 1 supports full roundtrip",
+			tick:        MAX_TICK - 1,
+			expectPanic: false,
+			description: "MAX_TICK - 1 should support tick -> sqrt -> tick conversion",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					TickMathGetSqrtRatioAtTick(tt.tick)
+				})
+			} else {
+				sqrtRatio := TickMathGetSqrtRatioAtTick(tt.tick)
+
+				// For MAX_TICK - 1, we can do full roundtrip
+				if tt.tick == MAX_TICK-1 {
+					recoveredTick := TickMathGetTickAtSqrtRatio(sqrtRatio)
+					uassert.Equal(t, tt.tick, recoveredTick,
+						"Roundtrip should work for MAX_TICK - 1")
+				}
+
+				// For MAX_TICK, the sqrt ratio equals MAX_SQRT_RATIO
+				if tt.tick == MAX_TICK {
+					maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+					uassert.True(t, sqrtRatio.Eq(maxSqrtRatio),
+						"MAX_TICK should produce MAX_SQRT_RATIO")
+				}
+			}
+		})
+	}
+
+	// Explicitly test that MAX_SQRT_RATIO is rejected by TickMathGetTickAtSqrtRatio
+	t.Run("MAX_SQRT_RATIO_rejected_by_GetTickAtSqrtRatio", func(t *testing.T) {
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+		// This should panic because TickMathGetTickAtSqrtRatio uses strict inequality (sqrtPriceX96 >= maxSqrtPriceX96)
+		uassert.PanicsContains(t, "out of range", func() {
+			TickMathGetTickAtSqrtRatio(maxSqrtRatio)
+		})
+	})
+
+	// Test that MAX_SQRT_RATIO - 1 is accepted
+	t.Run("MAX_SQRT_RATIO_minus_1_accepted", func(t *testing.T) {
+		maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+		almostMaxSqrtRatio := u256.Zero().Sub(maxSqrtRatio, u256.One())
+
+		// This should NOT panic
+		uassert.NotPanics(t, func() {
+			tick := TickMathGetTickAtSqrtRatio(almostMaxSqrtRatio)
+			// Should return MAX_TICK - 1
+			uassert.Equal(t, MAX_TICK-1, tick,
+				"MAX_SQRT_RATIO - 1 should map to MAX_TICK - 1")
+		})
+	})
+}
+
+// TestTickMath_ExtendedRoundtripAccuracy tests roundtrip accuracy for a wider range of ticks
+func TestTickMath_ExtendedRoundtripAccuracy(t *testing.T) {
+	// Test more granular tick values to ensure precision
+	// MAX_TICK is excluded from roundtrip tests - see TestTickMath_MaxTickBoundaryBehavior for details
+	testTicks := []int32{
+		MIN_TICK,
+		MIN_TICK + 1,
+		MIN_TICK + 10,
+		MIN_TICK + 100,
+		MIN_TICK + 1000,
+		-500000,
+		-100000,
+		-50000,
+		-10000,
+		-5000,
+		-1000,
+		-500,
+		-100,
+		-50,
+		-10,
+		-5,
+		-1,
+		0,
+		1,
+		5,
+		10,
+		50,
+		100,
+		500,
+		1000,
+		5000,
+		10000,
+		50000,
+		100000,
+		500000,
+		MAX_TICK - 1000,
+		MAX_TICK - 100,
+		MAX_TICK - 10,
+		MAX_TICK - 1,
+		// MAX_TICK excluded - see note above
+	}
+
+	for _, tick := range testTicks {
+		t.Run(ufmt.Sprintf("tick_%d", tick), func(t *testing.T) {
+			// Convert tick to sqrt ratio
+			sqrtRatio := TickMathGetSqrtRatioAtTick(tick)
+
+			// Convert back to tick
+			recoveredTick := TickMathGetTickAtSqrtRatio(sqrtRatio)
+
+			// Recovered tick should equal original tick
+			uassert.Equal(t, tick, recoveredTick,
+				ufmt.Sprintf("Roundtrip failed: tick %d -> sqrt %s -> tick %d",
+					tick, sqrtRatio.ToString(), recoveredTick))
+		})
+	}
+}

@@ -1,10 +1,10 @@
 package access
 
 import (
-	"strings"
 	"testing"
 
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -61,6 +61,14 @@ func TestGetAddress(t *testing.T) {
 			queryRole:      testRole,
 			expectedAddr:   "",
 			expectedExists: false,
+		},
+		{
+			name:           "role name with leading/trailing whitespace",
+			setupRole:      testRole,
+			setupAddr:      testAddr,
+			queryRole:      "  " + testRole + "  ",
+			expectedAddr:   testAddr,
+			expectedExists: true,
 		},
 	}
 
@@ -155,26 +163,20 @@ func TestGetRoleAddresses(t *testing.T) {
 			// Verify each address array
 			for role, expectedAddrs := range tt.expected {
 				actualAddrs, exists := addresses[role]
-				if !exists {
-					t.Errorf("Expected role %s to exist", role)
-					continue
-				}
+				uassert.True(t, exists, "Expected role %s to exist", role)
 
-				if len(actualAddrs) != len(expectedAddrs) {
-					t.Errorf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs))
-					continue
-				}
+				uassert.True(t, len(actualAddrs) == len(expectedAddrs),
+					ufmt.Sprintf("Role %s: expected %d addresses, got %d", role, len(expectedAddrs), len(actualAddrs)))
 
-				if actualAddrs != expectedAddrs {
-					t.Errorf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs)
-				}
+				uassert.True(t, actualAddrs == expectedAddrs,
+					ufmt.Sprintf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs))
 			}
 
 			// Verify original map is not modified by modifying returned map
 			addresses["new_role"] = testutils.TestAddress("new")
-			if len(roleAddresses) != len(tt.setupRoles) {
-				t.Errorf("Original map should not be modified")
-			}
+
+			uassert.True(t, len(roleAddresses) == len(tt.setupRoles),
+				ufmt.Sprintf("Original map should not be modified, expected %d, got %d", len(tt.setupRoles), len(roleAddresses)))
 		})
 	}
 }
@@ -233,27 +235,29 @@ func TestIsAuthorized(t *testing.T) {
 			queryAddr:    testAddr,
 			expectedAuth: false,
 		},
+		{
+			name:         "role name with whitespace matches existing role",
+			setupRole:    testRole,
+			setupAddr:    testAddr,
+			queryRole:    "  " + testRole + "  ",
+			queryAddr:    testAddr,
+			expectedAuth: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
+			// Reset state at start of each test case
+			roleAddresses = make(map[string]address)
+
 			if tt.setupRole != "" {
 				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
 
-			// Test
 			authorized := IsAuthorized(tt.queryRole, tt.queryAddr)
 
-			// Verify
-			if authorized != tt.expectedAuth {
-				t.Errorf("Expected authorized=%v, got %v", tt.expectedAuth, authorized)
-			}
-
-			// Cleanup
-			if tt.setupRole != "" {
-				delete(roleAddresses, tt.setupRole)
-			}
+			uassert.True(t, authorized == tt.expectedAuth,
+				ufmt.Sprintf("Expected authorized=%v, got %v", tt.expectedAuth, authorized))
 		})
 	}
 }
@@ -270,79 +274,132 @@ func TestSetRoleAddress(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		realmPath   string
+		userRealm   bool
+		userAddr    address
 		setupRoles  map[string]address
 		roleName    string
 		roleAddress address
-		shouldPanic bool
-		panicMsg    string
+		shouldAbort bool
+		abortMsg    string
 	}{
 		{
-			name: "set new role",
-			setupRoles: map[string]address{
-				"admin": testutils.TestAddress("admin"),
-			},
+			name:        "set new role",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
 			roleName:    "newrole",
 			roleAddress: testutils.TestAddress("newrole"),
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name: "update existing role",
+			name:      "update existing role",
+			realmPath: rbacPackagePath,
 			setupRoles: map[string]address{
 				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "admin",
 			roleAddress: testutils.TestAddress("newadmin"),
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name: "set role with invalid address",
+			name:        "set role with empty address",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "invalid",
+			roleAddress: address(""),
+			shouldAbort: true,
+			abortMsg:    "invalid address for role invalid",
+		},
+		{
+			name:        "set role with invalid address format",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "invalid",
+			roleAddress: address("invalid_addr"),
+			shouldAbort: true,
+			abortMsg:    "invalid address for role invalid",
+		},
+		{
+			name:        "unauthorized caller",
+			realmPath:   "gno.land/r/demo/unauthorized",
+			setupRoles:  map[string]address{},
+			roleName:    "newrole",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
+			name:        "unauthorized user realm",
+			userRealm:   true,
+			userAddr:    testutils.TestAddress("user"),
+			setupRoles:  map[string]address{},
+			roleName:    "newrole",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
+			name:        "empty role name",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "",
+			roleAddress: testutils.TestAddress("valid"),
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:        "whitespace role name",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "  ",
+			roleAddress: testutils.TestAddress("valid"),
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:        "role name with leading/trailing whitespace gets trimmed",
+			realmPath:   rbacPackagePath,
+			setupRoles:  map[string]address{},
+			roleName:    "  newrole  ",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldAbort: false,
+		},
+		{
+			name:      "update with same address - idempotent",
+			realmPath: rbacPackagePath,
 			setupRoles: map[string]address{
 				"admin": testutils.TestAddress("admin"),
 			},
-			roleName:    "invalid",
-			roleAddress: address(""),
-			shouldPanic: true,
-			panicMsg:    "invalid address for role invalid",
+			roleName:    "admin",
+			roleAddress: testutils.TestAddress("admin"),
+			shouldAbort: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup initial roles
-			roleAddresses = tt.setupRoles
-
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
+			roleAddresses = make(map[string]address)
+			for k, v := range tt.setupRoles {
+				roleAddresses[k] = v
 			}
 
-			// Simulate SetRoleAddress logic
-			if tt.roleAddress == address("") {
-				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
+			// Set realm for this test case
+			if tt.userRealm {
+				testing.SetRealm(testing.NewUserRealm(tt.userAddr))
+			} else {
+				testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
 			}
 
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				roleAddresses[tt.roleName] = address("")
-			}
-
-			roleAddresses[tt.roleName] = tt.roleAddress
-
-			if !tt.shouldPanic {
-				// Verify set operation
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortMsg, func() {
+					SetRoleAddress(cross, tt.roleName, tt.roleAddress)
+				})
+			} else {
+				SetRoleAddress(cross, tt.roleName, tt.roleAddress)
 				addr, ok := GetAddress(tt.roleName)
-				if !ok {
-					t.Errorf("Role %s should exist after set", tt.roleName)
-				}
-				if addr != tt.roleAddress {
-					t.Errorf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr)
-				}
+				uassert.True(t, ok, ufmt.Sprintf("Role %s should exist after set", tt.roleName))
+				uassert.True(t, addr == tt.roleAddress, ufmt.Sprintf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr))
 			}
 		})
 	}
@@ -360,62 +417,110 @@ func TestRemoveRole(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		realmPath   string
+		userRealm   bool
+		userAddr    address
 		setupRoles  map[string]address
 		roleName    string
-		shouldPanic bool
-		panicMsg    string
+		shouldAbort bool
+		abortMsg    string
 	}{
 		{
-			name: "remove existing role",
+			name:      "remove existing role",
+			realmPath: rbacPackagePath,
 			setupRoles: map[string]address{
 				"admin":      testutils.TestAddress("admin"),
 				"governance": testutils.TestAddress("governance"),
 				"custom":     testutils.TestAddress("custom"),
 			},
 			roleName:    "custom",
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name: "remove non-existent role",
+			name:      "remove non-existent role",
+			realmPath: rbacPackagePath,
 			setupRoles: map[string]address{
 				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "nonexistent",
-			shouldPanic: true,
-			panicMsg:    "role nonexistent does not exist",
+			shouldAbort: true,
+			abortMsg:    "role nonexistent does not exist",
+		},
+		{
+			name:      "unauthorized caller",
+			realmPath: "gno.land/r/demo/unauthorized",
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "existing",
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
+			name:      "unauthorized user realm",
+			userRealm: true,
+			userAddr:  testutils.TestAddress("user"),
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "existing",
+			shouldAbort: true,
+			abortMsg:    "unauthorized",
+		},
+		{
+			name:      "empty role name",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "",
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:      "whitespace role name",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"existing": testutils.TestAddress("existing"),
+			},
+			roleName:    "  ",
+			shouldAbort: true,
+			abortMsg:    "role name cannot be empty",
+		},
+		{
+			name:      "remove role with whitespace-padded name",
+			realmPath: rbacPackagePath,
+			setupRoles: map[string]address{
+				"custom": testutils.TestAddress("custom"),
+			},
+			roleName:    "  custom  ",
+			shouldAbort: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup roles
-			roleAddresses = tt.setupRoles
-
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
+			roleAddresses = make(map[string]address)
+			for k, v := range tt.setupRoles {
+				roleAddresses[k] = v
 			}
 
-			// Simulate RemoveRole logic
-			if _, exists := roleAddresses[tt.roleName]; !exists {
-				panic(ufmt.Errorf("role %s does not exist", tt.roleName))
+			// Set realm for this test case
+			if tt.userRealm {
+				testing.SetRealm(testing.NewUserRealm(tt.userAddr))
+			} else {
+				testing.SetRealm(testing.NewCodeRealm(tt.realmPath))
 			}
 
-			delete(roleAddresses, tt.roleName)
-
-			if !tt.shouldPanic {
-				// Verify removal
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortMsg, func() {
+					RemoveRole(cross, tt.roleName)
+				})
+			} else {
+				RemoveRole(cross, tt.roleName)
 				_, ok := GetAddress(tt.roleName)
-				if ok {
-					t.Errorf("Role %s should not exist after removal", tt.roleName)
-				}
+				uassert.False(t, ok, ufmt.Sprintf("Role %s should not exist after removal", tt.roleName))
 			}
 		})
 	}
@@ -467,6 +572,14 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "not found",
 		},
+		{
+			name:         "whitespace role name maps to existing role",
+			setupRole:    testRole,
+			setupAddr:    testAddr,
+			queryRole:    "  " + testRole + "  ",
+			expectedAddr: testAddr,
+			shouldPanic:  false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -478,36 +591,14 @@ func TestAccess_MustGetAddress(t *testing.T) {
 			}
 
 			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
-							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
-						}
-					} else {
-						t.Errorf("Expected panic but didn't panic")
-					}
-				}()
-			}
-
-			addr := MustGetAddress(tt.queryRole)
-
-			if !tt.shouldPanic {
-				if addr != tt.expectedAddr {
-					t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
-				}
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					MustGetAddress(tt.queryRole)
+				})
+			} else {
+				addr := MustGetAddress(tt.queryRole)
+				uassert.True(t, addr == tt.expectedAddr,
+					ufmt.Sprintf("Expected address=%s, got %s", tt.expectedAddr, addr))
 			}
 		})
-	}
-}
-
-// Helper function to check if error contains string
-func containsString(r interface{}, substr string) bool {
-	switch v := r.(type) {
-	case string:
-		return strings.Contains(v, substr)
-	case error:
-		return strings.Contains(v.Error(), substr)
-	default:
-		return strings.Contains(ufmt.Sprintf("%v", v), substr)
 	}
 }

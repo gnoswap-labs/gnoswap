@@ -102,7 +102,7 @@ func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	configs := s.GetConfigs()
-	result, ok := configs.Get(int64ToString(version))
+	result, ok := configs.Get(formatInt64Key(version))
 	if !ok {
 		return Config{}, false
 	}
@@ -121,7 +121,7 @@ func (s *governanceStore) SetConfig(version int64, config Config) error {
 	}
 
 	configs := s.GetConfigs()
-	configs.Set(int64ToString(version), config)
+	configs.Set(formatInt64Key(version), config)
 
 	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
@@ -151,7 +151,7 @@ func (s *governanceStore) SetProposals(proposals *avl.Tree) error {
 
 func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 	proposals := s.GetProposals()
-	result, ok := proposals.Get(int64ToString(proposalID))
+	result, ok := proposals.Get(formatInt64Key(proposalID))
 	if !ok {
 		return nil, false
 	}
@@ -169,7 +169,7 @@ func (s *governanceStore) SetProposal(proposalID int64, proposal *Proposal) erro
 	}
 
 	proposals := s.GetProposals()
-	proposals.Set(int64ToString(proposalID), proposal)
+	proposals.Set(formatInt64Key(proposalID), proposal)
 
 	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
 }
@@ -199,7 +199,7 @@ func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) erro
 
 func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
-	votingInfo, ok := votingInfos.Get(int64ToString(proposalID))
+	votingInfo, ok := votingInfos.Get(formatInt64Key(proposalID))
 	if !ok {
 		return nil, false
 	}
@@ -218,7 +218,7 @@ func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *
 	}
 
 	allVotingInfos := s.GetProposalUserVotingInfos()
-	allVotingInfos.Set(int64ToString(proposalID), votingInfos)
+	allVotingInfos.Set(formatInt64Key(proposalID), votingInfos)
 
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
 }
@@ -288,6 +288,40 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
 }
 
+func (s *governanceStore) RemoveUserProposal(user string, proposalID int64) error {
+	if !s.HasUserProposalsStoreKey() {
+		return errors.New("user proposals store key not found")
+	}
+
+	userProposals := s.GetUserProposals()
+	proposalIDsRaw, ok := userProposals.Get(user)
+	// proposal already removed
+	if !ok {
+		return nil
+	}
+
+	proposalIDs, ok := proposalIDsRaw.([]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to []int64: %T", proposalIDs))
+	}
+
+	newProposalIDs := make([]int64, 0)
+
+	for _, id := range proposalIDs {
+		if id != proposalID {
+			newProposalIDs = append(newProposalIDs, id)
+		}
+	}
+
+	if len(newProposalIDs) == 0 {
+		userProposals.Remove(user)
+	} else {
+		userProposals.Set(user, newProposalIDs)
+	}
+
+	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+}
+
 // NewGovernanceStore creates a new governance store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
@@ -296,6 +330,7 @@ func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
 	}
 }
 
-func int64ToString(id int64) string {
+// formatInt64Key formats int64 identifiers for storage keys.
+func formatInt64Key(id int64) string {
 	return strconv.FormatInt(id, 10)
 }

@@ -28,14 +28,6 @@ func (p *ProposalStatusResolver) TotalVoteWeight() int64 {
 	return p.voteStatusResolver.TotalVoteWeight()
 }
 
-// DiffVoteWeight returns the absolute difference between yes and no votes.
-//
-// Returns:
-//   - int64: absolute difference in vote weights
-func (p *ProposalStatusResolver) DiffVoteWeight() int64 {
-	return p.voteStatusResolver.DiffVoteWeight()
-}
-
 // StatusType determines the current status of the proposal based on timing, voting, and actions.
 // This is the main status calculation method that considers all factors.
 //
@@ -56,8 +48,6 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 		return governance.StatusCanceled
 	}
 
-	// schedule := p.Schedule()
-
 	// Check time-based statuses
 	if !p.scheduleResolver.IsPassedActiveAt(current) {
 		return governance.StatusUpcoming
@@ -67,7 +57,7 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 		return governance.StatusActive
 	}
 
-	// Check voting outcome
+	// Check voting outcome after voting period ends
 	if p.voteStatusResolver.IsRejected() {
 		return governance.StatusRejected
 	}
@@ -217,19 +207,6 @@ func (p *ProposalStatusResolver) vote(votedYes bool, weight int64) error {
 	return p.voteStatusResolver.AddNoVoteWeight(weight)
 }
 
-// updateVoteStatus updates the voting parameters and recalculates requirements.
-// This is used when voting parameters change dynamically.
-//
-// Parameters:
-//   - maxVotingWeight: updated maximum voting weight
-//   - quorum: updated quorum percentage
-//
-// Returns:
-//   - error: update error if operation fails
-func (p *ProposalStatusResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return p.voteStatusResolver.UpdateVoteStatus(maxVotingWeight, quorum)
-}
-
 // NewProposalStatus creates a new proposal status with the specified configuration.
 // This initializes all status components with the governance configuration and timing.
 //
@@ -255,6 +232,10 @@ func NewProposalStatus(
 		createdAt,
 	)
 	actionStatus := governance.NewProposalActionStatus(executable)
-	voteStatus := governance.NewProposalVoteStatus(maxVotingWeight, config.Quorum)
+
+	// Calculate the quorum amount based on the max voting weight and quorum percentage
+	quorumAmount := safeMulDiv(maxVotingWeight, config.Quorum, 100)
+	voteStatus := governance.NewProposalVoteStatus(maxVotingWeight, quorumAmount)
+
 	return governance.NewProposalStatusBy(schedule, actionStatus, voteStatus)
 }

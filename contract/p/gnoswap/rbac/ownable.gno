@@ -10,6 +10,9 @@ const (
 // Ownable2Step implements a two-step ownership transfer mechanism.
 // It requires the new owner to explicitly accept ownership before the transfer is completed,
 // preventing accidental transfers to incorrect addresses.
+//
+// Note: This package does not verify callers. Consuming realms must extract the actual
+// caller using `runtime.PreviousRealm` or `runtime.OriginCaller` and pass it to these methods.
 type Ownable2Step struct {
 	owner        address
 	pendingOwner address
@@ -23,15 +26,18 @@ func newOwnable2StepWithAddress(addr address) *Ownable2Step {
 	}
 }
 
-// TransferOwnership initiates ownership transfer by setting newOwner as pending owner.
-// The new owner must call AcceptOwnership to complete the transfer.
-// Only the current owner can call this function.
+// TransferOwnershipBy initiates ownership transfer by setting newOwner as pending owner.
+// The newOwner must call AcceptOwnershipBy to complete the transfer.
+//
+// Errors:
+//   - ErrUnauthorized: caller is not the current owner
+//   - ErrInvalidAddress: newOwner is empty or has an invalid format
 func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 	if !o.IsOwner(caller) {
 		return ErrUnauthorized
 	}
 
-	if newOwner.String() == "" || !newOwner.IsValid() {
+	if newOwner == zeroAddress || !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
@@ -46,10 +52,14 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 	return nil
 }
 
-// AcceptOwnership completes the ownership transfer.
-// Must be called by the pending owner. Panics if no pending owner exists or caller is not the pending owner.
+// AcceptOwnershipBy completes the ownership transfer.
+// Must be called by the pending owner.
+//
+// Errors:
+//   - ErrNoPendingOwner: no ownership transfer is pending
+//   - ErrPendingUnauthorized: caller is not the pending owner
 func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
-	if o.pendingOwner == "" {
+	if o.pendingOwner == zeroAddress {
 		return ErrNoPendingOwner
 	}
 
@@ -70,10 +80,11 @@ func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
 	return nil
 }
 
-// DropOwnership removes the owner, disabling all owner-only actions.
-// When used at the top level, it disables all owner-only functions.
-// When embedded, it acts like a burn function, removing ownership from the struct.
-// Only the current owner can call this function.
+// DropOwnershipBy removes the owner, disabling all owner-only actions.
+// This is irreversible - when ownership is dropped, no future owner-only operations can be performed.
+//
+// Errors:
+//   - ErrUnauthorized: caller is not the current owner
 func (o *Ownable2Step) DropOwnershipBy(caller address) error {
 	if !o.IsOwner(caller) {
 		return ErrUnauthorized

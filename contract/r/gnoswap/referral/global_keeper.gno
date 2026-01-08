@@ -12,11 +12,6 @@ func init() {
 	}
 }
 
-// getKeeper returns the global referral keeper instance.
-func getKeeper() ReferralKeeper {
-	return gReferralKeeper
-}
-
 // GetReferral returns the referral address for the given address.
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(address(addr))
@@ -28,16 +23,19 @@ func GetReferral(addr string) string {
 
 // HasReferral returns true if the given address has a referral.
 func HasReferral(addr string) bool {
-	referral, err := gReferralKeeper.get(address(addr))
-	if err != nil {
-		return false
-	}
-	return referral != zeroAddress
+	_, err := gReferralKeeper.get(address(addr))
+	return err == nil
 }
 
 // IsEmpty returns true if no referrals exist in the system.
 func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
+}
+
+// ContractAddress returns the address of the referral contract.
+// Use this address as the referral parameter in TryRegister to remove an existing referral.
+func ContractAddress() string {
+	return selfAddress.String()
 }
 
 // TryRegister attempts to register a new referral.
@@ -47,6 +45,7 @@ func IsEmpty() bool {
 //   - referral: referral address string
 //
 // Returns true on success, false on failure.
+// Panics if the caller is not authorized.
 func TryRegister(cur realm, addr address, referral string) bool {
 	refAddr := address(referral)
 

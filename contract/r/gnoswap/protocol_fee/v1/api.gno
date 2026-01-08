@@ -72,7 +72,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, balance := range tokenMap {
-		data.WriteString(token, formatInt64(balance))
+		data.WriteString(token, formatInt(balance))
 	}
 
 	return marshal(data.Node())
@@ -90,7 +90,7 @@ func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, amount := range tokenList {
-		data.WriteString(token, formatInt64(amount))
+		data.WriteString(token, formatInt(amount))
 	}
 
 	return marshal(data.Node())
@@ -115,7 +115,7 @@ func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, unrecordedBalance := range unrecordedMap {
-		data.WriteString(token, formatInt64(unrecordedBalance))
+		data.WriteString(token, formatInt(unrecordedBalance))
 	}
 
 	return marshal(data.Node())
@@ -137,16 +137,6 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 	})
 
 	return data.Node()
-}
-
-// formatUint formats uint64 to string.
-func formatUint(v uint64) string {
-	return strconv.FormatUint(v, 10)
-}
-
-// formatInt64 formats int64 to string.
-func formatInt64(v int64) string {
-	return strconv.FormatInt(v, 10)
 }
 
 // formatInt formats int64 to string.

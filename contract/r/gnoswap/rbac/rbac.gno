@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
@@ -21,16 +22,17 @@ func initRbac() {
 
 	// Prepare initial roles for one-time initialization
 	for role, addr := range DefaultRoleAddresses {
-		err := manager.RegisterRole(role.String(), addr)
+		roleName := role.String()
+		err := manager.RegisterRole(roleName, addr)
 		if err != nil {
 			panic(makeErrorWithDetails(
 				err,
-				ufmt.Sprintf("role name: %s, address: %s", role.String(), addr.String()),
+				ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
 			))
 		}
 
 		// Update access package with the role address
-		access.SetRoleAddress(cross, role.String(), addr)
+		access.SetRoleAddress(cross, roleName, addr)
 	}
 }
 
@@ -42,7 +44,8 @@ func initRbac() {
 //
 // Only callable by admin or governance.
 func RegisterRole(cur realm, roleName string, roleAddress address) {
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(roleAddress)
@@ -58,18 +61,15 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 		))
 	}
 
-	// Update the role address immediately after registration
-	err = manager.UpdateRoleAddress(roleName, roleAddress)
-	if err != nil {
-		panic(makeErrorWithDetails(
-			errInvalidAddress,
-			ufmt.Sprintf("failed to set address for role %s: %s", roleName, roleAddress),
-		))
-	}
-
 	// Set the role in access control
 	access.SetRoleAddress(cross, roleName, roleAddress)
-	emitRegisterRoleEvent(roleName, roleAddress)
+	chain.Emit(
+		"RegisterRole",
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"roleName", roleName,
+		"roleAddress", roleAddress.String(),
+	)
 }
 
 // UpdateRoleAddress updates the address assigned to a role.
@@ -80,10 +80,13 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 //
 // Only callable by admin or governance.
 func UpdateRoleAddress(cur realm, roleName string, addr address) {
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
+
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
+	assertNotAdminRole(roleName)
 
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
@@ -95,7 +98,14 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 
 	// Set the role address in access control
 	access.SetRoleAddress(cross, roleName, addr)
-	emitUpdateRoleAddressEvent(roleName, addr)
+
+	chain.Emit(
+		"UpdateRoleAddress",
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"roleName", roleName,
+		"roleAddress", addr.String(),
+	)
 }
 
 // RemoveRole removes a role from the RBAC system.
@@ -105,9 +115,11 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 //
 // Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
-	caller := runtime.PreviousRealm().Address()
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
+	assertNotAdminRole(roleName)
 
 	err := manager.RemoveRole(roleName)
 	if err != nil {
@@ -119,7 +131,13 @@ func RemoveRole(cur realm, roleName string) {
 
 	// Remove the role from access control
 	access.RemoveRole(cross, roleName)
-	emitRemoveRoleEvent(roleName)
+	chain.Emit(
+		"RemoveRole",
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"roleName", roleName,
+		"roleAddress", "",
+	)
 }
 
 // GetRoleAddress returns the address assigned to roleName.

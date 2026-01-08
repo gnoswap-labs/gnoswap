@@ -3,10 +3,8 @@ package emission
 import (
 	"chain"
 	"chain/runtime"
-	"strconv"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -27,7 +25,7 @@ var (
 	// Stores the percentage (in basis points) for each distribution target
 	// 1 basis point = 0.01%
 	// These percentages can be modified through governance.
-	distributionBpsPct *avl.Tree
+	distributionBpsPct map[int]int64
 
 	distributedToStaker        int64 // can be cleared by staker contract
 	distributedToDevOps        int64
@@ -49,11 +47,12 @@ var (
 //
 // ref: https://docs.gnoswap.io/gnoswap-token/emission
 func init() {
-	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), int64(7500))
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), int64(2000))
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), int64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
+	distributionBpsPct = map[int]int64{
+		LIQUIDITY_STAKER: 7500,
+		DEVOPS:           2000,
+		COMMUNITY_POOL:   500,
+		GOV_STAKER:       0,
+	}
 }
 
 // ChangeDistributionPct changes distribution percentages for emission targets.
@@ -154,40 +153,23 @@ func changeDistributionPcts(
 func distributeToTarget(amount int64) (int64, error) {
 	totalSent := int64(0)
 
-	var err error
-
-	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
-		targetInt, distErr := strconv.Atoi(targetStr)
-		if distErr != nil {
-			err = distErr
-			return true
-		}
-
-		pct, ok := iPct.(int64)
-		if !ok {
-			panic("failed to cast distributionBpsPct's element to int64")
-		}
-
+	for target, pct := range distributionBpsPct {
 		distAmount := calculateAmount(amount, pct)
 
 		// Skip zero amounts to avoid unnecessary transfers
 		if distAmount == 0 {
-			return false
+			continue
 		}
 
-		totalSent += distAmount
+		totalSent = safeAddInt64(totalSent, distAmount)
 
-		distErr = transferToTarget(targetInt, distAmount)
-		if distErr != nil {
-			err = distErr
-
-			return true
+		err := transferToTarget(target, distAmount)
+		if err != nil {
+			return totalSent, err
 		}
+	}
 
-		return false
-	})
-
-	return totalSent, err
+	return totalSent, nil
 }
 
 // calculateAmount converts basis points to actual token amount.
@@ -224,9 +206,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToStaker = safeAddInt64(distributedToStaker, amount)
+		accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
 		gns.Transfer(cross, stakerAddr, amount)
-		distributedToStaker += amount
-		accuDistributedToStaker += amount
 
 	case DEVOPS:
 		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
@@ -237,9 +219,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
+		accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
 		gns.Transfer(cross, devOpsAddr, amount)
-		distributedToDevOps += amount
-		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
 		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
@@ -250,9 +232,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
+		accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
 		gns.Transfer(cross, communityPoolAddr, amount)
-		distributedToCommunityPool += amount
-		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
 		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
@@ -263,9 +245,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
+		accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
 		gns.Transfer(cross, govStakerAddr, amount)
-		distributedToGovStaker += amount
-		accuDistributedToGovStaker += amount
 
 	default:
 		return makeErrorWithDetails(
@@ -284,17 +266,12 @@ func GetDistributionBpsPct(target int) int64 {
 		panic("distributionBpsPct is nil")
 	}
 
-	iInt64, exist := distributionBpsPct.Get(strconv.Itoa(target))
+	pct, exist := distributionBpsPct[target]
 	if !exist {
 		panic(makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
 		))
-	}
-
-	pct, ok := iInt64.(int64)
-	if !ok {
-		panic("failed to cast distributionBpsPct's element to int64")
 	}
 
 	return pct
@@ -384,10 +361,10 @@ func ClearDistributedToGovStaker(cur realm) {
 // Creates new AVL tree if nil.
 func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
-		distributionBpsPct = avl.NewTree()
+		distributionBpsPct = make(map[int]int64)
 	}
 
-	distributionBpsPct.Set(strconv.Itoa(target), pct)
+	distributionBpsPct[target] = pct
 }
 
 // targetToStr converts target constant to string representation.

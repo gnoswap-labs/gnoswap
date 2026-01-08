@@ -56,10 +56,10 @@ func TestInit_formatConfigKey(t *testing.T) {
 // TestInit_initStoreData tests the private initStoreData function
 func TestInit_initStoreData(t *testing.T) {
 	tests := []struct {
-		name              string
-		setupStore        func() governance.IGovernanceStore
-		expectedError     bool
-		verifyStore       func(*testing.T, governance.IGovernanceStore)
+		name          string
+		setupStore    func() governance.IGovernanceStore
+		expectedError bool
+		verifyStore   func(*testing.T, governance.IGovernanceStore)
 	}{
 		{
 			name: "success - initialize empty store",

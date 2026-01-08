@@ -134,6 +134,11 @@ func TestIsInt64(t *testing.T) {
 			x:        "0",
 			expected: true,
 		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -163,6 +168,11 @@ func TestIsUint64(t *testing.T) {
 		{
 			name:     "zero",
 			x:        "0",
+			expected: true,
+		},
+		{
+			name:     "one",
+			x:        "1",
 			expected: true,
 		},
 		{
@@ -250,6 +260,12 @@ func TestRem(t *testing.T) {
 			name:     "zero % negative",
 			x:        "0",
 			y:        "-2",
+			expected: "0",
+		},
+		{
+			name:     "zero % positive",
+			x:        "0",
+			y:        "2",
 			expected: "0",
 		},
 		{
@@ -579,6 +595,36 @@ func TestXor(t *testing.T) {
 			y:        "-1",
 			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 		},
+		{
+			name:     "zero ^ zero",
+			x:        "0",
+			y:        "0",
+			expected: "0",
+		},
+		{
+			name:     "positive ^ same positive (identity)",
+			x:        "12345678901234567890",
+			y:        "12345678901234567890",
+			expected: "0",
+		},
+		{
+			name:     "negative ^ same negative (identity)",
+			x:        "-12345678901234567890",
+			y:        "-12345678901234567890",
+			expected: "0",
+		},
+		{
+			name:     "max positive ^ max positive (identity)",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: "0",
+		},
+		{
+			name:     "min negative ^ min negative (identity)",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: "0",
+		},
 	}
 
 	for _, tt := range tests {
@@ -611,6 +657,26 @@ func TestNot(t *testing.T) {
 			name:     "zero",
 			x:        "0",
 			expected: "-1",
+		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: "-2",
+		},
+		{
+			name:     "negative one",
+			x:        "-1",
+			expected: "0",
+		},
+		{
+			name:     "max int256",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "min int256",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 		},
 	}
 

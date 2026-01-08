@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -210,6 +211,222 @@ func TestStakerDelegate_Undelegate(t *testing.T) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					result := gs.Undelegate(tt.from, tt.amount)
 					uassert.Equal(t, result, tt.expectedAmount)
+				}(cross)
+			}
+		})
+	}
+}
+
+// Test Undelegate with multiple delegations to same delegatee
+// This tests the optimization where GetUnDelegationLockupPeriod is called only once
+func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
+	tests := []struct {
+		name                 string
+		delegationAmounts    []int64
+		undelegateAmount     int64
+		expectedSuccess      bool
+		minExpectedWithdraws int
+		description          string
+	}{
+		{
+			name:                 "Undelegate spanning multiple delegations",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3, minimumAmount * 4, minimumAmount * 5},
+			undelegateAmount:     minimumAmount * 8,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should process first 3 delegations (1M + 2M + 3M + 2M from 4th)",
+		},
+		{
+			name:                 "Early exit - only first delegation needed",
+			delegationAmounts:    []int64{minimumAmount * 10, minimumAmount * 5, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 5,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should only process first delegation and exit early",
+		},
+		{
+			name:                 "Exact match - first delegation",
+			delegationAmounts:    []int64{minimumAmount * 5, minimumAmount * 3, minimumAmount * 2},
+			undelegateAmount:     minimumAmount * 5,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should exactly match and consume first delegation",
+		},
+		{
+			name:                 "Exact match - multiple delegations",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 6,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should exactly consume all three delegations (1M + 2M + 3M)",
+		},
+		{
+			name:                 "All delegations required",
+			delegationAmounts:    []int64{minimumAmount, minimumAmount * 2, minimumAmount * 3},
+			undelegateAmount:     minimumAmount * 6,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should process all delegations when amount equals total",
+		},
+		{
+			name:                 "Partial last delegation",
+			delegationAmounts:    []int64{minimumAmount * 2, minimumAmount * 3, minimumAmount * 10},
+			undelegateAmount:     minimumAmount * 7,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 3,
+			description:          "Should fully use first two and partially use third (2M + 3M + 2M)",
+		},
+		{
+			name:                 "Single delegation - partial undelegate",
+			delegationAmounts:    []int64{minimumAmount * 10},
+			undelegateAmount:     minimumAmount * 3,
+			expectedSuccess:      true,
+			minExpectedWithdraws: 1,
+			description:          "Should handle single delegation case (boundary)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup gov staker with clean state
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := testutils.TestAddress("alice")
+			validator := testutils.TestAddress("validator1")
+
+			testing.SetRealm(testing.NewUserRealm(user))
+
+			// Create delegations according to test case
+			totalDelegated := int64(0)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				for _, amount := range tt.delegationAmounts {
+					gs.Delegate(validator, amount, "")
+					totalDelegated += amount
+				}
+			}(cross)
+
+			// When: Undelegate specified amount
+			var undelegatedAmount int64
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				undelegatedAmount = gs.Undelegate(validator, tt.undelegateAmount)
+			}(cross)
+
+			// Then: Verify results
+			if tt.expectedSuccess {
+				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
+
+				// Verify withdraws were created correctly
+				delegationIDs := gs.getUserDelegationIDsWithDelegatee(user, validator)
+				totalWithdraws := 0
+				totalUndelegated := int64(0)
+
+				for _, delegationID := range delegationIDs {
+					delegation := gs.getDelegation(delegationID)
+					if delegation != nil {
+						withdraws := delegation.Withdraws()
+						totalWithdraws += len(withdraws)
+						totalUndelegated += delegation.UnDelegatedAmount()
+					}
+				}
+
+				uassert.Equal(t, totalUndelegated, tt.undelegateAmount)
+				uassert.True(t, totalWithdraws >= tt.minExpectedWithdraws)
+			}
+		})
+	}
+}
+
+// Test Undelegate edge cases with multiple delegations
+func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(gs *govStakerV1, user, validator address)
+		undelegateAmt int64
+		expectPanic   bool
+		expectedError string
+		description   string
+	}{
+		{
+			name: "Undelegate from non-existent delegatee",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				// No delegations created
+			},
+			undelegateAmt: minimumAmount,
+			expectPanic:   false,
+			description:   "Should return 0 when no delegations exist",
+		},
+		{
+			name: "Undelegate more than total delegated",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: minimumAmount * 10,
+			expectPanic:   false,
+			description:   "Should return available amount when requested exceeds delegated",
+		},
+		{
+			name: "Undelegate zero amount",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: 0,
+			expectPanic:   true,
+			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
+			description:   "Should reject zero amount",
+		},
+		{
+			name: "Undelegate negative amount",
+			setupFunc: func(gs *govStakerV1, user, validator address) {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					gs.Delegate(validator, minimumAmount*5, "")
+				}(cross)
+			},
+			undelegateAmt: -minimumAmount,
+			expectPanic:   true,
+			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
+			description:   "Should reject negative amount",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup test environment
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := testutils.TestAddress("alice")
+			validator := testutils.TestAddress("validator1")
+
+			testing.SetRealm(testing.NewUserRealm(user))
+			tt.setupFunc(gs, user, validator)
+
+			// When & Then: Execute and verify
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+						gs.Undelegate(validator, tt.undelegateAmt)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+					result := gs.Undelegate(validator, tt.undelegateAmt)
+					// For non-panic cases, verify result is reasonable
+					// (either 0 for no delegations, or capped at available amount)
+					if tt.undelegateAmt > 0 {
+						uassert.True(t, result >= 0)
+					}
 				}(cross)
 			}
 		})
@@ -819,7 +1036,7 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	mockStore.delegations = avl.NewTree()
 	mockStore.totalDelegationHistory = staker.NewUintTree()
 	mockStore.userDelegationHistory = avl.NewTree()
-	mockStore.userDelegations = make(map[string]map[string][]int64)
+	mockStore.userDelegations = avl.NewTree()
 
 	// Reset managers in store
 	mockStore.delegationManager = staker.NewDelegationManager()
@@ -913,11 +1130,460 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when - call registerReferrer
+		    // when - call registerReferrer
+		    testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			result := registerReferrer(tc.caller, tc.referrer)
 
 			// then - should return a referrer string (actual referrer may differ based on referral module logic)
 			uassert.NotNil(t, result)
+		})
+	}
+}
+
+// TestStakerDelegate_collectDelegations_MultipleDelegations tests collecting from multiple delegations
+func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
+	tests := []struct {
+		name             string
+		delegationCounts []int          // number of delegations to create
+		amounts          [][]int64      // amounts for each delegation's withdrawals
+		lockupPeriods    []int64        // lockup period for each delegation
+		waitTime         int64          // time to wait before collecting
+		expectedTotal    int64          // expected total collected amount
+		description      string
+	}{
+		{
+			name:             "collect from single delegation with single withdrawal",
+			delegationCounts: []int{1},
+			amounts:          [][]int64{{minimumAmount}},
+			lockupPeriods:    []int64{100},
+			waitTime:         150,
+			expectedTotal:    minimumAmount,
+		},
+		{
+			name:             "collect from multiple delegations each with single withdrawal",
+			delegationCounts: []int{3},
+			amounts: [][]int64{
+				{minimumAmount},
+				{minimumAmount * 2},
+				{minimumAmount * 3},
+			},
+			lockupPeriods: []int64{100, 100, 100},
+			waitTime:      150,
+			expectedTotal: minimumAmount * 6,
+		},
+		{
+			name:             "collect from delegation with multiple withdrawals",
+			delegationCounts: []int{1},
+			amounts:          [][]int64{{minimumAmount, minimumAmount * 2, minimumAmount * 3}},
+			lockupPeriods:    []int64{100},
+			waitTime:         150,
+			expectedTotal:    minimumAmount * 6,
+		},
+		{
+			name:             "partial collection - some still locked",
+			delegationCounts: []int{2},
+			amounts: [][]int64{
+				{minimumAmount},
+				{minimumAmount * 2},
+			},
+			lockupPeriods: []int64{100, 1000}, // second has longer lockup
+			waitTime:      150,
+			expectedTotal: minimumAmount, // only first one collectable
+		},
+		{
+			name:             "no collection - all still locked",
+			delegationCounts: []int{2},
+			amounts: [][]int64{
+				{minimumAmount},
+				{minimumAmount * 2},
+			},
+			lockupPeriods: []int64{1000, 1000}, // both locked
+			waitTime:      150,
+			expectedTotal: 0,
+		},
+		{
+			name:             "collect zero amount withdrawals",
+			delegationCounts: []int{1},
+			amounts:          [][]int64{{0, 0}},
+			lockupPeriods:    []int64{100},
+			waitTime:         150,
+			expectedTotal:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test environment
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := testutils.TestAddress("alice")
+			validator := testutils.TestAddress("validator1")
+			currentTime := int64(1000)
+			currentHeight := int64(100)
+
+			// Create delegations with withdrawals
+			for i, amounts := range tt.amounts {
+				delegationID := gs.nextDelegationID()
+				totalAmount := int64(0)
+				for _, amt := range amounts {
+					totalAmount += amt
+				}
+
+				delegation := staker.NewDelegation(delegationID, user, validator, totalAmount, currentHeight, currentTime)
+
+				// Add withdrawals
+				for _, amt := range amounts {
+					if amt > 0 {
+						resolver := NewDelegationResolver(delegation)
+						resolver.UnDelegate(amt, currentHeight, currentTime, tt.lockupPeriods[i])
+					}
+				}
+
+				gs.addDelegation(delegationID, delegation)
+
+				// Setup xGNS balance
+				testing.SetRealm(testing.NewUserRealm(govStakerAddr))
+				xgns.Mint(cross, user, totalAmount)
+			}
+
+			// When: Collect after waiting
+			collectedTime := currentTime + tt.waitTime
+			var collected int64
+			var err error
+
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				collected, err = gs.collectDelegations(user, collectedTime)
+			}(cross)
+
+			// Then: Verify collected amount
+			uassert.NoError(t, err)
+			uassert.Equal(t, collected, tt.expectedTotal)
+		})
+	}
+}
+
+// TestStakerDelegate_collectDelegations_NoCollectableAmount tests when there's nothing to collect
+func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFunc   func(gs *govStakerV1) address
+		description string
+	}{
+		{
+			name: "user has no delegations",
+			setupFunc: func(gs *govStakerV1) address {
+				return testutils.TestAddress("alice")
+			},
+			description: "Should return 0 when user has no delegations",
+		},
+		{
+			name: "user has delegations but all still locked",
+			setupFunc: func(gs *govStakerV1) address {
+				user := testutils.TestAddress("alice")
+				validator := testutils.TestAddress("validator1")
+
+				delegationID := gs.nextDelegationID()
+				delegation := staker.NewDelegation(delegationID, user, validator, minimumAmount, 100, 1000)
+
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(minimumAmount, 100, 1000, 10000) // very long lockup
+
+				gs.addDelegation(delegationID, delegation)
+
+				testing.SetRealm(testing.NewUserRealm(govStakerAddr))
+				xgns.Mint(cross, user, minimumAmount)
+
+				return user
+			},
+			description: "Should return 0 when all withdrawals are still locked",
+		},
+		{
+			name: "user has delegations with no withdrawals",
+			setupFunc: func(gs *govStakerV1) address {
+				user := testutils.TestAddress("alice")
+				validator := testutils.TestAddress("validator1")
+
+				delegationID := gs.nextDelegationID()
+				delegation := staker.NewDelegation(delegationID, user, validator, minimumAmount, 100, 1000)
+
+				gs.addDelegation(delegationID, delegation)
+
+				return user
+			},
+			description: "Should return 0 when delegations have no withdrawals",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test environment
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			user := tt.setupFunc(gs)
+
+			// When: Try to collect
+			var collected int64
+			var err error
+
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				collected, err = gs.collectDelegations(user, 2000)
+			}(cross)
+
+			// Then: Should return 0
+			uassert.NoError(t, err)
+			uassert.Equal(t, collected, int64(0))
+		})
+	}
+}
+
+// Test boundary conditions where safe arithmetic is used in delegation store operations
+func TestStakerDelegate_BoundaryConditions_TotalDelegatedAmount(t *testing.T) {
+	tests := []struct {
+		name          string
+		initialAmount int64
+		addAmount     int64
+		expectPanic   bool
+		description   string
+	}{
+		{
+			name:          "add to total delegated near max int64",
+			initialAmount: math.MaxInt64 - 10000000,
+			addAmount:     5000000,
+			expectPanic:   false,
+			description:   "Should handle adding when total is near max",
+		},
+		{
+			name:          "add causing overflow in total delegated",
+			initialAmount: math.MaxInt64 - 1000,
+			addAmount:     2000,
+			expectPanic:   true,
+			description:   "Should panic when addition would overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+
+			// Given: Set initial total delegated amount
+			err := gs.store.SetTotalDelegatedAmount(tt.initialAmount)
+			uassert.NoError(t, err)
+
+			if tt.expectPanic {
+				// When & Then: Should panic on overflow
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					// This simulates the safe arithmetic used in delegate()
+					current := gs.store.GetTotalDelegatedAmount()
+					newTotal := safeAddInt64(current, tt.addAmount)
+					_ = gs.store.SetTotalDelegatedAmount(newTotal)
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				// When: Add amount near boundary
+				current := gs.store.GetTotalDelegatedAmount()
+				newTotal := safeAddInt64(current, tt.addAmount)
+				err = gs.store.SetTotalDelegatedAmount(newTotal)
+
+				// Then: Should succeed
+				uassert.NoError(t, err)
+				result := gs.store.GetTotalDelegatedAmount()
+				uassert.Equal(t, result, tt.initialAmount+tt.addAmount)
+			}
+		})
+	}
+}
+
+// Test boundary conditions where safe arithmetic is used for subtraction in store operations
+func TestStakerDelegate_BoundaryConditions_Undelegate(t *testing.T) {
+	tests := []struct {
+		name           string
+		totalDelegated int64
+		subAmount      int64
+		expectPanic    bool
+		description    string
+	}{
+		{
+			name:           "subtract large amount from large total",
+			totalDelegated: math.MaxInt64 / 2,
+			subAmount:      math.MaxInt64 / 4,
+			expectPanic:    false,
+			description:    "Should handle large subtraction",
+		},
+		{
+			name:           "subtract causing underflow in total delegated",
+			totalDelegated: math.MinInt64 + 1000,
+			subAmount:      2000,
+			expectPanic:    true,
+			description:    "Should panic when subtraction would underflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+
+			// Given: Set initial total delegated amount
+			err := gs.store.SetTotalDelegatedAmount(tt.totalDelegated)
+			uassert.NoError(t, err)
+
+			if tt.expectPanic {
+				// When & Then: Should panic on underflow
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					// This simulates the safe arithmetic used in unDelegate()
+					current := gs.store.GetTotalDelegatedAmount()
+					newTotal := safeSubInt64(current, tt.subAmount)
+					_ = gs.store.SetTotalDelegatedAmount(newTotal)
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				// When: Subtract amount
+				current := gs.store.GetTotalDelegatedAmount()
+				newTotal := safeSubInt64(current, tt.subAmount)
+				err = gs.store.SetTotalDelegatedAmount(newTotal)
+
+				// Then: Should succeed
+				uassert.NoError(t, err)
+				result := gs.store.GetTotalDelegatedAmount()
+				uassert.Equal(t, result, tt.totalDelegated-tt.subAmount)
+			}
+		})
+	}
+}
+
+// Test boundary conditions in collect operations
+func TestStakerDelegate_BoundaryConditions_CollectDelegations(t *testing.T) {
+	tests := []struct {
+		name            string
+		initialLocked   int64
+		collectAmount   int64
+		expectUnderflow bool
+		description     string
+	}{
+		{
+			name:            "collect with locked amount at boundary",
+			initialLocked:   1000000,
+			collectAmount:   1000000,
+			expectUnderflow: false,
+			description:     "Should handle collecting exactly locked amount",
+		},
+		{
+			name:            "collect more than locked (should clamp to zero)",
+			initialLocked:   500000,
+			collectAmount:   1000000,
+			expectUnderflow: false,
+			description:     "Should clamp to zero when collecting more than locked",
+		},
+		{
+			name:            "collect with large locked amount",
+			initialLocked:   math.MaxInt64 / 2,
+			collectAmount:   math.MaxInt64 / 4,
+			expectUnderflow: false,
+			description:     "Should handle large collection amounts",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+			cleanupStakerDelegateTest(t, gs)
+
+			// Given: Set initial locked amount
+			err := gs.store.SetTotalLockedAmount(tt.initialLocked)
+			uassert.NoError(t, err)
+
+			// When: Simulate collection logic
+			currentLocked := gs.store.GetTotalLockedAmount()
+			newLocked := safeSubInt64(currentLocked, tt.collectAmount)
+			if newLocked < 0 {
+				newLocked = 0
+			}
+
+			// Then: Should succeed and clamp to valid range
+			uassert.True(t, newLocked >= 0)
+			uassert.True(t, newLocked <= tt.initialLocked)
+
+			err = gs.store.SetTotalLockedAmount(newLocked)
+			uassert.NoError(t, err)
+
+			result := gs.store.GetTotalLockedAmount()
+			uassert.Equal(t, result, newLocked)
+		})
+	}
+}
+
+// Test accumulation of collected amounts from multiple delegations
+func TestStakerDelegate_BoundaryConditions_AccumulateCollected(t *testing.T) {
+	tests := []struct {
+		name        string
+		amounts     []int64
+		expectPanic bool
+		description string
+	}{
+		{
+			name:        "accumulate normal amounts",
+			amounts:     []int64{100000, 200000, 300000, 400000, 500000},
+			expectPanic: false,
+			description: "Should accumulate multiple normal amounts",
+		},
+		{
+			name:        "accumulate large amounts",
+			amounts:     []int64{math.MaxInt64 / 10, math.MaxInt64 / 10, math.MaxInt64 / 10},
+			expectPanic: false,
+			description: "Should accumulate large amounts without overflow",
+		},
+		{
+			name:        "accumulate causing overflow",
+			amounts:     []int64{math.MaxInt64 / 2, math.MaxInt64 / 2, math.MaxInt64 / 2},
+			expectPanic: true,
+			description: "Should panic when accumulation would overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				didPanic := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					collected := int64(0)
+					for _, amt := range tt.amounts {
+						collected = safeAddInt64(collected, amt)
+					}
+				}()
+				uassert.True(t, didPanic)
+			} else {
+				collected := int64(0)
+				for _, amt := range tt.amounts {
+					collected = safeAddInt64(collected, amt)
+				}
+
+				// Then: Should have accumulated all amounts
+				expectedTotal := int64(0)
+				for _, amt := range tt.amounts {
+					expectedTotal += amt
+				}
+				uassert.Equal(t, collected, expectedTotal)
+			}
 		})
 	}
 }

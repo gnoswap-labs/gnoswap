@@ -144,13 +144,6 @@ func (s *stakerV1) GetDepositOwner(lpTokenId uint64) address {
 	return deposit.Owner()
 }
 
-// GetDepositStakeTimestamp returns the stake timestamp of a deposit.
-func (s *stakerV1) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
-
-	return deposit.StakeTime()
-}
-
 // GetDepositStakeTime returns the stake time of a deposit.
 func (s *stakerV1) GetDepositStakeTime(lpTokenId uint64) int64 {
 	deposit := s.getDeposit(lpTokenId)
