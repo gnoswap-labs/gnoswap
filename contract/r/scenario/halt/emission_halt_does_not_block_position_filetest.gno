@@ -150,7 +150,7 @@ func setEmissionHalt() {
 	isPositionHalted := halt.IsHaltedPosition()
 	isPoolHalted := halt.IsHaltedPool()
 
-	ufmt.Printf("[INFO] Emission selectively halted\n")
+	println("[INFO] Emission selectively halted")
 	ufmt.Printf("[EXPECTED] Emission halted: %t (should be true)\n", isEmissionHalted)
 	ufmt.Printf("[EXPECTED] Position halted: %t (should be false)\n", isPositionHalted)
 	ufmt.Printf("[EXPECTED] Pool halted: %t (should be false)\n", isPoolHalted)
@@ -193,7 +193,7 @@ func resumeEmissionAndVerify() {
 	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 
 	isEmissionHalted := halt.IsHaltedEmission()
-	ufmt.Printf("[INFO] Halt level reset to NONE\n")
+	println("[INFO] Halt level reset to NONE")
 	ufmt.Printf("[EXPECTED] Emission halted: %t (should be false)\n", isEmissionHalted)
 
 	// Skip some blocks and verify emission works
