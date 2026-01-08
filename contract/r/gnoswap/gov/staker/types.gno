@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 )
 
@@ -58,6 +59,21 @@ type IGovStakerGetter interface {
 
 	// Launchpad getters
 	GetLaunchpadProjectDeposit(projectAddr string) (int64, bool)
+
+	// Withdraw getters
+	GetDelegationWithdrawCount(delegationID int64) int
+	GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error)
+	GetCollectableWithdrawAmount(delegationID int64) int64
+
+	// Protocol fee reward getters
+	GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint
+	GetProtocolFeeAmounts(tokenPath string) *uint256.Uint
+	GetProtocolFeeAccumulatedTimestamp() int64
+
+	// Emission reward getters
+	GetEmissionAccumulatedX128PerStake() *uint256.Uint
+	GetEmissionDistributedAmount() int64
+	GetEmissionAccumulatedTimestamp() int64
 }
 
 // Admin interface for administrative functions

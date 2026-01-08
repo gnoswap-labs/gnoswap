@@ -1,5 +1,9 @@
 package staker
 
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
 // MockResponse is a simple mock response helper
 type MockResponse struct {
 	data      map[string][]any
@@ -244,6 +248,90 @@ func (m *MockGovStaker) GetLaunchpadProjectDeposit(projectAddr string) (int64, b
 		return 0, false
 	}
 	return res[0].(int64), res[1].(bool)
+}
+
+func (m *MockGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
+	res, ok := m.Response.Get("GetDelegationWithdrawCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error) {
+	res, ok := m.Response.Get("GetDelegationWithdraws")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].([]*DelegationWithdraw), nil
+	}
+	return res[0].([]*DelegationWithdraw), res[1].(error)
+}
+
+func (m *MockGovStaker) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	res, ok := m.Response.Get("GetCollectableWithdrawAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
+	res, ok := m.Response.Get("GetProtocolFeeAccumulatedX128PerStake")
+	if !ok {
+		return nil
+	}
+	if res[0] == nil {
+		return nil
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
+	res, ok := m.Response.Get("GetProtocolFeeAmounts")
+	if !ok {
+		return nil
+	}
+	if res[0] == nil {
+		return nil
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {
+	res, ok := m.Response.Get("GetProtocolFeeAccumulatedTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetEmissionAccumulatedX128PerStake() *u256.Uint {
+	res, ok := m.Response.Get("GetEmissionAccumulatedX128PerStake")
+	if !ok {
+		return nil
+	}
+	if res[0] == nil {
+		return nil
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockGovStaker) GetEmissionDistributedAmount() int64 {
+	res, ok := m.Response.Get("GetEmissionDistributedAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetEmissionAccumulatedTimestamp() int64 {
+	res, ok := m.Response.Get("GetEmissionAccumulatedTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
 }
 
 func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {

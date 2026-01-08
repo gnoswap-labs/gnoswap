@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
@@ -286,4 +287,90 @@ func (gs *govStakerV1) GetLaunchpadProjectDeposit(projectAddr string) (int64, bo
 	launchpadDeposits := gs.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	return resolvedDeposits.getLaunchpadProjectDeposit(gs.makeLaunchpadRewardID(projectAddr))
+}
+
+// GetDelegationWithdrawCount returns the total number of delegation withdraws for a specific delegation.
+func (gs *govStakerV1) GetDelegationWithdrawCount(delegationID int64) int {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return 0
+	}
+	return len(delegation.Withdraws())
+}
+
+// GetDelegationWithdraws returns a paginated list of delegation withdraws for a specific delegation.
+func (gs *govStakerV1) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return []*staker.DelegationWithdraw{}, nil
+	}
+
+	withdraws := delegation.Withdraws()
+	size := len(withdraws)
+	if offset >= size {
+		return []*staker.DelegationWithdraw{}, nil
+	}
+
+	end := offset + count
+	if end > size {
+		end = size
+	}
+
+	return withdraws[offset:end], nil
+}
+
+// GetCollectableWithdrawAmount returns the collectable withdraw amount for a specific delegation.
+func (gs *govStakerV1) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return 0
+	}
+
+	totalAmount := int64(0)
+	for _, withdraw := range delegation.Withdraws() {
+		totalAmount += safeSubInt64(withdraw.UnDelegateAmount(), withdraw.CollectedAmount())
+	}
+
+	return totalAmount
+}
+
+// GetProtocolFeeAccumulatedX128PerStake returns the accumulated protocol fee per stake (Q128) for a token path.
+func (gs *govStakerV1) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	accumulatedFee := protocolFeeRewardManager.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
+	if accumulatedFee == nil {
+		return uint256.NewUint(0)
+	}
+	return accumulatedFee.Clone()
+}
+
+// GetProtocolFeeAmounts returns the protocol fee amounts for a token path.
+func (gs *govStakerV1) GetProtocolFeeAmounts(tokenPath string) *uint256.Uint {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	amount := protocolFeeRewardManager.GetProtocolFeeAmount(tokenPath)
+	return uint256.NewUintFromInt64(amount)
+}
+
+// GetProtocolFeeAccumulatedTimestamp returns the accumulated timestamp for protocol fee rewards.
+func (gs *govStakerV1) GetProtocolFeeAccumulatedTimestamp() int64 {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	return protocolFeeRewardManager.GetAccumulatedTimestamp()
+}
+
+// GetEmissionAccumulatedX128PerStake returns the accumulated emission per stake (Q128).
+func (gs *govStakerV1) GetEmissionAccumulatedX128PerStake() *uint256.Uint {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetAccumulatedRewardX128PerStake().Clone()
+}
+
+// GetEmissionDistributedAmount returns the total distributed emission amount.
+func (gs *govStakerV1) GetEmissionDistributedAmount() int64 {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetDistributedAmount()
+}
+
+// GetEmissionAccumulatedTimestamp returns the accumulated timestamp for emission rewards.
+func (gs *govStakerV1) GetEmissionAccumulatedTimestamp() int64 {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetAccumulatedTimestamp()
 }
