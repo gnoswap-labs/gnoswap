@@ -903,9 +903,13 @@ func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name: "returns snapshot when config exists",
+			name: "returns snapshot when config and voting weight exist",
 			setup: func(t *testing.T) *governanceV1 {
-				return setupGetterTest(t)
+				gv := setupGetterTest(t)
+				// Set total delegation for voting weight to exist
+				accessor := gv.stakerAccessor.(*mockGovStakerAccessor)
+				accessor.totalDelegation = 1000
+				return gv
 			},
 			expectError: false,
 		},
@@ -914,6 +918,14 @@ func TestGetCurrentVotingWeightSnapshot(t *testing.T) {
 			setup: func(t *testing.T) *governanceV1 {
 				gv := newMockGovernance()
 				return gv
+			},
+			expectError: true,
+		},
+		{
+			name: "returns error when voting weight does not exist",
+			setup: func(t *testing.T) *governanceV1 {
+				// Config exists but no voting weight
+				return setupGetterTest(t)
 			},
 			expectError: true,
 		},
