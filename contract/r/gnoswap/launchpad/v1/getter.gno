@@ -201,7 +201,7 @@ func (lp *launchpadV1) GetProjects(offset, limit int64) []string {
 	currentIndex := int64(0)
 	collected := int64(0)
 
-	projects.Iterate("", "", func(key string, value interface{}) bool {
+	projects.Iterate("", "", func(key string, value any) bool {
 		if currentIndex < offset {
 			currentIndex++
 			return false
@@ -232,7 +232,7 @@ func (lp *launchpadV1) GetDeposits(offset, limit int64) []string {
 	currentIndex := int64(0)
 	collected := int64(0)
 
-	deposits.Iterate("", "", func(key string, value interface{}) bool {
+	deposits.Iterate("", "", func(key string, value any) bool {
 		if currentIndex < offset {
 			currentIndex++
 			return false
@@ -263,7 +263,7 @@ func (lp *launchpadV1) GetRewardManagers(offset, limit int64) []string {
 	currentIndex := int64(0)
 	collected := int64(0)
 
-	managers.Iterate("", "", func(key string, value interface{}) bool {
+	managers.Iterate("", "", func(key string, value any) bool {
 		if currentIndex < offset {
 			currentIndex++
 			return false
