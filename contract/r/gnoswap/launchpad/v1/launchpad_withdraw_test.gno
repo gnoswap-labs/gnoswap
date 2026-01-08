@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/launchpad"
+	"gno.land/r/onbloc/obl"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -92,6 +93,22 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
+}
+
+func TestLaunchpadWithdraw_CollectDepositGnsUnauthorized(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	initLaunchpadWithdrawTest(t, testutils.TestAddress("user"))
+	lp := getTestImplementation()
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
+
+	uassert.AbortsWithMessage(t, "caller is not user", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			lp.CollectDepositGns("1")
+		}(cross)
+	})
 }
 
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
@@ -653,6 +670,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		gns.Transfer(cross, launchpadAddr, 2000000000) // Extra for second attempt
+		obl.Transfer(cross, launchpadAddr, 2000000000)
 
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 		testing.SkipHeights(60*60*24*180/5 + 2)
@@ -670,8 +688,10 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 
 		// Second collection should fail
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		uassert.AbortsContains(t, "already collected", func() {
+		uassert.AbortsContains(t, "not exist deposit", func() {
+			testing.SetOriginCaller(userAddr)
 			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 				lp.CollectDepositGns("1")
 			}(cross)
 		})
@@ -683,12 +703,15 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(t *testing.T) {
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		gns.Transfer(cross, launchpadAddr, 1000000000)
+		obl.Transfer(cross, launchpadAddr, 1000000000)
 
 		// Don't skip heights - tier hasn't ended yet
+		testing.SkipHeights(60*60*24*3/5 + 2)
 		testing.SetRealm(testing.NewUserRealm(userAddr))
 
 		uassert.AbortsContains(t, "project lock period is not over yet", func() {
 			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 				lp.CollectDepositGns("1")
 			}(cross)
 		})
@@ -858,9 +881,9 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 			shouldFail:   true,
 		},
 		{
-			name:         "tier 30 - zero time elapsed",
+			name:         "tier 30 - only 29 days elapsed",
 			tierDuration: 30,
-			skipHeight:   0,
+			skipHeight:   (60 * 60 * 24 * 29 / 5),
 			shouldFail:   true,
 		},
 	}
@@ -876,6 +899,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			gns.Transfer(cross, launchpadAddr, 1000000000)
+			obl.Transfer(cross, launchpadAddr, 1000000000)
 
 			if tt.skipHeight > 0 {
 				testing.SkipHeights(tt.skipHeight)
@@ -886,6 +910,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsPartialTimeElapsed(t *testing.T) {
 			if tt.shouldFail {
 				uassert.AbortsContains(t, "project lock period is not over yet", func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 						lp.CollectDepositGns("1")
 					}(cross)
 				})

@@ -153,6 +153,7 @@ func NewRewardManager(
 	totalDistributeAmount int64,
 	distributeStartTime int64,
 	distributeEndTime int64,
+	rewardCollectableDuration int64,
 	currentHeight int64,
 	currentTime int64,
 ) *RewardManager {
@@ -166,7 +167,7 @@ func NewRewardManager(
 		accumulatedTime:                 0,
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),
-		rewardClaimableDuration:         0,
+		rewardClaimableDuration:         rewardCollectableDuration,
 		rewards:                         avl.NewTree(),
 	}
 }

@@ -16,12 +16,13 @@ import (
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
-// CollectDepositGns collects rewards from a deposit.
+// CollectDepositGns withdraws the original GNS deposit after the lock period ends.
 //
 // Parameters:
-//   - depositID: ID of the deposit to collect from
+//   - depositID: ID of the deposit to withdraw
 //
-// Returns amount collected and any error.
+// Returns amount withdrawn and any error.
+// Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
@@ -35,8 +36,28 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	emission.MintAndDistributeGns(cross)
 
 	deposit := lp.mustGetDeposit(depositID)
-
+	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
+
+	// Collect reward before withdrawal
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	// Transfer reward token to depositor
+	if rewardAmount > 0 {
+		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
+
+		chain.Emit(
+			"CollectRewardByDepositId",
+			"prevAddr", caller.String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"depositId", depositID,
+			"amount", formatInt(rewardAmount),
+		)
+	}
+
 	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
 		panic(err.Error())
