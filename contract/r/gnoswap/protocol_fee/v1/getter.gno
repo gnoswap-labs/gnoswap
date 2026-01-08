@@ -15,6 +15,17 @@ func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
 	return pf.getProtocolFeeState().TokenListWithAmounts()
 }
 
+// GetTokenList returns the list of token paths without amounts.
+func (pf *protocolFeeV1) GetTokenList() []string {
+	tokenListWithAmount := pf.getProtocolFeeState().TokenListWithAmounts()
+	tokens := make([]string, 0, len(tokenListWithAmount))
+	for token := range tokenListWithAmount {
+		tokens = append(tokens, token)
+	}
+
+	return tokens
+}
+
 // GetAmountOfToken returns the amount of token.
 func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
 	amount, exists := pf.getProtocolFeeState().TokenListWithAmounts()[tokenPath]
