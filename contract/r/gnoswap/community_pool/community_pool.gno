@@ -10,6 +10,16 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
+// GetBalanceOf returns the balance of a specific token held by the community pool.
+//
+// Parameters:
+//   - tokenPath: the path to the token contract (e.g., "gno.land/r/gnoswap/gns")
+//
+// Returns the balance of the specified token held by the community pool.
+func GetBalanceOf(tokenPath string) int64 {
+	return common.BalanceOf(tokenPath, runtime.CurrentRealm().Address())
+}
+
 // TransferToken transfers tokens from the community pool.
 //
 // Parameters:
