@@ -94,6 +94,57 @@ func (s *stakerV1) GetCreatedHeightOfIncentive(poolPath string, incentiveId stri
 	return incentive.CreatedHeight()
 }
 
+// GetIncentiveCreatedTimestamp returns the creation timestamp of an incentive.
+func (s *stakerV1) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.CreatedTimestamp()
+}
+
+// GetIncentiveTotalRewardAmount returns the total reward amount of an incentive.
+func (s *stakerV1) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.TotalRewardAmount()
+}
+
+// GetIncentiveDistributedRewardAmount returns the distributed reward amount of an incentive.
+func (s *stakerV1) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.DistributedRewardAmount()
+}
+
+// GetIncentiveRemainingRewardAmount returns the remaining reward amount of an incentive.
+func (s *stakerV1) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.RewardAmount()
+}
+
+// GetIncentiveDepositGnsAmount returns the deposit GNS amount of an incentive.
+func (s *stakerV1) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.DepositGnsAmount()
+}
+
+// GetIncentiveRefunded returns whether an incentive has been refunded.
+func (s *stakerV1) GetIncentiveRefunded(poolPath string, incentiveId string) bool {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.Refunded()
+}
+
+// IsIncentiveActive returns whether an incentive is currently active.
+func (s *stakerV1) IsIncentiveActive(poolPath string, incentiveId string) bool {
+	incentive := s.getIncentive(poolPath, incentiveId)
+	currentTime := time.Now().Unix()
+
+	resolver := NewExternalIncentiveResolver(incentive)
+	return resolver.IsStarted(currentTime) && !resolver.IsEnded(currentTime) && !resolver.Refunded()
+}
+
 // GetIncentiveRewardToken returns the reward token of an incentive.
 func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) string {
 	incentive := s.getIncentive(poolPath, incentiveId)
@@ -198,6 +249,25 @@ func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64
 	return deposit.InternalRewardLastCollectTime()
 }
 
+// GetDepositStakeTimestamp returns the staking timestamp of a deposit.
+func (s *stakerV1) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
+	deposit := s.getDeposit(lpTokenId)
+
+	return deposit.StakeTime()
+}
+
+// GetDepositCollectedInternalReward returns the collected internal reward amount.
+func (s *stakerV1) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
+	deposit := s.getDeposit(lpTokenId)
+
+	return deposit.CollectedInternalReward()
+}
+
+// GetDepositCollectedExternalReward returns the collected external reward amount for an incentive.
+func (s *stakerV1) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64 {
+	return s.getDepositResolver(lpTokenId).CollectedExternalReward(incentiveId)
+}
+
 // GetDepositExternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
 func (s *stakerV1) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
 	return s.getDepositResolver(lpTokenId).ExternalRewardLastCollectTime(incentiveId)
@@ -208,6 +278,13 @@ func (s *stakerV1) GetDepositWarmUp(lpTokenId uint64) []sr.Warmup {
 	deposit := s.getDeposit(lpTokenId)
 
 	return deposit.Warmups()
+}
+
+// GetDepositExternalIncentiveIdList returns external incentive IDs for a deposit.
+func (s *stakerV1) GetDepositExternalIncentiveIdList(lpTokenId uint64) []string {
+	deposit := s.getDeposit(lpTokenId)
+
+	return deposit.GetExternalIncentiveIdList()
 }
 
 // GetPoolTier returns the tier of a pool.
@@ -239,9 +316,92 @@ func (s *stakerV1) GetPoolReward(tier uint64) int64 {
 	return s.getPoolTier().CurrentReward(tier)
 }
 
+// GetPoolStakedLiquidity returns the current total staked liquidity of a pool.
+func (s *stakerV1) GetPoolStakedLiquidity(poolPath string) string {
+	pool := s.getPoolByPoolPath(poolPath)
+	liquidity := NewPoolResolver(pool).CurrentStakedLiquidity(time.Now().Unix())
+	if liquidity == nil {
+		return u256.Zero().ToString()
+	}
+
+	return liquidity.ToString()
+}
+
+// GetPoolsByTier returns the list of pools in a tier.
+func (s *stakerV1) GetPoolsByTier(tier uint64) []string {
+	if tier == 0 {
+		return []string{}
+	}
+
+	pools := make([]string, 0)
+	s.getPoolTier().membership.Iterate("", "", func(poolPath string, value any) bool {
+		currentTier, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast tier to uint64")
+		}
+		if currentTier == tier {
+			pools = append(pools, poolPath)
+		}
+		return false
+	})
+
+	return pools
+}
+
+// GetTotalEmissionSent returns the total GNS emission sent.
+func (s *stakerV1) GetTotalEmissionSent() int64 {
+	return s.store.GetTotalEmissionSent()
+}
+
+// GetAllowedTokens returns the allowed external incentive token list.
+func (s *stakerV1) GetAllowedTokens() []string {
+	tokens := s.store.GetAllowedTokens()
+	result := make([]string, len(tokens))
+	copy(result, tokens)
+	return result
+}
+
+// GetWarmupTemplate returns the current warmup template.
+func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
+	warmups := s.store.GetWarmupTemplate()
+	result := make([]sr.Warmup, len(warmups))
+	copy(result, warmups)
+	return result
+}
+
+// GetTotalStakedPositionCount returns the total staked position count.
+func (s *stakerV1) GetTotalStakedPositionCount() uint64 {
+	total := uint64(0)
+	s.getStakers().tree.Iterate("", "", func(_ string, value any) bool {
+		depositTree := retrieveDepositTree(value)
+		total += uint64(depositTree.Size())
+		return false
+	})
+	return total
+}
+
+// GetStakedPositionsByOwner returns staked position IDs for an owner.
+func (s *stakerV1) GetStakedPositionsByOwner(owner address) []uint64 {
+	positions := make([]uint64, 0, depositTree.Size())
+
+	depositTreeI, ok := s.getStakers().tree.Get(owner.String())
+	if !ok {
+		return positions
+	}
+
+	depositTree := retrieveDepositTree(depositTreeI)
+	depositTree.Iterate("", "", func(depositId string, _ any) bool {
+		positions = append(positions, sr.DecodeUint(depositId))
+		return false
+	})
+
+	return positions
+}
+
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.
 func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.ExternalIncentive {
-	incentives := []sr.ExternalIncentive{}
+	incentives := make([]sr.ExternalIncentive, 0)
+
 	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {

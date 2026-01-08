@@ -136,6 +136,62 @@ func (m *MockStaker) GetCreatedHeightOfIncentive(poolPath string, incentiveId st
 	return res[0].(int64)
 }
 
+func (m *MockStaker) GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveCreatedTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveTotalRewardAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveDistributedRewardAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveRemainingRewardAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveDepositGnsAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveRefunded(poolPath string, incentiveId string) bool {
+	res, ok := m.Response.Get("GetIncentiveRefunded")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
+func (m *MockStaker) IsIncentiveActive(poolPath string, incentiveId string) bool {
+	res, ok := m.Response.Get("IsIncentiveActive")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
 func (m *MockStaker) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetDepositExternalRewardLastCollectTimestamp")
 	if !ok {
@@ -154,6 +210,30 @@ func (m *MockStaker) GetDepositGnsAmount() int64 {
 
 func (m *MockStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
 	res, ok := m.Response.Get("GetDepositInternalRewardLastCollectTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
+	res, ok := m.Response.Get("GetDepositStakeTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
+	res, ok := m.Response.Get("GetDepositCollectedInternalReward")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetDepositCollectedExternalReward")
 	if !ok {
 		return 0
 	}
@@ -222,6 +302,14 @@ func (m *MockStaker) GetDepositWarmUp(lpTokenId uint64) []Warmup {
 		return nil
 	}
 	return res[0].([]Warmup)
+}
+
+func (m *MockStaker) GetDepositExternalIncentiveIdList(lpTokenId uint64) []string {
+	res, ok := m.Response.Get("GetDepositExternalIncentiveIdList")
+	if !ok {
+		return nil
+	}
+	return res[0].([]string)
 }
 
 func (m *MockStaker) GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
@@ -312,6 +400,22 @@ func (m *MockStaker) GetPoolIncentiveIdList(poolPath string) []string {
 	return res[0].([]string)
 }
 
+func (m *MockStaker) GetPoolStakedLiquidity(poolPath string) string {
+	res, ok := m.Response.Get("GetPoolStakedLiquidity")
+	if !ok {
+		return ""
+	}
+	return res[0].(string)
+}
+
+func (m *MockStaker) GetPoolsByTier(tier uint64) []string {
+	res, ok := m.Response.Get("GetPoolsByTier")
+	if !ok {
+		return []string{}
+	}
+	return res[0].([]string)
+}
+
 func (m *MockStaker) GetPoolReward(tier uint64) int64 {
 	res, ok := m.Response.Get("GetPoolReward")
 	if !ok {
@@ -374,6 +478,46 @@ func (m *MockStaker) IsStaked(positionId uint64) bool {
 		return false
 	}
 	return res[0].(bool)
+}
+
+func (m *MockStaker) GetTotalEmissionSent() int64 {
+	res, ok := m.Response.Get("GetTotalEmissionSent")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetAllowedTokens() []string {
+	res, ok := m.Response.Get("GetAllowedTokens")
+	if !ok {
+		return nil
+	}
+	return res[0].([]string)
+}
+
+func (m *MockStaker) GetWarmupTemplate() []Warmup {
+	res, ok := m.Response.Get("GetWarmupTemplate")
+	if !ok {
+		return nil
+	}
+	return res[0].([]Warmup)
+}
+
+func (m *MockStaker) GetTotalStakedPositionCount() uint64 {
+	res, ok := m.Response.Get("GetTotalStakedPositionCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetStakedPositionsByOwner(owner address) []uint64 {
+	res, ok := m.Response.Get("GetStakedPositionsByOwner")
+	if !ok {
+		return nil
+	}
+	return res[0].([]uint64)
 }
 
 func (m *MockStaker) ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
