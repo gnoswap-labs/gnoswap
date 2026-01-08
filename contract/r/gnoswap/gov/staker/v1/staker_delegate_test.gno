@@ -1206,7 +1206,8 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when - call registerReferrer
+		    // when - call registerReferrer
+		    testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			result := registerReferrer(tc.caller, tc.referrer)
 
 			// then - should return a referrer string (actual referrer may differ based on referral module logic)
