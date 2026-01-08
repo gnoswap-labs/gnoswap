@@ -129,6 +129,12 @@ func main() {
 	println("[SCENARIO] 5.4. Check quorum amount and voting power (without launchpad)")
 	checkQuorumAmountAndVotingPower(proposalId)
 	println()
+
+	println("[SCENARIO] 6. Check xGNS balance of alice and admin")
+	checkXgnsBalance("alice", aliceAddr)
+	checkXgnsBalance("admin", adminAddr)
+	checkXgnsBalance("launchpad", launchpadAddr)
+	println()
 }
 
 func initGNSBalance() {
@@ -271,3 +277,8 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 // [EXPECTED] Proposal 2's quorum amount: 500000000
 // [EXPECTED] Proposal 2's alice voting power: 1000000000
 // [EXPECTED] Proposal 2's yea weight: 1000000000, nay weight: 0
+//
+// [SCENARIO] 6. Check xGNS balance of alice and admin
+// [EXPECTED] alice's xGNS balance: 1000000000
+// [EXPECTED] admin's xGNS balance: 0
+// [EXPECTED] launchpad's xGNS balance: 1000000
