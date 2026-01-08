@@ -87,8 +87,6 @@ type ILaunchpadGetter interface {
 	GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error)
 
 	GetRewardState(projectTierId string, depositId string) (*RewardState, error)
-	GetClaimableRewardByProjectId(projectId string) (string, error)
-	GetClaimableRewardByAddress(addr address) string
 	GetProjectActiveStatus(projectId string) (bool, error)
 }
 

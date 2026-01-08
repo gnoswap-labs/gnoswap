@@ -202,25 +202,6 @@ func (m *MockLaunchpad) GetRewardState(projectTierId string, depositId string) (
 	return res[0].(*RewardState), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetClaimableRewardByProjectId(projectId string) (string, error) {
-	res, ok := m.Response.Get("GetClaimableRewardByProjectId")
-	if !ok {
-		return "0", nil
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(string), nil
-	}
-	return res[0].(string), res[1].(error)
-}
-
-func (m *MockLaunchpad) GetClaimableRewardByAddress(addr address) string {
-	res, ok := m.Response.Get("GetClaimableRewardByAddress")
-	if !ok {
-		return "0"
-	}
-	return res[0].(string)
-}
-
 func (m *MockLaunchpad) GetProjectActiveStatus(projectId string) (bool, error) {
 	res, ok := m.Response.Get("GetProjectActiveStatus")
 	if !ok {

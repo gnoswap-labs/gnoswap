@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/uint256"
-	gs "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/launchpad"
 )
 
@@ -681,33 +680,6 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	}
 
 	return rewardState.Clone(), nil
-}
-
-// GetClaimableRewardByProjectId returns the claimable reward for a project's recipient.
-// Returns "0" and error if project not found.
-func (lp *launchpadV1) GetClaimableRewardByProjectId(projectId string) (string, error) {
-	projects := lp.store.GetProjects()
-	value, exists := projects.Get(projectId)
-	if !exists {
-		return "0", errors.New("project not found")
-	}
-
-	project, ok := value.(*launchpad.Project)
-	if !ok {
-		return "0", errors.New("invalid project type")
-	}
-
-	return gs.GetClaimableRewardByAddress(project.Recipient()), nil
-}
-
-// GetClaimableRewardByAddress returns the claimable reward for a specific address.
-// Returns "0" if address is invalid.
-func (lp *launchpadV1) GetClaimableRewardByAddress(addr address) string {
-	if !addr.IsValid() {
-		return "0"
-	}
-
-	return gs.GetClaimableRewardByAddress(addr)
 }
 
 // GetProjectActiveStatus returns whether a project is currently active.

@@ -483,68 +483,6 @@ func TestGetProjectTier(t *testing.T) {
 	}
 }
 
-func TestGetClaimableRewardByProjectId(t *testing.T) {
-	tests := []struct {
-		name      string
-		projectId string
-	}{
-		{
-			name:      "get claimable reward by project id is success",
-			projectId: "project1",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetClaimableRewardByProjectId(tt.projectId)
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetClaimableRewardByProjectId") != 1 {
-				t.Error("GetClaimableRewardByProjectId was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetClaimableRewardByAddress(t *testing.T) {
-	tests := []struct {
-		name string
-		addr address
-	}{
-		{
-			name: "get claimable reward by address is success",
-			addr: "g1test",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetClaimableRewardByAddress(tt.addr)
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetClaimableRewardByAddress") != 1 {
-				t.Error("GetClaimableRewardByAddress was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestGetProjectActiveStatus(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -250,16 +250,6 @@ func GetRewardState(projectTierId string, depositId string) (*RewardState, error
 	return getImplementation().GetRewardState(projectTierId, depositId)
 }
 
-// GetClaimableRewardByProjectId returns the claimable reward for a project's recipient.
-func GetClaimableRewardByProjectId(projectId string) (string, error) {
-	return getImplementation().GetClaimableRewardByProjectId(projectId)
-}
-
-// GetClaimableRewardByAddress returns the claimable reward for a specific address.
-func GetClaimableRewardByAddress(addr address) string {
-	return getImplementation().GetClaimableRewardByAddress(addr)
-}
-
 // GetProjectActiveStatus returns whether a project is currently active.
 func GetProjectActiveStatus(projectId string) (bool, error) {
 	return getImplementation().GetProjectActiveStatus(projectId)
