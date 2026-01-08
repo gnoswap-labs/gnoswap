@@ -51,7 +51,8 @@ func (gv *governanceV1) Reconfigure(
 	// Check if system is halted before proceeding
 	halt.AssertIsNotHaltedGovernance()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidSmoothingPeriod(votingWeightSmoothingDuration)
@@ -82,11 +83,9 @@ func (gv *governanceV1) Reconfigure(
 	// Apply the new configuration
 	nextVersion := gv.reconfigure(newCfg)
 
-	// Emit configuration change event with all parameters
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Reconfigure",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"votingStartDelay", formatInt(newCfg.VotingStartDelay),
 		"votingPeriod", formatInt(newCfg.VotingPeriod),

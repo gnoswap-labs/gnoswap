@@ -1,12 +1,12 @@
 package v1
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 )
 
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval
@@ -106,7 +106,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			paramCount: 1,
 			params:     []string{"param1"},
 			handlerFunc: func([]string) error {
-				return ufmt.Errorf("handler error")
+				return errors.New("handler error")
 			},
 			expectedError:    true,
 			expectedErrorMsg: "handler error",
