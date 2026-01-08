@@ -103,11 +103,10 @@ func initialDelegation() {
 
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	totalXgns := xgns.TotalSupply()
-	votingXgns := xgns.VotingSupply()
 
 	ufmt.Printf("[INFO] Delegated %d GNS to voter1\n", initialAmount)
 	ufmt.Printf("[INFO] Voter1 xGNS balance: %d\n", voter1Xgns)
-	ufmt.Printf("[INFO] Total xGNS supply: %d, Voting supply: %d\n", totalXgns, votingXgns)
+	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
 func midPeriodDelegation() {
@@ -119,23 +118,20 @@ func midPeriodDelegation() {
 
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
 	totalXgns := xgns.TotalSupply()
-	votingXgns := xgns.VotingSupply()
 
 	ufmt.Printf("[INFO] Delegated %d GNS to voter2 (mid-period)\n", additionalAmount)
 	ufmt.Printf("[INFO] Voter2 xGNS balance: %d\n", voter2Xgns)
-	ufmt.Printf("[INFO] Total xGNS supply: %d, Voting supply: %d\n", totalXgns, votingXgns)
+	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
 }
 
 func checkCurrentXgnsBalance() {
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
 	totalXgns := xgns.TotalSupply()
-	votingXgns := xgns.VotingSupply()
 
 	ufmt.Printf("[INFO] Voter1 xGNS balance: %d\n", voter1Xgns)
 	ufmt.Printf("[INFO] Voter2 xGNS balance: %d\n", voter2Xgns)
 	ufmt.Printf("[INFO] Total xGNS supply: %d\n", totalXgns)
-	ufmt.Printf("[INFO] Voting xGNS supply: %d\n", votingXgns)
 }
 
 func proposeText() int64 {
@@ -181,13 +177,11 @@ func verifyVotingWeight(proposalId int64) {
 	// Get xGNS balances
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
-	votingXgns := xgns.VotingSupply()
 
 	ufmt.Printf("[EXPECTED] Voter1: vote weight=%d, xGNS=%d, match=%t\n",
 		voter1Weight, voter1Xgns, voter1Weight == voter1Xgns)
 	ufmt.Printf("[EXPECTED] Voter2: vote weight=%d, xGNS=%d, match=%t\n",
 		voter2Weight, voter2Xgns, voter2Weight == voter2Xgns)
-	ufmt.Printf("[EXPECTED] Current Voting supply: %d\n", votingXgns)
 	ufmt.Printf("[EXPECTED] Quorum amount: %d\n", quorumAmount)
 	ufmt.Printf("[EXPECTED] Yea weight: %d (voter1)\n", yeaWeight)
 	ufmt.Printf("[EXPECTED] Nay weight: %d (voter2)\n", nayWeight)
@@ -197,7 +191,7 @@ func verifyVotingWeight(proposalId int64) {
 // [SCENARIO] 1. Initial delegation to voter1
 // [INFO] Delegated 3000000000 GNS to voter1
 // [INFO] Voter1 xGNS balance: 0
-// [INFO] Total xGNS supply: 3000000000, Voting supply: 3000000000
+// [INFO] Total xGNS supply: 3000000000
 //
 // [SCENARIO] 2. Skip half of smoothing period
 // [INFO] current height: 8763
@@ -205,7 +199,7 @@ func verifyVotingWeight(proposalId int64) {
 // [SCENARIO] 3. Additional delegation to voter2 (mid-period)
 // [INFO] Delegated 2000000000 GNS to voter2 (mid-period)
 // [INFO] Voter2 xGNS balance: 0
-// [INFO] Total xGNS supply: 5000000000, Voting supply: 5000000000
+// [INFO] Total xGNS supply: 5000000000
 //
 // [SCENARIO] 4. Skip remaining smoothing period
 // [INFO] current height: 17503
@@ -214,7 +208,6 @@ func verifyVotingWeight(proposalId int64) {
 // [INFO] Voter1 xGNS balance: 0
 // [INFO] Voter2 xGNS balance: 0
 // [INFO] Total xGNS supply: 5000000000
-// [INFO] Voting xGNS supply: 5000000000
 //
 // [SCENARIO] 6. Propose Text (snapshot taken at this time)
 // [INFO] Created proposal ID: 1
@@ -232,7 +225,6 @@ func verifyVotingWeight(proposalId int64) {
 // [INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=0, xGNS=0, match=true
-// [EXPECTED] Current Voting supply: 5000000000
 // [EXPECTED] Quorum amount: 1500000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 0 (voter2)
