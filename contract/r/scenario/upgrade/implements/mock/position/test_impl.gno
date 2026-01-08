@@ -144,6 +144,21 @@ func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) 
 }
 
 // IPositionGetter interface
+func (t *TestPosition) GetPositionCount() int {
+	return t.ExecuteFn(
+		"GetPositionCount",
+		func(args ...any) any { return t.instance.GetPositionCount() },
+	).(int)
+}
+
+func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
+	return t.ExecuteFn(
+		"GetPositionIDs",
+		func(args ...any) any { return t.instance.GetPositionIDs(args[0].(int), args[1].(int)) },
+		offset, count,
+	).([]uint64)
+}
+
 func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
 	result := t.ExecuteFn(
 		"GetPosition",
@@ -262,21 +277,4 @@ func (t *TestPosition) GetPositionOwner(positionId uint64) address {
 		func(args ...any) any { return t.instance.GetPositionOwner(args[0].(uint64)) },
 		positionId,
 	).(address)
-}
-
-// IPositionApi interface
-func (t *TestPosition) ApiGetPosition(positionId uint64) string {
-	return t.ExecuteFn(
-		"ApiGetPosition",
-		func(args ...any) any { return t.instance.ApiGetPosition(args[0].(uint64)) },
-		positionId,
-	).(string)
-}
-
-func (t *TestPosition) ApiGetPositionUnclaimedFeeByPositionID(positionId uint64) string {
-	return t.ExecuteFn(
-		"ApiGetPositionUnclaimedFeeByPositionID",
-		func(args ...any) any { return t.instance.ApiGetPositionUnclaimedFeeByPositionID(args[0].(uint64)) },
-		positionId,
-	).(string)
 }

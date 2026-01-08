@@ -546,7 +546,7 @@ func TestGetPosition(t *testing.T) {
 		}
 
 		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("GetPosition", Position{}, true)
+		mockPosition.Response.Set("GetPosition", Position{}, false)
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -1195,104 +1195,6 @@ func TestGetPositionOwner(t *testing.T) {
 		}
 		if result != tt.expected {
 			t.Errorf("GetPositionOwner() = %v, want %v", result, tt.expected)
-		}
-	}
-}
-
-// TestApiGetPosition tests the ApiGetPosition proxy function
-func TestApiGetPosition(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func(t *testing.T)
-		positionId  uint64
-		expected    string
-		callerRealm runtime.Realm
-	}{
-		{
-			name: "api get position is success",
-			setup: func(t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
-			},
-			positionId:  1,
-			expected:    "{}",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(t)
-		}
-
-		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("ApiGetPosition", tt.expected)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		result := ApiGetPosition(tt.positionId)
-
-		// Assert
-		if mockPosition.Response.CallCount("ApiGetPosition") != 1 {
-			t.Error("ApiGetPosition was not called on the implementation")
-		}
-		if result != tt.expected {
-			t.Errorf("ApiGetPosition() = %v, want %v", result, tt.expected)
-		}
-	}
-}
-
-// TestApiGetPositionUnclaimedFeeByPositionID tests the ApiGetPositionUnclaimedFeeByPositionID proxy function
-func TestApiGetPositionUnclaimedFeeByPositionID(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func(t *testing.T)
-		positionId  uint64
-		expected    string
-		callerRealm runtime.Realm
-	}{
-		{
-			name: "api get position unclaimed fee by position id is success",
-			setup: func(t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
-			},
-			positionId:  1,
-			expected:    "{}",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(t)
-		}
-
-		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("ApiGetPositionUnclaimedFeeByPositionID", tt.expected)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		result := ApiGetPositionUnclaimedFeeByPositionID(tt.positionId)
-
-		// Assert
-		if mockPosition.Response.CallCount("ApiGetPositionUnclaimedFeeByPositionID") != 1 {
-			t.Error("ApiGetPositionUnclaimedFeeByPositionID was not called on the implementation")
-		}
-		if result != tt.expected {
-			t.Errorf("ApiGetPositionUnclaimedFeeByPositionID() = %v, want %v", result, tt.expected)
 		}
 	}
 }
