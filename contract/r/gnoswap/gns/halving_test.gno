@@ -85,8 +85,8 @@ func TestHalvingYearGetters(t *testing.T) {
 			// EndTimestamp should be startTimestamp + SECONDS_IN_YEAR - 1
 			uassert.Equal(t, startTimestamp+SECONDS_IN_YEAR-1, endTimestamp)
 
-			// GetHalvingYearTimestamp should equal GetHalvingYearStartTimestamp
-			uassert.Equal(t, startTimestamp, GetHalvingYearTimestamp(year))
+			// GetHalvingYearStartTimestamp should equal GetHalvingYearStartTimestamp
+			uassert.Equal(t, startTimestamp, GetHalvingYearStartTimestamp(year))
 
 			// Year N+1 start should be Year N end + 1
 			if year > 1 {
@@ -106,7 +106,6 @@ func TestHalvingYearGetters(t *testing.T) {
 	t.Run("invalid year 0", func(t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
-		uassert.Equal(t, int64(0), GetHalvingYearTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
 		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(0))
 		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
@@ -115,7 +114,6 @@ func TestHalvingYearGetters(t *testing.T) {
 	t.Run("invalid year 13", func(t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
-		uassert.Equal(t, int64(0), GetHalvingYearTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
 		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(13))
 		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(13))

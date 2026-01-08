@@ -146,3 +146,11 @@ func assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1 string, amount
 
 	common.AssertIsNotHandleNativeCoin()
 }
+
+// assertValidOperatorAddress validates operator address.
+// Empty address is allowed (for operator removal), but non-empty addresses must be valid.
+func assertValidOperatorAddress(operator address) {
+	if operator != address("") && !operator.IsValid() {
+		panic(newErrorWithDetail(errInvalidAddress, ufmt.Sprintf("operator(%s)", operator)))
+	}
+}
