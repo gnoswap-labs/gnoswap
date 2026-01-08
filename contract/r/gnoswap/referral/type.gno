@@ -8,11 +8,6 @@ var (
 	selfAddress address
 )
 
-// Event types for referral actions.
-const (
-	EventTypeRegister = "RegisterReferral"
-)
-
 func init() {
 	selfAddress = runtime.CurrentRealm().Address()
 }
@@ -32,7 +27,7 @@ func isRemovalRequest(refAddr address) bool {
 // ReferralKeeper defines the interface for managing referral relationships.
 type ReferralKeeper interface {
 	// register creates or updates a referral relationship between addresses.
-	// Setting refAddr to zero address removes the referral.
+	// Setting refAddr to the contract's own address removes the referral.
 	register(addr, refAddr address) error
 
 	// has returns true if a referral exists for the given address.

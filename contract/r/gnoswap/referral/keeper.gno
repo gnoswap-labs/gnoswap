@@ -34,7 +34,7 @@ func NewKeeper() ReferralKeeper {
 // Setting refAddr to the contract's own address removes the referral.
 // Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr address) error {
-	return k.setReferral(addr, refAddr, EventTypeRegister)
+	return k.setReferral(addr, refAddr, "RegisterReferral")
 }
 
 // setReferral handles common logic for registering and updating referrals.
