@@ -8,7 +8,7 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-func TestCastToInt64(t *testing.T) {
+func TestcastToInt64(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -17,7 +17,7 @@ func TestCastToInt64(t *testing.T) {
 			name: "Success",
 			verifyFn: func(t *testing.T) {
 				var value any = int64(123)
-				result, err := CastToInt64(value)
+				result, err := castToInt64(value)
 				uassert.NoError(t, err)
 				uassert.Equal(t, int64(123), result)
 			},
@@ -26,7 +26,7 @@ func TestCastToInt64(t *testing.T) {
 			name: "Failure_Uint64",
 			verifyFn: func(t *testing.T) {
 				var value any = uint64(123)
-				_, err := CastToInt64(value)
+				_, err := castToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "uint64")
 			},
@@ -35,7 +35,7 @@ func TestCastToInt64(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "123"
-				_, err := CastToInt64(value)
+				_, err := castToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -44,7 +44,7 @@ func TestCastToInt64(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToInt64(value)
+				_, err := castToInt64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -57,7 +57,7 @@ func TestCastToInt64(t *testing.T) {
 	}
 }
 
-func TestCastToUint64(t *testing.T) {
+func TestcastToUint64(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -66,7 +66,7 @@ func TestCastToUint64(t *testing.T) {
 			name: "Success",
 			verifyFn: func(t *testing.T) {
 				var value any = uint64(456)
-				result, err := CastToUint64(value)
+				result, err := castToUint64(value)
 				uassert.NoError(t, err)
 				uassert.Equal(t, uint64(456), result)
 			},
@@ -75,7 +75,7 @@ func TestCastToUint64(t *testing.T) {
 			name: "Failure_Int64",
 			verifyFn: func(t *testing.T) {
 				var value any = int64(456)
-				_, err := CastToUint64(value)
+				_, err := castToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "int64")
 			},
@@ -84,7 +84,7 @@ func TestCastToUint64(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "456"
-				_, err := CastToUint64(value)
+				_, err := castToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -93,7 +93,7 @@ func TestCastToUint64(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToUint64(value)
+				_, err := castToUint64(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -106,7 +106,7 @@ func TestCastToUint64(t *testing.T) {
 	}
 }
 
-func TestCastToBool(t *testing.T) {
+func TestcastToBool(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -115,7 +115,7 @@ func TestCastToBool(t *testing.T) {
 			name: "Success_True",
 			verifyFn: func(t *testing.T) {
 				var value any = true
-				result, err := CastToBool(value)
+				result, err := castToBool(value)
 				uassert.NoError(t, err)
 				uassert.True(t, result, "result should be true")
 			},
@@ -124,7 +124,7 @@ func TestCastToBool(t *testing.T) {
 			name: "Success_False",
 			verifyFn: func(t *testing.T) {
 				var value any = false
-				result, err := CastToBool(value)
+				result, err := castToBool(value)
 				uassert.NoError(t, err)
 				uassert.False(t, result, "result should be false")
 			},
@@ -133,7 +133,7 @@ func TestCastToBool(t *testing.T) {
 			name: "Failure_Int",
 			verifyFn: func(t *testing.T) {
 				var value any = 1
-				_, err := CastToBool(value)
+				_, err := castToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "int")
 			},
@@ -142,7 +142,7 @@ func TestCastToBool(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "true"
-				_, err := CastToBool(value)
+				_, err := castToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -151,7 +151,7 @@ func TestCastToBool(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToBool(value)
+				_, err := castToBool(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -164,7 +164,7 @@ func TestCastToBool(t *testing.T) {
 	}
 }
 
-func TestCastToString(t *testing.T) {
+func TestcastToString(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -173,7 +173,7 @@ func TestCastToString(t *testing.T) {
 			name: "Success",
 			verifyFn: func(t *testing.T) {
 				var value any = "test string"
-				result, err := CastToString(value)
+				result, err := castToString(value)
 				uassert.NoError(t, err)
 				uassert.Equal(t, "test string", result)
 			},
@@ -182,7 +182,7 @@ func TestCastToString(t *testing.T) {
 			name: "Success_EmptyString",
 			verifyFn: func(t *testing.T) {
 				var value any = ""
-				result, err := CastToString(value)
+				result, err := castToString(value)
 				uassert.NoError(t, err)
 				uassert.Equal(t, "", result)
 			},
@@ -191,7 +191,7 @@ func TestCastToString(t *testing.T) {
 			name: "Failure_Int",
 			verifyFn: func(t *testing.T) {
 				var value any = 123
-				_, err := CastToString(value)
+				_, err := castToString(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "int")
 			},
@@ -200,7 +200,7 @@ func TestCastToString(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToString(value)
+				_, err := castToString(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -213,7 +213,7 @@ func TestCastToString(t *testing.T) {
 	}
 }
 
-func TestCastToAddress(t *testing.T) {
+func TestcastToAddress(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -223,7 +223,7 @@ func TestCastToAddress(t *testing.T) {
 			verifyFn: func(t *testing.T) {
 				addr := testutils.TestAddress("test")
 				var value any = addr
-				result, err := CastToAddress(value)
+				result, err := castToAddress(value)
 				uassert.NoError(t, err)
 				uassert.Equal(t, addr, result)
 			},
@@ -232,7 +232,7 @@ func TestCastToAddress(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "g1test"
-				_, err := CastToAddress(value)
+				_, err := castToAddress(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -241,7 +241,7 @@ func TestCastToAddress(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToAddress(value)
+				_, err := castToAddress(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -254,7 +254,7 @@ func TestCastToAddress(t *testing.T) {
 	}
 }
 
-func TestCastToTree(t *testing.T) {
+func TestcastToTree(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -264,7 +264,7 @@ func TestCastToTree(t *testing.T) {
 			verifyFn: func(t *testing.T) {
 				tree := avl.NewTree()
 				var value any = tree
-				result, err := CastToTree(value)
+				result, err := castToTree(value)
 				uassert.NoError(t, err)
 				uassert.NotEqual(t, nil, result)
 			},
@@ -273,7 +273,7 @@ func TestCastToTree(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "not a tree"
-				_, err := CastToTree(value)
+				_, err := castToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -282,7 +282,7 @@ func TestCastToTree(t *testing.T) {
 			name: "Failure_Map",
 			verifyFn: func(t *testing.T) {
 				var value any = make(map[string]string)
-				_, err := CastToTree(value)
+				_, err := castToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -290,7 +290,7 @@ func TestCastToTree(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := CastToTree(value)
+				_, err := castToTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},

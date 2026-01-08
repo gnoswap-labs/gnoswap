@@ -1,7 +1,5 @@
 package rbac
 
-const maxVersionSize = int(9223372036854775807)
-
 var zeroAddress = address("")
 
 // Role represents a role with a name and an assigned address.

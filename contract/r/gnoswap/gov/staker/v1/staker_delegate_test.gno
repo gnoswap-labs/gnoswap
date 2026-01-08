@@ -319,14 +319,17 @@ func TestStakerDelegate_UndelegateMultipleDelegations(t *testing.T) {
 				uassert.Equal(t, undelegatedAmount, tt.undelegateAmount)
 
 				// Verify withdraws were created correctly
-				delegations := gs.getUserDelegationsWithDelegatee(user, validator)
+				delegationIDs := gs.getUserDelegationIDsWithDelegatee(user, validator)
 				totalWithdraws := 0
 				totalUndelegated := int64(0)
 
-				for _, delegation := range delegations {
-					withdraws := delegation.Withdraws()
-					totalWithdraws += len(withdraws)
-					totalUndelegated += delegation.UnDelegatedAmount()
+				for _, delegationID := range delegationIDs {
+					delegation := gs.getDelegation(delegationID)
+					if delegation != nil {
+						withdraws := delegation.Withdraws()
+						totalWithdraws += len(withdraws)
+						totalUndelegated += delegation.UnDelegatedAmount()
+					}
 				}
 
 				uassert.Equal(t, totalUndelegated, tt.undelegateAmount)
@@ -1127,7 +1130,8 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when - call registerReferrer
+		    // when - call registerReferrer
+		    testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			result := registerReferrer(tc.caller, tc.referrer)
 
 			// then - should return a referrer string (actual referrer may differ based on referral module logic)
@@ -1260,7 +1264,6 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	}
 }
 
-
 // TestStakerDelegate_collectDelegations_NoCollectableAmount tests when there's nothing to collect
 func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
 	tests := []struct {
@@ -1340,25 +1343,25 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(t *testing.T) {
 // Test boundary conditions where safe arithmetic is used in delegation store operations
 func TestStakerDelegate_BoundaryConditions_TotalDelegatedAmount(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialAmount  int64
-		addAmount      int64
-		expectPanic    bool
-		description    string
+		name          string
+		initialAmount int64
+		addAmount     int64
+		expectPanic   bool
+		description   string
 	}{
 		{
-			name:           "add to total delegated near max int64",
-			initialAmount:  math.MaxInt64 - 10000000,
-			addAmount:      5000000,
-			expectPanic:    false,
-			description:    "Should handle adding when total is near max",
+			name:          "add to total delegated near max int64",
+			initialAmount: math.MaxInt64 - 10000000,
+			addAmount:     5000000,
+			expectPanic:   false,
+			description:   "Should handle adding when total is near max",
 		},
 		{
-			name:           "add causing overflow in total delegated",
-			initialAmount:  math.MaxInt64 - 1000,
-			addAmount:      2000,
-			expectPanic:    true,
-			description:    "Should panic when addition would overflow",
+			name:          "add causing overflow in total delegated",
+			initialAmount: math.MaxInt64 - 1000,
+			addAmount:     2000,
+			expectPanic:   true,
+			description:   "Should panic when addition would overflow",
 		},
 	}
 
@@ -1466,11 +1469,11 @@ func TestStakerDelegate_BoundaryConditions_Undelegate(t *testing.T) {
 // Test boundary conditions in collect operations
 func TestStakerDelegate_BoundaryConditions_CollectDelegations(t *testing.T) {
 	tests := []struct {
-		name             string
-		initialLocked    int64
-		collectAmount    int64
-		expectUnderflow  bool
-		description      string
+		name            string
+		initialLocked   int64
+		collectAmount   int64
+		expectUnderflow bool
+		description     string
 	}{
 		{
 			name:            "collect with locked amount at boundary",

@@ -93,12 +93,6 @@ func GetHalvingYearEndTimestamp(year int64) int64 {
 	return halvingData.getEndTimestamp(year)
 }
 
-// GetHalvingYearTimestamp returns the start timestamp for the specified halving year.
-func GetHalvingYearTimestamp(year int64) int64 {
-	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getStartTimestamp(year)
-}
-
 // GetHalvingYearMaxAmount returns the maximum token issuance for the specified halving year.
 func GetHalvingYearMaxAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()

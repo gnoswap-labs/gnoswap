@@ -21,7 +21,7 @@ type mockGovStakerStore struct {
 	// Delegation data
 	delegations      *avl.Tree // map[int64]*staker.Delegation
 	delegationNextID *staker.Counter
-	userDelegations  *avl.Tree // delegator -> *avl.Tree (delegatee -> []int64)
+	userDelegations  *avl.Tree
 
 	// New delegation history structures
 	totalDelegationHistory       *staker.UintTree // timestamp -> int64
@@ -198,56 +198,18 @@ func (m *mockGovStakerStore) SetUserDelegations(delegations *avl.Tree) error {
 	return nil
 }
 
-func (m *mockGovStakerStore) GetUserDelegations(user string) (*avl.Tree, error) {
-	if delegations, exists := m.userDelegations.Get(user); exists {
-		if tree, ok := delegations.(*avl.Tree); ok {
-			return tree, nil
-		}
-	}
-	return avl.NewTree(), nil
-}
-
-func (m *mockGovStakerStore) AddUserDelegation(from, to string, delegationID int64) error {
-	var delegations *avl.Tree
-	if val, exists := m.userDelegations.Get(from); exists {
-		if tree, ok := val.(*avl.Tree); ok {
-			delegations = tree
-		} else {
-			delegations = avl.NewTree()
-		}
-	} else {
-		delegations = avl.NewTree()
-		m.userDelegations.Set(from, delegations)
+func (m *mockGovStakerStore) GetUserDelegations(user string) ([]int64, error) {
+	value, exists := m.userDelegations.Get(user)
+	if !exists {
+		return nil, errors.New("user delegations not found")
 	}
 
-	var ids []int64
-	if val, exists := delegations.Get(to); exists {
-		if slice, ok := val.([]int64); ok {
-			ids = slice
-		}
+	delegationIDs, ok := value.([]int64)
+	if !ok {
+		return nil, errors.New("user delegations not found")
 	}
-	ids = append(ids, delegationID)
-	delegations.Set(to, ids)
-	return nil
-}
 
-func (m *mockGovStakerStore) RemoveUserDelegation(from, to string, delegationID int64) error {
-	if delegationsVal, exists := m.userDelegations.Get(from); exists {
-		if delegations, ok := delegationsVal.(*avl.Tree); ok {
-			if idsVal, exists := delegations.Get(to); exists {
-				if ids, ok := idsVal.([]int64); ok {
-					// Remove the delegationID from the slice
-					for i, id := range ids {
-						if id == delegationID {
-							delegations.Set(to, append(ids[:i], ids[i+1:]...))
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil
+	return delegationIDs, nil
 }
 
 func (m *mockGovStakerStore) HasEmissionRewardManagerStoreKey() bool {
