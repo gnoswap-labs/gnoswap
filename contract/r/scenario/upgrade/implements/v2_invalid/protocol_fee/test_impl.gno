@@ -122,6 +122,20 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	return t.instance.GetAccuTransfersToDevOps()
 }
 
+func (t *TestProtocolFee) GetTotalAccuTransfersToGovStaker() int64 {
+	if !t.isActive("GetTotalAccuTransfersToGovStaker") {
+		panic("test implementation: GetTotalAccuTransfersToGovStaker not supported")
+	}
+	return t.instance.GetTotalAccuTransfersToGovStaker()
+}
+
+func (t *TestProtocolFee) GetTotalAccuTransfersToDevOps() int64 {
+	if !t.isActive("GetTotalAccuTransfersToDevOps") {
+		panic("test implementation: GetTotalAccuTransfersToDevOps not supported")
+	}
+	return t.instance.GetTotalAccuTransfersToDevOps()
+}
+
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	if !t.isActive("GetAccuTransferToGovStakerByTokenPath") {
 		panic("test implementation: GetAccuTransferToGovStakerByTokenPath not supported")

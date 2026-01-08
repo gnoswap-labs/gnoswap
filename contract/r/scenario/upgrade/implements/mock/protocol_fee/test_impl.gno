@@ -130,6 +130,27 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	).(map[string]int64)
 }
 
+func (t *TestProtocolFee) GetTotalAccuTransfersToGovStaker() int64 {
+	return t.ExecuteFn(
+		"GetTotalAccuTransfersToGovStaker",
+		func(args ...any) any { return t.instance.GetTotalAccuTransfersToGovStaker() },
+	).(int64)
+}
+
+func (t *TestProtocolFee) GetTotalAccuTransfersToDevOps() int64 {
+	return t.ExecuteFn(
+		"GetTotalAccuTransfersToDevOps",
+		func(args ...any) any { return t.instance.GetTotalAccuTransfersToDevOps() },
+	).(int64)
+}
+
+func (t *TestProtocolFee) GetTokenList() []string {
+	return t.ExecuteFn(
+		"GetTokenList",
+		func(args ...any) any { return t.instance.GetTokenList() },
+	).([]string)
+}
+
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	return t.ExecuteFn(
 		"GetAccuTransferToGovStakerByTokenPath",
@@ -162,54 +183,4 @@ func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string
 		func(args ...any) any { return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(args[0].(string)) },
 		path,
 	).(int64)
-}
-
-// IProtocolFeeApi interface
-func (t *TestProtocolFee) ApiGetAccuTransferToGovStaker() string {
-	return t.ExecuteFn(
-		"ApiGetAccuTransferToGovStaker",
-		func(args ...any) any { return t.instance.ApiGetAccuTransferToGovStaker() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetAccuTransferToDevOps() string {
-	return t.ExecuteFn(
-		"ApiGetAccuTransferToDevOps",
-		func(args ...any) any { return t.instance.ApiGetAccuTransferToDevOps() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToGovStaker() string {
-	return t.ExecuteFn(
-		"ApiGetHistoryTransferToGovStaker",
-		func(args ...any) any { return t.instance.ApiGetHistoryTransferToGovStaker() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToDevOps() string {
-	return t.ExecuteFn(
-		"ApiGetHistoryTransferToDevOps",
-		func(args ...any) any { return t.instance.ApiGetHistoryTransferToDevOps() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetActualBalance() string {
-	return t.ExecuteFn(
-		"ApiGetActualBalance",
-		func(args ...any) any { return t.instance.ApiGetActualBalance() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetRecordedBalance() string {
-	return t.ExecuteFn(
-		"ApiGetRecordedBalance",
-		func(args ...any) any { return t.instance.ApiGetRecordedBalance() },
-	).(string)
-}
-
-func (t *TestProtocolFee) ApiGetUnrecordedBalance() string {
-	return t.ExecuteFn(
-		"ApiGetUnrecordedBalance",
-		func(args ...any) any { return t.instance.ApiGetUnrecordedBalance() },
-	).(string)
 }
