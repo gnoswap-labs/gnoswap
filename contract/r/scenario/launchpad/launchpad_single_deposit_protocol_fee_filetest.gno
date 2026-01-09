@@ -229,7 +229,7 @@ func collectProtocolFeeForProjectRecipient() {
 	println("[INFO] Project recipient collecting protocol fee")
 
 	testing.SetRealm(govStakerRealm)
-	emissionReward, protocolFeeRewards := staker.GetClaimableRewardByLaunchpad(projectAddr)
+	emissionReward, protocolFeeRewards, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFeeRewards))
 
 	testing.SetRealm(projectRealm)

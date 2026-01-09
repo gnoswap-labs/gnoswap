@@ -132,7 +132,7 @@ func formatProtocolFees(fees map[string]int64) string {
 
 func protocolFeeRewardProjectRecipient() {
 	testing.SetRealm(govStakerRealm)
-	emissionReward, protocolFees := staker.GetClaimableRewardByLaunchpad(projectAddr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	testing.SetRealm(projectRealm)

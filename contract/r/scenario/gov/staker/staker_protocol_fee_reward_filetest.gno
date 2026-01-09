@@ -136,7 +136,7 @@ func formatProtocolFees(fees map[string]int64) string {
 
 func protocolFeeRewardBob() {
 	testing.SetRealm(gnoStakerRealm)
-	emissionReward, protocolFees := staker.GetClaimableRewardByAddress(bobAddr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
 	ufmt.Printf("[INFO] claimable reward (bob): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 	testing.SetRealm(bobRealm)
 	staker.CollectReward(cross)
@@ -145,7 +145,7 @@ func protocolFeeRewardBob() {
 
 func protocolFeeRewardAdmin() {
 	testing.SetRealm(gnoStakerRealm)
-	emissionReward, protocolFees := staker.GetClaimableRewardByAddress(adminAddr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
 	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	prevBarBalance := bar.BalanceOf(adminAddr)

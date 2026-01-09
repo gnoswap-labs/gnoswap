@@ -218,28 +218,28 @@ func (m *MockGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snap
 	return res[0].(int64), res[1].(bool)
 }
 
-func (m *MockGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func (m *MockGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	res, ok := m.Response.Get("GetClaimableRewardByAddress")
 	if !ok {
-		return 0, nil
+		return 0, nil, nil
 	}
-	return res[0].(int64), res[1].(map[string]int64)
+	return res[0].(int64), res[1].(map[string]int64), nil
 }
 
-func (m *MockGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func (m *MockGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	res, ok := m.Response.Get("GetClaimableRewardByLaunchpad")
 	if !ok {
-		return 0, nil
+		return 0, nil, nil
 	}
-	return res[0].(int64), res[1].(map[string]int64)
+	return res[0].(int64), res[1].(map[string]int64), nil
 }
 
-func (m *MockGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func (m *MockGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	res, ok := m.Response.Get("GetClaimableRewardByRewardID")
 	if !ok {
-		return 0, nil
+		return 0, nil, nil
 	}
-	return res[0].(int64), res[1].(map[string]int64)
+	return res[0].(int64), res[1].(map[string]int64), nil
 }
 
 func (m *MockGovStaker) GetLaunchpadProjectDeposit(projectAddr string) (int64, bool) {
@@ -288,15 +288,12 @@ func (m *MockGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) 
 	return res[0].(*u256.Uint)
 }
 
-func (m *MockGovStaker) GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
-	res, ok := m.Response.Get("GetProtocolFeeAmounts")
+func (m *MockGovStaker) GetProtocolFeeAmount(tokenPath string) int64 {
+	res, ok := m.Response.Get("GetProtocolFeeAmount")
 	if !ok {
-		return nil
+		return 0
 	}
-	if res[0] == nil {
-		return nil
-	}
-	return res[0].(*u256.Uint)
+	return res[0].(int64)
 }
 
 func (m *MockGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {

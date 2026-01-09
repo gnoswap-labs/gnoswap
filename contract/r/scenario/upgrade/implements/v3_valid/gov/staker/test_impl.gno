@@ -83,15 +83,15 @@ func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snap
 	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	return t.instance.GetClaimableRewardByAddress(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	return t.instance.GetClaimableRewardByLaunchpad(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	return t.instance.GetClaimableRewardByRewardID(rewardID)
 }
 
@@ -160,8 +160,8 @@ func (t *TestGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) 
 	return t.instance.GetProtocolFeeAccumulatedX128PerStake(tokenPath)
 }
 
-func (t *TestGovStaker) GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
-	return t.instance.GetProtocolFeeAmounts(tokenPath)
+func (t *TestGovStaker) GetProtocolFeeAmount(tokenPath string) int64 {
+	return t.instance.GetProtocolFeeAmount(tokenPath)
 }
 
 func (t *TestGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {

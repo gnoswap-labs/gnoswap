@@ -201,21 +201,21 @@ func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snap
 	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByAddress") {
 		panic("test implementation: GetClaimableRewardByAddress not supported")
 	}
 	return t.instance.GetClaimableRewardByAddress(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByLaunchpad") {
 		panic("test implementation: GetClaimableRewardByLaunchpad not supported")
 	}
 	return t.instance.GetClaimableRewardByLaunchpad(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByRewardID") {
 		panic("test implementation: GetClaimableRewardByRewardID not supported")
 	}
@@ -257,11 +257,11 @@ func (t *TestGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) 
 	return t.instance.GetProtocolFeeAccumulatedX128PerStake(tokenPath)
 }
 
-func (t *TestGovStaker) GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
-	if !t.isActive("GetProtocolFeeAmounts") {
-		panic("test implementation: GetProtocolFeeAmounts not supported")
+func (t *TestGovStaker) GetProtocolFeeAmount(tokenPath string) int64 {
+	if !t.isActive("GetProtocolFeeAmount") {
+		panic("test implementation: GetProtocolFeeAmount not supported")
 	}
-	return t.instance.GetProtocolFeeAmounts(tokenPath)
+	return t.instance.GetProtocolFeeAmount(tokenPath)
 }
 
 func (t *TestGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {

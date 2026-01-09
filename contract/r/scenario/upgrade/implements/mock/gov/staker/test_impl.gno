@@ -151,40 +151,49 @@ func (t *TestGovStaker) GetDelegationSnapshots(snapshotTime int64) (staker.Deleg
 	return result[0].(staker.DelegationSnapshot), result[1].(bool)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	result := t.ExecuteFn(
 		"GetClaimableRewardByAddress",
 		func(args ...any) any {
-			emission, fees := t.instance.GetClaimableRewardByAddress(args[0].(address))
-			return []any{emission, fees}
+			emission, fees, err := t.instance.GetClaimableRewardByAddress(args[0].(address))
+			return []any{emission, fees, err}
 		},
 		addr,
 	).([]any)
-	return result[0].(int64), result[1].(map[string]int64)
+	if result[2] != nil {
+		return result[0].(int64), result[1].(map[string]int64), result[2].(error)
+	}
+	return result[0].(int64), result[1].(map[string]int64), nil
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	result := t.ExecuteFn(
 		"GetClaimableRewardByLaunchpad",
 		func(args ...any) any {
-			emission, fees := t.instance.GetClaimableRewardByLaunchpad(args[0].(address))
-			return []any{emission, fees}
+			emission, fees, err := t.instance.GetClaimableRewardByLaunchpad(args[0].(address))
+			return []any{emission, fees, err}
 		},
 		addr,
 	).([]any)
-	return result[0].(int64), result[1].(map[string]int64)
+	if result[2] != nil {
+		return result[0].(int64), result[1].(map[string]int64), result[2].(error)
+	}
+	return result[0].(int64), result[1].(map[string]int64), nil
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	result := t.ExecuteFn(
 		"GetClaimableRewardByRewardID",
 		func(args ...any) any {
-			emission, fees := t.instance.GetClaimableRewardByRewardID(args[0].(string))
-			return []any{emission, fees}
+			emission, fees, err := t.instance.GetClaimableRewardByRewardID(args[0].(string))
+			return []any{emission, fees, err}
 		},
 		rewardID,
 	).([]any)
-	return result[0].(int64), result[1].(map[string]int64)
+	if result[2] != nil {
+		return result[0].(int64), result[1].(map[string]int64), result[2].(error)
+	}
+	return result[0].(int64), result[1].(map[string]int64), nil
 }
 
 // IGovStakerAdmin interface

@@ -23,8 +23,8 @@ var (
 	admin      = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(admin)
 
-	govStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm = testing.NewUserRealm(govStakerAddr)
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm   = testing.NewUserRealm(govStakerAddr)
 
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = testing.NewUserRealm(dummyToAddr)
@@ -119,7 +119,7 @@ func formatProtocolFees(fees map[string]int64) string {
 // check and collect emission reward for dummy
 func emissionRewardScenario() {
 	testing.SetRealm(govStakerRealm)
-	emissionReward, protocolFees := staker.GetClaimableRewardByAddress(dummyAddr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(dummyAddr)
 	ufmt.Printf("[INFO] claimable reward (dummy): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	// Collect reward
