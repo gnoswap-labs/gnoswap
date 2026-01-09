@@ -444,21 +444,22 @@ func TestObservationState_ObservationAt(t *testing.T) {
 func TestObservationState_Transform(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
+	lastObs, _ := lastObservation(os)
 
 	t.Run("Transform with same time", func(t *testing.T) {
-		obs, err := transform(os, currentTime, 100, u256.MustFromDecimal("1000000"))
+		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))
 		uassert.NoError(t, err, "Should not error for same time")
 		uassert.NotNil(t, obs, "Should return observation")
 		uassert.Equal(t, currentTime, obs.BlockTimestamp(), "Should return last observation for same time")
 	})
 
 	t.Run("Transform with negative time delta", func(t *testing.T) {
-		_, err := transform(os, currentTime-100, 100, u256.MustFromDecimal("1000000"))
+		_, err := transform(lastObs, currentTime-100, 100, u256.MustFromDecimal("1000000"))
 		uassert.Error(t, err, "Should error for negative time delta")
 	})
 
 	t.Run("Transform with zero liquidity", func(t *testing.T) {
-		obs, err := transform(os, currentTime+100, 100, u256.Zero())
+		obs, err := transform(lastObs, currentTime+100, 100, u256.Zero())
 		uassert.NoError(t, err, "Should handle zero liquidity")
 		uassert.NotNil(t, obs, "Should return observation")
 		// With zero liquidity, use max(1, liquidity) = 1

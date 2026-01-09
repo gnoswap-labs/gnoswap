@@ -98,12 +98,7 @@ func increaseObservationCardinalityLimitByPool(p *pl.Pool, observationCardinalit
 	return nil
 }
 
-func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity *u256.Uint) (*pl.Observation, error) {
-	lastObservation, err := lastObservation(os)
-	if err != nil {
-		return nil, err
-	}
-
+func transform(lastObservation *pl.Observation, currentTime int64, tick int32, liquidity *u256.Uint) (*pl.Observation, error) {
 	timeDelta := currentTime - lastObservation.BlockTimestamp()
 	if timeDelta < 0 {
 		return nil, errors.New("time delta must be greater than 0")
@@ -125,7 +120,6 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 	liquidityCumulative := u256.Zero().Add(lastObservation.LiquidityCumulative(), liquidityDelta)
 
 	// calculate seconds per liquidity
-	secondsPerLiquidityCumulativeX128 := lastObservation.SecondsPerLiquidityCumulativeX128().Clone()
 	liquidityForCalc := liquidity
 	if liquidity.IsZero() {
 		liquidityForCalc = u256.One()
@@ -137,6 +131,8 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 		q128FromDecimal,
 		liquidityForCalc,
 	)
+
+	secondsPerLiquidityCumulativeX128 := lastObservation.SecondsPerLiquidityCumulativeX128().Clone()
 	secondsPerLiquidityCumulativeX128 = u256.Zero().Add(
 		secondsPerLiquidityCumulativeX128,
 		secondsPerLiquidityDelta,
@@ -208,7 +204,7 @@ func writeObservation(
 		os.Observations()[nextIndex] = pl.NewDefaultObservation()
 	}
 
-	observation, err := transform(os, currentTime, tick, liquidity)
+	observation, err := transform(lastObservation, currentTime, tick, liquidity)
 	if err != nil {
 		return err
 	}
@@ -257,7 +253,7 @@ func observeSingle(os *pl.ObservationState,
 
 		if last.BlockTimestamp() != currentTime {
 			// need to create virtual observation for current time
-			transformed, err := transform(os, currentTime, tick, liquidity)
+			transformed, err := transform(last, currentTime, tick, liquidity)
 			if err != nil {
 				return 0, nil, err
 			}
@@ -349,7 +345,7 @@ func getSurroundingObservations(os *pl.ObservationState,
 			return beforeOrAt, nil, nil
 		}
 		// Otherwise, we need to transform
-		atOrAfter, err := transform(os, target, tick, liquidity)
+		atOrAfter, err := transform(beforeOrAt, target, tick, liquidity)
 		if err != nil {
 			return nil, nil, err
 		}
