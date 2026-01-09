@@ -67,8 +67,8 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 		"SetDepositGnsAmount",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevAmount", formatInt(prevDepositGnsAmount),
-		"newAmount", formatInt(amount),
+		"prevAmount", formatAnyInt(prevDepositGnsAmount),
+		"newAmount", formatAnyInt(amount),
 	)
 }
 
@@ -90,8 +90,8 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 		"SetMinimumRewardAmount",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevAmount", formatInt(prevMinimumRewardAmount),
-		"newAmount", formatInt(amount),
+		"prevAmount", formatAnyInt(prevMinimumRewardAmount),
+		"newAmount", formatAnyInt(amount),
 	)
 }
 
@@ -137,8 +137,8 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 		"paramsStr", paramsStr, // Log the raw input string
 		"tokenPath", tokenPath,
 		"prevAmountFound", formatBool(found),
-		"prevAmount", formatInt(prevAmount), // Will be 0 if !found
-		"newAmount", formatInt(amount64),
+		"prevAmount", formatAnyInt(prevAmount), // Will be 0 if !found
+		"newAmount", formatAnyInt(amount64),
 	)
 }
 

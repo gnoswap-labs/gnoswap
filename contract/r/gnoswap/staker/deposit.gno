@@ -230,6 +230,29 @@ func (d *Deposit) SetLastExternalIncentiveUpdatedAt(timestamp int64) {
 	d.lastExternalIncentiveUpdatedAt = timestamp
 }
 
+// Clone returns a deep copy of the deposit.
+func (d *Deposit) Clone() *Deposit {
+	if d == nil {
+		return nil
+	}
+
+	return &Deposit{
+		warmups:                        cloneWarmups(d.warmups),
+		liquidity:                      d.liquidity.Clone(),
+		targetPoolPath:                 d.targetPoolPath,
+		owner:                          d.owner,
+		stakeTime:                      d.stakeTime,
+		internalRewardLastCollectTime:  d.internalRewardLastCollectTime,
+		collectedInternalReward:        d.collectedInternalReward,
+		collectedExternalRewards:       cloneAvlTree(d.collectedExternalRewards),
+		externalRewardLastCollectTimes: cloneAvlTree(d.externalRewardLastCollectTimes),
+		externalIncentiveIds:           cloneAvlTree(d.externalIncentiveIds),
+		lastExternalIncentiveUpdatedAt: d.lastExternalIncentiveUpdatedAt,
+		tickLower:                      d.tickLower,
+		tickUpper:                      d.tickUpper,
+	}
+}
+
 func NewDeposit(
 	owner address,
 	targetPoolPath string,

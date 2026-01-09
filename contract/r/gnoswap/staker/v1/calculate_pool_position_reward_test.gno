@@ -1869,8 +1869,8 @@ func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
 	}
 
 	// Verify iteration bounds are correct
-	expectedStart := formatInt(lastUpdate) // formatInt(100)
-	expectedEnd := formatInt(currentTime)  // formatInt(500)
+	expectedStart := formatAnyInt(lastUpdate)
+	expectedEnd := formatAnyInt(currentTime)
 
 	// This simulates the Iterate call in calculatePositionReward
 	// Iterate(formatInt(lastUpdate), formatInt(currentTime), ...)

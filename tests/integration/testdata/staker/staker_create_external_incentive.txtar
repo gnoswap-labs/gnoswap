@@ -52,7 +52,7 @@ adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
 ## start a new node
-gnoland start 
+gnoland start
 
 ### Send wugnot to neccessary accounts
 gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
@@ -107,7 +107,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncent
 # stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CreateExternalIncentive\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"incentiveId\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:[0-9]+:1\"},{\"key\":\"targetPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"rewardAmount\",\"value\":\"1000000000\"},{\"key\":\"startTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"endTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"depositGnsAmount\",\"value\":\"1000000000\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 ## Check all external incentives for the pool
-gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.ApiGetExternalIncentivesByPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetExternalIncentiveByPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\")"
 # stdout '\\"incentiveId\\":\\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:[0-9]{10}:1\\"'
 # stdout '\\"poolPath\\":\\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\\"'
 # stdout '\\"rewardToken\\":\\"gno.land/r/gnoland/wugnot\\"'
@@ -118,4 +118,3 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.ApiGetExternalIncentives
 # stdout '\\"createdHeight\\":[0-9]+'
 # stdout '\\"depositGnsAmount\\":1000000000'
 # stdout '\\"refunded\\":false'
-
