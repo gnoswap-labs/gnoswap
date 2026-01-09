@@ -111,13 +111,6 @@ func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	).(int64)
 }
 
-func (t *TestGovStaker) GetTotalVoteWeight() int64 {
-	return t.ExecuteFn(
-		"GetTotalVoteWeight",
-		func(args ...any) any { return t.instance.GetTotalVoteWeight() },
-	).(int64)
-}
-
 func (t *TestGovStaker) GetTotalDelegated() int64 {
 	return t.ExecuteFn(
 		"GetTotalDelegated",

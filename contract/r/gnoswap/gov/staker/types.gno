@@ -38,7 +38,6 @@ type IGovStakerGetter interface {
 
 	// Delegation getters
 	GetTotalxGnsSupply() int64
-	GetTotalVoteWeight() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
