@@ -35,6 +35,7 @@ var (
 	errNotAccessEOA              = errors.New("[GNOSWAP-POOL-025] not access EOA")
 	errInsufficientPayment       = errors.New("[GNOSWAP-POOL-026] insufficient payment")
 	errNotInitializedObservation = errors.New("[GNOSWAP-POOL-027] not initialized observation")
+	errObservationTooOld         = errors.New("[GNOSWAP-POOL-028] target timestamp before oldest observation")
 )
 
 // newErrorWithDetail adds detail to an error message.

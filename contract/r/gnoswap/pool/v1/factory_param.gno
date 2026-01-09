@@ -132,7 +132,8 @@ func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
 
 // validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
 func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
-	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gt(maxSqrtRatio) {
+	// Valid range is [minSqrtRatio, maxSqrtRatio) - same as TickMathGetTickAtSqrtRatio
+	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		return makeErrorWithDetails(
 			errOutOfRange,
 			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),

@@ -9,7 +9,7 @@ Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs t
 ## Configuration
 
 - **Pool Creation Fee**: 100 GNS (default)
-- **Protocol Fee**: 0-10% of swap fees per token
+- **Protocol Fee**: Disabled (0) or 1/4 to 1/10 of swap fees (denominator: 4-10)
 - **Withdrawal Fee**: 1% on collected fees
 - **Fee Tiers**: 0.01%, 0.05%, 0.3%, 1%
 - **Tick Spacing**: Auto-set by fee tier
@@ -111,16 +111,16 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 
     // Security check: ensure this callback is invoked by the legitimate pool
     if caller != poolAddr {
-        panic("unauthorized caller")
+        return errors.New("unauthorized caller")
     }
 
     if amount0Delta > 0 {
         // Transfer token0 to pool
-        token0.Transfer(poolAddr, amount0Delta)
+        common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
     }
     if amount1Delta > 0 {
         // Transfer token1 to pool
-        token1.Transfer(poolAddr, amount1Delta)
+        common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
     }
     return nil
 }
@@ -187,7 +187,7 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 
 **Protocol fees**:
 
-- Optional 0-10% of swap fees
+- Optional 0% or 4-10% of swap fees
 - Configurable per pool
 - Sent to protocol fee contract
 

@@ -1140,12 +1140,12 @@ func TestGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, errors.New(""))
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
+		twap, _, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
 
 		// Assert
 		if mockPool.Response.CallCount("GetTWAP") != 1 {
@@ -1199,8 +1199,8 @@ func TestSetPoolCreationFee(t *testing.T) {
 	}
 }
 
-// TestIncreaseObservationCardinalityLimit tests the IncreaseObservationCardinalityLimit proxy function
-func TestIncreaseObservationCardinalityLimit(t *testing.T) {
+// TestIncreaseObservationCardinalityNext tests the IncreaseObservationCardinalityNext proxy function
+func TestIncreaseObservationCardinalityNext(t *testing.T) {
 	tests := []struct {
 		name            string
 		setup           func(t *testing.T)
@@ -1237,12 +1237,12 @@ func TestIncreaseObservationCardinalityLimit(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		IncreaseObservationCardinalityLimit(cross, tt.token0Path, tt.token1Path, tt.fee, tt.cardinalityNext)
+		IncreaseObservationCardinalityNext(cross, tt.token0Path, tt.token1Path, tt.fee, tt.cardinalityNext)
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("IncreaseObservationCardinalityLimit") != 1 {
-			t.Error("IncreaseObservationCardinalityLimit was not called on the implementation")
+		if mockPool.Response.CallCount("IncreaseObservationCardinalityNext") != 1 {
+			t.Error("IncreaseObservationCardinalityNext was not called on the implementation")
 		}
 	}
 }

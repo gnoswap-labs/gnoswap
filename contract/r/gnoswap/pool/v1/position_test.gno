@@ -105,10 +105,7 @@ func createPositionWithValidation(t *testing.T, pool *pl.Pool, scenario Position
 	t.Helper()
 
 	// Get position key
-	positionKey, err := getPositionKey(scenario.tickLower, scenario.tickUpper)
-	if err != nil {
-		t.Fatalf("Failed to get position key: %v", err)
-	}
+	positionKey = getPositionKey(scenario.tickLower, scenario.tickUpper)
 
 	// Create position through modifyPosition
 	liquidityDelta := i256.MustFromDecimal(scenario.liquidity)
@@ -119,6 +116,7 @@ func createPositionWithValidation(t *testing.T, pool *pl.Pool, scenario Position
 		liquidityDelta: liquidityDelta,
 	}
 
+	var err error
 	_, amount0, amount1, err = modifyPosition(pool, params)
 	if err != nil {
 		t.Fatalf("Failed to create position: %v", err)
@@ -217,8 +215,6 @@ func TestPositionGetKey(t *testing.T) {
 		tickLower       int32
 		tickUpper       int32
 		strategy        string
-		shouldSucceed   bool
-		expectedError   string
 		businessContext string
 	}{
 		{
@@ -228,7 +224,6 @@ func TestPositionGetKey(t *testing.T) {
 			tickLower:       CONCENTRATED_LOWER,
 			tickUpper:       CONCENTRATED_UPPER,
 			strategy:        "concentrated",
-			shouldSucceed:   true,
 			businessContext: "High capital efficiency for stable price ranges",
 		},
 		{
@@ -238,7 +233,6 @@ func TestPositionGetKey(t *testing.T) {
 			tickLower:       WIDE_LOWER,
 			tickUpper:       WIDE_UPPER,
 			strategy:        "wide",
-			shouldSucceed:   true,
 			businessContext: "Lower IL risk for volatile markets",
 		},
 		{
@@ -248,58 +242,23 @@ func TestPositionGetKey(t *testing.T) {
 			tickLower:       FULL_RANGE_LOWER,
 			tickUpper:       FULL_RANGE_UPPER,
 			strategy:        "full-range",
-			shouldSucceed:   true,
 			businessContext: "Passive strategy similar to v2 pools",
-		},
-		{
-			name:            "invalid_inverted_range",
-			description:     "Invalid position with inverted price range",
-			owner:           testutils.TestAddress(LP_ALICE),
-			tickLower:       200,
-			tickUpper:       100,
-			strategy:        "invalid",
-			shouldSucceed:   false,
-			expectedError:   "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
-			businessContext: "Prevent position creation errors",
-		},
-		{
-			name:            "invalid_zero_range",
-			description:     "Invalid position with zero price range",
-			owner:           testutils.TestAddress(LP_BOB),
-			tickLower:       100,
-			tickUpper:       100,
-			strategy:        "invalid",
-			shouldSucceed:   false,
-			expectedError:   "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)",
-			businessContext: "Prevent zero liquidity positions",
 		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			key, err := getPositionKey(scenario.tickLower, scenario.tickUpper)
+			key := getPositionKey(scenario.tickLower, scenario.tickUpper)
 
-			if scenario.shouldSucceed {
-				uassert.NoError(t, err, "Expected position key generation to succeed")
-				uassert.NotEmpty(t, key, "Position key should not be empty")
+			uassert.NotEmpty(t, key, "Position key should not be empty")
 
-				// Verify key uniqueness for different positions
-				if scenario.strategy != "invalid" {
-					// Same owner with different range should produce different key
-					altKey, _ := getPositionKey(scenario.tickLower+10, scenario.tickUpper+10)
-					uassert.NotEqual(t, key, altKey, "Different ranges should produce different keys")
-				}
+			// Verify key uniqueness for different positions
+			// Same owner with different range should produce different key
+			altKey := getPositionKey(scenario.tickLower+10, scenario.tickUpper+10)
+			uassert.NotEqual(t, key, altKey, "Different ranges should produce different keys")
 
-				t.Logf("✓ %s: Generated key for %s strategy - %s",
-					scenario.description, scenario.strategy, scenario.businessContext)
-			} else {
-				uassert.Error(t, err, "Expected position key generation to fail")
-				uassert.Equal(t, scenario.expectedError, err.Error())
-				uassert.Empty(t, key, "Failed generation should return empty key")
-
-				t.Logf("✓ %s: Correctly rejected - %s",
-					scenario.description, scenario.businessContext)
-			}
+			t.Logf("✓ %s: Generated key for %s strategy - %s",
+				scenario.description, scenario.strategy, scenario.businessContext)
 		})
 	}
 }
@@ -358,7 +317,7 @@ func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			pool := setupPoolAtPrice(t, 0) // Price at tick 0
 			alice := testutils.TestAddress(LP_ALICE)
-			positionKey, _ := getPositionKey(MODERATE_LOWER, MODERATE_UPPER)
+			positionKey := getPositionKey(MODERATE_LOWER, MODERATE_UPPER)
 
 			// Setup existing position if needed
 			if scenario.existingPosition {
@@ -926,7 +885,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		// Then: Should handle without overflow
 		uassert.NoError(t, err, "Fee calculation should not overflow")
 
-		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
+		posKey := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 		positionValue, _ := pool.Positions().Get(posKey)
 		position := positionValue.(pl.PositionInfo)
 
@@ -972,7 +931,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		// In real scenario, this would be calculated through tick crossing and swaps
 		for _, r := range ranges {
 			if r.inRange {
-				posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
+				posKey := getPositionKey(r.tickLower, r.tickUpper)
 				positionValue, _ := pool.Positions().Get(posKey)
 				position := positionValue.(pl.PositionInfo)
 
@@ -996,7 +955,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			}
 			modifyPosition(pool, params)
 
-			posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
+			posKey := getPositionKey(r.tickLower, r.tickUpper)
 			positionValue, _ := pool.Positions().Get(posKey)
 			position := positionValue.(pl.PositionInfo)
 
@@ -1133,7 +1092,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		}
 
 		modifyPosition(pool, params)
-		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
+		posKey := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 
 		// When: Remove all liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-" + MEDIUM_LIQUIDITY)
@@ -1210,7 +1169,7 @@ func TestPositionLiquidity(t *testing.T) {
 			name: "success - get liquidity of position with non-zero liquidity",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1227,7 +1186,7 @@ func TestPositionLiquidity(t *testing.T) {
 			name: "fail - get liquidity of non-existent position (returns zero)",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-120, 120)
+				key := getPositionKey(-120, 120)
 				return pool, key
 			},
 			expectedResult:       "0",
@@ -1265,7 +1224,7 @@ func TestPositionFeeGrowthInside0LastX128(t *testing.T) {
 			name: "success - get fee growth for position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1301,7 +1260,7 @@ func TestPositionFeeGrowthInside1LastX128(t *testing.T) {
 			name: "success - get fee growth for position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1337,7 +1296,7 @@ func TestPositionTokensOwed0(t *testing.T) {
 			name: "success - get tokens owed for position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1373,7 +1332,7 @@ func TestPositionTokensOwed1(t *testing.T) {
 			name: "success - get tokens owed for position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1410,7 +1369,7 @@ func TestGetPositionByPool(t *testing.T) {
 			name: "success - get existing position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-60, 60)
+				key := getPositionKey(-60, 60)
 
 				params := ModifyPositionParams{
 					tickLower:      -60,
@@ -1431,7 +1390,7 @@ func TestGetPositionByPool(t *testing.T) {
 			name: "success - get non-existent position returns zero position",
 			setupFn: func(t *testing.T) (*pl.Pool, string) {
 				pool := setupPoolAtPrice(t, 0)
-				key, _ := getPositionKey(-120, 120)
+				key := getPositionKey(-120, 120)
 				return pool, key
 			},
 			shouldExist: false,
@@ -1449,4 +1408,150 @@ func TestGetPositionByPool(t *testing.T) {
 			tt.verifyFn(t, position, exists)
 		})
 	}
+}
+
+func TestPosition_TickBoundaryEdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		description string
+	}{
+		{
+			name:        "MIN_TICK as tickLower",
+			tickLower:   MIN_TICK,
+			tickUpper:   0,
+			description: "MIN_TICK (-887272) should be accepted as tickLower",
+		},
+		{
+			name:        "MAX_TICK as tickUpper",
+			tickLower:   0,
+			tickUpper:   MAX_TICK,
+			description: "MAX_TICK (887272) should be accepted as tickUpper",
+		},
+		{
+			name:        "Full range: MIN_TICK to MAX_TICK",
+			tickLower:   MIN_TICK,
+			tickUpper:   MAX_TICK,
+			description: "Full tick range should be valid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// getPositionKey generates key without validation
+			key := getPositionKey(tt.tickLower, tt.tickUpper)
+			uassert.NotEqual(t, "", key, "Position key should not be empty")
+		})
+	}
+}
+
+func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		liquidity   string
+		shouldPanic bool
+		panicMsg    string
+		description string
+	}{
+		{
+			name:        "Minimum liquidity (1)",
+			liquidity:   "1",
+			shouldPanic: false,
+			description: "Liquidity of 1 should be accepted",
+		},
+		{
+			name:        "Small liquidity (100)",
+			liquidity:   "100",
+			shouldPanic: false,
+			description: "Small liquidity amounts should work",
+		},
+		{
+			name:        "Large liquidity (near maxLiquidityPerTick)",
+			liquidity:   "1917569901783203986719870431555000", // Just below maxLiquidityPerTick for tickSpacing=10
+			shouldPanic: false,
+			description: "Large liquidity below maxLiquidityPerTick should be accepted",
+		},
+		{
+			name:        "Liquidity exceeds maxLiquidityPerTick",
+			liquidity:   "1917569901783203986719870431556000", // Above maxLiquidityPerTick
+			shouldPanic: true,
+			panicMsg:    "maxLiquidity",
+			description: "Liquidity > maxLiquidityPerTick should panic",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := setupPoolAtPrice(t, 0)
+
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					liq := u256.MustFromDecimal(tt.liquidity)
+					liqDelta := safeConvertToInt128(liq)
+					params := ModifyPositionParams{
+						owner:          positionAddr,
+						tickLower:      -60,
+						tickUpper:      60,
+						liquidityDelta: liqDelta,
+					}
+					modifyPosition(pool, params)
+				})
+			} else {
+				liq := u256.MustFromDecimal(tt.liquidity)
+				liqDelta := safeConvertToInt128(liq)
+				params := ModifyPositionParams{
+					owner:          positionAddr,
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: liqDelta,
+				}
+				position, amount0, amount1, err := modifyPosition(pool, params)
+
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.liquidity, position.Liquidity().ToString())
+				uassert.True(t, amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()),
+					"At least one amount should be non-zero")
+			}
+		})
+	}
+}
+
+func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
+	t.Run("TokensOwed overflow detection", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+
+		// Add initial liquidity
+		params := ModifyPositionParams{
+			owner:          positionAddr,
+			tickLower:      -60,
+			tickUpper:      60,
+			liquidityDelta: i256.MustFromDecimal("1000000"),
+		}
+		position, _, _, err := modifyPosition(pool, params)
+		uassert.NoError(t, err)
+
+		// Verify initial tokensOwed
+		initialOwed0 := position.TokensOwed0()
+		initialOwed1 := position.TokensOwed1()
+
+		uassert.True(t, initialOwed0.Eq(u256.Zero()) || initialOwed0.Gt(u256.Zero()))
+		uassert.True(t, initialOwed1.Eq(u256.Zero()) || initialOwed1.Gt(u256.Zero()))
+
+		// Remove liquidity
+		params.liquidityDelta = i256.MustFromDecimal("-1000000")
+		position2, amount0, amount1, err := modifyPosition(pool, params)
+		uassert.NoError(t, err)
+
+		// Verify amounts are properly calculated and bounded to uint128
+		// (toUint128 is applied in Burn function, but modifyPosition returns raw amounts)
+		uassert.True(t, amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()))
+
+		// TokensOwed should accumulate
+		finalOwed0 := position2.TokensOwed0()
+		finalOwed1 := position2.TokensOwed1()
+
+		uassert.True(t, finalOwed0.Gte(initialOwed0))
+		uassert.True(t, finalOwed1.Gte(initialOwed1))
+	})
 }

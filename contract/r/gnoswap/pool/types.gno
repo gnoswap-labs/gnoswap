@@ -33,7 +33,7 @@ type IPoolManager interface {
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(fee int64)
 
-	IncreaseObservationCardinalityLimit(
+	IncreaseObservationCardinalityNext(
 		token0Path string,
 		token1Path string,
 		fee uint32,
@@ -210,7 +210,7 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, error)
+	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
 	GetPoolCount() int
 	GetPoolPaths(offset, count int) []string
