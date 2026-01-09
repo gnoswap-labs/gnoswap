@@ -88,7 +88,7 @@ func MintGns(cur realm, address address) int64 {
 		return 0
 	}
 
-	amountToMint, err := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
+	amountToMint, err := calculateAmountToMint(getEmissionState(), lastGNSMintedTimestamp+1, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -178,10 +178,8 @@ func checkErr(err error) {
 // calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
 // This function has side effects: it updates the accumulated and remaining amounts
 // for each halving year in the emission state.
-func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
+func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
-	state := getEmissionState()
-
 	endTimestamp := state.getEndTimestamp()
 	if toTimestamp > endTimestamp {
 		toTimestamp = endTimestamp
@@ -232,19 +230,11 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
+
 		err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
 		if err != nil {
 			return 0, err
 		}
-
-		chain.Emit(
-			"CalculateAmountToMint",
-			"fromTimestamp", formatInt(fromTimestamp),
-			"toTimestamp", formatInt(currentToTimestamp),
-			"year", formatInt(year),
-			"amountPerSecond", formatInt(amountPerSecond),
-			"mintedAmount", formatInt(yearAmountToMint),
-		)
 
 		fromTimestamp = currentToTimestamp + 1
 

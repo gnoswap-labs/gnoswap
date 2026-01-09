@@ -103,8 +103,7 @@ func initialDelegation() {
 	gs.Delegate(cross, voter2Addr, voter2Amount, "")
 	ufmt.Printf("[INFO] Voter2 delegated %d GNS (early - will have voting power)\n", voter2Amount)
 
-	ufmt.Printf("[INFO] Total xGNS supply: %d, Voting supply: %d\n",
-		xgns.TotalSupply(), xgns.VotingSupply())
+	ufmt.Printf("[INFO] Total xGNS supply: %d\n", xgns.TotalSupply())
 }
 
 func proposeText() int64 {
@@ -124,8 +123,7 @@ func lateDelegation() {
 	gs.Delegate(cross, voter3Addr, voter3Amount, "")
 	ufmt.Printf("[INFO] Voter3 delegated %d GNS (late - AFTER proposal snapshot)\n", voter3Amount)
 
-	ufmt.Printf("[INFO] Total xGNS supply: %d, Voting supply: %d\n",
-		xgns.TotalSupply(), xgns.VotingSupply())
+	ufmt.Printf("[INFO] Total xGNS supply: %d\n", xgns.TotalSupply())
 }
 
 func earlyVotersVote(proposalId int64) {
@@ -139,7 +137,7 @@ func earlyVotersVote(proposalId int64) {
 	governance.Vote(cross, proposalId, false)
 	ufmt.Printf("[INFO] Voter2 voted NO\n")
 
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state: %s\n", state)
 }
 
@@ -156,17 +154,16 @@ func lateVoterAttempt(proposalId int64) {
 
 func verifyVotingResults(proposalId int64) {
 	// Get vote weights - only voter1 and voter2 voted
-	voter1Weight := governance.GetVoteWeight(proposalId, voter1Addr)
-	voter2Weight := governance.GetVoteWeight(proposalId, voter2Addr)
+	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
+	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)
 
 	// Get proposal totals
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get current xGNS (for comparison)
 	voter3Xgns := xgns.BalanceOf(voter3Addr)
-	votingSupply := xgns.VotingSupply()
 
 	ufmt.Printf("[RESULT] Voting weights:\n")
 	ufmt.Printf("  - Voter1: weight=%d (voted YES)\n", voter1Weight)
@@ -174,7 +171,6 @@ func verifyVotingResults(proposalId int64) {
 	ufmt.Printf("  - Voter3: could not vote (late delegation, xGNS=%d)\n", voter3Xgns)
 
 	ufmt.Printf("[RESULT] Proposal summary:\n")
-	ufmt.Printf("  - Current voting supply (includes late voter3): %d\n", votingSupply)
 	ufmt.Printf("  - Quorum amount (based on snapshot, excludes voter3): %d\n", quorumAmount)
 	ufmt.Printf("  - Yea weight: %d\n", yeaWeight)
 	ufmt.Printf("  - Nay weight: %d\n", nayWeight)
@@ -193,7 +189,7 @@ func verifyVotingResults(proposalId int64) {
 // [SCENARIO] 1. Initial delegation to voter1 and voter2 (early)
 // [INFO] Voter1 delegated 4000000000 GNS (early - will have voting power)
 // [INFO] Voter2 delegated 2000000000 GNS (early - will have voting power)
-// [INFO] Total xGNS supply: 6000000000, Voting supply: 6000000000
+// [INFO] Total xGNS supply: 6000000000
 //
 // [SCENARIO] 2. Skip full smoothing period + buffer
 // [INFO] current height: 17503
@@ -204,7 +200,7 @@ func verifyVotingResults(proposalId int64) {
 //
 // [SCENARIO] 4. Voter3 delegates late (AFTER proposal snapshot)
 // [INFO] Voter3 delegated 3000000000 GNS (late - AFTER proposal snapshot)
-// [INFO] Total xGNS supply: 9000000000, Voting supply: 9000000000
+// [INFO] Total xGNS supply: 9000000000
 //
 // [SCENARIO] 5. Skip voting start delay
 // [INFO] current height: 34783
@@ -224,7 +220,6 @@ func verifyVotingResults(proposalId int64) {
 //   - Voter2: weight=2000000000 (voted NO)
 //   - Voter3: could not vote (late delegation, xGNS=0)
 // [RESULT] Proposal summary:
-//   - Current voting supply (includes late voter3): 9000000000
 //   - Quorum amount (based on snapshot, excludes voter3): 3000000000
 //   - Yea weight: 4000000000
 //   - Nay weight: 2000000000

@@ -120,7 +120,7 @@ func delegateToMultipleVoters() {
 
 	totalDelegated := voter1Amount + voter2Amount + voter3Amount
 	ufmt.Printf("[INFO] Total delegated: %d GNS\n", totalDelegated)
-	ufmt.Printf("[INFO] xGNS total supply: %d, voting supply: %d\n", xgns.TotalSupply(), xgns.VotingSupply())
+	ufmt.Printf("[INFO] xGNS total supply: %d\n", xgns.TotalSupply())
 }
 
 func createLaunchpadProject() string {
@@ -137,12 +137,12 @@ func createLaunchpadProject() string {
 		int64(30),
 		int64(30),
 		int64(40),
-		int64(time.Now().Unix()+3600),
+		int64(time.Now().Unix()+604800),
 	)
 	ufmt.Printf("[INFO] Project created with ID: %s\n", projectId)
 
 	// Skip to activate project
-	testing.SkipHeights(3600)
+	testing.SkipHeights(120960)
 	return projectId + ":30"
 }
 
@@ -172,7 +172,6 @@ func multipleDeposits(projectTierId string) {
 
 func verifyXgnsDistribution() {
 	totalSupply := xgns.TotalSupply()
-	votingSupply := xgns.VotingSupply()
 	launchpadBalance := xgns.BalanceOf(launchpadAddr)
 
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
@@ -181,15 +180,10 @@ func verifyXgnsDistribution() {
 
 	ufmt.Printf("[INFO] xGNS Distribution:\n")
 	ufmt.Printf("  - Total supply: %d\n", totalSupply)
-	ufmt.Printf("  - Voting supply: %d\n", votingSupply)
 	ufmt.Printf("  - Launchpad balance (excluded from voting): %d\n", launchpadBalance)
 	ufmt.Printf("  - Voter1 xGNS: %d\n", voter1Xgns)
 	ufmt.Printf("  - Voter2 xGNS: %d\n", voter2Xgns)
 	ufmt.Printf("  - Voter3 xGNS: %d\n", voter3Xgns)
-
-	expectedVotingSupply := voter1Xgns + voter2Xgns + voter3Xgns
-	ufmt.Printf("[EXPECTED] Voting supply (%d) = sum of voters' xGNS (%d): %t\n",
-		votingSupply, expectedVotingSupply, votingSupply == expectedVotingSupply)
 }
 
 func proposeText() int64 {
@@ -215,26 +209,25 @@ func multipleVotes(proposalId int64) {
 	governance.Vote(cross, proposalId, false)
 	ufmt.Printf("[INFO] Voter3 voted NO\n")
 
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state after all votes: %s\n", state)
 }
 
 func verifyVotingResults(proposalId int64) {
 	// Get individual vote weights
-	voter1Weight := governance.GetVoteWeight(proposalId, voter1Addr)
-	voter2Weight := governance.GetVoteWeight(proposalId, voter2Addr)
-	voter3Weight := governance.GetVoteWeight(proposalId, voter3Addr)
+	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
+	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)
+	voter3Weight, _ := governance.GetVoteWeight(proposalId, voter3Addr)
 
 	// Get proposal vote totals
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get xGNS balances
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
 	voter2Xgns := xgns.BalanceOf(voter2Addr)
 	voter3Xgns := xgns.BalanceOf(voter3Addr)
-	votingSupply := xgns.VotingSupply()
 
 	ufmt.Printf("[EXPECTED] Vote weights by voter:\n")
 	ufmt.Printf("  - Voter1: weight=%d, xGNS=%d, match=%t\n", voter1Weight, voter1Xgns, voter1Weight == voter1Xgns)
@@ -242,7 +235,6 @@ func verifyVotingResults(proposalId int64) {
 	ufmt.Printf("  - Voter3: weight=%d, xGNS=%d, match=%t\n", voter3Weight, voter3Xgns, voter3Weight == voter3Xgns)
 
 	ufmt.Printf("[EXPECTED] Proposal voting summary:\n")
-	ufmt.Printf("  - Voting supply (for quorum calc): %d\n", votingSupply)
 	ufmt.Printf("  - Quorum amount: %d\n", quorumAmount)
 	ufmt.Printf("  - Yea weight: %d\n", yeaWeight)
 	ufmt.Printf("  - Nay weight: %d\n", nayWeight)
@@ -263,7 +255,7 @@ func verifyVotingResults(proposalId int64) {
 // [INFO] Delegated 2000000000 GNS to voter2 (g1wehhgetjxf047h6lta047h6lta047h6l9t3l4q)
 // [INFO] Delegated 3000000000 GNS to voter3 (g1wehhgetjxd047h6lta047h6lta047h6l6mzefq)
 // [INFO] Total delegated: 6000000000 GNS
-// [INFO] xGNS total supply: 6000000000, voting supply: 6000000000
+// [INFO] xGNS total supply: 6000000000
 //
 // [SCENARIO] 2. Create Launchpad Project
 // [INFO] Project created with ID: gno.land/r/onbloc/obl:123
@@ -276,21 +268,19 @@ func verifyVotingResults(proposalId int64) {
 // [SCENARIO] 4. Verify xGNS distribution
 // [INFO] xGNS Distribution:
 //   - Total supply: 15000000000
-//   - Voting supply: 6000000000
 //   - Launchpad balance (excluded from voting): 9000000000
 //   - Voter1 xGNS: 0
 //   - Voter2 xGNS: 0
 //   - Voter3 xGNS: 0
-// [EXPECTED] Voting supply (6000000000) = sum of voters' xGNS (0): false
 //
 // [SCENARIO] 5. Skip smoothing period for proposal creation
-// [INFO] current height: 21003
+// [INFO] current height: 138363
 //
 // [SCENARIO] 6. Propose Text
 // [INFO] Created proposal ID: 1
 //
 // [SCENARIO] 7. Skip voting start delay
-// [INFO] current height: 38283
+// [INFO] current height: 155643
 //
 // [SCENARIO] 8. All voters vote (voter1, voter2: yes, voter3: no)
 // [INFO] Voter1 voted YES
@@ -304,7 +294,6 @@ func verifyVotingResults(proposalId int64) {
 //   - Voter2: weight=2000000000, xGNS=0, match=false
 //   - Voter3: weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Proposal voting summary:
-//   - Voting supply (for quorum calc): 6000000000
 //   - Quorum amount: 3000000000
 //   - Yea weight: 3000000000
 //   - Nay weight: 3000000000

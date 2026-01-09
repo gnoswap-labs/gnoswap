@@ -130,6 +130,21 @@ func (d *Deposit) SetWithdrawn(withdrawnHeight int64, withdrawnTime int64) {
 	d.withdrawnTime = withdrawnTime
 }
 
+func (d Deposit) Clone() *Deposit {
+	return &Deposit{
+		id:              d.id,
+		projectID:       d.projectID,
+		tier:            d.tier,
+		depositor:       d.depositor,
+		depositAmount:   d.depositAmount,
+		withdrawnHeight: d.withdrawnHeight,
+		withdrawnTime:   d.withdrawnTime,
+		createdHeight:   d.createdHeight,
+		createdAt:       d.createdAt,
+		endTime:         d.endTime,
+	}
+}
+
 // NewDeposit returns a pointer to a new Deposit with the given values.
 func NewDeposit(
 	depositID string,

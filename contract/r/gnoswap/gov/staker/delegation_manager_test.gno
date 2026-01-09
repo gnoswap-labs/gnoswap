@@ -9,7 +9,7 @@ import (
 
 // TestDelegationManager_NewDelegationManager tests the DelegationManager constructor
 func TestDelegationManager_NewDelegationManager(t *testing.T) {
-    t.Run("Create new delegation manager", func(t *testing.T) {
+	t.Run("Create new delegation manager", func(t *testing.T) {
 		// when
 		dm := NewDelegationManager()
 
@@ -74,19 +74,19 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			if len(tc.initialIDs) > 0 {
-				dm.SetDelegateeIDs(tc.delegator, tc.delegatee, tc.initialIDs)
+				dm.SetDelegationIDs(tc.delegator, tc.delegatee, tc.initialIDs)
 			}
 
 			// when - add IDs
 			if len(tc.addIDs) > 0 {
-				currentIDs, _ := dm.GetDelegateeIDs(tc.delegator, tc.delegatee)
+				currentIDs, _ := dm.GetDelegationIDs(tc.delegator, tc.delegatee)
 				newIDs := append(currentIDs, tc.addIDs...)
-				dm.SetDelegateeIDs(tc.delegator, tc.delegatee, newIDs)
+				dm.SetDelegationIDs(tc.delegator, tc.delegatee, newIDs)
 			}
 
 			// when - remove IDs
 			if len(tc.removeIDs) > 0 {
-				currentIDs, _ := dm.GetDelegateeIDs(tc.delegator, tc.delegatee)
+				currentIDs, _ := dm.GetDelegationIDs(tc.delegator, tc.delegatee)
 				for _, removeID := range tc.removeIDs {
 					for i, id := range currentIDs {
 						if id == removeID {
@@ -95,11 +95,11 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 						}
 					}
 				}
-				dm.SetDelegateeIDs(tc.delegator, tc.delegatee, currentIDs)
+				dm.SetDelegationIDs(tc.delegator, tc.delegatee, currentIDs)
 			}
 
 			// then
-			resultIDs, exists := dm.GetDelegateeIDs(tc.delegator, tc.delegatee)
+			resultIDs, exists := dm.GetDelegationIDs(tc.delegator, tc.delegatee)
 			if len(tc.expectedFinalIDs) == 0 {
 				uassert.Equal(t, len(resultIDs), 0)
 			} else {
@@ -116,10 +116,10 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 // TestDelegationManager_GetUserDelegationIDs tests retrieving all delegation IDs for a user
 func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 	tests := []struct {
-		name                  string
-		delegator             string
-		delegations           map[string][]int64 // delegatee -> ids
-		expectedTotalCount    int
+		name               string
+		delegator          string
+		delegations        map[string][]int64 // delegatee -> ids
+		expectedTotalCount int
 	}{
 		{
 			name:               "Get IDs for user with no delegations",
@@ -152,7 +152,7 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			for delegatee, ids := range tc.delegations {
-				dm.SetDelegateeIDs(tc.delegator, delegatee, ids)
+				dm.SetDelegationIDs(tc.delegator, delegatee, ids)
 			}
 
 			// when
@@ -230,8 +230,8 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 	}
 }
 
-// TestDelegationManager_GetDelegateeIDs_NonExistent tests getting IDs for non-existent pairs
-func TestDelegationManager_GetDelegateeIDs_NonExistent(t *testing.T) {
+// TestDelegationManager_GetDelegationIDs_NonExistent tests getting IDs for non-existent pairs
+func TestDelegationManager_GetDelegationIDs_NonExistent(t *testing.T) {
 	tests := []struct {
 		name      string
 		delegator string
@@ -253,10 +253,10 @@ func TestDelegationManager_GetDelegateeIDs_NonExistent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
-			dm.SetDelegateeIDs("delegator1", "delegatee1", []int64{1, 2, 3})
+			dm.SetDelegationIDs("delegator1", "delegatee1", []int64{1, 2, 3})
 
 			// when
-			ids, exists := dm.GetDelegateeIDs(tc.delegator, tc.delegatee)
+			ids, exists := dm.GetDelegationIDs(tc.delegator, tc.delegatee)
 
 			// then
 			uassert.False(t, exists)

@@ -21,8 +21,25 @@ func (r *routerV1) GetSwapFee() uint64 {
 	return r.store.GetSwapFee()
 }
 
-// SetSwapFee sets the swap fee rate in basis points.
-// Only admin or governance can call this function.
+// SetSwapFee sets the protocol swap fee rate.
+//
+// Fee is deducted from swap output and sent to protocol fee contract.
+// Only callable by admin or governance.
+//
+// Parameters:
+//   - fee: Fee rate in basis points (0-1000 = 0%-10%)
+//
+// Access:
+//   - Requires: Admin or Governance role
+//   - Halt check: Router and ProtocolFee must not be halted
+//
+// Events:
+//   - SetSwapFee: Emits previous and new fee values
+//
+// Reverts if:
+//   - Caller is not admin/governance
+//   - Fee > 1000 bps (10%)
+//   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(fee uint64) {
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
@@ -39,7 +56,7 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 	}
 
 	prevSwapFee := r.store.GetSwapFee()
-	if err := r.setSwapFee(fee); err != nil {
+	if err := r.store.SetSwapFee(fee); err != nil {
 		panic(err)
 	}
 
@@ -51,19 +68,6 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 		"newFee", formatUint(fee),
 		"prevFee", formatUint(prevSwapFee),
 	)
-}
-
-// setSwapFee validates and updates the swap fee rate.
-func (r *routerV1) setSwapFee(fee uint64) error {
-	// 10000 (bps) = 100%
-	if fee > 10000 {
-		return ufmt.Errorf(
-			"%s: fee must be in range 0 to 10000. got %d",
-			errInvalidSwapFee.Error(), fee,
-		)
-	}
-
-	return r.store.SetSwapFee(fee)
 }
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.

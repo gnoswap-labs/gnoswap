@@ -91,7 +91,7 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 			resolver.addDelegation(tc.delegator, tc.delegatee, tc.delegationID)
 
 			// then
-			ids, _ := resolver.GetDelegateeIDs(tc.delegator.String(), tc.delegatee.String())
+			ids, _ := resolver.GetDelegationIDs(tc.delegator.String(), tc.delegatee.String())
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
@@ -171,7 +171,7 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 			resolver.removeDelegation(tc.delegator, tc.delegatee, tc.delegationID)
 
 			// then
-			ids, _ := resolver.GetDelegateeIDs(tc.delegator.String(), tc.delegatee.String())
+			ids, _ := resolver.GetDelegationIDs(tc.delegator.String(), tc.delegatee.String())
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
@@ -193,7 +193,7 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 		resolver.removeDelegation(delegator, delegatee, 3)
 
 		// then - should be empty
-		ids, _ := resolver.GetDelegateeIDs(delegator.String(), delegatee.String())
+		ids, _ := resolver.GetDelegationIDs(delegator.String(), delegatee.String())
 		uassert.Equal(t, len(ids), 0)
 	})
 }

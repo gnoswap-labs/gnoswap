@@ -74,8 +74,9 @@ var (
 )
 
 var (
-	minTick int32 = -887220
-	maxTick int32 = 887220
+	minTick  int32 = -887220
+	maxTick  int32 = 887220
+	deadline int64 = max_timeout
 )
 
 var (
@@ -542,3 +543,4 @@ func mockInstanceSwapCallback(
 		return mockInstance.SwapCallback(token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 	}(cross)
 }
+

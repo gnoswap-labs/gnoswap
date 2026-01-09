@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 )
 
@@ -31,19 +32,49 @@ type IGovStakerReward interface {
 
 // Getter interface for read operations
 type IGovStakerGetter interface {
+	// Store data getters
+	GetUnDelegationLockupPeriod() int64
+	GetEmissionRewardBalance() int64
+
 	// Delegation getters
 	GetTotalxGnsSupply() int64
-	GetTotalVoteWeight() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
+	GetDelegationCount() int
+	GetDelegationIDs(offset, count int) []int64
+	ExistsDelegation(delegationID int64) bool
+	GetDelegation(delegationID int64) (*Delegation, error)
+	GetDelegatorDelegateeCount(delegator address) int
+	GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address
+	GetUserDelegationCount(delegator address, delegatee address) int
+	GetUserDelegationIDs(delegator address, delegatee address) []int64
+	HasDelegationSnapshotsKey() bool
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// Reward getters
-	GetClaimableRewardByAddress(addr address) string
-	GetClaimableRewardByLaunchpad(addr address) string
-	GetClaimableRewardByRewardID(rewardID string) string
+	GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error)
+	GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error)
+	GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error)
+
+	// Launchpad getters
+	GetLaunchpadProjectDeposit(projectAddr string) (int64, bool)
+
+	// Withdraw getters
+	GetDelegationWithdrawCount(delegationID int64) int
+	GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error)
+	GetCollectableWithdrawAmount(delegationID int64) int64
+
+	// Protocol fee reward getters
+	GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint
+	GetProtocolFeeAmount(tokenPath string) int64
+	GetProtocolFeeAccumulatedTimestamp() int64
+
+	// Emission reward getters
+	GetEmissionAccumulatedX128PerStake() *uint256.Uint
+	GetEmissionDistributedAmount() int64
+	GetEmissionAccumulatedTimestamp() int64
 }
 
 // Admin interface for administrative functions

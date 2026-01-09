@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/uassert"
-	"gno.land/p/onbloc/json"
 
 	"gno.land/p/nt/ufmt"
 )
@@ -127,14 +126,6 @@ func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
 	// Test that we can get the amount per seconds for a valid year
 	amountPerSeconds := GetAmountPerSecondPerHalvingYear(6)
 	uassert.True(t, amountPerSeconds > 0)
-}
-
-func TestGetHalvingInfo(t *testing.T) {
-	jsonStr, err := json.Unmarshal([]byte(GetHalvingInfo()))
-	uassert.NoError(t, err)
-
-	halving := jsonStr.MustKey("halvings").MustArray()
-	uassert.Equal(t, len(halving), 12)
 }
 
 func TestValidBlockTime(t *testing.T) {

@@ -114,6 +114,20 @@ func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) 
 }
 
 // IPositionGetter interface
+func (t *TestPosition) GetPositionCount() int {
+	if !t.isActive("GetPositionCount") {
+		panic("test implementation: GetPositionCount not supported")
+	}
+	return t.instance.GetPositionCount()
+}
+
+func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
+	if !t.isActive("GetPositionIDs") {
+		panic("test implementation: GetPositionIDs not supported")
+	}
+	return t.instance.GetPositionIDs(offset, count)
+}
+
 func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
 	if !t.isActive("GetPosition") {
 		panic("test implementation: GetPosition not supported")
@@ -210,19 +224,4 @@ func (t *TestPosition) GetPositionOwner(positionId uint64) address {
 		panic("test implementation: GetPositionOwner not supported")
 	}
 	return t.instance.GetPositionOwner(positionId)
-}
-
-// IPositionApi interface
-func (t *TestPosition) ApiGetPosition(positionId uint64) string {
-	if !t.isActive("ApiGetPosition") {
-		panic("test implementation: ApiGetPosition not supported")
-	}
-	return t.instance.ApiGetPosition(positionId)
-}
-
-func (t *TestPosition) ApiGetPositionUnclaimedFeeByPositionID(positionId uint64) string {
-	if !t.isActive("ApiGetPositionUnclaimedFeeByPositionID") {
-		panic("test implementation: ApiGetPositionUnclaimedFeeByPositionID not supported")
-	}
-	return t.instance.ApiGetPositionUnclaimedFeeByPositionID(positionId)
 }

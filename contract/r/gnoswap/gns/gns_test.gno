@@ -376,7 +376,7 @@ func TestCalculateAmountToMint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			InitGnsTest(t)
 
-			amount, err := calculateAmountToMint(tt.inputFromTimestamp, tt.inputToTimestamp)
+			amount, err := calculateAmountToMint(getEmissionState(), tt.inputFromTimestamp, tt.inputToTimestamp)
 			uassert.NoError(t, err)
 
 			uassert.Equal(t, tt.expectedAmount, amount)
@@ -392,13 +392,13 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		year12Start := GetHalvingYearStartTimestamp(12)
 
 		// Calculate amount for year 12 with toTimestamp at exactly emission end
-		amountAtEnd, err := calculateAmountToMint(year12Start, emissionEnd)
+		amountAtEnd, err := calculateAmountToMint(getEmissionState(), year12Start, emissionEnd)
 		uassert.NoError(t, err)
 
 		InitGnsTest(t)
 
 		// Calculate amount for year 12 with toTimestamp after emission end (should be clamped)
-		amountAfterEnd, err := calculateAmountToMint(year12Start, emissionEnd+1000)
+		amountAfterEnd, err := calculateAmountToMint(getEmissionState(), year12Start, emissionEnd+1000)
 		uassert.NoError(t, err)
 
 		// Both should return the same amount (clamped to endTimestamp)
@@ -414,13 +414,13 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		amountPerSecond := GetAmountPerSecondPerHalvingYear(1)
 
 		// Amount up to second-to-last second of year 1
-		amountSecondToLast, err := calculateAmountToMint(year1Start, year1End-1)
+		amountSecondToLast, err := calculateAmountToMint(getEmissionState(), year1Start, year1End-1)
 		uassert.NoError(t, err)
 
 		InitGnsTest(t)
 
 		// Amount up to last second of year 1 (includes leftover)
-		amountLastSecond, err := calculateAmountToMint(year1Start, year1End)
+		amountLastSecond, err := calculateAmountToMint(getEmissionState(), year1Start, year1End)
 		uassert.NoError(t, err)
 
 		// Last second should add the leftover to reach exactly the year's max amount
@@ -439,14 +439,14 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		amountPerSecond := GetAmountPerSecondPerHalvingYear(1)
 
 		// fromTimestamp exactly at emission start
-		amountAtStart, err := calculateAmountToMint(emissionStart, emissionStart)
+		amountAtStart, err := calculateAmountToMint(getEmissionState(), emissionStart, emissionStart)
 		uassert.NoError(t, err)
 		uassert.Equal(t, amountPerSecond, amountAtStart)
 
 		InitGnsTest(t)
 
 		// fromTimestamp before emission start (should be clamped to start)
-		amountBeforeStart, err := calculateAmountToMint(emissionStart-100, emissionStart)
+		amountBeforeStart, err := calculateAmountToMint(getEmissionState(), emissionStart-100, emissionStart)
 		uassert.NoError(t, err)
 		uassert.Equal(t, amountPerSecond, amountBeforeStart)
 	})
@@ -461,7 +461,7 @@ func TestCalculateAmountToMintBoundary(t *testing.T) {
 		uassert.Equal(t, year1End+1, year2Start)
 
 		// Calculate from last second of year 1 to first second of year 2
-		amount, err := calculateAmountToMint(year1End, year2Start)
+		amount, err := calculateAmountToMint(getEmissionState(), year1End, year2Start)
 		uassert.NoError(t, err)
 
 		// Should include: year 1's last second (with leftover) + year 2's first second
@@ -484,7 +484,7 @@ func TestMintGns_WithZeroLastMintedTimestamp(t *testing.T) {
 	uassert.Equal(t, int64(0), LastMintedTimestamp())
 
 	// First mint with lastMintedTimestamp = 0
-	// calculateAmountToMint(0+1, currentTime) is called
+	// calculateAmountToMint(getEmissionState(), 0+1, currentTime) is called
 	// Since fromTimestamp(1) < emissionState.startTimestamp, it gets adjusted to startTimestamp
 	// Result: 1 second worth of emission (due to +1 in seconds calculation)
 	testing.SetRealm(emissionRealm)

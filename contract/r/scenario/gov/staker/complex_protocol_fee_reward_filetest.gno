@@ -34,15 +34,18 @@ import (
 var t *testing.T
 
 var (
-	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = testing.NewUserRealm(adminAddr)
-	dummyAddr     = testutils.TestAddress("dummy")
-	dummyRealm    = testing.NewUserRealm(dummyAddr)
-	dummy2Addr    = testutils.TestAddress("dummy2")
-	dummy2Realm   = testing.NewUserRealm(dummy2Addr)
-	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = testing.NewUserRealm(stakerAddr)
-	minAmount     = int64(1_000_000)
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
+
+	stakerAddr  = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm = testing.NewUserRealm(stakerAddr)
+
+	dummyAddr   = testutils.TestAddress("dummy")
+	dummyRealm  = testing.NewUserRealm(dummyAddr)
+	dummy2Addr  = testutils.TestAddress("dummy2")
+	dummy2Realm = testing.NewUserRealm(dummy2Addr)
+
+	minAmount = int64(1_000_000)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -94,7 +97,7 @@ func main() {
 }
 
 func setupTokens() {
-	ufmt.Printf("[INFO] WUGNOT token issued for protocol fee\n")
+	println("[INFO] WUGNOT token issued for protocol fee")
 }
 
 func delegateAdminToDummy2() {
@@ -147,7 +150,7 @@ func skipBlocksAndDistribute() {
 	testing.SkipHeights(10)
 	en.MintAndDistributeGns(cross)
 	testing.SkipHeights(1)
-	ufmt.Printf("[INFO] skipped 10+1 blocks and distributed emission/protocol fee\n")
+	println("[INFO] skipped 10+1 blocks and distributed emission/protocol fee")
 }
 
 func depositProtocolFeeAdditional() {

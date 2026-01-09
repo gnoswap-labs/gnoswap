@@ -94,8 +94,7 @@ func main() {
 
 func checkInitialXgnsSupply() {
 	totalSupply := xgns.TotalSupply()
-	votingSupply := xgns.VotingSupply()
-	ufmt.Printf("[INFO] xGNS total supply: %d, voting supply: %d\n", totalSupply, votingSupply)
+	ufmt.Printf("[INFO] xGNS total supply: %d\n", totalSupply)
 	ufmt.Printf("[EXPECTED] Both should be 0 initially\n")
 }
 
@@ -109,7 +108,7 @@ func delegateGnsToDummy() {
 	xgnsBalance := xgns.BalanceOf(dummyAddr)
 	ufmt.Printf("[INFO] GNS delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
 	ufmt.Printf("[INFO] dummy xGNS balance: %d\n", xgnsBalance)
-	ufmt.Printf("[EXPECTED] xGNS total supply: %d, voting supply: %d\n", xgns.TotalSupply(), xgns.VotingSupply())
+	ufmt.Printf("[EXPECTED] xGNS total supply: %d\n", xgns.TotalSupply())
 }
 
 func createAndDepositLaunchpad() string {
@@ -130,12 +129,12 @@ func createAndDepositLaunchpad() string {
 		int64(30),
 		int64(30),
 		int64(40),
-		int64(time.Now().Unix()+3600),
+		int64(time.Now().Unix()+604800),
 	)
 	ufmt.Printf("[INFO] Project created with ID: %s\n", projectId)
 
 	// Skip to activate project
-	testing.SkipHeights(3600)
+	testing.SkipHeights(120960)
 
 	// Transfer GNS to depositor and deposit
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -157,16 +156,11 @@ func createAndDepositLaunchpad() string {
 
 func checkXgnsSupplyAfterLaunchpad() {
 	totalSupply := xgns.TotalSupply()
-	votingSupply := xgns.VotingSupply()
 	launchpadBalance := xgns.BalanceOf(launchpadAddr)
-	dummyBalance := xgns.BalanceOf(dummyAddr)
 
 	ufmt.Printf("[INFO] xGNS total supply: %d\n", totalSupply)
-	ufmt.Printf("[INFO] xGNS voting supply: %d\n", votingSupply)
 	ufmt.Printf("[INFO] Launchpad xGNS balance: %d\n", launchpadBalance)
-	ufmt.Printf("[INFO] Dummy xGNS balance: %d\n", dummyBalance)
 	ufmt.Printf("[EXPECTED] voting supply = total supply - launchpad balance = %d\n", totalSupply-launchpadBalance)
-	ufmt.Printf("[EXPECTED] voting supply should equal dummy's xGNS balance: %t\n", votingSupply == dummyBalance)
 }
 
 func proposeText() int64 {
@@ -179,27 +173,25 @@ func proposeText() int64 {
 func voteProposalWithDummy(proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Vote submitted, proposal state: %s\n", state)
 }
 
 func verifyVotingWeight(proposalId int64, projectTierId string) {
 	// Get vote info
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get dummy's voted weight
-	dummyVoteWeight := governance.GetVoteWeight(proposalId, dummyAddr)
+	dummyVoteWeight, _ := governance.GetVoteWeight(proposalId, dummyAddr)
 
 	// Get xGNS info
 	totalXgns := xgns.TotalSupply()
-	votingXgns := xgns.VotingSupply()
 	launchpadXgns := xgns.BalanceOf(launchpadAddr)
 	dummyXgns := xgns.BalanceOf(dummyAddr)
 
 	ufmt.Printf("[EXPECTED] Total xGNS supply: %d\n", totalXgns)
-	ufmt.Printf("[EXPECTED] Voting xGNS supply (excludes launchpad): %d\n", votingXgns)
 	ufmt.Printf("[EXPECTED] Launchpad xGNS balance: %d\n", launchpadXgns)
 	ufmt.Printf("[EXPECTED] Dummy xGNS balance: %d\n", dummyXgns)
 	ufmt.Printf("[EXPECTED] Quorum amount (based on voting supply): %d\n", quorumAmount)
@@ -212,13 +204,13 @@ func verifyVotingWeight(proposalId int64, projectTierId string) {
 
 // Output:
 // [SCENARIO] 1. Check Initial xGNS Supply
-// [INFO] xGNS total supply: 0, voting supply: 0
+// [INFO] xGNS total supply: 0
 // [EXPECTED] Both should be 0 initially
 //
 // [SCENARIO] 2. Delegate GNS to dummy (staker delegation)
 // [INFO] GNS delegated to dummy g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 (amount: 2000000000)
 // [INFO] dummy xGNS balance: 0
-// [EXPECTED] xGNS total supply: 2000000000, voting supply: 2000000000
+// [EXPECTED] xGNS total supply: 2000000000
 //
 // [SCENARIO] 3. Create Launchpad Project and Deposit GNS
 // [INFO] Creating launchpad project
@@ -228,27 +220,23 @@ func verifyVotingWeight(proposalId int64, projectTierId string) {
 //
 // [SCENARIO] 4. Check xGNS Supply after launchpad deposit
 // [INFO] xGNS total supply: 7000000000
-// [INFO] xGNS voting supply: 2000000000
 // [INFO] Launchpad xGNS balance: 5000000000
-// [INFO] Dummy xGNS balance: 0
 // [EXPECTED] voting supply = total supply - launchpad balance = 2000000000
-// [EXPECTED] voting supply should equal dummy's xGNS balance: false
 //
 // [SCENARIO] 5. Skip smoothing period for proposal creation
-// [INFO] current height: 21003
+// [INFO] current height: 138363
 //
 // [SCENARIO] 6. Propose Text
 // [INFO] Created proposal ID: 1
 //
 // [SCENARIO] 7. Skip voting start delay for ready to vote
-// [INFO] current height: 38283
+// [INFO] current height: 155643
 //
 // [SCENARIO] 8. Vote for the proposal with dummy
 // [INFO] Vote submitted, proposal state: active
 //
 // [SCENARIO] 9. Verify voting weight
 // [EXPECTED] Total xGNS supply: 7000000000
-// [EXPECTED] Voting xGNS supply (excludes launchpad): 2000000000
 // [EXPECTED] Launchpad xGNS balance: 5000000000
 // [EXPECTED] Dummy xGNS balance: 0
 // [EXPECTED] Quorum amount (based on voting supply): 1000000000

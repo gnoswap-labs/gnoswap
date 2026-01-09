@@ -25,7 +25,7 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDsWithDelegatee(delegator
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
-	ids, exists := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	ids, exists := dm.GetDelegationIDs(delegatorAddress, delegateeAddress)
 	if !exists {
 		return []int64{}
 	}
@@ -74,7 +74,7 @@ func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address,
 	delegateeAddress := delegatee.String()
 
 	// Get existing IDs
-	ids, _ := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	ids, _ := dm.GetDelegationIDs(delegatorAddress, delegateeAddress)
 
 	// Check for duplicates
 	for _, id := range ids {
@@ -85,7 +85,7 @@ func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address,
 
 	// Add the new delegation ID
 	ids = append(ids, delegationID)
-	dm.SetDelegateeIDs(delegatorAddress, delegateeAddress, ids)
+	dm.SetDelegationIDs(delegatorAddress, delegateeAddress, ids)
 }
 
 // removeDelegation removes a delegation ID from the manager's tracking system.
@@ -100,7 +100,7 @@ func (dm *DelegationManagerResolver) removeDelegation(delegator, delegatee addre
 	delegateeAddress := delegatee.String()
 
 	// Get existing IDs
-	ids, exists := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	ids, exists := dm.GetDelegationIDs(delegatorAddress, delegateeAddress)
 	if !exists {
 		return
 	}
@@ -117,6 +117,6 @@ func (dm *DelegationManagerResolver) removeDelegation(delegator, delegatee addre
 	// Remove the delegation ID if found
 	if index != -1 {
 		ids = append(ids[:index], ids[index+1:]...)
-		dm.SetDelegateeIDs(delegatorAddress, delegateeAddress, ids)
+		dm.SetDelegationIDs(delegatorAddress, delegateeAddress, ids)
 	}
 }
