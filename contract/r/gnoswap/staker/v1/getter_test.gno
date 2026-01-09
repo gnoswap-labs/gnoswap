@@ -699,7 +699,7 @@ func TestGetterPoolRewardCache(t *testing.T) {
 
 	// Test count
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
-	uassert.Equal(t, uint64(4), count) // 3 + 1 initial entry from NewPool
+	uassert.Equal(t, uint64(3), count) // NewPool initializes with fixedTimestamp, which gets overwritten
 
 	// Test IDs pagination
 	ids := state.instance.GetPoolRewardCacheIDs(state.poolPath, 0, 2)
@@ -757,7 +757,7 @@ func TestGetterPoolIncentive(t *testing.T) {
 func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 	state := setupBasicTestState(t)
 
-	// Add some accumulation entries
+	// Add some accumulation entries (avoiding fixedTimestamp as NewPool initializes with it)
 	acc1 := u256.MustFromDecimal("1000000000000000000")
 	acc2 := u256.MustFromDecimal("2000000000000000000")
 	acc3 := u256.MustFromDecimal("3000000000000000000")
@@ -768,7 +768,7 @@ func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 
 	// Test count
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
-	uassert.Equal(t, uint64(4), count) // 3 + 1 initial entry from NewPool
+	uassert.Equal(t, uint64(4), count) // 3 new entries + 1 initial entry from NewPool
 
 	// Test IDs pagination
 	ids := state.instance.GetPoolGlobalRewardRatioAccumulationIDs(state.poolPath, 0, 2)
@@ -812,14 +812,4 @@ func TestGetterPoolHistoricalTick(t *testing.T) {
 	// Test non-existent timestamp
 	nonExistent := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+9999))
 	uassert.Equal(t, int32(0), nonExistent)
-}
-
-// Helper function to check if a slice contains a string
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

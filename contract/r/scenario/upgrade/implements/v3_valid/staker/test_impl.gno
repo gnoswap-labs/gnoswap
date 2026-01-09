@@ -305,3 +305,47 @@ func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
 func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
 	return t.instance.GetStakedPositionsByUser(owner, offset, count)
 }
+
+func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
+	return t.instance.GetPoolRewardCacheCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+	return t.instance.GetPoolRewardCacheIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
+	return t.instance.GetPoolRewardCache(poolPath, timestamp)
+}
+
+func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
+	return t.instance.GetPoolIncentiveCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+	return t.instance.GetPoolIncentiveIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
+	return t.instance.GetPoolGlobalRewardRatioAccumulationCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
+	return t.instance.GetPoolHistoricalTickCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+	return t.instance.GetPoolHistoricalTickIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
+	return t.instance.GetPoolHistoricalTick(poolPath, tick)
+}

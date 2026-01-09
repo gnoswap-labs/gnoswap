@@ -638,3 +638,99 @@ func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) 
 		owner, offset, count,
 	).([]uint64)
 }
+
+func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
+	return t.ExecuteFn(
+		"GetPoolRewardCacheCount",
+		func(args ...any) any { return t.instance.GetPoolRewardCacheCount(args[0].(string)) },
+		poolPath,
+	).(uint64)
+}
+
+func (t *TestStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+	return t.ExecuteFn(
+		"GetPoolRewardCacheIDs",
+		func(args ...any) any {
+			return t.instance.GetPoolRewardCacheIDs(args[0].(string), args[1].(int), args[2].(int))
+		},
+		poolPath, offset, count,
+	).([]int64)
+}
+
+func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
+	return t.ExecuteFn(
+		"GetPoolRewardCache",
+		func(args ...any) any { return t.instance.GetPoolRewardCache(args[0].(string), args[1].(uint64)) },
+		poolPath, timestamp,
+	).(int64)
+}
+
+func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
+	return t.ExecuteFn(
+		"GetPoolIncentiveCount",
+		func(args ...any) any { return t.instance.GetPoolIncentiveCount(args[0].(string)) },
+		poolPath,
+	).(uint64)
+}
+
+func (t *TestStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+	return t.ExecuteFn(
+		"GetPoolIncentiveIDs",
+		func(args ...any) any {
+			return t.instance.GetPoolIncentiveIDs(args[0].(string), args[1].(int), args[2].(int))
+		},
+		poolPath, offset, count,
+	).([]string)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
+	return t.ExecuteFn(
+		"GetPoolGlobalRewardRatioAccumulationCount",
+		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulationCount(args[0].(string)) },
+		poolPath,
+	).(uint64)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+	return t.ExecuteFn(
+		"GetPoolGlobalRewardRatioAccumulationIDs",
+		func(args ...any) any {
+			return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(args[0].(string), args[1].(int), args[2].(int))
+		},
+		poolPath, offset, count,
+	).([]uint64)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+	return t.ExecuteFn(
+		"GetPoolGlobalRewardRatioAccumulation",
+		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64)) },
+		poolPath, timestamp,
+	).(*u256.Uint)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
+	return t.ExecuteFn(
+		"GetPoolHistoricalTickCount",
+		func(args ...any) any { return t.instance.GetPoolHistoricalTickCount(args[0].(string)) },
+		poolPath,
+	).(uint64)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+	return t.ExecuteFn(
+		"GetPoolHistoricalTickIDs",
+		func(args ...any) any {
+			return t.instance.GetPoolHistoricalTickIDs(args[0].(string), args[1].(int), args[2].(int))
+		},
+		poolPath, offset, count,
+	).([]int32)
+}
+
+func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
+	return t.ExecuteFn(
+		"GetPoolHistoricalTick",
+		func(args ...any) any { return t.instance.GetPoolHistoricalTick(args[0].(string), args[1].(uint64)) },
+		poolPath, tick,
+	).(int32)
+}

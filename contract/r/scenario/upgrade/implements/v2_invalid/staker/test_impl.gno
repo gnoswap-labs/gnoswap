@@ -528,3 +528,80 @@ func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) 
 	}
 	return t.instance.GetStakedPositionsByUser(owner, offset, count)
 }
+
+func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
+	if !t.isActive("GetPoolRewardCacheCount") {
+		panic("test implementation: GetPoolRewardCacheCount not supported")
+	}
+	return t.instance.GetPoolRewardCacheCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+	if !t.isActive("GetPoolRewardCacheIDs") {
+		panic("test implementation: GetPoolRewardCacheIDs not supported")
+	}
+	return t.instance.GetPoolRewardCacheIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
+	if !t.isActive("GetPoolRewardCache") {
+		panic("test implementation: GetPoolRewardCache not supported")
+	}
+	return t.instance.GetPoolRewardCache(poolPath, timestamp)
+}
+
+func (t *TestStaker) GetPoolIncentiveCount(poolPath string) uint64 {
+	if !t.isActive("GetPoolIncentiveCount") {
+		panic("test implementation: GetPoolIncentiveCount not supported")
+	}
+	return t.instance.GetPoolIncentiveCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+	if !t.isActive("GetPoolIncentiveIDs") {
+		panic("test implementation: GetPoolIncentiveIDs not supported")
+	}
+	return t.instance.GetPoolIncentiveIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
+	if !t.isActive("GetPoolGlobalRewardRatioAccumulationCount") {
+		panic("test implementation: GetPoolGlobalRewardRatioAccumulationCount not supported")
+	}
+	return t.instance.GetPoolGlobalRewardRatioAccumulationCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+	if !t.isActive("GetPoolGlobalRewardRatioAccumulationIDs") {
+		panic("test implementation: GetPoolGlobalRewardRatioAccumulationIDs not supported")
+	}
+	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+	if !t.isActive("GetPoolGlobalRewardRatioAccumulation") {
+		panic("test implementation: GetPoolGlobalRewardRatioAccumulation not supported")
+	}
+	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
+	if !t.isActive("GetPoolHistoricalTickCount") {
+		panic("test implementation: GetPoolHistoricalTickCount not supported")
+	}
+	return t.instance.GetPoolHistoricalTickCount(poolPath)
+}
+
+func (t *TestStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+	if !t.isActive("GetPoolHistoricalTickIDs") {
+		panic("test implementation: GetPoolHistoricalTickIDs not supported")
+	}
+	return t.instance.GetPoolHistoricalTickIDs(poolPath, offset, count)
+}
+
+func (t *TestStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
+	if !t.isActive("GetPoolHistoricalTick") {
+		panic("test implementation: GetPoolHistoricalTick not supported")
+	}
+	return t.instance.GetPoolHistoricalTick(poolPath, tick)
+}
