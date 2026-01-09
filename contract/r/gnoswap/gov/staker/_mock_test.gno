@@ -111,14 +111,6 @@ func (m *MockGovStaker) GetTotalxGnsSupply() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetTotalVoteWeight() int64 {
-	res, ok := m.Response.Get("GetTotalVoteWeight")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
 func (m *MockGovStaker) GetTotalDelegated() int64 {
 	res, ok := m.Response.Get("GetTotalDelegated")
 	if !ok {

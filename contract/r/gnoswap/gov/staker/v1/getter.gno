@@ -19,11 +19,6 @@ func (gs *govStakerV1) GetTotalxGnsSupply() int64 {
 	return xgns.TotalSupply()
 }
 
-// GetTotalVoteWeight returns the total amount of xGNS used for voting.
-func (gs *govStakerV1) GetTotalVoteWeight() int64 {
-	return xgns.VotingSupply()
-}
-
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func (gs *govStakerV1) GetTotalDelegated() int64 {
 	return gs.store.GetTotalDelegatedAmount()

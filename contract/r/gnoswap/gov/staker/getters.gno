@@ -9,11 +9,6 @@ func GetTotalxGnsSupply() int64 {
 	return getImplementation().GetTotalxGnsSupply()
 }
 
-// GetTotalVoteWeight returns the total voting weight in the system.
-func GetTotalVoteWeight() int64 {
-	return getImplementation().GetTotalVoteWeight()
-}
-
 // GetTotalDelegated returns the total amount of GNS delegated.
 func GetTotalDelegated() int64 {
 	return getImplementation().GetTotalDelegated()

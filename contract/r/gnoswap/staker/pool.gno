@@ -164,6 +164,25 @@ func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
 	p.historicalTick = historicalTick
 }
 
+// Clone returns a deep copy of the pool.
+func (p *Pool) Clone() *Pool {
+	if p == nil {
+		return nil
+	}
+
+	return &Pool{
+		poolPath:                      p.poolPath,
+		stakedLiquidity:               nil,
+		lastUnclaimableTime:           p.lastUnclaimableTime,
+		unclaimableAcc:                p.unclaimableAcc,
+		rewardCache:                   nil,
+		incentives:                    nil,
+		ticks:                         NewTicks(),
+		globalRewardRatioAccumulation: nil,
+		historicalTick:                nil,
+	}
+}
+
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
@@ -460,6 +479,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		startTimestamp:          e.startTimestamp,
 		endTimestamp:            e.endTimestamp,
 		createdHeight:           e.createdHeight,
+		createdTimestamp:        e.createdTimestamp,
 		depositGnsAmount:        e.depositGnsAmount,
 		targetPoolPath:          e.targetPoolPath,
 		rewardToken:             e.rewardToken,
@@ -469,6 +489,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		refundee:                e.refundee,
 		refunded:                e.refunded,
 		distributedRewardAmount: e.distributedRewardAmount,
+		isRequestUnwrap:         e.isRequestUnwrap,
 	}
 }
 
@@ -577,6 +598,20 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 	})
 }
 
+// Clone returns a deep copy of ticks.
+func (t Ticks) Clone() Ticks {
+	cloned := avl.NewTree()
+	t.tree.Iterate("", "", func(key string, value any) bool {
+		tick, ok := value.(*Tick)
+		if !ok {
+			panic("failed to cast value to *Tick")
+		}
+		cloned.Set(key, tick.Clone())
+		return false
+	})
+	return Ticks{tree: cloned}
+}
+
 func NewTicks() Ticks {
 	return Ticks{
 		tree: avl.NewTree(),
@@ -644,6 +679,20 @@ func (t *Tick) OutsideAccumulation() *UintTree {
 // SetOutsideAccumulation sets the outside accumulation tree
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
+}
+
+// Clone returns a deep copy of the tick.
+func (t *Tick) Clone() *Tick {
+	if t == nil {
+		return nil
+	}
+
+	return &Tick{
+		id:                   t.id,
+		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
+		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
+		outsideAccumulation:  t.outsideAccumulation.Clone(),
+	}
 }
 
 func NewTick(tickId int32) *Tick {

@@ -59,10 +59,6 @@ func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	return t.instance.GetTotalxGnsSupply()
 }
 
-func (t *TestGovStaker) GetTotalVoteWeight() int64 {
-	return t.instance.GetTotalVoteWeight()
-}
-
 func (t *TestGovStaker) GetTotalDelegated() int64 {
 	return t.instance.GetTotalDelegated()
 }
