@@ -484,8 +484,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 				"prevRealm", previousRealm.PkgPath(),
 				"positionId", formatUint(positionId),
 				"incentiveId", incentiveId,
-				"currentTime", formatInt(currentTime),
-				"currentHeight", formatInt(blockHeight),
+				"currentTime", formatAnyInt(currentTime),
+				"currentHeight", formatAnyInt(blockHeight),
 			)
 			continue
 		}
@@ -504,10 +504,10 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 				"prevRealm", previousRealm.PkgPath(),
 				"positionId", formatUint(positionId),
 				"incentiveId", incentiveId,
-				"requiredAmount", formatInt(rewardAmount),
-				"availableAmount", formatInt(incentiveResolver.RewardAmount()),
-				"currentTime", formatInt(currentTime),
-				"currentHeight", formatInt(blockHeight),
+				"requiredAmount", formatAnyInt(rewardAmount),
+				"availableAmount", formatAnyInt(incentiveResolver.RewardAmount()),
+				"currentTime", formatAnyInt(currentTime),
+				"currentHeight", formatAnyInt(blockHeight),
 			)
 			continue
 		}
@@ -569,9 +569,9 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			"fromPositionId", formatUint(positionId),
 			"fromPoolPath", incentive.TargetPoolPath(),
 			"feeTokenPath", rewardToken,
-			"feeAmount", formatInt(feeAmount),
-			"currentTime", formatInt(currentTime),
-			"currentHeight", formatInt(blockHeight),
+			"feeAmount", formatAnyInt(feeAmount),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
 		)
 
 		chain.Emit(
@@ -583,13 +583,13 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			"recipient", deposit.Owner().String(),
 			"incentiveId", incentiveId,
 			"rewardToken", rewardToken,
-			"rewardAmount", formatInt(rewardAmount),
-			"rewardToUser", formatInt(toUser),
-			"rewardToFee", formatInt(rewardAmount-toUser),
-			"rewardPenalty", formatInt(externalPenalty),
+			"rewardAmount", formatAnyInt(rewardAmount),
+			"rewardToUser", formatAnyInt(toUser),
+			"rewardToFee", formatAnyInt(rewardAmount-toUser),
+			"rewardPenalty", formatAnyInt(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
-			"currentTime", formatInt(currentTime),
-			"currentHeight", formatInt(blockHeight),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
 		)
 	}
 
@@ -606,7 +606,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"fromPositionId", formatUint(positionId),
 		"fromPoolPath", deposit.TargetPoolPath(),
 		"feeTokenPath", GNS_PATH,
-		"feeAmount", formatInt(feeAmount),
+		"feeAmount", formatAnyInt(feeAmount),
 	)
 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
@@ -656,8 +656,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
 
-	rewardToUser := formatInt(toUser)
-	rewardPenalty := formatInt(reward.InternalPenalty)
+	rewardToUser := formatAnyInt(toUser)
+	rewardPenalty := formatAnyInt(reward.InternalPenalty)
 
 	chain.Emit(
 		"CollectReward",
@@ -667,12 +667,12 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"poolPath", depositResolver.TargetPoolPath(),
 		"recipient", depositResolver.Owner().String(),
 		"rewardToken", GNS_PATH,
-		"rewardAmount", formatInt(reward.Internal),
+		"rewardAmount", formatAnyInt(reward.Internal),
 		"rewardToUser", rewardToUser,
-		"rewardToFee", formatInt(reward.Internal-toUser),
+		"rewardToFee", formatAnyInt(reward.Internal-toUser),
 		"rewardPenalty", rewardPenalty,
-		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
-		"currentTime", formatInt(currentTime),
+		"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
+		"currentTime", formatAnyInt(currentTime),
 	)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty

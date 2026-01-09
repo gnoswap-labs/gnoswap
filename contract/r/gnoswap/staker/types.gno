@@ -8,7 +8,6 @@ import (
 type IStaker interface {
 	IStakerManager
 	IStakerGetter
-	IStakerApi
 }
 
 type IStakerManager interface {
@@ -52,10 +51,35 @@ type IStakerManager interface {
 }
 
 type IStakerGetter interface {
+	GetPool(poolPath string) *Pool
+	GetPoolRewardCacheCount(poolPath string) uint64
+	GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64
+	GetPoolRewardCache(poolPath string, timestamp uint64) int64
+	GetPoolIncentiveCount(poolPath string) uint64
+	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
+	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
+	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
+	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint
+	GetPoolHistoricalTickCount(poolPath string) uint64
+	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
+	GetPoolHistoricalTick(poolPath string, tick uint64) int32
+	GetIncentive(poolPath string, incentiveId string) *ExternalIncentive
+	GetDeposit(lpTokenId uint64) *Deposit
+	CollectableEmissionReward(positionId uint64) int64
+	CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64
 	GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64
+	GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) int64
+	GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64
+	GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64
+	GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64
+	GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64
+	GetIncentiveRefunded(poolPath string, incentiveId string) bool
+	IsIncentiveActive(poolPath string, incentiveId string) bool
 	GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64
 	GetDepositGnsAmount() int64
 	GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64
+	GetDepositCollectedInternalReward(lpTokenId uint64) int64
+	GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64
 	GetDepositLiquidity(lpTokenId uint64) *u256.Uint
 	GetDepositLiquidityAsString(lpTokenId uint64) string
 	GetDepositOwner(lpTokenId uint64) address
@@ -64,6 +88,7 @@ type IStakerGetter interface {
 	GetDepositTickLower(lpTokenId uint64) int32
 	GetDepositTickUpper(lpTokenId uint64) int32
 	GetDepositWarmUp(lpTokenId uint64) []Warmup
+	GetDepositExternalIncentiveIdList(lpTokenId uint64) []string
 	GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive
 	GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64
 	GetIncentiveRefundee(poolPath string, incentiveId string) address
@@ -75,6 +100,8 @@ type IStakerGetter interface {
 	GetMinimumRewardAmount() int64
 	GetMinimumRewardAmountForToken(tokenPath string) int64
 	GetPoolIncentiveIdList(poolPath string) []string
+	GetPoolStakedLiquidity(poolPath string) string
+	GetPoolsByTier(tier uint64) []string
 	GetPoolReward(tier uint64) int64
 	GetPoolTier(poolPath string) uint64
 	GetPoolTierCount(tier uint64) uint64
@@ -83,18 +110,12 @@ type IStakerGetter interface {
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() int64
 	IsStaked(positionId uint64) bool
-}
-
-type IStakerApi interface {
-	ApiGetExternalIncentiveById(poolPath, incentiveId string) string
-	ApiGetExternalIncentives() string
-	ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string
-	ApiGetInternalIncentives() string
-	ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string
-	ApiGetInternalIncentivesByTiers(targetTier uint64) string
-	ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string
-	ApiGetRewardTokensByPoolPath(targetPoolPath string) string
-	ApiGetStakesByLpTokenId(targetLpTokenId uint64) string
+	GetTotalEmissionSent() int64
+	GetAllowedTokens() []string
+	GetWarmupTemplate() []Warmup
+	GetTotalStakedUserCount() uint64
+	GetTotalStakedUserPositionCount(user address) uint64
+	GetStakedPositionsByUser(owner address, offset, count int) []uint64
 }
 
 type IStakerStore interface {

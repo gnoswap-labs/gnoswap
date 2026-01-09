@@ -117,12 +117,12 @@ func (s *stakerV1) CreateExternalIncentive(
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
-		"rewardAmount", formatInt(rewardAmount),
-		"startTimestamp", formatInt(startTimestamp),
-		"endTimestamp", formatInt(endTimestamp),
-		"depositGnsAmount", formatInt(depositGnsAmount),
-		"currentHeight", formatInt(currentHeight),
-		"currentTime", formatInt(currentTime),
+		"rewardAmount", formatAnyInt(rewardAmount),
+		"startTimestamp", formatAnyInt(startTimestamp),
+		"endTimestamp", formatAnyInt(endTimestamp),
+		"depositGnsAmount", formatAnyInt(depositGnsAmount),
+		"currentHeight", formatAnyInt(currentHeight),
+		"currentTime", formatAnyInt(currentTime),
 	)
 }
 
@@ -228,8 +228,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		"targetPoolPath", targetPoolPath,
 		"refundee", incentiveResolver.Refundee().String(),
 		"refundToken", incentiveResolver.RewardToken(),
-		"refundAmount", formatInt(refund),
-		"refundGnsAmount", formatInt(incentiveResolver.DepositGnsAmount()),
+		"refundAmount", formatAnyInt(refund),
+		"refundGnsAmount", formatAnyInt(incentiveResolver.DepositGnsAmount()),
 		"isRequestUnwrap", formatBool(incentiveResolver.IsRequestUnwrap()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)

@@ -61,6 +61,30 @@ func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value 
 	})
 }
 
+func (self *UintTree) Size() int {
+	return self.tree.Size()
+}
+
+func (self *UintTree) IterateByOffset(offset, count int, fn func(key int64, value any) bool) {
+	self.tree.IterateByOffset(offset, count, func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
+	})
+}
+
+func (self *UintTree) Clone() *UintTree {
+	if self == nil {
+		return nil
+	}
+
+	cloned := NewUintTree()
+	self.tree.Iterate("", "", func(key string, value any) bool {
+		cloned.tree.Set(key, value)
+		return false
+	})
+
+	return cloned
+}
+
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.
 //
 // Parameters:
