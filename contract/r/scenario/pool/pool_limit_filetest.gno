@@ -71,7 +71,7 @@ func main() {
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
 
 	println("[SCENARIO] 1. Initialize Pool (Create pool with bar/foo tokens, fee 100)")
 	testing.SetRealm(posRealm)
@@ -149,7 +149,7 @@ func main() {
 
 	println("[SCENARIO] 5. Verify Final State (Check slot tick >= 120)")
 
-	thisPool = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[INFO] slot tick should be >= 120")
 	println("[INFO] Slot tick:", slotTick)

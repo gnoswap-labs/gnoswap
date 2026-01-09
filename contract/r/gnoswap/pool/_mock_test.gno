@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"errors"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -221,13 +223,13 @@ func (m *MockPool) ExistsPoolPath(poolPath string) bool {
 	return res[0].(bool)
 }
 
-func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) *Pool {
+func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
 	res, ok := m.Response.Get("GetPool")
 	if !ok {
-		return nil
+		return nil, errors.New("not found")
 	}
 
-	return res[0].(*Pool)
+	return res[0].(*Pool), res[1].(error)
 }
 
 func (m *MockPool) GetBalanceToken0(poolPath string) string {
@@ -563,22 +565,107 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) ApiGetPool(poolPath string) string {
-	res, ok := m.Response.Get("ApiGetPool")
+func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+	res, ok := m.Response.Get("GetTWAP")
 	if !ok {
-		return ""
+		return 0, errors.New("not found")
 	}
 
-	return res[0].(string)
+	return res[0].(int32), res[1].(error)
 }
 
-func (m *MockPool) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
-	res, ok := m.Response.Get("ApiGetTWAP")
+// Pool enumeration
+func (m *MockPool) GetPoolCount() int {
+	res, ok := m.Response.Get("GetPoolCount")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int)
+}
+
+func (m *MockPool) GetPoolPaths(offset, count int) []string {
+	res, ok := m.Response.Get("GetPoolPaths")
+	if !ok {
+		return []string{}
+	}
+
+	return res[0].([]string)
+}
+
+func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
+	res, ok := m.Response.Get("GetFeeAmountTickSpacings")
+	if !ok {
+		return nil
+	}
+
+	return res[0].(map[uint32]int32)
+}
+
+// Position enumeration
+func (m *MockPool) GetPoolPositionCount(poolPath string) int {
+	res, ok := m.Response.Get("GetPoolPositionCount")
+	if !ok {
+		return 0
+	}
+
+	return res[0].(int)
+}
+
+func (m *MockPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+	res, ok := m.Response.Get("GetPoolPositionKeys")
+	if !ok {
+		return []string{}
+	}
+
+	return res[0].([]string)
+}
+
+// Tick enumeration
+func (m *MockPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+	res, ok := m.Response.Get("GetInitializedTicksInRange")
+	if !ok {
+		return []int32{}
+	}
+
+	return res[0].([]int32)
+}
+
+// Structure getters
+func (m *MockPool) GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
+	res, ok := m.Response.Get("GetTickInfo")
+	if !ok {
+		return TickInfo{}, errors.New("not found")
+	}
+
+	return res[0].(TickInfo), res[1].(error)
+}
+
+func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+	res, ok := m.Response.Get("GetTickBitmaps")
+	if !ok {
+		return nil, errors.New("not found")
+	}
+
+	return res[0].(*u256.Uint), res[1].(error)
+}
+
+func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
+	res, ok := m.Response.Get("GetPosition")
+	if !ok {
+		return PositionInfo{}, errors.New("not found")
+	}
+
+	return res[0].(PositionInfo), res[1].(error)
+}
+
+func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {
+	res, ok := m.Response.Get("GetObservationState")
+	if !ok {
+		return nil, errors.New("not found")
+	}
+
+	return res[0].(*ObservationState), res[1].(error)
 }
 
 func newMockPool(version string) *MockPool {

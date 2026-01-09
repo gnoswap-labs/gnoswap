@@ -533,14 +533,12 @@ func TestUpgrade_GetNayByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetProposalById(t *testing.T) {
+func TestUpgrade_GetProposalCount(t *testing.T) {
 	tests := []struct {
 		name string
-		id   int64
 	}{
 		{
-			name: "get proposal by id is success",
-			id:   1,
+			name: "get proposal count is success",
 		},
 	}
 
@@ -553,25 +551,27 @@ func TestUpgrade_GetProposalById(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetProposalById(tt.id)
+			GetProposalCount()
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposalById") != 1 {
-				t.Error("GetProposalById was not called on the implementation")
+			if mockGovernance.Response.CallCount("GetProposalCount") != 1 {
+				t.Error("GetProposalCount was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestUpgrade_GetVoteStatusFromProposalById(t *testing.T) {
+func TestUpgrade_GetProposalIDs(t *testing.T) {
 	tests := []struct {
-		name string
-		id   int64
+		name   string
+		offset int
+		count  int
 	}{
 		{
-			name: "get vote status from proposal by id is success",
-			id:   1,
+			name:   "get proposal ids is success",
+			offset: 0,
+			count:  10,
 		},
 	}
 
@@ -584,26 +584,24 @@ func TestUpgrade_GetVoteStatusFromProposalById(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetVoteStatusFromProposalById(tt.id)
+			GetProposalIDs(tt.offset, tt.count)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVoteStatusFromProposalById") != 1 {
-				t.Error("GetVoteStatusFromProposalById was not called on the implementation")
+			if mockGovernance.Response.CallCount("GetProposalIDs") != 1 {
+				t.Error("GetProposalIDs was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestUpgrade_GetVoteByAddressFromProposalById(t *testing.T) {
+func TestUpgrade_ExistsProposal(t *testing.T) {
 	tests := []struct {
 		name string
-		addr address
 		id   int64
 	}{
 		{
-			name: "get vote by address from proposal by id is success",
-			addr: "g1test",
+			name: "exists proposal is success",
 			id:   1,
 		},
 	}
@@ -617,12 +615,74 @@ func TestUpgrade_GetVoteByAddressFromProposalById(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetVoteByAddressFromProposalById(tt.addr, tt.id)
+			ExistsProposal(tt.id)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVoteByAddressFromProposalById") != 1 {
-				t.Error("GetVoteByAddressFromProposalById was not called on the implementation")
+			if mockGovernance.Response.CallCount("ExistsProposal") != 1 {
+				t.Error("ExistsProposal was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestUpgrade_GetProposal(t *testing.T) {
+	tests := []struct {
+		name string
+		id   int64
+	}{
+		{
+			name: "get proposal is success",
+			id:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+
+			// Action
+			GetProposal(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetProposal") != 1 {
+				t.Error("GetProposal was not called on the implementation")
+			}
+		})
+	}
+}
+
+func TestUpgrade_GetVoteStatus(t *testing.T) {
+	tests := []struct {
+		name string
+		id   int64
+	}{
+		{
+			name: "get vote status is success",
+			id:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+
+			// Action
+			GetVoteStatus(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVoteStatus") != 1 {
+				t.Error("GetVoteStatus was not called on the implementation")
 			}
 		})
 	}
@@ -752,13 +812,13 @@ func TestUpgrade_GetDescriptionByProposalId(t *testing.T) {
 	}
 }
 
-func TestUpgrade_GetExecutionStateByProposalId(t *testing.T) {
+func TestUpgrade_GetProposalStatusByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
 	}{
 		{
-			name: "get execution state by proposal id is success",
+			name: "get proposal status by proposal id is success",
 			id:   1,
 		},
 	}
@@ -772,12 +832,12 @@ func TestUpgrade_GetExecutionStateByProposalId(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 			// Action
-			GetExecutionStateByProposalId(tt.id)
+			GetProposalStatusByProposalId(tt.id)
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetExecutionStateByProposalId") != 1 {
-				t.Error("GetExecutionStateByProposalId was not called on the implementation")
+			if mockGovernance.Response.CallCount("GetProposalStatusByProposalId") != 1 {
+				t.Error("GetProposalStatusByProposalId was not called on the implementation")
 			}
 		})
 	}

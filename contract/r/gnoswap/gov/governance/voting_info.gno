@@ -137,3 +137,19 @@ func (v *VotingInfo) SetVotedYes(votedYes bool) {
 func (v *VotingInfo) SetVoted(voted bool) {
 	v.voted = voted
 }
+
+// Clone creates a deep copy of the VotingInfo.
+func (v *VotingInfo) Clone() *VotingInfo {
+	if v == nil {
+		return nil
+	}
+
+	return &VotingInfo{
+		availableVoteWeight: v.availableVoteWeight,
+		votedWeight:         v.votedWeight,
+		votedHeight:         v.votedHeight,
+		votedAt:             v.votedAt,
+		votedYes:            v.votedYes,
+		voted:               v.voted,
+	}
+}

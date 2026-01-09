@@ -150,52 +150,9 @@ func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string
 	return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(path)
 }
 
-// IProtocolFeeApi interface
-func (t *TestProtocolFee) ApiGetAccuTransferToGovStaker() string {
-	if !t.isActive("ApiGetAccuTransferToGovStaker") {
-		panic("test implementation: ApiGetAccuTransferToGovStaker not supported")
+func (t *TestProtocolFee) GetTokenList() []string {
+	if !t.isActive("GetTokenList") {
+		panic("test implementation: GetTokenList not supported")
 	}
-	return t.instance.ApiGetAccuTransferToGovStaker()
-}
-
-func (t *TestProtocolFee) ApiGetAccuTransferToDevOps() string {
-	if !t.isActive("ApiGetAccuTransferToDevOps") {
-		panic("test implementation: ApiGetAccuTransferToDevOps not supported")
-	}
-	return t.instance.ApiGetAccuTransferToDevOps()
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToGovStaker() string {
-	if !t.isActive("ApiGetHistoryTransferToGovStaker") {
-		panic("test implementation: ApiGetHistoryTransferToGovStaker not supported")
-	}
-	return t.instance.ApiGetHistoryTransferToGovStaker()
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToDevOps() string {
-	if !t.isActive("ApiGetHistoryTransferToDevOps") {
-		panic("test implementation: ApiGetHistoryTransferToDevOps not supported")
-	}
-	return t.instance.ApiGetHistoryTransferToDevOps()
-}
-
-func (t *TestProtocolFee) ApiGetActualBalance() string {
-	if !t.isActive("ApiGetActualBalance") {
-		panic("test implementation: ApiGetActualBalance not supported")
-	}
-	return t.instance.ApiGetActualBalance()
-}
-
-func (t *TestProtocolFee) ApiGetRecordedBalance() string {
-	if !t.isActive("ApiGetRecordedBalance") {
-		panic("test implementation: ApiGetRecordedBalance not supported")
-	}
-	return t.instance.ApiGetRecordedBalance()
-}
-
-func (t *TestProtocolFee) ApiGetUnrecordedBalance() string {
-	if !t.isActive("ApiGetUnrecordedBalance") {
-		panic("test implementation: ApiGetUnrecordedBalance not supported")
-	}
-	return t.instance.ApiGetUnrecordedBalance()
+	return t.instance.GetTokenList()
 }

@@ -150,7 +150,7 @@ func checkPoolData(poolPath string) {
 	println("[INFO] Check pool data")
 	testing.SetRealm(adminRealm)
 
-	poolData := pool.GetPool(barPath, fooPath, fee500)
+	poolData, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[EXPECTED] Pool data:", poolData.PoolPath())
 }
 

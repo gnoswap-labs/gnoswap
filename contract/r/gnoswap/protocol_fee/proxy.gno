@@ -58,6 +58,11 @@ func GetTokenListWithAmount() map[string]int64 {
 	return getImplementation().GetTokenListWithAmount()
 }
 
+// GetTokenList returns the list of token paths without amounts.
+func GetTokenList() []string {
+	return getImplementation().GetTokenList()
+}
+
 // GetAmountOfToken returns the amount of a specific token.
 func GetAmountOfToken(tokenPath string) int64 {
 	return getImplementation().GetAmountOfToken(tokenPath)
@@ -91,39 +96,4 @@ func GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath string) int64 {
 // GetHistoryOfDistributedToDevOpsByTokenPath returns historical DevOps distributions for a token.
 func GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath string) int64 {
 	return getImplementation().GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath)
-}
-
-// ApiGetAccuTransferToGovStaker returns accumulated GovStaker transfers as JSON.
-func ApiGetAccuTransferToGovStaker() string {
-	return getImplementation().ApiGetAccuTransferToGovStaker()
-}
-
-// ApiGetAccuTransferToDevOps returns accumulated DevOps transfers as JSON.
-func ApiGetAccuTransferToDevOps() string {
-	return getImplementation().ApiGetAccuTransferToDevOps()
-}
-
-// ApiGetHistoryTransferToGovStaker returns GovStaker transfer history as JSON.
-func ApiGetHistoryTransferToGovStaker() string {
-	return getImplementation().ApiGetHistoryTransferToGovStaker()
-}
-
-// ApiGetHistoryTransferToDevOps returns DevOps transfer history as JSON.
-func ApiGetHistoryTransferToDevOps() string {
-	return getImplementation().ApiGetHistoryTransferToDevOps()
-}
-
-// ApiGetActualBalance returns actual token balances as JSON.
-func ApiGetActualBalance() string {
-	return getImplementation().ApiGetActualBalance()
-}
-
-// ApiGetRecordedBalance returns recorded token balances as JSON.
-func ApiGetRecordedBalance() string {
-	return getImplementation().ApiGetRecordedBalance()
-}
-
-// ApiGetUnrecordedBalance returns unrecorded token balances as JSON.
-func ApiGetUnrecordedBalance() string {
-	return getImplementation().ApiGetUnrecordedBalance()
 }
