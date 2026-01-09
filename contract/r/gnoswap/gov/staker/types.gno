@@ -67,7 +67,7 @@ type IGovStakerGetter interface {
 
 	// Protocol fee reward getters
 	GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint
-	GetProtocolFeeAmounts(tokenPath string) *uint256.Uint
+	GetProtocolFeeAmount(tokenPath string) int64
 	GetProtocolFeeAccumulatedTimestamp() int64
 
 	// Emission reward getters

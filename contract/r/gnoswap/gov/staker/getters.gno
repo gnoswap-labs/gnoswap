@@ -140,9 +140,9 @@ func GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
 	return getImplementation().GetProtocolFeeAccumulatedX128PerStake(tokenPath)
 }
 
-// GetProtocolFeeAmounts returns the protocol fee amounts for a token path.
-func GetProtocolFeeAmounts(tokenPath string) *u256.Uint {
-	return getImplementation().GetProtocolFeeAmounts(tokenPath)
+// GetProtocolFeeAmount returns the protocol fee amounts for a token path.
+func GetProtocolFeeAmount(tokenPath string) int64 {
+	return getImplementation().GetProtocolFeeAmount(tokenPath)
 }
 
 // GetProtocolFeeAccumulatedTimestamp returns the accumulated timestamp for protocol fee rewards.

@@ -344,11 +344,10 @@ func (gs *govStakerV1) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *
 	return accumulatedFee.Clone()
 }
 
-// GetProtocolFeeAmounts returns the protocol fee amounts for a token path.
-func (gs *govStakerV1) GetProtocolFeeAmounts(tokenPath string) *uint256.Uint {
+// GetProtocolFeeAmount returns the protocol fee amounts for a token path.
+func (gs *govStakerV1) GetProtocolFeeAmount(tokenPath string) int64 {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
-	amount := protocolFeeRewardManager.GetProtocolFeeAmount(tokenPath)
-	return uint256.NewUintFromInt64(amount)
+	return protocolFeeRewardManager.GetProtocolFeeAmount(tokenPath)
 }
 
 // GetProtocolFeeAccumulatedTimestamp returns the accumulated timestamp for protocol fee rewards.
