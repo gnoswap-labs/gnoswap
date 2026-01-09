@@ -358,8 +358,7 @@ func TestSetTokenURI(t *testing.T) {
 				resetObject(t)
 				testing.SetRealm(positionRealm)
 				// Mint token without URI by directly calling nft.Mint
-				ownerAddress := owner.Owner()
-				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+				checkErr(nft.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          1,
@@ -370,8 +369,7 @@ func TestSetTokenURI(t *testing.T) {
 			setup: func(tokenId uint64) {
 				resetObject(t)
 				testing.SetRealm(positionRealm)
-				ownerAddress := owner.Owner()
-				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+				checkErr(nft.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          2,
@@ -382,8 +380,7 @@ func TestSetTokenURI(t *testing.T) {
 			setup: func(tokenId uint64) {
 				resetObject(t)
 				testing.SetRealm(positionRealm)
-				ownerAddress := owner.Owner()
-				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+				checkErr(nft.Mint(positionAddr, tid(tokenId)))
 			},
 			callerRealm:      positionRealm,
 			tokenId:          100,
@@ -423,7 +420,7 @@ func TestSetTokenURI(t *testing.T) {
 			callerRealm:      addr01Realm,
 			tokenId:          1,
 			expectedHasAbort: true,
-			expectedErrMsg:   "ownable: caller is not owner",
+			expectedErrMsg:   "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not position",
 		},
 		{
 			name: "fail to set token uri by unauthorized caller with token id 50",
@@ -435,7 +432,7 @@ func TestSetTokenURI(t *testing.T) {
 			callerRealm:      addr01Realm,
 			tokenId:          50,
 			expectedHasAbort: true,
-			expectedErrMsg:   "ownable: caller is not owner",
+			expectedErrMsg:   "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not position",
 		},
 	}
 
@@ -699,7 +696,7 @@ func TestMint(t *testing.T) {
 			tokenIdToMint: 10,
 			addressToMint: addr01,
 			shouldPanic:   true,
-			panicMsg:      "ownable: caller is not owner",
+			panicMsg:      "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not position",
 		},
 	}
 
@@ -757,7 +754,7 @@ func TestBurn(t *testing.T) {
 			tokenIdToBurn:   1,
 			expectedBalance: 1,
 			shouldPanic:     true,
-			panicMsg:        "ownable: caller is not owner",
+			panicMsg:        "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not position",
 		},
 		{
 			name:            "burn non-existent token id",
@@ -1320,10 +1317,10 @@ func Test_setTokenURI(t *testing.T) {
 			name: "successfully sets URI for token owned by caller",
 			setup: func() {
 				// Mint token to position owner
-				ownerAddr := owner.Owner()
+				ownerAddr := positionAddr
 				nft.Mint(ownerAddr, tid(100))
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       100,
 			tokenURI:      "custom-uri",
 			expectedError: false,
@@ -1333,7 +1330,7 @@ func Test_setTokenURI(t *testing.T) {
 			setup: func() {
 				// No token minted
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       999,
 			tokenURI:      "custom-uri",
 			expectedError: true,
@@ -1343,16 +1340,15 @@ func Test_setTokenURI(t *testing.T) {
 			name: "overwrites URI when already set (private function allows this)",
 			setup: func() {
 				// Mint and set URI
-				ownerAddr := owner.Owner()
-				nft.Mint(ownerAddr, tid(200))
+				nft.Mint(positionAddr, tid(200))
 				// Set URI first time using nested realms
-				testing.SetRealm(testing.NewUserRealm(ownerAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				func() {
 					testing.SetRealm(testing.NewCodeRealm("gno.land/r/test"))
 					setTokenURI(tid(200), grc721.TokenURI("first-uri"))
 				}()
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       200,
 			tokenURI:      "second-uri",
 			expectedError: false, // private setTokenURI allows overwriting
@@ -1373,10 +1369,10 @@ func Test_setTokenURI(t *testing.T) {
 			name: "sets image params URI and verifies conversion to base64 SVG",
 			setup: func() {
 				// Mint token to position owner
-				ownerAddr := owner.Owner()
+				ownerAddr := positionAddr
 				nft.Mint(ownerAddr, tid(400))
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       400,
 			tokenURI:      "10,12,125,123,#FF0000,#00FF00", // (x1,y1,x2,y2,color1,color2)
 			expectedError: false,
@@ -1392,10 +1388,10 @@ func Test_setTokenURI(t *testing.T) {
 			name: "sets plain URI and verifies it returns unchanged",
 			setup: func() {
 				// Mint token to position owner
-				ownerAddr := owner.Owner()
+				ownerAddr := positionAddr
 				nft.Mint(ownerAddr, tid(500))
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       500,
 			tokenURI:      "https://xxx.xxx", // plain URI
 			expectedError: false,
@@ -1410,10 +1406,10 @@ func Test_setTokenURI(t *testing.T) {
 			name: "sets invalid image params URI and verifies it returns error",
 			setup: func() {
 				// Mint token to position owner
-				ownerAddr := owner.Owner()
+				ownerAddr := positionAddr
 				nft.Mint(ownerAddr, tid(500))
 			},
-			ownerAddr:     owner.Owner(),
+			ownerAddr:     positionAddr,
 			tokenId:       500,
 			tokenURI:      "10,12,125,123,#FF000,#00FF00", // invalid image params URI
 			expectedError: false,

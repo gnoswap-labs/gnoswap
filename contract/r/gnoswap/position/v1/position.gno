@@ -471,10 +471,7 @@ func (p *positionV1) collectFee(
 	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0Uint256, withdrawalFeeBps)
 	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1Uint256, withdrawalFeeBps)
 
-	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
-	if !ok {
-		panic("pool address not found")
-	}
+	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	if isWrappedToken(token0) && unwrapResult {
 		p.unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
@@ -488,10 +485,7 @@ func (p *positionV1) collectFee(
 		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 	}
 
-	protocolFeeAddr, ok := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	if !ok {
-		panic("protocol fee address not found")
-	}
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	// handle withdrawal protocol fee
 	pf.AddToProtocolFee(cross, token0, fee0)

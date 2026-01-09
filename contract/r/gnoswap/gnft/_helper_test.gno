@@ -5,13 +5,15 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
 
+var positionAddr = access.MustGetAddress(prbac.ROLE_POSITION.String())
+
 func setHalted(halted bool) {
-	adminAddr, _ := access.GetAddress(rbac.ROLE_ADMIN.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	halt.SetOperationStatus(cross, halt.OpTypePosition, halted)
 }

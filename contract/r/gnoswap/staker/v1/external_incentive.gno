@@ -51,6 +51,8 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	en.MintAndDistributeGns(cross)
 
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+
 	// transfer reward token from user to staker
 	isRequestUnwrap := false
 	if rewardToken == GNOT_DENOM {
@@ -189,6 +191,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// remove incentive from time-based index
 	s.removeIncentiveIdByCreationTime(targetPoolPath, incentiveId, incentive.CreatedTimestamp())
 
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
@@ -243,6 +246,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	// only refundee or admin can end incentive
 	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Refundee() {
+		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
 			ufmt.Sprintf(

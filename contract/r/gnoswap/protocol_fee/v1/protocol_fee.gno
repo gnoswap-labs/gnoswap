@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -28,6 +29,8 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)

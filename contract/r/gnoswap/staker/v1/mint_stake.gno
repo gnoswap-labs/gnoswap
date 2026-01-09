@@ -5,8 +5,10 @@ import (
 	"chain/banker"
 	"chain/runtime"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 
 	pn "gno.land/r/gnoswap/position"
@@ -52,6 +54,8 @@ func (s *stakerV1) MintAndStake(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+
 	// if one click native
 	if token0 == GNOT_DENOM || token1 == GNOT_DENOM {
 		// check sent ugnot
@@ -67,6 +71,7 @@ func (s *stakerV1) MintAndStake(
 		}
 
 		// send it over to position to wrap
+		positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: GNOT_DENOM, Amount: ugnotSent}})
 	}

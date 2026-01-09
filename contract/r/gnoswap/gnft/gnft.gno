@@ -5,7 +5,6 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ownable"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -14,11 +13,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-var (
-	nft          = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	positionAddr = access.MustGetAddress(prabc.ROLE_POSITION.String())
-	owner        = ownable.NewWithAddress(positionAddr)
-)
+var nft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 
 // Name returns the NFT collection name.
 func Name() string {
@@ -80,7 +75,9 @@ func MustOwnerOf(tid grc721.TokenID) address {
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
-	owner.AssertOwnedByPrevious()
+
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
 
 	assertIsValidTokenURI(tid)
 
@@ -199,18 +196,19 @@ func IsApprovedForAll(owner, operator address) bool {
 // Only callable by position contract.
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPosition()
-	owner.AssertOwnedByPrevious()
 
-	ownerAddress := owner.Owner()
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
 
-	checkErr(nft.Mint(ownerAddress, tid))
+	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
+	checkErr(nft.Mint(positionAddr, tid))
 
 	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
 	// Parameters are converted to full SVG on read via TokenURI().
 	imageParams := genImageParamsString(generateRandInstance())
 	checkErr(setTokenURI(tid, grc721.TokenURI(imageParams)))
 
-	checkErr(nft.TransferFrom(ownerAddress, to, tid))
+	checkErr(nft.TransferFrom(positionAddr, to, tid))
 
 	return tid
 }
@@ -226,10 +224,12 @@ func Exists(tid grc721.TokenID) bool {
 // Parameters:
 //   - tid: token ID to burn
 //
-// Only callable by owner.
+// Only callable by position.
 func Burn(cur realm, tid grc721.TokenID) {
 	halt.AssertIsNotHaltedPosition()
-	owner.AssertOwnedByPrevious()
+
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsPosition(caller)
 
 	checkErr(nft.Burn(tid))
 }

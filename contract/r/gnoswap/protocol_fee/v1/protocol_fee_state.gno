@@ -4,6 +4,8 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/protocol_fee"
 )
@@ -59,6 +61,7 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 		return err
 	}
 
+	devOpsAddr := access.MustGetAddress(prabc.ROLE_DEVOPS.String())
 	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
 
 	return nil
@@ -75,6 +78,7 @@ func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) e
 		return err
 	}
 
+	govStakerAddr := access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
 	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
 
 	return nil
