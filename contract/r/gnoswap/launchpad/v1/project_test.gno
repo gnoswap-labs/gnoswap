@@ -250,9 +250,6 @@ func TestProject_GetProjectRemainingAmount(t *testing.T) {
 
 			// Verify
 			uassert.Equal(t, tt.expectedRemaining, result)
-
-			resultFromState := getProjectStats(project).RemainingAmount
-			uassert.Equal(t, result, resultFromState)
 		})
 	}
 }
@@ -318,8 +315,11 @@ func TestProject_GetProjectTotalDepositCount(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			result := getProjectStats(project).TotalDepositCount
+			// Execute - calculate total deposit count from tiers
+			result := int64(0)
+			for _, tier := range project.Tiers() {
+				result += tier.TotalDepositCount()
+			}
 
 			// Verify
 			uassert.Equal(t, tt.expectedTotalCount, result)
@@ -383,8 +383,11 @@ func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			result := getProjectStats(project).CurrentDepositCount
+			// Execute - calculate current deposit count from tiers
+			result := int64(0)
+			for _, tier := range project.Tiers() {
+				result += tier.TotalDepositCount() - tier.TotalWithdrawCount()
+			}
 
 			// Verify
 			uassert.Equal(t, tt.expectedCurrentCount, result)
@@ -453,8 +456,11 @@ func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			result := getProjectStats(project).TotalDepositAmount
+			// Execute - calculate total deposit amount from tiers
+			result := int64(0)
+			for _, tier := range project.Tiers() {
+				result += tier.TotalDepositAmount()
+			}
 
 			// Verify
 			uassert.Equal(t, tt.expectedTotalAmount, result)
@@ -518,8 +524,11 @@ func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			result := getProjectStats(project).CurrentDepositAmount
+			// Execute - calculate current deposit amount from tiers
+			result := int64(0)
+			for _, tier := range project.Tiers() {
+				result += tier.TotalDepositAmount() - tier.TotalWithdrawAmount()
+			}
 
 			// Verify
 			uassert.Equal(t, tt.expectedCurrentAmount, result)
@@ -583,8 +592,11 @@ func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			result := getProjectStats(project).TotalCollectedAmount
+			// Execute - calculate total collected amount from tiers
+			result := int64(0)
+			for _, tier := range project.Tiers() {
+				result += tier.TotalCollectedAmount()
+			}
 
 			// Verify
 			uassert.Equal(t, tt.expectedCollectedAmount, result)

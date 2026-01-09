@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	LIQUIDITY_STAKER int = iota + 1
+	_ int = iota
+	LIQUIDITY_STAKER
 	DEVOPS
 	COMMUNITY_POOL
 	GOV_STAKER
@@ -172,6 +173,30 @@ func distributeToTarget(amount int64) (int64, error) {
 	return totalSent, nil
 }
 
+func calculateDistributableAmounts(amount int64, bps map[int]int64) (map[int]int64, int64) {
+	distributed := make(map[int]int64, 0)
+	if bps == nil {
+		return distributed, amount
+	}
+
+	targets := []int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER}
+	totalSent := int64(0)
+
+	for _, target := range targets {
+		pct := bps[target]
+		distAmount := calculateAmount(amount, pct)
+		if distAmount == 0 {
+			continue
+		}
+
+		distributed[target] = distAmount
+		totalSent = safeAddInt64(totalSent, distAmount)
+	}
+
+	leftAmount := safeSubInt64(amount, totalSent)
+	return distributed, leftAmount
+}
+
 // calculateAmount converts basis points to actual token amount.
 func calculateAmount(amount, bptPct int64) int64 {
 	if amount < 0 || bptPct < 0 || bptPct > 10000 {
@@ -297,6 +322,14 @@ func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
+func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
+    toStaker = GetDistributedToStaker()
+    toDevOps = GetDistributedToDevOps()
+    toCommunityPool = GetDistributedToCommunityPool()
+    toGovStaker = GetDistributedToGovStaker()
+    return
+}
+
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
@@ -317,6 +350,7 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
+// GetEmissionAmountPerSecondBy returns the emission amount per second for a given timestamp and distribution percentage.
 func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
 }

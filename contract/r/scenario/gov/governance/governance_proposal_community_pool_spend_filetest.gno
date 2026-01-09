@@ -100,13 +100,13 @@ func proposeCommunityPoolSpend() {
 func vote(proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	prevYeaNum := governance.GetYeaByProposalId(proposalID)
-	prevNayNum := governance.GetNayByProposalId(proposalID)
+	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
+	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
 	governance.Vote(cross, proposalID, yea)
 
-	afterYeaNum := governance.GetYeaByProposalId(proposalID)
-	afterNayNum := governance.GetNayByProposalId(proposalID)
+	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
+	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
 	ufmt.Printf("[INFO] before voting - yea: %d, nay: %d\n", prevYeaNum, prevNayNum)
 	ufmt.Printf("[INFO] after voting - yea: %d, nay: %d\n", afterYeaNum, afterNayNum)
 }
@@ -125,7 +125,7 @@ func execute(proposalID int64) {
 	afterReceiverBalance := gns.BalanceOf(to)
 	ufmt.Printf("[INFO] receiver's balance after executing: %d\n", afterReceiverBalance)
 
-	proposalState := governance.GetExecutionStateByProposalId(proposalID)
+	proposalState, _ := governance.GetProposalStatusByProposalId(proposalID)
 
 	ufmt.Printf("[EXPECTED] receiver's balance increased by %d\n", afterReceiverBalance-prevReceiverBalance)
 	ufmt.Printf("[EXPECTED] proposal's executed state is %v\n", proposalState)

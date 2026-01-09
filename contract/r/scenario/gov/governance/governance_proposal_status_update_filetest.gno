@@ -67,7 +67,7 @@ func proposeCommunityPoolSpend() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title_1", "test_description_1", adminAddr, "gno.land/r/gnoswap/gns", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] proposal created: %v\n", state)
 	return proposalId
 }

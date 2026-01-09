@@ -141,6 +141,47 @@ func TestGetTokenListWithAmount(t *testing.T) {
 	}
 }
 
+func TestGetTokenList(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func() *protocolFeeV1
+		expected map[string]bool
+	}{
+		{
+			name: "success - get empty token list",
+			setupFn: func() *protocolFeeV1 {
+				return createTestProtocolFee(t)
+			},
+			expected: map[string]bool{},
+		},
+		{
+			name: "success - get token list with multiple tokens",
+			setupFn: func() *protocolFeeV1 {
+				pf := createTestProtocolFee(t)
+				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
+				pf.store.SetTokenListWithAmountItem("gno.land/r/bar", 2000)
+				return pf
+			},
+			expected: map[string]bool{
+				"gno.land/r/foo": true,
+				"gno.land/r/bar": true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pf := tt.setupFn()
+			result := pf.GetTokenList()
+
+			uassert.Equal(t, len(result), len(tt.expected))
+			for _, token := range result {
+				uassert.True(t, tt.expected[token])
+			}
+		})
+	}
+}
+
 func TestGetAmountOfToken(t *testing.T) {
 	tests := []struct {
 		name      string

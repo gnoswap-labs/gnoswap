@@ -32,8 +32,6 @@ var (
 	leftEmissionAmount   int64 // amount of GNS can be minted for emission
 	mintedEmissionAmount int64 // amount of GNS that has been minted for emission
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
-
-	burnAmount int64 // amount of GNS that has been burned
 )
 
 func init() {
@@ -45,7 +43,6 @@ func init() {
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
 	setLastMintedTimestamp(0)
-	burnAmount = 0
 }
 
 // Name returns the name of the GNS token.
@@ -123,33 +120,6 @@ func MintGns(cur realm, address address) int64 {
 	)
 
 	return amountToMint
-}
-
-// Burn permanently removes GNS tokens from circulation.
-//
-// Parameters:
-//   - from: address to burn tokens from
-//   - amount: amount to burn
-//
-// Only callable by admin.
-func Burn(cur realm, from address, amount int64) {
-	previousRealm := runtime.PreviousRealm()
-	caller := previousRealm.Address()
-	access.AssertIsAdmin(caller)
-
-	checkErr(privateLedger.Burn(from, amount))
-
-	burnAmount = safeAddInt64(burnAmount, amount)
-
-	chain.Emit(
-		"Burn",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"burnedBlockHeight", formatInt(runtime.ChainHeight()),
-		"burnFrom", from.String(),
-		"burnedGNSAmount", formatInt(amount),
-		"accumBurnedGNSAmount", formatInt(BurnAmount()),
-	)
 }
 
 // Transfer transfers GNS tokens from caller to recipient.
@@ -277,9 +247,6 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 
 	return totalAmountToMint, nil
 }
-
-// BurnAmount returns the total amount of GNS tokens burned.
-func BurnAmount() int64 { return burnAmount }
 
 // LastMintedTimestamp returns the timestamp of the last GNS emission mint.
 func LastMintedTimestamp() int64 { return lastMintedTimestamp }

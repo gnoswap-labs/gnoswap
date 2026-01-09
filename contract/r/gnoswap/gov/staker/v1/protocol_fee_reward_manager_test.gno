@@ -707,8 +707,9 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 1000
 				m.SetProtocolFeeAmounts(protocolFeeMap)
+				existingAccumulated := u256.NewUintFromInt64(500)
 				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUintFromInt64(500)
+				accumulatedMap["token1"] = existingAccumulated
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 
 				// Try with smaller amount (negative delta)
@@ -716,11 +717,17 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 					"token1": 500, // Less than stored amount
 				}
 
-				uassert.PanicsWithMessage(t, "val is negative", func() {
-					m.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, 100)
-				})
+				// Should not panic - just keep existing accumulated value
+				result, _, err := m.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, 100)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				// Accumulated value should remain unchanged
+				if result["token1"].Cmp(existingAccumulated) != 0 {
+					t.Errorf("expected accumulated to remain %s, got %s", existingAccumulated.ToString(), result["token1"].ToString())
+				}
 			},
-			description: "Should handle negative protocol fee delta",
+			description: "Should handle negative protocol fee delta by keeping existing rate",
 		},
 	}
 

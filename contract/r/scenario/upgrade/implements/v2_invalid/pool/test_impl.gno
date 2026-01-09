@@ -153,7 +153,7 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) *pool.Pool {
+func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
 	if !t.isActive("GetPool") {
 		panic("test implementation: GetPool not supported")
 	}
@@ -412,16 +412,83 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) ApiGetPool(poolPath string) string {
-	if !t.isActive("ApiGetPool") {
-		panic("test implementation: ApiGetPool not supported")
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+	if !t.isActive("GetTWAP") {
+		panic("test implementation: GetTWAP not supported")
 	}
-	return t.instance.ApiGetPool(poolPath)
+	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
-func (t *TestPool) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
-	if !t.isActive("ApiGetTWAP") {
-		panic("test implementation: ApiGetTWAP not supported")
+// Pool enumeration
+func (t *TestPool) GetPoolCount() int {
+	if !t.isActive("GetPoolCount") {
+		panic("test implementation: GetPoolCount not supported")
 	}
-	return t.instance.ApiGetTWAP(poolPath, secondsAgo)
+	return t.instance.GetPoolCount()
+}
+
+func (t *TestPool) GetPoolPaths(offset, count int) []string {
+	if !t.isActive("GetPoolPaths") {
+		panic("test implementation: GetPoolPaths not supported")
+	}
+	return t.instance.GetPoolPaths(offset, count)
+}
+
+func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
+	if !t.isActive("GetFeeAmountTickSpacings") {
+		panic("test implementation: GetFeeAmountTickSpacings not supported")
+	}
+	return t.instance.GetFeeAmountTickSpacings()
+}
+
+// Position enumeration
+func (t *TestPool) GetPoolPositionCount(poolPath string) int {
+	if !t.isActive("GetPoolPositionCount") {
+		panic("test implementation: GetPoolPositionCount not supported")
+	}
+	return t.instance.GetPoolPositionCount(poolPath)
+}
+
+func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+	if !t.isActive("GetPoolPositionKeys") {
+		panic("test implementation: GetPoolPositionKeys not supported")
+	}
+	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+}
+
+// Tick enumeration
+func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+	if !t.isActive("GetInitializedTicksInRange") {
+		panic("test implementation: GetInitializedTicksInRange not supported")
+	}
+	return t.instance.GetInitializedTicksInRange(poolPath, tickLower, tickUpper)
+}
+
+// Structure getters
+func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, error) {
+	if !t.isActive("GetTickInfo") {
+		panic("test implementation: GetTickInfo not supported")
+	}
+	return t.instance.GetTickInfo(poolPath, tick)
+}
+
+func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+	if !t.isActive("GetTickBitmaps") {
+		panic("test implementation: GetTickBitmaps not supported")
+	}
+	return t.instance.GetTickBitmaps(poolPath, wordPos)
+}
+
+func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
+	if !t.isActive("GetPosition") {
+		panic("test implementation: GetPosition not supported")
+	}
+	return t.instance.GetPosition(poolPath, key)
+}
+
+func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
+	if !t.isActive("GetObservationState") {
+		panic("test implementation: GetObservationState not supported")
+	}
+	return t.instance.GetObservationState(poolPath)
 }

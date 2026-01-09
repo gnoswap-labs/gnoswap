@@ -83,6 +83,14 @@ func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) 
 }
 
 // IPositionGetter interface
+func (t *TestPosition) GetPositionCount() int {
+	return t.instance.GetPositionCount()
+}
+
+func (t *TestPosition) GetPositionIDs(offset, count int) []uint64 {
+	return t.instance.GetPositionIDs(offset, count)
+}
+
 func (t *TestPosition) GetPosition(positionId uint64) (position.Position, bool) {
 	return t.instance.GetPosition(positionId)
 }
@@ -137,13 +145,4 @@ func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uin
 
 func (t *TestPosition) GetPositionOwner(positionId uint64) address {
 	return t.instance.GetPositionOwner(positionId)
-}
-
-// IPositionApi interface
-func (t *TestPosition) ApiGetPosition(positionId uint64) string {
-	return t.instance.ApiGetPosition(positionId)
-}
-
-func (t *TestPosition) ApiGetPositionUnclaimedFeeByPositionID(positionId uint64) string {
-	return t.instance.ApiGetPositionUnclaimedFeeByPositionID(positionId)
 }

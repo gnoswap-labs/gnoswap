@@ -86,6 +86,8 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 			if accumulatedProtocolFeesX128PerStake[token] == nil {
 				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
 			}
+			changedProtocolFeeAmounts[token] = protocolFeeAmount
+			continue
 		}
 
 		// Scale the fee delta by 2^128 for precision

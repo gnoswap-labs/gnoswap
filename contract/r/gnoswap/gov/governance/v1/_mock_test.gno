@@ -6,13 +6,14 @@ import (
 )
 
 type mockGovernanceStore struct {
-	configCounter           *governance.Counter
-	proposalCounter         *governance.Counter
-	configs                 *avl.Tree
-	config                  governance.Config
-	proposals               *avl.Tree
-	proposalUserVotingInfos *avl.Tree
-	userProposals           *avl.Tree
+	configCounter             *governance.Counter
+	proposalCounter           *governance.Counter
+	config                    governance.Config
+	configs                   *avl.Tree
+	proposals                 *avl.Tree
+	proposalUserVotingInfos   *avl.Tree
+	userProposals             *avl.Tree
+	setProposalVotingInfosErr error
 }
 
 // Counter methods
@@ -76,6 +77,10 @@ func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
 	return m.proposals != nil
 }
 
+func (m *mockGovernanceStore) GetProposals() *avl.Tree {
+	return m.proposals
+}
+
 func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposal, bool) {
 	if m.proposals == nil {
 		return nil, false
@@ -121,6 +126,9 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tre
 }
 
 func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
+	if m.setProposalVotingInfosErr != nil {
+		return m.setProposalVotingInfosErr
+	}
 	if m.proposalUserVotingInfos == nil {
 		m.proposalUserVotingInfos = avl.NewTree()
 	}

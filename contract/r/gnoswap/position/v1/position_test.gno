@@ -1958,7 +1958,7 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
 
 	// Step 2: Manually reduce pool balance to simulate insufficient balance
-	pool := pl.GetPool(barPath, fooPath, fee500)
+	pool, _ := pl.GetPool(barPath, fooPath, fee500)
 	currentBalance0 := pool.BalanceToken0()
 	currentBalance1 := pool.BalanceToken1()
 

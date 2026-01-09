@@ -117,7 +117,7 @@ func (gv *governanceV1) vote(
 
 	// Create or update voting info for this user
 	if userVote == nil {
-		userVote = governance.NewVotingInfo(votingWeight, voterAddress)
+		userVote = governance.NewVotingInfo(votingWeight)
 	}
 
 	userVoteResolver := NewVotingInfoResolver(userVote)
@@ -129,9 +129,15 @@ func (gv *governanceV1) vote(
 
 	// Store the user's vote in the proposal voting infos
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
-	if votingInfosTree != nil {
-		votingInfosTree.Set(voterAddress.String(), userVote)
-		gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	if votingInfosTree == nil {
+	    return nil, 0, 0, makeErrorWithDetails(
+			errDataNotFound, "voting infos tree not found for proposal")
+	}
+
+	votingInfosTree.Set(voterAddress.String(), userVote)
+	err = gv.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	if err != nil {
+		return nil, 0, 0, err
 	}
 
 	// Update proposal vote tallies

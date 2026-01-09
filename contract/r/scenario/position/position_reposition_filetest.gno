@@ -142,7 +142,7 @@ func executeSwap() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, INT64_MAX)
 
-	p := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
 	// set current realm and origin caller
@@ -164,7 +164,7 @@ func executeSwap() {
 	)
 
 	testing.SetRealm(adminRealm)
-	p = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -222,7 +222,7 @@ func checkRepositionedState() {
 
 func executeSwapInNewRange() {
 	testing.SetRealm(adminRealm)
-	p := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
 
