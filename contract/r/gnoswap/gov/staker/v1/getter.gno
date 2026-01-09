@@ -121,7 +121,7 @@ func (gs *govStakerV1) GetDelegatorDelegateeAddresses(delegator address, offset,
 // GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
 func (gs *govStakerV1) GetUserDelegationCount(delegator address, delegatee address) int {
 	delegationManager := gs.store.GetDelegationManager()
-	delegationIDs, exists := delegationManager.GetDelegateeIDs(delegator.String(), delegatee.String())
+	delegationIDs, exists := delegationManager.GetDelegationIDs(delegator.String(), delegatee.String())
 	if !exists {
 		return 0
 	}
@@ -132,7 +132,7 @@ func (gs *govStakerV1) GetUserDelegationCount(delegator address, delegatee addre
 func (gs *govStakerV1) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
 	delegationManager := gs.store.GetDelegationManager()
 
-	delegationIDs, exists := delegationManager.GetDelegateeIDs(delegator.String(), delegatee.String())
+	delegationIDs, exists := delegationManager.GetDelegationIDs(delegator.String(), delegatee.String())
 	if !exists {
 		return []int64{}
 	}
