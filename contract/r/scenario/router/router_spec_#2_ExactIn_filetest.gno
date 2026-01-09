@@ -65,7 +65,7 @@ func main() {
 	println("[INFO] Minting position in bar-foo pool")
 	pn.Mint(cross, barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
-	pool := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
+	pool, _ := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 1000000")
 

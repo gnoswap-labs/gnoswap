@@ -91,6 +91,14 @@ func (m *MockProtocolFee) GetTokenListWithAmount() map[string]int64 {
 	return res[0].(map[string]int64)
 }
 
+func (m *MockProtocolFee) GetTokenList() []string {
+	res, ok := m.Response.Get("GetTokenList")
+	if !ok {
+		return nil
+	}
+	return res[0].([]string)
+}
+
 func (m *MockProtocolFee) GetAmountOfToken(tokenPath string) int64 {
 	res, ok := m.Response.Get("GetAmountOfToken")
 	if !ok {

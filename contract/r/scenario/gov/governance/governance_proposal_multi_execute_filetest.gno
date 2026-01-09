@@ -103,13 +103,13 @@ func proposeMultiExecute() int64 {
 // [SCENARIO] 3. Vote for the proposal
 func voteProposal(proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	prevYea := governance.GetYeaByProposalId(proposalID)
-	prevNay := governance.GetNayByProposalId(proposalID)
+	prevYea, _ := governance.GetYeaByProposalId(proposalID)
+	prevNay, _ := governance.GetNayByProposalId(proposalID)
 
 	governance.Vote(cross, proposalID, true)
 
-	afterYea := governance.GetYeaByProposalId(proposalID)
-	afterNay := governance.GetNayByProposalId(proposalID)
+	afterYea, _ := governance.GetYeaByProposalId(proposalID)
+	afterNay, _ := governance.GetNayByProposalId(proposalID)
 
 	ufmt.Printf("[EXPECTED] before voting - yea: %d, nay: %d\n", prevYea, prevNay)
 	ufmt.Printf("[EXPECTED] after voting - yea: %d, nay: %d\n", afterYea, afterNay)
@@ -128,7 +128,7 @@ func executeMultiProposal(proposalID int64) {
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
 
-	state := governance.GetExecutionStateByProposalId(proposalID)
+	state, _ := governance.GetProposalStatusByProposalId(proposalID)
 	ufmt.Printf("[EXPECTED] proposal executed: %v\n", state)
 }
 

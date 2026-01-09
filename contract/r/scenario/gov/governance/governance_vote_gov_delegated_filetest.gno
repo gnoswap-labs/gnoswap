@@ -86,7 +86,7 @@ func proposeText() int64 {
 func voteProposalWithDummy(proposalId int64) {
 	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 

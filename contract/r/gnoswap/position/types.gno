@@ -8,7 +8,6 @@ import (
 type IPosition interface {
 	IPositionManager
 	IPositionGetter
-	IPositionApi
 }
 
 type IPositionManager interface {
@@ -69,6 +68,8 @@ type IPositionManager interface {
 }
 
 type IPositionGetter interface {
+	GetPositionCount() int
+	GetPositionIDs(offset, count int) []uint64
 	GetPosition(positionId uint64) (Position, bool)
 	IsBurned(positionId uint64) bool
 	IsInRange(positionId uint64) bool
@@ -83,11 +84,6 @@ type IPositionGetter interface {
 	GetPositionTokensOwed1(positionId uint64) *u256.Uint
 	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	GetPositionOwner(positionId uint64) address
-}
-
-type IPositionApi interface {
-	ApiGetPosition(positionId uint64) string
-	ApiGetPositionUnclaimedFeeByPositionID(positionId uint64) string
 }
 
 type IPositionStore interface {

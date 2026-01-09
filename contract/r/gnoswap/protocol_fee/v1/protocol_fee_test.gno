@@ -14,6 +14,10 @@ import (
 	"gno.land/r/gnoswap/halt"
 
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
+
+	_ "gno.land/r/onbloc/bar"
+	_ "gno.land/r/onbloc/obl"
+	_ "gno.land/r/onbloc/qux"
 )
 
 var (

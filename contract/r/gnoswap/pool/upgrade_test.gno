@@ -2,6 +2,7 @@ package pool
 
 import (
 	"chain/runtime"
+	"errors"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -1105,64 +1106,15 @@ func TestExistsPoolPath(t *testing.T) {
 	}
 }
 
-// TestApiGetPool tests the ApiGetPool proxy function
-func TestApiGetPool(t *testing.T) {
-	tests := []struct {
-		name         string
-		setup        func(t *testing.T)
-		poolPath     string
-		callerRealm  runtime.Realm
-		expectedJSON string
-	}{
-		{
-			name: "api get pool is success",
-			setup: func(t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
-			},
-			poolPath:     "mock_pool_path",
-			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedJSON: "{}",
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(t)
-		}
-
-		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("ApiGetPool", tt.expectedJSON)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		json := ApiGetPool(tt.poolPath)
-
-		// Assert
-		if mockPool.Response.CallCount("ApiGetPool") != 1 {
-			t.Error("ApiGetPool was not called on the implementation")
-		}
-		if json != tt.expectedJSON {
-			t.Errorf("ApiGetPool() = %v, want %v", json, tt.expectedJSON)
-		}
-	}
-}
-
-// TestApiGetTWAP tests the ApiGetTWAP proxy function
-func TestApiGetTWAP(t *testing.T) {
+// TestGetTWAP tests the GetTWAP proxy function
+func TestGetTWAP(t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(t *testing.T)
 		poolPath     string
 		secondsAgo   uint32
 		callerRealm  runtime.Realm
-		expectedTWAP string
+		expectedTWAP int32
 	}{
 		{
 			name: "api get twap is success",
@@ -1175,7 +1127,7 @@ func TestApiGetTWAP(t *testing.T) {
 			poolPath:     "mock_pool_path",
 			secondsAgo:   3600,
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTWAP: "0",
+			expectedTWAP: 0,
 		},
 	}
 
@@ -1188,19 +1140,19 @@ func TestApiGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("ApiGetTWAP", tt.expectedTWAP)
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap := ApiGetTWAP(tt.poolPath, tt.secondsAgo)
+		twap, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("ApiGetTWAP") != 1 {
-			t.Error("ApiGetTWAP was not called on the implementation")
+		if mockPool.Response.CallCount("GetTWAP") != 1 {
+			t.Error("GetTWAP was not called on the implementation")
 		}
 		if twap != tt.expectedTWAP {
-			t.Errorf("ApiGetTWAP() = %v, want %v", twap, tt.expectedTWAP)
+			t.Errorf("GetTWAP() = %v, want %v", twap, tt.expectedTWAP)
 		}
 	}
 }

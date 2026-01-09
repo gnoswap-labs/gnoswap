@@ -216,12 +216,16 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	).(bool)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) *pool.Pool {
-	return t.ExecuteFn(
+func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
+	result := t.ExecuteFn(
 		"GetPool",
-		func(args ...any) any { return t.instance.GetPool(args[0].(string), args[1].(string), args[2].(uint32)) },
+		func(args ...any) any {
+			r1, r2 := t.instance.GetPool(args[0].(string), args[1].(string), args[2].(uint32))
+			return []any{r1, r2}
+		},
 		token0Path, token1Path, fee,
-	).(*pool.Pool)
+	).([]any)
+	return result[0].(*pool.Pool), result[1].(error)
 }
 
 func (t *TestPool) GetBalanceToken0(poolPath string) string {
@@ -536,18 +540,116 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) ApiGetPool(poolPath string) string {
-	return t.ExecuteFn(
-		"ApiGetPool",
-		func(args ...any) any { return t.instance.ApiGetPool(args[0].(string)) },
-		poolPath,
-	).(string)
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+	result := t.ExecuteFn(
+		"GetTWAP",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetTWAP(args[0].(string), args[1].(uint32))
+			return []any{r1, r2}
+		},
+		poolPath, secondsAgo,
+	).([]any)
+	return result[0].(int32), result[1].(error)
 }
 
-func (t *TestPool) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
+// Pool enumeration
+func (t *TestPool) GetPoolCount() int {
 	return t.ExecuteFn(
-		"ApiGetTWAP",
-		func(args ...any) any { return t.instance.ApiGetTWAP(args[0].(string), args[1].(uint32)) },
-		poolPath, secondsAgo,
-	).(string)
+		"GetPoolCount",
+		func(args ...any) any { return t.instance.GetPoolCount() },
+	).(int)
+}
+
+func (t *TestPool) GetPoolPaths(offset, count int) []string {
+	return t.ExecuteFn(
+		"GetPoolPaths",
+		func(args ...any) any { return t.instance.GetPoolPaths(args[0].(int), args[1].(int)) },
+		offset, count,
+	).([]string)
+}
+
+func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
+	return t.ExecuteFn(
+		"GetFeeAmountTickSpacings",
+		func(args ...any) any { return t.instance.GetFeeAmountTickSpacings() },
+	).(map[uint32]int32)
+}
+
+// Position enumeration
+func (t *TestPool) GetPoolPositionCount(poolPath string) int {
+	return t.ExecuteFn(
+		"GetPoolPositionCount",
+		func(args ...any) any { return t.instance.GetPoolPositionCount(args[0].(string)) },
+		poolPath,
+	).(int)
+}
+
+func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
+	return t.ExecuteFn(
+		"GetPoolPositionKeys",
+		func(args ...any) any {
+			return t.instance.GetPoolPositionKeys(args[0].(string), args[1].(int), args[2].(int))
+		},
+		poolPath, offset, count,
+	).([]string)
+}
+
+// Tick enumeration
+func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+	return t.ExecuteFn(
+		"GetInitializedTicksInRange",
+		func(args ...any) any {
+			return t.instance.GetInitializedTicksInRange(args[0].(string), args[1].(int32), args[2].(int32))
+		},
+		poolPath, tickLower, tickUpper,
+	).([]int32)
+}
+
+// Structure getters
+func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, error) {
+	result := t.ExecuteFn(
+		"GetTickInfo",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetTickInfo(args[0].(string), args[1].(int32))
+			return []any{r1, r2}
+		},
+		poolPath, tick,
+	).([]any)
+	return result[0].(pool.TickInfo), result[1].(error)
+}
+
+func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+	result := t.ExecuteFn(
+		"GetTickBitmaps",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetTickBitmaps(args[0].(string), args[1].(int16))
+			return []any{r1, r2}
+		},
+		poolPath, wordPos,
+	).([]any)
+	return result[0].(*u256.Uint), result[1].(error)
+}
+
+func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
+	result := t.ExecuteFn(
+		"GetPosition",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetPosition(args[0].(string), args[1].(string))
+			return []any{r1, r2}
+		},
+		poolPath, key,
+	).([]any)
+	return result[0].(pool.PositionInfo), result[1].(error)
+}
+
+func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
+	result := t.ExecuteFn(
+		"GetObservationState",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetObservationState(args[0].(string))
+			return []any{r1, r2}
+		},
+		poolPath,
+	).([]any)
+	return result[0].(*pool.ObservationState), result[1].(error)
 }

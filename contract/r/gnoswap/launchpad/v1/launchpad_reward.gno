@@ -88,5 +88,16 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 		return "", 0, err
 	}
 
+	// Update total collected amount for the tier
+	if rewardAmount > 0 {
+		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+		project.SetTier(deposit.Tier(), projectTier)
+
+		projects := lp.store.GetProjects()
+		if err := lp.store.SetProjects(projects); err != nil {
+			return "", 0, err
+		}
+	}
+
 	return project.TokenPath(), rewardAmount, nil
 }

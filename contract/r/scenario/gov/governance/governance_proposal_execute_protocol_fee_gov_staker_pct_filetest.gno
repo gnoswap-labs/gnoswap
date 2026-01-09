@@ -110,13 +110,13 @@ func proposeSetGovStakerPct() int64 {
 func vote(proposalID int64, yea bool) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	prevYeaNum := governance.GetYeaByProposalId(proposalID)
-	prevNayNum := governance.GetNayByProposalId(proposalID)
+	prevYeaNum, _ := governance.GetYeaByProposalId(proposalID)
+	prevNayNum, _ := governance.GetNayByProposalId(proposalID)
 
 	governance.Vote(cross, proposalID, yea)
 
-	afterYeaNum := governance.GetYeaByProposalId(proposalID)
-	afterNayNum := governance.GetNayByProposalId(proposalID)
+	afterYeaNum, _ := governance.GetYeaByProposalId(proposalID)
+	afterNayNum, _ := governance.GetNayByProposalId(proposalID)
 	ufmt.Printf("[INFO] before proposal %d voting - yea: %d, nay: %d\n", proposalID, prevYeaNum, prevNayNum)
 	ufmt.Printf("[INFO] after proposal %d voting - yea: %d, nay: %d\n", proposalID, afterYeaNum, afterNayNum)
 }

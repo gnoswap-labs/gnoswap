@@ -2,6 +2,7 @@
 package v2_invalid
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/gov/staker"
 	v1 "gno.land/r/gnoswap/gov/staker/v1"
 )
@@ -88,6 +89,20 @@ func (t *TestGovStaker) SetAmountByProjectWallet(addr address, amount int64, add
 }
 
 // IGovStakerGetter interface
+func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
+	if !t.isActive("GetUnDelegationLockupPeriod") {
+		panic("test implementation: GetUnDelegationLockupPeriod not supported")
+	}
+	return t.instance.GetUnDelegationLockupPeriod()
+}
+
+func (t *TestGovStaker) GetEmissionRewardBalance() int64 {
+	if !t.isActive("GetEmissionRewardBalance") {
+		panic("test implementation: GetEmissionRewardBalance not supported")
+	}
+	return t.instance.GetEmissionRewardBalance()
+}
+
 func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	if !t.isActive("GetTotalxGnsSupply") {
 		panic("test implementation: GetTotalxGnsSupply not supported")
@@ -123,6 +138,69 @@ func (t *TestGovStaker) GetLockedAmount() int64 {
 	return t.instance.GetLockedAmount()
 }
 
+func (t *TestGovStaker) GetDelegationCount() int {
+	if !t.isActive("GetDelegationCount") {
+		panic("test implementation: GetDelegationCount not supported")
+	}
+	return t.instance.GetDelegationCount()
+}
+
+func (t *TestGovStaker) GetDelegationIDs(offset, count int) []int64 {
+	if !t.isActive("GetDelegationIDs") {
+		panic("test implementation: GetDelegationIDs not supported")
+	}
+	return t.instance.GetDelegationIDs(offset, count)
+}
+
+func (t *TestGovStaker) ExistsDelegation(delegationID int64) bool {
+	if !t.isActive("ExistsDelegation") {
+		panic("test implementation: ExistsDelegation not supported")
+	}
+	return t.instance.ExistsDelegation(delegationID)
+}
+
+func (t *TestGovStaker) GetDelegation(delegationID int64) (*staker.Delegation, error) {
+	if !t.isActive("GetDelegation") {
+		panic("test implementation: GetDelegation not supported")
+	}
+	return t.instance.GetDelegation(delegationID)
+}
+
+func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
+	if !t.isActive("GetDelegatorDelegateeCount") {
+		panic("test implementation: GetDelegatorDelegateeCount not supported")
+	}
+	return t.instance.GetDelegatorDelegateeCount(delegator)
+}
+
+func (t *TestGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	if !t.isActive("GetDelegatorDelegateeAddresses") {
+		panic("test implementation: GetDelegatorDelegateeAddresses not supported")
+	}
+	return t.instance.GetDelegatorDelegateeAddresses(delegator, offset, count)
+}
+
+func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
+	if !t.isActive("GetUserDelegationCount") {
+		panic("test implementation: GetUserDelegationCount not supported")
+	}
+	return t.instance.GetUserDelegationCount(delegator, delegatee)
+}
+
+func (t *TestGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	if !t.isActive("GetUserDelegationIDs") {
+		panic("test implementation: GetUserDelegationIDs not supported")
+	}
+	return t.instance.GetUserDelegationIDs(delegator, delegatee)
+}
+
+func (t *TestGovStaker) HasDelegationSnapshotsKey() bool {
+	if !t.isActive("HasDelegationSnapshotsKey") {
+		panic("test implementation: HasDelegationSnapshotsKey not supported")
+	}
+	return t.instance.HasDelegationSnapshotsKey()
+}
+
 func (t *TestGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	if !t.isActive("GetTotalDelegationAmountAtSnapshot") {
 		panic("test implementation: GetTotalDelegationAmountAtSnapshot not supported")
@@ -137,25 +215,95 @@ func (t *TestGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snap
 	return t.instance.GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) string {
+func (t *TestGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByAddress") {
 		panic("test implementation: GetClaimableRewardByAddress not supported")
 	}
 	return t.instance.GetClaimableRewardByAddress(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) string {
+func (t *TestGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByLaunchpad") {
 		panic("test implementation: GetClaimableRewardByLaunchpad not supported")
 	}
 	return t.instance.GetClaimableRewardByLaunchpad(addr)
 }
 
-func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) string {
+func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	if !t.isActive("GetClaimableRewardByRewardID") {
 		panic("test implementation: GetClaimableRewardByRewardID not supported")
 	}
 	return t.instance.GetClaimableRewardByRewardID(rewardID)
+}
+
+func (t *TestGovStaker) GetLaunchpadProjectDeposit(projectAddr string) (int64, bool) {
+	if !t.isActive("GetLaunchpadProjectDeposit") {
+		panic("test implementation: GetLaunchpadProjectDeposit not supported")
+	}
+	return t.instance.GetLaunchpadProjectDeposit(projectAddr)
+}
+
+func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
+	if !t.isActive("GetDelegationWithdrawCount") {
+		panic("test implementation: GetDelegationWithdrawCount not supported")
+	}
+	return t.instance.GetDelegationWithdrawCount(delegationID)
+}
+
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+	if !t.isActive("GetDelegationWithdraws") {
+		panic("test implementation: GetDelegationWithdraws not supported")
+	}
+	return t.instance.GetDelegationWithdraws(delegationID, offset, count)
+}
+
+func (t *TestGovStaker) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	if !t.isActive("GetCollectableWithdrawAmount") {
+		panic("test implementation: GetCollectableWithdrawAmount not supported")
+	}
+	return t.instance.GetCollectableWithdrawAmount(delegationID)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
+	if !t.isActive("GetProtocolFeeAccumulatedX128PerStake") {
+		panic("test implementation: GetProtocolFeeAccumulatedX128PerStake not supported")
+	}
+	return t.instance.GetProtocolFeeAccumulatedX128PerStake(tokenPath)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAmount(tokenPath string) int64 {
+	if !t.isActive("GetProtocolFeeAmount") {
+		panic("test implementation: GetProtocolFeeAmount not supported")
+	}
+	return t.instance.GetProtocolFeeAmount(tokenPath)
+}
+
+func (t *TestGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {
+	if !t.isActive("GetProtocolFeeAccumulatedTimestamp") {
+		panic("test implementation: GetProtocolFeeAccumulatedTimestamp not supported")
+	}
+	return t.instance.GetProtocolFeeAccumulatedTimestamp()
+}
+
+func (t *TestGovStaker) GetEmissionAccumulatedX128PerStake() *u256.Uint {
+	if !t.isActive("GetEmissionAccumulatedX128PerStake") {
+		panic("test implementation: GetEmissionAccumulatedX128PerStake not supported")
+	}
+	return t.instance.GetEmissionAccumulatedX128PerStake()
+}
+
+func (t *TestGovStaker) GetEmissionDistributedAmount() int64 {
+	if !t.isActive("GetEmissionDistributedAmount") {
+		panic("test implementation: GetEmissionDistributedAmount not supported")
+	}
+	return t.instance.GetEmissionDistributedAmount()
+}
+
+func (t *TestGovStaker) GetEmissionAccumulatedTimestamp() int64 {
+	if !t.isActive("GetEmissionAccumulatedTimestamp") {
+		panic("test implementation: GetEmissionAccumulatedTimestamp not supported")
+	}
+	return t.instance.GetEmissionAccumulatedTimestamp()
 }
 
 // IGovStakerAdmin interface

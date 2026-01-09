@@ -111,7 +111,7 @@ func TestMint() {
 	println("[EXPECTED] amount0:", amount0, "expected: should be 30")
 	println("[EXPECTED] amount1:", amount1, "expected: should be 81")
 
-	pool := pl.GetPool(barPath, fooPath, fee500)
+	pool, _ := pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Dec():", test_liquidity.Dec(), "expected: should be 1000")
 
@@ -126,7 +126,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
@@ -153,7 +153,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	expected = new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))
 	println("[EXPECTED] test_liquidity.Eq(expected):", test_liquidity.Eq(expected), "expected: should be true")
@@ -172,27 +172,27 @@ func TestBurn() {
 	println("[EXPECTED] b12:", b12, "expected: should be 80")
 	println("[EXPECTED] b22:", b22, "expected: should be 80")
 
-	pool := pl.GetPool(barPath, fooPath, fee500)
+	pool, _ := pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString(), adminAddr)
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1", adminAddr)
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 9999")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999", adminAddr)
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString(), adminAddr)
-	pool = pl.GetPool(barPath, fooPath, fee500)
+	pool, _ = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 	println()
@@ -205,7 +205,7 @@ func TestCollect() {
 	pl.Collect(cross, barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
 	// pool should have zero liquidity
-	pool := pl.GetPool(barPath, fooPath, fee500)
+	pool, _ := pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 
@@ -247,7 +247,7 @@ func TestCollect() {
 }
 
 func TestSwap() {
-	pool := pl.GetPool(barPath, fooPath, fee500)
+	pool, _ := pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 

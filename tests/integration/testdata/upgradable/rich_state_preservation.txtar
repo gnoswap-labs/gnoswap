@@ -108,9 +108,6 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePa
 ## State should remain intact after upgrade
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
 # stdout true
-gnokey query vm/qeval --data "gno.land/r/gnoswap/position.ApiGetPosition(1)"
-# stdout '\\"poolKey\\":\\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\\"'
-# stdout '\\"liquidity\\":\\"50000000\\"'
 
 ## Generate fees again with the new implementation
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 2000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1

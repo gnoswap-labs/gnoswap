@@ -16,6 +16,7 @@ const totalDistributionDuration = 12 * 365 * 24 * 60 * 60 // 12 years
 var (
 	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
 	leftGNSAmount int64
+
 	// lastExecutedTimestamp stores the last timestamp when distribution was executed
 	lastExecutedTimestamp int64
 
@@ -31,13 +32,6 @@ var (
 	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
 )
 
-// GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
-func GetLeftGNSAmount() int64 { return leftGNSAmount }
-
-// GetDistributionStartTimestamp returns the timestamp when emission distribution started.
-// Returns 0 if distribution has not been started yet.
-func GetDistributionStartTimestamp() int64 { return distributionStartTimestamp }
-
 // setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) {
 	if amount < 0 {
@@ -46,9 +40,6 @@ func setLeftGNSAmount(amount int64) {
 
 	leftGNSAmount = amount
 }
-
-// GetLastExecutedTimestamp returns the timestamp of the last emission distribution execution.
-func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
 // setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
 func setLastExecutedTimestamp(timestamp int64) {
