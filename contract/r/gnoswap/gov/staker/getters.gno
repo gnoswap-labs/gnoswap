@@ -137,7 +137,7 @@ func GetCollectableWithdrawAmount(delegationID int64) int64 {
 
 // GetProtocolFeeAccumulatedX128PerStake returns the accumulated protocol fee per stake (Q128) for a token path.
 func GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
-	return getImplementation().GetProtocolFeeAccumulatedX128PerStake(tokenPath)
+	return getImplementation().GetProtocolFeeAccumulatedX128PerStake(tokenPath).Clone()
 }
 
 // GetProtocolFeeAmount returns the protocol fee amounts for a token path.
@@ -152,7 +152,7 @@ func GetProtocolFeeAccumulatedTimestamp() int64 {
 
 // GetEmissionAccumulatedX128PerStake returns the accumulated emission per stake (Q128).
 func GetEmissionAccumulatedX128PerStake() *u256.Uint {
-	return getImplementation().GetEmissionAccumulatedX128PerStake()
+	return getImplementation().GetEmissionAccumulatedX128PerStake().Clone()
 }
 
 // GetEmissionDistributedAmount returns the total distributed emission amount.
