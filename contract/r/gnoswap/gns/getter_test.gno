@@ -2,7 +2,6 @@ package gns
 
 import (
 	"testing"
-	"time"
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
@@ -300,71 +299,6 @@ func TestGetEmissionFunctionsWithInvalidTimestamps(t *testing.T) {
 			uassert.Equal(t, int64(0), result)
 		})
 	}
-}
-
-func TestSimulateMintGns_NoStateChange(t *testing.T) {
-	startTimestamp := int64(1000)
-	emissionState = NewEmissionState(1, startTimestamp)
-
-	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
-	setMintedEmissionAmount(0)
-	setLastMintedTimestamp(startTimestamp)
-
-	currentTime := startTimestamp + 1
-	beforeMinted := MintedEmissionAmount()
-	beforeLeft := LeftEmissionAmount()
-	beforeLast := LastMintedTimestamp()
-
-	amount, err := simulateMintGnsAt(currentTime)
-	uassert.NoError(t, err)
-	uassert.Equal(t, GetAmountPerSecondPerHalvingYear(1), amount)
-	uassert.Equal(t, beforeMinted, MintedEmissionAmount())
-	uassert.Equal(t, beforeLeft, LeftEmissionAmount())
-	uassert.Equal(t, beforeLast, LastMintedTimestamp())
-}
-
-func TestSimulateMintGns_ReflectsLeftAmount(t *testing.T) {
-	startTimestamp := int64(2000)
-	emissionState = NewEmissionState(1, startTimestamp)
-
-	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
-	setMintedEmissionAmount(0)
-
-	year := int64(1)
-	yearEnd := GetHalvingYearEndTimestamp(year)
-	leftAmount := int64(12345)
-
-	err := emissionState.getHalvingData().setLeftAmount(year, leftAmount)
-	uassert.NoError(t, err)
-
-	setLastMintedTimestamp(yearEnd - 1)
-
-	amount, err := simulateMintGnsAt(yearEnd)
-	uassert.NoError(t, err)
-	uassert.Equal(t, leftAmount, amount)
-}
-
-func TestSimulateMintGnsAt_TimeProgression(t *testing.T) {
-	startTimestamp := int64(3000)
-	emissionState = NewEmissionState(1, startTimestamp)
-
-	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
-	setMintedEmissionAmount(0)
-	setLastMintedTimestamp(startTimestamp)
-
-	ctx := testing.GetContext()
-	ctx.Time = time.Unix(startTimestamp+1, 0)
-	testing.SetContext(ctx)
-
-	amount1, err := simulateMintGnsAt(ctx.Time.Unix())
-	uassert.NoError(t, err)
-
-	ctx.Time = time.Unix(startTimestamp+2, 0)
-	testing.SetContext(ctx)
-
-	amount2, err := simulateMintGnsAt(ctx.Time.Unix())
-	uassert.NoError(t, err)
-	uassert.True(t, amount2 > amount1)
 }
 
 func TestEmissionActiveBoundaries(t *testing.T) {

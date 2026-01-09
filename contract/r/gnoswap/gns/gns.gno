@@ -93,7 +93,7 @@ func MintGns(cur realm, address address) int64 {
 		return 0
 	}
 
-	amountToMint, err := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
+	amountToMint, err := calculateAmountToMint(getEmissionState(), lastGNSMintedTimestamp+1, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -210,20 +210,8 @@ func checkErr(err error) {
 // calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
 // This function has side effects: it updates the accumulated and remaining amounts
 // for each halving year in the emission state.
-func calculateAmountToMint(fromTimestamp, toTimestamp int64) (int64, error) {
-	return calculateAmountToMintInternal(fromTimestamp, toTimestamp, true)
-}
-
-// calculateAmountToMintView calculates the amount to mint for a time range
-// without mutating emission state.
-func calculateAmountToMintView(fromTimestamp, toTimestamp int64) (int64, error) {
-	return calculateAmountToMintInternal(fromTimestamp, toTimestamp, false)
-}
-
-func calculateAmountToMintInternal(fromTimestamp, toTimestamp int64, mutate bool) (int64, error) {
+func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
-	state := getEmissionState()
-
 	endTimestamp := state.getEndTimestamp()
 	if toTimestamp > endTimestamp {
 		toTimestamp = endTimestamp
@@ -270,24 +258,14 @@ func calculateAmountToMintInternal(fromTimestamp, toTimestamp int64, mutate bool
 
 		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		if mutate {
-			err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
-			if err != nil {
-				return 0, err
-			}
-			err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
-			if err != nil {
-				return 0, err
-			}
+		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
+		}
 
-			chain.Emit(
-				"CalculateAmountToMint",
-				"fromTimestamp", formatInt(fromTimestamp),
-				"toTimestamp", formatInt(currentToTimestamp),
-				"year", formatInt(year),
-				"amountPerSecond", formatInt(amountPerSecond),
-				"mintedAmount", formatInt(yearAmountToMint),
-			)
+		err = state.subHalvingYearLeftAmount(year, yearAmountToMint)
+		if err != nil {
+			return 0, err
 		}
 
 		fromTimestamp = currentToTimestamp + 1
