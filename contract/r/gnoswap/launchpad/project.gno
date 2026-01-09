@@ -184,6 +184,36 @@ func NewProject(
 	}
 }
 
+func (p Project) Clone() *Project {
+	conditions := make(map[string]*ProjectCondition)
+	for k, v := range p.conditions {
+		conditions[k] = v.Clone()
+	}
+
+	tiers := make(map[int64]*ProjectTier)
+	for k, v := range p.tiers {
+		tiers[k] = v.Clone()
+	}
+
+	tiersRatios := make(map[int64]int64)
+	for k, v := range p.tiersRatios {
+		tiersRatios[k] = v
+	}
+
+	return &Project{
+		id:            p.id,
+		name:          p.name,
+		tokenPath:     p.tokenPath,
+		depositAmount: p.depositAmount,
+		recipient:     p.recipient,
+		conditions:    conditions,
+		tiers:         tiers,
+		tiersRatios:   tiersRatios,
+		createdHeight: p.createdHeight,
+		createdAt:     p.createdAt,
+	}
+}
+
 // MakeProjectID generates a unique project ID based on the given token path and the current block height.
 //
 // The generated ID combines the `tokenPath` and the current block height in the following format:

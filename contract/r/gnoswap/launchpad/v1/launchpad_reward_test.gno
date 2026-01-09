@@ -416,9 +416,15 @@ func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t 
 	storedProject, err := lp.getProject(projectID)
 	uassert.NoError(t, err)
 
-	stats := getProjectStats(storedProject)
-	uassert.Equal(t, reward, stats.TotalCollectedAmount)
-	uassert.Equal(t, safeSubInt64(storedProject.DepositAmount(), reward), stats.RemainingAmount)
+	// Calculate total collected amount from tiers
+	totalCollectedAmount := int64(0)
+	remainingAmount := int64(0)
+	for _, tier := range storedProject.Tiers() {
+		totalCollectedAmount += tier.TotalCollectedAmount()
+		remainingAmount += tier.TotalDistributeAmount() - tier.TotalCollectedAmount()
+	}
+	uassert.Equal(t, reward, totalCollectedAmount)
+	uassert.Equal(t, safeSubInt64(storedProject.DepositAmount(), reward), remainingAmount)
 }
 
 // TestCollectRewardByDepositId_Failure tests error scenarios

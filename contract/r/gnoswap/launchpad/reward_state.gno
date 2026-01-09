@@ -128,3 +128,17 @@ func (rs *RewardState) ClaimedAmount() int64 {
 func (rs *RewardState) SetClaimedAmount(amount int64) {
 	rs.claimedAmount = amount
 }
+
+func (rs RewardState) Clone() *RewardState {
+	return &RewardState{
+		priceDebtX128:           rs.priceDebtX128.Clone(),
+		claimableTime:           rs.claimableTime,
+		depositAmount:           rs.depositAmount,
+		distributeStartTime:     rs.distributeStartTime,
+		distributeEndTime:       rs.distributeEndTime,
+		accumulatedRewardAmount: rs.accumulatedRewardAmount,
+		accumulatedHeight:       rs.accumulatedHeight,
+		accumulatedTime:         rs.accumulatedTime,
+		claimedAmount:           rs.claimedAmount,
+	}
+}
