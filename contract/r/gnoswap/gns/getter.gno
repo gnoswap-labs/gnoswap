@@ -1,12 +1,21 @@
 package gns
 
-import (
-	"chain/runtime"
-	"strconv"
-	"time"
+import "time"
 
-	"gno.land/p/onbloc/json"
-)
+// GetMaxEmissionAmount returns the maximum amount of emission allowed.
+func GetMaxEmissionAmount() int64 {
+	return MAX_EMISSION_AMOUNT
+}
+
+// GetMaximumSupply returns the maximum supply of gns tokens.
+func GetMaximumSupply() int64 {
+	return MAXIMUM_SUPPLY
+}
+
+// GetInitialMintAmount returns the initial amount of gns tokens to be minted.
+func GetInitialMintAmount() int64 {
+	return INITIAL_MINT_AMOUNT
+}
 
 // IsEmissionInitialized returns true if emission schedule has been initialized.
 func IsEmissionInitialized() bool {
@@ -163,33 +172,19 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	return year, halvingData.getStartTimestamp(year), halvingData.getEndTimestamp(year)
 }
 
-// GetHalvingInfo returns comprehensive halving information as JSON string.
-// Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
-func GetHalvingInfo() string {
-	currentTime := time.Now().Unix()
-	currentHeight := runtime.ChainHeight()
-	halvingData := getEmissionState().getHalvingData()
+// GetHalvingInfo returns a clone of the halving data.
+func GetHalvingInfo() *HalvingData {
+	return getEmissionState().getHalvingData().Clone()
+}
 
-	halvings := make([]*json.Node, 0, HALVING_END_YEAR)
+// CalculateMintGnsAmount returns the amount of GNS that would be minted for the given timestamp range.
+func CalculateMintGnsAmount(fromTimestamp, toTimestamp int64) int64 {
+	state := getEmissionState().Clone()
 
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
-			"year":      json.StringNode("year", strconv.FormatInt(year, 10)),
-			"timestamp": json.NumberNode("timestamp", float64(halvingData.getStartTimestamp(year))),
-			"amount":    json.NumberNode("amount", float64(halvingData.getAmountPerSecond(year))),
-		}))
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":      json.NumberNode("height", float64(currentHeight)),
-		"currentTime": json.NumberNode("timestamp", float64(currentTime)),
-		"halvings":    json.ArrayNode("", halvings),
-	})
-
-	b, err := json.Marshal(node)
+	amountToMint, err := calculateAmountToMint(state, fromTimestamp, toTimestamp)
 	if err != nil {
-		panic(err.Error())
+		return 0
 	}
 
-	return string(b)
+	return amountToMint
 }

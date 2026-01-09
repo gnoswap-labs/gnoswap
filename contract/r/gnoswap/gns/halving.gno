@@ -179,6 +179,34 @@ func (h *HalvingData) setAmountPerSecond(year, amount int64) error {
 	return nil
 }
 
+func (h *HalvingData) Clone() *HalvingData {
+	startTimestamps := make([]int64, len(h.startTimestamps))
+	endTimestamps := make([]int64, len(h.endTimestamps))
+	maxAmount := make([]int64, len(h.maxAmount))
+	mintedAmount := make([]int64, len(h.mintedAmount))
+	leftAmount := make([]int64, len(h.leftAmount))
+	accumAmount := make([]int64, len(h.accumAmount))
+	amountPerSecond := make([]int64, len(h.amountPerSecond))
+
+	copy(startTimestamps, h.startTimestamps)
+	copy(endTimestamps, h.endTimestamps)
+	copy(maxAmount, h.maxAmount)
+	copy(mintedAmount, h.mintedAmount)
+	copy(leftAmount, h.leftAmount)
+	copy(accumAmount, h.accumAmount)
+	copy(amountPerSecond, h.amountPerSecond)
+
+	return &HalvingData{
+		startTimestamps: startTimestamps,
+		endTimestamps:   endTimestamps,
+		maxAmount:       maxAmount,
+		mintedAmount:    mintedAmount,
+		leftAmount:      leftAmount,
+		accumAmount:     accumAmount,
+		amountPerSecond: amountPerSecond,
+	}
+}
+
 // NewHalvingData creates a new HalvingData instance with emission schedule.
 // Initializes 12 years of halving periods with timestamps, amounts, and rates based on startTimestamp.
 func NewHalvingData(startTimestamp int64) *HalvingData {
