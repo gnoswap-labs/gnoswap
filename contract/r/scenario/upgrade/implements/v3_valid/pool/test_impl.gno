@@ -33,8 +33,8 @@ func (t *TestPool) SetPoolCreationFee(fee int64) {
 	t.instance.SetPoolCreationFee(fee)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
-	t.instance.IncreaseObservationCardinalityLimit(token0Path, token1Path, fee, cardinalityNext)
+func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+	t.instance.IncreaseObservationCardinalityNext(token0Path, token1Path, fee, cardinalityNext)
 }
 
 // IPoolPosition interface

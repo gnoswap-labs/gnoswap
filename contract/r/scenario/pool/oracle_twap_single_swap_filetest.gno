@@ -80,7 +80,7 @@ func main() {
 	// Increase observation cardinality to store multiple observations
 	println("[SCENARIO] 2. Increase Observation Cardinality")
 	println("[INFO] Increasing observation cardinality limit to 100")
-	pool.IncreaseObservationCardinalityLimit(cross, barPath, fooPath, fee500, 100)
+	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 100)
 	println()
 
 	// Add liquidity

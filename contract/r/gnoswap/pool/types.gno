@@ -33,7 +33,7 @@ type IPoolManager interface {
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(fee int64)
 
-	IncreaseObservationCardinalityLimit(
+	IncreaseObservationCardinalityNext(
 		token0Path string,
 		token1Path string,
 		fee uint32,

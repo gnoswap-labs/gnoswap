@@ -486,7 +486,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			observationState := &pl.ObservationState{}
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
-			observationState.SetCardinalityLimit(1)
+			observationState.SetCardinalityNext(1)
 			obs := &pl.Observation{}
 			obs.SetBlockTimestamp(100)
 			obs.SetTickCumulative(5000000000)

@@ -52,11 +52,11 @@ func (t *TestPool) SetPoolCreationFee(fee int64) {
 	t.instance.SetPoolCreationFee(fee)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
-	if !t.isActive("IncreaseObservationCardinalityLimit") {
-		panic("test implementation: IncreaseObservationCardinalityLimit not supported")
+func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+	if !t.isActive("IncreaseObservationCardinalityNext") {
+		panic("test implementation: IncreaseObservationCardinalityNext not supported")
 	}
-	t.instance.IncreaseObservationCardinalityLimit(token0Path, token1Path, fee, cardinalityNext)
+	t.instance.IncreaseObservationCardinalityNext(token0Path, token1Path, fee, cardinalityNext)
 }
 
 // IPoolPosition interface

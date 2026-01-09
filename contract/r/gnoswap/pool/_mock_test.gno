@@ -62,13 +62,13 @@ func (m *MockPool) SetPoolCreationFee(fee int64) {
 	m.Response.Get("SetPoolCreationFee")
 }
 
-func (m *MockPool) IncreaseObservationCardinalityLimit(
+func (m *MockPool) IncreaseObservationCardinalityNext(
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	m.Response.Get("IncreaseObservationCardinalityLimit")
+	m.Response.Get("IncreaseObservationCardinalityNext")
 }
 
 func (m *MockPool) Mint(

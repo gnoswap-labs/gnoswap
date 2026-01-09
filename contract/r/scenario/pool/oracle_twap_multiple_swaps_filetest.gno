@@ -26,12 +26,12 @@ const (
 	maxApprove int64 = 9223372036854775806
 
 	// 4 hours = 14400 seconds = 2880 blocks (1 block = 5 seconds)
-	totalBlocks  int64  = 2880
-	halfBlocks   int64  = 1440 // 2 hours
-	quarterBlocks int64 = 720  // 1 hour
-	totalSeconds uint32 = 14400
-	halfSeconds  uint32 = 7200
-	hourSeconds  uint32 = 3600
+	totalBlocks   int64  = 2880
+	halfBlocks    int64  = 1440 // 2 hours
+	quarterBlocks int64  = 720  // 1 hour
+	totalSeconds  uint32 = 14400
+	halfSeconds   uint32 = 7200
+	hourSeconds   uint32 = 3600
 )
 
 var (
@@ -79,10 +79,10 @@ func main() {
 	// Increase observation cardinality
 	println("[SCENARIO] 2. Increase Observation Cardinality")
 	println("[INFO] Increasing observation cardinality limit to 200")
-	pool.IncreaseObservationCardinalityLimit(cross, barPath, fooPath, fee500, 200)
+	pool.IncreaseObservationCardinalityNext(cross, barPath, fooPath, fee500, 200)
 
 	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
-	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityLimit())
+	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityNext())
 	println()
 
 	// Add initial liquidity

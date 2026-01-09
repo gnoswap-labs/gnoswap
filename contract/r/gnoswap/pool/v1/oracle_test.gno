@@ -114,7 +114,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 	tests := []struct {
 		name                string
 		cardinality         uint16
-		cardinalityLimit    uint16
+		cardinalityNext     uint16
 		numWrites           int
 		expectedFinalIndex  uint16
 		expectedCardinality uint16
@@ -122,7 +122,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 		{
 			name:                "single cardinality",
 			cardinality:         1,
-			cardinalityLimit:    1,
+			cardinalityNext:     1,
 			numWrites:           5,
 			expectedFinalIndex:  0,
 			expectedCardinality: 1,
@@ -130,7 +130,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 		{
 			name:                "multiple cardinality no wrap",
 			cardinality:         3,
-			cardinalityLimit:    3,
+			cardinalityNext:     3,
 			numWrites:           2,
 			expectedFinalIndex:  2,
 			expectedCardinality: 3,
@@ -138,7 +138,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 		{
 			name:                "multiple cardinality with wrap",
 			cardinality:         3,
-			cardinalityLimit:    3,
+			cardinalityNext:     3,
 			numWrites:           4,
 			expectedFinalIndex:  1,
 			expectedCardinality: 3,
@@ -149,7 +149,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			os := pl.NewObservationState(currentTime)
 			os.SetCardinality(tt.cardinality)
-			os.SetCardinalityLimit(tt.cardinalityLimit)
+			os.SetCardinalityNext(tt.cardinalityNext)
 
 			liquidity := u256.MustFromDecimal("1000000")
 			for i := 0; i < tt.numWrites; i++ {
@@ -164,53 +164,53 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 	}
 }
 
-// TestPool_IncreaseObservationCardinalityLimit tests cardinality limit management
-func TestPool_IncreaseObservationCardinalityLimit(t *testing.T) {
+// TestPool_IncreaseObservationCardinalityNext tests cardinality limit management
+func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
 	tests := []struct {
-		name                    string
-		initialCardinality      uint16
-		initialCardinalityLimit uint16
-		newCardinalityLimit     uint16
-		expectError             bool
-		errorContains           string
+		name                   string
+		initialCardinality     uint16
+		initialCardinalityNext uint16
+		newCardinalityNext     uint16
+		expectError            bool
+		errorContains          string
 	}{
 		{
-			name:                    "valid increase",
-			initialCardinality:      1,
-			initialCardinalityLimit: 1,
-			newCardinalityLimit:     10,
-			expectError:             false,
+			name:                   "valid increase",
+			initialCardinality:     1,
+			initialCardinalityNext: 1,
+			newCardinalityNext:     10,
+			expectError:            false,
 		},
 		{
-			name:                    "decrease attempt",
-			initialCardinality:      1,
-			initialCardinalityLimit: 10,
-			newCardinalityLimit:     5,
-			expectError:             true,
-			errorContains:           "must be greater than current",
+			name:                   "decrease attempt",
+			initialCardinality:     1,
+			initialCardinalityNext: 10,
+			newCardinalityNext:     5,
+			expectError:            true,
+			errorContains:          "must be greater than current",
 		},
 		{
-			name:                    "same value",
-			initialCardinality:      1,
-			initialCardinalityLimit: 10,
-			newCardinalityLimit:     10,
-			expectError:             true,
-			errorContains:           "must be greater than current",
+			name:                   "same value",
+			initialCardinality:     1,
+			initialCardinalityNext: 10,
+			newCardinalityNext:     10,
+			expectError:            true,
+			errorContains:          "must be greater than current",
 		},
 		{
-			name:                    "maximum cardinality",
-			initialCardinality:      1,
-			initialCardinalityLimit: 100,
-			newCardinalityLimit:     maxObservationCardinality,
-			expectError:             false,
+			name:                   "maximum cardinality",
+			initialCardinality:     1,
+			initialCardinalityNext: 100,
+			newCardinalityNext:     maxObservationCardinality,
+			expectError:            false,
 		},
 		{
-			name:                    "uninitialized state",
-			initialCardinality:      0,
-			initialCardinalityLimit: 0,
-			newCardinalityLimit:     10,
-			expectError:             true,
-			errorContains:           "not initialized",
+			name:                   "uninitialized state",
+			initialCardinality:     0,
+			initialCardinalityNext: 0,
+			newCardinalityNext:     10,
+			expectError:            true,
+			errorContains:          "not initialized",
 		},
 	}
 
@@ -224,19 +224,19 @@ func TestPool_IncreaseObservationCardinalityLimit(t *testing.T) {
 			if tt.initialCardinality > 0 {
 				writeObservation(observationState, currentTime, pool.Slot0Tick(), pool.Liquidity())
 				observationState.SetCardinality(tt.initialCardinality)
-				observationState.SetCardinalityLimit(tt.initialCardinalityLimit)
+				observationState.SetCardinalityNext(tt.initialCardinalityNext)
 				pool.SetObservationState(observationState)
 			} else {
 				pool.SetObservationState(nil)
 			}
 
 			if tt.expectError {
-				err := increaseObservationCardinalityLimitByPool(pool, tt.newCardinalityLimit)
+				err := increaseObservationCardinalityNextByPool(pool, tt.newCardinalityNext)
 				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
-				increaseObservationCardinalityLimitByPool(pool, tt.newCardinalityLimit)
+				increaseObservationCardinalityNextByPool(pool, tt.newCardinalityNext)
 				observationState := pool.ObservationState()
-				uassert.Equal(t, tt.newCardinalityLimit, observationState.CardinalityLimit(), "Cardinality limit mismatch")
+				uassert.Equal(t, tt.newCardinalityNext, observationState.CardinalityNext(), "Cardinality limit mismatch")
 			}
 		})
 	}
@@ -362,31 +362,31 @@ func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                        string
-		secondsAgo                  uint32
-		tickCumulatives             [2]int64
-		secondsPerLiqCumulatives    [2]string
-		expectedArithmeticMeanTick  int32
+		name                       string
+		secondsAgo                 uint32
+		tickCumulatives            [2]int64
+		secondsPerLiqCumulatives   [2]string
+		expectedArithmeticMeanTick int32
 	}{
 		{
-			name:       "correct output when tick is 0",
-			secondsAgo: 3,
-			tickCumulatives: [2]int64{12, 12},
-			secondsPerLiqCumulatives: [2]string{"10", "20"},
+			name:                       "correct output when tick is 0",
+			secondsAgo:                 3,
+			tickCumulatives:            [2]int64{12, 12},
+			secondsPerLiqCumulatives:   [2]string{"10", "20"},
 			expectedArithmeticMeanTick: 0,
 		},
 		{
-			name:       "correct rounding for .5 negative tick",
-			secondsAgo: 4,
-			tickCumulatives: [2]int64{-10, -12},
-			secondsPerLiqCumulatives: [2]string{"10", "15"},
+			name:                       "correct rounding for .5 negative tick",
+			secondsAgo:                 4,
+			tickCumulatives:            [2]int64{-10, -12},
+			secondsPerLiqCumulatives:   [2]string{"10", "15"},
 			expectedArithmeticMeanTick: -1, // Always round to negative infinity
 		},
 		{
-			name:       "correct output for liquidity overflow",
-			secondsAgo: 1,
-			tickCumulatives: [2]int64{12, 12},
-			secondsPerLiqCumulatives: [2]string{"10", "11"},
+			name:                       "correct output for liquidity overflow",
+			secondsAgo:                 1,
+			tickCumulatives:            [2]int64{12, 12},
+			secondsPerLiqCumulatives:   [2]string{"10", "11"},
 			expectedArithmeticMeanTick: 0,
 		},
 	}
@@ -425,10 +425,10 @@ func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
 // TestGetTWAP_ErrorCases tests error scenarios for TWAP calculation
 func TestGetTWAP_ErrorCases(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupPool      func() *pl.Pool
-		secondsAgo     uint32
-		expectedError  string
+		name          string
+		setupPool     func() *pl.Pool
+		secondsAgo    uint32
+		expectedError string
 	}{
 		{
 			name: "secondsAgo is zero",
@@ -481,7 +481,7 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 
 	os := pl.NewObservationState(start)
 	os.SetCardinality(2)
-	os.SetCardinalityLimit(2)
+	os.SetCardinalityNext(2)
 	os.SetIndex(1)
 	os.Observations()[1] = pl.NewObservation(
 		now,
@@ -501,7 +501,7 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 
 	os := pl.NewObservationState(start)
 	os.SetCardinality(2)
-	os.SetCardinalityLimit(2)
+	os.SetCardinalityNext(2)
 	os.SetIndex(1)
 	os.Observations()[1] = pl.NewObservation(
 		now,

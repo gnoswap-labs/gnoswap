@@ -107,7 +107,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 			if neededCard > currentCard {
 				_, err := grow(observationState, currentCard, neededCard)
 				uassert.NoError(t, err, "Should grow cardinality")
-				observationState.SetCardinalityLimit(neededCard)
+				observationState.SetCardinalityNext(neededCard)
 			}
 
 			// Process scenarios
@@ -362,7 +362,7 @@ func TestObservationState_IndexWrapping(t *testing.T) {
 }
 
 // Reject cardinalityNext > max, allow cardinalityNext == max
-func TestObservationState_CardinalityLimits(t *testing.T) {
+func TestObservationState_CardinalityNexts(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 

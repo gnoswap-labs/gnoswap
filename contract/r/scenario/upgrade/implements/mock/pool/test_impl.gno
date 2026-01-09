@@ -61,11 +61,11 @@ func (t *TestPool) SetPoolCreationFee(fee int64) {
 	)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
 	t.ExecuteFn(
-		"IncreaseObservationCardinalityLimit",
+		"IncreaseObservationCardinalityNext",
 		func(args ...any) any {
-			t.instance.IncreaseObservationCardinalityLimit(args[0].(string), args[1].(string), args[2].(uint32), args[3].(uint16))
+			t.instance.IncreaseObservationCardinalityNext(args[0].(string), args[1].(string), args[2].(uint32), args[3].(uint16))
 			return nil
 		},
 		token0Path, token1Path, fee, cardinalityNext,

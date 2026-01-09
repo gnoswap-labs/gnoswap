@@ -384,7 +384,7 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*
 	return amount0, amount1
 }
 
-func (i *poolV1) IncreaseObservationCardinalityLimit(
+func (i *poolV1) IncreaseObservationCardinalityNext(
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -393,14 +393,14 @@ func (i *poolV1) IncreaseObservationCardinalityLimit(
 	halt.AssertIsNotHaltedPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	err := increaseObservationCardinalityLimitByPool(pool, cardinalityNext)
+	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
 	if err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
-		"IncreaseObservationCardinalityLimit",
+		"IncreaseObservationCardinalityNext",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),
