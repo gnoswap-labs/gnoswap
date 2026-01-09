@@ -5,6 +5,8 @@ package main
 import (
 	"testing"
 
+	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -79,7 +81,7 @@ func main() {
 	println("[INFO] Increasing observation cardinality limit to 100")
 	pool.IncreaseObservationCardinalityLimit(cross, barPath, fooPath, fee500, 100)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityLimit())
 	println()
 
@@ -98,7 +100,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -129,7 +131,7 @@ func main() {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool tick after first swap:", thisPool.Slot0Tick())
 	println()
 
@@ -159,7 +161,7 @@ func main() {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool tick after second swap:", thisPool.Slot0Tick())
 	println()
 
@@ -173,22 +175,16 @@ func main() {
 	println("[SCENARIO] 9. TWAP Queries at Different Intervals")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	println("[INFO] Querying TWAP for last 1 hour")
-	twapResult1h := pool.ApiGetTWAP(poolPath, quarterSeconds)
-	println("[EXPECTED] TWAP for last 1 hour:")
-	println(twapResult1h)
+	twapResult1h , _ := pool.GetTWAP(poolPath, quarterSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago): %d\n", twapResult1h)
 	println()
 
-	println("[INFO] Querying TWAP for last 2 hours")
-	twapResult2h := pool.ApiGetTWAP(poolPath, halfSeconds)
-	println("[EXPECTED] TWAP for last 2 hours:")
-	println(twapResult2h)
+	twapResult2h , _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago): %d\n", twapResult2h)
 	println()
 
-	println("[INFO] Querying TWAP for last 4 hours")
-	twapResult4h := pool.ApiGetTWAP(poolPath, totalSeconds)
-	println("[EXPECTED] TWAP for last 4 hours:")
-	println(twapResult4h)
+	twapResult4h , _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago): %d\n", twapResult4h)
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -244,17 +240,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Skipping 720 blocks (1 hour = 3600 seconds)
 //
 // [SCENARIO] 9. TWAP Queries at Different Intervals
-// [INFO] Querying TWAP for last 1 hour
-// [EXPECTED] TWAP for last 1 hour:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-99","secondsAgo":"3600"}}
+// [EXPECTED] TWAP for last 1 hour (3600s ago): -99
 //
-// [INFO] Querying TWAP for last 2 hours
-// [EXPECTED] TWAP for last 2 hours:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-149","secondsAgo":"7200"}}
+// [EXPECTED] TWAP for last 2 hours (7200s ago): -149
 //
-// [INFO] Querying TWAP for last 4 hours
-// [EXPECTED] TWAP for last 4 hours:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-75","secondsAgo":"14400"}}
+// [EXPECTED] TWAP for last 4 hours (14400s ago): -75
 //
 // [INFO] Test completed successfully
 // [EXPECTED] Increased cardinality allows accurate TWAP calculation over longer periods with multiple price changes

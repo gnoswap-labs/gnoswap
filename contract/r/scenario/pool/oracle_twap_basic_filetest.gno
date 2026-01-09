@@ -5,6 +5,8 @@ package main
 import (
 	"testing"
 
+	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -87,7 +89,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Pool tick:", thisPool.Slot0Tick())
 	println()
@@ -95,9 +97,8 @@ func main() {
 	// Get initial TWAP (should be current tick since no time has passed)
 	println("[SCENARIO] 3. Initial TWAP Query (0 seconds ago)")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
-	twapResult := pool.ApiGetTWAP(poolPath, 0)
-	println("[EXPECTED] TWAP at 0 seconds ago (current tick):")
-	println(twapResult)
+	twapResult, _ := pool.GetTWAP(poolPath, 0)
+	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago (current tick): %d\n", twapResult)
 	println()
 
 	// Wait 4 hours (2880 blocks)
@@ -109,22 +110,16 @@ func main() {
 	// Query TWAP for different periods
 	println("[SCENARIO] 5. TWAP Queries After Time Passed")
 
-	println("[INFO] Querying TWAP for last 1 hour")
-	twapResult1h := pool.ApiGetTWAP(poolPath, hourSeconds)
-	println("[EXPECTED] TWAP for last 1 hour:")
-	println(twapResult1h)
+	twapResult1h, _ := pool.GetTWAP(poolPath, hourSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago): %d\n", twapResult1h)
 	println()
 
-	println("[INFO] Querying TWAP for last 2 hours")
-	twapResult2h := pool.ApiGetTWAP(poolPath, halfSeconds)
-	println("[EXPECTED] TWAP for last 2 hours:")
-	println(twapResult2h)
+	twapResult2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago): %d\n", twapResult2h)
 	println()
 
-	println("[INFO] Querying TWAP for last 4 hours")
-	twapResult4h := pool.ApiGetTWAP(poolPath, totalSeconds)
-	println("[EXPECTED] TWAP for last 4 hours:")
-	println(twapResult4h)
+	twapResult4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago): %d\n", twapResult4h)
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -146,24 +141,17 @@ func main() {
 // [INFO] Pool tick: 0
 //
 // [SCENARIO] 3. Initial TWAP Query (0 seconds ago)
-// [EXPECTED] TWAP at 0 seconds ago (current tick):
-// {"stat":{"height":123,"timestamp":1234567890},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"0","secondsAgo":"0"}}
+// [EXPECTED] TWAP at 0 seconds ago (current tick): 0
 //
 // [SCENARIO] 4. Wait 4 Hours
 // [INFO] Skipping 2880 blocks (4 hours = 14400 seconds)
 //
 // [SCENARIO] 5. TWAP Queries After Time Passed
-// [INFO] Querying TWAP for last 1 hour
-// [EXPECTED] TWAP for last 1 hour:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"0","secondsAgo":"3600"}}
+// [EXPECTED] TWAP for last 1 hour (3600s ago): 0
 //
-// [INFO] Querying TWAP for last 2 hours
-// [EXPECTED] TWAP for last 2 hours:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"0","secondsAgo":"7200"}}
+// [EXPECTED] TWAP for last 2 hours (7200s ago): 0
 //
-// [INFO] Querying TWAP for last 4 hours
-// [EXPECTED] TWAP for last 4 hours:
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"0","secondsAgo":"14400"}}
+// [EXPECTED] TWAP for last 4 hours (14400s ago): 0
 //
 // [INFO] Test completed successfully
 // [EXPECTED] TWAP should remain at tick 0 since no price changes occurred

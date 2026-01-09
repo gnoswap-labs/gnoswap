@@ -139,7 +139,7 @@ func setupWideRangePool() BalanceSnapshot {
 		adminAddr,
 	)
 
-	pools := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
 	println("[INFO] Pool created with wide-range position (-10000 to 10000)")
 	println("[INFO] Minted amounts - obl:", amount0, "usdc:", amount1)
 	println("[INFO] Initial tick:", pools.Slot0Tick())
@@ -150,7 +150,7 @@ func setupWideRangePool() BalanceSnapshot {
 func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 10000000 OBL -> USDC (extreme downward movement)")
@@ -173,7 +173,7 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 		},
 	)
 
-	pools = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
@@ -185,7 +185,7 @@ func testExtremePriceDown(before BalanceSnapshot) BalanceSnapshot {
 func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 5000000 USDC -> OBL (extreme upward movement)")
@@ -208,7 +208,7 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 		},
 	)
 
-	pools = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)
@@ -220,7 +220,7 @@ func testExtremePriceUp(before BalanceSnapshot) BalanceSnapshot {
 func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools := pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ := pool.GetPool(oblPath, usdcPath, fee500)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Swapping 20000000 OBL -> USDC (maximum slippage)")
@@ -243,7 +243,7 @@ func testMaximumSlippage(before BalanceSnapshot) BalanceSnapshot {
 		},
 	)
 
-	pools = pool.GetPool(oblPath, usdcPath, fee500)
+	pools, _ = pool.GetPool(oblPath, usdcPath, fee500)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap - In:", swapAmount0, "Out:", swapAmount1)

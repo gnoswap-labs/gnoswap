@@ -5,6 +5,8 @@ package main
 import (
 	"testing"
 
+	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -96,7 +98,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -127,7 +129,7 @@ func main() {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 
@@ -141,22 +143,16 @@ func main() {
 	println("[SCENARIO] 7. TWAP Queries After Price Change")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	println("[INFO] Querying TWAP for last 1 hour")
-	twapResult1h := pool.ApiGetTWAP(poolPath, hourSeconds)
-	println("[EXPECTED] TWAP for last 1 hour (recent price):")
-	println(twapResult1h)
+	twapResult1h , _ := pool.GetTWAP(poolPath, hourSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price): %d\n", twapResult1h)
 	println()
 
-	println("[INFO] Querying TWAP for last 2 hours")
-	twapResult2h := pool.ApiGetTWAP(poolPath, halfSeconds)
-	println("[EXPECTED] TWAP for last 2 hours (after price change):")
-	println(twapResult2h)
+	twapResult2h , _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago, after price change): %d\n", twapResult2h)
 	println()
 
-	println("[INFO] Querying TWAP for last 4 hours")
-	twapResult4h := pool.ApiGetTWAP(poolPath, totalSeconds)
-	println("[EXPECTED] TWAP for last 4 hours (weighted average of both periods):")
-	println(twapResult4h)
+	twapResult4h , _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods): %d\n", twapResult4h)
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -204,17 +200,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Skipping 1440 blocks (2 hours = 7200 seconds)
 //
 // [SCENARIO] 7. TWAP Queries After Price Change
-// [INFO] Querying TWAP for last 1 hour
-// [EXPECTED] TWAP for last 1 hour (recent price):
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-1906","secondsAgo":"3600"}}
+// [EXPECTED] TWAP for last 1 hour (3600s ago, recent price): -1906
 //
-// [INFO] Querying TWAP for last 2 hours
-// [EXPECTED] TWAP for last 2 hours (after price change):
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-1906","secondsAgo":"7200"}}
+// [EXPECTED] TWAP for last 2 hours (7200s ago, after price change): -1906
 //
-// [INFO] Querying TWAP for last 4 hours
-// [EXPECTED] TWAP for last 4 hours (weighted average of both periods):
-// {"stat":{"height":3003,"timestamp":1234582290},"response":{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","twapTick":"-953","secondsAgo":"14400"}}
+// [EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods): -953
 //
 // [INFO] Test completed successfully
 // [EXPECTED] TWAP should show weighted average: tick 0 (2h) and new tick (2h)

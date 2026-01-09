@@ -22,7 +22,6 @@ import (
 	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/pool"
-	poolv1 "gno.land/r/gnoswap/pool/v1"
 	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
@@ -44,6 +43,7 @@ var (
 	barPath        = "gno.land/r/onbloc/bar"
 	fooPath        = "gno.land/r/onbloc/foo"
 	fee500  uint32 = 500
+	poolPath       = barPath + ":" + fooPath + ":500"
 )
 
 func main() {
@@ -85,7 +85,7 @@ func initPool() {
 		"130621891405341611593710811006",
 	)
 
-	p := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool tick should be %d\n", p.Slot0Tick())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", p.Liquidity().ToString())
 }
@@ -121,23 +121,23 @@ func mintPosition() {
 
 func checkTick9000AsLower() {
 	testing.SetRealm(adminRealm)
-	p := pool.GetPool(barPath, fooPath, fee500)
 
 	ufmt.Println("[INFO] Checking tick 9000 state as lower boundary")
-	liquidityGross := poolv1.GetTickLiquidityGross(p, 9000)
-	liquidityNet := poolv1.GetTickLiquidityNet(p, 9000)
-	initialized := poolv1.GetTickInitialized(p, 9000)
+	tickInfo, err := pool.GetTickInfo(poolPath, 9000)
+	if err != nil {
+		panic(ufmt.Sprintf("Failed to get tick info: %s", err.Error()))
+	}
 
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", liquidityGross.ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (positive for lower tick)\n", liquidityNet.ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", initialized)
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (positive for lower tick)\n", tickInfo.LiquidityNet().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, INT64_MAX)
 
-	p := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[INFO] Pool tick before swap: %d\n", p.Slot0Tick())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -158,7 +158,7 @@ func executeSwap() {
 	)
 
 	testing.SetRealm(adminRealm)
-	p = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Swap amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap amount1: %s\n", amount1)
 	ufmt.Printf("[EXPECTED] Pool tick after swap: %d\n", p.Slot0Tick())
@@ -208,16 +208,16 @@ func repositionToNewRange() {
 
 func checkTick9000AsUpper() {
 	testing.SetRealm(adminRealm)
-	p := pool.GetPool(barPath, fooPath, fee500)
 
 	ufmt.Println("[INFO] Checking tick 9000 state as upper boundary")
-	liquidityGross := poolv1.GetTickLiquidityGross(p, 9000)
-	liquidityNet := poolv1.GetTickLiquidityNet(p, 9000)
-	initialized := poolv1.GetTickInitialized(p, 9000)
+	tickInfo, err := pool.GetTickInfo(poolPath, 9000)
+	if err != nil {
+		panic(ufmt.Sprintf("Failed to get tick info: %s", err.Error()))
+	}
 
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", liquidityGross.ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (negative for upper tick)\n", liquidityNet.ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", initialized)
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (negative for upper tick)\n", tickInfo.LiquidityNet().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {

@@ -142,7 +142,7 @@ func setupPool() BalanceSnapshot {
 func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -166,7 +166,7 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 		},
 	)
 
-	pools = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPool(barPath, fooPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -180,7 +180,7 @@ func testExactInputSwap(before BalanceSnapshot) BalanceSnapshot {
 func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPool(barPath, fooPath, fee500)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -204,7 +204,7 @@ func testExactOutputSwap(before BalanceSnapshot) BalanceSnapshot {
 		},
 	)
 
-	pools = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPool(barPath, fooPath, fee500)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
