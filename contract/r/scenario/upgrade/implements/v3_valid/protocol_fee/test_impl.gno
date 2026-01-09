@@ -73,6 +73,10 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	return t.instance.GetAccuTransfersToDevOps()
 }
 
+func (t *TestProtocolFee) GetTokenList() []string {
+	return t.instance.GetTokenList()
+}
+
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	return t.instance.GetAccuTransferToGovStakerByTokenPath(path)
 }
@@ -87,33 +91,4 @@ func (t *TestProtocolFee) GetHistoryOfDistributedToGovStakerByTokenPath(path str
 
 func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
 	return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(path)
-}
-
-// IProtocolFeeApi interface
-func (t *TestProtocolFee) ApiGetAccuTransferToGovStaker() string {
-	return t.instance.ApiGetAccuTransferToGovStaker()
-}
-
-func (t *TestProtocolFee) ApiGetAccuTransferToDevOps() string {
-	return t.instance.ApiGetAccuTransferToDevOps()
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToGovStaker() string {
-	return t.instance.ApiGetHistoryTransferToGovStaker()
-}
-
-func (t *TestProtocolFee) ApiGetHistoryTransferToDevOps() string {
-	return t.instance.ApiGetHistoryTransferToDevOps()
-}
-
-func (t *TestProtocolFee) ApiGetActualBalance() string {
-	return t.instance.ApiGetActualBalance()
-}
-
-func (t *TestProtocolFee) ApiGetRecordedBalance() string {
-	return t.instance.ApiGetRecordedBalance()
-}
-
-func (t *TestProtocolFee) ApiGetUnrecordedBalance() string {
-	return t.instance.ApiGetUnrecordedBalance()
 }

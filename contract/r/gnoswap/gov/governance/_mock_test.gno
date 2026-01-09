@@ -114,137 +114,17 @@ func (m *MockGovernance) Reconfigure(
 	return res[0].(int64)
 }
 
-// Getter methods
-func (m *MockGovernance) GetProposerByProposalId(id int64) string {
-	res, ok := m.Response.Get("GetProposerByProposalId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetProposalTypeByProposalId(id int64) string {
-	res, ok := m.Response.Get("GetProposalTypeByProposalId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetYeaByProposalId(id int64) int64 {
-	res, ok := m.Response.Get("GetYeaByProposalId")
+// Store data getters
+func (m *MockGovernance) GetLatestConfigVersion() int64 {
+	res, ok := m.Response.Get("GetLatestConfigVersion")
 	if !ok {
 		return 0
 	}
 	return res[0].(int64)
 }
 
-func (m *MockGovernance) GetNayByProposalId(id int64) int64 {
-	res, ok := m.Response.Get("GetNayByProposalId")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockGovernance) GetProposalById(id int64) string {
-	res, ok := m.Response.Get("GetProposalById")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetVoteStatusFromProposalById(id int64) string {
-	res, ok := m.Response.Get("GetVoteStatusFromProposalById")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetVoteByAddressFromProposalById(addr address, id int64) string {
-	res, ok := m.Response.Get("GetVoteByAddressFromProposalById")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetConfigVersionByProposalId(id int64) int64 {
-	res, ok := m.Response.Get("GetConfigVersionByProposalId")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockGovernance) GetQuorumAmountByProposalId(id int64) int64 {
-	res, ok := m.Response.Get("GetQuorumAmountByProposalId")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockGovernance) GetTitleByProposalId(id int64) string {
-	res, ok := m.Response.Get("GetTitleByProposalId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetDescriptionByProposalId(id int64) string {
-	res, ok := m.Response.Get("GetDescriptionByProposalId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetExecutionStateByProposalId(id int64) string {
-	res, ok := m.Response.Get("GetExecutionStateByProposalId")
-	if !ok {
-		return ""
-	}
-	return res[0].(string)
-}
-
-func (m *MockGovernance) GetLatestConfig() Config {
-	res, ok := m.Response.Get("GetLatestConfig")
-	if !ok {
-		return Config{}
-	}
-	return res[0].(Config)
-}
-
-func (m *MockGovernance) GetConfig(configVersion int64) Config {
-	res, ok := m.Response.Get("GetConfig")
-	if !ok {
-		return Config{}
-	}
-	return res[0].(Config)
-}
-
-func (m *MockGovernance) GetVoteWeight(proposalID int64, address address) int64 {
-	res, ok := m.Response.Get("GetVoteWeight")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockGovernance) GetVotedHeight(proposalID int64, address address) int64 {
-	res, ok := m.Response.Get("GetVotedHeight")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
-func (m *MockGovernance) GetVotedAt(proposalID int64, address address) int64 {
-	res, ok := m.Response.Get("GetVotedAt")
+func (m *MockGovernance) GetCurrentProposalID() int64 {
+	res, ok := m.Response.Get("GetCurrentProposalID")
 	if !ok {
 		return 0
 	}
@@ -259,12 +139,274 @@ func (m *MockGovernance) GetMaxSmoothingPeriod() int64 {
 	return res[0].(int64)
 }
 
+// Config getters
+func (m *MockGovernance) GetLatestConfig() Config {
+	res, ok := m.Response.Get("GetLatestConfig")
+	if !ok {
+		return Config{}
+	}
+	return res[0].(Config)
+}
+
+func (m *MockGovernance) GetConfig(configVersion int64) (Config, error) {
+	res, ok := m.Response.Get("GetConfig")
+	if !ok {
+		return Config{}, nil
+	}
+	if res[1] != nil {
+		return Config{}, res[1].(error)
+	}
+	return res[0].(Config), nil
+}
+
+// Proposal getters
+func (m *MockGovernance) GetProposalCount() int {
+	res, ok := m.Response.Get("GetProposalCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovernance) GetProposalIDs(offset, count int) []int64 {
+	res, ok := m.Response.Get("GetProposalIDs")
+	if !ok {
+		return []int64{}
+	}
+	return res[0].([]int64)
+}
+
+func (m *MockGovernance) ExistsProposal(proposalID int64) bool {
+	res, ok := m.Response.Get("ExistsProposal")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
+func (m *MockGovernance) GetProposal(proposalID int64) (*Proposal, error) {
+	res, ok := m.Response.Get("GetProposal")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*Proposal), nil
+}
+
+func (m *MockGovernance) GetProposerByProposalId(id int64) (address, error) {
+	res, ok := m.Response.Get("GetProposerByProposalId")
+	if !ok {
+		return "", nil
+	}
+	if res[1] != nil {
+		return "", res[1].(error)
+	}
+	return res[0].(address), nil
+}
+
+func (m *MockGovernance) GetProposalTypeByProposalId(id int64) (ProposalType, error) {
+	res, ok := m.Response.Get("GetProposalTypeByProposalId")
+	if !ok {
+		return ProposalType(0), nil
+	}
+	if res[1] != nil {
+		return ProposalType(0), res[1].(error)
+	}
+	return res[0].(ProposalType), nil
+}
+
+func (m *MockGovernance) GetYeaByProposalId(id int64) (int64, error) {
+	res, ok := m.Response.Get("GetYeaByProposalId")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetNayByProposalId(id int64) (int64, error) {
+	res, ok := m.Response.Get("GetNayByProposalId")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetConfigVersionByProposalId(id int64) (int64, error) {
+	res, ok := m.Response.Get("GetConfigVersionByProposalId")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetQuorumAmountByProposalId(id int64) (int64, error) {
+	res, ok := m.Response.Get("GetQuorumAmountByProposalId")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetTitleByProposalId(id int64) (string, error) {
+	res, ok := m.Response.Get("GetTitleByProposalId")
+	if !ok {
+		return "", nil
+	}
+	if res[1] != nil {
+		return "", res[1].(error)
+	}
+	return res[0].(string), nil
+}
+
+func (m *MockGovernance) GetDescriptionByProposalId(id int64) (string, error) {
+	res, ok := m.Response.Get("GetDescriptionByProposalId")
+	if !ok {
+		return "", nil
+	}
+	if res[1] != nil {
+		return "", res[1].(error)
+	}
+	return res[0].(string), nil
+}
+
+func (m *MockGovernance) GetProposalStatusByProposalId(id int64) (string, error) {
+	res, ok := m.Response.Get("GetProposalStatusByProposalId")
+	if !ok {
+		return "", nil
+	}
+	if res[1] != nil {
+		return "", res[1].(error)
+	}
+	return res[0].(string), nil
+}
+
+// Vote getters
+func (m *MockGovernance) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeight int64, err error) {
+	res, ok := m.Response.Get("GetVoteStatus")
+	if !ok {
+		return 0, 0, 0, 0, nil
+	}
+	if res[4] != nil {
+		return 0, 0, 0, 0, res[4].(error)
+	}
+	return res[0].(int64), res[1].(int64), res[2].(int64), res[3].(int64), nil
+}
+
+func (m *MockGovernance) GetVotingInfoCount(proposalID int64) int {
+	res, ok := m.Response.Get("GetVotingInfoCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovernance) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
+	res, ok := m.Response.Get("GetVotingInfoAddresses")
+	if !ok {
+		return []address{}
+	}
+	return res[0].([]address)
+}
+
+func (m *MockGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
+	res, ok := m.Response.Get("ExistsVotingInfo")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
+func (m *MockGovernance) GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
+	res, ok := m.Response.Get("GetVotingInfo")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*VotingInfo), nil
+}
+
+func (m *MockGovernance) GetVoteWeight(proposalID int64, addr address) (int64, error) {
+	res, ok := m.Response.Get("GetVoteWeight")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetVotedHeight(proposalID int64, addr address) (int64, error) {
+	res, ok := m.Response.Get("GetVotedHeight")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+func (m *MockGovernance) GetVotedAt(proposalID int64, addr address) (int64, error) {
+	res, ok := m.Response.Get("GetVotedAt")
+	if !ok {
+		return 0, nil
+	}
+	if res[1] != nil {
+		return 0, res[1].(error)
+	}
+	return res[0].(int64), nil
+}
+
+// User proposal getters
+func (m *MockGovernance) GetUserProposalCount(user address) int {
+	res, ok := m.Response.Get("GetUserProposalCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovernance) GetUserProposalIDs(user address, offset, count int) []int64 {
+	res, ok := m.Response.Get("GetUserProposalIDs")
+	if !ok {
+		return []int64{}
+	}
+	return res[0].([]int64)
+}
+
+// Active proposal query
 func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	res, ok := m.Response.Get("GetOldestActiveProposalSnapshotTime")
 	if !ok {
 		return 0, false
 	}
 	return res[0].(int64), res[1].(bool)
+}
+
+// Voting weight snapshot getters
+func (m *MockGovernance) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
+	res, ok := m.Response.Get("GetCurrentVotingWeightSnapshot")
+	if !ok {
+		return 0, 0, nil
+	}
+	return res[0].(int64), res[1].(int64), nil
 }
 
 func newMockGovernance(version string) *MockGovernance {

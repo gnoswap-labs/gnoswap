@@ -162,24 +162,30 @@ func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
 	return i.store.SetFeeAmountTickSpacing(feeAmountTickSpacing)
 }
 
-// mustGetPool retrieves a pool instance by its path and ensures it exists.
-func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
+func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 	pools := i.store.GetPools()
 
 	iPool, exist := pools.Get(poolPath)
 	if !exist {
-		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
-		))
+		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	pool, ok := iPool.(*pl.Pool)
+	p, ok := iPool.(*pl.Pool)
 	if !ok {
-		panic(ufmt.Errorf("failed to cast pool to *Pool: %T", iPool))
+		return nil, ufmt.Errorf("failed to cast pool to *Pool: %T", iPool)
 	}
 
-	return pool
+	return p, nil
+}
+
+// mustGetPool retrieves a pool instance by its path and ensures it exists.
+func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
+	p, err := i.getPool(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+
+	return p
 }
 
 func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Pool {

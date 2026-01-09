@@ -128,6 +128,17 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 			amount:    0,
 		},
 		{
+			name: "success transfer exact balance",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, communityPoolAddr, 10_000)
+			},
+			caller:    adminRealm,
+			tokenPath: gnsPath,
+			to:        dummyReceiver,
+			amount:    10_000,
+		},
+		{
 			name: "panic with negative amount",
 			setup: func() {
 				testing.SetRealm(adminRealm)
@@ -220,127 +231,93 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 	}
 }
 
-func TestCommunityPool_transferToken(t *testing.T) {
+func TestCommunityPool_GetBalanceOf(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		tokenPath   string
-		to          address
-		amount      int64
-		shouldPanic bool
-		panicMsg    string
+		name            string
+		setup           func()
+		tokenPath       string
+		expectedBalance int64
+		shouldPanic     bool
+		panicMsg        string
 	}{
 		{
-			name: "success transfer with valid parameters",
+			name: "returns zero when pool has no tokens",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				// transfer all tokens from community pool to admin first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
 			},
-			tokenPath: gnsPath,
-			to:        dummyReceiver,
-			amount:    1000,
+			tokenPath:       gnsPath,
+			expectedBalance: 0,
 		},
 		{
-			name: "success transfer zero amount",
+			name: "returns correct balance after transfer to pool",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				// clear pool first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
+				// transfer tokens to pool
+				gns.Transfer(cross, communityPoolAddr, 5_000)
 			},
-			tokenPath: gnsPath,
-			to:        dummyReceiver,
-			amount:    0,
+			tokenPath:       gnsPath,
+			expectedBalance: 5_000,
 		},
 		{
-			name: "success transfer with max valid amount",
+			name: "returns updated balance after multiple transfers",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
+				// clear pool first
+				currentBalance := gns.BalanceOf(communityPoolAddr)
+				if currentBalance > 0 {
+					TransferToken(cross, gnsPath, adminAddr, currentBalance)
+				}
+				// transfer tokens to pool multiple times
+				gns.Transfer(cross, communityPoolAddr, 1_000)
+				gns.Transfer(cross, communityPoolAddr, 2_000)
+				gns.Transfer(cross, communityPoolAddr, 3_000)
 			},
-			tokenPath: gnsPath,
-			to:        dummyReceiver,
-			amount:    10_000,
+			tokenPath:       gnsPath,
+			expectedBalance: 6_000,
 		},
 		{
-			name: "success transfer minimum amount",
+			name: "panics with unregistered token path",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
-			tokenPath: gnsPath,
-			to:        dummyReceiver,
-			amount:    1,
-		},
-		{
-			name: "panic with negative amount",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
-			},
-			tokenPath:   gnsPath,
-			to:          dummyReceiver,
-			amount:      -100,
+			tokenPath:   "gno.land/r/demo/unregistered_token",
 			shouldPanic: true,
-			panicMsg:    "invalid amount",
+			panicMsg:    "unknown token",
 		},
 		{
-			name: "panic with empty token path",
+			name: "panics with empty token path",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
 			tokenPath:   "",
-			to:          dummyReceiver,
-			amount:      100,
 			shouldPanic: true,
 			panicMsg:    "unknown token",
-		},
-		{
-			name: "panic with unregistered token path",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
-			},
-			tokenPath:   "gno.land/r/demo/not_registered",
-			to:          dummyReceiver,
-			amount:      100,
-			shouldPanic: true,
-			panicMsg:    "unknown token",
-		},
-		{
-			name: "panic with empty to address",
-			setup: func() {
-				testing.SetRealm(adminRealm)
-				gns.Transfer(cross, communityPoolAddr, 10_000)
-			},
-			tokenPath:   gnsPath,
-			to:          address(""),
-			amount:      100,
-			shouldPanic: true,
-			panicMsg:    "invalid address",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetCommunityPoolState(t)
-
 			if tt.setup != nil {
 				tt.setup()
 			}
 
-			// Set realm to community pool for the transfer
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/community_pool"))
-
 			if tt.shouldPanic {
-				uassert.AbortsContains(t, tt.panicMsg, func() {
-					transferToken(tt.tokenPath, tt.to, tt.amount)
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					GetBalanceOf(tt.tokenPath)
 				})
 			} else {
-				receiverOldBalance := gns.BalanceOf(tt.to)
-				err := transferToken(tt.tokenPath, tt.to, tt.amount)
-				uassert.NoError(t, err)
-				receiverNewBalance := gns.BalanceOf(tt.to)
-				uassert.Equal(t, receiverNewBalance-receiverOldBalance, tt.amount)
+				balance := GetBalanceOf(tt.tokenPath)
+				uassert.Equal(t, tt.expectedBalance, balance)
 			}
 		})
 	}

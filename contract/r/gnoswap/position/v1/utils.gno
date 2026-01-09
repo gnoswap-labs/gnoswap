@@ -11,6 +11,8 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
+const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
 func mustGetPositionAddress() address {
 	return access.MustGetAddress(prabc.ROLE_POSITION.String())
 }
@@ -198,7 +200,7 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
-	if overflow {
+	if overflow || res > 9223372036854775807 {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),

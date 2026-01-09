@@ -285,8 +285,8 @@ func verifyOwnership() {
 
 	// Verify position can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position, found := pn.GetPosition(1)
-	if !found {
+	position, err := pn.GetPosition(1)
+	if err != nil {
 		panic("position should still exist")
 	}
 	ufmt.Printf("[EXPECTED] position still accessible - liquidity: %s\n", position.Liquidity().ToString())

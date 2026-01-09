@@ -45,11 +45,11 @@ Claims accumulated swap fees.
 
 ### `Reposition`
 
-Atomically moves liquidity to new range.
+Updates an existing position's price range.
 
-- Burns old position
-- Creates new position
-- Mints new NFT
+- Requires position to be cleared first (zero liquidity/tokens owed)
+- Reuses the same position ID and NFT
+- Adds new liquidity to the updated range
 
 ## Technical Details
 
@@ -122,20 +122,24 @@ amount1 = L * (sqrtCurrent - sqrtLower)
 
 ```go
 // Mint new position
-tokenId := Mint(
-    "WETH/USDC:3000",  // pool
-    -887220,           // tickLower
-    887220,            // tickUpper
-    "1000000",         // amount0Desired
-    "2000000000",      // amount1Desired
-    "950000",          // amount0Min
-    "1900000000",      // amount1Min
+tokenId, liquidity, amount0, amount1 := Mint(
+    "gno.land/r/onbloc/weth",  // token0
+    "gno.land/r/onbloc/usdc",  // token1
+    3000,                      // fee
+    -887220,                   // tickLower
+    887220,                    // tickUpper
+    "1000000",                 // amount0Desired
+    "2000000000",              // amount1Desired
+    "950000",                  // amount0Min
+    "1900000000",              // amount1Min
     deadline,
-    recipient,
+    recipient,                 // mintTo
+    caller,                    // caller
+    "",                        // referrer
 )
 
 // Add liquidity
-IncreaseLiquidity(
+positionId, liquidity, amount0, amount1, refund := IncreaseLiquidity(
     tokenId,
     "500000",
     "1000000000",
@@ -145,7 +149,22 @@ IncreaseLiquidity(
 )
 
 // Collect fees
-CollectFee(tokenId)
+positionId, token0Path, token1Path, fee0, fee1, poolPath := CollectFee(
+    tokenId,
+    false,  // unwrapResult
+)
+
+// Reposition to new range (requires cleared position)
+positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
+    tokenId,
+    -443610,                   // new tickLower
+    443610,                    // new tickUpper
+    "1000000",                 // amount0Desired
+    "2000000000",              // amount1Desired
+    "950000",                  // amount0Min
+    "1900000000",              // amount1Min
+    deadline,
+)
 ```
 
 ## Security

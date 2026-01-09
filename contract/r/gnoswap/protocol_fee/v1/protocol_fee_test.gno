@@ -11,8 +11,13 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
+
+	_ "gno.land/r/onbloc/bar"
+	_ "gno.land/r/onbloc/obl"
+	_ "gno.land/r/onbloc/qux"
 )
 
 var (
@@ -731,6 +736,771 @@ func TestProtocolFee_AssertIsValidPercent(t *testing.T) {
 					assertIsValidPercent(tt.pct)
 				})
 			}
+		})
+	}
+}
+
+func TestSetDevOpsPct_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		pct         int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			pct:         5000,
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(adminRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetDevOpsPct(tt.pct)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestSetDevOpsPct_UnauthorizedCaller(t *testing.T) {
+	tests := []struct {
+		name        string
+		prevRealm   runtime.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "panic - unauthorized user",
+			prevRealm:   testing.NewUserRealm(aliceAddr),
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "panic - pool contract cannot set",
+			prevRealm:   testing.NewCodeRealm(poolPath),
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "panic - staker contract cannot set",
+			prevRealm:   stakerRealm,
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "success - admin can set",
+			prevRealm:   adminRealm,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(tt.prevRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetDevOpsPct(5000)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						pf.SetDevOpsPct(5000)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestSetGovStakerPct_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		pct         int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			pct:         5000,
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(adminRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetGovStakerPct(tt.pct)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestSetGovStakerPct_UnauthorizedCaller(t *testing.T) {
+	tests := []struct {
+		name        string
+		prevRealm   runtime.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "panic - unauthorized user",
+			prevRealm:   testing.NewUserRealm(aliceAddr),
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "panic - pool contract cannot set",
+			prevRealm:   testing.NewCodeRealm(poolPath),
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "panic - gov staker contract cannot set",
+			prevRealm:   govStakerRealm,
+			shouldPanic: true,
+			panicMsg:    "is not admin or governance",
+		},
+		{
+			name:        "success - admin can set",
+			prevRealm:   adminRealm,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(tt.prevRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetGovStakerPct(5000)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						pf.SetGovStakerPct(5000)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestClearTokenListWithAmount_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			pf.store.SetTokenListWithAmounts(map[string]int64{
+				"gno.land/r/foo": 100,
+			})
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(govStakerRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.ClearTokenListWithAmount()
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestClearAccuTransferToGovStaker_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			pf.store.SetAccuToGovStakerItem("gno.land/r/foo", int64(1000))
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(govStakerRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.ClearAccuTransferToGovStaker()
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(govStakerRealm)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.DistributeProtocolFee()
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestAddToProtocolFee_HaltScenario(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		cleanup     func()
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "panic - protocol fee is halted",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: protocol_fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.AddToProtocolFee("gno.land/r/foo", 100)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestSafeAddInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "success - positive + positive",
+			a:        100,
+			b:        200,
+			expected: 300,
+		},
+		{
+			name:     "success - positive + negative",
+			a:        100,
+			b:        -50,
+			expected: 50,
+		},
+		{
+			name:     "success - negative + negative",
+			a:        -100,
+			b:        -200,
+			expected: -300,
+		},
+		{
+			name:     "success - zero + positive",
+			a:        0,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "success - zero + zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:        "panic - overflow",
+			a:           9223372036854775807, // MaxInt64
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "panic - overflow with large positives",
+			a:           9223372036854775800,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "panic - underflow",
+			a:           -9223372036854775808, // MinInt64
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "panic - underflow with large negatives",
+			a:           -9223372036854775800,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeAddInt64(tt.a, tt.b)
+				})
+			} else {
+				result := safeAddInt64(tt.a, tt.b)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSafeSubInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "success - positive - positive (positive result)",
+			a:        200,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "success - positive - positive (negative result)",
+			a:        100,
+			b:        200,
+			expected: -100,
+		},
+		{
+			name:     "success - positive - negative",
+			a:        100,
+			b:        -50,
+			expected: 150,
+		},
+		{
+			name:     "success - negative - negative",
+			a:        -100,
+			b:        -200,
+			expected: 100,
+		},
+		{
+			name:     "success - zero - positive",
+			a:        0,
+			b:        100,
+			expected: -100,
+		},
+		{
+			name:     "success - zero - zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:        "panic - underflow",
+			a:           -9223372036854775808, // MinInt64
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "panic - underflow with large values",
+			a:           -9223372036854775800,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "panic - overflow",
+			a:           9223372036854775807, // MaxInt64
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "panic - overflow with large values",
+			a:           9223372036854775800,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeSubInt64(tt.a, tt.b)
+				})
+			} else {
+				result := safeSubInt64(tt.a, tt.b)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSafeMulDiv(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		c           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "success - simple multiplication and division",
+			a:        100,
+			b:        50,
+			c:        10,
+			expected: 500,
+		},
+		{
+			name:     "success - percentage calculation",
+			a:        1000,
+			b:        2500,
+			c:        10000,
+			expected: 250,
+		},
+		{
+			name:     "success - zero numerator",
+			a:        0,
+			b:        100,
+			c:        10,
+			expected: 0,
+		},
+		{
+			name:     "success - zero multiplier",
+			a:        100,
+			b:        0,
+			c:        10,
+			expected: 0,
+		},
+		{
+			name:        "panic - division by zero",
+			a:           100,
+			b:           50,
+			c:           0,
+			shouldPanic: true,
+			panicMsg:    "division by zero in safeMulDiv",
+		},
+		{
+			name:        "panic - multiplication overflow (positive * positive)",
+			a:           9223372036854775807, // MaxInt64
+			b:           2,
+			c:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 multiplication overflow in safeMulDiv",
+		},
+		{
+			name:        "panic - multiplication underflow (positive * negative)",
+			a:           9223372036854775807,
+			b:           -2,
+			c:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+		},
+		{
+			name:        "panic - multiplication underflow (negative * positive)",
+			a:           -9223372036854775808, // MinInt64
+			b:           2,
+			c:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeMulDiv(tt.a, tt.b, tt.c)
+				})
+			} else {
+				result := safeMulDiv(tt.a, tt.b, tt.c)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestMakeEventString(t *testing.T) {
+	tests := []struct {
+		name      string
+		tokenPath string
+		amount    int64
+		expected  string
+	}{
+		{
+			name:      "simple token and amount",
+			tokenPath: "gno.land/r/foo",
+			amount:    100,
+			expected:  "gno.land/r/foo*FEE*100",
+		},
+		{
+			name:      "token with zero amount",
+			tokenPath: "gno.land/r/bar",
+			amount:    0,
+			expected:  "gno.land/r/bar*FEE*0",
+		},
+		{
+			name:      "token with large amount",
+			tokenPath: "gno.land/r/baz",
+			amount:    9223372036854775807,
+			expected:  "gno.land/r/baz*FEE*9223372036854775807",
+		},
+		{
+			name:      "token with negative amount",
+			tokenPath: "gno.land/r/qux",
+			amount:    -100,
+			expected:  "gno.land/r/qux*FEE*-100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := makeEventString(tt.tokenPath, tt.amount)
+			uassert.Equal(t, result, tt.expected)
+		})
+	}
+}
+
+func TestProtocolFeeState_TokenAmountOfTokenPath(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupFn   func(pf *protocolFeeV1)
+		tokenPath string
+		expected  int64
+	}{
+		{
+			name: "success - existing token",
+			setupFn: func(pf *protocolFeeV1) {
+				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
+			},
+			tokenPath: "gno.land/r/foo",
+			expected:  1000,
+		},
+		{
+			name:      "success - non-existing token returns 0",
+			setupFn:   func(pf *protocolFeeV1) {},
+			tokenPath: "gno.land/r/nonexistent",
+			expected:  0,
+		},
+		{
+			name: "success - zero amount token",
+			setupFn: func(pf *protocolFeeV1) {
+				pf.store.SetTokenListWithAmountItem("gno.land/r/zero", 0)
+			},
+			tokenPath: "gno.land/r/zero",
+			expected:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			tt.setupFn(pf)
+
+			// When
+			result := pf.getProtocolFeeState().TokenAmountOfTokenPath(tt.tokenPath)
+
+			// Then
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }

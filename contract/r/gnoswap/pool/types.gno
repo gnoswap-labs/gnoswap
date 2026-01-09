@@ -138,8 +138,6 @@ type IPoolGetter interface {
 
 	ExistsPoolPath(poolPath string) bool
 
-	GetPool(token0Path, token1Path string, fee uint32) *Pool
-
 	GetBalanceToken0(poolPath string) string
 
 	GetBalanceToken1(poolPath string) string
@@ -212,9 +210,23 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	ApiGetPool(poolPath string) string
+	GetTWAP(poolPath string, secondsAgo uint32) (int32, error)
 
-	ApiGetTWAP(poolPath string, secondsAgo uint32) string
+	GetPoolCount() int
+	GetPoolPaths(offset, count int) []string
+	GetFeeAmountTickSpacings() map[uint32]int32
+
+	GetPoolPositionCount(poolPath string) int
+	GetPoolPositionKeys(poolPath string, offset, count int) []string
+
+	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32
+
+	// Structure getters
+	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
+	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
+	GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error)
+	GetPosition(poolPath, key string) (PositionInfo, error)
+	GetObservationState(poolPath string) (*ObservationState, error)
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.

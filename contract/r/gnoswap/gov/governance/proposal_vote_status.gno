@@ -59,11 +59,24 @@ func NewProposalVoteStatus(
 	maxVotingWeight int64,
 	quorumAmount int64,
 ) *ProposalVoteStatus {
-
 	return &ProposalVoteStatus{
 		yea:             0,               // Start with no "yes" votes
 		nay:             0,               // Start with no "no" votes
 		maxVotingWeight: maxVotingWeight, // Set maximum possible votes
 		quorumAmount:    quorumAmount,    // Set required votes for passage
+	}
+}
+
+// Clone creates a deep copy of the ProposalVoteStatus.
+func (p *ProposalVoteStatus) Clone() *ProposalVoteStatus {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalVoteStatus{
+		yea:             p.yea,
+		nay:             p.nay,
+		maxVotingWeight: p.maxVotingWeight,
+		quorumAmount:    p.quorumAmount,
 	}
 }

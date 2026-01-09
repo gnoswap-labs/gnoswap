@@ -246,7 +246,7 @@ func TestGetPool(t *testing.T) {
 		name        string
 		setupFn     func(t *testing.T)
 		action      func(t *testing.T) *pl.Pool
-		shouldPanic bool
+		shouldError bool
 		expected    string
 		verifyFn    func(t *testing.T, pool *pl.Pool)
 	}{
@@ -256,10 +256,7 @@ func TestGetPool(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				mockInstanceSetPoolCreationFee(0)
 			},
-			action: func(t *testing.T) *pl.Pool {
-				return getMockInstance().GetPool(barPath, fooPath, fee500)
-			},
-			shouldPanic: true,
+			shouldError: true,
 			expected:    "[GNOSWAP-POOL-006] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
 		},
 		{
@@ -268,9 +265,6 @@ func TestGetPool(t *testing.T) {
 				testing.SetRealm(adminRealm)
 				mockInstanceSetPoolCreationFee(0)
 				mockInstanceCreatePool(barPath, fooPath, fee500, "4295128740")
-			},
-			action: func(t *testing.T) *pl.Pool {
-				return getMockInstance().GetPool(barPath, fooPath, fee500)
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool) {
 				if pool.Token0Path() != barPath {
@@ -291,36 +285,14 @@ func TestGetPool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r == nil {
-					if tt.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tt.name)
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tt.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-						}
-					case error:
-						if r.(error).Error() != tt.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
-					}
-				}
-			}()
 			if tt.setupFn != nil {
 				tt.setupFn(t)
 			}
 
-			if tt.shouldPanic {
-				tt.action(t)
-			}
-
-			if !tt.shouldPanic {
-				pool := tt.action(t)
+			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
+			if tt.shouldError {
+				uassert.Error(t, err, "expected error")
+			} else {
 				if tt.verifyFn != nil {
 					tt.verifyFn(t, pool)
 				}

@@ -559,10 +559,10 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 	// This test verifies that InitEmissionState is called with actual block height,
 	// not timestamp value, fixing the semantic inconsistency issue.
 	tests := []struct {
-		name         string
-		blockHeight  int64
-		setup        func() int64
-		wantCheck    func(t *testing.T, startTimestamp, startHeight, expectedHeight int64)
+		name        string
+		blockHeight int64
+		setup       func() int64
+		wantCheck   func(t *testing.T, startTimestamp, startHeight, expectedHeight int64)
 	}{
 		{
 			name:        "emission start height should be block height not timestamp",
@@ -636,6 +636,266 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 
 			// Verify expectations
 			tt.wantCheck(t, startTimestamp, startHeight, tt.blockHeight)
+		})
+	}
+}
+
+func TestSetLeftGNSAmount_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:   "success - set zero value",
+			amount: 0,
+		},
+		{
+			name:   "success - set positive value",
+			amount: 100,
+		},
+		{
+			name:   "success - set max int64 value",
+			amount: 9223372036854775807,
+		},
+		{
+			name:        "panic - negative value",
+			amount:      -1,
+			shouldPanic: true,
+			panicMsg:    "left GNS amount cannot be negative",
+		},
+		{
+			name:        "panic - min int64 value",
+			amount:      -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "left GNS amount cannot be negative",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			resetObject(t)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					setLeftGNSAmount(tt.amount)
+				})
+				return
+			}
+
+			// When
+			setLeftGNSAmount(tt.amount)
+
+			// Then
+			uassert.Equal(t, tt.amount, GetLeftGNSAmount())
+		})
+	}
+}
+
+func TestSetLastExecutedTimestamp_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		timestamp   int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:      "success - set zero value",
+			timestamp: 0,
+		},
+		{
+			name:      "success - set positive value",
+			timestamp: 1234567890,
+		},
+		{
+			name:      "success - set max int64 value",
+			timestamp: 9223372036854775807,
+		},
+		{
+			name:        "panic - negative value",
+			timestamp:   -1,
+			shouldPanic: true,
+			panicMsg:    "last executed timestamp cannot be negative",
+		},
+		{
+			name:        "panic - min int64 value",
+			timestamp:   -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "last executed timestamp cannot be negative",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			resetObject(t)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					setLastExecutedTimestamp(tt.timestamp)
+				})
+				return
+			}
+
+			// When
+			setLastExecutedTimestamp(tt.timestamp)
+
+			// Then
+			uassert.Equal(t, tt.timestamp, GetLastExecutedTimestamp())
+		})
+	}
+}
+
+func TestTargetToStr(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   int
+		expected string
+	}{
+		{
+			name:     "LIQUIDITY_STAKER",
+			target:   LIQUIDITY_STAKER,
+			expected: "LIQUIDITY_STAKER",
+		},
+		{
+			name:     "DEVOPS",
+			target:   DEVOPS,
+			expected: "DEVOPS",
+		},
+		{
+			name:     "COMMUNITY_POOL",
+			target:   COMMUNITY_POOL,
+			expected: "COMMUNITY_POOL",
+		},
+		{
+			name:     "GOV_STAKER",
+			target:   GOV_STAKER,
+			expected: "GOV_STAKER",
+		},
+		{
+			name:     "invalid target 0",
+			target:   0,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target -1",
+			target:   -1,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target 5",
+			target:   5,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target 999",
+			target:   999,
+			expected: "UNKNOWN",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When
+			result := targetToStr(tt.target)
+
+			// Then
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAssertValidDistributionPct_NegativeAndExceed(t *testing.T) {
+	tests := []struct {
+		name        string
+		pcts        [4]int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "success - default distribution",
+			pcts: [4]int64{7500, 2000, 500, 0},
+		},
+		{
+			name: "success - equal distribution",
+			pcts: [4]int64{2500, 2500, 2500, 2500},
+		},
+		{
+			name: "success - all to one target",
+			pcts: [4]int64{10000, 0, 0, 0},
+		},
+		{
+			name: "success - minimum valid percentages",
+			pcts: [4]int64{9997, 1, 1, 1},
+		},
+		{
+			name:        "panic - sum less than 10000",
+			pcts:        [4]int64{5000, 2000, 1000, 1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 9000",
+		},
+		{
+			name:        "panic - sum greater than 10000",
+			pcts:        [4]int64{5000, 3000, 2000, 1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 11000",
+		},
+		{
+			name:        "panic - negative first percentage",
+			pcts:        [4]int64{-1000, 5000, 3000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative second percentage",
+			pcts:        [4]int64{5000, -1000, 3000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 2 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative third percentage",
+			pcts:        [4]int64{5000, 3000, -1000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 3 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative fourth percentage",
+			pcts:        [4]int64{5000, 3000, 3000, -1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 4 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - percentage exceeds 100%",
+			pcts:        [4]int64{15000, 0, 0, -5000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot exceed 100%: 15000",
+		},
+		{
+			name:        "panic - all zeros sum is 0",
+			pcts:        [4]int64{0, 0, 0, 0},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					assertValidDistributionPct(tt.pcts[0], tt.pcts[1], tt.pcts[2], tt.pcts[3])
+				})
+				return
+			}
+
+			// When
+			uassert.NotPanics(t, func() {
+				assertValidDistributionPct(tt.pcts[0], tt.pcts[1], tt.pcts[2], tt.pcts[3])
+			})
 		})
 	}
 }

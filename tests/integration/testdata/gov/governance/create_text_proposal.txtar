@@ -105,7 +105,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetTitleByPropos
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetDescriptionByProposalId(1)"
 # stdout '"This is a test proposal"'
 
-gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetProposalStatusByProposalId(1)"
 # stdout '"active"'
 
 ### Vote the proposal
@@ -116,5 +116,5 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Vote -args 1
 # stdout 'STORAGE FEE:    1[0-9]{3}ugnot'
 # stdout 'EVENTS:     \[{\"type\":\"Vote\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevPkgPath\",\"value\":\"\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"voter\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"yes\",\"value\":\"yes\"},{\"key\":\"voteWeight\",\"value\":\"1000000000\"},{\"key\":\"voteYes\",\"value\":\"1000000000\"},{\"key\":\"voteNo\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":12,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1200},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
-gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetProposalStatusByProposalId(1)"
 # stdout '"active"'

@@ -388,6 +388,40 @@ func TestAssertIsAuthorized(t *testing.T) {
 	}
 }
 
+func TestAssertIsAdminReflectsRoleUpdate(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	adminAddr := testutils.TestAddress("admin")
+	newAdminAddr := testutils.TestAddress("new_admin")
+
+	roleAddresses = make(map[string]address)
+	err := setRoleAddress(prbac.ROLE_ADMIN.String(), adminAddr)
+	uassert.NoError(t, err)
+
+	uassert.NotPanics(t, func() {
+		AssertIsAdmin(adminAddr)
+	})
+
+	err = setRoleAddress(prbac.ROLE_ADMIN.String(), newAdminAddr)
+	uassert.NoError(t, err)
+
+	uassert.NotPanics(t, func() {
+		AssertIsAdmin(newAdminAddr)
+	})
+
+	expectedMsg := "unauthorized: caller " + adminAddr.String() + " is not " + prbac.ROLE_ADMIN.String()
+	uassert.PanicsWithMessage(t, expectedMsg, func() {
+		AssertIsAdmin(adminAddr)
+	})
+}
+
 func TestAssertHasAnyRole(t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]address)
@@ -452,6 +486,25 @@ func TestAssertHasAnyRole(t *testing.T) {
 			roleNames:   []string{"non_existent_role"},
 			shouldPanic: true,
 			expectedMsg: "role non_existent_role not found",
+		},
+		{
+			name: "non-existent role checked before existing authorized role",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String(): adminAddr,
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{"non_existent_role", prbac.ROLE_ADMIN.String()},
+			shouldPanic: true,
+			expectedMsg: "role non_existent_role not found",
+		},
+		{
+			name: "existing authorized role checked before non-existent role",
+			setupRoles: map[string]address{
+				prbac.ROLE_ADMIN.String(): adminAddr,
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), "non_existent_role"},
+			shouldPanic: false,
 		},
 	}
 

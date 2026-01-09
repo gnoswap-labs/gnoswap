@@ -25,13 +25,13 @@ type ProposalActionStatus struct {
 }
 
 /* Getter methods */
-func (p *ProposalActionStatus) Canceled() bool { return p.canceled }
-func (p *ProposalActionStatus) CanceledAt() int64 { return p.canceledAt }
+func (p *ProposalActionStatus) Canceled() bool        { return p.canceled }
+func (p *ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
 func (p *ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
-func (p *ProposalActionStatus) Executed() bool { return p.executed }
-func (p *ProposalActionStatus) ExecutedAt() int64 { return p.executedAt }
+func (p *ProposalActionStatus) Executed() bool        { return p.executed }
+func (p *ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
 func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
-func (p *ProposalActionStatus) Executable() bool { return p.executable }
+func (p *ProposalActionStatus) Executable() bool      { return p.executable }
 
 /* Setter methods */
 func (p *ProposalActionStatus) SetCanceled(canceled bool) {
@@ -118,5 +118,24 @@ func NewProposalActionStatus(executable bool) *ProposalActionStatus {
 		canceled:   false,      // Proposal starts as not canceled
 		executed:   false,      // Proposal starts as not executed
 		executable: executable, // Set based on proposal type
+	}
+}
+
+// Clone creates a deep copy of the ProposalActionStatus.
+func (p *ProposalActionStatus) Clone() *ProposalActionStatus {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalActionStatus{
+		canceled:       p.canceled,
+		canceledAt:     p.canceledAt,
+		canceledHeight: p.canceledHeight,
+		canceledBy:     p.canceledBy,
+		executed:       p.executed,
+		executedAt:     p.executedAt,
+		executedHeight: p.executedHeight,
+		executedBy:     p.executedBy,
+		executable:     p.executable,
 	}
 }
