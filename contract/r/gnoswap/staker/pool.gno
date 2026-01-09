@@ -171,15 +171,15 @@ func (p *Pool) Clone() *Pool {
 	}
 
 	return &Pool{
-		poolPath:                   p.poolPath,
-		stakedLiquidity:            p.stakedLiquidity.Clone(),
-		lastUnclaimableTime:        p.lastUnclaimableTime,
-		unclaimableAcc:             p.unclaimableAcc,
-		rewardCache:                p.rewardCache.Clone(),
-		incentives:                 p.incentives.Clone(),
-		ticks:                      p.ticks.Clone(),
+		poolPath:                      p.poolPath,
+		stakedLiquidity:               p.stakedLiquidity.Clone(),
+		lastUnclaimableTime:           p.lastUnclaimableTime,
+		unclaimableAcc:                p.unclaimableAcc,
+		rewardCache:                   p.rewardCache.Clone(),
+		incentives:                    p.incentives.Clone(),
+		ticks:                         p.ticks.Clone(),
 		globalRewardRatioAccumulation: p.globalRewardRatioAccumulation.Clone(),
-		historicalTick:             p.historicalTick.Clone(),
+		historicalTick:                p.historicalTick.Clone(),
 	}
 }
 
@@ -617,7 +617,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false // skip invalid keys
 		}
 
-	return fn(int32(tickId), tick)
+		return fn(int32(tickId), tick)
 	})
 }
 
