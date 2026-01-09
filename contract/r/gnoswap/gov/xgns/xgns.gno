@@ -3,6 +3,7 @@ package xgns
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc20"
@@ -35,13 +36,6 @@ func BalanceOf(owner address) int64 {
 	return token.BalanceOf(owner)
 }
 
-// VotingSupply returns total supply eligible for voting.
-func VotingSupply() int64 {
-	launchpad := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
-
-	return token.TotalSupply() - token.BalanceOf(launchpad)
-}
-
 // Render returns a formatted representation of the token state.
 func Render(path string) string {
 	if path == "" {
@@ -56,11 +50,6 @@ func Render(path string) string {
 		}
 		balance := token.BalanceOf(address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
-	case "votingsupply":
-		if len(parts) != 1 {
-			return "404\n"
-		}
-		return ufmt.Sprintf("%d\n", VotingSupply())
 	default:
 		return "404\n"
 	}
@@ -96,6 +85,26 @@ func Burn(cur realm, from address, amount int64) {
 	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Burn(from, amount))
+}
+
+// SupplyInfo returns supply breakdown information.
+//
+// Returns:
+//   - totalIssued: total xGNS tokens issued
+//   - issuedByDelegate: tokens issued through governance delegation
+//   - issuedByDepositGns: tokens issued through launchpad deposit
+//   - error: error if launchpad address not found
+func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err error) {
+	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !ok {
+		return 0, 0, 0, errors.New("launchpad address not found")
+	}
+
+	totalIssued = token.TotalSupply()
+	issuedByDepositGns = token.BalanceOf(launchpad)
+	issuedByDelegate = totalIssued - issuedByDepositGns
+
+	return totalIssued, issuedByDelegate, issuedByDepositGns, nil
 }
 
 func checkErr(err error) {
