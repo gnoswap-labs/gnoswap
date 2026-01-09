@@ -280,7 +280,7 @@ func observeSingle(os *pl.ObservationState,
 		return 0, nil, err
 	}
 
-	if target <= beforeOrAt.BlockTimestamp() {
+	if target == beforeOrAt.BlockTimestamp() {
 		return beforeOrAt.TickCumulative(), beforeOrAt.SecondsPerLiquidityCumulativeX128(), nil
 	}
 
@@ -292,14 +292,9 @@ func observeSingle(os *pl.ObservationState,
 	observationTimeDelta := afterOrAt.BlockTimestamp() - beforeOrAt.BlockTimestamp()
 	targetDelta := target - beforeOrAt.BlockTimestamp()
 
-	// If the observations are at the same time, return the before observation
-	if observationTimeDelta == 0 {
-		return beforeOrAt.TickCumulative(), beforeOrAt.SecondsPerLiquidityCumulativeX128(), nil
-	}
-
-	// tickCumulative += (tickCumulativeAfter - tickCumulativeBefore) * targetDelta / observationTimeDelta
+	// tickCumulative += (tickCumulativeAfter - tickCumulativeBefore) / observationTimeDelta * targetDelta
 	tickCumulative := beforeOrAt.TickCumulative() +
-		(afterOrAt.TickCumulative()-beforeOrAt.TickCumulative())*targetDelta/observationTimeDelta
+		((afterOrAt.TickCumulative()-beforeOrAt.TickCumulative())/observationTimeDelta)*targetDelta
 
 	// for secondsPerLiquidity, need to interpolate carefully
 	secondsPerLiquidityDelta := u256.Zero().Sub(
@@ -427,11 +422,11 @@ func observe(os *pl.ObservationState,
 	liquidity *u256.Uint,
 	cardinality uint16,
 ) ([]int64, []*u256.Uint, error) {
-	historyCount := len(secondsAgos)
-	if historyCount == 0 {
-		return nil, nil, errors.New("secondsAgos must not be empty")
+	if cardinality == 0 {
+		return nil, nil, errors.New("observation cardinality must be greater than 0")
 	}
 
+	historyCount := len(secondsAgos)
 	tickCumulatives := make([]int64, historyCount)
 	secondsPerLiquidityCumulativeX128s := make([]*u256.Uint, historyCount)
 
