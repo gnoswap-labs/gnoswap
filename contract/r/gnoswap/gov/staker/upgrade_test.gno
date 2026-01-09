@@ -403,34 +403,6 @@ func TestGetTotalxGnsSupply(t *testing.T) {
 	}
 }
 
-// TestGetTotalVoteWeight tests the GetTotalVoteWeight getter function
-func TestGetTotalVoteWeight(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get total vote weight is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			// Action
-			GetTotalVoteWeight()
-
-			// Assert
-			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetTotalVoteWeight") != 1 {
-				t.Error("GetTotalVoteWeight was not called on the implementation")
-			}
-		})
-	}
-}
-
 // TestGetTotalDelegated tests the GetTotalDelegated getter function
 func TestGetTotalDelegated(t *testing.T) {
 	tests := []struct {

@@ -74,7 +74,7 @@ func main() {
 }
 
 func checkInitialGnsAndXgns() {
-	ufmt.Printf("[INFO] gns total supply: %d, xgns total: %d, xgns voting: %d\n", gns.TotalSupply(), xgns.TotalSupply(), xgns.VotingSupply())
+	ufmt.Printf("[INFO] gns total supply: %d, xgns total: %d\n", gns.TotalSupply(), xgns.TotalSupply())
 }
 
 func launchpadProjectCreateAndDeposit() {
@@ -106,7 +106,7 @@ func voteProposalWithDummy(proposalId int64) {
 
 // Output:
 // [SCENARIO] 1. Check Initial gns and xgns Supply
-// [INFO] gns total supply: 100000000000000, xgns total: 0, xgns voting: 0
+// [INFO] gns total supply: 100000000000000, xgns total: 0
 //
 // [SCENARIO] 2. Launchpad Project Create and Deposit gns
 // [INFO] launchpad project created and gns deposited

@@ -110,13 +110,6 @@ func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	return t.instance.GetTotalxGnsSupply()
 }
 
-func (t *TestGovStaker) GetTotalVoteWeight() int64 {
-	if !t.isActive("GetTotalVoteWeight") {
-		panic("test implementation: GetTotalVoteWeight not supported")
-	}
-	return t.instance.GetTotalVoteWeight()
-}
-
 func (t *TestGovStaker) GetTotalDelegated() int64 {
 	if !t.isActive("GetTotalDelegated") {
 		panic("test implementation: GetTotalDelegated not supported")
