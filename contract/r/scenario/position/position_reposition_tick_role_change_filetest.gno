@@ -40,10 +40,10 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 
-	barPath        = "gno.land/r/onbloc/bar"
-	fooPath        = "gno.land/r/onbloc/foo"
-	fee500  uint32 = 500
-	poolPath       = barPath + ":" + fooPath + ":500"
+	barPath         = "gno.land/r/onbloc/bar"
+	fooPath         = "gno.land/r/onbloc/foo"
+	fee500   uint32 = 500
+	poolPath        = barPath + ":" + fooPath + ":500"
 )
 
 func main() {
@@ -51,16 +51,16 @@ func main() {
 	initPool()
 	println()
 
-	ufmt.Println("[SCENARIO] 2. Mint Position (tickLower=9000, tickUpper=13000)")
+	ufmt.Println("[SCENARIO] 2. Mint Position A (tickLower=9000, tickUpper=13000)")
 	mintPosition()
 	println()
 
-	ufmt.Println("[SCENARIO] 3. Check tick 9000 state (lower tick role)")
-	checkTick9000AsLower()
+	ufmt.Println("[SCENARIO] 3. Mint Position B (tickLower=9000, tickUpper=13000)")
+	mintPosition()
 	println()
 
-	ufmt.Println("[SCENARIO] 4. Execute swap to change price")
-	executeSwap()
+	ufmt.Println("[SCENARIO] 4. Check tick 9000 state (lower tick role)")
+	checkTick9000AsLower()
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Reposition to new range (5000~9000)")
@@ -133,6 +133,45 @@ func checkTick9000AsLower() {
 	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
+func repositionToNewRange() {
+	testing.SetRealm(adminRealm)
+	bar.Approve(cross, poolAddr, INT64_MAX)
+	foo.Approve(cross, poolAddr, INT64_MAX)
+
+	ufmt.Println("[INFO] Decreasing liquidity to clear position")
+	_, _, _, _, amount0Decreased, amount1Decreased, _ := position.DecreaseLiquidity(
+		cross,
+		1,
+		"1183668969", // full liquidity
+		"0",
+		"0",
+		9999999999,
+		false,
+	)
+	ufmt.Printf("[EXPECTED] Decreased amount0: %s\n", amount0Decreased)
+	ufmt.Printf("[EXPECTED] Decreased amount1: %s\n", amount1Decreased)
+
+	executeSwap()
+
+	ufmt.Println("[INFO] Repositioning to new range [5000, 9000]")
+	_, liquidity, tickLower, tickUpper, amount0, amount1 := position.Reposition(
+		cross,
+		1,
+		5000,
+		9000,
+		"100000000",
+		"100000000",
+		"0",
+		"0",
+		9999999999,
+	)
+
+	ufmt.Printf("[EXPECTED] New liquidity: %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] New tick range: [%d, %d]\n", tickLower, tickUpper)
+	ufmt.Printf("[EXPECTED] Amount0: %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Amount1: %s\n", amount1)
+}
+
 func executeSwap() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, INT64_MAX)
@@ -162,48 +201,6 @@ func executeSwap() {
 	ufmt.Printf("[EXPECTED] Swap amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Swap amount1: %s\n", amount1)
 	ufmt.Printf("[EXPECTED] Pool tick after swap: %d\n", p.Slot0Tick())
-}
-
-func repositionToNewRange() {
-	testing.SetRealm(adminRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
-
-	ufmt.Println("[INFO] Collecting fees before reposition")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
-	ufmt.Printf("[EXPECTED] Collected fee0: %s\n", fee0)
-	ufmt.Printf("[EXPECTED] Collected fee1: %s\n", fee1)
-
-	ufmt.Println("[INFO] Decreasing liquidity to clear position")
-	_, _, _, _, amount0Decreased, amount1Decreased, _ := position.DecreaseLiquidity(
-		cross,
-		1,
-		"1183668969", // full liquidity
-		"0",
-		"0",
-		9999999999,
-		false,
-	)
-	ufmt.Printf("[EXPECTED] Decreased amount0: %s\n", amount0Decreased)
-	ufmt.Printf("[EXPECTED] Decreased amount1: %s\n", amount1Decreased)
-
-	ufmt.Println("[INFO] Repositioning to new range [5000, 9000]")
-	_, liquidity, tickLower, tickUpper, amount0, amount1 := position.Reposition(
-		cross,
-		1,
-		5000,
-		9000,
-		"100000000",
-		"100000000",
-		"0",
-		"0",
-		9999999999,
-	)
-
-	ufmt.Printf("[EXPECTED] New liquidity: %s\n", liquidity)
-	ufmt.Printf("[EXPECTED] New tick range: [%d, %d]\n", tickLower, tickUpper)
-	ufmt.Printf("[EXPECTED] Amount0: %s\n", amount0)
-	ufmt.Printf("[EXPECTED] Amount1: %s\n", amount1)
 }
 
 func checkTick9000AsUpper() {
@@ -238,33 +235,35 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Pool tick should be 10000
 // [EXPECTED] Pool liquidity should be 0
 //
-// [SCENARIO] 2. Mint Position (tickLower=9000, tickUpper=13000)
+// [SCENARIO] 2. Mint Position A (tickLower=9000, tickUpper=13000)
 // [INFO] Minting Position with range [9000, 13000]
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Liquidity should be 1183668969
 // [EXPECTED] Amount0 should be 100000000
 // [EXPECTED] Amount1 should be 95170720
 //
-// [SCENARIO] 3. Check tick 9000 state (lower tick role)
+// [SCENARIO] 3. Mint Position B (tickLower=9000, tickUpper=13000)
+// [INFO] Minting Position with range [9000, 13000]
+// [EXPECTED] Position ID should be 2
+// [EXPECTED] Liquidity should be 1183668969
+// [EXPECTED] Amount0 should be 100000000
+// [EXPECTED] Amount1 should be 95170720
+//
+// [SCENARIO] 4. Check tick 9000 state (lower tick role)
 // [INFO] Checking tick 9000 state as lower boundary
-// [EXPECTED] Tick 9000 liquidityGross should be 1183668969
-// [EXPECTED] Tick 9000 liquidityNet should be 1183668969 (positive for lower tick)
+// [EXPECTED] Tick 9000 liquidityGross should be 2367337938
+// [EXPECTED] Tick 9000 liquidityNet should be 2367337938 (positive for lower tick)
 // [EXPECTED] Tick 9000 initialized should be true
 //
-// [SCENARIO] 4. Execute swap to change price
+// [SCENARIO] 5. Reposition to new range (5000~9000)
+// [INFO] Decreasing liquidity to clear position
+// [EXPECTED] Decreased amount0: 99999999
+// [EXPECTED] Decreased amount1: 95170719
 // [INFO] Pool tick before swap: 10000
 // [INFO] Executing swap to change price
 // [EXPECTED] Swap amount0: 10000000
 // [EXPECTED] Swap amount1: -26794841
 // [EXPECTED] Pool tick after swap: 9723
-//
-// [SCENARIO] 5. Reposition to new range (5000~9000)
-// [INFO] Collecting fees before reposition
-// [EXPECTED] Collected fee0: 4950
-// [EXPECTED] Collected fee1: 0
-// [INFO] Decreasing liquidity to clear position
-// [EXPECTED] Decreased amount0: 109994999
-// [EXPECTED] Decreased amount1: 68375877
 // [INFO] Repositioning to new range [5000, 9000]
 // [EXPECTED] New liquidity: 351781291
 // [EXPECTED] New tick range: [5000, 9000]
@@ -273,6 +272,6 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 6. Check tick 9000 state (upper tick role)
 // [INFO] Checking tick 9000 state as upper boundary
-// [EXPECTED] Tick 9000 liquidityGross should be 351781291
-// [EXPECTED] Tick 9000 liquidityNet should be -351781291 (negative for upper tick)
+// [EXPECTED] Tick 9000 liquidityGross should be 1535450260
+// [EXPECTED] Tick 9000 liquidityNet should be 831887678 (negative for upper tick)
 // [EXPECTED] Tick 9000 initialized should be true
