@@ -313,7 +313,10 @@ func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 }
 
 // isValidFeeProtocolValue checks if a fee protocol value is within acceptable range.
-// valid values are either 0 or between 4 and 10 inclusive.
+// Valid values are either 0 (disabled) or between 4 and 10 inclusive.
+//
+// The value is used as a denominator: protocolFee = swapFee / feeProtocol
+// (e.g., feeProtocol=4 means 1/4 = 25% of swap fees go to protocol)
 func isValidFeeProtocolValue(value uint8) bool {
 	return value == 0 || (value >= 4 && value <= 10)
 }

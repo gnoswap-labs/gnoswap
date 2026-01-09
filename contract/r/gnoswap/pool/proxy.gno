@@ -27,21 +27,21 @@ func SetPoolCreationFee(cur realm, fee int64) {
 	getImplementation().SetPoolCreationFee(fee)
 }
 
-// IncreaseObservationCardinalityLimit increases the observation cardinality for a pool.
+// IncreaseObservationCardinalityNext increases the observation cardinality for a pool.
 //
 // Parameters:
 //   - token0Path: path of the first token
 //   - token1Path: path of the second token
 //   - fee: pool fee tier
 //   - cardinalityNext: new observation cardinality limit
-func IncreaseObservationCardinalityLimit(
+func IncreaseObservationCardinalityNext(
 	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	getImplementation().IncreaseObservationCardinalityLimit(
+	getImplementation().IncreaseObservationCardinalityNext(
 		token0Path,
 		token1Path,
 		fee,

@@ -100,7 +100,15 @@ func TestOracle_SwapScenarios(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := createTestPoolWithLiquidity()
 
-			increaseObservationCardinalityLimitByPool(pool, 10)
+			// Gradually increase cardinality as needed
+			observationState := pool.ObservationState()
+			currentCard := observationState.Cardinality()
+			neededCard := uint16(len(tt.scenarios) + 1) // +1 for initial observation
+			if neededCard > currentCard {
+				_, err := grow(observationState, currentCard, neededCard)
+				uassert.NoError(t, err, "Should grow cardinality")
+				observationState.SetCardinalityNext(neededCard)
+			}
 
 			// Process scenarios
 			for i, scenario := range tt.scenarios {
@@ -169,8 +177,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 	t.Run("Cardinality=1", func(t *testing.T) {
 		os := pl.NewObservationState(currentTime)
 
-		// Test target < observation timestamp
-		beforeOrAt, afterOrAt, err := getSurroundingObservations(
+		// Test target < observation timestamp (should error with OLD)
+		_, _, err := getSurroundingObservations(
 			os,
 			currentTime-100, // target before first observation
 			currentTime+100,
@@ -180,9 +188,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 			1,
 		)
 
-		uassert.NoError(t, err, "Should not error with single cardinality")
-		uassert.Equal(t, beforeOrAt.BlockTimestamp(), afterOrAt.BlockTimestamp(), "Should return same observation for both")
-		uassert.Equal(t, currentTime, beforeOrAt.BlockTimestamp(), "Should return first observation")
+		uassert.Error(t, err, "Should error when target before oldest observation")
+		uassert.ErrorContains(t, err, "[GNOSWAP-POOL-028]", "Should return observation too old error")
 
 		// Test target = observation timestamp
 		beforeOrAt2, afterOrAt2, err := getSurroundingObservations(
@@ -196,8 +203,10 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 		)
 
 		uassert.NoError(t, err, "Should not error when target equals observation")
-		uassert.Equal(t, beforeOrAt2.BlockTimestamp(), afterOrAt2.BlockTimestamp(), "Should return same observation")
 		uassert.Equal(t, currentTime, beforeOrAt2.BlockTimestamp(), "Should return exact observation")
+		if afterOrAt2 != nil {
+			t.Fatalf("afterOrAt should be nil when target equals newest observation")
+		}
 
 		// Test target > observation timestamp
 		beforeOrAt3, afterOrAt3, err := getSurroundingObservations(
@@ -212,7 +221,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 
 		uassert.NoError(t, err, "Should create virtual observation")
 		uassert.Equal(t, currentTime, beforeOrAt3.BlockTimestamp(), "Before should be first observation")
-		uassert.Equal(t, currentTime+100, afterOrAt3.BlockTimestamp(), "After should be virtual observation")
+		uassert.Equal(t, currentTime+50, afterOrAt3.BlockTimestamp(), "After should be virtual observation at target")
 	})
 
 	t.Run("Cardinality=N", func(t *testing.T) {
@@ -250,7 +259,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 	})
 }
 
-// After grow, all slots in [currentCardinality, nextCardinality) should have initialized==true
+// After grow, all slots in [currentCardinality, nextCardinality) should exist but have initialized==false
 func TestObservationState_GrowInvariants(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
@@ -265,15 +274,16 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 
 	// Verify all slots are created
 	for i := uint16(0); i < nextCard; i++ {
-		obs, _ := observationAt(os, i)
+		obs := os.Observations()[i]
+		uassert.NotNil(t, obs, "Observation slot should exist")
 
 		// Check initialization status
 		if i == 0 {
 			// First slot should be initialized from newObservationState
 			uassert.True(t, obs.Initialized(), "Slot 0 should be initialized")
 		} else if i >= currentCard && i < nextCard {
-			// New slots should be marked as initialized by grow
-			uassert.True(t, obs.Initialized(), "New slot should be initialized")
+			// New slots should NOT be initialized by grow
+			uassert.False(t, obs.Initialized(), "New slot should not be initialized")
 		}
 	}
 
@@ -285,8 +295,9 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 
 	// Verify new slots
 	for i := nextCard; i < newCard2; i++ {
-		obs, _ := observationAt(os, i)
-		uassert.True(t, obs.Initialized(), "New slot should be initialized")
+		obs := os.Observations()[i]
+		uassert.NotNil(t, obs, "Observation slot should exist")
+		uassert.False(t, obs.Initialized(), "New slot should not be initialized")
 	}
 }
 
@@ -351,7 +362,7 @@ func TestObservationState_IndexWrapping(t *testing.T) {
 }
 
 // Reject cardinalityNext > max, allow cardinalityNext == max
-func TestObservationState_CardinalityLimits(t *testing.T) {
+func TestObservationState_CardinalityNexts(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
 
@@ -417,19 +428,15 @@ func TestObservationState_ObservationAt(t *testing.T) {
 	})
 
 	t.Run("Uninitialized observation", func(t *testing.T) {
-		// Grow to create slots
+		// Grow to create slots (new slots are created with initialized=false)
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		// Manually set initialized to false for testing
+		// observationAt should return uninitialized observation (without error)
 		obs, err := observationAt(os, 3)
-		uassert.NoError(t, err, "Should return observation at index 3")
-		if obs != nil {
-			obs.SetInitialized(false)
-		}
-
-		_, err = observationAt(os, 3)
-		uassert.Error(t, err, "Should error for uninitialized observation")
+		uassert.NoError(t, err, "Should return observation even if uninitialized")
+		uassert.NotNil(t, obs, "Observation should not be nil")
+		uassert.False(t, obs.Initialized(), "Observation should be uninitialized")
 	})
 }
 
@@ -437,25 +444,28 @@ func TestObservationState_ObservationAt(t *testing.T) {
 func TestObservationState_Transform(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
+	lastObs, _ := lastObservation(os)
 
 	t.Run("Transform with same time", func(t *testing.T) {
-		obs, err := transform(os, currentTime, 100, u256.MustFromDecimal("1000000"))
+		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))
 		uassert.NoError(t, err, "Should not error for same time")
 		uassert.NotNil(t, obs, "Should return observation")
 		uassert.Equal(t, currentTime, obs.BlockTimestamp(), "Should return last observation for same time")
 	})
 
 	t.Run("Transform with negative time delta", func(t *testing.T) {
-		_, err := transform(os, currentTime-100, 100, u256.MustFromDecimal("1000000"))
+		_, err := transform(lastObs, currentTime-100, 100, u256.MustFromDecimal("1000000"))
 		uassert.Error(t, err, "Should error for negative time delta")
 	})
 
 	t.Run("Transform with zero liquidity", func(t *testing.T) {
-		obs, err := transform(os, currentTime+100, 100, u256.Zero())
+		obs, err := transform(lastObs, currentTime+100, 100, u256.Zero())
 		uassert.NoError(t, err, "Should handle zero liquidity")
 		uassert.NotNil(t, obs, "Should return observation")
-		// With zero liquidity, secondsPerLiquidity should not change
-		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
+		// With zero liquidity, use max(1, liquidity) = 1
+		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
+		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
+		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
 	})
 }
 

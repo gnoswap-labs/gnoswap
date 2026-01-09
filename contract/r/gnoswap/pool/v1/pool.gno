@@ -154,10 +154,7 @@ func (i *poolV1) Burn(
 		position.SetTokensOwed1(tokensOwed1)
 	}
 
-	positionKey, err := getPositionKey(tickLower, tickUpper)
-	if err != nil {
-		panic(err)
-	}
+	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
 	mustGetPositionByPool(pool, positionKey)
@@ -211,11 +208,7 @@ func (i *poolV1) Collect(
 	// Generate position key by combining position contract path with tick range
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
-	positionKey, err := getPositionKey(tickLower, tickUpper)
-	if err != nil {
-		panic(err)
-	}
-
+	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
 	var amount0, amount1 *u256.Uint
@@ -262,8 +255,7 @@ func (i *poolV1) Collect(
 
 	setPosition(pool, positionKey, *position)
 
-	err = i.savePool(pool)
-	if err != nil {
+	if err := i.savePool(pool); err != nil {
 		panic(err)
 	}
 
@@ -392,7 +384,7 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*
 	return amount0, amount1
 }
 
-func (i *poolV1) IncreaseObservationCardinalityLimit(
+func (i *poolV1) IncreaseObservationCardinalityNext(
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -401,14 +393,14 @@ func (i *poolV1) IncreaseObservationCardinalityLimit(
 	halt.AssertIsNotHaltedPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	err := increaseObservationCardinalityLimitByPool(pool, cardinalityNext)
+	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
 	if err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
-		"IncreaseObservationCardinalityLimit",
+		"IncreaseObservationCardinalityNext",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", pool.PoolPath(),

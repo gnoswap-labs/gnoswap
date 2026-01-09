@@ -6,16 +6,16 @@ import (
 
 // ObservationState manages the oracle's historical data
 type ObservationState struct {
-	observations     map[uint16]*Observation // circular buffer of observations
-	index            uint16                  // the most-recently updated index of the observations array
-	cardinality      uint16                  // the current maximum number of observations that are being stored
-	cardinalityLimit uint16                  // the next maximum number of observations to store, triggered in observations.write
+	observations    map[uint16]*Observation // circular buffer of observations
+	index           uint16                  // the most-recently updated index of the observations array
+	cardinality     uint16                  // the current maximum number of observations that are being stored
+	cardinalityNext uint16                  // the next maximum number of observations to store, triggered in observations.write
 }
 
 // ObservationState Getters methods
 func (os *ObservationState) Index() uint16                         { return os.index }
 func (os *ObservationState) Cardinality() uint16                   { return os.cardinality }
-func (os *ObservationState) CardinalityLimit() uint16              { return os.cardinalityLimit }
+func (os *ObservationState) CardinalityNext() uint16               { return os.cardinalityNext }
 func (os *ObservationState) Observations() map[uint16]*Observation { return os.observations }
 
 // ObservationState Setters methods
@@ -27,8 +27,8 @@ func (os *ObservationState) SetCardinality(cardinality uint16) {
 	os.cardinality = cardinality
 }
 
-func (os *ObservationState) SetCardinalityLimit(cardinalityLimit uint16) {
-	os.cardinalityLimit = cardinalityLimit
+func (os *ObservationState) SetCardinalityNext(cardinalityNext uint16) {
+	os.cardinalityNext = cardinalityNext
 }
 
 func (os *ObservationState) SetObservations(observations map[uint16]*Observation) {
@@ -37,10 +37,10 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 
 func (os *ObservationState) Clone() *ObservationState {
 	return &ObservationState{
-		observations:     make(map[uint16]*Observation),
-		index:            os.index,
-		cardinality:      os.cardinality,
-		cardinalityLimit: os.cardinalityLimit,
+		observations:    make(map[uint16]*Observation),
+		index:           os.index,
+		cardinality:     os.cardinality,
+		cardinalityNext: os.cardinalityNext,
 	}
 }
 
@@ -94,10 +94,10 @@ func (o *Observation) Clone() *Observation {
 
 func NewObservationState(currentTime int64) *ObservationState {
 	state := &ObservationState{
-		index:            0,
-		cardinality:      1,
-		cardinalityLimit: 1,
-		observations:     make(map[uint16]*Observation),
+		index:           0,
+		cardinality:     1,
+		cardinalityNext: 1,
+		observations:    make(map[uint16]*Observation),
 	}
 
 	// Initialize the first observation slot
@@ -134,6 +134,6 @@ func NewDefaultObservation() *Observation {
 		0,
 		u256.Zero(),
 		u256.Zero(),
-		true,
+		false,
 	)
 }

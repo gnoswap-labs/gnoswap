@@ -737,11 +737,11 @@ func mockInstanceCreatePool(token0Path string, token1Path string, fee uint32, sq
 	}(cross)
 }
 
-func mockInstanceIncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, newCardinalityLimit uint16) {
+func mockInstanceIncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, newCardinalityNext uint16) {
 	func(cur realm) {
 		const currentPoolPath = "gno.land/r/gnoswap/pool"
 		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-		getMockInstance().IncreaseObservationCardinalityLimit(token0Path, token1Path, fee, newCardinalityLimit)
+		getMockInstance().IncreaseObservationCardinalityNext(token0Path, token1Path, fee, newCardinalityNext)
 	}(cross)
 }
 

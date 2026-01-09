@@ -61,11 +61,11 @@ func (t *TestPool) SetPoolCreationFee(fee int64) {
 	)
 }
 
-func (t *TestPool) IncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
+func (t *TestPool) IncreaseObservationCardinalityNext(token0Path string, token1Path string, fee uint32, cardinalityNext uint16) {
 	t.ExecuteFn(
-		"IncreaseObservationCardinalityLimit",
+		"IncreaseObservationCardinalityNext",
 		func(args ...any) any {
-			t.instance.IncreaseObservationCardinalityLimit(args[0].(string), args[1].(string), args[2].(uint32), args[3].(uint16))
+			t.instance.IncreaseObservationCardinalityNext(args[0].(string), args[1].(string), args[2].(uint32), args[3].(uint16))
 			return nil
 		},
 		token0Path, token1Path, fee, cardinalityNext,
@@ -540,16 +540,16 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	result := t.ExecuteFn(
 		"GetTWAP",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetTWAP(args[0].(string), args[1].(uint32))
-			return []any{r1, r2}
+			r1, r2, r3 := t.instance.GetTWAP(args[0].(string), args[1].(uint32))
+			return []any{r1, r2, r3}
 		},
 		poolPath, secondsAgo,
 	).([]any)
-	return result[0].(int32), result[1].(error)
+	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
 }
 
 // Pool enumeration

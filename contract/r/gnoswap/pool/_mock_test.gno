@@ -62,13 +62,13 @@ func (m *MockPool) SetPoolCreationFee(fee int64) {
 	m.Response.Get("SetPoolCreationFee")
 }
 
-func (m *MockPool) IncreaseObservationCardinalityLimit(
+func (m *MockPool) IncreaseObservationCardinalityNext(
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	m.Response.Get("IncreaseObservationCardinalityLimit")
+	m.Response.Get("IncreaseObservationCardinalityNext")
 }
 
 func (m *MockPool) Mint(
@@ -565,13 +565,13 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	res, ok := m.Response.Get("GetTWAP")
 	if !ok {
-		return 0, errors.New("not found")
+		return 0, nil, errors.New("not found")
 	}
 
-	return res[0].(int32), res[1].(error)
+	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
 // Pool enumeration

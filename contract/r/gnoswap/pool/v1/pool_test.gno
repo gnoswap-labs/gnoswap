@@ -486,7 +486,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			observationState := &pl.ObservationState{}
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
-			observationState.SetCardinalityLimit(1)
+			observationState.SetCardinalityNext(1)
 			obs := &pl.Observation{}
 			obs.SetBlockTimestamp(100)
 			obs.SetTickCumulative(5000000000)
@@ -635,10 +635,10 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 			token0Path:      fooTokenPath,
 			token1Path:      barTokenPath,
 			fee:             FeeTier3000,
-			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342",
+			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO
 			expectSuccess:   false,
-			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
-			businessContext: "Extreme high price causes calculation overflow risk",
+			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1461446703485210103287273052203988822378723970342) is out of range",
+			businessContext: "Extreme high price at boundary (MAX_SQRT_RATIO is excluded)",
 		},
 		{
 			name:            "minimum_valid_price",
@@ -747,7 +747,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 			if test.name == "collect_nonexistent_position" {
 				tickLower := int32(-400)
 				tickUpper := int32(400)
-				positionKey, _ := getPositionKey(tickLower, tickUpper)
+				positionKey := getPositionKey(tickLower, tickUpper)
 				expectedError := ufmt.Sprintf(
 					"[GNOSWAP-POOL-006] requested data not found || positionKey(%s) does not exist",
 					positionKey)
@@ -1017,5 +1017,121 @@ func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	default:
 		t.Fatalf("Unknown token path: %s", tokenPath)
 		return 0
+	}
+}
+
+// TestCollectToken tests the collectToken function with various edge cases
+func TestCollectToken(t *testing.T) {
+	tests := []struct {
+		name        string
+		amountReq   *u256.Uint
+		tokensOwed  *u256.Uint
+		poolBalance *u256.Uint
+		expected    *u256.Uint
+		description string
+	}{
+		{
+			name:        "all equal",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.NewUint(1000),
+			poolBalance: u256.NewUint(1000),
+			expected:    u256.NewUint(1000),
+			description: "When all three amounts are equal, should return that amount",
+		},
+		{
+			name:        "request is minimum",
+			amountReq:   u256.NewUint(100),
+			tokensOwed:  u256.NewUint(500),
+			poolBalance: u256.NewUint(1000),
+			expected:    u256.NewUint(100),
+			description: "When request is smallest, should return request amount",
+		},
+		{
+			name:        "tokens owed is minimum",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.NewUint(100),
+			poolBalance: u256.NewUint(500),
+			expected:    u256.NewUint(100),
+			description: "When tokens owed is smallest, should return tokens owed",
+		},
+		{
+			name:        "pool balance is minimum",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.NewUint(500),
+			poolBalance: u256.NewUint(100),
+			expected:    u256.NewUint(100),
+			description: "When pool balance is smallest, should return pool balance",
+		},
+		{
+			name:        "request is zero",
+			amountReq:   u256.Zero(),
+			tokensOwed:  u256.NewUint(500),
+			poolBalance: u256.NewUint(1000),
+			expected:    u256.Zero(),
+			description: "When request is zero, should return zero",
+		},
+		{
+			name:        "tokens owed is zero",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.Zero(),
+			poolBalance: u256.NewUint(500),
+			expected:    u256.Zero(),
+			description: "When tokens owed is zero, should return zero",
+		},
+		{
+			name:        "pool balance is zero",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.NewUint(500),
+			poolBalance: u256.Zero(),
+			expected:    u256.Zero(),
+			description: "When pool balance is zero, should return zero",
+		},
+		{
+			name:        "all zero",
+			amountReq:   u256.Zero(),
+			tokensOwed:  u256.Zero(),
+			poolBalance: u256.Zero(),
+			expected:    u256.Zero(),
+			description: "When all are zero, should return zero",
+		},
+		{
+			name:        "max uint requested with limited owed",
+			amountReq:   u256.MustFromDecimal(MAX_UINT128),
+			tokensOwed:  u256.NewUint(1000),
+			poolBalance: u256.NewUint(5000),
+			expected:    u256.NewUint(1000),
+			description: "When MAX_UINT128 requested but owed is less, should return owed amount",
+		},
+		{
+			name:        "max uint requested with limited balance",
+			amountReq:   u256.MustFromDecimal(MAX_UINT128),
+			tokensOwed:  u256.NewUint(5000),
+			poolBalance: u256.NewUint(1000),
+			expected:    u256.NewUint(1000),
+			description: "When MAX_UINT128 requested but balance is less, should return balance",
+		},
+		{
+			name:        "max uint in all fields",
+			amountReq:   u256.MustFromDecimal(MAX_UINT128),
+			tokensOwed:  u256.MustFromDecimal(MAX_UINT128),
+			poolBalance: u256.MustFromDecimal(MAX_UINT128),
+			expected:    u256.MustFromDecimal(MAX_UINT128),
+			description: "When all are MAX_UINT128, should return MAX_UINT128",
+		},
+		{
+			name:        "one unit differences",
+			amountReq:   u256.NewUint(1000),
+			tokensOwed:  u256.NewUint(1001),
+			poolBalance: u256.NewUint(1002),
+			expected:    u256.NewUint(1000),
+			description: "Should correctly identify minimum with small differences",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := collectToken(tt.amountReq, tt.tokensOwed, tt.poolBalance)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
+		})
 	}
 }
