@@ -14,7 +14,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	_ "gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/access"
 
 	"gno.land/r/gnoswap/gns"
@@ -199,8 +198,8 @@ func testGovStakerGetters(delegationId1 int64) {
 	println("[EXPECTED] Protocol Fee Accumulated X128 Per Stake:", protocolFeeAccumulated.ToString())
 
 	// GetProtocolFeeAmounts
-	protocolFeeAmounts := staker.GetProtocolFeeAmounts("gno.land/r/gnoswap/pool:v1")
-	println("[EXPECTED] Protocol Fee Amounts:", protocolFeeAmounts.ToString())
+	protocolFeeAmount := staker.GetProtocolFeeAmount("gno.land/r/gnoswap/pool:v1")
+	println("[EXPECTED] Protocol Fee Amounts:", protocolFeeAmount)
 
 	// GetProtocolFeeAccumulatedTimestamp
 	protocolFeeAccumulatedTime := staker.GetProtocolFeeAccumulatedTimestamp()
@@ -223,7 +222,7 @@ func testGovStakerGetters(delegationId1 int64) {
 	println()
 
 	// GetClaimableRewardByAddress
-	emissionReward, protocolFeeRewards := staker.GetClaimableRewardByAddress(delegatorAddr)
+	emissionReward, protocolFeeRewards, err := staker.GetClaimableRewardByAddress(delegatorAddr)
 	println("[EXPECTED] Claimable Reward By Address:")
 	println("[EXPECTED] - Emission Reward:", emissionReward)
 	println("[EXPECTED] - Protocol Fee Rewards:")
@@ -234,7 +233,7 @@ func testGovStakerGetters(delegationId1 int64) {
 	println()
 
 	// GetClaimableRewardByLaunchpad
-	launchpadEmissionReward, launchpadProtocolFeeRewards := staker.GetClaimableRewardByLaunchpad(delegatorAddr)
+	launchpadEmissionReward, launchpadProtocolFeeRewards, err := staker.GetClaimableRewardByLaunchpad(delegatorAddr)
 	println("[EXPECTED] Claimable Reward By Launchpad:")
 	println("[EXPECTED] - Emission Reward:", launchpadEmissionReward)
 	println("[EXPECTED] - Protocol Fee Rewards:")
@@ -245,7 +244,7 @@ func testGovStakerGetters(delegationId1 int64) {
 	println()
 
 	// GetClaimableRewardByRewardID
-	rewardIdEmissionReward, rewardIdProtocolFeeRewards := staker.GetClaimableRewardByRewardID("test-reward-id")
+	rewardIdEmissionReward, rewardIdProtocolFeeRewards, err := staker.GetClaimableRewardByRewardID("test-reward-id")
 	println("[EXPECTED] Claimable Reward By RewardID:")
 	println("[EXPECTED] - Emission Reward:", rewardIdEmissionReward)
 	println("[EXPECTED] - Protocol Fee Rewards:")
@@ -274,7 +273,7 @@ func testGovStakerGetters(delegationId1 int64) {
 // [EXPECTED] Total Delegated: 500000000
 // [EXPECTED] Total Locked Amount: 500000000
 // [EXPECTED] Locked Amount: 500000000
-// [EXPECTED] Undelegation Lockup Period: 86400
+// [EXPECTED] Undelegation Lockup Period: 604800
 // [EXPECTED] Emission Reward Balance: 0
 //
 // [EXPECTED] Delegation Count: 1
