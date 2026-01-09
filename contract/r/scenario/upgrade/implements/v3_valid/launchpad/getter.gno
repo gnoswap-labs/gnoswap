@@ -536,9 +536,9 @@ func (lp *launchpadV1) GetProjectTierRewardAccumulatedTime(projectTierId string)
 	return manager.AccumulatedTime(), nil
 }
 
-// GetProjectTierRewardRewardClaimableDuration returns the reward claimable duration of a reward manager.
+// GetProjectTierRewardClaimableDuration returns the reward claimable duration of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error) {
+func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err

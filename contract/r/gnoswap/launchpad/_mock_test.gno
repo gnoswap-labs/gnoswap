@@ -611,8 +611,8 @@ func (m *MockLaunchpad) GetProjectTierRewardAccumulatedTime(projectTierId string
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error) {
-	res, ok := m.Response.Get("GetProjectTierRewardRewardClaimableDuration")
+func (m *MockLaunchpad) GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) {
+	res, ok := m.Response.Get("GetProjectTierRewardClaimableDuration")
 	if !ok {
 		return 0, nil
 	}

@@ -260,9 +260,9 @@ func GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
 	return getImplementation().GetProjectTierRewardAccumulatedTime(projectTierId)
 }
 
-// GetProjectTierRewardRewardClaimableDuration returns the reward claimable duration of a reward manager.
-func GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error) {
-	return getImplementation().GetProjectTierRewardRewardClaimableDuration(projectTierId)
+// GetProjectTierRewardClaimableDuration returns the reward claimable duration of a reward manager.
+func GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardClaimableDuration(projectTierId)
 }
 
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.

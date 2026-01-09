@@ -456,11 +456,11 @@ func TestGetProjectTiersRatios(t *testing.T) {
 		tier180Pct := int64(25)
 
 		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-			name:        "Test Project",
+			name:            "Test Project",
 			rewardAmount:    1000000,
-			tier30Pct:   tier30Pct,
-			tier90Pct:   tier90Pct,
-			tier180Pct:  tier180Pct,
+			tier30Pct:       tier30Pct,
+			tier90Pct:       tier90Pct,
+			tier180Pct:      tier180Pct,
 			recipientSuffix: "recipient",
 		})
 
@@ -1645,7 +1645,7 @@ func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardRewardClaimableDuration(t *testing.T) {
+func TestGetProjectTierRewardClaimableDuration(t *testing.T) {
 	t.Run("get reward manager reward claimable duration", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1664,7 +1664,7 @@ func TestGetProjectTierRewardRewardClaimableDuration(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		duration, err := lp.GetProjectTierRewardRewardClaimableDuration(projectTierID)
+		duration, err := lp.GetProjectTierRewardClaimableDuration(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)

@@ -514,8 +514,8 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 	}
 	println("[EXPECTED] Accumulated time:", accTime)
 
-	// GetProjectTierRewardRewardClaimableDuration
-	claimableDuration, err := launchpad.GetProjectTierRewardRewardClaimableDuration(projectTier30Id)
+	// GetProjectTierRewardClaimableDuration
+	claimableDuration, err := launchpad.GetProjectTierRewardClaimableDuration(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}

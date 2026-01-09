@@ -85,7 +85,7 @@ type ILaunchpadGetter interface {
 	GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error)
 	GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error)
 	GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error)
-	GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error)
+	GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error)
 
 	GetRewardState(projectTierId string, depositId string) (*RewardState, error)
 	GetProjectActiveStatus(projectId string) (bool, error)
