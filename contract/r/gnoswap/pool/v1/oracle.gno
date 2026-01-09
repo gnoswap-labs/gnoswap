@@ -24,10 +24,6 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 		return 0, nil, errors.New("observation state not initialized")
 	}
 
-	if p.ObservationState().Cardinality() == 0 {
-		return 0, nil, errors.New("no observations available")
-	}
-
 	// Get observations for current time and secondsAgo
 	secondsAgos := []uint32{secondsAgo, 0}
 	currentTime := time.Now().Unix()

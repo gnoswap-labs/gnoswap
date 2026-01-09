@@ -450,18 +450,6 @@ func TestGetTWAP_ErrorCases(t *testing.T) {
 			secondsAgo:    3600,
 			expectedError: "observation state not initialized",
 		},
-		{
-			name: "no observations available",
-			setupPool: func() *pl.Pool {
-				pool := createTestPool()
-				os := pl.NewObservationState(time.Now().Unix())
-				os.SetCardinality(0)
-				pool.SetObservationState(os)
-				return pool
-			},
-			secondsAgo:    3600,
-			expectedError: "no observations available",
-		},
 	}
 
 	for _, tt := range tests {
