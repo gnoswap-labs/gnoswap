@@ -399,7 +399,7 @@ func binarySearch(os *pl.ObservationState,
 
 		afterIndex := uint16((i + 1) % uint64(cardinality))
 		atOrAfter, err = observationAt(os, afterIndex)
-		if err != nil {
+		if err != nil || !atOrAfter.Initialized() {
 			l = i + 1
 			continue
 		}

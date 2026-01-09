@@ -259,7 +259,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 	})
 }
 
-// After grow, all slots in [currentCardinality, nextCardinality) should have initialized==true
+// After grow, all slots in [currentCardinality, nextCardinality) should exist but have initialized==false
 func TestObservationState_GrowInvariants(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
