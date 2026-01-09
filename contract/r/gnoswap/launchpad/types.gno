@@ -35,8 +35,8 @@ type ILaunchpadDeposit interface {
 }
 
 type ILaunchpadGetter interface {
-	GetProjectCount() int64
-	GetProjectIDs(offset, limit int64) []string
+	GetProjectCount() int
+	GetProjectIDs(offset, count int) []string
 	GetProject(projectId string) (*Project, error)
 	GetProjectName(projectId string) (string, error)
 	GetProjectTokenPath(projectId string) (string, error)
@@ -58,9 +58,11 @@ type ILaunchpadGetter interface {
 	GetProjectTierStartTime(projectId string, tier int64) (int64, error)
 	GetProjectTierEndTime(projectId string, tier int64) (int64, error)
 
-	GetDepositCount() int64
-	GetDepositIDs(offset, limit int64) []string
+	GetDepositCount() int
 	GetCurrentDepositId() int64
+	GetProjectTierDepositCount(projectId string, tier int64) int
+	GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string
+
 	GetDeposit(depositId string) (*Deposit, error)
 	GetDepositProjectID(depositId string) (string, error)
 	GetDepositTier(depositId string) (int64, error)
@@ -72,19 +74,18 @@ type ILaunchpadGetter interface {
 	GetDepositCreatedAt(depositId string) (int64, error)
 	GetDepositEndTime(depositId string) (int64, error)
 
-	GetRewardManagerCount() int64
-	GetRewardManagerIDs(offset, limit int64) []string
-	GetRewardManager(projectTierId string) (*RewardManager, error)
-	GetRewardManagerDistibuteAmountPerSecondX128(projectTierId string) (*uint256.Uint, error)
-	GetRewardManagerAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error)
-	GetRewardManagerTotalDistributeAmount(projectTierId string) (int64, error)
-	GetRewardManagerTotalClaimedAmount(projectTierId string) (int64, error)
-	GetRewardManagerDistributeStartTime(projectTierId string) (int64, error)
-	GetRewardManagerDistributeEndTime(projectTierId string) (int64, error)
-	GetRewardManagerAccumulatedDistributeAmount(projectTierId string) (int64, error)
-	GetRewardManagerAccumulatedHeight(projectTierId string) (int64, error)
-	GetRewardManagerAccumulatedTime(projectTierId string) (int64, error)
-	GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error)
+	GetProjectTierRewardManagerCount() int
+	GetProjectTierRewardManager(projectTierId string) (*RewardManager, error)
+	GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*uint256.Uint, error)
+	GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error)
+	GetProjectTierRewardTotalDistributeAmount(projectTierId string) (int64, error)
+	GetProjectTierRewardTotalClaimedAmount(projectTierId string) (int64, error)
+	GetProjectTierRewardDistributeStartTime(projectTierId string) (int64, error)
+	GetProjectTierRewardDistributeEndTime(projectTierId string) (int64, error)
+	GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error)
+	GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error)
+	GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error)
+	GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error)
 
 	GetRewardState(projectTierId string, depositId string) (*RewardState, error)
 	GetProjectActiveStatus(projectId string) (bool, error)

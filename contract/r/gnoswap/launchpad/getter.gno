@@ -5,13 +5,13 @@ import (
 )
 
 // GetProjectCount returns the total number of projects.
-func GetProjectCount() int64 {
+func GetProjectCount() int {
 	return getImplementation().GetProjectCount()
 }
 
 // GetProjectIDs returns a paginated list of project IDs.
-func GetProjectIDs(offset, limit int64) []string {
-	return getImplementation().GetProjectIDs(offset, limit)
+func GetProjectIDs(offset, count int) []string {
+	return getImplementation().GetProjectIDs(offset, count)
 }
 
 // GetProject retrieves a project by its ID.
@@ -134,18 +134,23 @@ func GetProjectTierEndTime(projectId string, tier int64) (int64, error) {
 }
 
 // GetDepositCount returns the total number of deposits.
-func GetDepositCount() int64 {
+func GetDepositCount() int {
 	return getImplementation().GetDepositCount()
-}
-
-// GetDepositIDs returns a paginated list of deposit IDs.
-func GetDepositIDs(offset, limit int64) []string {
-	return getImplementation().GetDepositIDs(offset, limit)
 }
 
 // GetCurrentDepositId returns the current deposit counter value.
 func GetCurrentDepositId() int64 {
 	return getImplementation().GetCurrentDepositId()
+}
+
+// GetProjectTierDepositCount returns the total number of deposits for a project tier.
+func GetProjectTierDepositCount(projectId string, tier int64) int {
+	return getImplementation().GetProjectTierDepositCount(projectId, tier)
+}
+
+// GetProjectTierDepositIDs returns a paginated list of deposit IDs for a project tier.
+func GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
+	return getImplementation().GetProjectTierDepositIDs(projectId, tier, offset, count)
 }
 
 // GetDeposit retrieves a deposit by its ID.
@@ -199,77 +204,65 @@ func GetDepositEndTime(depositId string) (int64, error) {
 	return getImplementation().GetDepositEndTime(depositId)
 }
 
-// GetRewardManagerCount returns the total number of reward managers.
-func GetRewardManagerCount() int64 {
-	return getImplementation().GetRewardManagerCount()
+// GetProjectTierRewardManagerCount returns the total number of reward managers.
+func GetProjectTierRewardManagerCount() int {
+	return getImplementation().GetProjectTierRewardManagerCount()
 }
 
-// GetRewardManagerIDs returns a paginated list of project tier IDs (reward manager keys).
-func GetRewardManagerIDs(offset, limit int64) []string {
-	return getImplementation().GetRewardManagerIDs(offset, limit)
-}
-
-// GetRewardManager retrieves a reward manager by project tier ID.
+// GetProjectTierRewardManager retrieves a reward manager by project tier ID.
 // Returns a cloned reward manager to prevent external modification.
-func GetRewardManager(projectTierId string) (*RewardManager, error) {
-	manager, err := getImplementation().GetRewardManager(projectTierId)
-	if err != nil {
-		return nil, err
-	}
-	if manager == nil {
-		return nil, nil
-	}
-	return manager.Clone(), nil
+func GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {
+	return getImplementation().GetProjectTierRewardManager(projectTierId)
 }
 
-// GetRewardManagerDistibuteAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
-func GetRewardManagerDistibuteAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
-	return getImplementation().GetRewardManagerDistibuteAmountPerSecondX128(projectTierId)
+// GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
+func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
+	return getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
 }
 
-// GetRewardManagerAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
-func GetRewardManagerAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
-	return getImplementation().GetRewardManagerAccumulatedRewardPerDepositX128(projectTierId)
+// GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
+func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
+	return getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
 }
 
-// GetRewardManagerTotalDistributeAmount returns the total distribute amount of a reward manager.
-func GetRewardManagerTotalDistributeAmount(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerTotalDistributeAmount(projectTierId)
+// GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.
+func GetProjectTierRewardTotalDistributeAmount(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardTotalDistributeAmount(projectTierId)
 }
 
-// GetRewardManagerTotalClaimedAmount returns the total claimed amount of a reward manager.
-func GetRewardManagerTotalClaimedAmount(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerTotalClaimedAmount(projectTierId)
+// GetProjectTierRewardTotalClaimedAmount returns the total claimed amount of a reward manager.
+func GetProjectTierRewardTotalClaimedAmount(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardTotalClaimedAmount(projectTierId)
 }
 
-// GetRewardManagerDistributeStartTime returns the distribute start time of a reward manager.
-func GetRewardManagerDistributeStartTime(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerDistributeStartTime(projectTierId)
+// GetProjectTierRewardDistributeStartTime returns the distribute start time of a reward manager.
+func GetProjectTierRewardDistributeStartTime(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardDistributeStartTime(projectTierId)
 }
 
-// GetRewardManagerDistributeEndTime returns the distribute end time of a reward manager.
-func GetRewardManagerDistributeEndTime(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerDistributeEndTime(projectTierId)
+// GetProjectTierRewardDistributeEndTime returns the distribute end time of a reward manager.
+func GetProjectTierRewardDistributeEndTime(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardDistributeEndTime(projectTierId)
 }
 
-// GetRewardManagerAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
-func GetRewardManagerAccumulatedDistributeAmount(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerAccumulatedDistributeAmount(projectTierId)
+// GetProjectTierRewardAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
+func GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardAccumulatedDistributeAmount(projectTierId)
 }
 
-// GetRewardManagerAccumulatedHeight returns the accumulated height of a reward manager.
-func GetRewardManagerAccumulatedHeight(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerAccumulatedHeight(projectTierId)
+// GetProjectTierRewardAccumulatedHeight returns the accumulated height of a reward manager.
+func GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardAccumulatedHeight(projectTierId)
 }
 
-// GetRewardManagerAccumulatedTime returns the accumulated time of a reward manager.
-func GetRewardManagerAccumulatedTime(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerAccumulatedTime(projectTierId)
+// GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
+func GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardAccumulatedTime(projectTierId)
 }
 
-// GetRewardManagerRewardClaimableDuration returns the reward claimable duration of a reward manager.
-func GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error) {
-	return getImplementation().GetRewardManagerRewardClaimableDuration(projectTierId)
+// GetProjectTierRewardRewardClaimableDuration returns the reward claimable duration of a reward manager.
+func GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error) {
+	return getImplementation().GetProjectTierRewardRewardClaimableDuration(projectTierId)
 }
 
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.

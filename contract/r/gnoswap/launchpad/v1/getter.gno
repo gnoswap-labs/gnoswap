@@ -9,40 +9,28 @@ import (
 )
 
 // GetProjectCount returns the total number of projects.
-func (lp *launchpadV1) GetProjectCount() int64 {
+func (lp *launchpadV1) GetProjectCount() int {
 	projects := lp.store.GetProjects()
-	return int64(projects.Size())
+	return projects.Size()
 }
 
 // GetProjectIDs returns a paginated list of project IDs.
 // Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetProjectIDs(offset, limit int64) []string {
-	if offset < 0 || limit <= 0 {
+func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
+	if offset < 0 || count <= 0 {
 		return []string{}
 	}
 
 	projects := lp.store.GetProjects()
-	projectIds := make([]string, 0, limit)
-	currentIndex := int64(0)
-	collected := int64(0)
+	projectIDs := make([]string, 0)
 
-	projects.Iterate("", "", func(key string, value any) bool {
-		if currentIndex < offset {
-			currentIndex++
-			return false
-		}
-
-		if collected >= limit {
-			return true
-		}
-
-		projectIds = append(projectIds, key)
-		collected++
-		currentIndex++
+	projects.IterateByOffset(offset, count, func(key string, value any) bool {
+		projectIDs = append(projectIDs, key)
 		return false
 	})
 
-	return projectIds
+	return projectIDs
+
 }
 
 // GetProject retrieves a project by its ID.
@@ -272,46 +260,48 @@ func (lp *launchpadV1) GetProjectTierEndTime(projectId string, tier int64) (int6
 }
 
 // GetDepositCount returns the total number of deposits.
-func (lp *launchpadV1) GetDepositCount() int64 {
+func (lp *launchpadV1) GetDepositCount() int {
 	deposits := lp.store.GetDeposits()
-	return int64(deposits.Size())
-}
-
-// GetDeposits returns a paginated list of deposit IDs.
-// Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetDepositIDs(offset, limit int64) []string {
-	if offset < 0 || limit <= 0 {
-		return []string{}
-	}
-
-	deposits := lp.store.GetDeposits()
-	depositIds := make([]string, 0, limit)
-	currentIndex := int64(0)
-	collected := int64(0)
-
-	deposits.Iterate("", "", func(key string, value any) bool {
-		if currentIndex < offset {
-			currentIndex++
-			return false
-		}
-
-		if collected >= limit {
-			return true
-		}
-
-		depositIds = append(depositIds, key)
-		collected++
-		currentIndex++
-		return false
-	})
-
-	return depositIds
+	return deposits.Size()
 }
 
 // GetCurrentDepositId returns the current deposit counter value.
 func (lp *launchpadV1) GetCurrentDepositId() int64 {
 	counter := lp.store.GetDepositCounter()
 	return counter.Get()
+}
+
+// GetProjectTierDepositCount returns the total number of deposits for a project tier.
+// Returns 0 and error if project or tier not found.
+func (lp *launchpadV1) GetProjectTierDepositCount(projectId string, tier int64) int {
+	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
+
+	rewardManager, err := lp.getProjectTierRewardManager(projectTierID)
+	if err != nil {
+		return 0
+	}
+
+	return rewardManager.Rewards().Size()
+}
+
+// GetProjectTierDepositIDs returns a paginated list of deposit IDs for a project tier.
+// Returns empty slice if offset is negative or limit is non-positive.
+func (lp *launchpadV1) GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
+	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
+
+	rewardManager, err := lp.getProjectTierRewardManager(projectTierID)
+	if err != nil {
+		return []string{}
+	}
+
+	depositIDs := make([]string, 0)
+
+	rewardManager.Rewards().IterateByOffset(offset, count, func(key string, value any) bool {
+		depositIDs = append(depositIDs, key)
+		return false
+	})
+
+	return depositIDs
 }
 
 // GetDeposit retrieves a deposit by its ID.
@@ -485,46 +475,15 @@ func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
 	return deposit.EndTime(), nil
 }
 
-// GetRewardManagerCount returns the total number of reward managers.
-func (lp *launchpadV1) GetRewardManagerCount() int64 {
+// GetProjectTierRewardManagerCount returns the total number of reward managers.
+func (lp *launchpadV1) GetProjectTierRewardManagerCount() int {
 	managers := lp.store.GetProjectTierRewardManagers()
-	return int64(managers.Size())
+	return managers.Size()
 }
 
-// GetRewardManagerIDs returns a paginated list of project tier IDs (reward manager keys).
-// Returns empty slice if offset is negative or limit is non-positive.
-func (lp *launchpadV1) GetRewardManagerIDs(offset, limit int64) []string {
-	if offset < 0 || limit <= 0 {
-		return []string{}
-	}
-
-	managers := lp.store.GetProjectTierRewardManagers()
-	managerIds := make([]string, 0, limit)
-	currentIndex := int64(0)
-	collected := int64(0)
-
-	managers.Iterate("", "", func(key string, value any) bool {
-		if currentIndex < offset {
-			currentIndex++
-			return false
-		}
-
-		if collected >= limit {
-			return true
-		}
-
-		managerIds = append(managerIds, key)
-		collected++
-		currentIndex++
-		return false
-	})
-
-	return managerIds
-}
-
-// GetRewardManager retrieves a reward manager by project tier ID.
+// GetProjectTierRewardManager retrieves a reward manager by project tier ID.
 // Returns nil and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
+func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
 	value, exists := managers.Get(projectTierId)
 	if !exists {
@@ -539,10 +498,10 @@ func (lp *launchpadV1) GetRewardManager(projectTierId string) (*launchpad.Reward
 	return manager, nil
 }
 
-// GetRewardManagerDistibuteAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
+// GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerDistibuteAmountPerSecondX128(projectTierId string) (*uint256.Uint, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*uint256.Uint, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return uint256.NewUint(0), err
 	}
@@ -550,10 +509,10 @@ func (lp *launchpadV1) GetRewardManagerDistibuteAmountPerSecondX128(projectTierI
 	return manager.DistributeAmountPerSecondX128().Clone(), nil
 }
 
-// GetRewardManagerAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
+// GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return uint256.NewUint(0), err
 	}
@@ -561,10 +520,10 @@ func (lp *launchpadV1) GetRewardManagerAccumulatedRewardPerDepositX128(projectTi
 	return manager.AccumulatedRewardPerDepositX128().Clone(), nil
 }
 
-// GetRewardManagerTotalDistributeAmount returns the total distribute amount of a reward manager.
+// GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerTotalDistributeAmount(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardTotalDistributeAmount(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -572,10 +531,10 @@ func (lp *launchpadV1) GetRewardManagerTotalDistributeAmount(projectTierId strin
 	return manager.TotalDistributeAmount(), nil
 }
 
-// GetRewardManagerTotalClaimedAmount returns the total claimed amount of a reward manager.
+// GetProjectTierRewardTotalClaimedAmount returns the total claimed amount of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerTotalClaimedAmount(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardTotalClaimedAmount(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -583,10 +542,10 @@ func (lp *launchpadV1) GetRewardManagerTotalClaimedAmount(projectTierId string) 
 	return manager.TotalClaimedAmount(), nil
 }
 
-// GetRewardManagerDistributeStartTime returns the distribute start time of a reward manager.
+// GetProjectTierRewardDistributeStartTime returns the distribute start time of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerDistributeStartTime(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardDistributeStartTime(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -594,10 +553,10 @@ func (lp *launchpadV1) GetRewardManagerDistributeStartTime(projectTierId string)
 	return manager.DistributeStartTime(), nil
 }
 
-// GetRewardManagerDistributeEndTime returns the distribute end time of a reward manager.
+// GetProjectTierRewardDistributeEndTime returns the distribute end time of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerDistributeEndTime(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardDistributeEndTime(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -605,10 +564,10 @@ func (lp *launchpadV1) GetRewardManagerDistributeEndTime(projectTierId string) (
 	return manager.DistributeEndTime(), nil
 }
 
-// GetRewardManagerAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
+// GetProjectTierRewardAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerAccumulatedDistributeAmount(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -616,10 +575,10 @@ func (lp *launchpadV1) GetRewardManagerAccumulatedDistributeAmount(projectTierId
 	return manager.AccumulatedDistributeAmount(), nil
 }
 
-// GetRewardManagerAccumulatedHeight returns the accumulated height of a reward manager.
+// GetProjectTierRewardAccumulatedHeight returns the accumulated height of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerAccumulatedHeight(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -627,10 +586,10 @@ func (lp *launchpadV1) GetRewardManagerAccumulatedHeight(projectTierId string) (
 	return manager.AccumulatedHeight(), nil
 }
 
-// GetRewardManagerAccumulatedTime returns the accumulated time of a reward manager.
+// GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerAccumulatedTime(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
@@ -638,10 +597,10 @@ func (lp *launchpadV1) GetRewardManagerAccumulatedTime(projectTierId string) (in
 	return manager.AccumulatedTime(), nil
 }
 
-// GetRewardManagerRewardClaimableDuration returns the reward claimable duration of a reward manager.
+// GetProjectTierRewardRewardClaimableDuration returns the reward claimable duration of a reward manager.
 // Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetRewardManagerRewardClaimableDuration(projectTierId string) (int64, error) {
-	manager, err := lp.GetRewardManager(projectTierId)
+func (lp *launchpadV1) GetProjectTierRewardRewardClaimableDuration(projectTierId string) (int64, error) {
+	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
 		return 0, err
 	}
