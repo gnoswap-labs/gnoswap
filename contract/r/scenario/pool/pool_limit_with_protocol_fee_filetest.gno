@@ -89,7 +89,7 @@ func main() {
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
 
 	println("[SCENARIO] 1. Minting position spanning current tick")
 	testing.SetRealm(posRealm)
@@ -157,7 +157,7 @@ func main() {
 
 	println("[INFO] Collected:", collect0, collect1)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: >= 120")
 	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) // temporary fix (cc @jinoosss)

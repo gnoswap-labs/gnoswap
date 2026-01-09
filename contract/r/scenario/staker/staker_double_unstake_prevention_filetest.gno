@@ -218,8 +218,8 @@ func verifyPositionIntegrity() {
 	testing.SetRealm(adminRealm)
 
 	// Verify position still exists and is accessible
-	position, found := pn.GetPosition(1)
-	if !found {
+	position, err := pn.GetPosition(1)
+	if err != nil {
 		panic("position should still exist")
 	}
 

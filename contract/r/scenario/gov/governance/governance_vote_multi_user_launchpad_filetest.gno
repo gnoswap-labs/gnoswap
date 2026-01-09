@@ -137,12 +137,12 @@ func createLaunchpadProject() string {
 		int64(30),
 		int64(30),
 		int64(40),
-		int64(time.Now().Unix()+3600),
+		int64(time.Now().Unix()+604800),
 	)
 	ufmt.Printf("[INFO] Project created with ID: %s\n", projectId)
 
 	// Skip to activate project
-	testing.SkipHeights(3600)
+	testing.SkipHeights(120960)
 	return projectId + ":30"
 }
 
@@ -209,20 +209,20 @@ func multipleVotes(proposalId int64) {
 	governance.Vote(cross, proposalId, false)
 	ufmt.Printf("[INFO] Voter3 voted NO\n")
 
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state after all votes: %s\n", state)
 }
 
 func verifyVotingResults(proposalId int64) {
 	// Get individual vote weights
-	voter1Weight := governance.GetVoteWeight(proposalId, voter1Addr)
-	voter2Weight := governance.GetVoteWeight(proposalId, voter2Addr)
-	voter3Weight := governance.GetVoteWeight(proposalId, voter3Addr)
+	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
+	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)
+	voter3Weight, _ := governance.GetVoteWeight(proposalId, voter3Addr)
 
 	// Get proposal vote totals
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get xGNS balances
 	voter1Xgns := xgns.BalanceOf(voter1Addr)
@@ -274,13 +274,13 @@ func verifyVotingResults(proposalId int64) {
 //   - Voter3 xGNS: 0
 //
 // [SCENARIO] 5. Skip smoothing period for proposal creation
-// [INFO] current height: 21003
+// [INFO] current height: 138363
 //
 // [SCENARIO] 6. Propose Text
 // [INFO] Created proposal ID: 1
 //
 // [SCENARIO] 7. Skip voting start delay
-// [INFO] current height: 38283
+// [INFO] current height: 155643
 //
 // [SCENARIO] 8. All voters vote (voter1, voter2: yes, voter3: no)
 // [INFO] Voter1 voted YES

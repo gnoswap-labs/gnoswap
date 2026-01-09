@@ -35,6 +35,15 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 	os.observations = observations
 }
 
+func (os *ObservationState) Clone() *ObservationState {
+	return &ObservationState{
+		observations:     make(map[uint16]*Observation),
+		index:            os.index,
+		cardinality:      os.cardinality,
+		cardinalityLimit: os.cardinalityLimit,
+	}
+}
+
 type Observation struct {
 	blockTimestamp                    int64      // timestamp of the observation
 	tickCumulative                    int64      // cumulative tick up to this timestamp
@@ -71,6 +80,16 @@ func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCu
 
 func (o *Observation) SetInitialized(initialized bool) {
 	o.initialized = initialized
+}
+
+func (o *Observation) Clone() *Observation {
+	return &Observation{
+		blockTimestamp:                    o.blockTimestamp,
+		tickCumulative:                    o.tickCumulative,
+		liquidityCumulative:               o.liquidityCumulative.Clone(),
+		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128.Clone(),
+		initialized:                       o.initialized,
+	}
 }
 
 func NewObservationState(currentTime int64) *ObservationState {

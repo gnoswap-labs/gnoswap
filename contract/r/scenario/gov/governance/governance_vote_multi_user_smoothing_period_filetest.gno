@@ -137,7 +137,7 @@ func earlyVotersVote(proposalId int64) {
 	governance.Vote(cross, proposalId, false)
 	ufmt.Printf("[INFO] Voter2 voted NO\n")
 
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[INFO] Proposal state: %s\n", state)
 }
 
@@ -154,13 +154,13 @@ func lateVoterAttempt(proposalId int64) {
 
 func verifyVotingResults(proposalId int64) {
 	// Get vote weights - only voter1 and voter2 voted
-	voter1Weight := governance.GetVoteWeight(proposalId, voter1Addr)
-	voter2Weight := governance.GetVoteWeight(proposalId, voter2Addr)
+	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
+	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)
 
 	// Get proposal totals
-	yeaWeight := governance.GetYeaByProposalId(proposalId)
-	nayWeight := governance.GetNayByProposalId(proposalId)
-	quorumAmount := governance.GetQuorumAmountByProposalId(proposalId)
+	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
+	nayWeight, _ := governance.GetNayByProposalId(proposalId)
+	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
 	// Get current xGNS (for comparison)
 	voter3Xgns := xgns.BalanceOf(voter3Addr)

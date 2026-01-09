@@ -100,7 +100,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommu
 # stdout 'STORAGE DELTA:  1[0-9]{4} bytes'
 # stdout 'EVENTS:     \[{\"type\":\"ProposeCommunityPoolSpend\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"tokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"amount\",\"value\":\"100\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"[0-9]+\"},{\"key\":\"maxVotingWeight\",\"value\":\"[0-9]+\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
-gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetProposalStatusByProposalId(1)"
 # stdout '"active"'
 
 # The proposal cannot be canceled because it is still in active status 

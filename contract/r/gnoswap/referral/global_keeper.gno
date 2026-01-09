@@ -32,6 +32,12 @@ func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
+// GetLastOpTimestamp returns the last operation timestamp for the given address.
+// Returns ErrNotFound if no operation exists.
+func GetLastOpTimestamp(addr string) (int64, error) {
+	return gReferralKeeper.getLastOpTimestamp(address(addr))
+}
+
 // ContractAddress returns the address of the referral contract.
 // Use this address as the referral parameter in TryRegister to remove an existing referral.
 func ContractAddress() string {

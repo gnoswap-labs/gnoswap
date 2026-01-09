@@ -148,3 +148,56 @@ func NewParameterChangeInfo(pkgPath string, function string, params []string) Pa
 func (i *ParameterChangeInfo) PkgPath() string  { return i.pkgPath }
 func (i *ParameterChangeInfo) Function() string { return i.function }
 func (i *ParameterChangeInfo) Params() []string { return i.params }
+
+// Clone creates a deep copy of the ProposalMetadata.
+func (p *ProposalMetadata) Clone() *ProposalMetadata {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalMetadata{
+		title:       p.title,
+		description: p.description,
+	}
+}
+
+// Clone creates a deep copy of the CommunityPoolSpendInfo.
+func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
+	if i == nil {
+		return nil
+	}
+
+	return &CommunityPoolSpendInfo{
+		to:        i.to,
+		tokenPath: i.tokenPath,
+		amount:    i.amount,
+	}
+}
+
+// Clone creates a deep copy of the ExecutionInfo.
+func (i *ExecutionInfo) Clone() *ExecutionInfo {
+	if i == nil {
+		return nil
+	}
+
+	clonedMsgs := make([]string, len(i.msgs))
+	copy(clonedMsgs, i.msgs)
+
+	return &ExecutionInfo{
+		num:  i.num,
+		msgs: clonedMsgs,
+	}
+}
+
+// Clone creates a deep copy of the ProposalData.
+func (p *ProposalData) Clone() *ProposalData {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalData{
+		proposalType:       p.proposalType,
+		communityPoolSpend: p.communityPoolSpend.Clone(),
+		execution:          p.execution.Clone(),
+	}
+}

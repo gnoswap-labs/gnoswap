@@ -15,7 +15,7 @@ const (
 
 	stringSplitterPad = "*PAD*"
 
-	projectMinimumStartDelayTime = int64(60 * 60) // 1 hour
+	projectMinimumStartDelayTime = int64(dayTime * 7) // 7 days
 )
 
 // contract paths

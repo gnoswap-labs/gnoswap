@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -142,41 +141,6 @@ func (p *Pool) DeleteTick(tick int32) {
 }
 
 func (p *Pool) Clone() *Pool {
-	ticks := avl.NewTree()
-	tickBitmaps := avl.NewTree()
-	positions := avl.NewTree()
-
-	// clone ticks
-	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickInfo, ok := tickValue.(TickInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
-		}
-
-		ticks.Set(tickKey, cloneTickInfo(tickInfo))
-		return false
-	})
-
-	// clone tickBitmaps
-	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickBitmap, ok := tickValue.(*u256.Uint)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to *u256.Uint: %T", tickValue))
-		}
-		tickBitmaps.Set(tickKey, tickBitmap.Clone())
-		return false
-	})
-
-	// clone positions
-	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
-		positionInfo, ok := positionValue.(PositionInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
-		}
-		positions.Set(positionKey, clonePositionInfo(positionInfo))
-		return false
-	})
-
 	return &Pool{
 		token0Path:  p.token0Path,
 		token1Path:  p.token1Path,
@@ -194,9 +158,9 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
-		ticks:                ticks,
-		tickBitmaps:          tickBitmaps,
-		positions:            positions,
+		ticks:                avl.NewTree(),
+		tickBitmaps:          avl.NewTree(),
+		positions:            avl.NewTree(),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }

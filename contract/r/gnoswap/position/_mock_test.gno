@@ -132,6 +132,24 @@ func (m *MockPosition) SetPositionOperator(positionId uint64, operator address) 
 	m.Response.Get("SetPositionOperator")
 }
 
+func (m *MockPosition) GetPositionCount() int {
+	res, ok := m.Response.Get("GetPositionCount")
+	if !ok {
+		return 0
+	}
+
+	return res[0].(int)
+}
+
+func (m *MockPosition) GetPositionIDs(offset, count int) []uint64 {
+	res, ok := m.Response.Get("GetPositionIDs")
+	if !ok {
+		return []uint64{}
+	}
+
+	return res[0].([]uint64)
+}
+
 func (m *MockPosition) GetPosition(positionId uint64) (Position, bool) {
 	res, ok := m.Response.Get("GetPosition")
 	if !ok {
@@ -256,24 +274,6 @@ func (m *MockPosition) GetPositionOwner(positionId uint64) address {
 	}
 
 	return res[0].(address)
-}
-
-func (m *MockPosition) ApiGetPosition(positionId uint64) string {
-	res, ok := m.Response.Get("ApiGetPosition")
-	if !ok {
-		return ""
-	}
-
-	return res[0].(string)
-}
-
-func (m *MockPosition) ApiGetPositionUnclaimedFeeByPositionID(positionId uint64) string {
-	res, ok := m.Response.Get("ApiGetPositionUnclaimedFeeByPositionID")
-	if !ok {
-		return ""
-	}
-
-	return res[0].(string)
 }
 
 func newMockPosition(version string) *MockPosition {

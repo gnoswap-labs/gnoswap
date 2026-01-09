@@ -57,7 +57,11 @@ SetOperationStatus(OpTypeRouter, true)
 SetOperationStatus(OpTypeRouter, false)
 
 // Check before operation
-if IsHalted(OpTypeWithdraw) {
+halted, err := IsHalted(OpTypeWithdraw)
+if err != nil {
+    panic(err)
+}
+if halted {
     panic("withdrawals halted")
 }
 ```

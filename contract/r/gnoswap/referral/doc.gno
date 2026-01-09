@@ -30,6 +30,8 @@
 //   - HasReferral(addr string) bool: Returns true if the user has a
 //     registered referrer.
 //   - IsEmpty() bool: Returns true if no referral relationships exist.
+//   - GetLastOpTimestamp(addr string) (int64, error): Returns the last
+//     referral operation timestamp for the given user address.
 //   - TryRegister(cur realm, addr address, referral string) bool:
 //     Attempts to register a new referral. Returns true on success.
 //

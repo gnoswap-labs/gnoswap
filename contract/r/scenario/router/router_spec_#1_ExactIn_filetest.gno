@@ -98,7 +98,7 @@ func testPositionMint() {
 	println("[EXPECTED] amount0:", amount0, "expected: 100000000")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000000")
 
-	pool := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
+	pool, _ := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 

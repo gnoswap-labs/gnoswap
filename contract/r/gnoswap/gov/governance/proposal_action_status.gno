@@ -120,3 +120,22 @@ func NewProposalActionStatus(executable bool) *ProposalActionStatus {
 		executable: executable, // Set based on proposal type
 	}
 }
+
+// Clone creates a deep copy of the ProposalActionStatus.
+func (p *ProposalActionStatus) Clone() *ProposalActionStatus {
+	if p == nil {
+		return nil
+	}
+
+	return &ProposalActionStatus{
+		canceled:       p.canceled,
+		canceledAt:     p.canceledAt,
+		canceledHeight: p.canceledHeight,
+		canceledBy:     p.canceledBy,
+		executed:       p.executed,
+		executedAt:     p.executedAt,
+		executedHeight: p.executedHeight,
+		executedBy:     p.executedBy,
+		executable:     p.executable,
+	}
+}

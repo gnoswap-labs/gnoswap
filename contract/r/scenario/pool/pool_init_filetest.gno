@@ -74,7 +74,7 @@ func main() {
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
 
-	thisPool := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
 
 	println("[INFO] Test 1: Minting position in range")
 	// 1. returns in supply in range
@@ -90,7 +90,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	currentLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println()
@@ -108,7 +108,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -129,7 +129,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -154,7 +154,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -177,7 +177,7 @@ func main() {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	poolTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -81")
 	println()
@@ -199,7 +199,7 @@ func main() {
 		adminAddr,
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
@@ -222,7 +222,7 @@ func main() {
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
 	poolTick = thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -120")
 	println()
