@@ -172,14 +172,14 @@ func (p *Pool) Clone() *Pool {
 
 	return &Pool{
 		poolPath:                      p.poolPath,
-		stakedLiquidity:               p.stakedLiquidity.Clone(),
+		stakedLiquidity:               nil,
 		lastUnclaimableTime:           p.lastUnclaimableTime,
 		unclaimableAcc:                p.unclaimableAcc,
-		rewardCache:                   p.rewardCache.Clone(),
-		incentives:                    p.incentives.Clone(),
+		rewardCache:                   nil,
+		incentives:                    nil,
 		ticks:                         p.ticks.Clone(),
-		globalRewardRatioAccumulation: p.globalRewardRatioAccumulation.Clone(),
-		historicalTick:                p.historicalTick.Clone(),
+		globalRewardRatioAccumulation: nil,
+		historicalTick:                nil,
 	}
 }
 
@@ -287,29 +287,6 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 		}
 		return false
 	})
-}
-
-// Clone returns a deep copy of the incentives.
-func (i *Incentives) Clone() *Incentives {
-	if i == nil {
-		return nil
-	}
-
-	incentives := avl.NewTree()
-	i.incentives.Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*ExternalIncentive)
-		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
-		}
-		incentives.Set(key, incentive.Clone())
-		return false
-	})
-
-	return &Incentives{
-		incentives:         incentives,
-		targetPoolPath:     i.targetPoolPath,
-		unclaimablePeriods: i.unclaimablePeriods.Clone(),
-	}
 }
 
 func NewIncentives(targetPoolPath string) *Incentives {

@@ -52,6 +52,17 @@ type IStakerManager interface {
 
 type IStakerGetter interface {
 	GetPool(poolPath string) *Pool
+	GetPoolRewardCacheCount(poolPath string) uint64
+	GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64
+	GetPoolRewardCache(poolPath string, timestamp uint64) int64
+	GetPoolIncentiveCount(poolPath string) uint64                    // Incentives struct > incentives *avl.Tree
+	GetPoolIncentiveIDs(poolPath string, offset, count int) []string // Incentives struct > incentives *avl.Tree
+	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
+	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
+	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint
+	GetPoolHistoricalTickCount(poolPath string) uint64
+	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
+	GetPoolHistoricalTick(poolPath string, tick uint64) int32
 	GetIncentive(poolPath string, incentiveId string) *ExternalIncentive
 	GetDeposit(lpTokenId uint64) *Deposit
 	CollectableEmissionReward(positionId uint64) int64

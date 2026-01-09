@@ -560,6 +560,94 @@ func (m *MockStaker) GetStakedPositionsByUser(owner address, offset, count int) 
 	return res[0].([]uint64)
 }
 
+func (m *MockStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
+	res, ok := m.Response.Get("GetPoolRewardCacheCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+	res, ok := m.Response.Get("GetPoolRewardCacheIDs")
+	if !ok {
+		return nil
+	}
+	return res[0].([]int64)
+}
+
+func (m *MockStaker) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
+	res, ok := m.Response.Get("GetPoolRewardCache")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetPoolIncentiveCount(poolPath string) uint64 {
+	res, ok := m.Response.Get("GetPoolIncentiveCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+	res, ok := m.Response.Get("GetPoolIncentiveIDs")
+	if !ok {
+		return nil
+	}
+	return res[0].([]string)
+}
+
+func (m *MockStaker) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
+	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulationCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulationIDs")
+	if !ok {
+		return nil
+	}
+	return res[0].([]uint64)
+}
+
+func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulation")
+	if !ok {
+		return u256.Zero()
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
+	res, ok := m.Response.Get("GetPoolHistoricalTickCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(uint64)
+}
+
+func (m *MockStaker) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+	res, ok := m.Response.Get("GetPoolHistoricalTickIDs")
+	if !ok {
+		return nil
+	}
+	return res[0].([]int32)
+}
+
+func (m *MockStaker) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
+	res, ok := m.Response.Get("GetPoolHistoricalTick")
+	if !ok {
+		return 0
+	}
+	return res[0].(int32)
+}
+
 func newMockStaker(version string) *MockStaker {
 	return &MockStaker{
 		Version:  version,

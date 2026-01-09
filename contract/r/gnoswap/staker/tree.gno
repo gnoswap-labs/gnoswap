@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 )
@@ -62,7 +61,16 @@ func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value 
 	})
 }
 
-// Clone returns a deep copy of the UintTree.
+func (self *UintTree) Size() int {
+	return self.tree.Size()
+}
+
+func (self *UintTree) IterateByOffset(offset, count int, fn func(key int64, value any) bool) {
+	self.tree.IterateByOffset(offset, count, func(key string, value any) bool {
+		return fn(DecodeInt64(key), value)
+	})
+}
+
 func (self *UintTree) Clone() *UintTree {
 	if self == nil {
 		return nil
@@ -70,57 +78,11 @@ func (self *UintTree) Clone() *UintTree {
 
 	cloned := NewUintTree()
 	self.tree.Iterate("", "", func(key string, value any) bool {
-		cloned.tree.Set(key, cloneUintTreeValue(value))
+		cloned.tree.Set(key, value)
 		return false
 	})
 
 	return cloned
-}
-
-func cloneUintTreeValue(value any) any {
-	switch v := value.(type) {
-	case *u256.Uint:
-		return v.Clone()
-	case *avl.Tree:
-		return cloneAvlTree(v)
-	case []string:
-		copied := make([]string, len(v))
-		copy(copied, v)
-		return copied
-	case int64, int32, uint64, bool, string:
-		return v
-	default:
-		return value
-	}
-}
-
-func cloneAvlTree(tree *avl.Tree) *avl.Tree {
-	if tree == nil {
-		return nil
-	}
-
-	cloned := avl.NewTree()
-	tree.Iterate("", "", func(key string, value any) bool {
-		cloned.Set(key, cloneAvlTreeValue(value))
-		return false
-	})
-
-	return cloned
-}
-
-func cloneAvlTreeValue(value any) any {
-	switch v := value.(type) {
-	case []string:
-		copied := make([]string, len(v))
-		copy(copied, v)
-		return copied
-	case *u256.Uint:
-		return v.Clone()
-	case int64, int32, uint64, bool, string:
-		return v
-	default:
-		return value
-	}
 }
 
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.

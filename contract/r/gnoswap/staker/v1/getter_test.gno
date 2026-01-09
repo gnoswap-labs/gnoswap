@@ -688,3 +688,138 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestGetterPoolRewardCache(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	// Add some reward cache entries
+	state.pool.RewardCache().Set(state.fixedTimestamp, int64(1000))
+	state.pool.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
+	state.pool.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
+
+	// Test count
+	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
+	uassert.Equal(t, uint64(4), count) // 3 + 1 initial entry from NewPool
+
+	// Test IDs pagination
+	ids := state.instance.GetPoolRewardCacheIDs(state.poolPath, 0, 2)
+	uassert.Equal(t, 2, len(ids))
+
+	// Test get specific cache value
+	cacheValue := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp))
+	uassert.Equal(t, int64(1000), cacheValue)
+
+	cacheValue2 := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+200))
+	uassert.Equal(t, int64(3000), cacheValue2)
+
+	// Test non-existent timestamp
+	nonExistent := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+9999))
+	uassert.Equal(t, int64(0), nonExistent)
+}
+
+func TestGetterPoolIncentive(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	// Add more incentives
+	incentive2 := sr.NewExternalIncentive(
+		"test-incentive-2",
+		state.poolPath,
+		bazPath,
+		5_000_000,
+		state.fixedTimestamp+100,
+		state.fixedTimestamp+3700,
+		state.owner,
+		500_000_000,
+		state.fixedBlockHeight,
+		state.fixedTimestamp,
+		false,
+	)
+	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
+
+	// Test count
+	count := state.instance.GetPoolIncentiveCount(state.poolPath)
+	uassert.Equal(t, uint64(2), count)
+
+	// Test IDs pagination
+	ids := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 10)
+	uassert.Equal(t, 2, len(ids))
+	uassert.True(t, contains(ids, state.incentiveId))
+	uassert.True(t, contains(ids, "test-incentive-2"))
+
+	// Test pagination with offset
+	idsPage1 := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 1)
+	uassert.Equal(t, 1, len(idsPage1))
+
+	idsPage2 := state.instance.GetPoolIncentiveIDs(state.poolPath, 1, 1)
+	uassert.Equal(t, 1, len(idsPage2))
+}
+
+func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	// Add some accumulation entries
+	acc1 := u256.MustFromDecimal("1000000000000000000")
+	acc2 := u256.MustFromDecimal("2000000000000000000")
+	acc3 := u256.MustFromDecimal("3000000000000000000")
+
+	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
+	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
+	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3)
+
+	// Test count
+	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
+	uassert.Equal(t, uint64(4), count) // 3 + 1 initial entry from NewPool
+
+	// Test IDs pagination
+	ids := state.instance.GetPoolGlobalRewardRatioAccumulationIDs(state.poolPath, 0, 2)
+	uassert.Equal(t, 2, len(ids))
+
+	// Test get specific accumulation value
+	accValue := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+100))
+	uassert.Equal(t, acc1.ToString(), accValue.ToString())
+
+	accValue2 := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+300))
+	uassert.Equal(t, acc3.ToString(), accValue2.ToString())
+
+	// Test non-existent timestamp
+	nonExistent := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+9999))
+	uassert.Equal(t, u256.Zero().ToString(), nonExistent.ToString())
+}
+
+func TestGetterPoolHistoricalTick(t *testing.T) {
+	state := setupBasicTestState(t)
+
+	// Add some historical tick entries
+	state.pool.HistoricalTick().Set(state.fixedTimestamp, int32(-100))
+	state.pool.HistoricalTick().Set(state.fixedTimestamp+100, int32(50))
+	state.pool.HistoricalTick().Set(state.fixedTimestamp+200, int32(200))
+
+	// Test count
+	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)
+	uassert.Equal(t, uint64(3), count)
+
+	// Test IDs pagination
+	ticks := state.instance.GetPoolHistoricalTickIDs(state.poolPath, 0, 2)
+	uassert.Equal(t, 2, len(ticks))
+
+	// Test get specific tick value
+	tickValue := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp))
+	uassert.Equal(t, int32(-100), tickValue)
+
+	tickValue2 := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+200))
+	uassert.Equal(t, int32(200), tickValue2)
+
+	// Test non-existent timestamp
+	nonExistent := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+9999))
+	uassert.Equal(t, int32(0), nonExistent)
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}

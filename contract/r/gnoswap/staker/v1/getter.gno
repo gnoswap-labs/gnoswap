@@ -457,3 +457,135 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 
 	return incentives
 }
+
+// GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
+func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	return uint64(pool.RewardCache().Size())
+}
+
+// GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
+func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	rewardCache := pool.RewardCache()
+
+	ids := make([]int64, 0)
+	rewardCache.IterateByOffset(offset, count, func(key int64, _ any) bool {
+		ids = append(ids, key)
+		return false
+	})
+
+	return ids
+}
+
+// GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
+func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	value, ok := pool.RewardCache().Get(int64(timestamp))
+	if !ok {
+		return 0
+	}
+
+	rewardCache, ok := value.(int64)
+	if !ok {
+		panic("failed to cast reward cache value to int64")
+	}
+
+	return rewardCache
+}
+
+// GetPoolIncentiveCount returns the number of incentives for a pool.
+func (s *stakerV1) GetPoolIncentiveCount(poolPath string) uint64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	return uint64(pool.Incentives().IncentiveTrees().Size())
+}
+
+// GetPoolIncentiveIDs returns a paginated list of incentive IDs for a pool.
+func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
+	pool := s.getPoolByPoolPath(poolPath)
+	incentives := pool.Incentives().IncentiveTrees()
+
+	ids := make([]string, 0)
+	incentives.IterateByOffset(offset, count, func(key string, _ any) bool {
+		ids = append(ids, key)
+		return false
+	})
+
+	return ids
+}
+
+// GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	return uint64(pool.GlobalRewardRatioAccumulation().Size())
+}
+
+// GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	accumulation := pool.GlobalRewardRatioAccumulation()
+
+	ids := make([]uint64, 0)
+	accumulation.IterateByOffset(offset, count, func(key int64, _ any) bool {
+		ids = append(ids, uint64(key))
+		return false
+	})
+
+	return ids
+}
+
+// GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+	pool := s.getPoolByPoolPath(poolPath)
+	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
+	if !ok {
+		return u256.Zero()
+	}
+
+	accumulation, ok := value.(*u256.Uint)
+	if !ok {
+		panic("failed to cast global reward ratio accumulation to *u256.Uint")
+	}
+
+	return accumulation.Clone()
+}
+
+// GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
+func (s *stakerV1) GetPoolHistoricalTickCount(poolPath string) uint64 {
+	pool := s.getPoolByPoolPath(poolPath)
+	return uint64(pool.HistoricalTick().Size())
+}
+
+// GetPoolHistoricalTickIDs returns a paginated list of historical tick values for a pool.
+func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
+	pool := s.getPoolByPoolPath(poolPath)
+	historicalTick := pool.HistoricalTick()
+
+	ticks := make([]int32, 0)
+	historicalTick.IterateByOffset(offset, count, func(_ int64, value any) bool {
+		tickId, ok := value.(int32)
+		if !ok {
+			return false
+		}
+		ticks = append(ticks, tickId)
+		return false
+	})
+
+	return ticks
+}
+
+// GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
+func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
+	pool := s.getPoolByPoolPath(poolPath)
+	value, ok := pool.HistoricalTick().Get(int64(tick))
+	if !ok {
+		return 0
+	}
+
+	tickId, ok := value.(int32)
+	if !ok {
+		panic("failed to cast historical tick value to int32")
+	}
+
+	return tickId
+}
