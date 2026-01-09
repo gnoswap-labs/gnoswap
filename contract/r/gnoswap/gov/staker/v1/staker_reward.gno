@@ -182,10 +182,7 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 
 	access.AssertIsLaunchpad(caller)
 
-	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	if !exists {
-		panic(ufmt.Sprintf("launchpad address not found"))
-	}
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
