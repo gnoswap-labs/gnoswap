@@ -256,14 +256,6 @@ func (m *MockStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint
 	return res[0].(int64)
 }
 
-func (m *MockStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	res, ok := m.Response.Get("GetDepositStakeTimestamp")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
 func (m *MockStaker) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
 	res, ok := m.Response.Get("GetDepositCollectedInternalReward")
 	if !ok {

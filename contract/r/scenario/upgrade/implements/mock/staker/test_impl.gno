@@ -211,7 +211,9 @@ func (t *TestStaker) CollectableEmissionReward(positionId uint64) int64 {
 func (t *TestStaker) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64 {
 	return t.ExecuteFn(
 		"CollectableExternalIncentiveReward",
-		func(args ...any) any { return t.instance.CollectableExternalIncentiveReward(args[0].(uint64), args[1].(string)) },
+		func(args ...any) any {
+			return t.instance.CollectableExternalIncentiveReward(args[0].(uint64), args[1].(string))
+		},
 		positionId, incentiveId,
 	).(int64)
 }
@@ -319,14 +321,6 @@ func (t *TestStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint
 		func(args ...any) any {
 			return t.instance.GetDepositInternalRewardLastCollectTimestamp(args[0].(uint64))
 		},
-		lpTokenId,
-	).(int64)
-}
-
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	return t.ExecuteFn(
-		"GetDepositStakeTimestamp",
-		func(args ...any) any { return t.instance.GetDepositStakeTimestamp(args[0].(uint64)) },
 		lpTokenId,
 	).(int64)
 }

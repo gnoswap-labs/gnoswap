@@ -282,13 +282,6 @@ func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64
 	return deposit.InternalRewardLastCollectTime()
 }
 
-// GetDepositStakeTimestamp returns the staking timestamp of a deposit.
-func (s *stakerV1) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
-
-	return deposit.StakeTime()
-}
-
 // GetDepositCollectedInternalReward returns the collected internal reward amount.
 func (s *stakerV1) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
 	deposit := s.getDeposit(lpTokenId)

@@ -303,11 +303,6 @@ func TestGetterDepositBasicProperties(t *testing.T) {
 			expected: int32(100),
 		},
 		{
-			name:     "GetDepositStakeTimestamp",
-			getter:   func() any { return state.instance.GetDepositStakeTimestamp(state.positionId) },
-			expected: state.fixedTimestamp,
-		},
-		{
 			name:     "GetDepositInternalRewardLastCollectTimestamp",
 			getter:   func() any { return state.instance.GetDepositInternalRewardLastCollectTimestamp(state.positionId) },
 			expected: state.fixedTimestamp,

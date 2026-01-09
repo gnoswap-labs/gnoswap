@@ -263,13 +263,6 @@ func (t *TestStaker) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint
 	return t.instance.GetDepositInternalRewardLastCollectTimestamp(lpTokenId)
 }
 
-func (t *TestStaker) GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	if !t.isActive("GetDepositStakeTimestamp") {
-		panic("test implementation: GetDepositStakeTimestamp not supported")
-	}
-	return t.instance.GetDepositStakeTimestamp(lpTokenId)
-}
-
 func (t *TestStaker) GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
 	if !t.isActive("GetDepositCollectedInternalReward") {
 		panic("test implementation: GetDepositCollectedInternalReward not supported")

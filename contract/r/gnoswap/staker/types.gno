@@ -67,7 +67,6 @@ type IStakerGetter interface {
 	GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64
 	GetDepositGnsAmount() int64
 	GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64
-	GetDepositStakeTimestamp(lpTokenId uint64) int64
 	GetDepositCollectedInternalReward(lpTokenId uint64) int64
 	GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64
 	GetDepositLiquidity(lpTokenId uint64) *u256.Uint

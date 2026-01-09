@@ -96,11 +96,6 @@ func GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
 	return getImplementation().GetDepositInternalRewardLastCollectTimestamp(lpTokenId)
 }
 
-// GetDepositStakeTimestamp returns the staking timestamp of a position.
-func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	return getImplementation().GetDepositStakeTimestamp(lpTokenId)
-}
-
 // GetDepositCollectedInternalReward returns the collected internal reward amount of a position.
 func GetDepositCollectedInternalReward(lpTokenId uint64) int64 {
 	return getImplementation().GetDepositCollectedInternalReward(lpTokenId)
