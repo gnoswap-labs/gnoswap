@@ -177,7 +177,7 @@ func (p *Pool) Clone() *Pool {
 		unclaimableAcc:                p.unclaimableAcc,
 		rewardCache:                   nil,
 		incentives:                    nil,
-		ticks:                         p.ticks.Clone(),
+		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: nil,
 		historicalTick:                nil,
 	}

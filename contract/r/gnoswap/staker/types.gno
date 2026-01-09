@@ -55,8 +55,8 @@ type IStakerGetter interface {
 	GetPoolRewardCacheCount(poolPath string) uint64
 	GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64
 	GetPoolRewardCache(poolPath string, timestamp uint64) int64
-	GetPoolIncentiveCount(poolPath string) uint64                    // Incentives struct > incentives *avl.Tree
-	GetPoolIncentiveIDs(poolPath string, offset, count int) []string // Incentives struct > incentives *avl.Tree
+	GetPoolIncentiveCount(poolPath string) uint64
+	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
 	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
 	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
 	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint

@@ -238,70 +238,19 @@ func (d *Deposit) Clone() *Deposit {
 
 	return &Deposit{
 		warmups:                        cloneWarmups(d.warmups),
-		liquidity:                      cloneUint(d.liquidity),
+		liquidity:                      d.liquidity.Clone(),
 		targetPoolPath:                 d.targetPoolPath,
 		owner:                          d.owner,
 		stakeTime:                      d.stakeTime,
 		internalRewardLastCollectTime:  d.internalRewardLastCollectTime,
 		collectedInternalReward:        d.collectedInternalReward,
-		collectedExternalRewards:       cloneAvlTreeInt64(d.collectedExternalRewards),
-		externalRewardLastCollectTimes: cloneAvlTreeInt64(d.externalRewardLastCollectTimes),
-		externalIncentiveIds:           cloneAvlTreeBool(d.externalIncentiveIds),
+		collectedExternalRewards:       cloneAvlTree(d.collectedExternalRewards),
+		externalRewardLastCollectTimes: cloneAvlTree(d.externalRewardLastCollectTimes),
+		externalIncentiveIds:           cloneAvlTree(d.externalIncentiveIds),
 		lastExternalIncentiveUpdatedAt: d.lastExternalIncentiveUpdatedAt,
 		tickLower:                      d.tickLower,
 		tickUpper:                      d.tickUpper,
 	}
-}
-
-func cloneWarmups(warmups []Warmup) []Warmup {
-	if warmups == nil {
-		return nil
-	}
-
-	copied := make([]Warmup, len(warmups))
-	copy(copied, warmups)
-	return copied
-}
-
-func cloneUint(value *u256.Uint) *u256.Uint {
-	if value == nil {
-		return nil
-	}
-	return value.Clone()
-}
-
-func cloneAvlTreeInt64(tree *avl.Tree) *avl.Tree {
-	if tree == nil {
-		return nil
-	}
-
-	cloned := avl.NewTree()
-	tree.Iterate("", "", func(key string, value any) bool {
-		intValue, ok := value.(int64)
-		if !ok {
-			panic("failed to cast value to int64")
-		}
-		cloned.Set(key, intValue)
-		return false
-	})
-	return cloned
-}
-
-func cloneAvlTreeBool(tree *avl.Tree) *avl.Tree {
-	if tree == nil {
-		return nil
-	}
-
-	cloned := avl.NewTree()
-	tree.Iterate("", "", func(key string, value any) bool {
-		boolValue, ok := value.(bool)
-		if !ok {
-			panic("failed to cast value to bool")
-		}
-		cloned.Set(key, boolValue)
-		return false
-	})
-	return cloned
 }
 
 func NewDeposit(
