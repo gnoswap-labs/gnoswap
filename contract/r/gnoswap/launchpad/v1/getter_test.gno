@@ -19,7 +19,7 @@ func TestGetProjectCount(t *testing.T) {
 		count := lp.GetProjectCount()
 
 		// Verify
-		uassert.Equal(t, int64(0), count)
+		uassert.Equal(t, 0, count)
 	})
 
 	t.Run("count increases with created projects", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestGetProjectCount(t *testing.T) {
 		})
 
 		count1 := lp.GetProjectCount()
-		uassert.Equal(t, int64(1), count1)
+		uassert.Equal(t, 1, count1)
 
 		createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
 			name:            "Project 2",
@@ -54,39 +54,39 @@ func TestGetProjectCount(t *testing.T) {
 		count2 := lp.GetProjectCount()
 
 		// Verify
-		uassert.Equal(t, int64(2), count2)
+		uassert.Equal(t, 2, count2)
 	})
 }
 
 func TestGetProjectIDs(t *testing.T) {
 	tests := []struct {
 		name          string
-		offset        int64
-		limit         int64
-		expectedCount int64
+		offset        int
+		count         int
+		expectedCount int
 	}{
 		{
 			name:          "negative offset returns empty slice",
 			offset:        -1,
-			limit:         10,
+			count:         10,
 			expectedCount: 0,
 		},
 		{
-			name:          "zero limit returns empty slice",
+			name:          "zero count returns empty slice",
 			offset:        0,
-			limit:         0,
+			count:         0,
 			expectedCount: 0,
 		},
 		{
-			name:          "negative limit returns empty slice",
+			name:          "negative count returns empty slice",
 			offset:        0,
-			limit:         -1,
+			count:         -1,
 			expectedCount: 0,
 		},
 		{
 			name:          "valid pagination with empty store",
 			offset:        0,
-			limit:         10,
+			count:         10,
 			expectedCount: 0,
 		},
 	}
@@ -99,13 +99,13 @@ func TestGetProjectIDs(t *testing.T) {
 			lp := getTestImplementation()
 
 			// Execute
-			result := lp.GetProjectIDs(tt.offset, tt.limit)
+			result := lp.GetProjectIDs(tt.offset, tt.count)
 
 			// Verify
 			if result == nil {
 				result = []string{}
 			}
-			uassert.Equal(t, tt.expectedCount, int64(len(result)))
+			uassert.Equal(t, tt.expectedCount, len(result))
 		})
 	}
 }
@@ -651,7 +651,7 @@ func TestGetDepositCount(t *testing.T) {
 		count := lp.GetDepositCount()
 
 		// Verify
-		uassert.Equal(t, int64(0), count)
+		uassert.Equal(t, 0, count)
 	})
 
 	t.Run("deposit count increases with new deposits", func(t *testing.T) {
@@ -680,7 +680,7 @@ func TestGetDepositCount(t *testing.T) {
 		count := lp.GetDepositCount()
 
 		// Verify
-		uassert.Equal(t, int64(1), count)
+		uassert.Equal(t, 1, count)
 	})
 }
 
@@ -883,7 +883,7 @@ func TestGetDepositAmount(t *testing.T) {
 	})
 }
 
-func TestGetRewardManager(t *testing.T) {
+func TestGetProjectTierRewardManager(t *testing.T) {
 	tests := []struct {
 		name             string
 		createProject    bool
@@ -927,7 +927,7 @@ func TestGetRewardManager(t *testing.T) {
 			}
 
 			// Execute
-			manager, err := lp.GetRewardManager(projectTierID)
+			manager, err := lp.GetProjectTierRewardManager(projectTierID)
 
 			// Verify
 			if tt.expectedHasError {
@@ -942,7 +942,7 @@ func TestGetRewardManager(t *testing.T) {
 	}
 }
 
-func TestGetRewardManagerTotalDistributeAmount(t *testing.T) {
+func TestGetProjectTierRewardTotalDistributeAmount(t *testing.T) {
 	t.Run("get reward manager total distribute amount", func(t *testing.T) {
 		// Setup
 		setupTestEnvironment(t, testEnvConfig{})
@@ -962,7 +962,7 @@ func TestGetRewardManagerTotalDistributeAmount(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		totalDistribute, err := lp.GetRewardManagerTotalDistributeAmount(projectTierID)
+		totalDistribute, err := lp.GetProjectTierRewardTotalDistributeAmount(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -970,7 +970,7 @@ func TestGetRewardManagerTotalDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerDistributeStartTime(t *testing.T) {
+func TestGetProjectTierRewardDistributeStartTime(t *testing.T) {
 	t.Run("get reward manager distribute start time", func(t *testing.T) {
 		// Setup
 		setupTestEnvironment(t, testEnvConfig{})
@@ -990,7 +990,7 @@ func TestGetRewardManagerDistributeStartTime(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		startTime, err := lp.GetRewardManagerDistributeStartTime(projectTierID)
+		startTime, err := lp.GetProjectTierRewardDistributeStartTime(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -998,7 +998,7 @@ func TestGetRewardManagerDistributeStartTime(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerDistributeEndTime(t *testing.T) {
+func TestGetProjectTierRewardDistributeEndTime(t *testing.T) {
 	t.Run("get reward manager distribute end time", func(t *testing.T) {
 		// Setup
 		setupTestEnvironment(t, testEnvConfig{})
@@ -1018,7 +1018,7 @@ func TestGetRewardManagerDistributeEndTime(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		endTime, err := lp.GetRewardManagerDistributeEndTime(projectTierID)
+		endTime, err := lp.GetProjectTierRewardDistributeEndTime(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1093,8 +1093,8 @@ func TestGetRewardState(t *testing.T) {
 	}
 }
 
-func TestGetDepositIDs(t *testing.T) {
-	t.Run("get deposit ids pagination", func(t *testing.T) {
+func TestGetProjectTierDepositIDs(t *testing.T) {
+	t.Run("get project tier deposit ids pagination", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
@@ -1116,7 +1116,7 @@ func TestGetDepositIDs(t *testing.T) {
 		})
 
 		// Execute
-		ids := lp.GetDepositIDs(0, 10)
+		ids := lp.GetProjectTierDepositIDs(projectID, 30, 0, 10)
 
 		// Verify
 		uassert.True(t, len(ids) > 0)
@@ -1459,8 +1459,8 @@ func TestGetProjectTierTotalCollectedAmount(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerCount(t *testing.T) {
-	t.Run("get reward manager count", func(t *testing.T) {
+func TestGetProjectTierRewardManagerCount(t *testing.T) {
+	t.Run("get project tier reward manager count", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
 		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
@@ -1476,38 +1476,14 @@ func TestGetRewardManagerCount(t *testing.T) {
 		})
 
 		// Execute
-		count := lp.GetRewardManagerCount()
+		count := lp.GetProjectTierRewardManagerCount()
 
 		// Verify
 		uassert.True(t, count > 0)
 	})
 }
 
-func TestGetRewardManagerIDs(t *testing.T) {
-	t.Run("get reward manager ids", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
-		lp := getTestImplementation()
-		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
-
-		_ = createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-			name:            "Test Project",
-			rewardAmount:    1000000,
-			tier30Pct:       25,
-			tier90Pct:       50,
-			tier180Pct:      25,
-			recipientSuffix: "recipient",
-		})
-
-		// Execute
-		ids := lp.GetRewardManagerIDs(0, 10)
-
-		// Verify
-		uassert.True(t, len(ids) > 0)
-	})
-}
-
-func TestGetRewardManagerDistibuteAmountPerSecondX128(t *testing.T) {
+func TestGetProjectTierRewardDistributeAmountPerSecondX128(t *testing.T) {
 	t.Run("get reward manager distribute amount per second x128", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1526,7 +1502,7 @@ func TestGetRewardManagerDistibuteAmountPerSecondX128(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		amount, err := lp.GetRewardManagerDistibuteAmountPerSecondX128(projectTierID)
+		amount, err := lp.GetProjectTierRewardDistributeAmountPerSecondX128(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1534,7 +1510,7 @@ func TestGetRewardManagerDistibuteAmountPerSecondX128(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerAccumulatedRewardPerDepositX128(t *testing.T) {
+func TestGetProjectTierRewardAccumulatedRewardPerDepositX128(t *testing.T) {
 	t.Run("get reward manager accumulated reward per deposit x128", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1553,7 +1529,7 @@ func TestGetRewardManagerAccumulatedRewardPerDepositX128(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		amount, err := lp.GetRewardManagerAccumulatedRewardPerDepositX128(projectTierID)
+		amount, err := lp.GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1561,7 +1537,7 @@ func TestGetRewardManagerAccumulatedRewardPerDepositX128(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerTotalClaimedAmount(t *testing.T) {
+func TestGetProjectTierRewardTotalClaimedAmount(t *testing.T) {
 	t.Run("get reward manager total claimed amount", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1580,7 +1556,7 @@ func TestGetRewardManagerTotalClaimedAmount(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		amount, err := lp.GetRewardManagerTotalClaimedAmount(projectTierID)
+		amount, err := lp.GetProjectTierRewardTotalClaimedAmount(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1588,7 +1564,7 @@ func TestGetRewardManagerTotalClaimedAmount(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerAccumulatedDistributeAmount(t *testing.T) {
+func TestGetProjectTierRewardAccumulatedDistributeAmount(t *testing.T) {
 	t.Run("get reward manager accumulated distribute amount", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1607,7 +1583,7 @@ func TestGetRewardManagerAccumulatedDistributeAmount(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		amount, err := lp.GetRewardManagerAccumulatedDistributeAmount(projectTierID)
+		amount, err := lp.GetProjectTierRewardAccumulatedDistributeAmount(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1615,7 +1591,7 @@ func TestGetRewardManagerAccumulatedDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerAccumulatedHeight(t *testing.T) {
+func TestGetProjectTierRewardAccumulatedHeight(t *testing.T) {
 	t.Run("get reward manager accumulated height", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1634,7 +1610,7 @@ func TestGetRewardManagerAccumulatedHeight(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		height, err := lp.GetRewardManagerAccumulatedHeight(projectTierID)
+		height, err := lp.GetProjectTierRewardAccumulatedHeight(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1642,7 +1618,7 @@ func TestGetRewardManagerAccumulatedHeight(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerAccumulatedTime(t *testing.T) {
+func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
 	t.Run("get reward manager accumulated time", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1661,7 +1637,7 @@ func TestGetRewardManagerAccumulatedTime(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		time, err := lp.GetRewardManagerAccumulatedTime(projectTierID)
+		time, err := lp.GetProjectTierRewardAccumulatedTime(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)
@@ -1669,7 +1645,7 @@ func TestGetRewardManagerAccumulatedTime(t *testing.T) {
 	})
 }
 
-func TestGetRewardManagerRewardClaimableDuration(t *testing.T) {
+func TestGetProjectTierRewardRewardClaimableDuration(t *testing.T) {
 	t.Run("get reward manager reward claimable duration", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
 		lp := getTestImplementation()
@@ -1688,7 +1664,7 @@ func TestGetRewardManagerRewardClaimableDuration(t *testing.T) {
 		projectTierID := projectID + ":" + formatInt(projectTier30)
 
 		// Execute
-		duration, err := lp.GetRewardManagerRewardClaimableDuration(projectTierID)
+		duration, err := lp.GetProjectTierRewardRewardClaimableDuration(projectTierID)
 
 		// Verify
 		uassert.NoError(t, err)

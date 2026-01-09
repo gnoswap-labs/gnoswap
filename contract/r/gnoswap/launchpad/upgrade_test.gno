@@ -517,13 +517,13 @@ func TestGetProjectActiveStatus(t *testing.T) {
 func TestGetProjectIDs(t *testing.T) {
 	tests := []struct {
 		name   string
-		offset int64
-		limit  int64
+		offset int
+		count  int
 	}{
 		{
 			name:   "get projects is success",
 			offset: 0,
-			limit:  10,
+			count:  10,
 		},
 	}
 
@@ -536,7 +536,7 @@ func TestGetProjectIDs(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjectIDs(tt.offset, tt.limit)
+			GetProjectIDs(tt.offset, tt.count)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
@@ -547,16 +547,20 @@ func TestGetProjectIDs(t *testing.T) {
 	}
 }
 
-func TestGetDepositIDs(t *testing.T) {
+func TestGetProjectTierDepositIDs(t *testing.T) {
 	tests := []struct {
-		name   string
-		offset int64
-		limit  int64
+		name      string
+		projectId string
+		tier      int64
+		offset    int
+		count     int
 	}{
 		{
-			name:   "get deposits is success",
-			offset: 0,
-			limit:  10,
+			name:      "get project tier deposits is success",
+			projectId: "project1",
+			tier:      30,
+			offset:    0,
+			count:     10,
 		},
 	}
 
@@ -569,23 +573,23 @@ func TestGetDepositIDs(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetDepositIDs(tt.offset, tt.limit)
+			GetProjectTierDepositIDs(tt.projectId, tt.tier, tt.offset, tt.count)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetDepositIDs") != 1 {
-				t.Error("GetDepositIDs was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectTierDepositIDs") != 1 {
+				t.Error("GetProjectTierDepositIDs was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestGetRewardManagerCount(t *testing.T) {
+func TestGetProjectTierRewardManagerCount(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "get reward manager count is success",
+			name: "get project tier reward manager count is success",
 		},
 	}
 
@@ -598,12 +602,12 @@ func TestGetRewardManagerCount(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetRewardManagerCount()
+			GetProjectTierRewardManagerCount()
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetRewardManagerCount") != 1 {
-				t.Error("GetRewardManagerCount was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectTierRewardManagerCount") != 1 {
+				t.Error("GetProjectTierRewardManagerCount was not called on the implementation")
 			}
 		})
 	}
@@ -671,13 +675,13 @@ func TestGetProjectCondition(t *testing.T) {
 	}
 }
 
-func TestGetRewardManager(t *testing.T) {
+func TestGetProjectTierRewardManager(t *testing.T) {
 	tests := []struct {
 		name          string
 		projectTierId string
 	}{
 		{
-			name:          "get reward manager is success",
+			name:          "get project tier reward manager is success",
 			projectTierId: "project1:30",
 		},
 	}
@@ -691,12 +695,12 @@ func TestGetRewardManager(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetRewardManager(tt.projectTierId)
+			GetProjectTierRewardManager(tt.projectTierId)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetRewardManager") != 1 {
-				t.Error("GetRewardManager was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectTierRewardManager") != 1 {
+				t.Error("GetProjectTierRewardManager was not called on the implementation")
 			}
 		})
 	}
@@ -730,39 +734,6 @@ func TestGetRewardState(t *testing.T) {
 			mockLaunchpad := implementation.(*MockLaunchpad)
 			if mockLaunchpad.Response.CallCount("GetRewardState") != 1 {
 				t.Error("GetRewardState was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetRewardManagerIDs(t *testing.T) {
-	tests := []struct {
-		name   string
-		offset int64
-		limit  int64
-	}{
-		{
-			name:   "get reward managers is success",
-			offset: 0,
-			limit:  10,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetRewardManagerIDs(tt.offset, tt.limit)
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetRewardManagerIDs") != 1 {
-				t.Error("GetRewardManagerIDs was not called on the implementation")
 			}
 		})
 	}

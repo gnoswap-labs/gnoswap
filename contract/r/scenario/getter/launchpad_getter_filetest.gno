@@ -346,13 +346,6 @@ func testDepositGetters(depositId1, depositId2 string) {
 	count := launchpad.GetDepositCount()
 	println("[EXPECTED] Deposit count:", count)
 
-	// GetDepositIDs
-	ids := launchpad.GetDepositIDs(0, 10)
-	println("[EXPECTED] Deposit IDs (offset=0, limit=10):", len(ids), "deposits")
-	for i, id := range ids {
-		ufmt.Printf("[EXPECTED] - Deposit %d: %s\n", i+1, id)
-	}
-
 	// GetCurrentDepositId
 	currentId := launchpad.GetCurrentDepositId()
 	println("[EXPECTED] Current deposit ID counter:", currentId)
@@ -441,21 +434,14 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 	// Set realm to launchpad for getter calls
 	testing.SetRealm(launchpadRealm)
 
-	// GetRewardManagerCount
-	count := launchpad.GetRewardManagerCount()
+	// GetProjectTierRewardManagerCount
+	count := launchpad.GetProjectTierRewardManagerCount()
 	println("[EXPECTED] Reward manager count:", count)
-
-	// GetRewardManagerIDs
-	ids := launchpad.GetRewardManagerIDs(0, 10)
-	println("[EXPECTED] Reward manager IDs (offset=0, limit=10):", len(ids), "managers")
-	for i, id := range ids {
-		ufmt.Printf("[EXPECTED] - Manager %d: %s\n", i+1, id)
-	}
 
 	println("[INFO] Testing reward manager for 30 day tier")
 
-	// GetRewardManager
-	manager, err := launchpad.GetRewardManager(projectTier30Id)
+	// GetProjectTierRewardManager
+	manager, err := launchpad.GetProjectTierRewardManager(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
@@ -465,71 +451,71 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 		println("[EXPECTED] - Total Claimed Amount:", manager.TotalClaimedAmount())
 	}
 
-	// GetRewardManagerDistibuteAmountPerSecondX128
-	distributeAmountX128, err := launchpad.GetRewardManagerDistibuteAmountPerSecondX128(projectTier30Id)
+	// GetProjectTierRewardDistributeAmountPerSecondX128
+	distributeAmountX128, err := launchpad.GetProjectTierRewardDistributeAmountPerSecondX128(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Distribute amount per second X128:", distributeAmountX128.ToString())
 
-	// GetRewardManagerAccumulatedRewardPerDepositX128
-	accRewardPerDepositX128, err := launchpad.GetRewardManagerAccumulatedRewardPerDepositX128(projectTier30Id)
+	// GetProjectTierRewardAccumulatedRewardPerDepositX128
+	accRewardPerDepositX128, err := launchpad.GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Accumulated reward per deposit X128:", accRewardPerDepositX128.ToString())
 
-	// GetRewardManagerTotalDistributeAmount
-	totalDistribute, err := launchpad.GetRewardManagerTotalDistributeAmount(projectTier30Id)
+	// GetProjectTierRewardTotalDistributeAmount
+	totalDistribute, err := launchpad.GetProjectTierRewardTotalDistributeAmount(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Total distribute amount:", totalDistribute)
 
-	// GetRewardManagerTotalClaimedAmount
-	totalClaimed, err := launchpad.GetRewardManagerTotalClaimedAmount(projectTier30Id)
+	// GetProjectTierRewardTotalClaimedAmount
+	totalClaimed, err := launchpad.GetProjectTierRewardTotalClaimedAmount(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Total claimed amount:", totalClaimed)
 
-	// GetRewardManagerDistributeStartTime
-	startTime, err := launchpad.GetRewardManagerDistributeStartTime(projectTier30Id)
+	// GetProjectTierRewardDistributeStartTime
+	startTime, err := launchpad.GetProjectTierRewardDistributeStartTime(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Distribute start time:", startTime)
 
-	// GetRewardManagerDistributeEndTime
-	endTime, err := launchpad.GetRewardManagerDistributeEndTime(projectTier30Id)
+	// GetProjectTierRewardDistributeEndTime
+	endTime, err := launchpad.GetProjectTierRewardDistributeEndTime(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Distribute end time:", endTime)
 
-	// GetRewardManagerAccumulatedDistributeAmount
-	accDistributeAmount, err := launchpad.GetRewardManagerAccumulatedDistributeAmount(projectTier30Id)
+	// GetProjectTierRewardAccumulatedDistributeAmount
+	accDistributeAmount, err := launchpad.GetProjectTierRewardAccumulatedDistributeAmount(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Accumulated distribute amount:", accDistributeAmount)
 
-	// GetRewardManagerAccumulatedHeight
-	accHeight, err := launchpad.GetRewardManagerAccumulatedHeight(projectTier30Id)
+	// GetProjectTierRewardAccumulatedHeight
+	accHeight, err := launchpad.GetProjectTierRewardAccumulatedHeight(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Accumulated height:", accHeight)
 
-	// GetRewardManagerAccumulatedTime
-	accTime, err := launchpad.GetRewardManagerAccumulatedTime(projectTier30Id)
+	// GetProjectTierRewardAccumulatedTime
+	accTime, err := launchpad.GetProjectTierRewardAccumulatedTime(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Accumulated time:", accTime)
 
-	// GetRewardManagerRewardClaimableDuration
-	claimableDuration, err := launchpad.GetRewardManagerRewardClaimableDuration(projectTier30Id)
+	// GetProjectTierRewardRewardClaimableDuration
+	claimableDuration, err := launchpad.GetProjectTierRewardRewardClaimableDuration(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
@@ -646,9 +632,6 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [SCENARIO] 4. Test Deposit Getters
 // [INFO] Testing deposit getters
 // [EXPECTED] Deposit count: 2
-// [EXPECTED] Deposit IDs (offset=0, limit=10): 2 deposits
-// [EXPECTED] - Deposit 1: 1
-// [EXPECTED] - Deposit 2: 2
 // [EXPECTED] Current deposit ID counter: 2
 // [INFO] Testing deposit 1 getters
 // [EXPECTED] Deposit 1 details:
@@ -669,10 +652,6 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [SCENARIO] 5. Test RewardManager Getters
 // [INFO] Testing reward manager getters
 // [EXPECTED] Reward manager count: 3
-// [EXPECTED] Reward manager IDs (offset=0, limit=10): 3 managers
-// [EXPECTED] - Manager 1: gno.land/r/onbloc/obl:123:180
-// [EXPECTED] - Manager 2: gno.land/r/onbloc/obl:123:30
-// [EXPECTED] - Manager 3: gno.land/r/onbloc/obl:123:90
 // [INFO] Testing reward manager for 30 day tier
 // [EXPECTED] Reward manager details:
 // [EXPECTED] - Total Distribute Amount: 3000000
