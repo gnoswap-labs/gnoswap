@@ -229,8 +229,8 @@ func collectProtocolFeeForProjectRecipient() {
 	println("[INFO] Project recipient collecting protocol fee")
 
 	testing.SetRealm(govStakerRealm)
-	claimableReward := staker.GetClaimableRewardByLaunchpad(projectAddr)
-	ufmt.Printf("[INFO] Claimable reward for project recipient: %s\n", claimableReward)
+	emissionReward, protocolFeeRewards, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
+	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFeeRewards))
 
 	testing.SetRealm(projectRealm)
 
@@ -247,6 +247,23 @@ func collectProtocolFeeForProjectRecipient() {
 	ufmt.Printf("[INFO] QUX balance after: %d\n", afterQuxBalance)
 	ufmt.Printf("[INFO] BAR collected: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[INFO] QUX collected: %d\n", afterQuxBalance-prevQuxBalance)
+}
+
+func formatProtocolFees(fees map[string]int64) string {
+	if len(fees) == 0 {
+		return "map[]"
+	}
+	result := "map["
+	first := true
+	for k, v := range fees {
+		if !first {
+			result += " "
+		}
+		result += k + ":" + ufmt.Sprintf("%d", v)
+		first = false
+	}
+	result += "]"
+	return result
 }
 
 // Output:
@@ -288,7 +305,7 @@ func collectProtocolFeeForProjectRecipient() {
 //
 // [SCENARIO] 8. Project recipient collects protocol fee
 // [INFO] Project recipient collecting protocol fee
-// [INFO] Claimable reward for project recipient: {"height":"121089","now":"1235172720","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1099"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2199"}]}
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1099 gno.land/r/onbloc/qux:2199]
 // [INFO] BAR balance before: 0
 // [INFO] QUX balance before: 0
 // [INFO] BAR balance after: 1099
@@ -305,7 +322,7 @@ func collectProtocolFeeForProjectRecipient() {
 // [INFO] Distributing protocol fee to gov/staker
 // [INFO] Protocol fee distributed
 // [INFO] Project recipient collecting protocol fee
-// [INFO] Claimable reward for project recipient: {"height":"121092","now":"1235172735","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1499"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2999"}]}
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1499 gno.land/r/onbloc/qux:2999]
 // [INFO] BAR balance before: 1099
 // [INFO] QUX balance before: 2199
 // [INFO] BAR balance after: 2598

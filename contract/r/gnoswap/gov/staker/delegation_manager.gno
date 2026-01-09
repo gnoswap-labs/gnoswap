@@ -43,8 +43,8 @@ func (dm *DelegationManager) GetDelegatorDelegations(delegator string) (*avl.Tre
 	return delegationsTree, true
 }
 
-// GetDelegateeIDs returns all delegation IDs for a specific delegator-delegatee pair.
-func (dm *DelegationManager) GetDelegateeIDs(delegator, delegatee string) ([]int64, bool) {
+// GetDelegationIDs returns all delegation IDs for a specific delegator-delegatee pair.
+func (dm *DelegationManager) GetDelegationIDs(delegator, delegatee string) ([]int64, bool) {
 	delegations, exists := dm.GetDelegatorDelegations(delegator)
 	if !exists {
 		return nil, false
@@ -60,8 +60,8 @@ func (dm *DelegationManager) GetDelegateeIDs(delegator, delegatee string) ([]int
 	return idsSlice, true
 }
 
-// SetDelegateeIDs sets delegation IDs for a specific delegator-delegatee pair.
-func (dm *DelegationManager) SetDelegateeIDs(delegator, delegatee string, ids []int64) {
+// SetDelegationIDs sets delegation IDs for a specific delegator-delegatee pair.
+func (dm *DelegationManager) SetDelegationIDs(delegator, delegatee string, ids []int64) {
 	delegations, exists := dm.GetDelegatorDelegations(delegator)
 	if !exists {
 		delegations = avl.NewTree()

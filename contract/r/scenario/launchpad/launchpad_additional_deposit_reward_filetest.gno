@@ -37,8 +37,8 @@ var (
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
-	aliceAddr = testutils.TestAddress("alice")
-	bobAddr   = testutils.TestAddress("bob")
+	aliceAddr   = testutils.TestAddress("alice")
+	bobAddr     = testutils.TestAddress("bob")
 	charlieAddr = testutils.TestAddress("charlie")
 	davidAddr   = testutils.TestAddress("david")
 	erinAddr    = testutils.TestAddress("erin")
@@ -196,7 +196,7 @@ func collectReward(ownerAddr address, depositId string) {
 
 func validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id string) {
 	validateCollectableDurationForTier(davidAddr, projectTier30Id, 51840)   // 3 days
-	validateCollectableDurationForTier(erinAddr, projectTier90Id, 120960)  // 7 days
+	validateCollectableDurationForTier(erinAddr, projectTier90Id, 120960)   // 7 days
 	validateCollectableDurationForTier(frankAddr, projectTier180Id, 241920) // 14 days
 }
 

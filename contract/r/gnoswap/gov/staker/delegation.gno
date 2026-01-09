@@ -74,3 +74,29 @@ func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
 func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
 	d.withdraws = withdraws
 }
+
+// Clone creates a deep copy of the delegation.
+func (d *Delegation) Clone() *Delegation {
+	if d == nil {
+		return nil
+	}
+
+	clonedWithdraws := make([]*DelegationWithdraw, len(d.withdraws))
+	for i, w := range d.withdraws {
+		if w != nil {
+			clonedWithdraws[i] = w.Clone()
+		}
+	}
+
+	return &Delegation{
+		id:               d.id,
+		delegateAmount:   d.delegateAmount,
+		unDelegateAmount: d.unDelegateAmount,
+		collectedAmount:  d.collectedAmount,
+		delegateFrom:     d.delegateFrom,
+		delegateTo:       d.delegateTo,
+		createdHeight:    d.createdHeight,
+		createdAt:        d.createdAt,
+		withdraws:        clonedWithdraws,
+	}
+}

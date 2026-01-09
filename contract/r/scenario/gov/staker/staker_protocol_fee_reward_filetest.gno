@@ -117,10 +117,27 @@ func skipBlocksAndDistribute() {
 	println("[INFO] skipped 10 blocks")
 }
 
+func formatProtocolFees(fees map[string]int64) string {
+	if len(fees) == 0 {
+		return "map[]"
+	}
+	result := "map["
+	first := true
+	for k, v := range fees {
+		if !first {
+			result += " "
+		}
+		result += k + ":" + ufmt.Sprintf("%d", v)
+		first = false
+	}
+	result += "]"
+	return result
+}
+
 func protocolFeeRewardBob() {
 	testing.SetRealm(gnoStakerRealm)
-	gcr := staker.GetClaimableRewardByAddress(bobAddr)
-	ufmt.Printf("[INFO] claimable reward (bob): %s\n", gcr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
+	ufmt.Printf("[INFO] claimable reward (bob): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 	testing.SetRealm(bobRealm)
 	staker.CollectReward(cross)
 	println("[INFO] collected protocol fee reward for bob")
@@ -128,8 +145,8 @@ func protocolFeeRewardBob() {
 
 func protocolFeeRewardAdmin() {
 	testing.SetRealm(gnoStakerRealm)
-	gcr := staker.GetClaimableRewardByAddress(adminAddr)
-	ufmt.Printf("[INFO] claimable reward (adminAddr): %s\n", gcr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
+	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	prevBarBalance := bar.BalanceOf(adminAddr)
 	prevQuxBalance := qux.BalanceOf(adminAddr)
@@ -162,11 +179,11 @@ func protocolFeeRewardAdmin() {
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for Bob
-// [INFO] claimable reward (bob): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"}]}
+// [INFO] claimable reward (bob): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:833 gno.land/r/onbloc/qux:2083]
 // [INFO] collected protocol fee reward for bob
 //
 // [SCENARIO] 7. Check and collect protocol fee reward for Admin
-// [INFO] claimable reward (adminAddr): {"height":"133","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"1166"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2916"}]}
+// [INFO] claimable reward (adminAddr): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:1166 gno.land/r/onbloc/qux:2916]
 // [INFO] collected protocol fee reward for adminAddr
 // [EXPECTED] collected bar amount: 1166
 // [EXPECTED] collected qux amount: 2916

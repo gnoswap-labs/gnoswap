@@ -121,10 +121,27 @@ func skipBlocksAndDistribute() {
 	println("[INFO] skipped 10 blocks")
 }
 
+func formatProtocolFees(fees map[string]int64) string {
+	if len(fees) == 0 {
+		return "map[]"
+	}
+	result := "map["
+	first := true
+	for k, v := range fees {
+		if !first {
+			result += " "
+		}
+		result += k + ":" + ufmt.Sprintf("%d", v)
+		first = false
+	}
+	result += "]"
+	return result
+}
+
 func protocolFeeRewardProjectRecipient() {
 	testing.SetRealm(govStakerRealm)
-	gcr := staker.GetClaimableRewardByLaunchpad(projectAddr)
-	ufmt.Printf("[INFO] claimable reward (project recipient): %s\n", gcr)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
+	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
 	testing.SetRealm(projectRealm)
 	prevBarBalance := bar.BalanceOf(projectAddr)
@@ -160,7 +177,7 @@ func checkBlockedWithLaunchpadCollectDepositGns() {
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): {"height":"121093","now":"1235172740","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:999 gno.land/r/onbloc/qux:2499]
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999
 // [EXPECTED] collected qux amount: 2499

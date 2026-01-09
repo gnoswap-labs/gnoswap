@@ -148,6 +148,32 @@ func (rm *RewardManager) SetRewardClaimableDuration(duration int64) {
 	rm.rewardClaimableDuration = duration
 }
 
+func (rm RewardManager) Clone() *RewardManager {
+	rewardsTree := avl.NewTree()
+	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
+		rewardState, ok := value.(*RewardState)
+		if !ok {
+			return true
+		}
+		rewardsTree.Set(key, rewardState.Clone())
+		return false
+	})
+
+	return &RewardManager{
+		rewards:                         rewardsTree,
+		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128.Clone(),
+		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128.Clone(),
+		totalDistributeAmount:           rm.totalDistributeAmount,
+		totalClaimedAmount:              rm.totalClaimedAmount,
+		distributeStartTime:             rm.distributeStartTime,
+		distributeEndTime:               rm.distributeEndTime,
+		accumulatedDistributeAmount:     rm.accumulatedDistributeAmount,
+		accumulatedHeight:               rm.accumulatedHeight,
+		accumulatedTime:                 rm.accumulatedTime,
+		rewardClaimableDuration:         rm.rewardClaimableDuration,
+	}
+}
+
 // NewRewardManager returns a pointer to a new RewardManager with the given values.
 func NewRewardManager(
 	totalDistributeAmount int64,
