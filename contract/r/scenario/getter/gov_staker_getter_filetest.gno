@@ -144,15 +144,26 @@ func testGovStakerGetters(delegationId1 int64) {
 
 	println()
 
-	// GetDelegatorDelegationCount
-	delegatorDelegationCount := staker.GetDelegatorDelegationCount(delegatorAddr)
-	println("[EXPECTED] Delegator Delegation Count:", delegatorDelegationCount)
+	// GetDelegatorDelegateeCount
+	delegatorDelegateeCount := staker.GetDelegatorDelegateeCount(delegatorAddr)
+	println("[EXPECTED] Delegator Delegatee Count:", delegatorDelegateeCount)
 
-	// GetDelegatorDelegationIDs
-	delegatorDelegationIds := staker.GetDelegatorDelegationIDs(delegatorAddr, 0, 10)
-	println("[EXPECTED] Delegator Delegation IDs (offset=0, limit=10):", len(delegatorDelegationIds), "delegations")
-	for i, id := range delegatorDelegationIds {
-		ufmt.Printf("[EXPECTED] - Delegator Delegation %d: %d\n", i+1, id)
+	// GetDelegatorDelegateeAddresses
+	delegatorDelegateeAddrs := staker.GetDelegatorDelegateeAddresses(delegatorAddr, 0, 10)
+	println("[EXPECTED] Delegator Delegatee Addresses (offset=0, limit=10):", len(delegatorDelegateeAddrs), "delegatees")
+	for i, addr := range delegatorDelegateeAddrs {
+		ufmt.Printf("[EXPECTED] - Delegatee %d: %s\n", i+1, addr)
+	}
+
+	// GetUserDelegationCount
+	userDelegationCount := staker.GetUserDelegationCount(delegatorAddr, delegateeAddr)
+	println("[EXPECTED] User Delegation Count:", userDelegationCount)
+
+	// GetUserDelegationIDs
+	userDelegationIds := staker.GetUserDelegationIDs(delegatorAddr, delegateeAddr)
+	println("[EXPECTED] User Delegation IDs:", len(userDelegationIds), "delegations")
+	for i, id := range userDelegationIds {
+		ufmt.Printf("[EXPECTED] - Delegation %d: %d\n", i+1, id)
 	}
 
 	println()
@@ -288,9 +299,12 @@ func testGovStakerGetters(delegationId1 int64) {
 // [EXPECTED] - Total Delegated Amount: 500000000
 // [EXPECTED] - Collected Amount: 0
 //
-// [EXPECTED] Delegator Delegation Count: 1
-// [EXPECTED] Delegator Delegation IDs (offset=0, limit=10): 1 delegations
-// [EXPECTED] - Delegator Delegation 1: 1
+// [EXPECTED] Delegator Delegatee Count: 1
+// [EXPECTED] Delegator Delegatee Addresses (offset=0, limit=10): 1 delegatees
+// [EXPECTED] - Delegatee 1: g1v3jkcet8v96x2ef3ta047h6lta047h6lcpu3dr
+// [EXPECTED] User Delegation Count: 1
+// [EXPECTED] User Delegation IDs: 1 delegations
+// [EXPECTED] - Delegation 1: 1
 //
 // [EXPECTED] Has Delegation Snapshots Key: true
 // [EXPECTED] Total Delegation Amount At Snapshot: 0 exists: false

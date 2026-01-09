@@ -178,16 +178,32 @@ func (m *MockGovStaker) GetDelegation(delegationID int64) (*Delegation, error) {
 	return res[0].(*Delegation), nil
 }
 
-func (m *MockGovStaker) GetDelegatorDelegationCount(delegator address) int {
-	res, ok := m.Response.Get("GetDelegatorDelegationCount")
+func (m *MockGovStaker) GetDelegatorDelegateeCount(delegator address) int {
+	res, ok := m.Response.Get("GetDelegatorDelegateeCount")
 	if !ok {
 		return 0
 	}
 	return res[0].(int)
 }
 
-func (m *MockGovStaker) GetDelegatorDelegationIDs(delegator address, offset, count int) []int64 {
-	res, ok := m.Response.Get("GetDelegatorDelegationIDs")
+func (m *MockGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	res, ok := m.Response.Get("GetDelegatorDelegateeAddresses")
+	if !ok {
+		return []address{}
+	}
+	return res[0].([]address)
+}
+
+func (m *MockGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
+	res, ok := m.Response.Get("GetUserDelegationCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	res, ok := m.Response.Get("GetUserDelegationIDs")
 	if !ok {
 		return []int64{}
 	}

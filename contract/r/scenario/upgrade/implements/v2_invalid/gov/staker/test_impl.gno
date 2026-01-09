@@ -166,18 +166,32 @@ func (t *TestGovStaker) GetDelegation(delegationID int64) (*staker.Delegation, e
 	return t.instance.GetDelegation(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegationCount(delegator address) int {
-	if !t.isActive("GetDelegatorDelegationCount") {
-		panic("test implementation: GetDelegatorDelegationCount not supported")
+func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
+	if !t.isActive("GetDelegatorDelegateeCount") {
+		panic("test implementation: GetDelegatorDelegateeCount not supported")
 	}
-	return t.instance.GetDelegatorDelegationCount(delegator)
+	return t.instance.GetDelegatorDelegateeCount(delegator)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegationIDs(delegator address, offset, count int) []int64 {
-	if !t.isActive("GetDelegatorDelegationIDs") {
-		panic("test implementation: GetDelegatorDelegationIDs not supported")
+func (t *TestGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	if !t.isActive("GetDelegatorDelegateeAddresses") {
+		panic("test implementation: GetDelegatorDelegateeAddresses not supported")
 	}
-	return t.instance.GetDelegatorDelegationIDs(delegator, offset, count)
+	return t.instance.GetDelegatorDelegateeAddresses(delegator, offset, count)
+}
+
+func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
+	if !t.isActive("GetUserDelegationCount") {
+		panic("test implementation: GetUserDelegationCount not supported")
+	}
+	return t.instance.GetUserDelegationCount(delegator, delegatee)
+}
+
+func (t *TestGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	if !t.isActive("GetUserDelegationIDs") {
+		panic("test implementation: GetUserDelegationIDs not supported")
+	}
+	return t.instance.GetUserDelegationIDs(delegator, delegatee)
 }
 
 func (t *TestGovStaker) HasDelegationSnapshotsKey() bool {

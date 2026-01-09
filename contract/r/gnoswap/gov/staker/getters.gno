@@ -63,14 +63,24 @@ func GetDelegation(delegationID int64) (*Delegation, error) {
 	return delegation.Clone(), nil
 }
 
-// GetDelegatorDelegationCount returns the number of delegations for a specific delegator.
-func GetDelegatorDelegationCount(delegator address) int {
-	return getImplementation().GetDelegatorDelegationCount(delegator)
+// GetDelegatorDelegateeCount returns the number of delegatees for a specific delegator.
+func GetDelegatorDelegateeCount(delegator address) int {
+	return getImplementation().GetDelegatorDelegateeCount(delegator)
 }
 
-// GetDelegatorDelegationIDs returns a paginated list of delegation IDs for a specific delegator.
-func GetDelegatorDelegationIDs(delegator address, offset, count int) []int64 {
-	return getImplementation().GetDelegatorDelegationIDs(delegator, offset, count)
+// GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
+func GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	return getImplementation().GetDelegatorDelegateeAddresses(delegator, offset, count)
+}
+
+// GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
+func GetUserDelegationCount(delegator address, delegatee address) int {
+	return getImplementation().GetUserDelegationCount(delegator, delegatee)
+}
+
+// GetUserDelegationIDs returns a list of delegation IDs for a specific delegator-delegatee pair.
+func GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	return getImplementation().GetUserDelegationIDs(delegator, delegatee)
 }
 
 // HasDelegationSnapshotsKey returns true if delegation history exists.

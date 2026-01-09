@@ -128,12 +128,20 @@ func (t *TestGovStaker) GetDelegation(delegationID int64) (*staker.Delegation, e
 	return t.instance.GetDelegation(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegationCount(delegator address) int {
-	return t.instance.GetDelegatorDelegationCount(delegator)
+func (t *TestGovStaker) GetDelegatorDelegateeCount(delegator address) int {
+	return t.instance.GetDelegatorDelegateeCount(delegator)
 }
 
-func (t *TestGovStaker) GetDelegatorDelegationIDs(delegator address, offset, count int) []int64 {
-	return t.instance.GetDelegatorDelegationIDs(delegator, offset, count)
+func (t *TestGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	return t.instance.GetDelegatorDelegateeAddresses(delegator, offset, count)
+}
+
+func (t *TestGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
+	return t.instance.GetUserDelegationCount(delegator, delegatee)
+}
+
+func (t *TestGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	return t.instance.GetUserDelegationIDs(delegator, delegatee)
 }
 
 func (t *TestGovStaker) HasDelegationSnapshotsKey() bool {

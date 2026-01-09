@@ -46,8 +46,10 @@ type IGovStakerGetter interface {
 	GetDelegationIDs(offset, count int) []int64
 	ExistsDelegation(delegationID int64) bool
 	GetDelegation(delegationID int64) (*Delegation, error)
-	GetDelegatorDelegationCount(delegator address) int
-	GetDelegatorDelegationIDs(delegator address, offset, count int) []int64
+	GetDelegatorDelegateeCount(delegator address) int
+	GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address
+	GetUserDelegationCount(delegator address, delegatee address) int
+	GetUserDelegationIDs(delegator address, delegatee address) []int64
 	HasDelegationSnapshotsKey() bool
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)

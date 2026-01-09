@@ -2,6 +2,7 @@ package v1
 
 import (
 	"math"
+	"strconv"
 	"time"
 
 	"gno.land/p/gnoswap/uint256"
@@ -58,21 +59,16 @@ func (gs *govStakerV1) GetDelegationCount() int {
 // GetDelegationIDs returns a paginated list of delegation IDs.
 func (gs *govStakerV1) GetDelegationIDs(offset, count int) []int64 {
 	delegations := gs.store.GetAllDelegations()
-	size := delegations.Size()
 
-	if offset >= size {
-		return []int64{}
-	}
+	ids := make([]int64, 0)
 
-	end := offset + count
-	if end > size {
-		end = size
-	}
+	delegations.IterateByOffset(offset, count, func(key string, _ any) bool {
+		delegationID, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
 
-	ids := make([]int64, 0, end-offset)
-	delegations.IterateByOffset(offset, end-offset, func(key string, value any) bool {
-		delegation := value.(*staker.Delegation)
-		ids = append(ids, delegation.ID())
+		ids = append(ids, delegationID)
 		return false
 	})
 
@@ -93,50 +89,55 @@ func (gs *govStakerV1) GetDelegation(delegationID int64) (*staker.Delegation, er
 	return delegation, nil
 }
 
-// GetDelegatorDelegationCount returns the number of delegations for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegationCount(delegator address) int {
+// GetDelegatorDelegateeCount returns the number of delegatees for a specific delegator.
+func (gs *govStakerV1) GetDelegatorDelegateeCount(delegator address) int {
 	delegationManager := gs.store.GetDelegationManager()
 	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
 	if !exists {
 		return 0
 	}
 
-	count := 0
-	delegatorTree.Iterate("", "", func(delegatee string, value any) bool {
-		delegationIDs := value.([]int64)
-		count += len(delegationIDs)
+	return delegatorTree.Size()
+}
+
+// GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
+func (gs *govStakerV1) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	delegationManager := gs.store.GetDelegationManager()
+	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
+	if !exists {
+		return []address{}
+	}
+
+	delegateeAddresses := make([]address, 0)
+
+	delegatorTree.IterateByOffset(offset, count, func(delegatee string, _ any) bool {
+		delegateeAddresses = append(delegateeAddresses, address(delegatee))
 		return false
 	})
 
-	return count
+	return delegateeAddresses
 }
 
-// GetDelegatorDelegationIDs returns a paginated list of delegation IDs for a specific delegator.
-func (gs *govStakerV1) GetDelegatorDelegationIDs(delegator address, offset, count int) []int64 {
+// GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
+func (gs *govStakerV1) GetUserDelegationCount(delegator address, delegatee address) int {
 	delegationManager := gs.store.GetDelegationManager()
-	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
+	delegationIDs, exists := delegationManager.GetDelegateeIDs(delegator.String(), delegatee.String())
+	if !exists {
+		return 0
+	}
+	return len(delegationIDs)
+}
+
+// GetUserDelegationIDs returns a paginated list of delegation IDs for a specific delegator and delegatee.
+func (gs *govStakerV1) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	delegationManager := gs.store.GetDelegationManager()
+
+	delegationIDs, exists := delegationManager.GetDelegateeIDs(delegator.String(), delegatee.String())
 	if !exists {
 		return []int64{}
 	}
 
-	allIDs := []int64{}
-	delegatorTree.Iterate("", "", func(delegatee string, value any) bool {
-		delegationIDs := value.([]int64)
-		allIDs = append(allIDs, delegationIDs...)
-		return false
-	})
-
-	size := len(allIDs)
-	if offset >= size {
-		return []int64{}
-	}
-
-	end := offset + count
-	if end > size {
-		end = size
-	}
-
-	return allIDs[offset:end]
+	return delegationIDs
 }
 
 // HasDelegationSnapshotsKey returns true if delegation history exists.
