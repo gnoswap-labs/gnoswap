@@ -87,10 +87,6 @@ func testGovStakerGetters(delegationId1 int64) {
 	totalxGnsSupply := staker.GetTotalxGnsSupply()
 	println("[EXPECTED] Total xGNS Supply:", totalxGnsSupply)
 
-	// GetTotalVoteWeight
-	totalVoteWeight := staker.GetTotalVoteWeight()
-	println("[EXPECTED] Total Vote Weight:", totalVoteWeight)
-
 	// GetTotalDelegated
 	totalDelegated := staker.GetTotalDelegated()
 	println("[EXPECTED] Total Delegated:", totalDelegated)
@@ -280,7 +276,6 @@ func testGovStakerGetters(delegationId1 int64) {
 // [SCENARIO] 2. Test Gov Staker Getters
 // [INFO] Testing gov staker getters
 // [EXPECTED] Total xGNS Supply: 500000000
-// [EXPECTED] Total Vote Weight: 500000000
 // [EXPECTED] Total Delegated: 500000000
 // [EXPECTED] Total Locked Amount: 500000000
 // [EXPECTED] Locked Amount: 500000000

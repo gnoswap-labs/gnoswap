@@ -330,18 +330,6 @@ func TestXgns_Render(t *testing.T) {
 			expectedResult: "404\n",
 		},
 		{
-			name:           "Voting supply path",
-			path:           "votingsupply",
-			mintAmount:     1000,
-			expectedResult: "1000\n",
-		},
-		{
-			name:           "Invalid voting supply path",
-			path:           "votingsupply/invalid",
-			mintAmount:     0,
-			expectedResult: "404\n",
-		},
-		{
 			name:           "Invalid path returns 404",
 			path:           "invalid/path",
 			mintAmount:     0,
