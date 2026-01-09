@@ -93,7 +93,7 @@ func GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (in
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	return getImplementation().GetClaimableRewardByAddress(addr)
 }
 
@@ -102,7 +102,7 @@ func GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	return getImplementation().GetClaimableRewardByLaunchpad(addr)
 }
 
@@ -111,7 +111,7 @@ func GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	return getImplementation().GetClaimableRewardByRewardID(rewardID)
 }
 

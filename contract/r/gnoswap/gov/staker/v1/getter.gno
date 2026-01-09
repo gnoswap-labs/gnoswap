@@ -241,7 +241,7 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func (gs *govStakerV1) GetClaimableRewardByAddress(addr address) (int64, map[string]int64) {
+func (gs *govStakerV1) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
 	return gs.GetClaimableRewardByRewardID(addr.String())
 }
 
@@ -250,7 +250,7 @@ func (gs *govStakerV1) GetClaimableRewardByAddress(addr address) (int64, map[str
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64) {
+func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
 	return gs.GetClaimableRewardByRewardID(gs.makeLaunchpadRewardID(addr.String()))
 }
 
@@ -259,7 +259,7 @@ func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) (int64, map[s
 // Returns:
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
-func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64) {
+func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
 	emission.MintAndDistributeGns(cross)
 	protocol_fee.DistributeProtocolFee(cross)
 
@@ -268,7 +268,7 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map
 	emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
 	emissionReward, err := emissionResolver.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 	if err != nil {
-		panic(err)
+		return 0, make(map[string]int64), err
 	}
 
 	protocolFeeDistributedAmounts := gs.getDistributedProtocolFees()
@@ -276,10 +276,10 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map
 	protocolFeeResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 	protocolFeeRewards, err := protocolFeeResolver.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 	if err != nil {
-		panic(err)
+		return 0, make(map[string]int64), err
 	}
 
-	return emissionReward, protocolFeeRewards
+	return emissionReward, protocolFeeRewards, nil
 }
 
 // GetLaunchpadProjectDeposit returns the deposit amount for a launchpad project.

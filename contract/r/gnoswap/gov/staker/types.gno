@@ -53,9 +53,9 @@ type IGovStakerGetter interface {
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// Reward getters
-	GetClaimableRewardByAddress(addr address) (int64, map[string]int64)
-	GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64)
-	GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64)
+	GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error)
+	GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error)
+	GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error)
 
 	// Launchpad getters
 	GetLaunchpadProjectDeposit(projectAddr string) (int64, bool)
