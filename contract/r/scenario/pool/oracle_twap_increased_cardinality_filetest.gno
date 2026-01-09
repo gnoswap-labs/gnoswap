@@ -175,16 +175,16 @@ func main() {
 	println("[SCENARIO] 9. TWAP Queries at Different Intervals")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	twapResult1h , _ := pool.GetTWAP(poolPath, quarterSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago): %d\n", twapResult1h)
+	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, quarterSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h.ToString())
 	println()
 
-	twapResult2h , _ := pool.GetTWAP(poolPath, halfSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago): %d\n", twapResult2h)
+	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h.ToString())
 	println()
 
-	twapResult4h , _ := pool.GetTWAP(poolPath, totalSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago): %d\n", twapResult4h)
+	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h.ToString())
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -240,11 +240,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Skipping 720 blocks (1 hour = 3600 seconds)
 //
 // [SCENARIO] 9. TWAP Queries at Different Intervals
-// [EXPECTED] TWAP for last 1 hour (3600s ago): -99
+// [EXPECTED] TWAP for last 1 hour (3600s ago) - tick: -99, liquidity: 100000000
 //
-// [EXPECTED] TWAP for last 2 hours (7200s ago): -149
+// [EXPECTED] TWAP for last 2 hours (7200s ago) - tick: -149, liquidity: 100000000
 //
-// [EXPECTED] TWAP for last 4 hours (14400s ago): -75
+// [EXPECTED] TWAP for last 4 hours (14400s ago) - tick: -75, liquidity: 100000000
 //
 // [INFO] Test completed successfully
 // [EXPECTED] Increased cardinality allows accurate TWAP calculation over longer periods with multiple price changes

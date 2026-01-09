@@ -8,31 +8,31 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
+var max160 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1
+
 // maxObservationCardinality defines the maximum number of observations to store
 const maxObservationCardinality uint16 = 65535
 
 // GetTWAP calculates the time-weighted average price between two points in time
-// Returns the average tick over the time period
-func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, error) {
+// Returns the arithmetic mean tick and harmonic mean liquidity over the time period
+func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if secondsAgo == 0 {
-		return p.Slot0Tick(), nil
+		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	// Check if observation state is initialized
 	if p.ObservationState() == nil {
-		return 0, errors.New("observation state not initialized")
+		return 0, nil, errors.New("observation state not initialized")
 	}
 
-	// Check if we have enough observations
 	if p.ObservationState().Cardinality() == 0 {
-		return 0, errors.New("no observations available")
+		return 0, nil, errors.New("no observations available")
 	}
 
 	// Get observations for current time and secondsAgo
 	secondsAgos := []uint32{secondsAgo, 0}
 	currentTime := time.Now().Unix()
 
-	tickCumulatives, _, err := observe(
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := observe(
 		p.ObservationState(),
 		currentTime,
 		secondsAgos,
@@ -42,22 +42,30 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, error) {
 		p.ObservationState().Cardinality(),
 	)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
-	// Ensure we have valid data
-	if len(tickCumulatives) != 2 {
-		return 0, errors.New("insufficient observation data")
+	tickCumulativesDelta := tickCumulatives[1] - tickCumulatives[0]
+	secondsPerLiquidityDelta := u256.Zero().Sub(
+		secondsPerLiquidityCumulativeX128s[1],
+		secondsPerLiquidityCumulativeX128s[0],
+	)
+
+	arithmeticMeanTick := int32(tickCumulativesDelta / int64(secondsAgo))
+	if tickCumulativesDelta < 0 && (tickCumulativesDelta%int64(secondsAgo) != 0) {
+		arithmeticMeanTick--
 	}
 
-	// Calculate TWAP: (tickCumulative_now - tickCumulative_before) / timeDelta
-	tickDelta := tickCumulatives[1] - tickCumulatives[0]
-	twapTick := int32(tickDelta / int64(secondsAgo))
-	if tickDelta < 0 && (tickDelta%int64(secondsAgo) != 0) {
-		twapTick--
+	if secondsPerLiquidityDelta.IsZero() {
+		return arithmeticMeanTick, u256.Zero(), nil
 	}
 
-	return twapTick, nil
+	// Calculate harmonic mean liquidity
+	secondsAgoX160 := u256.Zero().Mul(u256.NewUint(uint64(secondsAgo)), max160)
+	denominator := u256.Zero().Lsh(secondsPerLiquidityDelta, 32)
+	harmonicMeanLiquidity := u256.Zero().Div(secondsAgoX160, denominator)
+
+	return arithmeticMeanTick, harmonicMeanLiquidity, nil
 }
 
 func writeObservationByPool(

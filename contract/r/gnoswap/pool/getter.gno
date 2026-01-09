@@ -281,7 +281,8 @@ func GetWithdrawalFee() uint64 {
 }
 
 // GetTWAP returns the time-weighted average price for a pool.
-func GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+// Returns arithmetic mean tick and harmonic mean liquidity over the time period.
+func GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	return getImplementation().GetTWAP(poolPath, secondsAgo)
 }
 

@@ -1140,12 +1140,12 @@ func TestGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, errors.New(""))
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
+		twap, _, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
 
 		// Assert
 		if mockPool.Response.CallCount("GetTWAP") != 1 {

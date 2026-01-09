@@ -143,16 +143,16 @@ func main() {
 	println("[SCENARIO] 7. TWAP Queries After Price Change")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	twapResult1h , _ := pool.GetTWAP(poolPath, hourSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price): %d\n", twapResult1h)
+	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h.ToString())
 	println()
 
-	twapResult2h , _ := pool.GetTWAP(poolPath, halfSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago, after price change): %d\n", twapResult2h)
+	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago, after price change) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h.ToString())
 	println()
 
-	twapResult4h , _ := pool.GetTWAP(poolPath, totalSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods): %d\n", twapResult4h)
+	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h.ToString())
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -200,11 +200,11 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Skipping 1440 blocks (2 hours = 7200 seconds)
 //
 // [SCENARIO] 7. TWAP Queries After Price Change
-// [EXPECTED] TWAP for last 1 hour (3600s ago, recent price): -1906
+// [EXPECTED] TWAP for last 1 hour (3600s ago, recent price) - tick: -1906, liquidity: 99999999
 //
-// [EXPECTED] TWAP for last 2 hours (7200s ago, after price change): -1906
+// [EXPECTED] TWAP for last 2 hours (7200s ago, after price change) - tick: -1906, liquidity: 100000000
 //
-// [EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods): -953
+// [EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods) - tick: -953, liquidity: 100000000
 //
 // [INFO] Test completed successfully
 // [EXPECTED] TWAP should show weighted average: tick 0 (2h) and new tick (2h)

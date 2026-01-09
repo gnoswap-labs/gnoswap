@@ -242,10 +242,10 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 //   - secondsAgo: Number of seconds ago to calculate TWAP from
 //
 // Returns TWAP tick and error
-func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
 	return getTWAP(pool, secondsAgo)

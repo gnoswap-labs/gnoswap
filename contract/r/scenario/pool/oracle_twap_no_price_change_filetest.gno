@@ -43,11 +43,11 @@ var (
 
 const (
 	// 4 hours = 14400 seconds = 2880 blocks (1 block = 5 seconds)
-	totalBlocks    int64  = 2880
-	halfBlocks     int64  = 1440
-	totalSeconds   uint32 = 14400
-	halfSeconds    uint32 = 7200
-	hourSeconds    uint32 = 3600
+	totalBlocks  int64  = 2880
+	halfBlocks   int64  = 1440
+	totalSeconds uint32 = 14400
+	halfSeconds  uint32 = 7200
+	hourSeconds  uint32 = 3600
 )
 
 var (
@@ -97,8 +97,8 @@ func main() {
 	// Get initial TWAP (should be current tick since no time has passed)
 	println("[SCENARIO] 3. Initial TWAP Query (0 seconds ago)")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
-	twapResult, _ := pool.GetTWAP(poolPath, 0)
-	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago (current tick): %d\n", twapResult)
+	twapTick, twapLiquidity, _ := pool.GetTWAP(poolPath, 0)
+	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago - tick: %d, liquidity: %s\n", twapTick, twapLiquidity.ToString())
 	println()
 
 	// Wait 4 hours (2880 blocks)
@@ -110,16 +110,16 @@ func main() {
 	// Query TWAP for different periods
 	println("[SCENARIO] 5. TWAP Queries After Time Passed")
 
-	twapResult1h, _ := pool.GetTWAP(poolPath, hourSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago): %d\n", twapResult1h)
+	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h.ToString())
 	println()
 
-	twapResult2h, _ := pool.GetTWAP(poolPath, halfSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago): %d\n", twapResult2h)
+	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h.ToString())
 	println()
 
-	twapResult4h, _ := pool.GetTWAP(poolPath, totalSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago): %d\n", twapResult4h)
+	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h.ToString())
 	println()
 
 	println("[INFO] Test completed successfully")
@@ -141,17 +141,17 @@ func main() {
 // [INFO] Pool tick: 0
 //
 // [SCENARIO] 3. Initial TWAP Query (0 seconds ago)
-// [EXPECTED] TWAP at 0 seconds ago (current tick): 0
+// [EXPECTED] TWAP at 0 seconds ago - tick: 0, liquidity:
 //
 // [SCENARIO] 4. Wait 4 Hours
 // [INFO] Skipping 2880 blocks (4 hours = 14400 seconds)
 //
 // [SCENARIO] 5. TWAP Queries After Time Passed
-// [EXPECTED] TWAP for last 1 hour (3600s ago): 0
+// [EXPECTED] TWAP for last 1 hour (3600s ago) - tick: 0, liquidity: 10000000
 //
-// [EXPECTED] TWAP for last 2 hours (7200s ago): 0
+// [EXPECTED] TWAP for last 2 hours (7200s ago) - tick: 0, liquidity: 10000000
 //
-// [EXPECTED] TWAP for last 4 hours (14400s ago): 0
+// [EXPECTED] TWAP for last 4 hours (14400s ago) - tick: 0, liquidity: 10000000
 //
 // [INFO] Test completed successfully
 // [EXPECTED] TWAP should remain at tick 0 since no price changes occurred

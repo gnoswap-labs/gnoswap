@@ -339,9 +339,136 @@ func TestGetTWAP_RoundingTable(t *testing.T) {
 			observationState := newObservationStateWithDelta(tt.secondsAgo, tt.tickDelta)
 			pool.SetObservationState(observationState)
 
-			twapTick, err := getTWAP(pool, tt.secondsAgo)
+			twapTick, _, err := getTWAP(pool, tt.secondsAgo)
 			uassert.NoError(t, err, "getTWAP should succeed for configured observations")
 			uassert.Equal(t, tt.expected, twapTick, "unexpected TWAP tick")
+		})
+	}
+}
+
+// TestGetTWAP_HarmonicMeanLiquidity tests harmonic mean liquidity calculation
+// Test cases from Uniswap V3 OracleLibrary.spec.ts
+func TestGetTWAP_HarmonicMeanLiquidity(t *testing.T) {
+	// Helper function to calculate expected harmonic mean liquidity
+	// Matches Uniswap's calculateHarmonicAvgLiq function
+	calculateHarmonicAvgLiq := func(period uint32, secondsPerLiq0, secondsPerLiq1 *u256.Uint) *u256.Uint {
+		delta := u256.Zero().Sub(secondsPerLiq1, secondsPerLiq0)
+		// maxUint160 = 2^160 - 1
+		maxUint160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
+		// return maxUint160 * period / (delta << 32)
+		numerator := u256.Zero().Mul(maxUint160, u256.NewUint(uint64(period)))
+		denominator := u256.Zero().Lsh(delta, 32)
+		return u256.Zero().Div(numerator, denominator)
+	}
+
+	tests := []struct {
+		name                        string
+		secondsAgo                  uint32
+		tickCumulatives             [2]int64
+		secondsPerLiqCumulatives    [2]string
+		expectedArithmeticMeanTick  int32
+	}{
+		{
+			name:       "correct output when tick is 0",
+			secondsAgo: 3,
+			tickCumulatives: [2]int64{12, 12},
+			secondsPerLiqCumulatives: [2]string{"10", "20"},
+			expectedArithmeticMeanTick: 0,
+		},
+		{
+			name:       "correct rounding for .5 negative tick",
+			secondsAgo: 4,
+			tickCumulatives: [2]int64{-10, -12},
+			secondsPerLiqCumulatives: [2]string{"10", "15"},
+			expectedArithmeticMeanTick: -1, // Always round to negative infinity
+		},
+		{
+			name:       "correct output for liquidity overflow",
+			secondsAgo: 1,
+			tickCumulatives: [2]int64{12, 12},
+			secondsPerLiqCumulatives: [2]string{"10", "11"},
+			expectedArithmeticMeanTick: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := createTestPool()
+
+			secondsPerLiq0 := u256.MustFromDecimal(tt.secondsPerLiqCumulatives[0])
+			secondsPerLiq1 := u256.MustFromDecimal(tt.secondsPerLiqCumulatives[1])
+			delta := u256.Zero().Sub(secondsPerLiq1, secondsPerLiq0)
+
+			observationState := newObservationStateWithLiquidity(tt.secondsAgo, tt.tickCumulatives[1]-tt.tickCumulatives[0], delta)
+			pool.SetObservationState(observationState)
+
+			arithmeticMeanTick, harmonicMeanLiquidity, err := getTWAP(pool, tt.secondsAgo)
+			uassert.NoError(t, err, "getTWAP should succeed")
+
+			// Check arithmetic mean tick
+			uassert.Equal(t, tt.expectedArithmeticMeanTick, arithmeticMeanTick, "unexpected arithmetic mean tick")
+
+			// Check harmonic mean liquidity
+			expectedHarmonicMean := calculateHarmonicAvgLiq(tt.secondsAgo, secondsPerLiq0, secondsPerLiq1)
+
+			// For liquidity overflow test, should return max uint128
+			if tt.name == "correct output for liquidity overflow" {
+				maxUint128 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 128), u256.One())
+				uassert.Equal(t, maxUint128.ToString(), harmonicMeanLiquidity.ToString(), "liquidity overflow should return max uint128")
+			} else {
+				uassert.Equal(t, expectedHarmonicMean.ToString(), harmonicMeanLiquidity.ToString(), "unexpected harmonic mean liquidity")
+			}
+		})
+	}
+}
+
+// TestGetTWAP_ErrorCases tests error scenarios for TWAP calculation
+func TestGetTWAP_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupPool      func() *pl.Pool
+		secondsAgo     uint32
+		expectedError  string
+	}{
+		{
+			name: "secondsAgo is zero",
+			setupPool: func() *pl.Pool {
+				pool := createTestPool()
+				pool.SetObservationState(pl.NewObservationState(time.Now().Unix()))
+				return pool
+			},
+			secondsAgo:    0,
+			expectedError: "secondsAgo must be greater than 0",
+		},
+		{
+			name: "observation state not initialized",
+			setupPool: func() *pl.Pool {
+				pool := createTestPool()
+				pool.SetObservationState(nil)
+				return pool
+			},
+			secondsAgo:    3600,
+			expectedError: "observation state not initialized",
+		},
+		{
+			name: "no observations available",
+			setupPool: func() *pl.Pool {
+				pool := createTestPool()
+				os := pl.NewObservationState(time.Now().Unix())
+				os.SetCardinality(0)
+				pool.SetObservationState(os)
+				return pool
+			},
+			secondsAgo:    3600,
+			expectedError: "no observations available",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := tt.setupPool()
+			_, _, err := getTWAP(pool, tt.secondsAgo)
+			uassert.ErrorContains(t, err, tt.expectedError)
 		})
 	}
 }
@@ -361,6 +488,26 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 		tickDelta,
 		u256.Zero(),
 		u256.Zero(),
+		true,
+	)
+	return os
+}
+
+// newObservationStateWithLiquidity seeds a 2-slot observation state with
+// tick cumulative delta and seconds per liquidity delta.
+func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, secondsPerLiquidityDelta *u256.Uint) *pl.ObservationState {
+	now := time.Now().Unix()
+	start := now - int64(secondsAgo)
+
+	os := pl.NewObservationState(start)
+	os.SetCardinality(2)
+	os.SetCardinalityLimit(2)
+	os.SetIndex(1)
+	os.Observations()[1] = pl.NewObservation(
+		now,
+		tickDelta,
+		u256.Zero(),
+		secondsPerLiquidityDelta,
 		true,
 	)
 	return os

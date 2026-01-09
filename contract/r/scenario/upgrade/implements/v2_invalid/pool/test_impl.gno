@@ -412,7 +412,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if !t.isActive("GetTWAP") {
 		panic("test implementation: GetTWAP not supported")
 	}

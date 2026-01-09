@@ -798,11 +798,12 @@ func getTWAP() {
 	println("[INFO] Check GetTWAP method")
 	testing.SetRealm(adminRealm)
 
-	twap, err := pl.GetTWAP(poolPath, 0)
+	arithmeticMeanTick, harmonicMeanLiquidity, err := pl.GetTWAP(poolPath, 0)
 	if err != nil {
 		println("[EXPECTED] GetTWAP error:", err.Error())
 	} else {
-		ufmt.Printf("[EXPECTED] TWAP: %d\n", twap)
+		ufmt.Printf("[EXPECTED] arithmeticMeanTick: %d\n", arithmeticMeanTick)
+		println("[EXPECTED] harmonicMeanLiquidity:", harmonicMeanLiquidity.ToString())
 	}
 }
 
@@ -1125,7 +1126,7 @@ func getObservationState() {
 //
 // [SCENARIO] 2.50. GetTWAP
 // [INFO] Check GetTWAP method
-// [EXPECTED] TWAP: 198
+// [EXPECTED] GetTWAP error: secondsAgo must be greater than 0
 //
 // [SCENARIO] 2.51. GetPool
 // [INFO] Check GetPool method
