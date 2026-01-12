@@ -1020,118 +1020,99 @@ func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	}
 }
 
-// TestCollectToken tests the collectToken function with various edge cases
-func TestCollectToken(t *testing.T) {
+func TestCollect(t *testing.T) {
 	tests := []struct {
-		name        string
-		amountReq   *u256.Uint
-		tokensOwed  *u256.Uint
-		poolBalance *u256.Uint
-		expected    *u256.Uint
-		description string
+		name               string
+		burnAmount         string
+		request0           string
+		request1           string
+		expectedCollected0 string
+		expectedCollected1 string
+		expectedOwed0After string
+		expectedOwed1After string
 	}{
 		{
-			name:        "all equal",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.NewUint(1000),
-			poolBalance: u256.NewUint(1000),
-			expected:    u256.NewUint(1000),
-			description: "When all three amounts are equal, should return that amount",
+			name:               "request_less_than_owed",
+			burnAmount:         MEDIUM_LIQUIDITY,
+			request0:           "50000",
+			request1:           "50000",
+			expectedCollected0: "50000",  // min(50000, 119276)
+			expectedCollected1: "50000",  // min(50000, 119276)
+			expectedOwed0After: "69276",  // 119276 - 50000
+			expectedOwed1After: "69276",  // 119276 - 50000
 		},
 		{
-			name:        "request is minimum",
-			amountReq:   u256.NewUint(100),
-			tokensOwed:  u256.NewUint(500),
-			poolBalance: u256.NewUint(1000),
-			expected:    u256.NewUint(100),
-			description: "When request is smallest, should return request amount",
-		},
-		{
-			name:        "tokens owed is minimum",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.NewUint(100),
-			poolBalance: u256.NewUint(500),
-			expected:    u256.NewUint(100),
-			description: "When tokens owed is smallest, should return tokens owed",
-		},
-		{
-			name:        "pool balance is minimum",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.NewUint(500),
-			poolBalance: u256.NewUint(100),
-			expected:    u256.NewUint(100),
-			description: "When pool balance is smallest, should return pool balance",
-		},
-		{
-			name:        "request is zero",
-			amountReq:   u256.Zero(),
-			tokensOwed:  u256.NewUint(500),
-			poolBalance: u256.NewUint(1000),
-			expected:    u256.Zero(),
-			description: "When request is zero, should return zero",
-		},
-		{
-			name:        "tokens owed is zero",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.Zero(),
-			poolBalance: u256.NewUint(500),
-			expected:    u256.Zero(),
-			description: "When tokens owed is zero, should return zero",
-		},
-		{
-			name:        "pool balance is zero",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.NewUint(500),
-			poolBalance: u256.Zero(),
-			expected:    u256.Zero(),
-			description: "When pool balance is zero, should return zero",
-		},
-		{
-			name:        "all zero",
-			amountReq:   u256.Zero(),
-			tokensOwed:  u256.Zero(),
-			poolBalance: u256.Zero(),
-			expected:    u256.Zero(),
-			description: "When all are zero, should return zero",
-		},
-		{
-			name:        "max uint requested with limited owed",
-			amountReq:   u256.MustFromDecimal(MAX_UINT128),
-			tokensOwed:  u256.NewUint(1000),
-			poolBalance: u256.NewUint(5000),
-			expected:    u256.NewUint(1000),
-			description: "When MAX_UINT128 requested but owed is less, should return owed amount",
-		},
-		{
-			name:        "max uint requested with limited balance",
-			amountReq:   u256.MustFromDecimal(MAX_UINT128),
-			tokensOwed:  u256.NewUint(5000),
-			poolBalance: u256.NewUint(1000),
-			expected:    u256.NewUint(1000),
-			description: "When MAX_UINT128 requested but balance is less, should return balance",
-		},
-		{
-			name:        "max uint in all fields",
-			amountReq:   u256.MustFromDecimal(MAX_UINT128),
-			tokensOwed:  u256.MustFromDecimal(MAX_UINT128),
-			poolBalance: u256.MustFromDecimal(MAX_UINT128),
-			expected:    u256.MustFromDecimal(MAX_UINT128),
-			description: "When all are MAX_UINT128, should return MAX_UINT128",
-		},
-		{
-			name:        "one unit differences",
-			amountReq:   u256.NewUint(1000),
-			tokensOwed:  u256.NewUint(1001),
-			poolBalance: u256.NewUint(1002),
-			expected:    u256.NewUint(1000),
-			description: "Should correctly identify minimum with small differences",
+			name:               "request_more_than_owed",
+			burnAmount:         MEDIUM_LIQUIDITY,
+			request0:           MAX_UINT128,
+			request1:           MAX_UINT128,
+			expectedCollected0: "119276", // min(MAX_UINT128, 119276)
+			expectedCollected1: "119276", // min(MAX_UINT128, 119276)
+			expectedOwed0After: "0",      // 119276 - 119276
+			expectedOwed1After: "0",      // 119276 - 119276
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := collectToken(tt.amountReq, tt.tokensOwed, tt.poolBalance)
-			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
+			// Given: Create pool with liquidity and burn to create tokensOwed
+			pool := setupStablecoinPool(t)
+			approveTokensForPool(t, pool)
+			testing.SetRealm(posRealm)
+
+			mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+			mockInstanceBurn(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, tt.burnAmount, adminAddr)
+
+			positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+			positionBefore := mustGetPositionByPool(pool, positionKey)
+
+			// When: Collect with specific request amounts
+			testing.SetRealm(posRealm)
+			amount0, amount1 := mockInstanceCollect(
+				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+				tt.request0, tt.request1,
+			)
+
+			// Then: Should collect min(request, tokensOwed)
+			uassert.Equal(t, tt.expectedCollected0, amount0,
+				"Collected amount0 should equal min(request, tokensOwed)")
+			uassert.Equal(t, tt.expectedCollected1, amount1,
+				"Collected amount1 should equal min(request, tokensOwed)")
+
+			// Verify tokensOwed decreased correctly
+			positionAfter := mustGetPositionByPool(pool, positionKey)
+			uassert.Equal(t, tt.expectedOwed0After, positionAfter.TokensOwed0().ToString(),
+				"TokensOwed0 should decrease by collected amount")
+			uassert.Equal(t, tt.expectedOwed1After, positionAfter.TokensOwed1().ToString(),
+				"TokensOwed1 should decrease by collected amount")
+
+			// Verify pool balance >= tokensOwed invariant
+			validateCollectInvariant(t, pool, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+
+			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
+				amount0, amount1,
+				tt.request0, tt.request1,
+				positionBefore.TokensOwed0().ToString(), positionBefore.TokensOwed1().ToString(),
+				tt.expectedOwed0After, tt.expectedOwed1After)
+
+			resetObject(t)
 		})
 	}
+}
+
+// validateCollectInvariant validates pool balance >= tokensOwed invariant
+func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
+	t.Helper()
+	positionKey := getPositionKey(tickLower, tickUpper)
+	position := mustGetPositionByPool(pool, positionKey)
+
+	uassert.True(t, pool.BalanceToken0().Cmp(position.TokensOwed0()) >= 0,
+		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
+			pool.BalanceToken0().ToString(), position.TokensOwed0().ToString()))
+	uassert.True(t, pool.BalanceToken1().Cmp(position.TokensOwed1()) >= 0,
+		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
+			pool.BalanceToken1().ToString(), position.TokensOwed1().ToString()))
 }
