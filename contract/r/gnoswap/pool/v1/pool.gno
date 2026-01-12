@@ -342,16 +342,10 @@ func (i *poolV1) collectProtocol(
 // saveProtocolFees updates the protocol fee balances after collection.
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
-	token0Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken0(), amount0)
-	if underflow {
-		panic(errOverflow)
-	}
+	token0Fees := u256.Zero().Sub(pool.ProtocolFeesToken0(), amount0)
 	pool.SetProtocolFeesToken0(token0Fees)
 
-	token1Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken1(), amount1)
-	if underflow {
-		panic(errUnderflow)
-	}
+	token1Fees := u256.Zero().Sub(pool.ProtocolFeesToken1(), amount1)
 	pool.SetProtocolFeesToken1(token1Fees)
 
 	return amount0, amount1
