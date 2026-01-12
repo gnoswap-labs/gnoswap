@@ -1317,16 +1317,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	// when: Define swap callback
 	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		t.Logf("Callback: amount0=%d, amount1=%d", amount0Delta, amount1Delta)
-		testing.SetRealm(adminRealm)
-
-		if amount0Delta > 0 {
-			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
-		}
-		if amount1Delta > 0 {
-			common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
-		}
-
-		return nil
+		return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta)
 	}
 
 	// Swap parameters matching the failing case
@@ -1360,25 +1351,21 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
 
 	// then: Actual Swap should complete successfully even with zero amount0
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/test/mock_swapper"))
+	amount0Str, amount1Str := mockInstanceSwap(
+		token0Path,
+		token1Path,
+		fee,
+		adminAddr,
+		zeroForOne,
+		amountSpecified,
+		sqrtPriceLimitX96,
+		adminAddr,
+		swapCallback,
+	)
 
-		amount0Str, amount1Str := getMockInstance().Swap(
-			token0Path,
-			token1Path,
-			fee,
-			adminAddr,
-			zeroForOne,
-			amountSpecified,
-			sqrtPriceLimitX96,
-			adminAddr,
-			swapCallback,
-		)
-
-		// Verify that swap completed with expected amounts
-		uassert.Equal(t, "0", amount0Str, "Swap should return amount0=0")
-		uassert.NotEqual(t, "0", amount1Str, "Swap should return non-zero amount1")
-	}(cross)
+	// Verify that swap completed with expected amounts
+	uassert.Equal(t, "0", amount0Str, "Swap should return amount0=0")
+	uassert.NotEqual(t, "0", amount1Str, "Swap should return non-zero amount1")
 }
 
 // TestSwap_ReentrancyProtection tests that the reentrancy lock properly prevents

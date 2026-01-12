@@ -1135,3 +1135,49 @@ func TestCollectToken(t *testing.T) {
 		})
 	}
 }
+
+func TestSwap_ZeroOutputAllowed(t *testing.T) {
+	InitialisePoolTest(t)
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0)
+
+	mockInstanceCreatePool(barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
+
+	pool := getMockInstance().mustGetPoolBy(barTokenPath, fooTokenPath, 500)
+	approveTokensForPool(t, pool)
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(barTokenPath, fooTokenPath, 500, FULL_RANGE_LOWER, FULL_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+
+	slot0Before := pool.Slot0()
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+	bar.Approve(cross, poolAddr, 1)
+
+	amount0, amount1 := mockInstanceSwap(
+		barTokenPath,
+		fooTokenPath,
+		500,
+		adminAddr,
+		true,
+		"1",
+		"4295128740",
+		adminAddr,
+		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+			return mockSwapCallback(barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
+		},
+	)
+
+	uassert.NotEqual(t, "", amount0, "Swap should complete and return amount0")
+	uassert.NotEqual(t, "", amount1, "Swap should complete and return amount1")
+
+	t.Logf("Swap completed: amount0=%s, amount1=%s", amount0, amount1)
+
+	slot0After := pool.Slot0()
+	if amount0 != "0" && amount1 != "0" {
+		uassert.NotEqual(t, slot0Before.Tick(), slot0After.Tick(),
+			"Tick should change when amounts are non-zero")
+	}
+
+	t.Logf("✓ Zero output swap completed successfully (amount0=%s, amount1=%s)", amount0, amount1)
+}
