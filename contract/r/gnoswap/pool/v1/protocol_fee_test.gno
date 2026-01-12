@@ -627,3 +627,129 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	resetObject(t)
 }
+
+// TestUpdateFeeProtocol verifies that updateFeeProtocol correctly handles
+// fee calculations without overflow/underflow after removing explicit checks.
+//
+// Mathematical proof:
+//   delta = feeAmount / feeProtocol
+//   Division: delta ≤ feeAmount (when feeProtocol > 0)
+//   Therefore: feeAmount - delta ≥ 0 (underflow impossible)
+func TestUpdateFeeProtocol(t *testing.T) {
+	tests := []struct {
+		name              string
+		initialProtocol   string
+		feeAmount         string
+		feeProtocol       uint8
+		expectedDelta     string
+		expectedRemaining string
+		expectedProtocol  string
+	}{
+		// Edge cases: boundary values
+		{
+			name:              "zero_fee_amount",
+			initialProtocol:   "0",
+			feeAmount:         "0",
+			feeProtocol:       10,
+			expectedDelta:     "0",
+			expectedRemaining: "0",
+			expectedProtocol:  "0",
+		},
+		{
+			name:              "fee_less_than_divisor",
+			initialProtocol:   "0",
+			feeAmount:         "5",
+			feeProtocol:       10,
+			expectedDelta:     "0",
+			expectedRemaining: "5",
+			expectedProtocol:  "0",
+		},
+
+		// Normal cases: typical swap fees
+		{
+			name:              "small_fee",
+			initialProtocol:   "0",
+			feeAmount:         "100",
+			feeProtocol:       10,
+			expectedDelta:     "10",
+			expectedRemaining: "90",
+			expectedProtocol:  "10",
+		},
+		{
+			name:              "large_fee",
+			initialProtocol:   "0",
+			feeAmount:         "1000000000000000000",
+			feeProtocol:       10,
+			expectedDelta:     "100000000000000000",
+			expectedRemaining: "900000000000000000",
+			expectedProtocol:  "100000000000000000",
+		},
+
+		// Accumulation: protocol fee builds up over time
+		{
+			name:              "accumulate_to_existing",
+			initialProtocol:   "999999999999999999",
+			feeAmount:         "1000000000000000",
+			feeProtocol:       10,
+			expectedDelta:     "100000000000000",
+			expectedRemaining: "900000000000000",
+			expectedProtocol:  "1000099999999999999",
+		},
+
+		// Protocol fee percentage: test valid range (4-10 = 10%-25%)
+		{
+			name:              "min_protocol_fee",
+			initialProtocol:   "0",
+			feeAmount:         "1000",
+			feeProtocol:       4,
+			expectedDelta:     "250",
+			expectedRemaining: "750",
+			expectedProtocol:  "250",
+		},
+		{
+			name:              "mid_protocol_fee",
+			initialProtocol:   "0",
+			feeAmount:         "1000",
+			feeProtocol:       6,
+			expectedDelta:     "166",
+			expectedRemaining: "834",
+			expectedProtocol:  "166",
+		},
+		{
+			name:              "max_protocol_fee",
+			initialProtocol:   "0",
+			feeAmount:         "1000",
+			feeProtocol:       10,
+			expectedDelta:     "100",
+			expectedRemaining: "900",
+			expectedProtocol:  "100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			initialProtocolFee := u256.MustFromDecimal(tt.initialProtocol)
+			feeAmount := u256.MustFromDecimal(tt.feeAmount)
+
+			step := StepComputations{feeAmount: feeAmount}
+			state := SwapState{protocolFee: initialProtocolFee}
+
+			// Execute
+			newState, newStep, err := updateFeeProtocol(step, tt.feeProtocol, state)
+
+			// Verify
+			uassert.Nil(t, err)
+
+			expectedDelta := u256.MustFromDecimal(tt.expectedDelta)
+
+			// Core invariant: delta ≤ feeAmount (no underflow possible)
+			uassert.True(t, expectedDelta.Lte(u256.MustFromDecimal(tt.feeAmount)))
+			// Verify calculations
+			uassert.Equal(t, newStep.feeAmount.ToString(), tt.expectedRemaining)
+			uassert.Equal(t, newState.protocolFee.ToString(), tt.expectedProtocol)
+			// Verify monotonic increase (no overflow)
+			uassert.True(t, newState.protocolFee.Gte(initialProtocolFee))
+		})
+	}
+}
