@@ -549,18 +549,8 @@ func (i *poolV1) computeSwapStep(
 func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, StepComputations, error) {
 	delta := u256.Zero().Div(step.feeAmount, u256.NewUint(uint64(feeProtocol)))
 
-	newFeeAmount, overflow := u256.Zero().SubOverflow(step.feeAmount, delta)
-	if overflow {
-		return state, step, errUnderflow
-	}
-
-	step.feeAmount = newFeeAmount
-
-	newProtocolFee, overflow := u256.Zero().AddOverflow(state.protocolFee, delta)
-	if overflow {
-		return state, step, errOverflow
-	}
-	state.protocolFee = newProtocolFee
+	step.feeAmount = u256.Zero().Sub(step.feeAmount, delta)
+	state.protocolFee = u256.Zero().Add(state.protocolFee, delta)
 
 	return state, step, nil
 }
