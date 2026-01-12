@@ -125,40 +125,45 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 		projectID            string
 		tier                 int64
 		depositAmount        int64
-		skipSeconds          int64
+		skipBeforeDeposit    int64
+		skipBeforeCollect    int64
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
-			name:             "success - 30 tier claimable wait 1 days",
-			projectID:        "project_1",
-			tier:             30,
-			depositAmount:    1000000,
-			skipSeconds:      1 * secondsPerDay,
-			expectedHasPanic: false,
+			name:              "success - 30 tier claimable wait 1 days",
+			projectID:         "project_1",
+			tier:              30,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3 * secondsPerDay, // 3 day
+			skipBeforeCollect: secondsPerDay,     // 1 day
+			expectedHasPanic:  false,
 		},
 		{
-			name:             "success - 90 tier claimable wait 1 days",
-			projectID:        "project_1",
-			tier:             90,
-			depositAmount:    1000000,
-			skipSeconds:      1 * secondsPerDay,
-			expectedHasPanic: false,
+			name:              "success - 90 tier claimable wait 1 days",
+			projectID:         "project_1",
+			tier:              90,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3 * secondsPerDay, // 3 day
+			skipBeforeCollect: secondsPerDay,     // 1 day
+			expectedHasPanic:  false,
 		},
 		{
-			name:             "success - 180 tier claimable wait 1 days",
-			projectID:        "project_1",
-			tier:             180,
-			depositAmount:    1000000,
-			skipSeconds:      1 * secondsPerDay,
-			expectedHasPanic: false,
+			name:              "success - 180 tier claimable wait 1 days",
+			projectID:         "project_1",
+			tier:              180,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3 * secondsPerDay, // 3 day
+			skipBeforeCollect: secondsPerDay,     // 1 day
+			expectedHasPanic:  false,
 		},
 		{
 			name:                 "fail - 30 tier claimable duration not reached",
 			projectID:            "project_1",
 			tier:                 30,
 			depositAmount:        1000000,
-			skipSeconds:          0,
+			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
+			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
 		},
@@ -167,25 +172,85 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			projectID:            "project_1",
 			tier:                 30,
 			depositAmount:        1000000,
-			skipSeconds:          (1 * secondsPerDay) - 1,
+			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
+			skipBeforeCollect:    secondsPerDay - 1,
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
 		},
 		{
-			name:                 "fail - 90 tier claimable wait 1 days - 1 second",
+			name:                 "fail - 90 tier claimable wait 7 days - 1 second",
 			projectID:            "project_1",
 			tier:                 90,
 			depositAmount:        1000000,
-			skipSeconds:          (1 * secondsPerDay) - 1,
+			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
+			skipBeforeCollect:    secondsPerDay - 1,
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
 		},
 		{
-			name:                 "fail - 180 tier claimable wait 1 days - 1 second",
+			name:                 "fail - 180 tier claimable wait 14 days - 1 second",
 			projectID:            "project_1",
 			tier:                 180,
 			depositAmount:        1000000,
-			skipSeconds:          (1 * secondsPerDay) - 1,
+			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
+			skipBeforeCollect:    secondsPerDay - 1,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:              "success - 30 tier claimable wait start time(3 days) + 30 days when ended project",
+			projectID:         "project_1",
+			tier:              30,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3*secondsPerDay + 30*secondsPerDay - 5, // wait start time(3 days) + 30 days - 5 seconds
+			skipBeforeCollect: 5,                                      // 5 seconds per block
+			expectedHasPanic:  false,
+		},
+		{
+			name:              "success - 90 tier claimable wait start time(3 days) + 90 days when ended project",
+			projectID:         "project_1",
+			tier:              90,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3*secondsPerDay + 90*secondsPerDay - 5, // wait start time(3 days) + 90 days - 5 seconds
+			skipBeforeCollect: 5,                                      // 5 seconds per block
+			expectedHasPanic:  false,
+		},
+		{
+			name:              "success - 180 tier claimable wait start time(3 days) + 180 days when ended project",
+			projectID:         "project_1",
+			tier:              180,
+			depositAmount:     1000000,
+			skipBeforeDeposit: 3*secondsPerDay + 180*secondsPerDay - 5, // wait start time(3 days) + 180 days - 5 seconds
+			skipBeforeCollect: 5,                                       // 5 seconds per block
+			expectedHasPanic:  false,
+		},
+		{
+			name:                 "fail - 30 tier claimable wait start time(3 days) + 30 days - 5 seconds but not ended project",
+			projectID:            "project_1",
+			tier:                 30,
+			depositAmount:        1000000,
+			skipBeforeDeposit:    3*secondsPerDay + 30*secondsPerDay - 5, // wait start time(3 days) + 30 days - 5 seconds
+			skipBeforeCollect:    0,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:                 "fail - 90 tier claimable wait start time(3 days) + 90 days - 5 seconds but not ended project",
+			projectID:            "project_1",
+			tier:                 90,
+			depositAmount:        1000000,
+			skipBeforeDeposit:    3*secondsPerDay + 90*secondsPerDay - 5, // wait start time(3 days) + 90 days - 5 seconds
+			skipBeforeCollect:    0,
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+		},
+		{
+			name:                 "fail - 180 tier claimable wait start time(3 days) + 180 days - 5 seconds but not ended project",
+			projectID:            "project_1",
+			tier:                 180,
+			depositAmount:        1000000,
+			skipBeforeDeposit:    3*secondsPerDay + 180*secondsPerDay - 5, // wait start time(3 days) + 180 days - 5 seconds
+			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
 		},
@@ -197,7 +262,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			resetTestStore()
 
 			currentTime := time.Now().Unix()
-			secondsOf7Days := 7 * secondsPerDay
+			secondsOf3Days := 3 * secondsPerDay
 
 			adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -214,18 +279,18 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 				33,
 				33,
 				34,
-				currentTime+secondsOf7Days,
+				currentTime+secondsOf3Days,
 			)
 
 			// Skip to start project
-			testing.SkipHeights(secondsOf7Days / 5)
+			testing.SkipHeights(tt.skipBeforeDeposit / 5) // 5 seconds per block
 
 			// Create deposit
 			projectTierID := ufmt.Sprintf("%s:%d", projectID, tt.tier)
 			depositID := depositGnsTest(t, projectTierID, tt.depositAmount)
 
 			// Skip to test time
-			testing.SkipHeights(tt.skipSeconds / 5) // 5 seconds per block
+			testing.SkipHeights(tt.skipBeforeCollect / 5) // 5 seconds per block
 
 			// Execute
 			if tt.expectedHasPanic {

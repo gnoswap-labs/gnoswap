@@ -900,27 +900,36 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 	tests := []struct {
 		name              string
-		CreatedAt         int64
+		createdAt         int64
+		distributeEndTime int64
 		claimableDuration int64
 		expectedResult    int64
 		description       string
 	}{
 		{
 			name:              "normal case",
-			CreatedAt:         1000,
+			createdAt:         1000,
+			distributeEndTime: 2000,
 			claimableDuration: 500,
 			expectedResult:    1500,
 			description:       "Normal addition",
 		},
 		{
 			name:              "boundary - exactly MaxInt64",
-			CreatedAt:         math.MaxInt64 - 1000,
+			createdAt:         math.MaxInt64 - 1000,
+			distributeEndTime: math.MaxInt64,
 			claimableDuration: 1000,
 			expectedResult:    math.MaxInt64,
 			description:       "Should handle boundary at MaxInt64",
 		},
-		// TODO: Add overflow test case after implementing overflow check in main code
-		// Currently, MaxInt64 + 1 would wrap to negative (Go behavior)
+		{
+			name:              "boundary - claimableTime > distributeEndTime",
+			createdAt:         1000,
+			distributeEndTime: 2000,
+			claimableDuration: 1001,
+			expectedResult:    2000,
+			description:       "Should handle claimableTime > distributeEndTime",
+		},
 	}
 
 	for _, tt := range tests {
@@ -929,7 +938,7 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 			manager := newRewardManager(
 				1000000,
 				time.Now().Unix(),
-				time.Now().Unix()+1000,
+				tt.distributeEndTime,
 				0,
 				100,
 				time.Now().Unix(),
@@ -943,8 +952,8 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 				testutils.TestAddress("depositor"),
 				1000000,
 				100,
-				tt.CreatedAt,
-				tt.CreatedAt+1000,
+				tt.createdAt,
+				tt.createdAt+1000,
 			)
 
 			// when
