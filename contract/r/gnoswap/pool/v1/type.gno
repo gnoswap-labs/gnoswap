@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"time"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -59,8 +61,12 @@ func newModifyPositionParams(
 
 // SwapCache holds data that remains constant throughout a swap.
 type SwapCache struct {
-	feeProtocol    uint8      // protocol fee for the input token
-	liquidityStart *u256.Uint // liquidity at the beginning of the swap
+	feeProtocol                       uint8      // protocol fee for the input token
+	liquidityStart                    *u256.Uint // liquidity at the beginning of the swap
+	blockTimestamp                    int64      // current block timestamp
+	tickCumulative                    int64      // current tick accumulator value
+	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
+	computedLatestObservation         bool       // whether we've computed the above accumulators
 }
 
 func newSwapCache(
@@ -68,8 +74,12 @@ func newSwapCache(
 	liquidityStart *u256.Uint,
 ) SwapCache {
 	return SwapCache{
-		feeProtocol:    feeProtocol,
-		liquidityStart: liquidityStart,
+		feeProtocol:                       feeProtocol,
+		liquidityStart:                    liquidityStart,
+		blockTimestamp:                    time.Now().Unix(),
+		tickCumulative:                    0,
+		secondsPerLiquidityCumulativeX128: u256.Zero(),
+		computedLatestObservation:         false,
 	}
 }
 
