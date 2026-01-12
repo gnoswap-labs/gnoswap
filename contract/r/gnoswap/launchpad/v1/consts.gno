@@ -15,7 +15,7 @@ const (
 
 	stringSplitterPad = "*PAD*"
 
-	projectMinimumStartDelayTime = int64(dayTime * 7) // 7 days
+	projectMinimumStartDelayTime = int64(dayTime * 3) // 3 days
 )
 
 // contract paths
@@ -37,9 +37,9 @@ var projectTierDurationTimes = map[int64]int64{
 }
 
 var projectTierRewardCollectableDuration = map[int64]int64{
-	projectTier30:  dayTime * 3,  // 3 days
-	projectTier90:  dayTime * 7,  // 7 days
-	projectTier180: dayTime * 14, // 14 days
+	projectTier30:  dayTime * 1, // 1 days
+	projectTier90:  dayTime * 1, // 1 days
+	projectTier180: dayTime * 1, // 1 days
 }
 
 var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
