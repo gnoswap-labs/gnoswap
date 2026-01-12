@@ -627,3 +627,172 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	resetObject(t)
 }
+
+// TestCollectProtocol_SafeDeduction verifies that collectProtocol safely handles
+// requests that exceed available protocol fees using u256Min to prevent underflow.
+// This test validates the refactoring that removed underflow checks from saveProtocolFees
+// by confirming that u256Min in collectProtocol provides the necessary protection.
+func TestCollectProtocol_SafeDeduction(t *testing.T) {
+	tests := []struct {
+		name                string
+		initialToken0Fees   string
+		initialToken1Fees   string
+		requestToken0Amount string
+		requestToken1Amount string
+		expectedToken0      string
+		expectedToken1      string
+		remainingToken0     string
+		remainingToken1     string
+		description         string
+	}{
+		{
+			name:                "request_exceeds_available_token0",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "5000", // request more than available
+			requestToken1Amount: "1000",
+			expectedToken0:      "1000", // should return only what's available
+			expectedToken1:      "1000",
+			remainingToken0:     "0",
+			remainingToken1:     "1000",
+			description:         "u256Min caps collection at available amount for token0",
+		},
+		{
+			name:                "request_exceeds_available_token1",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "500",
+			requestToken1Amount: "5000", // request more than available
+			expectedToken0:      "500",
+			expectedToken1:      "2000", // should return only what's available
+			remainingToken0:     "500",
+			remainingToken1:     "0",
+			description:         "u256Min caps collection at available amount for token1",
+		},
+		{
+			name:                "request_exceeds_both_tokens",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "10000", // both exceed available
+			requestToken1Amount: "20000",
+			expectedToken0:      "1000", // return all available
+			expectedToken1:      "2000",
+			remainingToken0:     "0",
+			remainingToken1:     "0",
+			description:         "u256Min protects both tokens when requests exceed availability",
+		},
+		{
+			name:                "request_within_available_amounts",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "500",
+			requestToken1Amount: "1000",
+			expectedToken0:      "500",
+			expectedToken1:      "1000",
+			remainingToken0:     "500",
+			remainingToken1:     "1000",
+			description:         "Normal case: requests within available amounts work correctly",
+		},
+		{
+			name:                "request_exact_available_amounts",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "1000",
+			requestToken1Amount: "2000",
+			expectedToken0:      "1000",
+			expectedToken1:      "2000",
+			remainingToken0:     "0",
+			remainingToken1:     "0",
+			description:         "Edge case: requesting exactly available amounts empties reserves",
+		},
+		{
+			name:                "request_zero_amounts",
+			initialToken0Fees:   "1000",
+			initialToken1Fees:   "2000",
+			requestToken0Amount: "0",
+			requestToken1Amount: "0",
+			expectedToken0:      "0",
+			expectedToken1:      "0",
+			remainingToken0:     "1000",
+			remainingToken1:     "2000",
+			description:         "Zero request preserves all protocol fees",
+		},
+		{
+			name:                "collect_from_zero_balance",
+			initialToken0Fees:   "0",
+			initialToken1Fees:   "0",
+			requestToken0Amount: "1000",
+			requestToken1Amount: "2000",
+			expectedToken0:      "0",
+			expectedToken1:      "0",
+			remainingToken0:     "0",
+			remainingToken1:     "0",
+			description:         "Cannot collect from empty protocol fee reserves",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+
+			// Setup: Create pool with initial protocol fees
+			testing.SetRealm(adminRealm)
+			gns.Approve(cross, poolAddr, getMockInstance().GetPoolCreationFee())
+			mockInstanceSetPoolCreationFee(0)
+			mockInstanceCreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+			// Approve tokens for operations
+			foo.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
+
+			// Add liquidity to pool so it has actual token balances
+			testing.SetRealm(posRealm)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-1000,
+				1000,
+				"1000000",
+				adminAddr,
+			)
+
+			// Set initial protocol fees
+			pool := getMockInstance().mustGetPoolBy(barPath, fooPath, fee500)
+			protocolFees := pl.ProtocolFees{}
+			protocolFees.SetToken0(u256.MustFromDecimal(tt.initialToken0Fees))
+			protocolFees.SetToken1(u256.MustFromDecimal(tt.initialToken1Fees))
+			pool.SetProtocolFees(protocolFees)
+			err := getMockInstance().savePool(pool)
+			uassert.NoError(t, err)
+
+			// When: Collect protocol fees
+			testing.SetRealm(adminRealm)
+			collected0, collected1 := mockInstanceCollectProtocol(
+				barPath,
+				fooPath,
+				fee500,
+				adminAddr,
+				tt.requestToken0Amount,
+				tt.requestToken1Amount,
+			)
+
+			// Then: Verify collected amounts match expected (capped by u256Min)
+			uassert.Equal(t, collected0, tt.expectedToken0,
+				"Token0 collected amount should be capped by u256Min")
+			uassert.Equal(t, collected1, tt.expectedToken1,
+				"Token1 collected amount should be capped by u256Min")
+
+			// Verify remaining protocol fees
+			pool = getMockInstance().mustGetPoolBy(barPath, fooPath, fee500)
+			uassert.Equal(t, pool.ProtocolFeesToken0().ToString(), tt.remainingToken0,
+				"Token0 remaining protocol fees incorrect")
+			uassert.Equal(t, pool.ProtocolFeesToken1().ToString(), tt.remainingToken1,
+				"Token1 remaining protocol fees incorrect")
+
+			t.Logf("✓ %s", tt.description)
+
+			resetObject(t)
+		})
+	}
+}
