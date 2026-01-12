@@ -72,8 +72,8 @@ type SwapCache struct {
 func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
-) SwapCache {
-	return SwapCache{
+) *SwapCache {
+	return &SwapCache{
 		feeProtocol:                       feeProtocol,
 		liquidityStart:                    liquidityStart,
 		blockTimestamp:                    time.Now().Unix(),

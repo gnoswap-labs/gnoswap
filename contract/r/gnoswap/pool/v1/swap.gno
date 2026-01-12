@@ -105,7 +105,7 @@ type SwapComputation struct {
 	ZeroForOne        bool
 	ExactInput        bool
 	InitialState      SwapState
-	Cache             SwapCache
+	Cache             *SwapCache
 }
 
 // Swap executes a swap with callback pattern for optimistic transfers.
@@ -375,7 +375,7 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 
 	// Compute swap steps until completion
 	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-		state, err = i.computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, &comp.Cache)
+		state, err = i.computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache)
 		if err != nil {
 			return nil, err
 		}
@@ -701,7 +701,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 					cache.liquidityStart,
 					observationState.Cardinality(),
 				)
-				if err == nil && secondsPerLiquidity != nil {
+				if err == nil {
 					cache.tickCumulative = tickCumulative
 					cache.secondsPerLiquidityCumulativeX128 = secondsPerLiquidity
 					cache.computedLatestObservation = true
@@ -748,11 +748,10 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		}
 	}
 
-	decrement := int32(0)
+	newState.tick = step.tickNext
 	if zeroForOne {
-		decrement = 1
+		newState.tick = step.tickNext - 1
 	}
-	newState.tick = step.tickNext - decrement
 
 	return newState
 }
