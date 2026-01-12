@@ -56,10 +56,10 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() - projectMinimumStartDelayTime, // 7 days
+			startTime:            time.Now().Unix() - projectMinimumStartDelayTime, // 3 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1233963090) must be greater than now(1235172690)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234308690) must be greater than now(1234827090)",
 		},
 		{
 			name:                 "create project failed by start time is less than minimum start delay time",
@@ -72,10 +72,10 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			tier30Ratio:          10,
 			tier90Ratio:          20,
 			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + projectMinimumStartDelayTime - 1, // 7 days
+			startTime:            time.Now().Unix() + projectMinimumStartDelayTime - 1, // 3 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1235172689) must be greater than now(1235172690)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234827089) must be greater than now(1234827090)",
 		},
 	}
 
@@ -172,7 +172,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -369,7 +369,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
