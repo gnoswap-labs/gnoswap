@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/banker"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -2007,4 +2008,157 @@ func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
 
 	t.Logf("Flash swap arbitrage pattern verified: received %d output tokens before payment (amount0=%s, amount1=%s)",
 		outputAmountReceived, amount0, amount1)
+}
+
+// TestUpdateAmounts_WrapAround verifies that updateAmounts correctly handles
+// wrap-around scenarios after removing immediate overflow/underflow checks.
+//
+// Edge cases tested:
+//   - amountSpecifiedRemaining becomes slightly negative (overshooting in last step)
+//   - Final int64 range validation catches extreme values
+//   - Both exactInput and exactOutput scenarios
+func TestUpdateAmounts_WrapAround(t *testing.T) {
+	tests := []struct {
+		name                     string
+		amountSpecifiedRemaining string
+		amountIn                 string
+		feeAmount                string
+		amountOut                string
+		exactInput               bool
+		expectError              bool
+		errorMsg                 string
+	}{
+		// Exact Input: amountSpecifiedRemaining goes slightly negative (overshooting)
+		{
+			name:                     "exact_input_slight_overshoot",
+			amountSpecifiedRemaining: "10",
+			amountIn:                 "5",
+			feeAmount:                "10", // amountInWithFee = 15, remaining = 10 - 15 = -5
+			amountOut:                "8",
+			exactInput:               true,
+			expectError:              false, // -5 is within int64 range, allowed
+		},
+		{
+			name:                     "exact_input_larger_overshoot",
+			amountSpecifiedRemaining: "100",
+			amountIn:                 "50",
+			feeAmount:                "100", // amountInWithFee = 150, remaining = 100 - 150 = -50
+			amountOut:                "80",
+			exactInput:               true,
+			expectError:              false, // -50 is within int64 range, allowed
+		},
+
+		// Exact Output: amountSpecifiedRemaining increments from negative toward zero
+		{
+			name:                     "exact_output_negative_to_less_negative",
+			amountSpecifiedRemaining: "-100",
+			amountIn:                 "30",
+			feeAmount:                "5",
+			amountOut:                "50", // remaining = -100 + 50 = -50
+			exactInput:               false,
+			expectError:              false,
+		},
+		{
+			name:                     "exact_output_crossing_zero",
+			amountSpecifiedRemaining: "-30",
+			amountIn:                 "20",
+			feeAmount:                "5",
+			amountOut:                "50", // remaining = -30 + 50 = 20
+			exactInput:               false,
+			expectError:              false,
+		},
+
+		// Normal cases: no wrap-around
+		{
+			name:                     "exact_input_normal",
+			amountSpecifiedRemaining: "1000",
+			amountIn:                 "100",
+			feeAmount:                "3",
+			amountOut:                "95",
+			exactInput:               true,
+			expectError:              false,
+		},
+		{
+			name:                     "exact_output_normal",
+			amountSpecifiedRemaining: "-1000",
+			amountIn:                 "100",
+			feeAmount:                "3",
+			amountOut:                "95",
+			exactInput:               false,
+			expectError:              false,
+		},
+
+		// Edge: int64 range boundary
+		{
+			name:                     "exact_output_near_min_int64",
+			amountSpecifiedRemaining: "-9223372036854775800", // Near math.MinInt64
+			amountIn:                 "100",
+			feeAmount:                "3",
+			amountOut:                "10", // remaining = -9223372036854775800 + 10 = still within int64
+			exactInput:               false,
+			expectError:              false, // Still within int64 range
+		},
+
+		// amountCalculated final range check (kept in updateAmounts)
+		{
+			name:                     "exact_output_amountCalculated_exceeds_int64",
+			amountSpecifiedRemaining: "1000",
+			amountIn:                 "9223372036854775800", // Near math.MaxInt64
+			feeAmount:                "10",
+			amountOut:                "100",
+			exactInput:               false, // amountCalculated += amountInWithFee
+			expectError:              true,
+			errorMsg:                 "overflow", // Caught by final int64 range check
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			amountSpecifiedRemaining := i256.MustFromDecimal(tt.amountSpecifiedRemaining)
+			amountIn := u256.MustFromDecimal(tt.amountIn)
+			feeAmount := u256.MustFromDecimal(tt.feeAmount)
+			amountOut := u256.MustFromDecimal(tt.amountOut)
+
+			step := StepComputations{
+				amountIn:  amountIn,
+				feeAmount: feeAmount,
+				amountOut: amountOut,
+			}
+
+			state := SwapState{
+				amountSpecifiedRemaining: amountSpecifiedRemaining,
+				amountCalculated:         i256.Zero(),
+			}
+
+			// Execute
+			newState, err := updateAmounts(step, state, tt.exactInput)
+
+			// Verify
+			if tt.expectError {
+				uassert.NotNil(t, err)
+			} else {
+				uassert.Nil(t, err)
+
+				// Verify wrap-around was allowed (amountSpecifiedRemaining can be negative)
+				if tt.exactInput {
+					amountInWithFee := u256.Zero().Add(amountIn, feeAmount)
+					maxInt64U256 := u256.NewUint(uint64(math.MaxInt64))
+					if amountInWithFee.Lte(maxInt64U256) {
+						expected := i256.Zero().Sub(amountSpecifiedRemaining, i256.FromUint256(amountInWithFee))
+						uassert.Equal(t, expected.ToString(), newState.amountSpecifiedRemaining.ToString())
+					}
+				} else {
+					expected := i256.Zero().Add(amountSpecifiedRemaining, i256.FromUint256(amountOut))
+					uassert.Equal(t, expected.ToString(), newState.amountSpecifiedRemaining.ToString())
+				}
+
+				// Verify int64 range (this is what final check ensures)
+				maxInt64 := i256.NewInt(math.MaxInt64)
+				minInt64 := i256.NewInt(math.MinInt64)
+				uassert.True(t, newState.amountSpecifiedRemaining.Lte(maxInt64))
+				uassert.True(t, newState.amountSpecifiedRemaining.Gte(minInt64))
+			}
+		})
+	}
 }
