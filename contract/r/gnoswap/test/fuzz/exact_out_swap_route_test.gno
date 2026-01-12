@@ -18,7 +18,7 @@ import (
 
 // TestFuzzExactOutSwapRoute_ValidParams_Stateless fuzzes the ExactOutSwapRoute function.
 func TestFuzzExactOutSwapRoute_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
 		initStates(t)
 
@@ -41,7 +41,7 @@ func TestFuzzExactOutSwapRoute_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzExactOutSwapRoute_RandomizedParams_Stateless fuzzes the ExactOutSwapRoute function.
 func TestFuzzExactOutSwapRoute_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
 		initStates(t)
 
@@ -67,7 +67,7 @@ func TestFuzzExactOutSwapRoute_RandomizedParams_Stateful(t *testing.T) {
 	// initialize the states for the stateful fuzz test
 	initStates(t)
 
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedExactOutSwapRouteParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)

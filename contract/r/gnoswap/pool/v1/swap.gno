@@ -220,13 +220,6 @@ func (i *poolV1) Swap(
 		panic(err)
 	}
 
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
-		panic(newErrorWithDetail(
-			errInvalidSwapAmount,
-			"amount0 or amount1 is zero",
-		))
-	}
-
 	// Update oracle BEFORE applying swap result (using pre-swap state)
 	if result.NewTick != pool.Slot0Tick() {
 		currentTime := time.Now().Unix()
@@ -245,17 +238,15 @@ func (i *poolV1) Swap(
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
 			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
-
-			i.safeSwapCallback(pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 		}
+		i.safeSwapCallback(pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
 			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
-
-			i.safeSwapCallback(pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 		}
+		i.safeSwapCallback(pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 	}
 
 	lastObservation, err := lastObservation(pool.ObservationState())
@@ -341,10 +332,6 @@ func (i *poolV1) DrySwap(
 
 	result, err := i.computeSwap(pool, comp)
 	if err != nil {
-		return "0", "0", false
-	}
-
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
 	}
 

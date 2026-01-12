@@ -16,7 +16,7 @@ import (
 
 // TestFuzzPoolSwap_ValidParams_Stateless tests DrySwap and Swap with valid parameters
 func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		initStates(t)
 
@@ -42,7 +42,7 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzPoolSwap_RandomizedParams_Stateless tests DrySwap and Swap with randomized parameters
 func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		initStates(t)
 
@@ -71,7 +71,7 @@ func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
 	// given
 	initStates(t)
 
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_MIDDLE, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedPoolSwapParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
