@@ -220,13 +220,6 @@ func (i *poolV1) Swap(
 		panic(err)
 	}
 
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
-		panic(newErrorWithDetail(
-			errInvalidSwapAmount,
-			"amount0 or amount1 is zero",
-		))
-	}
-
 	// Update oracle BEFORE applying swap result (using pre-swap state)
 	if result.NewTick != pool.Slot0Tick() {
 		currentTime := time.Now().Unix()

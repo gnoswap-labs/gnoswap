@@ -1359,23 +1359,25 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	uassert.Equal(t, "0", result.Amount0.ToString(), "DrySwap should return amount0=0")
 	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
 
-	// then: Actual Swap should panic due to zero amount validation
+	// then: Actual Swap should complete successfully even with zero amount0
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/test/mock_swapper"))
 
-		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-013] invalid swap amount || amount0 or amount1 is zero", func() {
-			getMockInstance().Swap(
-				token0Path,
-				token1Path,
-				fee,
-				adminAddr,
-				zeroForOne,
-				amountSpecified,
-				sqrtPriceLimitX96,
-				adminAddr,
-				swapCallback,
-			)
-		})
+		amount0Str, amount1Str := getMockInstance().Swap(
+			token0Path,
+			token1Path,
+			fee,
+			adminAddr,
+			zeroForOne,
+			amountSpecified,
+			sqrtPriceLimitX96,
+			adminAddr,
+			swapCallback,
+		)
+
+		// Verify that swap completed with expected amounts
+		uassert.Equal(t, "0", amount0Str, "Swap should return amount0=0")
+		uassert.NotEqual(t, "0", amount1Str, "Swap should return non-zero amount1")
 	}(cross)
 }
 
