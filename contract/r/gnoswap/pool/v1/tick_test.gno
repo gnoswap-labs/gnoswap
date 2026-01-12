@@ -519,6 +519,9 @@ func TestTickCross(t *testing.T) {
 				tt.tick,
 				tt.feeGrowthGlobal0X128,
 				tt.feeGrowthGlobal1X128,
+				u256.Zero(), // secondsPerLiquidityCumulativeX128
+				int64(0),    // tickCumulative
+				int64(0),    // blockTimestamp
 			)
 			if gotLiquidityNet.ToString() != tt.wantLiquidityNet {
 				t.Errorf("tickCross() liquidityNet = %v, want %v",
