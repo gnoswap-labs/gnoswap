@@ -637,19 +637,13 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	)
 
 	if exactInput {
-		amountSpecifiedRemaining, overflow = i256.Zero().SubOverflow(state.amountSpecifiedRemaining, amountInWithFee)
-		if overflow {
-			return state, errUnderflow
-		}
+		amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		amountCalculated, overflow = i256.Zero().SubOverflow(state.amountCalculated, i256.FromUint256(step.amountOut))
 		if overflow {
 			return state, errUnderflow
 		}
 	} else {
-		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		if overflow {
-			return state, errOverflow
-		}
+		amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
 		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
 		if overflow {
 			return state, errOverflow
