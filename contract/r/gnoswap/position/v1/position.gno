@@ -454,17 +454,11 @@ func (p *positionV1) collectFee(
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
-	}
+	tokensOwed0Updated := u256.Zero().Sub(tokensOwed0, amount0Uint256)
+	tokensOwed1Updated := u256.Zero().Sub(tokensOwed1, amount1Uint256)
 	position.SetTokensOwed0(tokensOwed0Updated)
-
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
-	}
 	position.SetTokensOwed1(tokensOwed1Updated)
+
 	p.mustUpdatePosition(positionId, *position)
 
 	withdrawalFeeBps := pl.GetWithdrawalFee()

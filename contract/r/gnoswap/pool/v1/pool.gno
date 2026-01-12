@@ -141,16 +141,10 @@ func (i *poolV1) Burn(
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
 
-		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), amount0)
-		if overflow {
-			panic(errOverflow)
-		}
+		tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), amount0)
 		position.SetTokensOwed0(tokensOwed0)
 
-		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), amount1)
-		if overflow {
-			panic(errOverflow)
-		}
+		tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), amount1)
 		position.SetTokensOwed1(tokensOwed1)
 	}
 
@@ -223,11 +217,7 @@ func (i *poolV1) Collect(
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
 	if amount0.Gt(zero) {
-		tokenOwed0, overflow := u256.Zero().SubOverflow(position.TokensOwed0(), amount0)
-		if overflow {
-			panic(errOverflow)
-		}
-
+		tokenOwed0 := u256.Zero().Sub(position.TokensOwed0(), amount0)
 		token0Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken0(), amount0)
 		if overflow {
 			panic(errOverflow)
@@ -238,11 +228,7 @@ func (i *poolV1) Collect(
 		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, safeConvertToInt64(amount0))
 	}
 	if amount1.Gt(zero) {
-		tokenOwed1, overflow := u256.Zero().SubOverflow(position.TokensOwed1(), amount1)
-		if overflow {
-			panic(errOverflow)
-		}
-
+		tokenOwed1 := u256.Zero().Sub(position.TokensOwed1(), amount1)
 		token1Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken1(), amount1)
 		if overflow {
 			panic(errOverflow)
