@@ -31,6 +31,7 @@ import (
 
 const (
 	FUZZ_ITERATIONS          = 10   // 10 iterations is enough for basic sanity checks
+	FUZZ_ITERATIONS_MIDDLE   = 50   // 50 iterations is enough for middle-level checks
 	FUZZ_ITERATIONS_EXTENDED = 1000 // 1000 iterations is enough for extended checks
 )
 
