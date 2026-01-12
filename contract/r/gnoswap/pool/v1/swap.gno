@@ -105,7 +105,7 @@ type SwapComputation struct {
 	ZeroForOne        bool
 	ExactInput        bool
 	InitialState      SwapState
-	Cache             SwapCache
+	Cache             *SwapCache
 }
 
 // Swap executes a swap with callback pattern for optimistic transfers.
@@ -487,7 +487,7 @@ func (i *poolV1) computeSwapStep(
 	zeroForOne bool,
 	sqrtPriceLimitX96 *u256.Uint,
 	exactInput bool,
-	cache SwapCache,
+	cache *SwapCache,
 ) (SwapState, error) {
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
@@ -524,7 +524,7 @@ func (i *poolV1) computeSwapStep(
 
 	// handling tick transitions
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-		newState = i.tickTransition(step, zeroForOne, newState, pool)
+		newState = i.tickTransition(step, zeroForOne, newState, pool, cache)
 	} else if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
 		newState.setTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
@@ -670,11 +670,37 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 }
 
 // tickTransition handles the transition between price ticks during a swap
-func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool) SwapState {
+func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, cache *SwapCache) SwapState {
 	// ensure existing state to keep immutability
 	newState := state
 
 	if step.initialized {
+		// Compute oracle values on first initialized tick cross
+		if !cache.computedLatestObservation {
+			observationState := pool.ObservationState()
+			if observationState != nil {
+				tickCumulative, secondsPerLiquidity, err := observeSingle(
+					observationState,
+					cache.blockTimestamp,
+					0,
+					state.tick,
+					observationState.Index(),
+					cache.liquidityStart,
+					observationState.Cardinality(),
+				)
+				if err == nil {
+					cache.tickCumulative = tickCumulative
+					cache.secondsPerLiquidityCumulativeX128 = secondsPerLiquidity
+					cache.computedLatestObservation = true
+				}
+			}
+		}
+
+		// Ensure cache has valid values even if oracle computation fails
+		if cache.secondsPerLiquidityCumulativeX128 == nil {
+			cache.secondsPerLiquidityCumulativeX128 = u256.Zero()
+		}
+
 		fee0, fee1 := u256.Zero(), u256.Zero()
 
 		if zeroForOne {
@@ -685,7 +711,15 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			fee1 = state.feeGrowthGlobalX128
 		}
 
-		liquidityNet := tickCross(pool, step.tickNext, fee0, fee1)
+		liquidityNet := tickCross(
+			pool,
+			step.tickNext,
+			fee0,
+			fee1,
+			cache.secondsPerLiquidityCumulativeX128,
+			cache.tickCumulative,
+			cache.blockTimestamp,
+		)
 
 		if zeroForOne {
 			liquidityNet = i256.Zero().Neg(liquidityNet)
@@ -701,11 +735,10 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		}
 	}
 
-	decrement := int32(0)
+	newState.tick = step.tickNext
 	if zeroForOne {
-		decrement = 1
+		newState.tick = step.tickNext - 1
 	}
-	newState.tick = step.tickNext - decrement
 
 	return newState
 }

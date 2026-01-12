@@ -326,7 +326,7 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 					protocolFee:              u256.Zero(),
 					liquidity:                mockPool.Liquidity(),
 				},
-				Cache: SwapCache{
+				Cache: &SwapCache{
 					feeProtocol:    0,
 					liquidityStart: mockPool.Liquidity(),
 				},
