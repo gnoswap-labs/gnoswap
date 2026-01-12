@@ -335,10 +335,6 @@ func (i *poolV1) DrySwap(
 		return "0", "0", false
 	}
 
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
-		return "0", "0", false
-	}
-
 	if zeroForOne {
 		if pool.BalanceToken1().Lt(result.Amount1.Abs()) {
 			return "0", "0", false
