@@ -207,12 +207,11 @@ func (i *poolV1) Collect(
 
 	var amount0, amount1 *u256.Uint
 
-	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount0 = collectToken(amount0Req, position.TokensOwed0(), pool.BalanceToken0())
+	amount0 = u256Min(amount0Req, position.TokensOwed0())
 
 	amount1Req := u256.MustFromDecimal(amount1Requested)
-	amount1 = collectToken(amount1Req, position.TokensOwed1(), pool.BalanceToken1())
+	amount1 = u256Min(amount1Req, position.TokensOwed1())
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
@@ -246,18 +245,6 @@ func (i *poolV1) Collect(
 	}
 
 	return amount0.ToString(), amount1.ToString()
-}
-
-// collectToken calculates the actual amount of tokens that can be collected.
-// It returns the minimum of: requested amount, tokens owed, and pool balance.
-// This ensures collection never exceeds available funds.
-func collectToken(
-	amountReq, tokensOwed, poolBalance *u256.Uint,
-) (amount *u256.Uint) {
-	// find smallest of three amounts
-	amount = u256Min(amountReq, tokensOwed)
-	amount = u256Min(amount, poolBalance)
-	return amount.Clone()
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
