@@ -1057,6 +1057,152 @@ func TestPositionUpdate_TokensOwedAccumulation(t *testing.T) {
 	}
 }
 
+func TestBurn_TokensOwedAccumulation(t *testing.T) {
+	tests := []struct {
+		name            string
+		mintAmount      string
+		burnAmount      string
+		minOwed0        string
+		minOwed1        string
+		businessContext string
+	}{
+		{
+			name:            "normal_burn_accumulation",
+			mintAmount:      "10000000",
+			burnAmount:      "500000",
+			minOwed0:        "500",
+			minOwed1:        "2000",
+			businessContext: "LP removes liquidity and earns fees",
+		},
+		{
+			name:            "full_burn_accumulation",
+			mintAmount:      "10000000",
+			burnAmount:      "10000000",
+			minOwed0:        "10000",
+			minOwed1:        "40000",
+			businessContext: "LP withdraws all liquidity",
+		},
+		{
+			name:            "partial_burn_accumulation",
+			mintAmount:      "50000000",
+			burnAmount:      "10000000",
+			minOwed0:        "10000",
+			minOwed1:        "40000",
+			businessContext: "LP removes portion of liquidity",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			testing.SetRealm(adminRealm)
+			mockInstanceSetPoolCreationFee(0)
+			mockInstanceCreatePool(barPath, fooPath, FeeTier500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+			pool := getMockInstance().mustGetPool(GetPoolPath(barPath, fooPath, FeeTier500))
+			approveTokensForPool(t, pool)
+
+			testing.SetRealm(posRealm)
+			mockInstanceMint(barPath, fooPath, FeeTier500, -887220, 887220, tt.mintAmount, adminAddr)
+
+			posKey := getPositionKey(-887220, 887220)
+
+			testing.SetRealm(posRealm)
+			mockInstanceBurn(barPath, fooPath, FeeTier500, -887220, 887220, tt.burnAmount, adminAddr)
+
+			positionValue, _ := pool.Positions().Get(posKey)
+			position := positionValue.(pl.PositionInfo)
+
+			minOwed0 := u256.MustFromDecimal(tt.minOwed0)
+			minOwed1 := u256.MustFromDecimal(tt.minOwed1)
+
+			uassert.True(t, position.TokensOwed0().Gte(minOwed0),
+				"Token0 owed should be at least "+tt.minOwed0)
+			uassert.True(t, position.TokensOwed1().Gte(minOwed1),
+				"Token1 owed should be at least "+tt.minOwed1)
+		})
+	}
+}
+
+func TestCollect_TokensOwedDeduction(t *testing.T) {
+	tests := []struct {
+		name            string
+		mintAmount      string
+		burnAmount      string
+		collectAmount0  string
+		collectAmount1  string
+		businessContext string
+	}{
+		{
+			name:            "partial_collection",
+			mintAmount:      "10000000",
+			burnAmount:      "5000000",
+			collectAmount0:  "2500",
+			collectAmount1:  "10000",
+			businessContext: "LP collects portion of earned fees",
+		},
+		{
+			name:            "full_collection",
+			mintAmount:      "10000000",
+			burnAmount:      "10000000",
+			collectAmount0:  "100000",
+			collectAmount1:  "100000",
+			businessContext: "LP withdraws all accumulated fees",
+		},
+		{
+			name:            "zero_collection",
+			mintAmount:      "10000000",
+			burnAmount:      "5000000",
+			collectAmount0:  "0",
+			collectAmount1:  "0",
+			businessContext: "Query without actual collection",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			testing.SetRealm(adminRealm)
+			mockInstanceSetPoolCreationFee(0)
+			mockInstanceCreatePool(barPath, fooPath, FeeTier500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+			pool := getMockInstance().mustGetPool(GetPoolPath(barPath, fooPath, FeeTier500))
+			approveTokensForPool(t, pool)
+
+			testing.SetRealm(posRealm)
+			mockInstanceMint(barPath, fooPath, FeeTier500, -887220, 887220, tt.mintAmount, adminAddr)
+
+			posKey := getPositionKey(-887220, 887220)
+
+			testing.SetRealm(posRealm)
+			mockInstanceBurn(barPath, fooPath, FeeTier500, -887220, 887220, tt.burnAmount, adminAddr)
+
+			positionValue, _ := pool.Positions().Get(posKey)
+			position := positionValue.(pl.PositionInfo)
+			owedBeforeCollect0 := position.TokensOwed0()
+			owedBeforeCollect1 := position.TokensOwed1()
+
+			pool.SetBalanceToken0(u256.MustFromDecimal("1000000000000000000000"))
+			pool.SetBalanceToken1(u256.MustFromDecimal("1000000000000000000000"))
+
+			testing.SetRealm(posRealm)
+			mockInstanceCollect(barPath, fooPath, FeeTier500, adminAddr, -887220, 887220, tt.collectAmount0, tt.collectAmount1)
+
+			positionValue, _ = pool.Positions().Get(posKey)
+			position = positionValue.(pl.PositionInfo)
+
+			collectAmt0 := u256.MustFromDecimal(tt.collectAmount0)
+			collectAmt1 := u256.MustFromDecimal(tt.collectAmount1)
+
+			expectedOwed0 := u256.Zero().Sub(owedBeforeCollect0, collectAmt0)
+			expectedOwed1 := u256.Zero().Sub(owedBeforeCollect1, collectAmt1)
+
+			uassert.Equal(t, expectedOwed0.ToString(), position.TokensOwed0().ToString())
+			uassert.Equal(t, expectedOwed1.ToString(), position.TokensOwed1().ToString())
+		})
+	}
+}
+
 
 func TestPositionSecurity_EdgeCases(t *testing.T) {
 	t.Run("duplicate_position_handling", func(t *testing.T) {
