@@ -665,7 +665,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [EXPECTED] Accumulated distribute amount: 0
 // [EXPECTED] Accumulated height: 0
 // [EXPECTED] Accumulated time: 0
-// [EXPECTED] Reward claimable duration: 259200
+// [EXPECTED] Reward claimable duration: 86400
 //
 // [SCENARIO] 6. Test RewardState Getters
 // [INFO] Testing reward state getters
@@ -673,4 +673,4 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [EXPECTED] - Deposit Amount: 2000000
 // [EXPECTED] - Accumulated Reward Amount: 0
 // [EXPECTED] - Claimed Amount: 0
-// [EXPECTED] - Claimable Time: 1235431890
+// [EXPECTED] - Claimable Time: 1235259090

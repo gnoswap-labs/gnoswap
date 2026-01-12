@@ -195,9 +195,10 @@ func collectReward(ownerAddr address, depositId string) {
 }
 
 func validateCollectableDurationByTier(projectTier30Id, projectTier90Id, projectTier180Id string) {
-	validateCollectableDurationForTier(davidAddr, projectTier30Id, 51840)   // 3 days
-	validateCollectableDurationForTier(erinAddr, projectTier90Id, 120960)   // 7 days
-	validateCollectableDurationForTier(frankAddr, projectTier180Id, 241920) // 14 days
+	dayTime := int64(60 * 60 * 24)
+	validateCollectableDurationForTier(davidAddr, projectTier30Id, dayTime/5)  // 1 days
+	validateCollectableDurationForTier(erinAddr, projectTier90Id, dayTime/5)   // 1 days
+	validateCollectableDurationForTier(frankAddr, projectTier180Id, dayTime/5) // 1 days
 }
 
 func validateCollectableDurationForTier(depositorAddr address, projectTierId string, claimableBlocks int64) {
