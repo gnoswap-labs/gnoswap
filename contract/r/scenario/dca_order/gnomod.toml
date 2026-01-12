@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/dca_order"
+gno = "0.9"
