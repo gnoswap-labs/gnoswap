@@ -972,6 +972,92 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 	})
 }
 
+func TestPositionUpdate_TokensOwedAccumulation(t *testing.T) {
+	q128 := u256.MustFromDecimal("340282366920938463463374607431768211456")
+
+	tests := []struct {
+		name             string
+		initialLiquidity string
+		liquidityDelta   string
+		feeGrowthInside0 *u256.Uint
+		feeGrowthInside1 *u256.Uint
+		feeGrowth0Last   *u256.Uint
+		feeGrowth1Last   *u256.Uint
+		expectedOwed0    string
+		expectedOwed1    string
+		businessContext  string
+	}{
+		{
+			name:             "normal_fee_accumulation",
+			initialLiquidity: "1000000",
+			liquidityDelta:   "0",
+			feeGrowthInside0: u256.Zero().Mul(q128, u256.NewUint(2)),
+			feeGrowthInside1: u256.Zero().Mul(q128, u256.NewUint(3)),
+			feeGrowth0Last:   u256.Zero().Mul(q128, u256.NewUint(1)),
+			feeGrowth1Last:   u256.Zero().Mul(q128, u256.NewUint(1)),
+			expectedOwed0:    "1000000",
+			expectedOwed1:    "2000000",
+			businessContext:  "Active position earning fees from trading",
+		},
+		{
+			name:             "large_fee_accumulation",
+			initialLiquidity: "10000000000",
+			liquidityDelta:   "0",
+			feeGrowthInside0: u256.Zero().Mul(q128, u256.NewUint(100)),
+			feeGrowthInside1: u256.Zero().Mul(q128, u256.NewUint(200)),
+			feeGrowth0Last:   u256.Zero().Mul(q128, u256.NewUint(50)),
+			feeGrowth1Last:   u256.Zero().Mul(q128, u256.NewUint(100)),
+			expectedOwed0:    "500000000000",
+			expectedOwed1:    "1000000000000",
+			businessContext:  "High-volume pool with significant fee generation",
+		},
+		{
+			name:             "zero_fee_growth",
+			initialLiquidity: "1000000",
+			liquidityDelta:   "0",
+			feeGrowthInside0: u256.Zero().Mul(q128, u256.NewUint(5)),
+			feeGrowthInside1: u256.Zero().Mul(q128, u256.NewUint(5)),
+			feeGrowth0Last:   u256.Zero().Mul(q128, u256.NewUint(5)),
+			feeGrowth1Last:   u256.Zero().Mul(q128, u256.NewUint(5)),
+			expectedOwed0:    "0",
+			expectedOwed1:    "0",
+			businessContext:  "No trading activity since last update",
+		},
+		{
+			name:             "accumulation_with_existing_owed",
+			initialLiquidity: "5000000",
+			liquidityDelta:   "0",
+			feeGrowthInside0: u256.Zero().Mul(q128, u256.NewUint(10)),
+			feeGrowthInside1: u256.Zero().Mul(q128, u256.NewUint(20)),
+			feeGrowth0Last:   u256.Zero().Mul(q128, u256.NewUint(8)),
+			feeGrowth1Last:   u256.Zero().Mul(q128, u256.NewUint(15)),
+			expectedOwed0:    "10000000",
+			expectedOwed1:    "25000000",
+			businessContext:  "Position with prior uncollected fees earns more",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			position := pl.PositionInfo{}
+			position.SetLiquidity(u256.MustFromDecimal(tt.initialLiquidity))
+			position.SetFeeGrowthInside0LastX128(tt.feeGrowth0Last)
+			position.SetFeeGrowthInside1LastX128(tt.feeGrowth1Last)
+			position.SetTokensOwed0(u256.Zero())
+			position.SetTokensOwed1(u256.Zero())
+
+			liquidityDelta := i256.MustFromDecimal(tt.liquidityDelta)
+
+			result, err := positionUpdate(position, liquidityDelta, tt.feeGrowthInside0, tt.feeGrowthInside1)
+			uassert.NoError(t, err)
+
+			uassert.Equal(t, tt.expectedOwed0, result.TokensOwed0().ToString())
+			uassert.Equal(t, tt.expectedOwed1, result.TokensOwed1().ToString())
+		})
+	}
+}
+
+
 func TestPositionSecurity_EdgeCases(t *testing.T) {
 	t.Run("duplicate_position_handling", func(t *testing.T) {
 		// Given: Pool with existing position
