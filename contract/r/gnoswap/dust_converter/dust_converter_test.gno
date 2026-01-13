@@ -20,11 +20,13 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 	_ "gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/baz"
+	_ "gno.land/r/onbloc/foo"
 )
 
 const (
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
+	fooPath = "gno.land/r/onbloc/foo"
 )
 
 var (
@@ -190,6 +192,41 @@ func TestConvertDustToGns_Success(t *testing.T) {
 	uassert.Equal(t, int64(7), gns.BalanceOf(userAddr)-beforeRecipientGns, "recipient GNS delta mismatch")
 }
 
+func TestConvertDustToGns_MultiTokenBatch(t *testing.T) {
+	resetConfig(t)
+	mock := &mockRouter{
+		dryResultIn:            "1",
+		dryResultOut:           "-5",
+		drySuccess:             true,
+		exactInSingleResultIn:  "1",
+		exactInSingleResultOut: "5",
+	}
+	_ = registerMockRouter(t, mock)
+
+	createPoolIfNeeded(t, barPath, gnsTokenPath)
+	createPoolIfNeeded(t, bazPath, gnsTokenPath)
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, dustConverterAddr, 12)
+	common.SafeGRC20Transfer(cross, barPath, dustConverterAddr, 3)
+	common.SafeGRC20Transfer(cross, bazPath, dustConverterAddr, 4)
+
+	beforeRecipientGns := gns.BalanceOf(userAddr)
+
+	totalGnsOut := callConvertDustToGns(
+		t,
+		userRealm,
+		barPath+":3,"+bazPath+":4,"+gnsTokenPath+":2",
+		time.Now().Add(time.Hour).Unix(),
+		userAddr,
+	)
+
+	uassert.Equal(t, int64(12), totalGnsOut, "totalGnsOut mismatch")
+	uassert.Equal(t, 2, mock.dryCalls, "dry swap call count mismatch")
+	uassert.Equal(t, 2, mock.exactInSingleCalls, "exactInSingle call count mismatch")
+	uassert.Equal(t, int64(12), gns.BalanceOf(userAddr)-beforeRecipientGns, "recipient GNS delta mismatch")
+}
+
 func TestConvertDustToGns_LengthMismatch(t *testing.T) {
 	resetConfig(t)
 
@@ -248,12 +285,12 @@ func TestConvertDustToGns_SkipsMissingPool(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, dustConverterAddr, 1)
-	common.SafeGRC20Transfer(cross, bazPath, dustConverterAddr, 1)
+	common.SafeGRC20Transfer(cross, fooPath, dustConverterAddr, 1)
 
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
-		bazPath+":1",
+		fooPath+":1",
 		time.Now().Unix(),
 		userAddr,
 	)
