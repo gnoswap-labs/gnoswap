@@ -34,7 +34,7 @@ func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerSt
 func UpgradeImpl(cur realm, packagePath string) {
 	// Check admin permission
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(packagePath)
 	if err != nil {

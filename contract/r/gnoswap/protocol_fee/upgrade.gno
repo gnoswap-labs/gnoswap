@@ -47,7 +47,7 @@ func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolF
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin can perform upgrades
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(packagePath)
 	if err != nil {
