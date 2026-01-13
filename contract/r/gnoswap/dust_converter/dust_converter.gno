@@ -40,11 +40,13 @@ func SetDustMinAmount(amount int64) {
 	access.AssertIsAdminOrGovernance(caller)
 
 	if amount < 0 {
-		panic(makeErrorWithDetail(errInvalidAmount, "min amount must be non-negative"))
+		panic(makeErrorWithDetail(
+			errInvalidAmount, "min amount must be non-negative"))
 	}
 
 	if dustMaxAmount > 0 && amount > dustMaxAmount {
-		panic(makeErrorWithDetail(errInvalidAmount, ufmt.Sprintf("min(%d) should be <= max(%d)", amount, dustMaxAmount)))
+		panic(makeErrorWithDetail(
+			errInvalidAmount, ufmt.Sprintf("min(%d) should be <= max(%d)", amount, dustMaxAmount)))
 	}
 
 	dustMinAmount = amount
@@ -61,7 +63,8 @@ func SetDustMaxAmount(amount int64) {
 	}
 
 	if amount > 0 && amount < dustMinAmount {
-		panic(makeErrorWithDetail(errInvalidAmount, ufmt.Sprintf("max(%d) should be >= min(%d)", amount, dustMinAmount)))
+		panic(makeErrorWithDetail(errInvalidAmount,
+			ufmt.Sprintf("max(%d) should be >= min(%d)", amount, dustMinAmount)))
 	}
 
 	dustMaxAmount = amount
@@ -240,6 +243,7 @@ func ConvertDustToGns(
 		"prevRealm", previousRealm.PkgPath(),
 		"recipient", recipient.String(),
 		"totalGnsOut", strconv.FormatInt(totalGnsOut, 10),
+		"lastExecutedTimestamp", strconv.FormatInt(lastExecutedTimestamp, 10),
 	)
 
 	return totalGnsOut
