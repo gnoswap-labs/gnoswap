@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -14,9 +14,10 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
+	pf "gno.land/r/gnoswap/protocol_fee"
 	sr "gno.land/r/gnoswap/staker"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -30,10 +31,12 @@ import (
 )
 
 var (
-	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm = testing.NewUserRealm(adminAddr)
+	adminAddr       = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
-	poolAddr = access.MustGetAddress(prabc.ROLE_POOL.String())
+	adminRealm       = testing.NewUserRealm(adminAddr)
+	protocolFeeRealm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
+	stakerRealm      = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	userAddr  = testutils.TestAddress("dust-user")
 	userRealm = testing.NewUserRealm(userAddr)
@@ -50,18 +53,18 @@ const (
 )
 
 func main() {
-	println("[SCENARIO] Claim dust via dust_converter")
+	println("[SCENARIO] Convert protocol_fee dust to GNS and distribute")
 	println()
 
 	println("[SCENARIO] 1. Setup pools and liquidity")
 	setupPools()
 	println()
 
-	println("[SCENARIO] 2. Transfer dust to dust_converter")
-	setupDustBalances()
+	println("[SCENARIO] 2. Accumulate dust in protocol_fee")
+	accumulateDust()
 	println()
 
-	println("[SCENARIO] 3. Convert dust to GNS")
+	println("[SCENARIO] 3. Move dust to dust_converter and convert")
 	convertDust()
 	println()
 }
@@ -73,9 +76,9 @@ func setupPools() {
 	createPool(barPath, gnsPath, feeTier)
 	createPool(bazPath, gnsPath, feeTier)
 
-	bar.Approve(cross, poolAddr, 1_000_000_000)
-	baz.Approve(cross, poolAddr, 1_000_000_000)
-	gns.Approve(cross, poolAddr, 1_000_000_000)
+	bar.Approve(cross, access.MustGetAddress(prbac.ROLE_POOL.String()), 1_000_000_000)
+	baz.Approve(cross, access.MustGetAddress(prbac.ROLE_POOL.String()), 1_000_000_000)
+	gns.Approve(cross, access.MustGetAddress(prbac.ROLE_POOL.String()), 1_000_000_000)
 
 	mintPosition(barPath, gnsPath, feeTier, "1000000", "1000000")
 	mintPosition(bazPath, gnsPath, feeTier, "1000000", "1000000")
@@ -118,24 +121,39 @@ func mintPosition(token0Path, token1Path string, fee uint32, amount0, amount1 st
 	ufmt.Printf("[EXPECTED] liquidity: %s amount0: %s amount1: %s\n", liquidity, amt0, amt1)
 }
 
-func setupDustBalances() {
+func accumulateDust() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Transferring bar dust to dust_converter")
+	println("[INFO] Transferring bar dust to protocol_fee")
+	bar.Transfer(cross, protocolFeeAddr, 3)
+	println("[INFO] Transferring baz dust to protocol_fee")
+	baz.Transfer(cross, protocolFeeAddr, 4)
+	println("[INFO] Transferring gns dust to protocol_fee")
+	gns.Transfer(cross, protocolFeeAddr, 2)
+
+	println("[EXPECTED] protocol_fee bar balance:", bar.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] protocol_fee baz balance:", baz.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] protocol_fee gns balance:", gns.BalanceOf(protocolFeeAddr))
+
+	testing.SetRealm(stakerRealm)
+	pf.AddToProtocolFee(cross, barPath, 3)
+	pf.AddToProtocolFee(cross, bazPath, 4)
+	pf.AddToProtocolFee(cross, gnsPath, 2)
+}
+
+func convertDust() {
+	testing.SetRealm(protocolFeeRealm)
+
+	println("[INFO] Moving dust from protocol_fee to dust_converter")
 	bar.Transfer(cross, dustConverterAddr, 3)
-	println("[INFO] Transferring baz dust to dust_converter")
 	baz.Transfer(cross, dustConverterAddr, 4)
-	println("[INFO] Transferring gns dust to dust_converter")
 	gns.Transfer(cross, dustConverterAddr, 2)
 
 	println("[EXPECTED] dust_converter bar balance:", bar.BalanceOf(dustConverterAddr))
 	println("[EXPECTED] dust_converter baz balance:", baz.BalanceOf(dustConverterAddr))
 	println("[EXPECTED] dust_converter gns balance:", gns.BalanceOf(dustConverterAddr))
-}
 
-func convertDust() {
 	testing.SetRealm(userRealm)
-
 	beforeUserGns := gns.BalanceOf(userAddr)
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
@@ -152,7 +170,7 @@ func convertDust() {
 }
 
 // Output:
-// [SCENARIO] Claim dust via dust_converter
+// [SCENARIO] Convert protocol_fee dust to GNS and distribute
 //
 // [SCENARIO] 1. Setup pools and liquidity
 // [EXPECTED] created pool: gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500
@@ -160,15 +178,19 @@ func convertDust() {
 // [EXPECTED] liquidity: 3858461 amount0: 1000000 amount1: 1000000
 // [EXPECTED] liquidity: 3858461 amount0: 1000000 amount1: 1000000
 //
-// [SCENARIO] 2. Transfer dust to dust_converter
-// [INFO] Transferring bar dust to dust_converter
-// [INFO] Transferring baz dust to dust_converter
-// [INFO] Transferring gns dust to dust_converter
+// [SCENARIO] 2. Accumulate dust in protocol_fee
+// [INFO] Transferring bar dust to protocol_fee
+// [INFO] Transferring baz dust to protocol_fee
+// [INFO] Transferring gns dust to protocol_fee
+// [EXPECTED] protocol_fee bar balance: 3
+// [EXPECTED] protocol_fee baz balance: 4
+// [EXPECTED] protocol_fee gns balance: 2
+//
+// [SCENARIO] 3. Move dust to dust_converter and convert
+// [INFO] Moving dust from protocol_fee to dust_converter
 // [EXPECTED] dust_converter bar balance: 3
 // [EXPECTED] dust_converter baz balance: 4
 // [EXPECTED] dust_converter gns balance: 2
-//
-// [SCENARIO] 3. Convert dust to GNS
 // [EXPECTED] totalGnsOut: 5
 // [EXPECTED] dust_converter bar balance after convert: 0
 // [EXPECTED] dust_converter baz balance after convert: 0
