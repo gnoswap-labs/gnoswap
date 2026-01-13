@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"chain"
 	"chain/runtime"
 	"errors"
 
@@ -53,6 +54,7 @@ func initRegisterReadableContract() {
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	dustConverterAddr := chain.PackageAddress("gno.land/r/gnoswap/dust_converter")
 
 	if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
 		panic(err)
@@ -63,6 +65,10 @@ func initRegisterReadableContract() {
 	}
 
 	if err := kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly); err != nil {
+		panic(err)
+	}
+
+	if err := kvStore.AddAuthorizedCaller(dustConverterAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
 }
