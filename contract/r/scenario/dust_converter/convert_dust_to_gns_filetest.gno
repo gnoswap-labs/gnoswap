@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr  = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(adminAddr)
 
 	poolAddr = access.MustGetAddress(prabc.ROLE_POOL.String())

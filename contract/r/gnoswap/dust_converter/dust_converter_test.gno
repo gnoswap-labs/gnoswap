@@ -13,10 +13,12 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
 	_ "gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/baz"
@@ -24,14 +26,16 @@ import (
 )
 
 const (
-	barPath = "gno.land/r/onbloc/bar"
-	bazPath = "gno.land/r/onbloc/baz"
-	fooPath = "gno.land/r/onbloc/foo"
+	barPath        = "gno.land/r/onbloc/bar"
+	bazPath        = "gno.land/r/onbloc/baz"
+	fooPath        = "gno.land/r/onbloc/foo"
+	defaultFeeTier = uint32(500)
 )
 
 var (
 	adminAddr  = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(adminAddr)
+	poolAddr   = access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	userAddr  = testutils.TestAddress("user")
 	userRealm = testing.NewCodeRealm("gno.land/r/dust_converter/user")
@@ -44,10 +48,12 @@ type mockRouter struct {
 	dryResultOut string
 	drySuccess   bool
 	dryCalls     int
+	lastDryRoute string
 
 	exactInSingleResultIn  string
 	exactInSingleResultOut string
 	exactInSingleCalls     int
+	lastExactRoute         string
 }
 
 func (m *mockRouter) ExactInSingleSwapRoute(
@@ -61,6 +67,7 @@ func (m *mockRouter) ExactInSingleSwapRoute(
 	referrer string,
 ) (string, string) {
 	m.exactInSingleCalls++
+	m.lastExactRoute = routeArr
 	return m.exactInSingleResultIn, m.exactInSingleResultOut
 }
 
@@ -74,6 +81,7 @@ func (m *mockRouter) DrySwapRoute(
 	tokenAmountLimit string,
 ) (string, string, bool) {
 	m.dryCalls++
+	m.lastDryRoute = strRouteArr
 	return m.dryResultIn, m.dryResultOut, m.drySuccess
 }
 
@@ -162,15 +170,63 @@ func drainBalance(
 func createPoolIfNeeded(t *testing.T, token0, token1 string) {
 	t.Helper()
 
+	createPoolWithFee(t, token0, token1, defaultFeeTier)
+}
+
+func createPoolWithFee(t *testing.T, token0, token1 string, fee uint32) {
+	t.Helper()
+
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	poolPath := pool.GetPoolPath(token0, token1, feeTier)
+	poolPath := pool.GetPoolPath(token0, token1, fee)
 	if pool.ExistsPoolPath(poolPath) {
 		return
 	}
 
-	pool.CreatePool(cross, token0, token1, feeTier, "79228162514264337593543950336")
+	pool.CreatePool(cross, token0, token1, fee, "79228162514264337593543950336")
+}
+
+func mintPosition(
+	t *testing.T,
+	token0,
+	token1 string,
+	fee uint32,
+	amount0,
+	amount1 string,
+) {
+	t.Helper()
+
+	testing.SetRealm(adminRealm)
+
+	approveForPool(token0)
+	approveForPool(token1)
+
+	pn.Mint(
+		cross,
+		token0,
+		token1,
+		fee,
+		-6000,
+		6000,
+		amount0,
+		amount1,
+		"0",
+		"0",
+		9999999999,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+}
+
+func approveForPool(tokenPath string) {
+	if tokenPath == gnsTokenPath {
+		gns.Approve(cross, poolAddr, 1_000_000_000)
+		return
+	}
+
+	common.SafeGRC20Approve(cross, tokenPath, poolAddr, 1_000_000_000)
 }
 
 func callConvertDustToGns(
@@ -256,6 +312,39 @@ func TestConvertDustToGns_MultiTokenBatch(t *testing.T) {
 	uassert.Equal(t, 2, mock.dryCalls, "dry swap call count mismatch")
 	uassert.Equal(t, 2, mock.exactInSingleCalls, "exactInSingle call count mismatch")
 	uassert.Equal(t, int64(12), gns.BalanceOf(userAddr)-beforeRecipientGns, "recipient GNS delta mismatch")
+}
+
+func TestConvertDustToGns_SelectsHighestLiquidityFeeTier(t *testing.T) {
+	resetConfig(t)
+	mock := &mockRouter{
+		dryResultIn:            "1",
+		dryResultOut:           "-5",
+		drySuccess:             true,
+		exactInSingleResultIn:  "1",
+		exactInSingleResultOut: "5",
+	}
+	_ = registerMockRouter(t, mock)
+
+	createPoolWithFee(t, barPath, gnsTokenPath, 500)
+	createPoolWithFee(t, barPath, gnsTokenPath, 3000)
+	mintPosition(t, barPath, gnsTokenPath, 500, "1000", "1000")
+	mintPosition(t, barPath, gnsTokenPath, 3000, "2000", "2000")
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, dustConverterAddr, 5)
+	common.SafeGRC20Transfer(cross, barPath, dustConverterAddr, 1)
+
+	totalGnsOut := callConvertDustToGns(
+		t,
+		userRealm,
+		barPath+":1",
+		time.Now().Add(time.Hour).Unix(),
+		userAddr,
+	)
+
+	uassert.Equal(t, int64(5), totalGnsOut, "totalGnsOut mismatch")
+	uassert.Equal(t, barPath+":"+gnsTokenPath+":3000", mock.lastDryRoute, "selected fee tier mismatch")
+	uassert.Equal(t, barPath+":"+gnsTokenPath+":3000", mock.lastExactRoute, "selected fee tier mismatch")
 }
 
 func TestConvertDustToGns_LengthMismatch(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -19,13 +20,13 @@ import (
 
 const (
 	gnsTokenPath   = "gno.land/r/gnoswap/gns"
-	feeTier        = uint32(500)
 	feeBps         = uint64(0)
 	feeDenominator = int64(10_000)
 )
 
 var (
 	dustConverterAddr = chain.PackageAddress("gno.land/r/gnoswap/dust_converter")
+	feeTierCandidates = []uint32{100, 500, 3000, 10000}
 
 	dustMinAmount         int64 = 1
 	dustMaxAmount         int64 = 0
@@ -92,7 +93,7 @@ func GetFeeBps() uint64               { return feeBps }
 // ConvertDustToGns swaps eligible dust tokens into GNS and transfers the total to recipient.
 // Pairs format: "tokenA:100,tokenB:200".
 func ConvertDustToGns(
-    cur realm,
+	cur realm,
 	pairs string,
 	deadline int64,
 	recipient address,
@@ -168,8 +169,11 @@ func ConvertDustToGns(
 			continue
 		}
 
-		poolPath := pool.GetPoolPath(tokenPath, gnsTokenPath, feeTier)
-		if !pool.ExistsPoolPath(poolPath) {
+		// Selects a pool with most largest liquidity for the token pair.
+		// the lookup cost itself is just a pool existence check
+		// in a fixed-size array of fee tiers.
+		feeTier, ok := selectBestFeeTier(tokenPath, gnsTokenPath)
+		if !ok {
 			continue
 		}
 
@@ -248,4 +252,29 @@ func ConvertDustToGns(
 	)
 
 	return totalGnsOut
+}
+
+func selectBestFeeTier(tokenPath, targetPath string) (uint32, bool) {
+	var bestTier uint32
+	var bestLiquidity *u256.Uint
+
+	for _, fee := range feeTierCandidates {
+		poolPath := pool.GetPoolPath(tokenPath, targetPath, fee)
+		if !pool.ExistsPoolPath(poolPath) {
+			continue
+		}
+
+		liquidityStr := pool.GetLiquidity(poolPath)
+		liquidity := u256.MustFromDecimal(liquidityStr)
+		if bestLiquidity == nil || liquidity.Cmp(bestLiquidity) > 0 {
+			bestTier = fee
+			bestLiquidity = liquidity
+		}
+	}
+
+	if bestLiquidity == nil {
+		return 0, false
+	}
+
+	return bestTier, true
 }
