@@ -131,7 +131,7 @@ func mintPosition(token0Path, token1Path string, fee uint32, amount0, amount1 st
 
 func convertDust() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, dustConverterAddr, 3)
+	bar.Transfer(cross, dustConverterAddr, 10)
 	println("[EXPECTED] dust_converter bar balance:", bar.BalanceOf(dustConverterAddr))
 
 	testing.SetRealm(userRealm)
@@ -139,7 +139,7 @@ func convertDust() {
 	totalOut := dc.ConvertDustToGns(
 		cross,
 		wugnotPath,
-		barPath+":3",
+		barPath+":10",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
 	)
@@ -160,7 +160,7 @@ func convertDust() {
 // [EXPECTED] liquidity: 3858461 amount0: 1000000 amount1: 1000000
 //
 // [SCENARIO] 3. Convert bar dust to WUGNOT
-// [EXPECTED] dust_converter bar balance: 3
-// [EXPECTED] totalOut: 1
+// [EXPECTED] dust_converter bar balance: 10
+// [EXPECTED] totalOut: 8
 // [EXPECTED] dust_converter bar balance after convert: 0
-// [EXPECTED] user wugnot delta: 1
+// [EXPECTED] user wugnot delta: 8

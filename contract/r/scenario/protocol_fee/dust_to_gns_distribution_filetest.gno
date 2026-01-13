@@ -125,29 +125,29 @@ func accumulateDust() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Transferring bar dust to protocol_fee")
-	bar.Transfer(cross, protocolFeeAddr, 3)
+	bar.Transfer(cross, protocolFeeAddr, 10)
 	println("[INFO] Transferring baz dust to protocol_fee")
-	baz.Transfer(cross, protocolFeeAddr, 4)
+	baz.Transfer(cross, protocolFeeAddr, 10)
 	println("[INFO] Transferring gns dust to protocol_fee")
-	gns.Transfer(cross, protocolFeeAddr, 2)
+	gns.Transfer(cross, protocolFeeAddr, 10)
 
 	println("[EXPECTED] protocol_fee bar balance:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] protocol_fee baz balance:", baz.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] protocol_fee gns balance:", gns.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, barPath, 3)
-	pf.AddToProtocolFee(cross, bazPath, 4)
-	pf.AddToProtocolFee(cross, gnsPath, 2)
+	pf.AddToProtocolFee(cross, barPath, 10)
+	pf.AddToProtocolFee(cross, bazPath, 10)
+	pf.AddToProtocolFee(cross, gnsPath, 10)
 }
 
 func convertDust() {
 	testing.SetRealm(protocolFeeRealm)
 
 	println("[INFO] Moving dust from protocol_fee to dust_converter")
-	bar.Transfer(cross, dustConverterAddr, 3)
-	baz.Transfer(cross, dustConverterAddr, 4)
-	gns.Transfer(cross, dustConverterAddr, 2)
+	bar.Transfer(cross, dustConverterAddr, 10)
+	baz.Transfer(cross, dustConverterAddr, 10)
+	gns.Transfer(cross, dustConverterAddr, 10)
 
 	println("[EXPECTED] dust_converter bar balance:", bar.BalanceOf(dustConverterAddr))
 	println("[EXPECTED] dust_converter baz balance:", baz.BalanceOf(dustConverterAddr))
@@ -158,7 +158,7 @@ func convertDust() {
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
 		gnsPath,
-		barPath+":3,"+bazPath+":4,"+gnsPath+":2",
+		barPath+":10,"+bazPath+":10,"+gnsPath+":10",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
 	)
@@ -183,17 +183,17 @@ func convertDust() {
 // [INFO] Transferring bar dust to protocol_fee
 // [INFO] Transferring baz dust to protocol_fee
 // [INFO] Transferring gns dust to protocol_fee
-// [EXPECTED] protocol_fee bar balance: 3
-// [EXPECTED] protocol_fee baz balance: 4
-// [EXPECTED] protocol_fee gns balance: 2
+// [EXPECTED] protocol_fee bar balance: 10
+// [EXPECTED] protocol_fee baz balance: 10
+// [EXPECTED] protocol_fee gns balance: 10
 //
 // [SCENARIO] 3. Move dust to dust_converter and convert
 // [INFO] Moving dust from protocol_fee to dust_converter
-// [EXPECTED] dust_converter bar balance: 3
-// [EXPECTED] dust_converter baz balance: 4
-// [EXPECTED] dust_converter gns balance: 2
-// [EXPECTED] totalGnsOut: 5
+// [EXPECTED] dust_converter bar balance: 10
+// [EXPECTED] dust_converter baz balance: 10
+// [EXPECTED] dust_converter gns balance: 10
+// [EXPECTED] totalGnsOut: 26
 // [EXPECTED] dust_converter bar balance after convert: 0
 // [EXPECTED] dust_converter baz balance after convert: 0
 // [EXPECTED] dust_converter gns balance after convert: 0
-// [EXPECTED] user gns delta: 5
+// [EXPECTED] user gns delta: 26

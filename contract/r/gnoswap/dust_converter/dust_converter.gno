@@ -35,8 +35,14 @@ var (
 	// add/remove operations, we use a map data structure instead of AVL.
 	targetAssets map[string]bool
 
-	dustMinAmount int64 = 1
-	dustMaxAmount int64 = 0
+	// Setting the minimum amount to 1(≈ 0.000001) cause dryswap to fail
+	// in most cases. To avoid unnecessary checks and iterations, `dustMinAmount`
+	// should be set to a value greater than 1.
+	//
+	// If a more effective value is discovered, it can be also changed later
+	// through governance or admin.
+	dustMinAmount int64 = 10
+	dustMaxAmount int64 = 10
 
 	cooldownSeconds       int64
 	lastExecutedTimestamp int64

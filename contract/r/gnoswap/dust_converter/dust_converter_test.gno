@@ -131,11 +131,16 @@ func resetConfig(t *testing.T) {
 }
 
 func resetDefaults() {
-	dustMinAmount = 1
-	dustMaxAmount = 0
+	dustMinAmount = 10
+	dustMaxAmount = 10
 	cooldownSeconds = 0
 	lastExecutedTimestamp = 0
 	targetAssets = map[string]bool{gnsTokenPath: true}
+}
+
+func allowSmallDust() {
+	dustMinAmount = 1
+	dustMaxAmount = 0
 }
 
 func cleanupBalances(t *testing.T) {
@@ -249,6 +254,7 @@ func callConvertDustToGns(
 
 func TestConvertDustToGns_Success(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "3",
 		dryResultOut:           "-5",
@@ -283,6 +289,7 @@ func TestConvertDustToGns_Success(t *testing.T) {
 
 func TestConvertDustToGns_MultiTokenBatch(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "1",
 		dryResultOut:           "-5",
@@ -319,6 +326,7 @@ func TestConvertDustToGns_MultiTokenBatch(t *testing.T) {
 
 func TestConvertDustToGns_SelectsHighestLiquidityFeeTier(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "1",
 		dryResultOut:           "-5",
@@ -385,6 +393,7 @@ func TestConvertDustToGns_Cooldown(t *testing.T) {
 
 func TestConvertDustToGns_AmountExceedsBalance(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 
 	amount := common.BalanceOf(barPath, dustConverterAddr) + 1
 	uassert.AbortsContains(t, "should be <= balance", func() {
@@ -430,6 +439,7 @@ func TestConvertDustToGns_SkipsMissingPool(t *testing.T) {
 
 func TestConvertDustToGns_SkipsDrySwapFailure(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "1",
 		dryResultOut:           "1",
@@ -461,6 +471,7 @@ func TestConvertDustToGns_SkipsDrySwapFailure(t *testing.T) {
 
 func TestConvertDustToGns_InvalidDrySwapOutput(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "1",
 		dryResultOut:           "notnum",
@@ -490,6 +501,7 @@ func TestConvertDustToGns_InvalidDrySwapOutput(t *testing.T) {
 
 func TestConvertDustToGns_GnsOnly(t *testing.T) {
 	resetConfig(t)
+	allowSmallDust()
 	mock := &mockRouter{
 		dryResultIn:            "1",
 		dryResultOut:           "1",

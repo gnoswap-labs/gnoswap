@@ -122,11 +122,11 @@ func setupDustBalances() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Transferring bar dust to dust_converter")
-	bar.Transfer(cross, dustConverterAddr, 3)
+	bar.Transfer(cross, dustConverterAddr, 10)
 	println("[INFO] Transferring baz dust to dust_converter")
-	baz.Transfer(cross, dustConverterAddr, 4)
+	baz.Transfer(cross, dustConverterAddr, 10)
 	println("[INFO] Transferring gns dust to dust_converter")
-	gns.Transfer(cross, dustConverterAddr, 2)
+	gns.Transfer(cross, dustConverterAddr, 10)
 
 	println("[EXPECTED] dust_converter bar balance:", bar.BalanceOf(dustConverterAddr))
 	println("[EXPECTED] dust_converter baz balance:", baz.BalanceOf(dustConverterAddr))
@@ -140,7 +140,7 @@ func convertDust() {
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
 		gnsPath,
-		barPath+":3,"+bazPath+":4,"+gnsPath+":2",
+		barPath+":10,"+bazPath+":10,"+gnsPath+":10",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
 	)
@@ -165,13 +165,13 @@ func convertDust() {
 // [INFO] Transferring bar dust to dust_converter
 // [INFO] Transferring baz dust to dust_converter
 // [INFO] Transferring gns dust to dust_converter
-// [EXPECTED] dust_converter bar balance: 3
-// [EXPECTED] dust_converter baz balance: 4
-// [EXPECTED] dust_converter gns balance: 2
+// [EXPECTED] dust_converter bar balance: 10
+// [EXPECTED] dust_converter baz balance: 10
+// [EXPECTED] dust_converter gns balance: 10
 //
 // [SCENARIO] 3. Convert dust to GNS
-// [EXPECTED] totalGnsOut: 5
+// [EXPECTED] totalGnsOut: 26
 // [EXPECTED] dust_converter bar balance after convert: 0
 // [EXPECTED] dust_converter baz balance after convert: 0
 // [EXPECTED] dust_converter gns balance after convert: 0
-// [EXPECTED] user gns delta: 5
+// [EXPECTED] user gns delta: 26

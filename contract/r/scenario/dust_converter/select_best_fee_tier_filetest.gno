@@ -123,6 +123,8 @@ func convertAndVerify() {
 	lowBefore0, lowBefore1 := getBalances(lowPath)
 	highBefore0, highBefore1 := getBalances(highPath)
 
+	testing.SetRealm(adminRealm)
+	dc.SetDustMaxAmount(cross, 0)
 	testing.SetRealm(userRealm)
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
