@@ -152,7 +152,7 @@ func callConvertDustToGns(
 	testing.SetRealm(caller)
 	func(cur realm) {
 		testing.SetRealm(dustConverterRealm)
-		result = ConvertDustToGns(pairs, deadline, recipient)
+		result = ConvertDustToGns(cross, pairs, deadline, recipient)
 	}(cross)
 	return result
 }

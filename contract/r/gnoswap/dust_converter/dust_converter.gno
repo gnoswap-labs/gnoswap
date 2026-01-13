@@ -92,6 +92,7 @@ func GetFeeBps() uint64               { return feeBps }
 // ConvertDustToGns swaps eligible dust tokens into GNS and transfers the total to recipient.
 // Pairs format: "tokenA:100,tokenB:200".
 func ConvertDustToGns(
+    cur realm,
 	pairs string,
 	deadline int64,
 	recipient address,
