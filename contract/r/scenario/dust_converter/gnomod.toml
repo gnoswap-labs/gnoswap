@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/dust_converter"
+gno = "0.9"

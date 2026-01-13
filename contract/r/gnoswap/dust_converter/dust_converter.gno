@@ -35,7 +35,7 @@ var (
 
 // SetDustMinAmount sets the minimum amount eligible for conversion.
 // Only callable by admin or governance.
-func SetDustMinAmount(amount int64) {
+func SetDustMinAmount(cur realm, amount int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -54,7 +54,7 @@ func SetDustMinAmount(amount int64) {
 
 // SetDustMaxAmount sets the maximum amount eligible for conversion.
 // Only callable by admin or governance.
-func SetDustMaxAmount(amount int64) {
+func SetDustMaxAmount(cur realm, amount int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -72,7 +72,7 @@ func SetDustMaxAmount(amount int64) {
 
 // SetCooldownSeconds sets the cooldown window for conversions.
 // Only callable by admin or governance.
-func SetCooldownSeconds(seconds int64) {
+func SetCooldownSeconds(cur realm, seconds int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 

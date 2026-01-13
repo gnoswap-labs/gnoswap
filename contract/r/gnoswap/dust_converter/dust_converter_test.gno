@@ -119,6 +119,8 @@ func registerMockRouter(t *testing.T, mock router.IRouter) string {
 func resetConfig(t *testing.T) {
 	t.Helper()
 	resetDefaults()
+	resetDefaults()
+	cleanupBalances(t)
 }
 
 func resetDefaults() {
@@ -126,6 +128,35 @@ func resetDefaults() {
 	dustMaxAmount = 0
 	cooldownSeconds = 0
 	lastExecutedTimestamp = 0
+}
+
+func cleanupBalances(t *testing.T) {
+	t.Helper()
+	drainBalance(t, dustConverterRealm, dustConverterAddr, adminAddr, gnsTokenPath)
+	drainBalance(t, dustConverterRealm, dustConverterAddr, adminAddr, barPath)
+	drainBalance(t, dustConverterRealm, dustConverterAddr, adminAddr, bazPath)
+	drainBalance(t, dustConverterRealm, dustConverterAddr, adminAddr, fooPath)
+
+	userCallerRealm := testing.NewUserRealm(userAddr)
+	drainBalance(t, userCallerRealm, userAddr, adminAddr, gnsTokenPath)
+}
+
+func drainBalance(
+	t *testing.T,
+	fromRealm runtime.Realm,
+	fromAddr address,
+	toAddr address,
+	tokenPath string,
+) {
+	t.Helper()
+
+	balance := common.BalanceOf(tokenPath, fromAddr)
+	if balance <= 0 {
+		return
+	}
+
+	testing.SetRealm(fromRealm)
+	common.SafeGRC20Transfer(cross, tokenPath, toAddr, balance)
 }
 
 func createPoolIfNeeded(t *testing.T, token0, token1 string) {
