@@ -1,0 +1,11 @@
+package orderbook
+
+const (
+	MIN_TICK = -108000000
+	MAX_TICK = 182402823
+
+	GEOMETRIC_EXPONENT_INCREMENT_DISTANCE = 9000000
+	EXPONENT_AT_PRICE_ONE                 = -6
+
+	MAX_CLAIM_BOUNTY_BPS = 100 // 1% = 100 basis points
+)
