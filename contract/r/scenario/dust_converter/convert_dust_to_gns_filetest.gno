@@ -139,6 +139,7 @@ func convertDust() {
 	beforeUserGns := gns.BalanceOf(userAddr)
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
+		gnsPath,
 		barPath+":3,"+bazPath+":4,"+gnsPath+":2",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,

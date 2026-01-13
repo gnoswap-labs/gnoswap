@@ -127,7 +127,6 @@ func registerMockRouter(t *testing.T, mock router.IRouter) string {
 func resetConfig(t *testing.T) {
 	t.Helper()
 	resetDefaults()
-	resetDefaults()
 	cleanupBalances(t)
 }
 
@@ -136,6 +135,7 @@ func resetDefaults() {
 	dustMaxAmount = 0
 	cooldownSeconds = 0
 	lastExecutedTimestamp = 0
+	targetAssets = map[string]bool{gnsTokenPath: true}
 }
 
 func cleanupBalances(t *testing.T) {
@@ -232,6 +232,7 @@ func approveForPool(tokenPath string) {
 func callConvertDustToGns(
 	t *testing.T,
 	caller runtime.Realm,
+	targetPath string,
 	pairs string,
 	deadline int64,
 	recipient address,
@@ -241,7 +242,7 @@ func callConvertDustToGns(
 	testing.SetRealm(caller)
 	func(cur realm) {
 		testing.SetRealm(dustConverterRealm)
-		result = ConvertDustToGns(cross, pairs, deadline, recipient)
+		result = ConvertDustToGns(cross, targetPath, pairs, deadline, recipient)
 	}(cross)
 	return result
 }
@@ -268,6 +269,7 @@ func TestConvertDustToGns_Success(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		barPath+":3,"+gnsTokenPath+":2",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
@@ -303,6 +305,7 @@ func TestConvertDustToGns_MultiTokenBatch(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		barPath+":3,"+bazPath+":4,"+gnsTokenPath+":2",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
@@ -337,6 +340,7 @@ func TestConvertDustToGns_SelectsHighestLiquidityFeeTier(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		barPath+":1",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
@@ -354,6 +358,7 @@ func TestConvertDustToGns_LengthMismatch(t *testing.T) {
 		callConvertDustToGns(
 			t,
 			userRealm,
+			gnsTokenPath,
 			barPath+":1:2",
 			time.Now().Unix(),
 			userAddr,
@@ -370,6 +375,7 @@ func TestConvertDustToGns_Cooldown(t *testing.T) {
 		callConvertDustToGns(
 			t,
 			userRealm,
+			gnsTokenPath,
 			barPath+":1",
 			time.Now().Unix(),
 			userAddr,
@@ -385,6 +391,7 @@ func TestConvertDustToGns_AmountExceedsBalance(t *testing.T) {
 		callConvertDustToGns(
 			t,
 			userRealm,
+			gnsTokenPath,
 			barPath+":"+strconv.FormatInt(amount, 10),
 			time.Now().Unix(),
 			userAddr,
@@ -410,6 +417,7 @@ func TestConvertDustToGns_SkipsMissingPool(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		fooPath+":1",
 		time.Now().Unix(),
 		userAddr,
@@ -440,6 +448,7 @@ func TestConvertDustToGns_SkipsDrySwapFailure(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		barPath+":1",
 		time.Now().Unix(),
 		userAddr,
@@ -471,6 +480,7 @@ func TestConvertDustToGns_InvalidDrySwapOutput(t *testing.T) {
 		callConvertDustToGns(
 			t,
 			userRealm,
+			gnsTokenPath,
 			barPath+":1",
 			time.Now().Unix(),
 			userAddr,
@@ -497,6 +507,7 @@ func TestConvertDustToGns_GnsOnly(t *testing.T) {
 	totalGnsOut := callConvertDustToGns(
 		t,
 		userRealm,
+		gnsTokenPath,
 		gnsTokenPath+":2",
 		time.Now().Unix(),
 		userAddr,
@@ -505,4 +516,45 @@ func TestConvertDustToGns_GnsOnly(t *testing.T) {
 	uassert.Equal(t, int64(2), totalGnsOut, "totalGnsOut mismatch")
 	uassert.Equal(t, 0, mock.dryCalls, "dry swap should not be called")
 	uassert.Equal(t, int64(2), gns.BalanceOf(userAddr)-beforeRecipientGns, "recipient GNS delta mismatch")
+}
+
+func TestTargetAssets_DefaultIncludesGns(t *testing.T) {
+	resetConfig(t)
+
+	uassert.True(t, IsTargetAsset(gnsTokenPath), "gns should be a default target asset")
+}
+
+func TestTargetAssets_AddRemove(t *testing.T) {
+	resetConfig(t)
+
+	testing.SetRealm(adminRealm)
+	AddTargetAsset(cross, bazPath)
+	uassert.True(t, IsTargetAsset(bazPath), "baz should be added as target asset")
+
+	RemoveTargetAsset(cross, bazPath)
+	uassert.False(t, IsTargetAsset(bazPath), "baz should be removed from target assets")
+}
+
+func TestTargetAssets_Unauthorized(t *testing.T) {
+	resetConfig(t)
+
+	testing.SetRealm(userRealm)
+	uassert.AbortsContains(t, "is not admin or governance", func() {
+		AddTargetAsset(cross, bazPath)
+	})
+}
+
+func TestConvertDustToGns_TargetNotAllowed(t *testing.T) {
+	resetConfig(t)
+
+	uassert.AbortsContains(t, "target asset not allowed", func() {
+		callConvertDustToGns(
+			t,
+			userRealm,
+			bazPath,
+			gnsTokenPath+":1",
+			time.Now().Unix(),
+			userAddr,
+		)
+	})
 }

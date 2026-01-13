@@ -60,7 +60,7 @@ func testBelowMin() {
 	println("[EXPECTED] dust_converter gns balance:", gns.BalanceOf(dustConverterAddr))
 
 	testing.SetRealm(userRealm)
-	totalGnsOut := dc.ConvertDustToGns(cross, gnsPath+":4", time.Now().Add(time.Hour).Unix(), userAddr)
+	totalGnsOut := dc.ConvertDustToGns(cross, gnsPath, gnsPath+":4", time.Now().Add(time.Hour).Unix(), userAddr)
 
 	println("[EXPECTED] totalGnsOut:", totalGnsOut)
 	println("[EXPECTED] dust_converter gns balance after convert:", gns.BalanceOf(dustConverterAddr))
@@ -73,7 +73,7 @@ func testWithinBounds() {
 
 	testing.SetRealm(userRealm)
 	beforeUserGns := gns.BalanceOf(userAddr)
-	totalGnsOut := dc.ConvertDustToGns(cross, gnsPath+":7", time.Now().Add(time.Hour).Unix(), userAddr)
+	totalGnsOut := dc.ConvertDustToGns(cross, gnsPath, gnsPath+":7", time.Now().Add(time.Hour).Unix(), userAddr)
 
 	println("[EXPECTED] totalGnsOut:", totalGnsOut)
 	println("[EXPECTED] dust_converter gns balance after convert:", gns.BalanceOf(dustConverterAddr))

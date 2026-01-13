@@ -28,11 +28,23 @@ var (
 	dustConverterAddr = chain.PackageAddress("gno.land/r/gnoswap/dust_converter")
 	feeTierCandidates = []uint32{100, 500, 3000, 10000}
 
-	dustMinAmount         int64 = 1
-	dustMaxAmount         int64 = 0
+	// targetAssets is a map of tokens that can be converted.
+	// This map can be updated through governance or admin.
+	//
+	// Note: Since dust conversion operation only require existence checks and
+	// add/remove operations, we use a map data structure instead of AVL.
+	targetAssets map[string]bool
+
+	dustMinAmount int64 = 1
+	dustMaxAmount int64 = 0
+
 	cooldownSeconds       int64
 	lastExecutedTimestamp int64
 )
+
+func init() {
+	targetAssets = map[string]bool{gnsTokenPath: true}
+}
 
 // SetDustMinAmount sets the minimum amount eligible for conversion.
 // Only callable by admin or governance.
@@ -90,14 +102,70 @@ func GetCooldownSeconds() int64       { return cooldownSeconds }
 func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 func GetFeeBps() uint64               { return feeBps }
 
-// ConvertDustToGns swaps eligible dust tokens into GNS and transfers the total to recipient.
+// AddTargetAsset registers a token path as a conversion target.
+// Only callable by admin or governance.
+func AddTargetAsset(cur realm, tokenPath string) {
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	tokenPath = strings.TrimSpace(tokenPath)
+	if tokenPath == "" {
+		panic(makeErrorWithDetail(errInvalidInput, "target asset path is required"))
+	}
+
+	targetAssets[tokenPath] = true
+}
+
+// RemoveTargetAsset unregisters a token path as a conversion target.
+// Only callable by admin or governance.
+func RemoveTargetAsset(cur realm, tokenPath string) {
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	tokenPath = strings.TrimSpace(tokenPath)
+	if tokenPath == "" {
+		panic(makeErrorWithDetail(errInvalidInput, "target asset path is required"))
+	}
+
+	if !targetAssets[tokenPath] {
+		panic(makeErrorWithDetail(errInvalidInput, "target asset not found"))
+	}
+
+	delete(targetAssets, tokenPath)
+}
+
+// IsTargetAsset checks if the token path is registered as a conversion target.
+func IsTargetAsset(tokenPath string) bool {
+	tokenPath = strings.TrimSpace(tokenPath)
+	return targetAssets[tokenPath]
+}
+
+// GetTargetAssets returns the list of registered target assets.
+func GetTargetAssets() []string {
+	assets := make([]string, 0, len(targetAssets))
+	for tokenPath := range targetAssets {
+		assets = append(assets, tokenPath)
+	}
+	return assets
+}
+
+// ConvertDustToGns swaps eligible dust tokens into target asset and transfers the total to recipient.
 // Pairs format: "tokenA:100,tokenB:200".
 func ConvertDustToGns(
 	cur realm,
+	targetPath string,
 	pairs string,
 	deadline int64,
 	recipient address,
 ) int64 {
+	targetPath = strings.TrimSpace(targetPath)
+	if targetPath == "" {
+		panic(makeErrorWithDetail(errInvalidInput, "target asset path is required"))
+	}
+	if !IsTargetAsset(targetPath) {
+		panic(makeErrorWithDetail(errInvalidInput, "target asset not allowed"))
+	}
+
 	pairs = strings.TrimSpace(pairs)
 	if pairs == "" {
 		panic(makeErrorWithDetail(errInvalidInput, "pairs should not be empty"))
@@ -160,7 +228,7 @@ func ConvertDustToGns(
 			))
 		}
 
-		if tokenPath == gnsTokenPath {
+		if tokenPath == targetPath {
 			net, _ := applyFee(amount)
 			if net > 0 {
 				totalGnsOut = safeAddInt64(totalGnsOut, net)
@@ -170,21 +238,19 @@ func ConvertDustToGns(
 		}
 
 		// Selects a pool with most largest liquidity for the token pair.
-		// the lookup cost itself is just a pool existence check
-		// in a fixed-size array of fee tiers.
-		feeTier, ok := selectBestFeeTier(tokenPath, gnsTokenPath)
+		feeTier, ok := selectBestFeeTier(tokenPath, targetPath)
 		if !ok {
 			continue
 		}
 
-		routeArr := tokenPath + ":" + gnsTokenPath + ":" + strconv.FormatUint(uint64(feeTier), 10)
+		routeArr := tokenPath + ":" + targetPath + ":" + strconv.FormatUint(uint64(feeTier), 10)
 
 		routerAddr := access.MustGetAddress(prabc.ROLE_ROUTER.String())
 		common.SafeGRC20Approve(cross, tokenPath, routerAddr, amount)
 
 		_, dryOutStr, success := router.DrySwapRoute(
 			tokenPath,
-			gnsTokenPath,
+			targetPath,
 			strconv.FormatInt(amount, 10),
 			"EXACT_IN",
 			routeArr,
@@ -209,7 +275,7 @@ func ConvertDustToGns(
 		_, actualOutStr := router.ExactInSingleSwapRoute(
 			cross,
 			tokenPath,
-			gnsTokenPath,
+			targetPath,
 			strconv.FormatInt(amount, 10),
 			routeArr,
 			strconv.FormatInt(dryOut, 10),
@@ -234,7 +300,7 @@ func ConvertDustToGns(
 	}
 
 	if totalGnsOut > 0 {
-		common.SafeGRC20Transfer(cross, gnsTokenPath, recipient, totalGnsOut)
+		common.SafeGRC20Transfer(cross, targetPath, recipient, totalGnsOut)
 	}
 
 	if processedCount > 0 {
@@ -247,6 +313,7 @@ func ConvertDustToGns(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"recipient", recipient.String(),
+		"targetPath", targetPath,
 		"totalGnsOut", strconv.FormatInt(totalGnsOut, 10),
 		"lastExecutedTimestamp", strconv.FormatInt(lastExecutedTimestamp, 10),
 	)
@@ -258,6 +325,8 @@ func selectBestFeeTier(tokenPath, targetPath string) (uint32, bool) {
 	var bestTier uint32
 	var bestLiquidity *u256.Uint
 
+	// The lookup cost itself is just a pool existence check
+	// in a fixed-size array of fee tiers.
 	for _, fee := range feeTierCandidates {
 		poolPath := pool.GetPoolPath(tokenPath, targetPath, fee)
 		if !pool.ExistsPoolPath(poolPath) {

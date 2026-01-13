@@ -126,6 +126,7 @@ func convertAndVerify() {
 	testing.SetRealm(userRealm)
 	totalGnsOut := dc.ConvertDustToGns(
 		cross,
+		gnsPath,
 		barPath+":1000",
 		time.Now().Add(time.Hour).Unix(),
 		userAddr,
