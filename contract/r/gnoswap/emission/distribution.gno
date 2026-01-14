@@ -285,6 +285,12 @@ func transferToTarget(target int, amount int64) error {
 }
 
 // GetDistributionBpsPct returns the distribution percentage in basis points for a specific target.
+//
+// Parameters:
+//   - target: distribution target identifier
+//
+// Returns:
+//   - percentage: distribution percentage in basis points
 func GetDistributionBpsPct(target int) int64 {
 	assertValidDistributionTarget(target)
 	if distributionBpsPct == nil {
@@ -303,25 +309,44 @@ func GetDistributionBpsPct(target int) int64 {
 }
 
 // GetDistributedToStaker returns pending GNS for liquidity stakers.
+//
+// Returns:
+//   - amount: pending GNS amount for stakers
 func GetDistributedToStaker() int64 {
 	return distributedToStaker
 }
 
 // GetDistributedToDevOps returns accumulated GNS for DevOps.
+//
+// Returns:
+//   - amount: pending GNS amount for DevOps
 func GetDistributedToDevOps() int64 {
 	return distributedToDevOps
 }
 
 // GetDistributedToCommunityPool returns the amount of GNS distributed to Community Pool.
+//
+// Returns:
+//   - amount: pending GNS amount for Community Pool
 func GetDistributedToCommunityPool() int64 {
 	return distributedToCommunityPool
 }
 
 // GetDistributedToGovStaker returns the amount of GNS distributed to governance stakers since last clear.
+//
+// Returns:
+//   - amount: pending GNS amount for governance stakers
 func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
+// AccumulateDistributedInfo returns pending distribution amounts for all targets.
+//
+// Returns:
+//   - toStaker: pending GNS for liquidity stakers
+//   - toDevOps: pending GNS for DevOps
+//   - toCommunityPool: pending GNS for Community Pool
+//   - toGovStaker: pending GNS for governance stakers
 func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
     toStaker = GetDistributedToStaker()
     toDevOps = GetDistributedToDevOps()
@@ -331,37 +356,67 @@ func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStak
 }
 
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.
+//
+// Returns:
+//   - amount: total historical GNS distributed to stakers
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
 }
 
 // GetAccuDistributedToDevOps returns the total historical GNS distributed to DevOps.
+//
+// Returns:
+//   - amount: total historical GNS distributed to DevOps
 func GetAccuDistributedToDevOps() int64 {
 	return accuDistributedToDevOps
 }
 
 // GetAccuDistributedToCommunityPool returns the total historical GNS distributed to Community Pool.
+//
+// Returns:
+//   - amount: total historical GNS distributed to Community Pool
 func GetAccuDistributedToCommunityPool() int64 {
 	return accuDistributedToCommunityPool
 }
 
 // GetAccuDistributedToGovStaker returns the total historical GNS distributed to governance stakers.
+//
+// Returns:
+//   - amount: total historical GNS distributed to governance stakers
 func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
 // GetEmissionAmountPerSecondBy returns the emission amount per second for a given timestamp and distribution percentage.
+//
+// Parameters:
+//   - timestamp: timestamp to calculate emission for
+//   - distributionPct: distribution percentage in basis points
+//
+// Returns:
+//   - amount: emission amount per second
 func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
 }
 
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
+//
+// Returns:
+//   - amount: emission amount per second for stakers
 func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
 	return GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
+//
+// Parameters:
+//   - start: start timestamp
+//   - end: end timestamp
+//
+// Returns:
+//   - halvingBlocks: halving block timestamps
+//   - halvingEmissions: emission amounts at each halving
 func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
 	halvingBlocks, halvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
 	for i := range halvingBlocks {
