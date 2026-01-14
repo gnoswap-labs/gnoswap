@@ -36,6 +36,7 @@ func MethodAnchor(typeName, methodName string) string {
 type AnchorRegistry struct {
 	anchors map[string]int    // anchor -> count
 	names   map[string]string // original name -> anchor
+	keys    map[string]string // logical key -> anchor
 }
 
 // NewAnchorRegistry creates a new anchor registry.
@@ -43,6 +44,7 @@ func NewAnchorRegistry() *AnchorRegistry {
 	return &AnchorRegistry{
 		anchors: make(map[string]int),
 		names:   make(map[string]string),
+		keys:    make(map[string]string),
 	}
 }
 
@@ -66,6 +68,23 @@ func (r *AnchorRegistry) RegisterName(name string) string {
 	unique := r.Register(anchor)
 	r.names[name] = unique
 	return unique
+}
+
+// RegisterKey registers a stable anchor for a logical key.
+// If the key is already registered, it returns the existing anchor.
+func (r *AnchorRegistry) RegisterKey(key, anchor string) string {
+	if existing, ok := r.keys[key]; ok {
+		return existing
+	}
+	unique := r.Register(anchor)
+	r.keys[key] = unique
+	return unique
+}
+
+// GetKey returns the registered anchor for a logical key.
+// Returns empty string if not registered.
+func (r *AnchorRegistry) GetKey(key string) string {
+	return r.keys[key]
 }
 
 // Get returns the registered anchor for a name.

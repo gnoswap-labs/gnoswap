@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"gnodoc/model"
@@ -70,6 +71,27 @@ func (r *MarkdownRenderer) Render(pkg *model.DocPackage) string {
 	return strings.Join(r.sections, "\n\n")
 }
 
+func (r *MarkdownRenderer) anchorTag(anchor string) string {
+	return fmt.Sprintf("<a id=\"%s\"></a>", anchor)
+}
+
+func (r *MarkdownRenderer) symbolAnchor(kind model.SymbolKind, name string) string {
+	key := fmt.Sprintf("%s:%s", kind, name)
+	return r.anchors.RegisterKey(key, ToAnchor(name))
+}
+
+func (r *MarkdownRenderer) methodAnchor(typeName, methodName string) string {
+	key := fmt.Sprintf("%s:%s:%s", model.KindMethod, typeName, methodName)
+	return r.anchors.RegisterKey(key, MethodAnchor(typeName, methodName))
+}
+
+func (r *MarkdownRenderer) sourceLink(pos model.SourcePos) string {
+	if r.opts.SourceLinkBase == "" || !pos.IsValid() {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s#L%d", r.opts.SourceLinkBase, pos.Filename, pos.Line)
+}
+
 // RenderOverview renders the Overview section.
 func (r *MarkdownRenderer) RenderOverview(pkg *model.DocPackage) string {
 	var sb strings.Builder
@@ -99,7 +121,7 @@ func (r *MarkdownRenderer) RenderIndex(pkg *model.DocPackage) string {
 	for _, group := range pkg.Consts {
 		for _, spec := range group.Specs {
 			if r.opts.ShouldRender(spec.Exported) {
-				anchor := r.anchors.RegisterName(spec.Name)
+				anchor := r.symbolAnchor(spec.Kind, spec.Name)
 				items = append(items, fmt.Sprintf("- [%s](#%s)", spec.Name, anchor))
 			}
 		}
@@ -109,7 +131,7 @@ func (r *MarkdownRenderer) RenderIndex(pkg *model.DocPackage) string {
 	for _, group := range pkg.Vars {
 		for _, spec := range group.Specs {
 			if r.opts.ShouldRender(spec.Exported) {
-				anchor := r.anchors.RegisterName(spec.Name)
+				anchor := r.symbolAnchor(spec.Kind, spec.Name)
 				items = append(items, fmt.Sprintf("- [%s](#%s)", spec.Name, anchor))
 			}
 		}
@@ -118,7 +140,7 @@ func (r *MarkdownRenderer) RenderIndex(pkg *model.DocPackage) string {
 	// Collect functions
 	for _, fn := range pkg.Funcs {
 		if r.opts.ShouldRender(fn.Exported) {
-			anchor := r.anchors.RegisterName(fn.Name)
+			anchor := r.symbolAnchor(fn.Kind, fn.Name)
 			items = append(items, fmt.Sprintf("- [%s](#%s)", fn.Name, anchor))
 		}
 	}
@@ -126,7 +148,7 @@ func (r *MarkdownRenderer) RenderIndex(pkg *model.DocPackage) string {
 	// Collect types
 	for _, typ := range pkg.Types {
 		if r.opts.ShouldRender(typ.Exported) {
-			anchor := r.anchors.RegisterName(typ.Name)
+			anchor := r.symbolAnchor(typ.Kind, typ.Name)
 			items = append(items, fmt.Sprintf("- [%s](#%s)", typ.Name, anchor))
 		}
 	}
@@ -166,6 +188,18 @@ func (r *MarkdownRenderer) RenderConstants(pkg *model.DocPackage) string {
 			groupParts = append(groupParts, group.Doc)
 		}
 
+		// Anchors for constants
+		var anchors []string
+		for _, spec := range group.Specs {
+			if r.opts.ShouldRender(spec.Exported) {
+				anchor := r.symbolAnchor(spec.Kind, spec.Name)
+				anchors = append(anchors, r.anchorTag(anchor))
+			}
+		}
+		if len(anchors) > 0 {
+			groupParts = append(groupParts, strings.Join(anchors, "\n"))
+		}
+
 		// Constants
 		groupParts = append(groupParts, "```go")
 		groupParts = append(groupParts, "const (")
@@ -181,6 +215,22 @@ func (r *MarkdownRenderer) RenderConstants(pkg *model.DocPackage) string {
 		}
 		groupParts = append(groupParts, ")")
 		groupParts = append(groupParts, "```")
+
+		// Source links
+		if r.opts.SourceLinkBase != "" {
+			var links []string
+			for _, spec := range group.Specs {
+				if !r.opts.ShouldRender(spec.Exported) {
+					continue
+				}
+				if link := r.sourceLink(spec.Pos); link != "" {
+					links = append(links, fmt.Sprintf("- %s: [source](%s)", spec.Name, link))
+				}
+			}
+			if len(links) > 0 {
+				groupParts = append(groupParts, strings.Join(links, "\n"))
+			}
+		}
 
 		parts = append(parts, strings.Join(groupParts, "\n"))
 	}
@@ -220,6 +270,18 @@ func (r *MarkdownRenderer) RenderVariables(pkg *model.DocPackage) string {
 			groupParts = append(groupParts, group.Doc)
 		}
 
+		// Anchors for variables
+		var anchors []string
+		for _, spec := range group.Specs {
+			if r.opts.ShouldRender(spec.Exported) {
+				anchor := r.symbolAnchor(spec.Kind, spec.Name)
+				anchors = append(anchors, r.anchorTag(anchor))
+			}
+		}
+		if len(anchors) > 0 {
+			groupParts = append(groupParts, strings.Join(anchors, "\n"))
+		}
+
 		// Variables
 		groupParts = append(groupParts, "```go")
 		groupParts = append(groupParts, "var (")
@@ -231,6 +293,22 @@ func (r *MarkdownRenderer) RenderVariables(pkg *model.DocPackage) string {
 		}
 		groupParts = append(groupParts, ")")
 		groupParts = append(groupParts, "```")
+
+		// Source links
+		if r.opts.SourceLinkBase != "" {
+			var links []string
+			for _, spec := range group.Specs {
+				if !r.opts.ShouldRender(spec.Exported) {
+					continue
+				}
+				if link := r.sourceLink(spec.Pos); link != "" {
+					links = append(links, fmt.Sprintf("- %s: [source](%s)", spec.Name, link))
+				}
+			}
+			if len(links) > 0 {
+				groupParts = append(groupParts, strings.Join(links, "\n"))
+			}
+		}
 
 		parts = append(parts, strings.Join(groupParts, "\n"))
 	}
@@ -258,6 +336,9 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 
 		var fnParts []string
 
+		anchor := r.symbolAnchor(fn.Kind, fn.Name)
+		fnParts = append(fnParts, r.anchorTag(anchor))
+
 		// Function name as subheader
 		fnParts = append(fnParts, fmt.Sprintf("### %s", fn.Name))
 
@@ -272,8 +353,7 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 		}
 
 		// Source link
-		if r.opts.SourceLinkBase != "" && fn.Pos.IsValid() {
-			link := fmt.Sprintf("%s/%s#L%d", r.opts.SourceLinkBase, fn.Pos.Filename, fn.Pos.Line)
+		if link := r.sourceLink(fn.Pos); link != "" {
 			fnParts = append(fnParts, fmt.Sprintf("[source](%s)", link))
 		}
 
@@ -303,6 +383,9 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 
 		var typParts []string
 
+		anchor := r.symbolAnchor(typ.Kind, typ.Name)
+		typParts = append(typParts, r.anchorTag(anchor))
+
 		// Type name as subheader
 		typParts = append(typParts, fmt.Sprintf("### %s", typ.Name))
 
@@ -320,6 +403,11 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 			typParts = append(typParts, typ.Doc)
 		}
 
+		// Source link
+		if link := r.sourceLink(typ.Pos); link != "" {
+			typParts = append(typParts, fmt.Sprintf("[source](%s)", link))
+		}
+
 		// Fields (for struct types)
 		if typ.IsStruct() && len(typ.Fields) > 0 {
 			var fieldLines []string
@@ -327,7 +415,11 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 			fieldLines = append(fieldLines, "")
 			for _, f := range typ.Fields {
 				if r.opts.ShouldRender(f.Exported) {
-					fieldLines = append(fieldLines, fmt.Sprintf("- `%s %s`", f.Name, f.Type))
+					line := fmt.Sprintf("- `%s %s`", f.Name, f.Type)
+					if link := r.sourceLink(f.Pos); link != "" {
+						line = fmt.Sprintf("%s ([source](%s))", line, link)
+					}
+					fieldLines = append(fieldLines, line)
 				}
 			}
 			if len(fieldLines) > 2 {
@@ -342,6 +434,8 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 			methodLines = append(methodLines, "")
 			for _, m := range typ.Methods {
 				if r.opts.ShouldRender(m.Exported) {
+					methodAnchor := r.methodAnchor(typ.Name, m.Name)
+					methodLines = append(methodLines, r.anchorTag(methodAnchor))
 					methodLines = append(methodLines, fmt.Sprintf("##### %s", m.Name))
 					methodLines = append(methodLines, "")
 					methodLines = append(methodLines, "```go")
@@ -350,6 +444,10 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 					if m.Doc != "" {
 						methodLines = append(methodLines, "")
 						methodLines = append(methodLines, m.Doc)
+					}
+					if link := r.sourceLink(m.Pos); link != "" {
+						methodLines = append(methodLines, "")
+						methodLines = append(methodLines, fmt.Sprintf("[source](%s)", link))
 					}
 					methodLines = append(methodLines, "")
 				}
@@ -366,7 +464,11 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 			ctorLines = append(ctorLines, "")
 			for _, c := range typ.Constructors {
 				if r.opts.ShouldRender(c.Exported) {
-					ctorLines = append(ctorLines, fmt.Sprintf("- `%s`", c.FullSignature()))
+					line := fmt.Sprintf("- `%s`", c.FullSignature())
+					if link := r.sourceLink(c.Pos); link != "" {
+						line = fmt.Sprintf("%s ([source](%s))", line, link)
+					}
+					ctorLines = append(ctorLines, line)
 				}
 			}
 			if len(ctorLines) > 2 {
@@ -461,7 +563,13 @@ func (r *MarkdownRenderer) RenderNotes(pkg *model.DocPackage) string {
 	}
 
 	// Render each kind
-	for kind, notes := range notesByKind {
+	var kinds []string
+	for kind := range notesByKind {
+		kinds = append(kinds, kind)
+	}
+	sort.Strings(kinds)
+	for _, kind := range kinds {
+		notes := notesByKind[kind]
 		var noteParts []string
 		noteParts = append(noteParts, fmt.Sprintf("### %s", kind))
 		for _, note := range notes {
