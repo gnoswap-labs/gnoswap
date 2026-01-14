@@ -106,6 +106,15 @@ type IPoolSwap interface {
 		swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 	) (string, string)
 
+	DrySwap(
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		zeroForOne bool,
+		amountSpecified string,
+		sqrtPriceLimitX96 string,
+	) (string, string, bool)
+
 	SetSwapEndHook(hook func(cur realm, poolPath string) error)
 
 	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
@@ -127,15 +136,6 @@ type IPoolSwap interface {
 // IPoolGetter interface defines data retrieval operations.
 // These methods provide read-only access to pool state and data.
 type IPoolGetter interface {
-	DrySwap(
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		zeroForOne bool,
-		amountSpecified string,
-		sqrtPriceLimitX96 string,
-	) (string, string, bool)
-
 	ExistsPoolPath(poolPath string) bool
 
 	GetBalanceToken0(poolPath string) string
