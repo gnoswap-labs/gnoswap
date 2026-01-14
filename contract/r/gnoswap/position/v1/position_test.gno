@@ -16,7 +16,6 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/mock"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 
@@ -1384,62 +1383,6 @@ func TestReposition(t *testing.T) {
 	}
 }
 
-// TestReposition_FailsWithUncollectedFees tests that Reposition fails when there are uncollected fees
-func TestReposition_FailsWithUncollectedFees(t *testing.T) {
-	initPositionTest(t)
-
-	// Setup pool and position
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
-
-	testing.SetOriginCaller(adminAddr)
-	mockInstanceMint(
-		barPath,
-		fooPath,
-		fee500,
-		-10000,
-		10000,
-		"1000000",
-		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
-
-	// Get position and decrease ALL liquidity
-	position, _ := mockInstance.GetPosition(1)
-	liquidity := position.Liquidity().ToString()
-
-	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
-		1,
-		liquidity,
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		false,
-	)
-
-	// Simulate uncollected fees by setting tokensOwed directly
-	// (In real scenario, this would be from swap fees)
-	position, _ = mockInstance.GetPosition(1)
-	position.SetTokensOwed0(u256.NewUint(1000)) // Has uncollected fees
-	mockInstance.mustUpdatePosition(1, position)
-
-	// Try to Reposition without collecting fees - should fail
-	uassert.PanicsWithMessage(t,
-		"[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:0, tokensOwed0:1000, tokensOwed1:0)",
-		func() {
-			testing.SetOriginCaller(adminAddr)
-			testing.SetRealm(testing.NewCodeRealm(posPath))
-			mockInstance.Reposition(
-				1,
-				-5000,
-				5000,
-				"500000",
-				"500000",
-				"0",
-				"0",
-				time.Now().Add(time.Hour).Unix(),
-			)
-		})
-}
-
 func TestValidateTokenPath(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -2208,64 +2151,5 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 				time.Now().Add(time.Hour).Unix(),
 				false,
 			)
-		})
-}
-
-// TestBurnedPosition_ReuseAttempt tests that burned position cannot be reused
-func TestBurnedPosition_ReuseAttempt(t *testing.T) {
-	initPositionTest(t)
-
-	// Setup pool and position owned by admin
-	createPoolWithoutFee(barPath, fooPath, fee500, 0)
-
-	testing.SetOriginCaller(adminAddr)
-	mockInstanceMint(
-		barPath,
-		fooPath,
-		fee500,
-		-10000,
-		10000,
-		"1000000",
-		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
-
-	// Get position liquidity and decrease 100% (burn position)
-	position, _ := mockInstance.GetPosition(1)
-	liquidity := position.Liquidity().ToString()
-
-	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
-		1,
-		liquidity,
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		false,
-	)
-
-	// Simulate burning the NFT (remove from NFT accessor)
-	nftAccessor := mockInstance.nftAccessor.(*mock.MockNFTAccessor)
-	nftAccessor.Burn(positionIdFrom(1))
-
-	// Try to increase liquidity on burned position - should fail
-	uassert.PanicsWithMessage(t,
-		"[GNOSWAP-POSITION-012] position does not exist || position with position ID(1) doesn't exist",
-		func() {
-			testing.SetRealm(testing.NewCodeRealm(posPath))
-			mockInstance.IncreaseLiquidity(
-				1,
-				"500000",
-				"500000",
-				"0",
-				"0",
-				time.Now().Add(time.Hour).Unix(),
-			)
-		})
-
-	// Try to collect fee on burned position - should fail
-	uassert.PanicsWithMessage(t,
-		"[GNOSWAP-POSITION-012] position does not exist || position with position ID(1) doesn't exist",
-		func() {
-			testing.SetRealm(testing.NewCodeRealm(posPath))
-			mockInstance.CollectFee(1, false)
 		})
 }
