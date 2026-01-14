@@ -42,12 +42,12 @@ func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolF
 // This function allows seamless upgrades from one version to another without
 // data migration or downtime.
 //
-// Security: Only admin addresses can perform upgrades.
+// Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
 func UpgradeImpl(cur realm, packagePath string) {
-	// Ensure only admin can perform upgrades
+	// Ensure only admin or governance can perform upgrades
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := versionManager.ChangeImplementation(packagePath)
 	if err != nil {

@@ -32,7 +32,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdmin(caller)
 
 	if period < 0 {
 		panic("period must be greater than 0")
@@ -72,7 +72,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdmin(caller)
 
 	assertIsValidSnapshotTime(snapshotTime)
 	assertIsAvailableCleanupSnapshotTime(snapshotTime)

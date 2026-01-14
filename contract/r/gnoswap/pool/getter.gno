@@ -4,31 +4,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// DrySwap simulates a swap without executing it, returning the expected output.
-//
-// Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
-//   - fee: pool fee tier
-//   - zeroForOne: true if swapping token0 for token1
-//   - amountSpecified: amount to swap
-//   - sqrtPriceLimitX96: price limit for the swap
-//
-// Returns:
-//   - amount0Delta: amount of token0 delta
-//   - amount1Delta: amount of token1 delta
-//   - ok: swap success status
-func DrySwap(
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	zeroForOne bool,
-	amountSpecified string,
-	sqrtPriceLimitX96 string,
-) (string, string, bool) {
-	return getImplementation().DrySwap(token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96)
-}
-
 // GetPoolCount returns the total number of pools.
 //
 // Returns:

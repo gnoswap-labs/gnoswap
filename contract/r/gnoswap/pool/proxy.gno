@@ -244,6 +244,34 @@ func Swap(
 	)
 }
 
+// DrySwap simulates a swap without executing it, returning the expected output.
+//
+// This is a read-only operation that does not modify pool state.
+// Used by router for multi-hop swap simulations and by clients for price quotes.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - zeroForOne: true if swapping token0 for token1
+//   - amountSpecified: amount to swap
+//   - sqrtPriceLimitX96: price limit for the swap
+//
+// Returns:
+//   - string: amount of token0 delta
+//   - string: amount of token1 delta
+//   - bool: swap success status
+func DrySwap(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	zeroForOne bool,
+	amountSpecified string,
+	sqrtPriceLimitX96 string,
+) (string, string, bool) {
+	return getImplementation().DrySwap(token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96)
+}
+
 // SetSwapEndHook sets the hook to be called at the end of a swap.
 //
 // Parameters:
