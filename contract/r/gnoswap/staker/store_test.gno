@@ -85,7 +85,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			resetTestState(t)
 
 			ss := NewStakerStore(kvStore)
-			initRegisterReadableContract()
+			initRegisterWritableContract()
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 			if !ss.HasAllowedTokensStoreKey() {
