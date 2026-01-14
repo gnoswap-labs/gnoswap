@@ -4,13 +4,14 @@ import (
 	"chain"
 	"chain/runtime"
 
+	"gno.land/p/nt/ufmt"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
-
-	"gno.land/p/nt/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -88,6 +89,7 @@ func (r *routerV1) handleSwapFee(
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)

@@ -6,10 +6,12 @@ import (
 	"errors"
 	"strings"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 )
 
@@ -188,7 +190,7 @@ func (r *routerV1) handleMultiSwap(
 	amountSpecified int64,
 	withUnwrap bool,
 ) (int64, int64) {
-	recipient := routerAddr
+	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	switch swapType {
 	case ExactIn:

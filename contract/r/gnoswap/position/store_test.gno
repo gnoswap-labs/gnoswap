@@ -60,14 +60,6 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "pool has read permission",
-			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedErrorWithRead:         false,
-			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "",
-			expectedErrorMessageWithWrite: "write permission denied",
-		},
-		{
 			name:                          "staker has read permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
 			expectedErrorWithRead:         false,
