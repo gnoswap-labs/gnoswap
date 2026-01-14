@@ -595,6 +595,10 @@ func (r *MarkdownRenderer) RenderNotes(pkg *model.DocPackage) string {
 }
 
 func (r *MarkdownRenderer) renderReturns(fn model.DocFunc) string {
+	trimmedDoc := strings.TrimSpace(fn.Doc)
+	if strings.HasPrefix(trimmedDoc, "Returns:") || strings.Contains(fn.Doc, "\nReturns:") {
+		return ""
+	}
 	if len(fn.ReturnNames) == 0 && len(fn.ReturnExprs) == 0 && !fn.HasNakedReturn {
 		return ""
 	}
