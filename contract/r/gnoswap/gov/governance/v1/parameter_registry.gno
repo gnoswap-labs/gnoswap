@@ -7,6 +7,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	cp "gno.land/r/gnoswap/community_pool"
+	dc "gno.land/r/gnoswap/dust_converter"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/rbac"
 
@@ -35,6 +36,7 @@ const (
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
 	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"
+	DUST_CONVERTER_PATH = "gno.land/r/gnoswap/dust_converter"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/pool"
@@ -451,6 +453,68 @@ func CreateParameterHandlers() *ParameterRegistry {
 			},
 		},
 
+		// Dust converter configuration
+		{
+			pkgPath:    DUST_CONVERTER_PATH,
+			function:   "SetDustMinAmount",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // amount
+			},
+			handlerFunc: func(params []string) error {
+				dc.SetDustMinAmount(cross, parseInt64(params[0])) // amount
+				return nil
+			},
+		},
+		{
+			pkgPath:    DUST_CONVERTER_PATH,
+			function:   "SetDustMaxAmount",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // amount
+			},
+			handlerFunc: func(params []string) error {
+				dc.SetDustMaxAmount(cross, parseInt64(params[0])) // amount
+				return nil
+			},
+		},
+		{
+			pkgPath:    DUST_CONVERTER_PATH,
+			function:   "SetCooldownSeconds",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				numberValidator(kindInt64), // seconds
+			},
+			handlerFunc: func(params []string) error {
+				dc.SetCooldownSeconds(cross, parseInt64(params[0])) // seconds
+				return nil
+			},
+		},
+		{
+			pkgPath:    DUST_CONVERTER_PATH,
+			function:   "AddTargetAsset",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // tokenPath
+			},
+			handlerFunc: func(params []string) error {
+				dc.AddTargetAsset(cross, params[0]) // tokenPath
+				return nil
+			},
+		},
+		{
+			pkgPath:    DUST_CONVERTER_PATH,
+			function:   "RemoveTargetAsset",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // tokenPath
+			},
+			handlerFunc: func(params []string) error {
+				dc.RemoveTargetAsset(cross, params[0]) // tokenPath
+				return nil
+			},
+		},
+
 		// Router swap fee
 		{
 			pkgPath:    ROUTER_PATH,
@@ -740,16 +804,16 @@ func CreateParameterHandlers() *ParameterRegistry {
 				// Create a new launchpad project
 				lp.CreateProject(
 					cross,
-					params[0],                                     // name
-					params[1],                                     // tokenPath
-					address(params[2]),                            // recipient
-					parseNumber(params[3], kindInt64).(int64),     // depositAmount
-					params[4],                                     // conditionTokens
-					params[5],                                     // conditionAmounts
-					parseNumber(params[6], kindInt64).(int64),     // tier30Ratio
-					parseNumber(params[7], kindInt64).(int64),     // tier90Ratio
-					parseNumber(params[8], kindInt64).(int64),     // tier180Ratio
-					parseNumber(params[9], kindInt64).(int64),     // startTime
+					params[0],          // name
+					params[1],          // tokenPath
+					address(params[2]), // recipient
+					parseNumber(params[3], kindInt64).(int64), // depositAmount
+					params[4], // conditionTokens
+					params[5], // conditionAmounts
+					parseNumber(params[6], kindInt64).(int64), // tier30Ratio
+					parseNumber(params[7], kindInt64).(int64), // tier90Ratio
+					parseNumber(params[8], kindInt64).(int64), // tier180Ratio
+					parseNumber(params[9], kindInt64).(int64), // startTime
 				)
 				return nil
 			},

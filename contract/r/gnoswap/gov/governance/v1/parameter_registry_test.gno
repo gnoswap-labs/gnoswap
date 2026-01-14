@@ -350,6 +350,37 @@ func TestValidateExecutions(t *testing.T) {
 			executions:    "gno.land/r/gnoswap/protocol_fee*EXE*SetDevOpsPct*EXE*5000",
 			expectedError: false,
 		},
+		// dust_converter
+		{
+			name:          "Success - dust_converter SetDustMinAmount",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/dust_converter*EXE*SetDustMinAmount*EXE*10",
+			expectedError: false,
+		},
+		{
+			name:          "Success - dust_converter SetDustMaxAmount",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/dust_converter*EXE*SetDustMaxAmount*EXE*100",
+			expectedError: false,
+		},
+		{
+			name:          "Success - dust_converter SetCooldownSeconds",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/dust_converter*EXE*SetCooldownSeconds*EXE*3600",
+			expectedError: false,
+		},
+		{
+			name:          "Success - dust_converter AddTargetAsset",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/dust_converter*EXE*AddTargetAsset*EXE*gno.land/r/gnoswap/gns",
+			expectedError: false,
+		},
+		{
+			name:          "Success - dust_converter RemoveTargetAsset",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/dust_converter*EXE*RemoveTargetAsset*EXE*gno.land/r/gnoswap/gns",
+			expectedError: false,
+		},
 		// rbac
 		{
 			name:          "Success - rbac RegisterRole",
