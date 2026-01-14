@@ -1,0 +1,498 @@
+package parser
+
+import (
+	"fmt"
+	"go/ast"
+	"go/doc"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
+	"strings"
+	"unicode"
+
+	"gnodoc/model"
+)
+
+// Parser parses Go/Gno source files and converts them to DocPackage.
+type Parser struct {
+	opts *Options
+	fset *token.FileSet
+}
+
+// New creates a new parser with the given options.
+func New(opts *Options) *Parser {
+	if opts == nil {
+		opts = DefaultOptions()
+	}
+	return &Parser{
+		opts: opts,
+		fset: token.NewFileSet(),
+	}
+}
+
+// ParsePackage parses all Go/Gno files in the given directory.
+func (p *Parser) ParsePackage(dir string) (*model.DocPackage, error) {
+	// Check directory exists
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, fmt.Errorf("cannot access directory: %w", err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("not a directory: %s", dir)
+	}
+
+	// Collect files
+	files, err := p.collectFiles(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no Go/Gno files found in %s", dir)
+	}
+
+	// Parse files
+	pkgs, err := p.parseFiles(dir, files)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pkgs) == 0 {
+		return nil, fmt.Errorf("no packages found in %s", dir)
+	}
+
+	// Get the main package (not test package)
+	var mainPkg *ast.Package
+	for name, pkg := range pkgs {
+		if !strings.HasSuffix(name, "_test") {
+			mainPkg = pkg
+			break
+		}
+	}
+	if mainPkg == nil {
+		// If only test packages, use first one
+		for _, pkg := range pkgs {
+			mainPkg = pkg
+			break
+		}
+	}
+
+	// Convert to go/doc.Package
+	mode := doc.AllDecls
+	if p.opts.ExportedOnly {
+		mode = 0
+	}
+	docPkg := doc.New(mainPkg, dir, mode)
+
+	// Convert to model.DocPackage
+	return p.convertPackage(docPkg, dir, files), nil
+}
+
+// collectFiles returns all Go/Gno files in the directory.
+func (p *Parser) collectFiles(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read directory: %w", err)
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+
+		// Check extension
+		if !strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, ".gno") {
+			continue
+		}
+
+		// Skip test files if not included
+		if !p.opts.IncludeTests && isTestFile(name) {
+			continue
+		}
+
+		files = append(files, name)
+	}
+
+	return files, nil
+}
+
+// parseFiles parses the given files using go/parser.
+func (p *Parser) parseFiles(dir string, files []string) (map[string]*ast.Package, error) {
+	filter := func(fi os.FileInfo) bool {
+		for _, f := range files {
+			if fi.Name() == f {
+				return true
+			}
+		}
+		return false
+	}
+
+	pkgs, err := parser.ParseDir(p.fset, dir, filter, parser.ParseComments)
+	if err != nil {
+		if p.opts.IgnoreParseErrors {
+			// Try to parse files individually
+			return p.parseFilesIndividually(dir, files)
+		}
+		return nil, fmt.Errorf("parse error: %w", err)
+	}
+
+	return pkgs, nil
+}
+
+// parseFilesIndividually parses files one by one, skipping failures.
+func (p *Parser) parseFilesIndividually(dir string, files []string) (map[string]*ast.Package, error) {
+	pkgs := make(map[string]*ast.Package)
+
+	for _, filename := range files {
+		path := filepath.Join(dir, filename)
+		f, err := parser.ParseFile(p.fset, path, nil, parser.ParseComments)
+		if err != nil {
+			// Skip failed file
+			continue
+		}
+
+		pkgName := f.Name.Name
+		if pkgs[pkgName] == nil {
+			pkgs[pkgName] = &ast.Package{
+				Name:  pkgName,
+				Files: make(map[string]*ast.File),
+			}
+		}
+		pkgs[pkgName].Files[path] = f
+	}
+
+	return pkgs, nil
+}
+
+// convertPackage converts go/doc.Package to model.DocPackage.
+func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string) *model.DocPackage {
+	pkg := &model.DocPackage{
+		Name:       docPkg.Name,
+		ImportPath: docPkg.ImportPath,
+		Doc:        docPkg.Doc,
+	}
+
+	// Extract summary (first sentence)
+	if pkg.Doc != "" {
+		pkg.Summary = extractSummary(pkg.Doc)
+	}
+
+	// Convert files
+	for _, f := range files {
+		pkg.Files = append(pkg.Files, model.SourceFile{
+			Name: f,
+			Path: filepath.Join(dir, f),
+		})
+	}
+
+	// Convert constants
+	for _, c := range docPkg.Consts {
+		pkg.Consts = append(pkg.Consts, p.convertValueGroup(c, model.KindConst))
+	}
+
+	// Convert variables
+	for _, v := range docPkg.Vars {
+		pkg.Vars = append(pkg.Vars, p.convertValueGroup(v, model.KindVar))
+	}
+
+	// Convert functions
+	for _, f := range docPkg.Funcs {
+		pkg.Funcs = append(pkg.Funcs, p.convertFunc(f))
+	}
+
+	// Convert types
+	for _, t := range docPkg.Types {
+		pkg.Types = append(pkg.Types, p.convertType(t))
+	}
+
+	// Convert notes
+	for kind, notes := range docPkg.Notes {
+		for _, note := range notes {
+			pkg.Notes = append(pkg.Notes, model.DocNote{
+				Kind: kind,
+				Body: note.Body,
+				Pos:  p.convertPos(note.Pos),
+			})
+		}
+	}
+
+	// Build index
+	pkg.BuildIndex()
+
+	return pkg
+}
+
+// convertValueGroup converts a go/doc.Value to model.DocValueGroup.
+func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.DocValueGroup {
+	group := model.DocValueGroup{
+		DocNode: model.DocNode{
+			Kind: kind,
+			Doc:  v.Doc,
+		},
+	}
+
+	for _, name := range v.Names {
+		spec := model.DocValueSpec{
+			DocNode: model.DocNode{
+				Name:     name,
+				Kind:     kind,
+				Exported: isExported(name),
+			},
+		}
+		group.Specs = append(group.Specs, spec)
+	}
+
+	return group
+}
+
+// convertFunc converts a go/doc.Func to model.DocFunc.
+func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
+	fn := model.DocFunc{
+		DocNode: model.DocNode{
+			Name:     f.Name,
+			Kind:     model.KindFunc,
+			Doc:      f.Doc,
+			Summary:  extractSummary(f.Doc),
+			Exported: isExported(f.Name),
+		},
+	}
+
+	// Extract position
+	if f.Decl != nil {
+		fn.Pos = p.convertPos(f.Decl.Pos())
+
+		// Extract params and results from declaration
+		if f.Decl.Type != nil {
+			fn.Params = p.convertFieldList(f.Decl.Type.Params)
+			fn.Results = p.convertFieldList(f.Decl.Type.Results)
+		}
+
+		// Extract receiver
+		if f.Decl.Recv != nil && len(f.Decl.Recv.List) > 0 {
+			recv := f.Decl.Recv.List[0]
+			fn.Receiver = &model.DocReceiver{
+				Type: p.typeString(recv.Type),
+			}
+			if len(recv.Names) > 0 {
+				fn.Receiver.Name = recv.Names[0].Name
+			}
+			fn.Kind = model.KindMethod
+		}
+	}
+
+	return fn
+}
+
+// convertType converts a go/doc.Type to model.DocType.
+func (p *Parser) convertType(t *doc.Type) model.DocType {
+	typ := model.DocType{
+		DocNode: model.DocNode{
+			Name:     t.Name,
+			Kind:     model.KindType,
+			Doc:      t.Doc,
+			Summary:  extractSummary(t.Doc),
+			Exported: isExported(t.Name),
+		},
+	}
+
+	// Determine type kind and extract fields
+	if t.Decl != nil {
+		typ.Pos = p.convertPos(t.Decl.Pos())
+
+		for _, spec := range t.Decl.Specs {
+			if ts, ok := spec.(*ast.TypeSpec); ok {
+				switch underlying := ts.Type.(type) {
+				case *ast.StructType:
+					typ.TypeKind = model.TypeKindStruct
+					typ.Signature = fmt.Sprintf("type %s struct", t.Name)
+					if underlying.Fields != nil {
+						for _, field := range underlying.Fields.List {
+							typ.Fields = append(typ.Fields, p.convertField(field))
+						}
+					}
+				case *ast.InterfaceType:
+					typ.TypeKind = model.TypeKindInterface
+					typ.Signature = fmt.Sprintf("type %s interface", t.Name)
+				default:
+					typ.TypeKind = model.TypeKindAlias
+					typ.Signature = fmt.Sprintf("type %s %s", t.Name, p.typeString(underlying))
+				}
+			}
+		}
+	}
+
+	// Convert methods
+	for _, m := range t.Methods {
+		method := p.convertFunc(m)
+		method.Kind = model.KindMethod
+		if method.Receiver == nil {
+			method.Receiver = &model.DocReceiver{Type: t.Name}
+		}
+		typ.Methods = append(typ.Methods, method)
+	}
+
+	// Convert constructors (functions that return this type)
+	for _, f := range t.Funcs {
+		ctor := p.convertFunc(f)
+		typ.Constructors = append(typ.Constructors, ctor)
+	}
+
+	return typ
+}
+
+// convertField converts an ast.Field to model.DocField.
+func (p *Parser) convertField(field *ast.Field) model.DocField {
+	f := model.DocField{
+		DocNode: model.DocNode{
+			Kind: model.KindField,
+		},
+		Type: p.typeString(field.Type),
+	}
+
+	// Field name (may be anonymous)
+	if len(field.Names) > 0 {
+		f.Name = field.Names[0].Name
+		f.Exported = isExported(f.Name)
+		f.Pos = p.convertPos(field.Names[0].Pos())
+	} else {
+		// Anonymous field - use type name
+		f.Name = f.Type
+		f.Exported = isExported(f.Name)
+	}
+
+	// Field tag
+	if field.Tag != nil {
+		f.Tag = field.Tag.Value
+		// Remove quotes
+		if len(f.Tag) >= 2 {
+			f.Tag = f.Tag[1 : len(f.Tag)-1]
+		}
+	}
+
+	// Field doc
+	if field.Doc != nil {
+		f.Doc = field.Doc.Text()
+	} else if field.Comment != nil {
+		f.Doc = field.Comment.Text()
+	}
+
+	return f
+}
+
+// convertFieldList converts an ast.FieldList to []model.DocParam.
+func (p *Parser) convertFieldList(fl *ast.FieldList) []model.DocParam {
+	if fl == nil {
+		return nil
+	}
+
+	var params []model.DocParam
+	for _, field := range fl.List {
+		typStr := p.typeString(field.Type)
+		if len(field.Names) == 0 {
+			// Unnamed parameter
+			params = append(params, model.DocParam{Type: typStr})
+		} else {
+			for _, name := range field.Names {
+				params = append(params, model.DocParam{
+					Name: name.Name,
+					Type: typStr,
+				})
+			}
+		}
+	}
+
+	return params
+}
+
+// convertPos converts a token.Pos to model.SourcePos.
+func (p *Parser) convertPos(pos token.Pos) model.SourcePos {
+	if !pos.IsValid() {
+		return model.SourcePos{}
+	}
+	position := p.fset.Position(pos)
+	return model.SourcePos{
+		Filename: filepath.Base(position.Filename),
+		Line:     position.Line,
+		Column:   position.Column,
+	}
+}
+
+// typeString returns the string representation of an ast type.
+func (p *Parser) typeString(expr ast.Expr) string {
+	if expr == nil {
+		return ""
+	}
+
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return p.typeString(t.X) + "." + t.Sel.Name
+	case *ast.StarExpr:
+		return "*" + p.typeString(t.X)
+	case *ast.ArrayType:
+		if t.Len == nil {
+			return "[]" + p.typeString(t.Elt)
+		}
+		return "[...]" + p.typeString(t.Elt)
+	case *ast.MapType:
+		return "map[" + p.typeString(t.Key) + "]" + p.typeString(t.Value)
+	case *ast.ChanType:
+		return "chan " + p.typeString(t.Value)
+	case *ast.FuncType:
+		return "func(...)"
+	case *ast.InterfaceType:
+		return "interface{}"
+	case *ast.StructType:
+		return "struct{}"
+	case *ast.Ellipsis:
+		return "..." + p.typeString(t.Elt)
+	default:
+		return "?"
+	}
+}
+
+// Helper functions
+
+func isTestFile(name string) bool {
+	return strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, "_test.gno")
+}
+
+func isExported(name string) bool {
+	if name == "" {
+		return false
+	}
+	r := []rune(name)[0]
+	return unicode.IsUpper(r)
+}
+
+func extractSummary(doc string) string {
+	if doc == "" {
+		return ""
+	}
+
+	// Find first sentence (ends with period followed by space or newline)
+	for i, r := range doc {
+		if r == '.' {
+			// Check if next char is space, newline, or end of string
+			if i+1 >= len(doc) {
+				return doc[:i+1]
+			}
+			next := doc[i+1]
+			if next == ' ' || next == '\n' || next == '\t' {
+				return doc[:i+1]
+			}
+		}
+	}
+
+	// No period found, return first line
+	if idx := strings.Index(doc, "\n"); idx != -1 {
+		return doc[:idx]
+	}
+
+	return doc
+}
