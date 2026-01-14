@@ -1419,13 +1419,15 @@ func TestReposition_FailsWithUncollectedFees(t *testing.T) {
 	// (In real scenario, this would be from swap fees)
 	position, _ = mockInstance.GetPosition(1)
 	position.SetTokensOwed0(u256.NewUint(1000)) // Has uncollected fees
-	mockInstance.store.Set(1, position)
+	mockInstance.mustUpdatePosition(1, position)
 
 	// Try to Reposition without collecting fees - should fail
 	uassert.PanicsWithMessage(t,
 		"[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:0, tokensOwed0:1000, tokensOwed1:0)",
 		func() {
-			mockInstanceReposition(
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(testing.NewCodeRealm(posPath))
+			mockInstance.Reposition(
 				1,
 				-5000,
 				5000,
@@ -1434,7 +1436,6 @@ func TestReposition_FailsWithUncollectedFees(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				adminAddr,
 			)
 		})
 }

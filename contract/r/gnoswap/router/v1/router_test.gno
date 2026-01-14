@@ -953,7 +953,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			expectedAmountIn:  "",
 			expectedAmountOut: "",
 			expectError:       true,
-			errorMsg:          "[GNOSWAP-ROUTER-008] invalid pool path || len(poolPathSplit) != 3, poolPath: ",
+			errorMsg:          "[GNOSWAP-ROUTER-008] invalid pool path || len(poolPathSplit) != 3, poolPath: invalid",
 		},
 		{
 			name:              "Empty route",
