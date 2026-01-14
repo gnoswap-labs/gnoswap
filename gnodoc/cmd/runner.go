@@ -27,6 +27,7 @@ Options:
   --exported-only        Only include exported symbols (default)
   --all                  Include all symbols
   --source-link-base=URL Base URL for source links
+  --module-root=DIR      Module root directory
   --help                 Show this help
 
 Export Options:
@@ -91,6 +92,7 @@ func (r *Runner) runDefault(args []string) ExitCode {
 	fs.BoolVar(&opts.IncludeTests, "include-tests", false, "Include test files")
 	fs.BoolVar(&opts.IgnoreParseErrors, "ignore-parse-errors", false, "Continue on parse errors")
 	fs.StringVar(&opts.SourceLinkBase, "source-link-base", "", "Base URL for source links")
+	fs.StringVar(&opts.ModuleRoot, "module-root", "", "Module root directory")
 
 	var all bool
 	var exportedOnly bool
@@ -138,6 +140,7 @@ func (r *Runner) runExport(args []string) ExitCode {
 	fs.BoolVar(&opts.IncludeTests, "include-tests", false, "Include test files")
 	fs.BoolVar(&opts.IgnoreParseErrors, "ignore-parse-errors", false, "Continue on parse errors")
 	fs.StringVar(&opts.SourceLinkBase, "source-link-base", "", "Base URL for source links")
+	fs.StringVar(&opts.ModuleRoot, "module-root", "", "Module root directory")
 
 	var all bool
 	var exportedOnly bool
@@ -214,6 +217,7 @@ func (r *Runner) generateDoc(pkgPath, outDir string, opts *GlobalOptions) ExitCo
 		IgnoreParseErrors: opts.IgnoreParseErrors,
 		ExportedOnly:      opts.ExportedOnly,
 		Exclude:           opts.Exclude,
+		ModuleRoot:        opts.ModuleRoot,
 	}
 
 	p := parser.New(parserOpts)

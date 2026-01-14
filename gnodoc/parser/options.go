@@ -13,6 +13,9 @@ type Options struct {
 
 	// Exclude is a list of glob patterns to exclude files.
 	Exclude []string
+
+	// ModuleRoot is the module root directory for resolving paths.
+	ModuleRoot string
 }
 
 // DefaultOptions returns the default parser options.
@@ -22,5 +25,6 @@ func DefaultOptions() *Options {
 		IgnoreParseErrors: false,
 		ExportedOnly:      true,
 		Exclude:           nil,
+		ModuleRoot:        "",
 	}
 }

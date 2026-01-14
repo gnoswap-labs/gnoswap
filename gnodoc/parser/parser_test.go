@@ -447,3 +447,108 @@ func Invalid( {
 		t.Error("expected HadParseErrors to return true")
 	}
 }
+
+func TestParser_ValueSpec_MultipleNamesSingleValue(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testFile := filepath.Join(tmpDir, "multi.go")
+	content := `package multi
+
+const (
+	A, B = 1
+)
+
+var (
+	X, Y = 2
+)
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	wantConst := map[string]string{"A": "1", "B": "1"}
+	for _, group := range pkg.Consts {
+		for _, spec := range group.Specs {
+			if want, ok := wantConst[spec.Name]; ok {
+				if spec.Value != want {
+					t.Errorf("%s expected value %q, got %q", spec.Name, want, spec.Value)
+				}
+				delete(wantConst, spec.Name)
+			}
+		}
+	}
+	if len(wantConst) > 0 {
+		t.Errorf("missing const specs: %v", wantConst)
+	}
+
+	wantVar := map[string]string{"X": "2", "Y": "2"}
+	for _, group := range pkg.Vars {
+		for _, spec := range group.Specs {
+			if want, ok := wantVar[spec.Name]; ok {
+				if spec.Value != want {
+					t.Errorf("%s expected value %q, got %q", spec.Name, want, spec.Value)
+				}
+				delete(wantVar, spec.Name)
+			}
+		}
+	}
+	if len(wantVar) > 0 {
+		t.Errorf("missing var specs: %v", wantVar)
+	}
+}
+
+func TestParser_ModuleRoot_RelativePath(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	pkgDir := filepath.Join(tmpDir, "subpkg")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatalf("failed to create package dir: %v", err)
+	}
+
+	testFile := filepath.Join(pkgDir, "foo.go")
+	content := `package subpkg
+
+// Hello says hi.
+func Hello() {}
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	opts := DefaultOptions()
+	opts.ModuleRoot = tmpDir
+
+	p := New(opts)
+	pkg, err := p.ParsePackage("subpkg")
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	if pkg.Name != "subpkg" {
+		t.Errorf("expected package name 'subpkg', got %q", pkg.Name)
+	}
+
+	if len(pkg.Funcs) == 0 {
+		t.Fatal("expected functions in package")
+	}
+
+	got := pkg.Funcs[0].Pos.Filename
+	want := filepath.ToSlash(filepath.Join("subpkg", "foo.go"))
+	if got != want {
+		t.Errorf("expected relative filename %q, got %q", want, got)
+	}
+}

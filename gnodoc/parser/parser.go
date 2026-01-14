@@ -20,6 +20,7 @@ type Parser struct {
 	opts           *Options
 	fset           *token.FileSet
 	hadParseErrors bool
+	moduleRoot     string
 }
 
 // New creates a new parser with the given options.
@@ -27,10 +28,15 @@ func New(opts *Options) *Parser {
 	if opts == nil {
 		opts = DefaultOptions()
 	}
+	moduleRoot := ""
+	if opts.ModuleRoot != "" {
+		moduleRoot = filepath.Clean(opts.ModuleRoot)
+	}
 	return &Parser{
 		opts:           opts,
 		fset:           token.NewFileSet(),
 		hadParseErrors: false,
+		moduleRoot:     moduleRoot,
 	}
 }
 
@@ -45,7 +51,14 @@ func (p *Parser) HadParseErrors() bool {
 func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 	// First, try to resolve as a directory path
 	dir := path
-	info, err := os.Stat(path)
+	if p.opts.ModuleRoot != "" && !filepath.IsAbs(path) {
+		candidate := filepath.Join(p.opts.ModuleRoot, path)
+		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
+			dir = candidate
+		}
+	}
+
+	info, err := os.Stat(dir)
 	if err != nil || !info.IsDir() {
 		// Try to resolve as an import path
 		resolved, resolveErr := p.resolveImportPath(path)
@@ -57,6 +70,12 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 			return nil, fmt.Errorf("not a directory: %s", path)
 		}
 		dir = resolved
+	}
+
+	if p.opts.ModuleRoot != "" {
+		p.moduleRoot = filepath.Clean(p.opts.ModuleRoot)
+	} else {
+		p.moduleRoot = dir
 	}
 
 	// Collect files
@@ -285,13 +304,29 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 		},
 	}
 
-	// Build a map of name to AST spec for extracting type/value/pos
-	nameToSpec := make(map[string]*ast.ValueSpec)
+	// Build a map of name to AST info for extracting type/value/pos
+	type valueInfo struct {
+		typ  string
+		val  string
+		pos  token.Pos
+	}
+	nameToInfo := make(map[string]valueInfo)
 	if v.Decl != nil {
 		for _, s := range v.Decl.Specs {
 			if vs, ok := s.(*ast.ValueSpec); ok {
-				for _, name := range vs.Names {
-					nameToSpec[name.Name] = vs
+				typ := ""
+				if vs.Type != nil {
+					typ = p.typeString(vs.Type)
+				}
+
+				for i, name := range vs.Names {
+					info := valueInfo{typ: typ, pos: name.Pos()}
+					if len(vs.Values) == 1 {
+						info.val = p.exprString(vs.Values[0])
+					} else if i < len(vs.Values) {
+						info.val = p.exprString(vs.Values[i])
+					}
+					nameToInfo[name.Name] = info
 				}
 			}
 		}
@@ -307,23 +342,10 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 		}
 
 		// Extract type, value, and position from AST
-		if vs, ok := nameToSpec[name]; ok {
-			// Position
-			for i, n := range vs.Names {
-				if n.Name == name {
-					spec.Pos = p.convertPos(n.Pos())
-					// Extract value if available
-					if i < len(vs.Values) {
-						spec.Value = p.exprString(vs.Values[i])
-					}
-					break
-				}
-			}
-
-			// Type
-			if vs.Type != nil {
-				spec.Type = p.typeString(vs.Type)
-			}
+		if info, ok := nameToInfo[name]; ok {
+			spec.Pos = p.convertPos(info.pos)
+			spec.Type = info.typ
+			spec.Value = info.val
 		}
 
 		group.Specs = append(group.Specs, spec)
@@ -497,8 +519,18 @@ func (p *Parser) convertPos(pos token.Pos) model.SourcePos {
 		return model.SourcePos{}
 	}
 	position := p.fset.Position(pos)
+	filename := position.Filename
+	if p.moduleRoot != "" {
+		if rel, err := filepath.Rel(p.moduleRoot, filename); err == nil && !strings.HasPrefix(rel, "..") {
+			filename = rel
+		} else {
+			filename = filepath.Base(filename)
+		}
+	} else {
+		filename = filepath.Base(filename)
+	}
 	return model.SourcePos{
-		Filename: filepath.Base(position.Filename),
+		Filename: filepath.ToSlash(filename),
 		Line:     position.Line,
 		Column:   position.Column,
 	}
