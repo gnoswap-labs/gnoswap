@@ -93,14 +93,26 @@ func (r *Runner) runDefault(args []string) ExitCode {
 	fs.StringVar(&opts.SourceLinkBase, "source-link-base", "", "Base URL for source links")
 
 	var all bool
+	var exportedOnly bool
+	var exclude string
 	fs.BoolVar(&all, "all", false, "Include all symbols")
+	fs.BoolVar(&exportedOnly, "exported-only", true, "Only include exported symbols (default)")
+	fs.StringVar(&exclude, "exclude", "", "Exclude patterns (comma-separated)")
 
 	if err := fs.Parse(args); err != nil {
 		return ExitError
 	}
 
+	// --all overrides --exported-only
 	if all {
 		opts.ExportedOnly = false
+	} else if exportedOnly {
+		opts.ExportedOnly = true
+	}
+
+	// Parse exclude patterns
+	if exclude != "" {
+		opts.Exclude = strings.Split(exclude, ",")
 	}
 
 	remaining := fs.Args()
@@ -128,14 +140,26 @@ func (r *Runner) runExport(args []string) ExitCode {
 	fs.StringVar(&opts.SourceLinkBase, "source-link-base", "", "Base URL for source links")
 
 	var all bool
+	var exportedOnly bool
+	var exclude string
 	fs.BoolVar(&all, "all", false, "Include all symbols")
+	fs.BoolVar(&exportedOnly, "exported-only", true, "Only include exported symbols (default)")
+	fs.StringVar(&exclude, "exclude", "", "Exclude patterns (comma-separated)")
 
 	if err := fs.Parse(args); err != nil {
 		return ExitError
 	}
 
+	// --all overrides --exported-only
 	if all {
 		opts.ExportedOnly = false
+	} else if exportedOnly {
+		opts.ExportedOnly = true
+	}
+
+	// Parse exclude patterns
+	if exclude != "" {
+		opts.Exclude = strings.Split(exclude, ",")
 	}
 
 	remaining := fs.Args()
@@ -189,6 +213,7 @@ func (r *Runner) generateDoc(pkgPath, outDir string, opts *GlobalOptions) ExitCo
 		IncludeTests:      opts.IncludeTests,
 		IgnoreParseErrors: opts.IgnoreParseErrors,
 		ExportedOnly:      opts.ExportedOnly,
+		Exclude:           opts.Exclude,
 	}
 
 	p := parser.New(parserOpts)
@@ -221,6 +246,11 @@ func (r *Runner) generateDoc(pkgPath, outDir string, opts *GlobalOptions) ExitCo
 	}
 
 	fmt.Fprintf(r.stdout, "Documentation written to %s\n", outputPath)
+
+	// Return partial error if some files failed to parse
+	if p.HadParseErrors() {
+		return ExitPartialError
+	}
 	return ExitSuccess
 }
 

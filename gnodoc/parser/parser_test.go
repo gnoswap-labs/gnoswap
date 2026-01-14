@@ -214,6 +214,25 @@ func TestParser_ParsePackage_InvalidDir(t *testing.T) {
 	}
 }
 
+func TestParser_ParsePackage_ImportPath(t *testing.T) {
+	// This test validates that we can resolve import paths.
+	// We use a standard library package that should always exist.
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage("fmt")
+	if err != nil {
+		t.Skipf("Could not resolve import path 'fmt': %v (might not have Go installed properly)", err)
+	}
+
+	if pkg.Name != "fmt" {
+		t.Errorf("expected package name 'fmt', got %q", pkg.Name)
+	}
+
+	// Should have some functions (like Printf)
+	if len(pkg.Funcs) == 0 && len(pkg.Types) == 0 {
+		t.Error("expected functions or types in fmt package")
+	}
+}
+
 func TestParser_ParsePackage_EmptyDir(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
 	if err != nil {
@@ -225,5 +244,206 @@ func TestParser_ParsePackage_EmptyDir(t *testing.T) {
 	_, err = p.ParsePackage(tmpDir)
 	if err == nil {
 		t.Error("expected error for empty directory")
+	}
+}
+
+func TestParser_ValueSpec_TypeValuePos(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Write file with typed constants and variables
+	testFile := filepath.Join(tmpDir, "values.go")
+	content := `package values
+
+// TypedConst has an explicit type.
+const TypedConst int = 42
+
+// UntypedConst has an inferred type.
+const UntypedConst = "hello"
+
+// TypedVar has an explicit type.
+var TypedVar float64 = 3.14
+
+// UntypedVar has an inferred type.
+var UntypedVar = true
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	// Check constants
+	foundTypedConst := false
+	for _, group := range pkg.Consts {
+		for _, spec := range group.Specs {
+			if spec.Name == "TypedConst" {
+				foundTypedConst = true
+				if spec.Type != "int" {
+					t.Errorf("TypedConst expected type 'int', got %q", spec.Type)
+				}
+				if spec.Value != "42" {
+					t.Errorf("TypedConst expected value '42', got %q", spec.Value)
+				}
+				if spec.Pos.Line == 0 {
+					t.Error("TypedConst expected non-zero line position")
+				}
+			}
+		}
+	}
+	if !foundTypedConst {
+		t.Error("expected TypedConst in constants")
+	}
+
+	// Check variables
+	foundTypedVar := false
+	for _, group := range pkg.Vars {
+		for _, spec := range group.Specs {
+			if spec.Name == "TypedVar" {
+				foundTypedVar = true
+				if spec.Type != "float64" {
+					t.Errorf("TypedVar expected type 'float64', got %q", spec.Type)
+				}
+				if spec.Value != "3.14" {
+					t.Errorf("TypedVar expected value '3.14', got %q", spec.Value)
+				}
+				if spec.Pos.Line == 0 {
+					t.Error("TypedVar expected non-zero line position")
+				}
+			}
+		}
+	}
+	if !foundTypedVar {
+		t.Error("expected TypedVar in variables")
+	}
+}
+
+func TestParser_ExcludeFiles(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Write main file
+	mainFile := filepath.Join(tmpDir, "main.go")
+	mainContent := `package testpkg
+
+// MainFunc is from main.go.
+func MainFunc() {}
+`
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+		t.Fatalf("failed to write main file: %v", err)
+	}
+
+	// Write generated file (should be excluded)
+	genFile := filepath.Join(tmpDir, "generated.go")
+	genContent := `package testpkg
+
+// GeneratedFunc is from generated.go.
+func GeneratedFunc() {}
+`
+	if err := os.WriteFile(genFile, []byte(genContent), 0644); err != nil {
+		t.Fatalf("failed to write generated file: %v", err)
+	}
+
+	// Parse with exclude pattern
+	opts := DefaultOptions()
+	opts.Exclude = []string{"generated*"}
+
+	p := New(opts)
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	// Should have MainFunc
+	foundMain := false
+	for _, fn := range pkg.Funcs {
+		if fn.Name == "MainFunc" {
+			foundMain = true
+		}
+	}
+	if !foundMain {
+		t.Error("expected MainFunc in result")
+	}
+
+	// Should NOT have GeneratedFunc
+	for _, fn := range pkg.Funcs {
+		if fn.Name == "GeneratedFunc" {
+			t.Error("unexpected GeneratedFunc in result (should be excluded)")
+		}
+	}
+}
+
+func TestParser_ParsePackage_PartialError(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Write valid file
+	validFile := filepath.Join(tmpDir, "valid.go")
+	validContent := `package testpkg
+
+// Valid is a valid function.
+func Valid() {}
+`
+	if err := os.WriteFile(validFile, []byte(validContent), 0644); err != nil {
+		t.Fatalf("failed to write valid file: %v", err)
+	}
+
+	// Write invalid file
+	invalidFile := filepath.Join(tmpDir, "invalid.go")
+	invalidContent := `package testpkg
+
+func Invalid( {
+	// syntax error
+}
+`
+	if err := os.WriteFile(invalidFile, []byte(invalidContent), 0644); err != nil {
+		t.Fatalf("failed to write invalid file: %v", err)
+	}
+
+	// Without IgnoreParseErrors - should fail
+	opts := DefaultOptions()
+	opts.IgnoreParseErrors = false
+	p := New(opts)
+	_, err = p.ParsePackage(tmpDir)
+	if err == nil {
+		t.Error("expected error without IgnoreParseErrors")
+	}
+
+	// With IgnoreParseErrors - should succeed with partial result
+	opts.IgnoreParseErrors = true
+	p = New(opts)
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("expected success with IgnoreParseErrors, got: %v", err)
+	}
+
+	// Should have the valid function
+	foundValid := false
+	for _, fn := range pkg.Funcs {
+		if fn.Name == "Valid" {
+			foundValid = true
+			break
+		}
+	}
+	if !foundValid {
+		t.Error("expected Valid function in result")
+	}
+
+	// Should report partial failure
+	if !p.HadParseErrors() {
+		t.Error("expected HadParseErrors to return true")
 	}
 }

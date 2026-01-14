@@ -183,3 +183,271 @@ func TestRunner_Help(t *testing.T) {
 		t.Error("expected usage info in output")
 	}
 }
+
+func createTestPackageWithUnexported(t *testing.T) string {
+	t.Helper()
+
+	tmpDir, err := os.MkdirTemp("", "gnodoc-cmd-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+
+	content := `// Package mixedpkg has exported and unexported symbols.
+package mixedpkg
+
+// PublicConst is exported.
+const PublicConst = 1
+
+// privateConst is unexported.
+const privateConst = 2
+
+// PublicFunc is exported.
+func PublicFunc() {}
+
+// privateFunc is unexported.
+func privateFunc() {}
+
+// PublicType is exported.
+type PublicType struct{}
+
+// privateType is unexported.
+type privateType struct{}
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "mixed.go"), []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	return tmpDir
+}
+
+func TestRunner_ExportedOnlyFlag(t *testing.T) {
+	tmpDir := createTestPackageWithUnexported(t)
+	defer os.RemoveAll(tmpDir)
+
+	outDir, err := os.MkdirTemp("", "gnodoc-out-*")
+	if err != nil {
+		t.Fatalf("failed to create output dir: %v", err)
+	}
+	defer os.RemoveAll(outDir)
+
+	var stdout, stderr bytes.Buffer
+	r := NewRunner(&stdout, &stderr)
+
+	// Run with --exported-only flag (explicit)
+	code := r.Run([]string{"--exported-only", "--out=" + outDir, tmpDir})
+
+	if code != ExitSuccess {
+		t.Errorf("expected ExitSuccess, got %v: %s", code, stderr.String())
+	}
+
+	outputPath := filepath.Join(outDir, "README.md")
+	content, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	// Should contain exported symbols
+	if !strings.Contains(string(content), "PublicConst") {
+		t.Error("expected PublicConst in output")
+	}
+	if !strings.Contains(string(content), "PublicFunc") {
+		t.Error("expected PublicFunc in output")
+	}
+	if !strings.Contains(string(content), "PublicType") {
+		t.Error("expected PublicType in output")
+	}
+
+	// Should NOT contain unexported symbols
+	if strings.Contains(string(content), "privateConst") {
+		t.Error("unexpected privateConst in output with --exported-only")
+	}
+	if strings.Contains(string(content), "privateFunc") {
+		t.Error("unexpected privateFunc in output with --exported-only")
+	}
+	if strings.Contains(string(content), "privateType") {
+		t.Error("unexpected privateType in output with --exported-only")
+	}
+}
+
+func createTestPackageWithParseError(t *testing.T) string {
+	t.Helper()
+
+	tmpDir, err := os.MkdirTemp("", "gnodoc-cmd-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+
+	// Valid file
+	validContent := `package partialerr
+
+// Valid is a valid function.
+func Valid() {}
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "valid.go"), []byte(validContent), 0644); err != nil {
+		t.Fatalf("failed to write valid file: %v", err)
+	}
+
+	// Invalid file with syntax error
+	invalidContent := `package partialerr
+
+func Invalid( {
+	// syntax error
+}
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "invalid.go"), []byte(invalidContent), 0644); err != nil {
+		t.Fatalf("failed to write invalid file: %v", err)
+	}
+
+	return tmpDir
+}
+
+func TestRunner_PartialError(t *testing.T) {
+	tmpDir := createTestPackageWithParseError(t)
+	defer os.RemoveAll(tmpDir)
+
+	outDir, err := os.MkdirTemp("", "gnodoc-out-*")
+	if err != nil {
+		t.Fatalf("failed to create output dir: %v", err)
+	}
+	defer os.RemoveAll(outDir)
+
+	var stdout, stderr bytes.Buffer
+	r := NewRunner(&stdout, &stderr)
+
+	// Run with --ignore-parse-errors flag
+	code := r.Run([]string{"--ignore-parse-errors", "--out=" + outDir, tmpDir})
+
+	// Should return ExitPartialError (2) not ExitSuccess (0)
+	if code != ExitPartialError {
+		t.Errorf("expected ExitPartialError (2), got %v", code)
+	}
+
+	// Output file should still be created
+	outputPath := filepath.Join(outDir, "README.md")
+	content, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	// Should contain the valid function
+	if !strings.Contains(string(content), "Valid") {
+		t.Error("expected Valid function in output")
+	}
+}
+
+func TestRunner_AllFlag(t *testing.T) {
+	tmpDir := createTestPackageWithUnexported(t)
+	defer os.RemoveAll(tmpDir)
+
+	outDir, err := os.MkdirTemp("", "gnodoc-out-*")
+	if err != nil {
+		t.Fatalf("failed to create output dir: %v", err)
+	}
+	defer os.RemoveAll(outDir)
+
+	var stdout, stderr bytes.Buffer
+	r := NewRunner(&stdout, &stderr)
+
+	// Run with --all flag
+	code := r.Run([]string{"--all", "--out=" + outDir, tmpDir})
+
+	if code != ExitSuccess {
+		t.Errorf("expected ExitSuccess, got %v: %s", code, stderr.String())
+	}
+
+	outputPath := filepath.Join(outDir, "README.md")
+	content, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	// Should contain exported symbols
+	if !strings.Contains(string(content), "PublicConst") {
+		t.Error("expected PublicConst in output")
+	}
+	if !strings.Contains(string(content), "PublicFunc") {
+		t.Error("expected PublicFunc in output")
+	}
+	if !strings.Contains(string(content), "PublicType") {
+		t.Error("expected PublicType in output")
+	}
+
+	// Should also contain unexported symbols with --all
+	if !strings.Contains(string(content), "privateConst") {
+		t.Error("expected privateConst in output with --all")
+	}
+	if !strings.Contains(string(content), "privateFunc") {
+		t.Error("expected privateFunc in output with --all")
+	}
+	if !strings.Contains(string(content), "privateType") {
+		t.Error("expected privateType in output with --all")
+	}
+}
+
+func createTestPackageWithMultipleFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir, err := os.MkdirTemp("", "gnodoc-cmd-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+
+	// Main file
+	mainContent := `package multipkg
+
+// MainFunc is from main.go.
+func MainFunc() {}
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte(mainContent), 0644); err != nil {
+		t.Fatalf("failed to write main file: %v", err)
+	}
+
+	// Generated file (to be excluded)
+	genContent := `package multipkg
+
+// GeneratedFunc is from generated.go.
+func GeneratedFunc() {}
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "generated.go"), []byte(genContent), 0644); err != nil {
+		t.Fatalf("failed to write generated file: %v", err)
+	}
+
+	return tmpDir
+}
+
+func TestRunner_ExcludeFlag(t *testing.T) {
+	tmpDir := createTestPackageWithMultipleFiles(t)
+	defer os.RemoveAll(tmpDir)
+
+	outDir, err := os.MkdirTemp("", "gnodoc-out-*")
+	if err != nil {
+		t.Fatalf("failed to create output dir: %v", err)
+	}
+	defer os.RemoveAll(outDir)
+
+	var stdout, stderr bytes.Buffer
+	r := NewRunner(&stdout, &stderr)
+
+	// Run with --exclude flag
+	code := r.Run([]string{"--exclude=generated*", "--out=" + outDir, tmpDir})
+
+	if code != ExitSuccess {
+		t.Errorf("expected ExitSuccess, got %v: %s", code, stderr.String())
+	}
+
+	outputPath := filepath.Join(outDir, "README.md")
+	content, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	// Should have MainFunc
+	if !strings.Contains(string(content), "MainFunc") {
+		t.Error("expected MainFunc in output")
+	}
+
+	// Should NOT have GeneratedFunc (excluded)
+	if strings.Contains(string(content), "GeneratedFunc") {
+		t.Error("unexpected GeneratedFunc in output (should be excluded)")
+	}
+}

@@ -10,6 +10,9 @@ type Options struct {
 
 	// ExportedOnly includes only exported symbols.
 	ExportedOnly bool
+
+	// Exclude is a list of glob patterns to exclude files.
+	Exclude []string
 }
 
 // DefaultOptions returns the default parser options.
@@ -18,5 +21,6 @@ func DefaultOptions() *Options {
 		IncludeTests:      false,
 		IgnoreParseErrors: false,
 		ExportedOnly:      true,
+		Exclude:           nil,
 	}
 }

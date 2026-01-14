@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -16,8 +17,9 @@ import (
 
 // Parser parses Go/Gno source files and converts them to DocPackage.
 type Parser struct {
-	opts *Options
-	fset *token.FileSet
+	opts           *Options
+	fset           *token.FileSet
+	hadParseErrors bool
 }
 
 // New creates a new parser with the given options.
@@ -26,20 +28,35 @@ func New(opts *Options) *Parser {
 		opts = DefaultOptions()
 	}
 	return &Parser{
-		opts: opts,
-		fset: token.NewFileSet(),
+		opts:           opts,
+		fset:           token.NewFileSet(),
+		hadParseErrors: false,
 	}
 }
 
-// ParsePackage parses all Go/Gno files in the given directory.
-func (p *Parser) ParsePackage(dir string) (*model.DocPackage, error) {
-	// Check directory exists
-	info, err := os.Stat(dir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot access directory: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("not a directory: %s", dir)
+// HadParseErrors returns true if some files failed to parse
+// when IgnoreParseErrors was enabled.
+func (p *Parser) HadParseErrors() bool {
+	return p.hadParseErrors
+}
+
+// ParsePackage parses all Go/Gno files in the given path.
+// The path can be a directory path or an import path (e.g., "fmt").
+func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
+	// First, try to resolve as a directory path
+	dir := path
+	info, err := os.Stat(path)
+	if err != nil || !info.IsDir() {
+		// Try to resolve as an import path
+		resolved, resolveErr := p.resolveImportPath(path)
+		if resolveErr != nil {
+			// Return the original error if it was a valid path attempt
+			if err != nil {
+				return nil, fmt.Errorf("cannot access directory: %w", err)
+			}
+			return nil, fmt.Errorf("not a directory: %s", path)
+		}
+		dir = resolved
 	}
 
 	// Collect files
@@ -114,10 +131,42 @@ func (p *Parser) collectFiles(dir string) ([]string, error) {
 			continue
 		}
 
+		// Check exclude patterns
+		if p.isExcluded(name) {
+			continue
+		}
+
 		files = append(files, name)
 	}
 
 	return files, nil
+}
+
+// isExcluded checks if a filename matches any exclude pattern.
+func (p *Parser) isExcluded(name string) bool {
+	for _, pattern := range p.opts.Exclude {
+		if matched, _ := filepath.Match(pattern, name); matched {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveImportPath resolves a Go import path to a directory path.
+func (p *Parser) resolveImportPath(importPath string) (string, error) {
+	// Use go list to resolve the import path
+	cmd := exec.Command("go", "list", "-f", "{{.Dir}}", importPath)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve import path %q: %w", importPath, err)
+	}
+
+	dir := strings.TrimSpace(string(output))
+	if dir == "" {
+		return "", fmt.Errorf("cannot resolve import path %q: empty result", importPath)
+	}
+
+	return dir, nil
 }
 
 // parseFiles parses the given files using go/parser.
@@ -151,7 +200,8 @@ func (p *Parser) parseFilesIndividually(dir string, files []string) (map[string]
 		path := filepath.Join(dir, filename)
 		f, err := parser.ParseFile(p.fset, path, nil, parser.ParseComments)
 		if err != nil {
-			// Skip failed file
+			// Mark that we had parse errors, then skip the failed file
+			p.hadParseErrors = true
 			continue
 		}
 
@@ -235,6 +285,18 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 		},
 	}
 
+	// Build a map of name to AST spec for extracting type/value/pos
+	nameToSpec := make(map[string]*ast.ValueSpec)
+	if v.Decl != nil {
+		for _, s := range v.Decl.Specs {
+			if vs, ok := s.(*ast.ValueSpec); ok {
+				for _, name := range vs.Names {
+					nameToSpec[name.Name] = vs
+				}
+			}
+		}
+	}
+
 	for _, name := range v.Names {
 		spec := model.DocValueSpec{
 			DocNode: model.DocNode{
@@ -243,6 +305,27 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 				Exported: isExported(name),
 			},
 		}
+
+		// Extract type, value, and position from AST
+		if vs, ok := nameToSpec[name]; ok {
+			// Position
+			for i, n := range vs.Names {
+				if n.Name == name {
+					spec.Pos = p.convertPos(n.Pos())
+					// Extract value if available
+					if i < len(vs.Values) {
+						spec.Value = p.exprString(vs.Values[i])
+					}
+					break
+				}
+			}
+
+			// Type
+			if vs.Type != nil {
+				spec.Type = p.typeString(vs.Type)
+			}
+		}
+
 		group.Specs = append(group.Specs, spec)
 	}
 
@@ -453,6 +536,37 @@ func (p *Parser) typeString(expr ast.Expr) string {
 		return "..." + p.typeString(t.Elt)
 	default:
 		return "?"
+	}
+}
+
+// exprString returns the string representation of an expression value.
+func (p *Parser) exprString(expr ast.Expr) string {
+	if expr == nil {
+		return ""
+	}
+
+	switch e := expr.(type) {
+	case *ast.BasicLit:
+		return e.Value
+	case *ast.Ident:
+		return e.Name
+	case *ast.SelectorExpr:
+		return p.exprString(e.X) + "." + e.Sel.Name
+	case *ast.UnaryExpr:
+		return e.Op.String() + p.exprString(e.X)
+	case *ast.BinaryExpr:
+		return p.exprString(e.X) + " " + e.Op.String() + " " + p.exprString(e.Y)
+	case *ast.ParenExpr:
+		return "(" + p.exprString(e.X) + ")"
+	case *ast.CallExpr:
+		return p.exprString(e.Fun) + "(...)"
+	case *ast.CompositeLit:
+		if e.Type != nil {
+			return p.typeString(e.Type) + "{...}"
+		}
+		return "{...}"
+	default:
+		return "..."
 	}
 }
 
