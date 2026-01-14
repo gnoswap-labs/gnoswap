@@ -25,4 +25,5 @@ var (
 	GOV_STAKER_ADDR     = chain.PackageAddress("gno.land/r/gnoswap/gov/staker")
 	GOV_XGNS_ADDR       = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")
 	LAUNCHPAD_ADDR      = chain.PackageAddress("gno.land/r/gnoswap/launchpad")
+	LIMIT_ORDER_ADDR    = chain.PackageAddress("gno.land/r/gnoswap/limit_order")
 )

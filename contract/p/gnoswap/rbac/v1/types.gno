@@ -17,6 +17,7 @@ const (
 	ROLE_EMISSION       SystemRole = "emission"
 	ROLE_LAUNCHPAD      SystemRole = "launchpad"
 	ROLE_PROTOCOL_FEE   SystemRole = "protocol_fee"
+	ROLE_LIMIT_ORDER    SystemRole = "limit_order"
 )
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
@@ -35,6 +36,7 @@ var _systemRoleNames = map[string]SystemRole{
 	"emission":       ROLE_EMISSION,
 	"launchpad":      ROLE_LAUNCHPAD,
 	"protocol_fee":   ROLE_PROTOCOL_FEE,
+	"limit_order":    ROLE_LIMIT_ORDER,
 }
 
 // String returns the string representation of the SystemRole.
