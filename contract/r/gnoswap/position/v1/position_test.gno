@@ -1384,6 +1384,61 @@ func TestReposition(t *testing.T) {
 	}
 }
 
+// TestReposition_FailsWithUncollectedFees tests that Reposition fails when there are uncollected fees
+func TestReposition_FailsWithUncollectedFees(t *testing.T) {
+	initPositionTest(t)
+
+	// Setup pool and position
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Get position and decrease ALL liquidity
+	position, _ := mockInstance.GetPosition(1)
+	liquidity := position.Liquidity().ToString()
+
+	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+		1,
+		liquidity,
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		false,
+	)
+
+	// Simulate uncollected fees by setting tokensOwed directly
+	// (In real scenario, this would be from swap fees)
+	position, _ = mockInstance.GetPosition(1)
+	position.SetTokensOwed0(u256.NewUint(1000)) // Has uncollected fees
+	mockInstance.store.Set(1, position)
+
+	// Try to Reposition without collecting fees - should fail
+	uassert.PanicsWithMessage(t,
+		"[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:0, tokensOwed0:1000, tokensOwed1:0)",
+		func() {
+			mockInstanceReposition(
+				1,
+				-5000,
+				5000,
+				"500000",
+				"500000",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+			)
+		})
+}
+
 func TestValidateTokenPath(t *testing.T) {
 	tests := []struct {
 		name        string
