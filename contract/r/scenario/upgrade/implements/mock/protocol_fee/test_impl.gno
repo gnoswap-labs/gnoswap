@@ -152,21 +152,3 @@ func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 
 		path,
 	).(int64)
 }
-
-func (t *TestProtocolFee) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	return t.ExecuteFn(
-		"GetHistoryOfDistributedToGovStakerByTokenPath",
-		func(args ...any) any {
-			return t.instance.GetHistoryOfDistributedToGovStakerByTokenPath(args[0].(string))
-		},
-		path,
-	).(int64)
-}
-
-func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	return t.ExecuteFn(
-		"GetHistoryOfDistributedToDevOpsByTokenPath",
-		func(args ...any) any { return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(args[0].(string)) },
-		path,
-	).(int64)
-}
