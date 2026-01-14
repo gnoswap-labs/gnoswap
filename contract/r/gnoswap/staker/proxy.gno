@@ -7,7 +7,7 @@ package staker
 //   - referrer: referrer address for reward tracking
 //
 // Returns:
-//   - string: deposit ID
+//   - depositId: deposit ID
 func StakeToken(cur realm, positionId uint64, referrer string) string {
 	return getImplementation().StakeToken(positionId, referrer)
 }
@@ -19,7 +19,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 //   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
-//   - string: collected reward details
+//   - rewardDetail: collected reward details
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) string {
 	return getImplementation().UnStakeToken(positionId, unwrapResult)
 }
@@ -40,11 +40,11 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) string {
 //   - referrer: referrer address for reward tracking
 //
 // Returns:
-//   - uint64: position ID
-//   - string: liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
-//   - string: staking details
+//   - positionId: position ID
+//   - liquidity: liquidity amount
+//   - amount0: amount of token0 added
+//   - amount1: amount of token1 added
+//   - stakeDetail: staking details
 func MintAndStake(
 	cur realm,
 	token0 string,
@@ -81,25 +81,36 @@ func MintAndStake(
 //   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
-//   - string: pool path
-//   - string: staking details
-//   - map[string]int64: internal rewards
-//   - map[string]int64: external rewards
+//   - poolPath: pool path
+//   - stakeDetail: staking details
+//   - internalRewards: internal rewards
+//   - externalRewards: external rewards
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	return getImplementation().CollectReward(positionId, unwrapResult)
 }
 
 // SetPoolTier sets the reward tier for a pool.
+//
+// Parameters:
+//   - poolPath: path of the pool
+//   - tier: reward tier level
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	getImplementation().SetPoolTier(poolPath, tier)
 }
 
 // ChangePoolTier changes the reward tier of a pool.
+//
+// Parameters:
+//   - poolPath: path of the pool
+//   - tier: new reward tier level
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	getImplementation().ChangePoolTier(poolPath, tier)
 }
 
 // RemovePoolTier removes a pool from the tier system.
+//
+// Parameters:
+//   - poolPath: path of the pool
 func RemovePoolTier(cur realm, poolPath string) {
 	getImplementation().RemovePoolTier(poolPath)
 }
@@ -130,41 +141,67 @@ func CreateExternalIncentive(
 }
 
 // EndExternalIncentive terminates an external incentive early.
+//
+// Parameters:
+//   - targetPoolPath: path of the pool
+//   - incentiveId: ID of the incentive to end
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId)
 }
 
 // AddToken adds a token to the reward token whitelist.
+//
+// Parameters:
+//   - tokenPath: path of the token to add
 func AddToken(cur realm, tokenPath string) {
 	getImplementation().AddToken(tokenPath)
 }
 
 // RemoveToken removes a token from the reward token whitelist.
+//
+// Parameters:
+//   - tokenPath: path of the token to remove
 func RemoveToken(cur realm, tokenPath string) {
 	getImplementation().RemoveToken(tokenPath)
 }
 
 // SetWarmUp sets the warm-up period parameters for staking.
+//
+// Parameters:
+//   - pct: warmup percentage
+//   - timeDuration: warmup time duration in seconds
 func SetWarmUp(cur realm, pct, timeDuration int64) {
 	getImplementation().SetWarmUp(pct, timeDuration)
 }
 
 // SetDepositGnsAmount sets the required GNS deposit amount for staking.
+//
+// Parameters:
+//   - amount: required GNS amount
 func SetDepositGnsAmount(cur realm, amount int64) {
 	getImplementation().SetDepositGnsAmount(amount)
 }
 
 // SetMinimumRewardAmount sets the minimum reward amount to distribute.
+//
+// Parameters:
+//   - amount: minimum reward amount
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	getImplementation().SetMinimumRewardAmount(amount)
 }
 
 // SetTokenMinimumRewardAmount sets minimum reward amounts per token.
+//
+// Parameters:
+//   - paramsStr: encoded parameters for token minimum amounts
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	getImplementation().SetTokenMinimumRewardAmount(paramsStr)
 }
 
 // SetUnStakingFee sets the unstaking fee percentage.
+//
+// Parameters:
+//   - fee: unstaking fee percentage
 func SetUnStakingFee(cur realm, fee int64) {
 	getImplementation().SetUnStakingFee(fee)
 }
