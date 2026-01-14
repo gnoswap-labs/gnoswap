@@ -246,9 +246,6 @@ func Swap(
 
 // DrySwap simulates a swap without executing it, returning the expected output.
 //
-// This is a read-only operation that does not modify pool state.
-// Used by router for multi-hop swap simulations and by clients for price quotes.
-//
 // Parameters:
 //   - token0Path: path of the first token
 //   - token1Path: path of the second token
@@ -258,9 +255,9 @@ func Swap(
 //   - sqrtPriceLimitX96: price limit for the swap
 //
 // Returns:
-//   - string: amount of token0 delta
-//   - string: amount of token1 delta
-//   - bool: swap success status
+//   - amount0Delta: amount of token0 delta
+//   - amount1Delta: amount of token1 delta
+//   - ok: swap success status
 func DrySwap(
 	token0Path string,
 	token1Path string,
