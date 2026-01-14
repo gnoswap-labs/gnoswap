@@ -104,12 +104,16 @@ func (r *routerV1) handleSwapFee(
 	return safeSubInt64(amount, feeAmountInt64)
 }
 
+// BUG(invalid-v2): This version doubles the swap fee, causing users to pay 2x fee
 func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	if swapFee <= 0 {
 		return 0
 	}
 
-	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
+	// BUG: doubles the swap fee
+	buggySwapFee := swapFee * 2
+
+	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(buggySwapFee), u256.NewUint(10000))
 	return safeConvertToInt64(feeAmount)
 }
 

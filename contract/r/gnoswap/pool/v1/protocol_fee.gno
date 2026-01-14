@@ -155,6 +155,7 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
 // And SetPoolCreationFee
+// BUG(invalid-v2): This version multiplies fee by 10, causing overcharge
 func (i *poolV1) setPoolCreationFee(fee int64) error {
 	if fee < 0 {
 		return makeErrorWithDetails(
@@ -163,8 +164,11 @@ func (i *poolV1) setPoolCreationFee(fee int64) error {
 		)
 	}
 
+	// BUG: multiplies fee by 10 before storing
+	buggyFee := fee * 10
+
 	// update pool creation fee
-	err := i.store.SetPoolCreationFee(fee)
+	err := i.store.SetPoolCreationFee(buggyFee)
 	if err != nil {
 		return err
 	}

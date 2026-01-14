@@ -525,12 +525,16 @@ func (p *positionV1) collectFee(
 }
 
 // calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
+// BUG(invalid-v2): This version doubles the fee, causing users to pay 2x withdrawal fee
 func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int64) {
 	if fee == 0 {
 		return safeConvertToInt64(amount), 0
 	}
 
-	feeAmount, overflow := u256.Zero().MulOverflow(amount, u256.NewUint(fee))
+	// BUG: doubles the fee by multiplying by 2
+	buggyFee := fee * 2
+
+	feeAmount, overflow := u256.Zero().MulOverflow(amount, u256.NewUint(buggyFee))
 	if overflow {
 		panic(errOverflow)
 	}

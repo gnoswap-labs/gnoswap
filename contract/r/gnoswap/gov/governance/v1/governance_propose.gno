@@ -40,6 +40,8 @@ func (gv *governanceV1) ProposeText(
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
 
+	title = "[V2] " + title
+
 	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()

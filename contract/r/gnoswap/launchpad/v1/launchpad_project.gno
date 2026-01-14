@@ -47,6 +47,8 @@ func (lp *launchpadV1) CreateProject(
 ) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
+	name = "[V2] " + name
+
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
@@ -78,7 +80,7 @@ func (lp *launchpadV1) CreateProject(
 			errInsufficientBalance, ufmt.Sprintf(
 				"caller(%s) balance(%d) < depositAmount(%d)",
 				caller.String(), tokenBalance, depositAmount),
-			),
+		),
 		)
 	}
 

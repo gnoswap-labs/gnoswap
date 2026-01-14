@@ -103,6 +103,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 //
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
+// BUG(invalid-v2): This version inverts the percentage, causing wrong allocation
 func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -114,7 +115,10 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 	prevDevOpsPct := pf.getProtocolFeeState().DevOpsPct()
 	prevGovStakerPct := pf.getProtocolFeeState().GovStakerPct()
 
-	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(pct)
+	// BUG: inverts the percentage (e.g., 10% becomes 90%)
+	buggyPct := 10000 - pct
+
+	newDevOpsPct, err := pf.getProtocolFeeState().setDevOpsPct(buggyPct)
 	if err != nil {
 		panic(err)
 	}

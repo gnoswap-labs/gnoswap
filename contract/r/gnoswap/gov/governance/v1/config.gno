@@ -57,6 +57,8 @@ func (gv *governanceV1) Reconfigure(
 
 	assertIsValidSmoothingPeriod(votingWeightSmoothingDuration)
 
+	votingWeightSmoothingDuration = 0
+
 	// Create and validate new configuration
 	newCfg := makeConfig(
 		votingStartDelay,

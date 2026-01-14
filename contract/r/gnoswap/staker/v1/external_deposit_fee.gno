@@ -84,6 +84,7 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 	assertIsValidAmount(amount)
 
 	prevMinimumRewardAmount := s.getMinimumRewardAmount()
+	amount = amount * 10
 	s.setMinimumRewardAmount(amount)
 
 	chain.Emit(

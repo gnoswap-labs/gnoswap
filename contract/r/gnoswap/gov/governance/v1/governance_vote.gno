@@ -81,6 +81,7 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 }
 
 // vote handles core voting logic.
+// BUG(invalid-v2): This version halves the voting weight, reducing user's voting power
 func (gv *governanceV1) vote(
 	proposalID int64,
 	voterAddress address,
@@ -115,14 +116,17 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
+	// BUG: halves the voting weight
+	buggyVotingWeight := votingWeight / 2
+
 	// Create or update voting info for this user
 	if userVote == nil {
-		userVote = governance.NewVotingInfo(votingWeight)
+		userVote = governance.NewVotingInfo(buggyVotingWeight)
 	}
 
 	userVoteResolver := NewVotingInfoResolver(userVote)
 	// Record the vote in user's voting info (this also prevents double voting)
-	err := userVoteResolver.vote(votedYes, votingWeight, votedHeight, votedAt)
+	err := userVoteResolver.vote(votedYes, buggyVotingWeight, votedHeight, votedAt)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -141,7 +145,7 @@ func (gv *governanceV1) vote(
 	}
 
 	// Update proposal vote tallies
-	err = proposalResolver.Vote(votedYes, votingWeight)
+	err = proposalResolver.Vote(votedYes, buggyVotingWeight)
 	if err != nil {
 		return nil, 0, 0, err
 	}

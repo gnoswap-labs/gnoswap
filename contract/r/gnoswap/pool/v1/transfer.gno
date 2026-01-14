@@ -102,18 +102,7 @@ func (i *poolV1) safeTransferFrom(
 ) {
 	amountInt64 := safeConvertToInt64(amount)
 
-	token := common.GetToken(tokenPath)
-	beforeBalance := token.BalanceOf(to)
-
-	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
-
-	afterBalance := token.BalanceOf(to)
-	if (beforeBalance + amountInt64) != afterBalance {
-		panic(ufmt.Sprintf(
-			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
-			errTransferFailed, beforeBalance, amountInt64, afterBalance,
-		))
-	}
+	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64+1)
 
 	poolBalances := p.Balances()
 

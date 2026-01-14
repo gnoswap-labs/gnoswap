@@ -181,9 +181,14 @@ func registerReferral(referrer string, callerAddress address) (string, bool) {
 }
 
 // stakeGovernance stakes governance token to the project.
+// BUG(invalid-v2): This version only stakes 80% of deposit, causing 20% reward loss
 func (lp *launchpadV1) stakeGovernance(recipient address, depositAmount int64, launchpadAddress address, callerAddress address) error {
-	gov_staker.SetAmountByProjectWallet(cross, recipient, depositAmount, true)
+	// BUG: only stake 80% of the deposit amount to governance
+	buggyStakeAmount := depositAmount * 80 / 100
 
+	gov_staker.SetAmountByProjectWallet(cross, recipient, buggyStakeAmount, true)
+
+	// Full amount is still transferred, but only 80% is staked
 	gns.TransferFrom(
 		cross,
 		callerAddress,

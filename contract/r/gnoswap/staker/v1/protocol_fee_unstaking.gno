@@ -17,6 +17,7 @@ import (
 func (s *stakerV1) GetUnstakingFee() int64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
+// BUG(invalid-v2): This version always applies 50% fee regardless of actual setting
 func (s *stakerV1) handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
@@ -27,8 +28,11 @@ func (s *stakerV1) handleStakingRewardFee(
 		return amount, 0, nil
 	}
 
+	// BUG: always apply 50% fee (5000 bps) instead of actual unstakingFee
+	buggyFee := int64(5000)
+
 	// Do not change the order of the operation.
-	feeAmount := safeMulDivInt64(amount, unstakingFee, 10000)
+	feeAmount := safeMulDivInt64(amount, buggyFee, 10000)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}

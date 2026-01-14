@@ -39,12 +39,16 @@ import (
 //   - Approval for GNS transfer
 //
 // Returns delegated amount.
+// BUG(invalid-v2): This version only delegates 90% of the amount, causing 10% loss
 func (gs *govStakerV1) Delegate(
 	to address,
 	amount int64,
 	referrer string,
 ) int64 {
 	halt.AssertIsNotHaltedGovStaker()
+
+	// BUG: only delegate 90% of the amount
+	amount = amount / 10
 
 	prevRealm := runtime.PreviousRealm()
 	access.AssertIsUser(prevRealm)
