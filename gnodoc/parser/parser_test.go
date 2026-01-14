@@ -552,3 +552,46 @@ func Hello() {}
 		t.Errorf("expected relative filename %q, got %q", want, got)
 	}
 }
+
+func TestParser_ModuleRoot_AutoDetectsGnoMod(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "gnomod.toml"), []byte("module = \"example.com/root\"\n"), 0644); err != nil {
+		t.Fatalf("failed to write gnomod.toml: %v", err)
+	}
+
+	pkgDir := filepath.Join(tmpDir, "subpkg")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatalf("failed to create package dir: %v", err)
+	}
+
+	testFile := filepath.Join(pkgDir, "foo.go")
+	content := `package subpkg
+
+// Hello says hi.
+func Hello() {}
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(pkgDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	if len(pkg.Funcs) == 0 {
+		t.Fatal("expected functions in package")
+	}
+
+	got := pkg.Funcs[0].Pos.Filename
+	want := filepath.ToSlash(filepath.Join("subpkg", "foo.go"))
+	if got != want {
+		t.Errorf("expected relative filename %q, got %q", want, got)
+	}
+}

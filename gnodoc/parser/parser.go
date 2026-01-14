@@ -74,6 +74,8 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 
 	if p.opts.ModuleRoot != "" {
 		p.moduleRoot = filepath.Clean(p.opts.ModuleRoot)
+	} else if root, ok := findModuleRoot(dir); ok {
+		p.moduleRoot = root
 	} else {
 		p.moduleRoot = dir
 	}
@@ -186,6 +188,25 @@ func (p *Parser) resolveImportPath(importPath string) (string, error) {
 	}
 
 	return dir, nil
+}
+
+// findModuleRoot walks up from startDir to find gnomod.toml.
+// Returns the directory containing gnomod.toml if found.
+func findModuleRoot(startDir string) (string, bool) {
+	dir := filepath.Clean(startDir)
+	for {
+		gnomodPath := filepath.Join(dir, "gnomod.toml")
+		if info, err := os.Stat(gnomodPath); err == nil && !info.IsDir() {
+			return dir, true
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", false
 }
 
 // parseFiles parses the given files using go/parser.
