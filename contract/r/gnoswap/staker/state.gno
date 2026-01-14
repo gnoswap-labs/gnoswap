@@ -26,7 +26,7 @@ var (
 func init() {
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
-	initRegisterReadableContract()
+	initRegisterWritableContract()
 
 	// Initialize the initializers map to store implementation registration functions
 	versionManager = version_manager.NewVersionManager(
@@ -38,7 +38,7 @@ func init() {
 	implementation = nil
 }
 
-func initRegisterReadableContract() {
+func initRegisterWritableContract() {
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 
 	if err := kvStore.AddAuthorizedCaller(poolAddr, store.Write); err != nil {
