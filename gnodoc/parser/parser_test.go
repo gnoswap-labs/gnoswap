@@ -507,6 +507,19 @@ func ExampleHello() {
 	}
 }
 
+func TestNormalizeExampleCode(t *testing.T) {
+	input := `
+		func main() {
+			println("hi")
+		}
+`
+	want := "func main() {\n\tprintln(\"hi\")\n}"
+	got := normalizeExampleCode(input)
+	if got != want {
+		t.Errorf("normalizeExampleCode() = %q, want %q", got, want)
+	}
+}
+
 func TestParser_DeprecatedExtraction(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
 	if err != nil {
@@ -701,6 +714,12 @@ func Hello() {}
 	want := filepath.ToSlash(filepath.Join("subpkg", "foo.go"))
 	if got != want {
 		t.Errorf("expected relative filename %q, got %q", want, got)
+	}
+
+	if strings.HasPrefix(pkg.ImportPath, "example.com/") {
+		if pkg.ImportPath != "example.com/root/subpkg" {
+			t.Errorf("expected import path %q, got %q", "example.com/root/subpkg", pkg.ImportPath)
+		}
 	}
 }
 

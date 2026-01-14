@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"go/ast"
@@ -23,6 +24,7 @@ type Parser struct {
 	fset           *token.FileSet
 	hadParseErrors bool
 	moduleRoot     string
+	modulePath     string
 }
 
 // New creates a new parser with the given options.
@@ -39,6 +41,7 @@ func New(opts *Options) *Parser {
 		fset:           token.NewFileSet(),
 		hadParseErrors: false,
 		moduleRoot:     moduleRoot,
+		modulePath:     "",
 	}
 }
 
@@ -81,6 +84,7 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 	} else {
 		p.moduleRoot = dir
 	}
+	p.modulePath = readGnoModModule(p.moduleRoot)
 
 	// Collect files
 	files, err := p.collectFiles(dir)
@@ -130,7 +134,7 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 	if p.opts.IncludeTests {
 		examples = p.collectExamplesFromFiles(dir, files)
 	}
-	return p.convertPackage(docPkg, dir, files, examples), nil
+	return p.convertPackage(docPkg, dir, files, examples, p.moduleRoot, p.modulePath), nil
 }
 
 // collectFiles returns all Go/Gno files in the directory.
@@ -215,8 +219,50 @@ func findModuleRoot(startDir string) (string, bool) {
 	return "", false
 }
 
+func readGnoModModule(moduleRoot string) string {
+	if moduleRoot == "" {
+		return ""
+	}
+	path := filepath.Join(moduleRoot, "gnomod.toml")
+	file, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if !strings.HasPrefix(line, "module") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		if key != "module" {
+			continue
+		}
+		value := strings.TrimSpace(parts[1])
+		value = strings.Trim(value, "\"")
+		value = strings.Trim(value, "'")
+		return value
+	}
+	return ""
+}
+
 // parseFiles parses the given files using go/parser.
 func (p *Parser) parseFiles(dir string, files []string) (map[string]*ast.Package, error) {
+	for _, name := range files {
+		if strings.HasSuffix(name, ".gno") {
+			return p.parseFilesIndividually(dir, files)
+		}
+	}
+
 	filter := func(fi os.FileInfo) bool {
 		for _, f := range files {
 			if fi.Name() == f {
@@ -265,10 +311,21 @@ func (p *Parser) parseFilesIndividually(dir string, files []string) (map[string]
 }
 
 // convertPackage converts go/doc.Package to model.DocPackage.
-func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string, examples []*doc.Example) *model.DocPackage {
+func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string, examples []*doc.Example, moduleRoot, modulePath string) *model.DocPackage {
 	pkg := &model.DocPackage{
 		Name:       docPkg.Name,
 		ImportPath: docPkg.ImportPath,
+	}
+	if modulePath != "" && moduleRoot != "" {
+		if rel, err := filepath.Rel(moduleRoot, dir); err == nil {
+			rel = filepath.ToSlash(rel)
+			if rel == "." {
+				pkg.ImportPath = modulePath
+			} else {
+				pkg.ImportPath = modulePath + "/" + rel
+			}
+			pkg.ModulePath = modulePath
+		}
 	}
 
 	// Extract summary (first sentence)
@@ -725,7 +782,7 @@ func (p *Parser) convertExample(ex *doc.Example) model.DocExample {
 	if ex.Code != nil {
 		var buf bytes.Buffer
 		_ = printer.Fprint(&buf, p.fset, ex.Code)
-		code = strings.TrimSpace(buf.String())
+		code = normalizeExampleCode(buf.String())
 	}
 
 	pos := model.SourcePos{}
@@ -781,6 +838,62 @@ func extractSummary(doc string) string {
 	}
 
 	return doc
+}
+
+func normalizeExampleCode(code string) string {
+	if strings.TrimSpace(code) == "" {
+		return ""
+	}
+
+	lines := strings.Split(code, "\n")
+	start := 0
+	for start < len(lines) && strings.TrimSpace(lines[start]) == "" {
+		start++
+	}
+	end := len(lines) - 1
+	for end >= start && strings.TrimSpace(lines[end]) == "" {
+		end--
+	}
+	lines = lines[start : end+1]
+
+	minIndent := -1
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		count := 0
+		for _, r := range line {
+			if r == ' ' || r == '\t' {
+				count++
+			} else {
+				break
+			}
+		}
+		if minIndent == -1 || count < minIndent {
+			minIndent = count
+		}
+	}
+
+	if minIndent > 0 {
+		for i, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			removed := 0
+			index := 0
+			for index < len(line) && removed < minIndent {
+				if line[index] == ' ' || line[index] == '\t' {
+					removed++
+					index++
+					continue
+				}
+				break
+			}
+			lines[i] = line[index:]
+		}
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func extractDeprecated(doc string, pos model.SourcePos) (string, []model.DocDeprecated) {
