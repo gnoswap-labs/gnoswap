@@ -24,14 +24,14 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 			caller:        testutils.TestAddress("alice"),
 			threshold:     100,
 			expectPanic:   true,
-			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not admin or governance",
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not admin",
 		},
 		{
 			name:          "Invalid caller address should panic",
 			caller:        testutils.TestAddress("invalid"),
 			threshold:     100,
 			expectPanic:   true,
-			expectedError: "unauthorized: caller g1d9h8vctvd9j97h6lta047h6lta047h6l8k5rvt is not admin or governance",
+			expectedError: "unauthorized: caller g1d9h8vctvd9j97h6lta047h6lta047h6l8k5rvt is not admin",
 		},
 	}
 
@@ -107,6 +107,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
 // Test boundary conditions for safe arithmetic in delegation snapshot cleanup
 func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 	t.Run("CleanTotalDelegationHistory with MaxInt64 cutoff", func(t *testing.T) {
