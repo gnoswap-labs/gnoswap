@@ -348,11 +348,14 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 		fnParts = append(fnParts, "```")
 
 		// Documentation
-		if fn.Doc != "" {
-			fnParts = append(fnParts, fn.Doc)
+		docText, paramItems, returnItems := splitDocSections(fn.Doc)
+		if docText != "" {
+			fnParts = append(fnParts, docText)
 		}
-
-		if returns := r.renderReturns(fn); returns != "" {
+		if params := r.renderParamTable(fn.Params, paramItems); params != "" {
+			fnParts = append(fnParts, params)
+		}
+		if returns := r.renderReturnTable(fn, returnItems); returns != "" {
 			fnParts = append(fnParts, returns)
 		}
 
@@ -445,11 +448,16 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 					methodLines = append(methodLines, "```go")
 					methodLines = append(methodLines, m.FullSignature())
 					methodLines = append(methodLines, "```")
-					if m.Doc != "" {
+					docText, paramItems, returnItems := splitDocSections(m.Doc)
+					if docText != "" {
 						methodLines = append(methodLines, "")
-						methodLines = append(methodLines, m.Doc)
+						methodLines = append(methodLines, docText)
 					}
-					if returns := r.renderReturns(m); returns != "" {
+					if params := r.renderParamTable(m.Params, paramItems); params != "" {
+						methodLines = append(methodLines, "")
+						methodLines = append(methodLines, params)
+					}
+					if returns := r.renderReturnTable(m, returnItems); returns != "" {
 						methodLines = append(methodLines, "")
 						methodLines = append(methodLines, returns)
 					}
@@ -594,49 +602,199 @@ func (r *MarkdownRenderer) RenderNotes(pkg *model.DocPackage) string {
 	return sb.String()
 }
 
-func (r *MarkdownRenderer) renderReturns(fn model.DocFunc) string {
-	trimmedDoc := strings.TrimSpace(fn.Doc)
-	if strings.HasPrefix(trimmedDoc, "Returns:") || strings.Contains(fn.Doc, "\nReturns:") {
+type docItem struct {
+	Key  string
+	Desc string
+	Used bool
+}
+
+func splitDocSections(doc string) (string, []docItem, []docItem) {
+	if doc == "" {
+		return "", nil, nil
+	}
+
+	lines := strings.Split(doc, "\n")
+	var cleaned []string
+	var paramItems []docItem
+	var returnItems []docItem
+
+	for i := 0; i < len(lines); i++ {
+		trimmed := strings.TrimSpace(lines[i])
+		switch trimmed {
+		case "Parameters:":
+			items, next := parseDocList(lines, i+1)
+			paramItems = append(paramItems, items...)
+			i = next - 1
+			continue
+		case "Returns:":
+			items, next := parseDocList(lines, i+1)
+			returnItems = append(returnItems, items...)
+			i = next - 1
+			continue
+		}
+		cleaned = append(cleaned, lines[i])
+	}
+
+	cleaned = trimEmptyLines(cleaned)
+	return strings.Join(cleaned, "\n"), paramItems, returnItems
+}
+
+func parseDocList(lines []string, start int) ([]docItem, int) {
+	var items []docItem
+	i := start
+	for i < len(lines) {
+		trimmed := strings.TrimLeft(lines[i], " \t")
+		if !strings.HasPrefix(trimmed, "- ") {
+			break
+		}
+		item := strings.TrimSpace(strings.TrimPrefix(trimmed, "- "))
+		key, desc := splitKeyDesc(item)
+		items = append(items, docItem{Key: key, Desc: desc})
+		i++
+	}
+	return items, i
+}
+
+func splitKeyDesc(item string) (string, string) {
+	if idx := strings.Index(item, ":"); idx != -1 {
+		key := strings.TrimSpace(item[:idx])
+		desc := strings.TrimSpace(item[idx+1:])
+		return key, desc
+	}
+	return strings.TrimSpace(item), ""
+}
+
+func trimEmptyLines(lines []string) []string {
+	for len(lines) > 0 && strings.TrimSpace(lines[0]) == "" {
+		lines = lines[1:]
+	}
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+	return lines
+}
+
+func escapeTableCell(value string) string {
+	value = strings.ReplaceAll(value, "|", "\\|")
+	value = strings.ReplaceAll(value, "\n", " ")
+	return strings.TrimSpace(value)
+}
+
+func (r *MarkdownRenderer) renderParamTable(params []model.DocParam, items []docItem) string {
+	if len(params) == 0 && len(items) == 0 {
 		return ""
 	}
-	if len(fn.ReturnNames) == 0 && len(fn.ReturnExprs) == 0 && !fn.HasNakedReturn {
+
+	descByName := make(map[string]string, len(items))
+	for _, item := range items {
+		if item.Key == "" {
+			continue
+		}
+		descByName[item.Key] = item.Desc
+	}
+
+	var lines []string
+	lines = append(lines, "#### Parameters")
+	lines = append(lines, "")
+	lines = append(lines, "| Name | Type | Description |")
+	lines = append(lines, "| --- | --- | --- |")
+
+	if len(params) == 0 {
+		for _, item := range items {
+			lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
+				escapeTableCell(item.Key),
+				"",
+				escapeTableCell(item.Desc),
+			))
+		}
+		return strings.Join(lines, "\n")
+	}
+
+	for _, param := range params {
+		desc := ""
+		if param.Name != "" {
+			desc = descByName[param.Name]
+		}
+		lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
+			escapeTableCell(param.Name),
+			escapeTableCell(param.Type),
+			escapeTableCell(desc),
+		))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (r *MarkdownRenderer) renderReturnTable(fn model.DocFunc, items []docItem) string {
+	if len(fn.Results) == 0 && len(items) == 0 {
 		return ""
 	}
 
 	var lines []string
 	lines = append(lines, "#### Returns")
 	lines = append(lines, "")
+	lines = append(lines, "| Name | Type | Description |")
+	lines = append(lines, "| --- | --- | --- |")
 
-	if len(fn.ReturnNames) > 0 {
-		lines = append(lines, fmt.Sprintf("- named: %s", strings.Join(fn.ReturnNames, ", ")))
-	}
-	if fn.HasNakedReturn {
-		lines = append(lines, "- return: (named returns)")
-	}
-	seen := make(map[string]struct{})
-	var ordered []string
-	hasNil := false
-	for _, ret := range fn.ReturnExprs {
-		ret = strings.TrimSpace(ret)
-		if ret == "" {
-			continue
+	if len(fn.Results) == 0 {
+		for _, item := range items {
+			lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
+				escapeTableCell(item.Key),
+				"",
+				escapeTableCell(item.Desc),
+			))
 		}
-		if ret == "nil" {
-			hasNil = true
-			continue
-		}
-		if _, ok := seen[ret]; ok {
-			continue
-		}
-		seen[ret] = struct{}{}
-		ordered = append(ordered, ret)
+		return strings.Join(lines, "\n")
 	}
-	if hasNil {
-		ordered = append(ordered, "nil")
-	}
-	for _, ret := range ordered {
-		lines = append(lines, fmt.Sprintf("- return: %s", ret))
+
+	descItems := make([]docItem, len(items))
+	copy(descItems, items)
+
+	for _, result := range fn.Results {
+		item := matchDocItem(descItems, result.Name, result.Type)
+		name := result.Name
+		if name == "" && item.Key != "" {
+			name = item.Key
+		}
+		lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
+			escapeTableCell(name),
+			escapeTableCell(result.Type),
+			escapeTableCell(item.Desc),
+		))
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func matchDocItem(items []docItem, name, typ string) docItem {
+	if name != "" {
+		for i := range items {
+			if items[i].Used {
+				continue
+			}
+			if items[i].Key == name {
+				items[i].Used = true
+				return items[i]
+			}
+		}
+	}
+	if typ != "" {
+		for i := range items {
+			if items[i].Used {
+				continue
+			}
+			if items[i].Key == typ {
+				items[i].Used = true
+				return items[i]
+			}
+		}
+	}
+	for i := range items {
+		if items[i].Used {
+			continue
+		}
+		items[i].Used = true
+		return items[i]
+	}
+	return docItem{}
 }
