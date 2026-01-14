@@ -1003,7 +1003,7 @@ func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.
 
 	testing.SetRealm(userRealm)
 
-	uassert.AbortsContains(t, "not admin or governance", func() {
+	uassert.AbortsContains(t, "is not admin", func() {
 		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
 	})
 }
