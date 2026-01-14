@@ -18,10 +18,10 @@ package position
 //   - referrer: referrer address for reward tracking
 //
 // Returns:
-//   - uint64: position ID
-//   - string: liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
+//   - positionId: position ID
+//   - liquidity: liquidity amount
+//   - amount0: amount of token0 added
+//   - amount1: amount of token1 added
 func Mint(
 	cur realm,
 	token0 string,
@@ -52,11 +52,11 @@ func Mint(
 //   - deadline: transaction deadline
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
-//   - string: pool path
+//   - positionId: position ID
+//   - liquidity: new liquidity amount
+//   - amount0: amount of token0 added
+//   - amount1: amount of token1 added
+//   - poolPath: pool path
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -80,13 +80,13 @@ func IncreaseLiquidity(
 //   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
-//   - uint64: position ID
-//   - string: removed liquidity amount
-//   - string: amount of token0 removed
-//   - string: amount of token1 removed
-//   - string: pool path
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
+//   - positionId: position ID
+//   - liquidity: removed liquidity amount
+//   - amount0: amount of token0 removed
+//   - amount1: amount of token1 removed
+//   - poolPath: pool path
+//   - amount0AfterFee: net amount of token0 after fees
+//   - amount1AfterFee: net amount of token1 after fees
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -112,12 +112,12 @@ func DecreaseLiquidity(
 //   - deadline: transaction deadline
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - int32: new lower tick
-//   - int32: new upper tick
-//   - string: amount of token0 used
-//   - string: amount of token1 used
+//   - positionId: position ID
+//   - liquidity: new liquidity amount
+//   - tickLower: new lower tick
+//   - tickUpper: new upper tick
+//   - amount0: amount of token0 used
+//   - amount1: amount of token1 used
 func Reposition(
 	cur realm,
 	positionId uint64,
@@ -139,12 +139,12 @@ func Reposition(
 //   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
-//   - uint64: position ID
-//   - string: amount of token0 collected
-//   - string: amount of token1 collected
-//   - string: pool path
-//   - string: token0 path
-//   - string: token1 path
+//   - positionId: position ID
+//   - amount0: amount of token0 collected
+//   - amount1: amount of token1 collected
+//   - poolPath: pool path
+//   - token0Path: token0 path
+//   - token1Path: token1 path
 func CollectFee(
 	cur realm,
 	positionId uint64,
