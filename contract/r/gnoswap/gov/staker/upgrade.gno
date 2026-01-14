@@ -30,9 +30,9 @@ func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerSt
 }
 
 // UpgradeImpl upgrades the implementation to a new version
-// Only admin can call this function
+// Only admin or governance can call this function
 func UpgradeImpl(cur realm, packagePath string) {
-	// Check admin permission
+	// Check admin or governance permission
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
