@@ -32,13 +32,13 @@ func (f DocField) TagValue(key string) string {
 
 	// Fallback: manual parsing for tags without quotes around the whole tag
 	// e.g., `json:"id" xml:"id"`
-	parts := strings.Split(f.Tag, " ")
-	for _, part := range parts {
+	parts := strings.SplitSeq(f.Tag, " ")
+	for part := range parts {
 		if strings.HasPrefix(part, key+":") {
 			// Extract value between quotes
-			idx := strings.Index(part, ":")
-			if idx >= 0 {
-				val := part[idx+1:]
+			_, after, ok := strings.Cut(part, ":")
+			if ok {
+				val := after
 				val = strings.Trim(val, "\"")
 				return val
 			}

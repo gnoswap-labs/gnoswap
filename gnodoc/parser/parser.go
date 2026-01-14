@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -266,12 +267,7 @@ func (p *Parser) parseFiles(dir string, files []string) (map[string]*ast.Package
 	}
 
 	filter := func(fi os.FileInfo) bool {
-		for _, f := range files {
-			if fi.Name() == f {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(files, fi.Name())
 	}
 
 	pkgs, err := parser.ParseDir(p.fset, dir, filter, parser.ParseComments)
@@ -984,8 +980,8 @@ func extractSummary(doc string) string {
 	}
 
 	// No period found, return first line
-	if idx := strings.Index(doc, "\n"); idx != -1 {
-		return doc[:idx]
+	if before, _, ok := strings.Cut(doc, "\n"); ok {
+		return before
 	}
 
 	return doc
@@ -1100,8 +1096,8 @@ func extractDeprecated(doc string, pos model.SourcePos) (string, []model.DocDepr
 	for i := 0; i < len(lines); {
 		line := lines[i]
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "Deprecated:") {
-			body := strings.TrimSpace(strings.TrimPrefix(trimmed, "Deprecated:"))
+		if after, ok := strings.CutPrefix(trimmed, "Deprecated:"); ok {
+			body := strings.TrimSpace(after)
 			j := i + 1
 			for j < len(lines) {
 				next := strings.TrimSpace(lines[j])
