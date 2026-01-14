@@ -716,6 +716,9 @@ func (p *Parser) typeString(expr ast.Expr) string {
 	case *ast.Ident:
 		return t.Name
 	case *ast.SelectorExpr:
+		if ident, ok := t.X.(*ast.Ident); ok && ident.Name == "std" && t.Sel.Name == "Address" {
+			return "address"
+		}
 		return p.typeString(t.X) + "." + t.Sel.Name
 	case *ast.StarExpr:
 		return "*" + p.typeString(t.X)
@@ -753,6 +756,9 @@ func (p *Parser) exprString(expr ast.Expr) string {
 	case *ast.Ident:
 		return e.Name
 	case *ast.SelectorExpr:
+		if ident, ok := e.X.(*ast.Ident); ok && ident.Name == "std" && e.Sel.Name == "Address" {
+			return "address"
+		}
 		return p.exprString(e.X) + "." + e.Sel.Name
 	case *ast.UnaryExpr:
 		return e.Op.String() + p.exprString(e.X)
@@ -937,7 +943,7 @@ func (p *Parser) convertExample(ex *doc.Example) model.DocExample {
 
 	return model.DocExample{
 		Name:   ex.Name,
-		Doc:    ex.Doc,
+		Doc:    normalizeDocText(ex.Doc),
 		Code:   code,
 		Output: strings.TrimRight(ex.Output, "\n"),
 		Pos:    pos,
@@ -983,6 +989,13 @@ func extractSummary(doc string) string {
 	}
 
 	return doc
+}
+
+func normalizeDocText(doc string) string {
+	if doc == "" {
+		return ""
+	}
+	return strings.ReplaceAll(doc, "std.Address", "address")
 }
 
 func normalizeExampleCode(code string) string {
@@ -1075,6 +1088,7 @@ func normalizeExampleCode(code string) string {
 }
 
 func extractDeprecated(doc string, pos model.SourcePos) (string, []model.DocDeprecated) {
+	doc = normalizeDocText(doc)
 	if strings.TrimSpace(doc) == "" {
 		return doc, nil
 	}
