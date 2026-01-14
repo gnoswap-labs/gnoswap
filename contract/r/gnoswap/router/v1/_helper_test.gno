@@ -94,6 +94,10 @@ var (
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
+	poolAddr     = chain.PackageAddress("gno.land/r/gnoswap/pool")
+	routerAddr   = chain.PackageAddress("gno.land/r/gnoswap/router")
+	positionAddr = chain.PackageAddress("gno.land/r/gnoswap/position")
+
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	// addresses used in tests
@@ -543,4 +547,3 @@ func mockInstanceSwapCallback(
 		return mockInstance.SwapCallback(token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 	}(cross)
 }
-
