@@ -609,7 +609,28 @@ func (r *MarkdownRenderer) renderReturns(fn model.DocFunc) string {
 	if fn.HasNakedReturn {
 		lines = append(lines, "- return: (named returns)")
 	}
+	seen := make(map[string]struct{})
+	var ordered []string
+	hasNil := false
 	for _, ret := range fn.ReturnExprs {
+		ret = strings.TrimSpace(ret)
+		if ret == "" {
+			continue
+		}
+		if ret == "nil" {
+			hasNil = true
+			continue
+		}
+		if _, ok := seen[ret]; ok {
+			continue
+		}
+		seen[ret] = struct{}{}
+		ordered = append(ordered, ret)
+	}
+	if hasNil {
+		ordered = append(ordered, "nil")
+	}
+	for _, ret := range ordered {
 		lines = append(lines, fmt.Sprintf("- return: %s", ret))
 	}
 
