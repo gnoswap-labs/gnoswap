@@ -352,6 +352,10 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 			fnParts = append(fnParts, fn.Doc)
 		}
 
+		if returns := r.renderReturns(fn); returns != "" {
+			fnParts = append(fnParts, returns)
+		}
+
 		// Source link
 		if link := r.sourceLink(fn.Pos); link != "" {
 			fnParts = append(fnParts, fmt.Sprintf("[source](%s)", link))
@@ -444,6 +448,10 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 					if m.Doc != "" {
 						methodLines = append(methodLines, "")
 						methodLines = append(methodLines, m.Doc)
+					}
+					if returns := r.renderReturns(m); returns != "" {
+						methodLines = append(methodLines, "")
+						methodLines = append(methodLines, returns)
 					}
 					if link := r.sourceLink(m.Pos); link != "" {
 						methodLines = append(methodLines, "")
@@ -584,4 +592,26 @@ func (r *MarkdownRenderer) RenderNotes(pkg *model.DocPackage) string {
 	sb.WriteString("\n")
 
 	return sb.String()
+}
+
+func (r *MarkdownRenderer) renderReturns(fn model.DocFunc) string {
+	if len(fn.ReturnNames) == 0 && len(fn.ReturnExprs) == 0 && !fn.HasNakedReturn {
+		return ""
+	}
+
+	var lines []string
+	lines = append(lines, "#### Returns")
+	lines = append(lines, "")
+
+	if len(fn.ReturnNames) > 0 {
+		lines = append(lines, fmt.Sprintf("- named: %s", strings.Join(fn.ReturnNames, ", ")))
+	}
+	if fn.HasNakedReturn {
+		lines = append(lines, "- return: (named returns)")
+	}
+	for _, ret := range fn.ReturnExprs {
+		lines = append(lines, fmt.Sprintf("- return: %s", ret))
+	}
+
+	return strings.Join(lines, "\n")
 }

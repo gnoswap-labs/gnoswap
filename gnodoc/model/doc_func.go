@@ -8,6 +8,12 @@ type DocFunc struct {
 	Params   []DocParam
 	Results  []DocParam
 	Receiver *DocReceiver
+	// ReturnNames captures named return values from the signature.
+	ReturnNames []string
+	// ReturnExprs captures return statement expressions, joined by ", ".
+	ReturnExprs []string
+	// HasNakedReturn reports whether a naked return is present.
+	HasNakedReturn bool
 }
 
 // IsMethod reports whether this is a method (has a receiver).

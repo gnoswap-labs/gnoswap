@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/doc"
+	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -134,7 +135,8 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 	if p.opts.IncludeTests {
 		examples = p.collectExamplesFromFiles(dir, files)
 	}
-	return p.convertPackage(docPkg, dir, files, examples, p.moduleRoot, p.modulePath), nil
+	returnInfos := p.collectReturnInfo(pkgs)
+	return p.convertPackage(docPkg, dir, files, examples, p.moduleRoot, p.modulePath, returnInfos), nil
 }
 
 // collectFiles returns all Go/Gno files in the directory.
@@ -311,7 +313,7 @@ func (p *Parser) parseFilesIndividually(dir string, files []string) (map[string]
 }
 
 // convertPackage converts go/doc.Package to model.DocPackage.
-func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string, examples []*doc.Example, moduleRoot, modulePath string) *model.DocPackage {
+func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string, examples []*doc.Example, moduleRoot, modulePath string, returnInfos map[string]returnInfo) *model.DocPackage {
 	pkg := &model.DocPackage{
 		Name:       docPkg.Name,
 		ImportPath: docPkg.ImportPath,
@@ -358,14 +360,14 @@ func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string,
 
 	// Convert functions
 	for _, f := range docPkg.Funcs {
-		fn := p.convertFunc(f)
+		fn := p.convertFunc(f, returnInfos)
 		pkg.Funcs = append(pkg.Funcs, fn)
 		pkg.Deprecated = append(pkg.Deprecated, fn.Deprecated...)
 	}
 
 	// Convert types
 	for _, t := range docPkg.Types {
-		typ := p.convertType(t)
+		typ := p.convertType(t, returnInfos)
 		pkg.Types = append(pkg.Types, typ)
 		pkg.Deprecated = append(pkg.Deprecated, typ.Deprecated...)
 		for _, field := range typ.Fields {
@@ -494,7 +496,7 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 }
 
 // convertFunc converts a go/doc.Func to model.DocFunc.
-func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
+func (p *Parser) convertFunc(f *doc.Func, returnInfos map[string]returnInfo) model.DocFunc {
 	pos := model.SourcePos{}
 	if f.Decl != nil {
 		pos = p.convertPos(f.Decl.Pos())
@@ -522,6 +524,12 @@ func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
 			fn.Results = p.convertFieldList(f.Decl.Type.Results)
 		}
 
+		for _, result := range fn.Results {
+			if result.Name != "" {
+				fn.ReturnNames = append(fn.ReturnNames, result.Name)
+			}
+		}
+
 		// Extract receiver
 		if f.Decl.Recv != nil && len(f.Decl.Recv.List) > 0 {
 			recv := f.Decl.Recv.List[0]
@@ -535,11 +543,20 @@ func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
 		}
 	}
 
+	key := returnInfoKey(fn.Name, fn.ReceiverType())
+	if info, ok := returnInfos[key]; ok {
+		fn.ReturnExprs = append(fn.ReturnExprs, info.exprs...)
+		fn.HasNakedReturn = info.naked
+	} else if info, ok := p.fallbackReturnInfo(f, fn.ReceiverType()); ok {
+		fn.ReturnExprs = append(fn.ReturnExprs, info.exprs...)
+		fn.HasNakedReturn = info.naked
+	}
+
 	return fn
 }
 
 // convertType converts a go/doc.Type to model.DocType.
-func (p *Parser) convertType(t *doc.Type) model.DocType {
+func (p *Parser) convertType(t *doc.Type, returnInfos map[string]returnInfo) model.DocType {
 	pos := model.SourcePos{}
 	if t.Decl != nil {
 		pos = p.convertPos(t.Decl.Pos())
@@ -585,7 +602,7 @@ func (p *Parser) convertType(t *doc.Type) model.DocType {
 
 	// Convert methods
 	for _, m := range t.Methods {
-		method := p.convertFunc(m)
+		method := p.convertFunc(m, returnInfos)
 		method.Kind = model.KindMethod
 		if method.Receiver == nil {
 			method.Receiver = &model.DocReceiver{Type: t.Name}
@@ -595,7 +612,7 @@ func (p *Parser) convertType(t *doc.Type) model.DocType {
 
 	// Convert constructors (functions that return this type)
 	for _, f := range t.Funcs {
-		ctor := p.convertFunc(f)
+		ctor := p.convertFunc(f, returnInfos)
 		typ.Constructors = append(typ.Constructors, ctor)
 	}
 
@@ -776,18 +793,146 @@ func (p *Parser) collectExamplesFromFiles(dir string, files []string) []*doc.Exa
 	return doc.Examples(testFiles...)
 }
 
+type returnInfo struct {
+	exprs []string
+	naked bool
+}
+
+func returnInfoKey(name, receiver string) string {
+	if receiver == "" {
+		return name
+	}
+	return receiver + "." + name
+}
+
+func (p *Parser) collectReturnInfo(pkgs map[string]*ast.Package) map[string]returnInfo {
+	results := make(map[string]returnInfo)
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Files {
+			for _, decl := range file.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if !ok || fn.Body == nil || fn.Name == nil {
+					continue
+				}
+				receiver := ""
+				if fn.Recv != nil && len(fn.Recv.List) > 0 {
+					receiver = p.typeString(fn.Recv.List[0].Type)
+				}
+
+				key := returnInfoKey(fn.Name.Name, receiver)
+				info := results[key]
+
+				ast.Inspect(fn.Body, func(n ast.Node) bool {
+					ret, ok := n.(*ast.ReturnStmt)
+					if !ok {
+						return true
+					}
+					if len(ret.Results) == 0 {
+						info.naked = true
+						return true
+					}
+					var exprs []string
+					for _, expr := range ret.Results {
+						if ident, ok := expr.(*ast.Ident); ok {
+							exprs = append(exprs, ident.Name)
+							continue
+						}
+						exprs = append(exprs, p.exprString(expr))
+					}
+					if len(exprs) > 0 {
+						info.exprs = append(info.exprs, strings.Join(exprs, ", "))
+					}
+					return true
+				})
+
+				results[key] = info
+			}
+		}
+	}
+	return results
+}
+
+func (p *Parser) fallbackReturnInfo(f *doc.Func, receiverType string) (returnInfo, bool) {
+	if f.Decl == nil {
+		return returnInfo{}, false
+	}
+	pos := p.fset.Position(f.Decl.Pos())
+	if pos.Filename == "" {
+		return returnInfo{}, false
+	}
+
+	file, err := parser.ParseFile(token.NewFileSet(), pos.Filename, nil, parser.ParseComments)
+	if err != nil {
+		return returnInfo{}, false
+	}
+
+	for _, decl := range file.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Name == nil || fn.Body == nil {
+			continue
+		}
+		if fn.Name.Name != f.Name {
+			continue
+		}
+		recvType := ""
+		if fn.Recv != nil && len(fn.Recv.List) > 0 {
+			recvType = p.typeString(fn.Recv.List[0].Type)
+		}
+		if recvType != receiverType {
+			continue
+		}
+
+		info := returnInfo{}
+		ast.Inspect(fn.Body, func(n ast.Node) bool {
+			ret, ok := n.(*ast.ReturnStmt)
+			if !ok {
+				return true
+			}
+			if len(ret.Results) == 0 {
+				info.naked = true
+				return true
+			}
+			var exprs []string
+			for _, expr := range ret.Results {
+				if ident, ok := expr.(*ast.Ident); ok {
+					exprs = append(exprs, ident.Name)
+					continue
+				}
+				exprs = append(exprs, p.exprString(expr))
+			}
+			if len(exprs) > 0 {
+				info.exprs = append(info.exprs, strings.Join(exprs, ", "))
+			}
+			return true
+		})
+		return info, true
+	}
+
+	return returnInfo{}, false
+}
+
 // convertExample converts a go/doc.Example to model.DocExample.
 func (p *Parser) convertExample(ex *doc.Example) model.DocExample {
 	code := ""
-	if ex.Code != nil {
+	node := ex.Code
+	if ex.Play != nil {
+		node = ex.Play
+	}
+	if node != nil {
 		var buf bytes.Buffer
-		_ = printer.Fprint(&buf, p.fset, ex.Code)
-		code = normalizeExampleCode(buf.String())
+		_ = printer.Fprint(&buf, p.fset, node)
+		code = buf.String()
+		if strings.HasPrefix(strings.TrimSpace(code), "package ") {
+			if formatted, err := format.Source([]byte(code)); err == nil {
+				code = string(formatted)
+			}
+		}
+		code = normalizeExampleCode(code)
 	}
 
 	pos := model.SourcePos{}
-	if ex.Code != nil {
-		pos = p.convertPos(ex.Code.Pos())
+	if node != nil {
+		pos = p.convertPos(node.Pos())
 	}
 
 	return model.DocExample{
@@ -857,6 +1002,7 @@ func normalizeExampleCode(code string) string {
 	lines = lines[start : end+1]
 
 	minIndent := -1
+	minIndentNonZero := -1
 	for _, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
@@ -872,6 +1018,9 @@ func normalizeExampleCode(code string) string {
 		if minIndent == -1 || count < minIndent {
 			minIndent = count
 		}
+		if count > 0 && (minIndentNonZero == -1 || count < minIndentNonZero) {
+			minIndentNonZero = count
+		}
 	}
 
 	if minIndent > 0 {
@@ -882,6 +1031,35 @@ func normalizeExampleCode(code string) string {
 			removed := 0
 			index := 0
 			for index < len(line) && removed < minIndent {
+				if line[index] == ' ' || line[index] == '\t' {
+					removed++
+					index++
+					continue
+				}
+				break
+			}
+			lines[i] = line[index:]
+		}
+	}
+	if minIndent == 0 && minIndentNonZero > 0 {
+		for i, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			count := 0
+			for _, r := range line {
+				if r == ' ' || r == '\t' {
+					count++
+				} else {
+					break
+				}
+			}
+			if count < minIndentNonZero {
+				continue
+			}
+			removed := 0
+			index := 0
+			for index < len(line) && removed < minIndentNonZero {
 				if line[index] == ' ' || line[index] == '\t' {
 					removed++
 					index++

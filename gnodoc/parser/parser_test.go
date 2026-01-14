@@ -612,6 +612,69 @@ const Alpha = 1
 	}
 }
 
+func TestParser_ReturnTracking(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testFile := filepath.Join(tmpDir, "returns.go")
+	content := `package returns
+
+// Sum returns the sum and error.
+func Sum(a, b int) (result int, err error) {
+	result = a + b
+	return result, nil
+}
+
+// NamedOnly returns using a naked return.
+func NamedOnly() (value int) {
+	value = 10
+	return
+}
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	foundSum := false
+	foundNamed := false
+	for _, fn := range pkg.Funcs {
+		switch fn.Name {
+		case "Sum":
+			foundSum = true
+			if len(fn.ReturnNames) != 2 {
+				t.Errorf("expected 2 named returns, got %d", len(fn.ReturnNames))
+			}
+			if len(fn.ReturnExprs) == 0 {
+				t.Error("expected return expressions")
+			}
+		case "NamedOnly":
+			foundNamed = true
+			if !fn.HasNakedReturn {
+				t.Error("expected naked return")
+			}
+			if len(fn.ReturnNames) != 1 || fn.ReturnNames[0] != "value" {
+				t.Errorf("expected named return 'value', got %v", fn.ReturnNames)
+			}
+		}
+	}
+
+	if !foundSum {
+		t.Error("expected Sum function")
+	}
+	if !foundNamed {
+		t.Error("expected NamedOnly function")
+	}
+}
+
 func TestParser_ValueSpec_MultipleNamesSingleValue(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
 	if err != nil {
