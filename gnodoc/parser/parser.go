@@ -504,12 +504,12 @@ func (p *Parser) convertFunc(f *doc.Func, returnInfos map[string]returnInfo) mod
 	docText, deprecated := extractDeprecated(f.Doc, pos)
 	fn := model.DocFunc{
 		DocNode: model.DocNode{
-			Name:     f.Name,
-			Kind:     model.KindFunc,
-			Doc:      docText,
-			Summary:  extractSummary(docText),
-			Exported: isExported(f.Name),
-			Pos:      pos,
+			Name:       f.Name,
+			Kind:       model.KindFunc,
+			Doc:        docText,
+			Summary:    extractSummary(docText),
+			Exported:   isExported(f.Name),
+			Pos:        pos,
 			Deprecated: deprecated,
 		},
 	}
@@ -564,12 +564,12 @@ func (p *Parser) convertType(t *doc.Type, returnInfos map[string]returnInfo) mod
 	docText, deprecated := extractDeprecated(t.Doc, pos)
 	typ := model.DocType{
 		DocNode: model.DocNode{
-			Name:     t.Name,
-			Kind:     model.KindType,
-			Doc:      docText,
-			Summary:  extractSummary(docText),
-			Exported: isExported(t.Name),
-			Pos:      pos,
+			Name:       t.Name,
+			Kind:       model.KindType,
+			Doc:        docText,
+			Summary:    extractSummary(docText),
+			Exported:   isExported(t.Name),
+			Pos:        pos,
 			Deprecated: deprecated,
 		},
 	}

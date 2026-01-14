@@ -237,14 +237,14 @@ func (r *Runner) generateDoc(pkgPath, outDir string, opts *GlobalOptions) ExitCo
 	content := renderer.Render(pkg)
 
 	// Ensure output directory exists
-	if err := os.MkdirAll(outDir, 0755); err != nil {
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		fmt.Fprintf(r.stderr, "error: cannot create output directory: %v\n", err)
 		return ExitError
 	}
 
 	// Write output file
 	outputPath := filepath.Join(outDir, opts.OutputFile)
-	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 		fmt.Fprintf(r.stderr, "error: cannot write output file: %v\n", err)
 		return ExitError
 	}
@@ -321,7 +321,6 @@ func (r *Runner) listPackages(rootPath string, opts *ListOptions) ExitCode {
 
 		return nil
 	})
-
 	if err != nil {
 		fmt.Fprintf(r.stderr, "error: %v\n", err)
 		return ExitError

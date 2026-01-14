@@ -22,14 +22,14 @@ func (k SymbolKind) String() string {
 // DocNode is the common base for all documented symbols.
 // It contains shared metadata like name, documentation, position, and export status.
 type DocNode struct {
-	Name      string
-	Kind      SymbolKind
-	Summary   string
-	Doc       string
-	Signature string
-	Decl      string
-	Exported  bool
-	Pos       SourcePos
+	Name       string
+	Kind       SymbolKind
+	Summary    string
+	Doc        string
+	Signature  string
+	Decl       string
+	Exported   bool
+	Pos        SourcePos
 	Deprecated []DocDeprecated
 }
 

@@ -32,7 +32,7 @@ func NewFoo() *Foo {
 	return &Foo{}
 }
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "foo.go"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "foo.go"), []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -213,7 +213,7 @@ type PublicType struct{}
 // privateType is unexported.
 type privateType struct{}
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "mixed.go"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "mixed.go"), []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -283,7 +283,7 @@ func createTestPackageWithParseError(t *testing.T) string {
 // Valid is a valid function.
 func Valid() {}
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "valid.go"), []byte(validContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "valid.go"), []byte(validContent), 0o644); err != nil {
 		t.Fatalf("failed to write valid file: %v", err)
 	}
 
@@ -294,7 +294,7 @@ func Invalid( {
 	// syntax error
 }
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "invalid.go"), []byte(invalidContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "invalid.go"), []byte(invalidContent), 0o644); err != nil {
 		t.Fatalf("failed to write invalid file: %v", err)
 	}
 
@@ -398,7 +398,7 @@ func createTestPackageWithMultipleFiles(t *testing.T) string {
 // MainFunc is from main.go.
 func MainFunc() {}
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte(mainContent), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -408,7 +408,7 @@ func MainFunc() {}
 // GeneratedFunc is from generated.go.
 func GeneratedFunc() {}
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "generated.go"), []byte(genContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "generated.go"), []byte(genContent), 0o644); err != nil {
 		t.Fatalf("failed to write generated file: %v", err)
 	}
 

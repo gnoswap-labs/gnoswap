@@ -46,7 +46,7 @@ func (f *Foo) String() string {
 	return f.Name
 }
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -125,7 +125,7 @@ func TestParser_ParsePackage_IgnoreTests(t *testing.T) {
 
 func Main() {}
 `
-	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -135,7 +135,7 @@ func Main() {}
 
 func TestMain() {}
 `
-	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(testContent), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -170,7 +170,7 @@ func TestParser_ParsePackage_IncludeTests(t *testing.T) {
 
 func Main() {}
 `
-	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -180,7 +180,7 @@ func Main() {}
 
 func TestMain() {}
 `
-	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(testContent), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -271,7 +271,7 @@ var TypedVar float64 = 3.14
 // UntypedVar has an inferred type.
 var UntypedVar = true
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -340,7 +340,7 @@ func TestParser_ExcludeFiles(t *testing.T) {
 // MainFunc is from main.go.
 func MainFunc() {}
 `
-	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -351,7 +351,7 @@ func MainFunc() {}
 // GeneratedFunc is from generated.go.
 func GeneratedFunc() {}
 `
-	if err := os.WriteFile(genFile, []byte(genContent), 0644); err != nil {
+	if err := os.WriteFile(genFile, []byte(genContent), 0o644); err != nil {
 		t.Fatalf("failed to write generated file: %v", err)
 	}
 
@@ -398,7 +398,7 @@ func TestParser_ParsePackage_PartialError(t *testing.T) {
 // Valid is a valid function.
 func Valid() {}
 `
-	if err := os.WriteFile(validFile, []byte(validContent), 0644); err != nil {
+	if err := os.WriteFile(validFile, []byte(validContent), 0o644); err != nil {
 		t.Fatalf("failed to write valid file: %v", err)
 	}
 
@@ -410,7 +410,7 @@ func Invalid( {
 	// syntax error
 }
 `
-	if err := os.WriteFile(invalidFile, []byte(invalidContent), 0644); err != nil {
+	if err := os.WriteFile(invalidFile, []byte(invalidContent), 0o644); err != nil {
 		t.Fatalf("failed to write invalid file: %v", err)
 	}
 
@@ -461,7 +461,7 @@ func TestParser_Examples(t *testing.T) {
 
 func Hello() {}
 `
-	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -476,7 +476,7 @@ func ExampleHello() {
 	// Output: hello
 }
 `
-	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(testContent), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -538,7 +538,7 @@ package legacy
 // Deprecated: use NewFunc instead.
 func OldFunc() {}
 `
-	if err := os.WriteFile(mainFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(mainFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write main file: %v", err)
 	}
 
@@ -586,7 +586,7 @@ func TestParser_ValueSpec_DocComments(t *testing.T) {
 // Alpha is the first constant.
 const Alpha = 1
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -634,7 +634,7 @@ func NamedOnly() (value int) {
 	return
 }
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -693,7 +693,7 @@ var (
 	X, Y = 2
 )
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -742,7 +742,7 @@ func TestParser_ModuleRoot_RelativePath(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	pkgDir := filepath.Join(tmpDir, "subpkg")
-	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+	if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 		t.Fatalf("failed to create package dir: %v", err)
 	}
 
@@ -752,7 +752,7 @@ func TestParser_ModuleRoot_RelativePath(t *testing.T) {
 // Hello says hi.
 func Hello() {}
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -793,12 +793,12 @@ func TestParser_ModuleRoot_AutoDetectsGnoMod(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := os.WriteFile(filepath.Join(tmpDir, "gnomod.toml"), []byte("module = \"example.com/root\"\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "gnomod.toml"), []byte("module = \"example.com/root\"\n"), 0o644); err != nil {
 		t.Fatalf("failed to write gnomod.toml: %v", err)
 	}
 
 	pkgDir := filepath.Join(tmpDir, "subpkg")
-	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+	if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 		t.Fatalf("failed to create package dir: %v", err)
 	}
 
@@ -808,7 +808,7 @@ func TestParser_ModuleRoot_AutoDetectsGnoMod(t *testing.T) {
 // Hello says hi.
 func Hello() {}
 `
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
