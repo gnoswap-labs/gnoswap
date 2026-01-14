@@ -3,6 +3,7 @@ package parser
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -445,6 +446,159 @@ func Invalid( {
 	// Should report partial failure
 	if !p.HadParseErrors() {
 		t.Error("expected HadParseErrors to return true")
+	}
+}
+
+func TestParser_Examples(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	mainFile := filepath.Join(tmpDir, "main.go")
+	mainContent := `package example
+
+func Hello() {}
+`
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+		t.Fatalf("failed to write main file: %v", err)
+	}
+
+	testFile := filepath.Join(tmpDir, "main_test.go")
+	testContent := `package example
+
+import "fmt"
+
+// ExampleHello shows a basic example.
+func ExampleHello() {
+	fmt.Println("hello")
+	// Output: hello
+}
+`
+	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	opts := DefaultOptions()
+	opts.IncludeTests = true
+
+	p := New(opts)
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	if len(pkg.Examples) == 0 {
+		t.Fatal("expected examples in package")
+	}
+
+	found := false
+	for _, ex := range pkg.Examples {
+		if ex.Name == "ExampleHello" {
+			found = true
+			if !strings.Contains(ex.Code, "fmt.Println") {
+				t.Errorf("expected example code, got %q", ex.Code)
+			}
+			if ex.Output != "hello" {
+				t.Errorf("expected output %q, got %q", "hello", ex.Output)
+			}
+		}
+	}
+	if !found {
+		t.Error("expected ExampleHello example")
+	}
+}
+
+func TestParser_DeprecatedExtraction(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	mainFile := filepath.Join(tmpDir, "main.go")
+	content := `// Package legacy is deprecated.
+//
+// Deprecated: use newpkg instead.
+package legacy
+
+// OldFunc does old things.
+//
+// Deprecated: use NewFunc instead.
+func OldFunc() {}
+`
+	if err := os.WriteFile(mainFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write main file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	if strings.Contains(pkg.Doc, "Deprecated:") {
+		t.Error("expected package doc to strip Deprecated block")
+	}
+
+	if len(pkg.Deprecated) < 2 {
+		t.Errorf("expected deprecated entries, got %d", len(pkg.Deprecated))
+	}
+
+	found := false
+	for _, fn := range pkg.Funcs {
+		if fn.Name == "OldFunc" {
+			found = true
+			if strings.Contains(fn.Doc, "Deprecated:") {
+				t.Error("expected function doc to strip Deprecated block")
+			}
+			if len(fn.Deprecated) == 0 {
+				t.Error("expected function to have deprecated metadata")
+			}
+		}
+	}
+	if !found {
+		t.Error("expected OldFunc")
+	}
+}
+
+func TestParser_ValueSpec_DocComments(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gnodoc-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testFile := filepath.Join(tmpDir, "values.go")
+	content := `package values
+
+// Alpha is the first constant.
+const Alpha = 1
+`
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	p := New(DefaultOptions())
+	pkg, err := p.ParsePackage(tmpDir)
+	if err != nil {
+		t.Fatalf("ParsePackage failed: %v", err)
+	}
+
+	found := false
+	for _, group := range pkg.Consts {
+		for _, spec := range group.Specs {
+			if spec.Name == "Alpha" {
+				found = true
+				if !strings.Contains(spec.Doc, "Alpha is the first constant") {
+					t.Errorf("expected spec doc to be populated, got %q", spec.Doc)
+				}
+			}
+		}
+	}
+	if !found {
+		t.Error("expected Alpha constant")
 	}
 }
 

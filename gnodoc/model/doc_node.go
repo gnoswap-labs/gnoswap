@@ -30,6 +30,7 @@ type DocNode struct {
 	Decl      string
 	Exported  bool
 	Pos       SourcePos
+	Deprecated []DocDeprecated
 }
 
 // IsExported reports whether the symbol is exported.

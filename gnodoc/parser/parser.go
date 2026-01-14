@@ -1,10 +1,12 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"os"
 	"os/exec"
@@ -263,10 +265,10 @@ func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string)
 	pkg := &model.DocPackage{
 		Name:       docPkg.Name,
 		ImportPath: docPkg.ImportPath,
-		Doc:        docPkg.Doc,
 	}
 
 	// Extract summary (first sentence)
+	pkg.Doc, pkg.Deprecated = extractDeprecated(docPkg.Doc, model.SourcePos{})
 	if pkg.Doc != "" {
 		pkg.Summary = extractSummary(pkg.Doc)
 	}
@@ -281,22 +283,44 @@ func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string)
 
 	// Convert constants
 	for _, c := range docPkg.Consts {
-		pkg.Consts = append(pkg.Consts, p.convertValueGroup(c, model.KindConst))
+		group := p.convertValueGroup(c, model.KindConst)
+		pkg.Consts = append(pkg.Consts, group)
+		pkg.Deprecated = append(pkg.Deprecated, group.Deprecated...)
 	}
 
 	// Convert variables
 	for _, v := range docPkg.Vars {
-		pkg.Vars = append(pkg.Vars, p.convertValueGroup(v, model.KindVar))
+		group := p.convertValueGroup(v, model.KindVar)
+		pkg.Vars = append(pkg.Vars, group)
+		pkg.Deprecated = append(pkg.Deprecated, group.Deprecated...)
 	}
 
 	// Convert functions
 	for _, f := range docPkg.Funcs {
-		pkg.Funcs = append(pkg.Funcs, p.convertFunc(f))
+		fn := p.convertFunc(f)
+		pkg.Funcs = append(pkg.Funcs, fn)
+		pkg.Deprecated = append(pkg.Deprecated, fn.Deprecated...)
 	}
 
 	// Convert types
 	for _, t := range docPkg.Types {
-		pkg.Types = append(pkg.Types, p.convertType(t))
+		typ := p.convertType(t)
+		pkg.Types = append(pkg.Types, typ)
+		pkg.Deprecated = append(pkg.Deprecated, typ.Deprecated...)
+		for _, field := range typ.Fields {
+			pkg.Deprecated = append(pkg.Deprecated, field.Deprecated...)
+		}
+		for _, method := range typ.Methods {
+			pkg.Deprecated = append(pkg.Deprecated, method.Deprecated...)
+		}
+		for _, ctor := range typ.Constructors {
+			pkg.Deprecated = append(pkg.Deprecated, ctor.Deprecated...)
+		}
+	}
+
+	// Convert examples
+	for _, ex := range docPkg.Examples {
+		pkg.Examples = append(pkg.Examples, p.convertExample(ex))
 	}
 
 	// Convert notes
@@ -318,10 +342,16 @@ func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string)
 
 // convertValueGroup converts a go/doc.Value to model.DocValueGroup.
 func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.DocValueGroup {
+	groupPos := model.SourcePos{}
+	if v.Decl != nil {
+		groupPos = p.convertPos(v.Decl.Pos())
+	}
+	groupDoc, groupDeprecated := extractDeprecated(v.Doc, groupPos)
 	group := model.DocValueGroup{
 		DocNode: model.DocNode{
-			Kind: kind,
-			Doc:  v.Doc,
+			Kind:       kind,
+			Doc:        groupDoc,
+			Deprecated: groupDeprecated,
 		},
 	}
 
@@ -330,6 +360,8 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 		typ  string
 		val  string
 		pos  token.Pos
+		doc  string
+		deps []model.DocDeprecated
 	}
 	nameToInfo := make(map[string]valueInfo)
 	if v.Decl != nil {
@@ -339,9 +371,22 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 				if vs.Type != nil {
 					typ = p.typeString(vs.Type)
 				}
+				docText := ""
+				if vs.Doc != nil {
+					docText = vs.Doc.Text()
+				} else if vs.Comment != nil {
+					docText = vs.Comment.Text()
+				}
+				docPos := model.SourcePos{}
+				if len(vs.Names) > 0 {
+					docPos = p.convertPos(vs.Names[0].Pos())
+				} else {
+					docPos = p.convertPos(vs.Pos())
+				}
+				docText, deps := extractDeprecated(docText, docPos)
 
 				for i, name := range vs.Names {
-					info := valueInfo{typ: typ, pos: name.Pos()}
+					info := valueInfo{typ: typ, pos: name.Pos(), doc: docText, deps: deps}
 					if len(vs.Values) == 1 {
 						info.val = p.exprString(vs.Values[0])
 					} else if i < len(vs.Values) {
@@ -367,6 +412,8 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 			spec.Pos = p.convertPos(info.pos)
 			spec.Type = info.typ
 			spec.Value = info.val
+			spec.Doc = info.doc
+			spec.Deprecated = info.deps
 		}
 
 		group.Specs = append(group.Specs, spec)
@@ -377,19 +424,26 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 
 // convertFunc converts a go/doc.Func to model.DocFunc.
 func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
+	pos := model.SourcePos{}
+	if f.Decl != nil {
+		pos = p.convertPos(f.Decl.Pos())
+	}
+	docText, deprecated := extractDeprecated(f.Doc, pos)
 	fn := model.DocFunc{
 		DocNode: model.DocNode{
 			Name:     f.Name,
 			Kind:     model.KindFunc,
-			Doc:      f.Doc,
-			Summary:  extractSummary(f.Doc),
+			Doc:      docText,
+			Summary:  extractSummary(docText),
 			Exported: isExported(f.Name),
+			Pos:      pos,
+			Deprecated: deprecated,
 		},
 	}
 
 	// Extract position
 	if f.Decl != nil {
-		fn.Pos = p.convertPos(f.Decl.Pos())
+		fn.Pos = pos
 
 		// Extract params and results from declaration
 		if f.Decl.Type != nil {
@@ -415,19 +469,26 @@ func (p *Parser) convertFunc(f *doc.Func) model.DocFunc {
 
 // convertType converts a go/doc.Type to model.DocType.
 func (p *Parser) convertType(t *doc.Type) model.DocType {
+	pos := model.SourcePos{}
+	if t.Decl != nil {
+		pos = p.convertPos(t.Decl.Pos())
+	}
+	docText, deprecated := extractDeprecated(t.Doc, pos)
 	typ := model.DocType{
 		DocNode: model.DocNode{
 			Name:     t.Name,
 			Kind:     model.KindType,
-			Doc:      t.Doc,
-			Summary:  extractSummary(t.Doc),
+			Doc:      docText,
+			Summary:  extractSummary(docText),
 			Exported: isExported(t.Name),
+			Pos:      pos,
+			Deprecated: deprecated,
 		},
 	}
 
 	// Determine type kind and extract fields
 	if t.Decl != nil {
-		typ.Pos = p.convertPos(t.Decl.Pos())
+		typ.Pos = pos
 
 		for _, spec := range t.Decl.Specs {
 			if ts, ok := spec.(*ast.TypeSpec); ok {
@@ -501,9 +562,9 @@ func (p *Parser) convertField(field *ast.Field) model.DocField {
 
 	// Field doc
 	if field.Doc != nil {
-		f.Doc = field.Doc.Text()
+		f.Doc, f.Deprecated = extractDeprecated(field.Doc.Text(), f.Pos)
 	} else if field.Comment != nil {
-		f.Doc = field.Comment.Text()
+		f.Doc, f.Deprecated = extractDeprecated(field.Comment.Text(), f.Pos)
 	}
 
 	return f
@@ -619,8 +680,31 @@ func (p *Parser) exprString(expr ast.Expr) string {
 		}
 		return "{...}"
 	default:
-		return "..."
+	return "..."
+}
+
+// convertExample converts a go/doc.Example to model.DocExample.
+func (p *Parser) convertExample(ex *doc.Example) model.DocExample {
+	code := ""
+	if ex.Code != nil {
+		var buf bytes.Buffer
+		_ = printer.Fprint(&buf, p.fset, ex.Code)
+		code = strings.TrimSpace(buf.String())
 	}
+
+	pos := model.SourcePos{}
+	if ex.Code != nil {
+		pos = p.convertPos(ex.Code.Pos())
+	}
+
+	return model.DocExample{
+		Name:   ex.Name,
+		Doc:    ex.Doc,
+		Code:   code,
+		Output: ex.Output,
+		Pos:    pos,
+	}
+}
 }
 
 // Helper functions
@@ -662,4 +746,42 @@ func extractSummary(doc string) string {
 	}
 
 	return doc
+}
+
+func extractDeprecated(doc string, pos model.SourcePos) (string, []model.DocDeprecated) {
+	if strings.TrimSpace(doc) == "" {
+		return doc, nil
+	}
+
+	lines := strings.Split(doc, "\n")
+	var kept []string
+	var deprecated []model.DocDeprecated
+
+	for i := 0; i < len(lines); {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "Deprecated:") {
+			body := strings.TrimSpace(strings.TrimPrefix(trimmed, "Deprecated:"))
+			j := i + 1
+			for j < len(lines) {
+				next := strings.TrimSpace(lines[j])
+				if next == "" {
+					break
+				}
+				if body != "" {
+					body += " "
+				}
+				body += next
+				j++
+			}
+			deprecated = append(deprecated, model.DocDeprecated{Body: body, Pos: pos})
+			i = j
+			continue
+		}
+		kept = append(kept, line)
+		i++
+	}
+
+	clean := strings.TrimRight(strings.Join(kept, "\n"), "\n")
+	return clean, deprecated
 }
