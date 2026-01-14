@@ -16,6 +16,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/mock"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 
@@ -2116,4 +2117,99 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestDecreaseLiquidity_NonOwner tests that non-owner cannot decrease liquidity
+func TestDecreaseLiquidity_NonOwner(t *testing.T) {
+	initPositionTest(t)
+
+	// Setup pool and position owned by admin
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Alice (non-owner) tries to decrease liquidity
+	testing.SetRealm(testing.NewUserRealm(alice))
+
+	uassert.PanicsWithMessage(t,
+		"[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
+		func() {
+			testing.SetRealm(testing.NewCodeRealm(posPath))
+			mockInstance.DecreaseLiquidity(
+				1,
+				"100",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+		})
+}
+
+// TestBurnedPosition_ReuseAttempt tests that burned position cannot be reused
+func TestBurnedPosition_ReuseAttempt(t *testing.T) {
+	initPositionTest(t)
+
+	// Setup pool and position owned by admin
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Get position liquidity and decrease 100% (burn position)
+	position, _ := mockInstance.GetPosition(1)
+	liquidity := position.Liquidity().ToString()
+
+	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+		1,
+		liquidity,
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		false,
+	)
+
+	// Simulate burning the NFT (remove from NFT accessor)
+	nftAccessor := mockInstance.nftAccessor.(*mock.MockNFTAccessor)
+	nftAccessor.Burn(positionIdFrom(1))
+
+	// Try to increase liquidity on burned position - should fail
+	uassert.PanicsWithMessage(t,
+		"[GNOSWAP-POSITION-012] position does not exist || position with position ID(1) doesn't exist",
+		func() {
+			testing.SetRealm(testing.NewCodeRealm(posPath))
+			mockInstance.IncreaseLiquidity(
+				1,
+				"500000",
+				"500000",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+			)
+		})
+
+	// Try to collect fee on burned position - should fail
+	uassert.PanicsWithMessage(t,
+		"[GNOSWAP-POSITION-012] position does not exist || position with position ID(1) doesn't exist",
+		func() {
+			testing.SetRealm(testing.NewCodeRealm(posPath))
+			mockInstance.CollectFee(1, false)
+		})
 }
