@@ -23,6 +23,9 @@ func CreatePool(
 }
 
 // SetPoolCreationFee sets the pool creation fee.
+//
+// Parameters:
+//   - fee: fee charged when creating a new pool
 func SetPoolCreationFee(cur realm, fee int64) {
 	getImplementation().SetPoolCreationFee(fee)
 }
@@ -61,8 +64,8 @@ func IncreaseObservationCardinalityNext(
 //   - positionCaller: caller address for the position
 //
 // Returns:
-//   - string: amount of token0 added
-//   - string: amount of token1 added
+//   - amount0: amount of token0 added
+//   - amount1: amount of token1 added
 func Mint(
 	cur realm,
 	token0Path string,
@@ -85,6 +88,19 @@ func Mint(
 }
 
 // Burn removes liquidity from a position.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - tickLower: lower tick boundary
+//   - tickUpper: upper tick boundary
+//   - liquidityAmount: amount of liquidity to remove
+//   - positionCaller: caller address for the position
+//
+// Returns:
+//   - amount0: amount of token0 returned
+//   - amount1: amount of token1 returned
 func Burn(
 	cur realm,
 	token0Path string,
@@ -107,6 +123,20 @@ func Burn(
 }
 
 // Collect transfers owed tokens from a position to recipient.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - recipient: recipient address for collected tokens
+//   - tickLower: lower tick boundary
+//   - tickUpper: upper tick boundary
+//   - amount0Requested: max amount of token0 to collect
+//   - amount1Requested: max amount of token1 to collect
+//
+// Returns:
+//   - amount0: amount of token0 collected
+//   - amount1: amount of token1 collected
 func Collect(
 	cur realm,
 	token0Path string,
@@ -150,8 +180,8 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 //   - positionCaller: caller address for the position
 //
 // Returns:
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
+//   - amount0: net amount of token0 after fees
+//   - amount1: net amount of token1 after fees
 func HandleWithdrawalFee(
 	cur realm,
 	positionId uint64,
@@ -187,8 +217,8 @@ func HandleWithdrawalFee(
 //   - swapCallback: callback function for token transfer, callbackMarker is used to identify the callback
 //
 // Returns:
-//   - string: amount of token0 delta
-//   - string: amount of token1 delta
+//   - amount0Delta: amount of token0 delta
+//   - amount1Delta: amount of token1 delta
 func Swap(
 	cur realm,
 	token0Path string,
@@ -215,16 +245,25 @@ func Swap(
 }
 
 // SetSwapEndHook sets the hook to be called at the end of a swap.
+//
+// Parameters:
+//   - hook: callback invoked after a swap completes for a pool path
 func SetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
 	getImplementation().SetSwapEndHook(hook)
 }
 
 // SetSwapStartHook sets the hook to be called at the start of a swap.
+//
+// Parameters:
+//   - hook: callback invoked before a swap starts for a pool path
 func SetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	getImplementation().SetSwapStartHook(hook)
 }
 
 // SetTickCrossHook sets the hook to be called when a tick is crossed during a swap.
+//
+// Parameters:
+//   - hook: callback invoked when a swap crosses a tick within a pool
 func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	getImplementation().SetTickCrossHook(hook)
 }
@@ -240,8 +279,8 @@ func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId in
 //   - amount1Requested: amount of token1 to collect
 //
 // Returns:
-//   - string: amount of token0 collected
-//   - string: amount of token1 collected
+//   - amount0: amount of token0 collected
+//   - amount1: amount of token1 collected
 func CollectProtocol(
 	cur realm,
 	token0Path string,
