@@ -35,4 +35,6 @@ var (
 	GOV_XGNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")
 	// LAUNCHPAD_ADDR is the derived address for the launchpad package.
 	LAUNCHPAD_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/launchpad")
+	// LIMIT_ORDER_ADDR is the derived address for the limit order package.
+	LIMIT_ORDER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/limit_order")
 )

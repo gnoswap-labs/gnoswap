@@ -53,6 +53,7 @@ func initRegisterReadableContract() {
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	limitOrderAddr := access.MustGetAddress(prbac.ROLE_LIMIT_ORDER.String())
 
 	if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
 		panic(err)
@@ -63,6 +64,10 @@ func initRegisterReadableContract() {
 	}
 
 	if err := kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly); err != nil {
+		panic(err)
+	}
+
+	if err := kvStore.AddAuthorizedCaller(limitOrderAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
 }

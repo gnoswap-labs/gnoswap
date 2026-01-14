@@ -18,4 +18,5 @@ var DefaultRoleAddresses = map[prbac.SystemRole]address{
 	prbac.ROLE_EMISSION:       EMISSION_ADDR,
 	prbac.ROLE_LAUNCHPAD:      LAUNCHPAD_ADDR,
 	prbac.ROLE_PROTOCOL_FEE:   PROTOCOL_FEE_ADDR,
+	prbac.ROLE_LIMIT_ORDER:    LIMIT_ORDER_ADDR,
 }

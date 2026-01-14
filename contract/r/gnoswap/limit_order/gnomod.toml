@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/limit_order"
+gno = "0.9"
