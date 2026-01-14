@@ -126,7 +126,11 @@ func (p *Parser) ParsePackage(path string) (*model.DocPackage, error) {
 	docPkg := doc.New(mainPkg, dir, mode)
 
 	// Convert to model.DocPackage
-	return p.convertPackage(docPkg, dir, files), nil
+	var examples []*doc.Example
+	if p.opts.IncludeTests {
+		examples = p.collectExamplesFromFiles(dir, files)
+	}
+	return p.convertPackage(docPkg, dir, files, examples), nil
 }
 
 // collectFiles returns all Go/Gno files in the directory.
@@ -261,7 +265,7 @@ func (p *Parser) parseFilesIndividually(dir string, files []string) (map[string]
 }
 
 // convertPackage converts go/doc.Package to model.DocPackage.
-func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string) *model.DocPackage {
+func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string, examples []*doc.Example) *model.DocPackage {
 	pkg := &model.DocPackage{
 		Name:       docPkg.Name,
 		ImportPath: docPkg.ImportPath,
@@ -319,7 +323,10 @@ func (p *Parser) convertPackage(docPkg *doc.Package, dir string, files []string)
 	}
 
 	// Convert examples
-	for _, ex := range docPkg.Examples {
+	if len(examples) == 0 {
+		examples = docPkg.Examples
+	}
+	for _, ex := range examples {
 		pkg.Examples = append(pkg.Examples, p.convertExample(ex))
 	}
 
@@ -414,6 +421,13 @@ func (p *Parser) convertValueGroup(v *doc.Value, kind model.SymbolKind) model.Do
 			spec.Value = info.val
 			spec.Doc = info.doc
 			spec.Deprecated = info.deps
+		}
+
+		if spec.Doc == "" && len(v.Names) == 1 {
+			spec.Doc = group.Doc
+			if len(spec.Deprecated) == 0 {
+				spec.Deprecated = group.Deprecated
+			}
 		}
 
 		group.Specs = append(group.Specs, spec)
@@ -680,7 +694,29 @@ func (p *Parser) exprString(expr ast.Expr) string {
 		}
 		return "{...}"
 	default:
-	return "..."
+		return "..."
+	}
+}
+
+// collectExamplesFromFiles extracts examples from test files listed for the package.
+func (p *Parser) collectExamplesFromFiles(dir string, files []string) []*doc.Example {
+	var testFiles []*ast.File
+	for _, name := range files {
+		if !strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		path := filepath.Join(dir, name)
+		file, err := parser.ParseFile(p.fset, path, nil, parser.ParseComments)
+		if err != nil {
+			continue
+		}
+		testFiles = append(testFiles, file)
+	}
+
+	if len(testFiles) == 0 {
+		return nil
+	}
+	return doc.Examples(testFiles...)
 }
 
 // convertExample converts a go/doc.Example to model.DocExample.
@@ -701,10 +737,9 @@ func (p *Parser) convertExample(ex *doc.Example) model.DocExample {
 		Name:   ex.Name,
 		Doc:    ex.Doc,
 		Code:   code,
-		Output: ex.Output,
+		Output: strings.TrimRight(ex.Output, "\n"),
 		Pos:    pos,
 	}
-}
 }
 
 // Helper functions
