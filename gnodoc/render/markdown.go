@@ -344,7 +344,7 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 
 		// Signature
 		fnParts = append(fnParts, "```go")
-		fnParts = append(fnParts, fn.FullSignature())
+		fnParts = append(fnParts, formatSignatureMultiline(fn))
 		fnParts = append(fnParts, "```")
 
 		// Documentation
@@ -441,7 +441,7 @@ func (r *MarkdownRenderer) RenderTypes(pkg *model.DocPackage) string {
 					methodLines = append(methodLines, fmt.Sprintf("##### %s", m.Name))
 					methodLines = append(methodLines, "")
 					methodLines = append(methodLines, "```go")
-					methodLines = append(methodLines, m.FullSignature())
+					methodLines = append(methodLines, formatSignatureMultiline(m))
 					methodLines = append(methodLines, "```")
 					docText, paramItems, returnItems := splitDocSections(m.Doc)
 					if docText != "" {
@@ -808,4 +808,49 @@ func matchDocItem(items []docItem, name, typ string) docItem {
 		return items[i]
 	}
 	return docItem{}
+}
+
+func formatSignatureMultiline(fn model.DocFunc) string {
+	var sb strings.Builder
+	sb.WriteString("func ")
+	if fn.Receiver != nil {
+		sb.WriteString(fn.Receiver.String())
+		sb.WriteString(" ")
+	}
+	sb.WriteString(fn.Name)
+	sb.WriteString("(")
+	if len(fn.Params) == 0 {
+		sb.WriteString(")")
+	} else {
+		sb.WriteString("\n")
+		for i, param := range fn.Params {
+			sb.WriteString("\t")
+			sb.WriteString(param.String())
+			if i < len(fn.Params)-1 {
+				sb.WriteString(",")
+			}
+			sb.WriteString("\n")
+		}
+		sb.WriteString(")")
+	}
+
+	if len(fn.Results) == 0 {
+		return sb.String()
+	}
+
+	sb.WriteString(" ")
+	if len(fn.Results) == 1 && fn.Results[0].Name == "" {
+		sb.WriteString(fn.Results[0].Type)
+		return sb.String()
+	}
+
+	sb.WriteString("(")
+	for i, result := range fn.Results {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(result.String())
+	}
+	sb.WriteString(")")
+	return sb.String()
 }
