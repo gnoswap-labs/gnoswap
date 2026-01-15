@@ -10,7 +10,7 @@ import (
 func TestNewEmissionState(t *testing.T) {
 	tests := []struct {
 		name           string
-		startHeight    int64
+		createdHeight  int64
 		startTimestamp int64
 		wantEndTs      int64
 		shouldPanic    bool
@@ -19,51 +19,51 @@ func TestNewEmissionState(t *testing.T) {
 		// Success cases
 		{
 			name:           "success - zero values",
-			startHeight:    0,
+			createdHeight:  0,
 			startTimestamp: 0,
 			wantEndTs:      SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
 			name:           "success - positive values",
-			startHeight:    100,
+			createdHeight:  100,
 			startTimestamp: 1000,
 			wantEndTs:      1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
 			name:           "success - large timestamp",
-			startHeight:    999999,
+			createdHeight:  999999,
 			startTimestamp: 1700000000,
 			wantEndTs:      1700000000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
 			name:           "success - negative height",
-			startHeight:    -100,
+			createdHeight:  -100,
 			startTimestamp: 1000,
 			wantEndTs:      1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
 			name:           "success - negative timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: -1000,
 			wantEndTs:      -1000 + SECONDS_IN_YEAR*HALVING_END_YEAR - 1,
 		},
 		{
 			name:           "success - max safe timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR),
 			wantEndTs:      math.MaxInt64 - 1,
 		},
 		// Panic cases
 		{
 			name:           "panic - overflow near MaxInt64",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR) + 2,
 			shouldPanic:    true,
 			panicMsg:       "int64 addition overflow",
 		},
 		{
 			name:           "panic - overflow at MaxInt64",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: math.MaxInt64,
 			shouldPanic:    true,
 			panicMsg:       "int64 addition overflow",
@@ -74,14 +74,14 @@ func TestNewEmissionState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					NewEmissionState(tt.startHeight, tt.startTimestamp)
+					NewEmissionState(tt.createdHeight, tt.startTimestamp)
 				})
 				return
 			}
 
-			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+			es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 
-			uassert.Equal(t, tt.startHeight, es.getStartHeight())
+			uassert.Equal(t, tt.createdHeight, es.getCreatedHeight())
 			uassert.Equal(t, tt.startTimestamp, es.getStartTimestamp())
 			uassert.Equal(t, tt.wantEndTs, es.getEndTimestamp())
 			uassert.True(t, es.getHalvingData() != nil)
@@ -92,55 +92,55 @@ func TestNewEmissionState(t *testing.T) {
 func TestIsInitialized(t *testing.T) {
 	tests := []struct {
 		name           string
-		startHeight    int64
+		createdHeight  int64
 		startTimestamp int64
 		want           bool
 	}{
 		{
 			name:           "not initialized - both zero",
-			startHeight:    0,
+			createdHeight:  0,
 			startTimestamp: 0,
 			want:           false,
 		},
 		{
 			name:           "not initialized - only height set",
-			startHeight:    100,
+			createdHeight:  100,
 			startTimestamp: 0,
 			want:           false,
 		},
 		{
 			name:           "not initialized - only timestamp set",
-			startHeight:    0,
+			createdHeight:  0,
 			startTimestamp: 1000,
 			want:           false,
 		},
 		{
 			name:           "initialized - both positive",
-			startHeight:    100,
+			createdHeight:  100,
 			startTimestamp: 1000,
 			want:           true,
 		},
 		{
 			name:           "initialized - negative height with positive timestamp",
-			startHeight:    -1,
+			createdHeight:  -1,
 			startTimestamp: 1000,
 			want:           true,
 		},
 		{
 			name:           "initialized - positive height with negative timestamp",
-			startHeight:    100,
+			createdHeight:  100,
 			startTimestamp: -1,
 			want:           true,
 		},
 		{
 			name:           "initialized - both negative",
-			startHeight:    -1,
+			createdHeight:  -1,
 			startTimestamp: -1,
 			want:           true,
 		},
 		{
 			name:           "initialized - min int64 values",
-			startHeight:    math.MinInt64,
+			createdHeight:  math.MinInt64,
 			startTimestamp: 1,
 			want:           true,
 		},
@@ -148,7 +148,7 @@ func TestIsInitialized(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+			es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 			got := es.isInitialized()
 			uassert.Equal(t, tt.want, got)
 		})
@@ -347,7 +347,7 @@ func TestGetCurrentYear_AllYearBoundaries(t *testing.T) {
 func TestGetters(t *testing.T) {
 	tests := []struct {
 		name           string
-		startHeight    int64
+		createdHeight  int64
 		startTimestamp int64
 	}{
 		{"zero values", 0, 0},
@@ -359,9 +359,9 @@ func TestGetters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+			es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 
-			uassert.Equal(t, tt.startHeight, es.getStartHeight())
+			uassert.Equal(t, tt.createdHeight, es.getCreatedHeight())
 			uassert.Equal(t, tt.startTimestamp, es.getStartTimestamp())
 
 			expectedEnd := tt.startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
@@ -781,7 +781,7 @@ func TestGetEmissionState(t *testing.T) {
 
 			// Getting again should return same instance
 			es2 := getEmissionState()
-			uassert.Equal(t, es.getStartHeight(), es2.getStartHeight())
+			uassert.Equal(t, es.getCreatedHeight(), es2.getCreatedHeight())
 			uassert.Equal(t, es.getStartTimestamp(), es2.getStartTimestamp())
 		})
 	}

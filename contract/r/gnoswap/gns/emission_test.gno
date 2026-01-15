@@ -484,28 +484,28 @@ func TestEmissionStateAmountConsistency(t *testing.T) {
 func TestEmissionStateTimestampEdgeCases(t *testing.T) {
 	tests := []struct {
 		name           string
-		startHeight    int64
+		createdHeight  int64
 		startTimestamp int64
 		testTimestamp  int64
 		expectedYear   int64
 	}{
 		{
 			name:           "Start timestamp is 0",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: 0,
 			testTimestamp:  SECONDS_IN_YEAR - 1,
 			expectedYear:   1,
 		},
 		{
 			name:           "Large start timestamp",
-			startHeight:    1000000,
+			createdHeight:  1000000,
 			startTimestamp: 9999999999,
 			testTimestamp:  9999999999 + SECONDS_IN_YEAR,
 			expectedYear:   2,
 		},
 		{
 			name:           "Test at exact year boundary",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: 5000,
 			testTimestamp:  5000 + (SECONDS_IN_YEAR * 5),
 			expectedYear:   6,
@@ -514,7 +514,7 @@ func TestEmissionStateTimestampEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+			es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 			year := es.getCurrentYear(tt.testTimestamp)
 			uassert.Equal(t, tt.expectedYear, year, "Year mismatch for "+tt.name)
 		})
@@ -686,39 +686,39 @@ func TestSubHalvingYearLeftAmountUnderflow(t *testing.T) {
 func TestNewEmissionStateOverflow(t *testing.T) {
 	tests := []struct {
 		name           string
-		startHeight    int64
+		createdHeight  int64
 		startTimestamp int64
 		shouldPanic    bool
 		panicMsg       string
 	}{
 		{
 			name:           "normal timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: 1000,
 			shouldPanic:    false,
 		},
 		{
 			name:           "zero timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: 0,
 			shouldPanic:    false,
 		},
 		{
 			name:           "large but safe timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: 9999999999,
 			shouldPanic:    false,
 		},
 		{
 			name:           "overflow - timestamp near MaxInt64",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: math.MaxInt64 - (SECONDS_IN_YEAR * HALVING_END_YEAR) + 2,
 			shouldPanic:    true,
 			panicMsg:       "int64 addition overflow",
 		},
 		{
 			name:           "overflow - MaxInt64 timestamp",
-			startHeight:    1,
+			createdHeight:  1,
 			startTimestamp: math.MaxInt64,
 			shouldPanic:    true,
 			panicMsg:       "int64 addition overflow",
@@ -729,13 +729,13 @@ func TestNewEmissionStateOverflow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					NewEmissionState(tt.startHeight, tt.startTimestamp)
+					NewEmissionState(tt.createdHeight, tt.startTimestamp)
 				})
 			} else {
-				es := NewEmissionState(tt.startHeight, tt.startTimestamp)
+				es := NewEmissionState(tt.createdHeight, tt.startTimestamp)
 
 				// Verify basic properties
-				uassert.Equal(t, tt.startHeight, es.getStartHeight())
+				uassert.Equal(t, tt.createdHeight, es.getCreatedHeight())
 				uassert.Equal(t, tt.startTimestamp, es.getStartTimestamp())
 
 				// Verify end timestamp calculation

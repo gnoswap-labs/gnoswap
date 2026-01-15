@@ -33,7 +33,11 @@ var (
 
 func init() {
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
-	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
+	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	grc20reg.Register(cross, token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).

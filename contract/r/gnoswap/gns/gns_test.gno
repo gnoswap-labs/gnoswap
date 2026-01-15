@@ -730,7 +730,7 @@ func TestInitEmissionState(t *testing.T) {
 			shouldAbort: false,
 			validateState: func(t *testing.T) {
 				uassert.True(t, IsEmissionInitialized())
-				uassert.Equal(t, int64(100), GetEmissionStartHeight())
+				uassert.Equal(t, int64(100), GetEmissionCreatedHeight())
 				uassert.Equal(t, int64(1000), GetEmissionStartTimestamp())
 			},
 		},
@@ -743,7 +743,7 @@ func TestInitEmissionState(t *testing.T) {
 			validateState: func(t *testing.T) {
 				// With height=0 and timestamp=0, isInitialized returns false
 				uassert.False(t, IsEmissionInitialized())
-				uassert.Equal(t, int64(0), GetEmissionStartHeight())
+				uassert.Equal(t, int64(0), GetEmissionCreatedHeight())
 				uassert.Equal(t, int64(0), GetEmissionStartTimestamp())
 			},
 		},
@@ -755,7 +755,7 @@ func TestInitEmissionState(t *testing.T) {
 			shouldAbort: false,
 			validateState: func(t *testing.T) {
 				uassert.True(t, IsEmissionInitialized())
-				uassert.Equal(t, int64(1000000), GetEmissionStartHeight())
+				uassert.Equal(t, int64(1000000), GetEmissionCreatedHeight())
 				uassert.Equal(t, int64(1700000000), GetEmissionStartTimestamp())
 				// Verify end timestamp calculation
 				expectedEnd := int64(1700000000) + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
@@ -795,7 +795,7 @@ func TestInitEmissionState_Reinitialize(t *testing.T) {
 		testing.SetRealm(emissionRealm)
 		InitEmissionState(cross, 50, 500)
 	})
-	uassert.Equal(t, int64(50), GetEmissionStartHeight())
+	uassert.Equal(t, int64(50), GetEmissionCreatedHeight())
 	uassert.Equal(t, int64(500), GetEmissionStartTimestamp())
 
 	// Reinitialize with new values
@@ -804,7 +804,7 @@ func TestInitEmissionState_Reinitialize(t *testing.T) {
 		InitEmissionState(cross, 200, 2000)
 	})
 	// Should be overwritten with new values
-	uassert.Equal(t, int64(200), GetEmissionStartHeight())
+	uassert.Equal(t, int64(200), GetEmissionCreatedHeight())
 	uassert.Equal(t, int64(2000), GetEmissionStartTimestamp())
 }
 
