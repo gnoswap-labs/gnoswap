@@ -2,6 +2,9 @@ package v1
 
 import (
 	"chain/runtime"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 )
 
 // SwapDirection represents the direction of swap execution in multi-hop swaps.
@@ -80,6 +83,7 @@ func NewMultiSwapProcessor(r *routerV1, isSimulate bool, direction SwapDirection
 // processForwardSwap handles forward direction swaps (exactIn).
 func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swapPath string) (int64, int64, error) {
 	payer := runtime.PreviousRealm().Address() // Initial payer is the user
+	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	firstAmountIn := int64(0)
 	currentPoolIndex := 0
@@ -123,6 +127,7 @@ func (p *MultiSwapProcessor) processBackwardSwap(sp SwapParams, numPools int, sw
 func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int, swapPath string) (int64, int64, error) {
 	firstAmountIn := int64(0)
 	currentPoolIndex := numPools - 1
+	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 	payer := routerAddr
 
 	for {
@@ -197,6 +202,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 	firstAmountIn := int64(0)
 	currentPoolIndex := len(swapInfo) - 1
 	payer := runtime.PreviousRealm().Address() // Initial payer is the user
+	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	for currentPoolIndex >= 0 {
 		// Execute the swap

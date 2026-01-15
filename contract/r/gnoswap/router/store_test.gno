@@ -58,14 +58,6 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
-			name:                          "gov/staker has read permission",
-			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
-			expectedErrorWithRead:         false,
-			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "",
-			expectedErrorMessageWithWrite: "write permission denied",
-		},
-		{
 			name:                          "panic with no permission realm",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
 			expectedErrorWithRead:         true,
@@ -86,7 +78,6 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			resetTestState(t)
 
 			rs := NewRouterStore(kvStore)
-			initRegisterReadableContract()
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 			if !rs.HasSwapFeeKey() {
