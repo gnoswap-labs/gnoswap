@@ -287,7 +287,7 @@ func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 // [INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
 // [EXPECTED] Voter2: vote weight=0, xGNS=0, match=true
-// [EXPECTED] Quorum amount: 1500000000
+// [EXPECTED] Quorum amount: 2000000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
 // [EXPECTED] Nay weight: 0 (voter2)
 //
