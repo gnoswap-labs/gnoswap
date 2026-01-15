@@ -84,11 +84,3 @@ func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int
 func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	return t.instance.GetAccuTransferToDevOpsByTokenPath(path)
 }
-
-func (t *TestProtocolFee) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	return t.instance.GetHistoryOfDistributedToGovStakerByTokenPath(path)
-}
-
-func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(path)
-}

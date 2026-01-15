@@ -87,13 +87,3 @@ func GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 func GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return getImplementation().GetAccuTransferToDevOpsByTokenPath(tokenPath)
 }
-
-// GetHistoryOfDistributedToGovStakerByTokenPath returns historical GovStaker distributions for a token.
-func GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath string) int64 {
-	return getImplementation().GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath)
-}
-
-// GetHistoryOfDistributedToDevOpsByTokenPath returns historical DevOps distributions for a token.
-func GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath string) int64 {
-	return getImplementation().GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath)
-}
