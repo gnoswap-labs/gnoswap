@@ -89,13 +89,18 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)")
+	beforeDelegationAmount, _ := gs.GetTotalDelegationAmountAtSnapshot(1234783890)
+	ufmt.Printf("[INFO] before delegation amount: %d\n", beforeDelegationAmount)
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
-		cleanupSnapshots(safeCleanupTime)
+		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
+		cleanupSnapshots(1234783890 + 5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
 	}
-	println()
+
+	afterDelegationAmount, _ := gs.GetTotalDelegationAmountAtSnapshot(1234783890)
+	ufmt.Printf("[INFO] after delegation amount: %d\n", afterDelegationAmount)
 
 	println("[SCENARIO] 9. Verify proposal is still accessible after cleanup")
 	verifyProposalAccessible(proposalId)
@@ -185,9 +190,10 @@ func verifyTotalDelegation() {
 // [INFO] valid cleanup threshold (must be less than): 1251847890
 //
 // [SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)
-// [INFO] cleaned snapshots older than 1234567790
+// [INFO] before delegation amount: 1500000000
+// [INFO] cleaned snapshots older than 1234783895
 // [EXPECTED] snapshot cleanup succeeded
-//
+// [INFO] after delegation amount: 0
 // [SCENARIO] 9. Verify proposal is still accessible after cleanup
 // [EXPECTED] proposal 1 status: passed
 // [EXPECTED] proposal is still accessible after cleanup
