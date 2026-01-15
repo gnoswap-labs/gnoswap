@@ -3,6 +3,7 @@ package staker
 // StakeToken stakes a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position to stake.
 //   - referrer: The referrer address for reward tracking.
 //
@@ -15,6 +16,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 // UnStakeToken unstakes a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position to unstake.
 //   - unwrapResult: Whether to unwrap WGNOT to GNOT.
 //
@@ -27,6 +29,7 @@ func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) string {
 // MintAndStake mints and stakes an LP token.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - token0: The path of token0.
 //   - token1: The path of token1.
 //   - fee: The fee tier of the pool.
@@ -77,6 +80,7 @@ func MintAndStake(
 // CollectReward collects staking rewards accrued to a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position to collect incentives from.
 //   - unwrapResult: (if position has wugnot fee) whether to receive reward in ugnot or not.
 //
@@ -92,6 +96,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 // SetPoolTier sets the reward tier for a pool.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - poolPath: path of the pool
 //   - tier: reward tier level
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
@@ -101,6 +106,7 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 // ChangePoolTier changes the reward tier of a pool.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - poolPath: path of the pool
 //   - tier: new reward tier level
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
@@ -110,6 +116,7 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 // RemovePoolTier removes a pool from the tier system.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - poolPath: path of the pool
 func RemovePoolTier(cur realm, poolPath string) {
 	getImplementation().RemovePoolTier(poolPath)
@@ -118,6 +125,7 @@ func RemovePoolTier(cur realm, poolPath string) {
 // CreateExternalIncentive creates an incentive program for a pool.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - targetPoolPath: The path of the pool in which to add incentives.
 //   - rewardToken: The path of the token to add as incentives.
 //   - rewardAmount: The amount of tokens to add as incentives.
@@ -143,6 +151,7 @@ func CreateExternalIncentive(
 // EndExternalIncentive ends an incentive program.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - targetPoolPath: The path of the pool to end the incentive program.
 //   - incentiveId: The ID of the incentive program to end.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
@@ -152,6 +161,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 // AddToken adds a token to the reward token whitelist.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - tokenPath: path of the token to add
 func AddToken(cur realm, tokenPath string) {
 	getImplementation().AddToken(tokenPath)
@@ -160,6 +170,7 @@ func AddToken(cur realm, tokenPath string) {
 // RemoveToken removes a token from the reward token whitelist.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - tokenPath: path of the token to remove
 func RemoveToken(cur realm, tokenPath string) {
 	getImplementation().RemoveToken(tokenPath)
@@ -168,6 +179,7 @@ func RemoveToken(cur realm, tokenPath string) {
 // SetWarmUp sets the warm-up period parameters for staking.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - pct: warmup percentage
 //   - timeDuration: warmup time duration in seconds
 func SetWarmUp(cur realm, pct, timeDuration int64) {
@@ -177,6 +189,7 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 // SetDepositGnsAmount sets the amount of GNS to deposit when creating an external incentive.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - amount: The amount of GNS needed to create an external incentive.
 func SetDepositGnsAmount(cur realm, amount int64) {
 	getImplementation().SetDepositGnsAmount(amount)
@@ -185,6 +198,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 // SetMinimumRewardAmount sets the minimum reward amount to distribute.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - amount: minimum reward amount
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	getImplementation().SetMinimumRewardAmount(amount)
@@ -193,6 +207,7 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 // SetTokenMinimumRewardAmount sets minimum reward amounts per token.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - paramsStr: encoded parameters for token minimum amounts
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	getImplementation().SetTokenMinimumRewardAmount(paramsStr)
@@ -201,6 +216,7 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 // SetUnStakingFee modifies the Unstaking Fee.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - fee: The rate that will be set as the new Unstaking Fee. (the value should be in bps)
 func SetUnStakingFee(cur realm, fee int64) {
 	getImplementation().SetUnStakingFee(fee)

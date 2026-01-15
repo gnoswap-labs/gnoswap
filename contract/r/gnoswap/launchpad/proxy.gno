@@ -3,6 +3,7 @@ package launchpad
 // CreateProject creates a new launchpad project (only callable by the admin).
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - name: The name of a project.
 //   - tokenPath: The token path to distribute as reward.
 //   - recipient: The address of the project's to receive reward.
@@ -44,6 +45,9 @@ func CreateProject(
 }
 
 // CollectProtocolFee collects the protocol fees from the governance contract. The reward is for projects, not for users, and it occurs based on the xGNS holdings that users deposited via launchpad to receive the project tokens.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
 func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee()
 }
@@ -51,6 +55,7 @@ func CollectProtocolFee(cur realm) {
 // TransferLeftFromProjectByAdmin transfers the remaining amount from the ended project to the recipient.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - projectID: The ID of the ended project.
 //   - recipient: The recipient address to receive the remaining tokens.
 //
@@ -63,6 +68,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient addre
 // DepositGns deposits GNS to a launchpad project pool.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - targetProjectTierID: The pool tier ID to deposit.
 //   - depositAmount: The amount of GNS token to deposit.
 //   - referrer: The referrer address for reward tracking.
@@ -76,6 +82,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 // CollectDepositGns collects the deposited GNS using a depositID.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - depositID: The ID of a deposit to collect GNS.
 //
 // Returns:
@@ -88,6 +95,7 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 // CollectRewardByDepositId collects the project token reward for users using a depositId.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - depositID: The ID of a deposit to collect reward token.
 //
 // Returns:

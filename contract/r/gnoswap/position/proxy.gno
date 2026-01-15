@@ -3,6 +3,7 @@ package position
 // Mint adds liquidity to a pool. Internally calls the `mint` function of the pool contract.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - token0: The path of the token0 of the desired pool.
 //   - token1: The path of the token1 of the desired pool.
 //   - fee: The fee tier of the pool.
@@ -44,6 +45,7 @@ func Mint(
 // IncreaseLiquidity adds additional liquidity to an existing position. Calling this function on a closed position will reopen it.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position NFT in which to increase liquidity.
 //   - amount0DesiredStr: The maximum amount of token0 to increase.
 //   - amount1DesiredStr: The maximum amount of token1 to increase.
@@ -72,6 +74,7 @@ func IncreaseLiquidity(
 // DecreaseLiquidity decreases liquidity of an existing position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position to decrease liquidity from.
 //   - liquidityStr: The amount of liquidity to decrease.
 //   - amount0MinStr: The minimum amount of token0 to decrease.
@@ -102,6 +105,7 @@ func DecreaseLiquidity(
 // Reposition modifies the price range of a closed position while maintaining the `positionId`.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position.
 //   - tickLower: The lower tick of the price range of the position.
 //   - tickUpper: The upper tick of the price range of the position.
@@ -135,6 +139,7 @@ func Reposition(
 // CollectFee collects fee accrued to a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: The ID of the position.
 //   - unwrapResult: (if position has wugnot fee) whether to receive fee in ugnot or not.
 //
@@ -156,6 +161,7 @@ func CollectFee(
 // SetPositionOperator sets an operator for a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - operator: address of the operator
 func SetPositionOperator(

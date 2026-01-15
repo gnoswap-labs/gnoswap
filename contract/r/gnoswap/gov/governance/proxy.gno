@@ -3,6 +3,7 @@ package governance
 // ProposeText creates a new text proposal with the provided data.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //
@@ -22,6 +23,7 @@ func ProposeText(
 // ProposeCommunityPoolSpend creates a CommunityPoolSpend proposal with the provided data.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //   - to: The address to receive the spent token.
@@ -50,6 +52,7 @@ func ProposeCommunityPoolSpend(
 // ProposeParameterChange creates a ParameterChange proposal with the provided data.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //   - numToExecute: The number of changes to execute.
@@ -75,6 +78,7 @@ func ProposeParameterChange(
 // Vote allows a user to vote on a given proposal.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - proposalId: The ID of the proposal to vote.
 //   - yes: The flag to vote as yes or not.
 //
@@ -94,6 +98,7 @@ func Vote(
 // Execute executes the given proposal.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - proposalId: The ID of the proposal to execute.
 //
 // Returns:
@@ -108,6 +113,7 @@ func Execute(
 // Cancel cancels the proposal with the given ID.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - proposalId: The ID of the proposal to cancel.
 //
 // Returns:
@@ -123,6 +129,7 @@ func Cancel(
 // Only callable by admin or governance.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)

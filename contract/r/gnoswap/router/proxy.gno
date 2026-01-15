@@ -3,6 +3,7 @@ package router
 // ExactInSwapRoute runs a exact-in direction swap through the route that offers the most favorable exchange rate.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - inputToken: The path of the input token.
 //   - outputToken: The path of the output token.
 //   - amountIn: The amount of the input token.
@@ -22,6 +23,7 @@ func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn
 // ExactInSingleSwapRoute executes a single-hop swap with exact input amount.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - inputToken: path of input token
 //   - outputToken: path of output token
 //   - amountIn: exact input amount
@@ -41,6 +43,7 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 // ExactOutSwapRoute runs a exact-out direction swap through the route that offers the most favorable exchange rate.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - inputToken: The path of the input token.
 //   - outputToken: The path of the output token.
 //   - amountOut: The amount of the output token.
@@ -60,6 +63,7 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 // ExactOutSingleSwapRoute executes a single-hop swap with exact output amount.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - inputToken: path of input token
 //   - outputToken: path of output token
 //   - amountOut: exact output amount
@@ -131,6 +135,7 @@ func GetSwapFee() uint64 {
 // SetSwapFee modifies the Swap Fee.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - fee: The rate that will be set as the new Swap Fee. (the value should be in bps)
 func SetSwapFee(cur realm, fee uint64) {
 	getImplementation().SetSwapFee(fee)
