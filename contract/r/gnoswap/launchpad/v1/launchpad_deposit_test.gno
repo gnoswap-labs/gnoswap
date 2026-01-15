@@ -66,7 +66,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				// Create project as admin
 				testing.SetOriginCaller(launchpadAddr)
 				testing.SetRealm(adminRealm)
-				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				obl.Approve(cross, launchpadAddr, 10000)
 
@@ -135,7 +135,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Create project as admin
 				testing.SetRealm(adminRealm)
-				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
 				testing.SetRealm(adminRealm)
@@ -200,7 +200,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Create project as admin
 				testing.SetRealm(adminRealm)
-				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
 				obl.Approve(cross, launchpadAddr, 10000)
@@ -328,7 +328,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Create project as admin
 				testing.SetRealm(adminRealm)
-				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
 				obl.Approve(cross, launchpadAddr, 10000)
@@ -446,7 +446,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 
 				// Create project as admin
 				testing.SetRealm(adminRealm)
-				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+				startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 				// Approve token for project creation
 				obl.Approve(cross, launchpadAddr, 10000)
@@ -722,7 +722,7 @@ func TestLaunchpadDeposit_xGNSMintedOnce(t *testing.T) {
 		// Create project as admin
 		testing.SetOriginCaller(launchpadAddr)
 		testing.SetRealm(adminRealm)
-		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 		obl.Approve(cross, launchpadAddr, 10000)
 
@@ -910,7 +910,7 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 
 		// Create project as admin
 		testing.SetRealm(adminRealm)
-		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 		obl.Approve(cross, launchpadAddr, 1000000)
 
@@ -1126,7 +1126,7 @@ func TestDepositGns_TierEndTimeBoundary(t *testing.T) {
 
 		// Create project
 		testing.SetRealm(adminRealm)
-		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 7 days from now
+		startTime := time.Now().Unix() + projectMinimumStartDelayTime // 3 days from now
 
 		obl.Approve(cross, launchpadAddr, 1000000)
 
