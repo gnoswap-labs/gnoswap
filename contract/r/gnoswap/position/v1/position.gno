@@ -596,7 +596,8 @@ func computePositionKey(
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
 func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.Uint) {
-	if position.Liquidity().IsZero() {
+	liquidity := position.Liquidity()
+	if liquidity.IsZero() {
 		return u256.Zero(), u256.Zero()
 	}
 
@@ -604,6 +605,6 @@ func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.U
 		pl.GetSlot0SqrtPriceX96(position.PoolKey()), // currentSqrtPriceX96
 		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
-		position.Liquidity(),
+		liquidity,
 	)
 }
