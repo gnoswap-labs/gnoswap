@@ -2117,3 +2117,39 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 		})
 	}
 }
+
+// TestDecreaseLiquidity_NonOwner tests that non-owner cannot decrease liquidity
+func TestDecreaseLiquidity_NonOwner(t *testing.T) {
+	initPositionTest(t)
+
+	// Setup pool and position owned by admin
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Alice (non-owner) tries to decrease liquidity
+	testing.SetRealm(testing.NewUserRealm(alice))
+
+	uassert.PanicsWithMessage(t,
+		"[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh) is not owner of positionId(1)",
+		func() {
+			testing.SetRealm(testing.NewCodeRealm(posPath))
+			mockInstance.DecreaseLiquidity(
+				1,
+				"100",
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+		})
+}

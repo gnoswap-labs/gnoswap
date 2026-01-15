@@ -798,12 +798,14 @@ func setupNarrowRangePositionPool(t *testing.T) {
 
 func TestSwap_TradingPatterns(t *testing.T) {
 	tradingPatterns := []struct {
-		name            string
-		description     string
-		setupLiquidity  func(t *testing.T)
-		swapParams      SwapScenario
-		expectedAmounts []string
-		tradingContext  string
+		name                 string
+		description          string
+		setupLiquidity       func(t *testing.T)
+		swapParams           SwapScenario
+		expectedAmounts      []string
+		tradingContext       string
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name:        "exact_input_token1_purchase",
@@ -856,6 +858,25 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			expectedAmounts: []string{"0", "0"},
 			tradingContext:  "Swap attempt in zero liquidity situation",
 		},
+		{
+			name:        "sqrt_price_limit_over_tick_range_termination",
+			description: "Swap terminated when sqrtPriceLimitX96 is over tick range",
+			setupLiquidity: func(t *testing.T) {
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "200",
+				priceLimit:      common.TickMathGetSqrtRatioAtTick(887224).ToString(),
+			},
+			expectedAmounts:      []string{},
+			tradingContext:       "Swap terminated when sqrtPriceLimitX96 is over tick range",
+			expectedHasPanic:     true,
+			expectedPanicMessage: "[GNOSWAP-POOL-017] swap price out of range",
+		},
 	}
 
 	for _, pattern := range tradingPatterns {
@@ -873,21 +894,32 @@ func TestSwap_TradingPatterns(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
-				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
-				pattern.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
-					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			if pattern.expectedHasPanic {
+				uassert.AbortsContains(t, pattern.expectedPanicMessage, func() {
+					mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+						alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
+						pattern.swapParams.priceLimit, routerAddr,
+						func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+							return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+						})
 				})
+			} else {
+				actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
+					pattern.swapParams.priceLimit, routerAddr,
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+					})
 
-			// Then: Verify expected trading result
-			uassert.Equal(t, pattern.expectedAmounts[0], actualAmount0,
-				"Token0 amount differs from expected")
-			uassert.Equal(t, pattern.expectedAmounts[1], actualAmount1,
-				"Token1 amount differs from expected")
+				// Then: Verify expected trading result
+				uassert.Equal(t, pattern.expectedAmounts[0], actualAmount0,
+					"Token0 amount differs from expected")
+				uassert.Equal(t, pattern.expectedAmounts[1], actualAmount1,
+					"Token1 amount differs from expected")
 
-			t.Logf("✓ %s: Result(%s/%s) - %s",
-				pattern.description, actualAmount0, actualAmount1, pattern.tradingContext)
+				t.Logf("✓ %s: Result(%s/%s) - %s",
+					pattern.description, actualAmount0, actualAmount1, pattern.tradingContext)
+			}
 		})
 	}
 }
