@@ -728,7 +728,7 @@ func (p *Parser) typeString(expr ast.Expr) string {
 	case *ast.ChanType:
 		return "chan " + p.typeString(t.Value)
 	case *ast.FuncType:
-		return "func(...)"
+		return p.funcTypeString(t)
 	case *ast.InterfaceType:
 		return "interface{}"
 	case *ast.StructType:
@@ -738,6 +738,51 @@ func (p *Parser) typeString(expr ast.Expr) string {
 	default:
 		return "?"
 	}
+}
+
+func (p *Parser) funcTypeString(fn *ast.FuncType) string {
+	var sb strings.Builder
+	sb.WriteString("func(")
+	if fn.Params != nil && len(fn.Params.List) > 0 {
+		var parts []string
+		for _, field := range fn.Params.List {
+			count := len(field.Names)
+			if count == 0 {
+				count = 1
+			}
+			for i := 0; i < count; i++ {
+				parts = append(parts, p.typeString(field.Type))
+			}
+		}
+		sb.WriteString(strings.Join(parts, ", "))
+	}
+	sb.WriteString(")")
+
+	if fn.Results == nil || len(fn.Results.List) == 0 {
+		return sb.String()
+	}
+
+	var results []string
+	for _, field := range fn.Results.List {
+		count := len(field.Names)
+		if count == 0 {
+			count = 1
+		}
+		for i := 0; i < count; i++ {
+			results = append(results, p.typeString(field.Type))
+		}
+	}
+
+	if len(results) == 1 {
+		sb.WriteString(" ")
+		sb.WriteString(results[0])
+		return sb.String()
+	}
+
+	sb.WriteString(" (")
+	sb.WriteString(strings.Join(results, ", "))
+	sb.WriteString(")")
+	return sb.String()
 }
 
 // exprString returns the string representation of an expression value.
