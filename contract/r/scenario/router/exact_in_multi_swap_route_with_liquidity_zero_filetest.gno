@@ -56,10 +56,13 @@ func main() {
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
 	createPool(wugnotPath, gnsPath, 500, 0)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
+	println()
+
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity")
 	createPool(barPath, gnsPath, 500, 0)
 	println()
 
-	println("[SCENARIO] 3. ExactInSwapRoute")
+	println("[SCENARIO] 4. ExactInSwapRoute")
 	exactInSwapRouteByWithPanic(
 		"ugnot",
 		barPath,
@@ -189,9 +192,11 @@ func exactInSwapRouteByWithPanic(
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
+//
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500) with zero liquidity
 // [EXPECTED] created gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500 pool at tick 0
 //
-// [SCENARIO] 3. ExactInSwapRoute
+// [SCENARIO] 4. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
 // [INFO] inputToken: ugnot
 // [INFO] outputToken: gno.land/r/onbloc/bar
