@@ -93,7 +93,8 @@ func ChangeDistributionPct(
 ) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionTargets(target01, target02, target03, target04)
@@ -104,12 +105,6 @@ func ChangeDistributionPct(
 	// under previous ratio configurations.
 	MintAndDistributeGns(cross)
 
-	if onDistributionPctChangeCallback != nil {
-		currentTimestamp := time.Now().Unix()
-		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
-	}
-
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
@@ -117,10 +112,15 @@ func ChangeDistributionPct(
 		target04, pct04,
 	)
 
-	previousRealm := runtime.PreviousRealm()
+	if onDistributionPctChangeCallback != nil {
+		currentTimestamp := time.Now().Unix()
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
+
 	chain.Emit(
 		"ChangeDistributionPct",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"target01", targetToStr(target01),
 		"pct01", formatInt(pct01),
@@ -323,11 +323,11 @@ func GetDistributedToGovStaker() int64 {
 }
 
 func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
-    toStaker = GetDistributedToStaker()
-    toDevOps = GetDistributedToDevOps()
-    toCommunityPool = GetDistributedToCommunityPool()
-    toGovStaker = GetDistributedToGovStaker()
-    return
+	toStaker = GetDistributedToStaker()
+	toDevOps = GetDistributedToDevOps()
+	toCommunityPool = GetDistributedToCommunityPool()
+	toGovStaker = GetDistributedToGovStaker()
+	return
 }
 
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.

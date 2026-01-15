@@ -88,6 +88,8 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		return 0, true
 	}
 
+	setLastExecutedTimestamp(currentTimestamp)
+
 	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(cross, emissionAddr)
 
@@ -99,17 +101,20 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
 
-	if leftGNSAmount > 0 {
+	if prevLeftAmount > 0 {
 		// Check for overflow before addition
 		if distributableAmount > math.MaxInt64-prevLeftAmount {
 			panic("distributable amount would overflow")
 		}
 
 		distributableAmount += prevLeftAmount
-		setLeftGNSAmount(0)
 	}
 
-	// Distribute tokens and track any undistributed amount
+	// pre-calculate remainder and update state before external transfer calls
+	_, expectedRemainder := calculateDistributableAmounts(distributableAmount, distributionBpsPct)
+	setLeftGNSAmount(expectedRemainder)
+
+	// Distribute tokens
 	distributedGNSAmount, err := distributeToTarget(distributableAmount)
 	if err != nil {
 		panic(err)
@@ -124,15 +129,11 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		panic("distributed amount cannot exceed distributable amount")
 	}
 
-	if distributableAmount != distributedGNSAmount {
-		remainder := safeSubInt64(distributableAmount, distributedGNSAmount)
-		if remainder < 0 {
-			panic("remainder calculation error")
-		}
-		setLeftGNSAmount(remainder)
+	// Verify that pre-calculated remainder matches actual distribution
+	actualRemainder := safeSubInt64(distributableAmount, distributedGNSAmount)
+	if actualRemainder != expectedRemainder {
+		panic("distribution remainder mismatch")
 	}
-
-	setLastExecutedTimestamp(currentTimestamp)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -200,13 +201,12 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	}
 
 	prevStartTimestamp := distributionStartTimestamp
+	distributionStartTimestamp = startTimestamp
 
 	if gns.MintedEmissionAmount() == 0 {
 		currentHeight := runtime.ChainHeight()
 		gns.InitEmissionState(cross, currentHeight, startTimestamp)
 	}
-
-	distributionStartTimestamp = startTimestamp
 
 	chain.Emit(
 		"SetDistributionStartTime",
