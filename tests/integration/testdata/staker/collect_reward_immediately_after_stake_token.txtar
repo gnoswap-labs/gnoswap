@@ -107,3 +107,47 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CollectReward -args 
 # stdout "0"
 # stdout 'GAS USED:   (3|4|5)[0-9]{7}'
 # stdout 'EVENTS:     \[{\"type\":\"ProtocolFeeInternalReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"fromPositionId\",\"value\":\"1\"},{\"key\":\"fromPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"recipient\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"rewardAmount\",\"value\":\"0\"},{\"key\":\"rewardToUser\",\"value\":\"0\"},{\"key\":\"rewardToFee\",\"value\":\"0\"},{\"key\":\"rewardPenalty\",\"value\":\"0\"},{\"key\":\"rewardUnClaimableAmount\",\"value\":\"0\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}.*\]'
+
+## ===== JSON Output Tests (after staking position) =====
+
+## 1. Primitive int64: GetDepositGnsAmount
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetDepositGnsAmount()"
+stdout '"T":"int64"'
+stdout '"results":'
+
+## 2. Primitive int64: GetUnstakingFee
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetUnstakingFee()"
+stdout '"T":"int64"'
+stdout '"results":'
+
+## 3. Primitive int64: GetMinimumRewardAmount
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetMinimumRewardAmount()"
+stdout '"T":"int64"'
+stdout '"results":'
+
+## 4. Primitive uint64: GetPoolTier
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
+stdout '"T":"uint64"'
+stdout '"value":"1"'
+
+## 5. Primitive bool: IsStaked
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
+stdout '"T":"bool"'
+stdout 'true'
+
+## 6. String: GetPoolStakedLiquidity
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolStakedLiquidity(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
+stdout '"T":"string"'
+stdout 'StringValue'
+
+## 7. Slice: GetAllowedTokens
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetAllowedTokens()"
+stdout '"T":"\[\]string"'
+stdout 'SliceValue'
+
+## 8. Struct pointer: GetDeposit (returns *Deposit struct)
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/staker.GetDeposit(1)"
+stdout '"results":'
+stdout 'Deposit'
+
+## ===== End JSON Output Tests =====

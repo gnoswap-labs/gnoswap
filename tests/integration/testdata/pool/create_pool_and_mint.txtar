@@ -75,9 +75,48 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.
 # stdout 'TOTAL TX COST:  1[0-9]{7}ugnot'
 # stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"100000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"PoolCreationFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"100000000\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},{\"type\":\"CreatePool\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"token0Path\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"token1Path\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"fee\",\"value\":\"3000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"tick\",\"value\":\"0\"},{\"key\":\"tickSpacing\",\"value\":\"60\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee\"}\]'
 
-## Check created pool 
+## Check created pool
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
 # stdout true
+
+## ===== JSON Output Tests (after pool creation) =====
+
+## 1. Primitive int: GetPoolCount
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCount()"
+stdout '"T":"int"'
+stdout '"results":'
+
+## 2. Primitive bool: ExistsPoolPath (JSON version)
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
+stdout '"T":"bool"'
+stdout 'true'
+
+## 3. Primitive int64: GetPoolCreationFee
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee()"
+stdout '"T":"int64"'
+
+## 4. Primitive uint32: GetFee
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetFee(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
+stdout '"T":"uint32"'
+
+## 5. String: GetLiquidity (before mint, should be 0)
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetLiquidity(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
+stdout '"T":"string"'
+
+## 6. Slice: GetPoolPaths
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolPaths(0, 10)"
+stdout '"T":"\[\]string"'
+
+## 7. Map: GetFeeAmountTickSpacings
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetFeeAmountTickSpacings()"
+stdout '"T":"map\[uint32\]int32"'
+
+## 8. Struct: GetPool (returns *Pool with full structure)
+gnokey --json query vm/qeval --data "gno.land/r/gnoswap/pool.GetPool(\"gno.land/r/gnoland/wugnot\", \"gno.land/r/gnoswap/gns\", 3000)"
+stdout '"results":'
+stdout 'Pool'
+
+## ===== End JSON Output Tests =====
 
 ## Mint position
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
