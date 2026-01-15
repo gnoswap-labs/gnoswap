@@ -113,20 +113,18 @@ func (gv *governanceV1) vote(
 
 	weightAtSnapshot, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, snapshotTime)
 	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(
-			errNotEnoughVotingWeight, "no voting weight at snapshot time")
+		weightAtSnapshot = 0
 	}
 
 	weightAtCreated, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, createdAt)
 	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(
-			errNotEnoughVotingWeight, "no voting weight at proposal time")
+		weightAtCreated = 0
 	}
 
 	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(
-			errNotEnoughVotingWeight, "insufficient averaged voting weight")
+			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
 	// Create or update voting info for this user

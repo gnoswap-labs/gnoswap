@@ -425,12 +425,12 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 	// Get total delegation amount at snapshot time from staker contract via accessor
 	totalAtSnapshot, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)
 	if !ok {
-		return 0, snapshotTime, errNotEnoughVotingWeight
+		totalAtSnapshot = 0
 	}
 
 	totalAtCurrent, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(current)
 	if !ok {
-		return 0, snapshotTime, errNotEnoughVotingWeight
+		totalAtCurrent = 0
 	}
 
 	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
