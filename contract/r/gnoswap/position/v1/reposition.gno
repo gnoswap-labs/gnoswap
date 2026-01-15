@@ -100,6 +100,19 @@ func (p *positionV1) Reposition(
 		},
 	)
 
+	// before update position, calculate token balances
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
+
+	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
+	if overflow {
+		panic(newErrorWithDetail(errOverflow, "token0Balance + amount0 overflow"))
+	}
+
+	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
+	if overflow {
+		panic(newErrorWithDetail(errOverflow, "token1Balance + amount1 overflow"))
+	}
+
 	// update position tickLower, tickUpper to new value
 	// because getCurrentFeeGrowth() uses tickLower, tickUpper
 	position.SetTickLower(tickLower)
@@ -113,10 +126,8 @@ func (p *positionV1) Reposition(
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	position.SetLiquidity(liquidity)
-
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
-	position.SetToken0Balance(calculatedToken0Balance)
-	position.SetToken1Balance(calculatedToken1Balance)
+	position.SetToken0Balance(token0Balance)
+	position.SetToken1Balance(token1Balance)
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
@@ -127,8 +138,8 @@ func (p *positionV1) Reposition(
 	p.mustUpdatePosition(positionId, *position)
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	token0Balance := pl.GetBalanceToken0(poolKey)
-	token1Balance := pl.GetBalanceToken1(poolKey)
+	poolToken0Balance := pl.GetBalanceToken0(poolKey)
+	poolToken1Balance := pl.GetBalanceToken1(poolKey)
 
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolKey, 0)
@@ -149,8 +160,8 @@ func (p *positionV1) Reposition(
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
-		"token0Balance", token0Balance,
-		"token1Balance", token1Balance,
+		"token0Balance", poolToken0Balance,
+		"token1Balance", poolToken1Balance,
 		"tickCumulative", formatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
