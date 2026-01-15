@@ -1,6 +1,9 @@
 package referral
 
-import "chain"
+import (
+	"chain"
+	"chain/runtime"
+)
 
 var gReferralKeeper ReferralKeeper
 
@@ -53,6 +56,9 @@ func ContractAddress() string {
 // Returns true on success, false on failure.
 // Panics if the caller is not authorized.
 func TryRegister(cur realm, addr address, referral string) bool {
+	caller := runtime.PreviousRealm().Address()
+	assertValidCaller(caller)
+
 	refAddr := address(referral)
 
 	err := gReferralKeeper.register(addr, refAddr)
@@ -65,6 +71,13 @@ func TryRegister(cur realm, addr address, referral string) bool {
 
 		return false
 	}
+
+	chain.Emit(
+		"RegisterReferral",
+		"prevAddr", caller.String(),
+		"address", addr.String(),
+		"referral", refAddr.String(),
+	)
 
 	return true
 }

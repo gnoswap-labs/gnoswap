@@ -196,13 +196,12 @@ func TestRateLimit_CheckRateLimitInternal(t *testing.T) {
 func TestRateLimit_UnauthorizedCallerTakesPrecedence(t *testing.T) {
 	cleanup := setupRateLimitCaller(t, "unauthorized")
 	defer cleanup()
-	k := setupRateLimitKeeper(t)
 
 	user := testutils.TestAddress("user")
 	referrer := testutils.TestAddress("referrer")
 
-	uassert.PanicsContains(t, "unauthorized caller", func() {
-		k.register(user, referrer)
+	uassert.AbortsContains(t, "unauthorized caller", func() {
+		TryRegister(cross, user, referrer.String())
 	})
 }
 

@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestUtils_isValidCaller_AllAuthorizedRoles(t *testing.T) {
+func TestUtils_assertValidCaller_AllAuthorizedRoles(t *testing.T) {
 	tests := []struct {
 		name     string
 		roleName string
@@ -51,15 +51,15 @@ func TestUtils_isValidCaller_AllAuthorizedRoles(t *testing.T) {
 			}
 
 			// when
-			err := isValidCaller(roleAddr)
+			assertValidCaller(roleAddr)
 
 			// then
-			uassert.NoError(t, err)
+			t.Log("authorized")
 		})
 	}
 }
 
-func TestUtils_isValidCaller_UnauthorizedCallers(t *testing.T) {
+func TestUtils_assertValidCaller_UnauthorizedCallers(t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -81,15 +81,14 @@ func TestUtils_isValidCaller_UnauthorizedCallers(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			err := isValidCaller(tc.caller)
-
-			// then
-			uassert.Error(t, err)
+			uassert.PanicsContains(t, "unauthorized", func() {
+				assertValidCaller(tc.caller)
+			})
 		})
 	}
 }
 
-func TestUtils_isValidCaller_EdgeCases(t *testing.T) {
+func TestUtils_assertValidCaller_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -107,15 +106,14 @@ func TestUtils_isValidCaller_EdgeCases(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			err := isValidCaller(tc.caller)
-
-			// then
-			uassert.Error(t, err)
+			uassert.PanicsContains(t, "unauthorized", func() {
+				assertValidCaller(tc.caller)
+			})
 		})
 	}
 }
 
-func TestUtils_isValidCaller_MultipleRolesConsistency(t *testing.T) {
+func TestUtils_assertValidCaller_MultipleRolesConsistency(t *testing.T) {
 	// Test that multiple calls with the same authorized role return consistent results
 	t.Run("consistent authorization for same role", func(t *testing.T) {
 		// given
@@ -126,8 +124,7 @@ func TestUtils_isValidCaller_MultipleRolesConsistency(t *testing.T) {
 
 		// when & then - call multiple times
 		for i := 0; i < 5; i++ {
-			err := isValidCaller(routerAddr)
-			uassert.NoError(t, err)
+			assertValidCaller(routerAddr)
 		}
 	})
 
@@ -137,13 +134,14 @@ func TestUtils_isValidCaller_MultipleRolesConsistency(t *testing.T) {
 
 		// when & then - call multiple times
 		for i := 0; i < 5; i++ {
-			err := isValidCaller(unauthorizedAddr)
-			uassert.Error(t, err)
+			uassert.PanicsContains(t, "unauthorized", func() {
+				assertValidCaller(unauthorizedAddr)
+			})
 		}
 	})
 }
 
-func TestUtils_isValidCaller_RoleIsolation(t *testing.T) {
+func TestUtils_assertValidCaller_RoleIsolation(t *testing.T) {
 	// Test that authorization is properly isolated by role
 	t.Run("different authorized roles all work", func(t *testing.T) {
 		roles := []string{
@@ -158,8 +156,7 @@ func TestUtils_isValidCaller_RoleIsolation(t *testing.T) {
 				continue // Skip if role not configured
 			}
 
-			err := isValidCaller(roleAddr)
-			uassert.NoError(t, err)
+			assertValidCaller(roleAddr)
 		}
 	})
 
@@ -175,13 +172,15 @@ func TestUtils_isValidCaller_RoleIsolation(t *testing.T) {
 		unauthorizedAddr := testutils.TestAddress("between")
 
 		// when
-		routerErr := isValidCaller(routerAddr)
-		unauthorizedErr := isValidCaller(unauthorizedAddr)
-		positionErr := isValidCaller(positionAddr)
+		// not panic
+		assertValidCaller(routerAddr)
 
-		// then
-		uassert.NoError(t, routerErr)
-		uassert.Error(t, unauthorizedErr)
-		uassert.NoError(t, positionErr)
+		// panic
+		uassert.PanicsContains(t, "unauthorized", func() {
+			assertValidCaller(unauthorizedAddr)
+		})
+
+		// not panic
+		assertValidCaller(positionAddr)
 	})
 }

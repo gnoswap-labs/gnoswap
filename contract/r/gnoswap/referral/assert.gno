@@ -18,17 +18,17 @@ var validCallerRoles = []string{
 	prabc.ROLE_LAUNCHPAD.String(),
 }
 
-// isValidCaller checks if the caller address has permission to modify referral data.
+// assertValidCaller checks if the caller address has permission to modify referral data.
 // Only addresses with specific roles defined in validCallerRoles are authorized.
 //
 // Errors:
 //   - ErrUnauthorized: the caller is not authorized to modify referral data
-func isValidCaller(caller address) error {
+func assertValidCaller(caller address) {
 	for _, role := range validCallerRoles {
 		if access.IsAuthorized(role, caller) {
-			return nil
+			return
 		}
 	}
 
-	return makeErrorWithDetails(ErrUnauthorized, caller.String())
+	panic(makeErrorWithDetails(ErrUnauthorized, caller.String()))
 }
