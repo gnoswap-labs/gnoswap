@@ -340,7 +340,7 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 		fnParts = append(fnParts, r.anchorTag(anchor))
 
 		// Function name as subheader
-		fnParts = append(fnParts, fmt.Sprintf("### %s", fn.Name))
+		fnParts = append(fnParts, fmt.Sprintf("## %s", fn.Name))
 
 		// Signature
 		fnParts = append(fnParts, "```go")
@@ -371,12 +371,7 @@ func (r *MarkdownRenderer) RenderFunctions(pkg *model.DocPackage) string {
 		return ""
 	}
 
-	var sb strings.Builder
-	sb.WriteString("## Functions\n\n")
-	sb.WriteString(strings.Join(parts, "\n\n---\n\n"))
-	sb.WriteString("\n")
-
-	return sb.String()
+	return strings.Join(parts, "\n\n---\n\n") + "\n"
 }
 
 // RenderTypes renders the Types section.
@@ -701,8 +696,12 @@ func (r *MarkdownRenderer) renderParamTable(params []model.DocParam, items []doc
 
 	if len(params) == 0 {
 		for _, item := range items {
+			name := ""
+			if item.Key != "" {
+				name = "`" + escapeTableCell(item.Key) + "`"
+			}
 			lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
-				escapeTableCell(item.Key),
+				name,
 				"",
 				escapeTableCell(item.Desc),
 			))
@@ -715,8 +714,12 @@ func (r *MarkdownRenderer) renderParamTable(params []model.DocParam, items []doc
 		if param.Name != "" {
 			desc = descByName[param.Name]
 		}
+		name := ""
+		if param.Name != "" {
+			name = "`" + escapeTableCell(param.Name) + "`"
+		}
 		lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
-			escapeTableCell(param.Name),
+			name,
 			escapeTableCell(param.Type),
 			escapeTableCell(desc),
 		))
@@ -731,15 +734,19 @@ func (r *MarkdownRenderer) renderReturnTable(fn model.DocFunc, items []docItem) 
 	}
 
 	var lines []string
-	lines = append(lines, "#### Returns")
+	lines = append(lines, "#### Return Values")
 	lines = append(lines, "")
 	lines = append(lines, "| Name | Type | Description |")
 	lines = append(lines, "| --- | --- | --- |")
 
 	if len(fn.Results) == 0 {
 		for _, item := range items {
+			name := ""
+			if item.Key != "" {
+				name = "`" + escapeTableCell(item.Key) + "`"
+			}
 			lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
-				escapeTableCell(item.Key),
+				name,
 				"",
 				escapeTableCell(item.Desc),
 			))
@@ -756,8 +763,12 @@ func (r *MarkdownRenderer) renderReturnTable(fn model.DocFunc, items []docItem) 
 		if name == "" && item.Key != "" {
 			name = item.Key
 		}
+		nameCell := ""
+		if name != "" {
+			nameCell = "`" + escapeTableCell(name) + "`"
+		}
 		lines = append(lines, fmt.Sprintf("| %s | %s | %s |",
-			escapeTableCell(name),
+			nameCell,
 			escapeTableCell(result.Type),
 			escapeTableCell(item.Desc),
 		))
