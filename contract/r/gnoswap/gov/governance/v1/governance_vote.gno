@@ -113,17 +113,20 @@ func (gv *governanceV1) vote(
 
 	weightAtSnapshot, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, snapshotTime)
 	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at snapshot time")
+		return nil, 0, 0, makeErrorWithDetails(
+			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
 	weightAtCreated, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, createdAt)
 	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at proposal time")
+		return nil, 0, 0, makeErrorWithDetails(
+			errNotEnoughVotingWeight, "no voting weight at proposal time")
 	}
 
 	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
-		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at snapshot time")
+		return nil, 0, 0, makeErrorWithDetails(
+			errNotEnoughVotingWeight, "insufficient averaged voting weight")
 	}
 
 	// Create or update voting info for this user
@@ -141,7 +144,7 @@ func (gv *governanceV1) vote(
 	// Store the user's vote in the proposal voting infos
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
-	    return nil, 0, 0, makeErrorWithDetails(
+		return nil, 0, 0, makeErrorWithDetails(
 			errDataNotFound, "voting infos tree not found for proposal")
 	}
 
