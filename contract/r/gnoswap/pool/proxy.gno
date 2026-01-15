@@ -1,12 +1,13 @@
 package pool
 
-// CreatePool creates a new liquidity pool for a token pair.
+// CreatePool creates a liquidity pool.
 //
 // Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
-//   - fee: pool fee tier
-//   - sqrtPriceX96: initial sqrt price (Q64.96 format)
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of the token0 of the pool to create.
+//   - token1Path: The path of the token1 of the pool to create.
+//   - fee: The fee tier of the pool. (100 = 0.01%, 500 = 0.05%, 3000 = 0.3%, 10000 = 1%)
+//   - sqrtPriceX96: The starting price of the pool.
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -22,7 +23,11 @@ func CreatePool(
 	)
 }
 
-// SetPoolCreationFee sets the pool creation fee.
+// SetPoolCreationFee modifies the Pool Creation Fee.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - fee: The amount of tokens that will be set as the new Pool Creation Fee. (the amount should be in uTokens)
 func SetPoolCreationFee(cur realm, fee int64) {
 	getImplementation().SetPoolCreationFee(fee)
 }
@@ -30,6 +35,7 @@ func SetPoolCreationFee(cur realm, fee int64) {
 // IncreaseObservationCardinalityNext increases the observation cardinality for a pool.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - token0Path: path of the first token
 //   - token1Path: path of the second token
 //   - fee: pool fee tier
@@ -49,20 +55,21 @@ func IncreaseObservationCardinalityNext(
 	)
 }
 
-// Mint adds liquidity to a position.
+// Mint adds liquidity to a pool. This function can only be called by the Position contract, not by users.
 //
 // Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
-//   - fee: pool fee tier
-//   - tickLower: lower tick boundary
-//   - tickUpper: upper tick boundary
-//   - liquidityAmount: amount of liquidity to add
-//   - positionCaller: caller address for the position
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of token0 of the desired pool.
+//   - token1Path: The path of token1 of the desired pool.
+//   - fee: The fee tier of the desired pool.
+//   - tickLower: The lower tick of the price range of the position.
+//   - tickUpper: The upper tick of the price range of the position.
+//   - liquidityAmount: The amount of liquidity to add. This value is calculated by the Position contract based on the amounts of token0 & token1, and the price.
+//   - positionCaller: The caller address from the position contract.
 //
 // Returns:
-//   - string: amount of token0 added
-//   - string: amount of token1 added
+//   - amount0: The amount of token0 that added to the liquidity pool to mint the position.
+//   - amount1: The amount of token1 that added to the liquidity pool to mint the position.
 func Mint(
 	cur realm,
 	token0Path string,
@@ -84,7 +91,21 @@ func Mint(
 	)
 }
 
-// Burn removes liquidity from a position.
+// Burn removes liquidity from a pool. This function can only be called by the Position contract, not by users.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of token0 of the desired pool.
+//   - token1Path: The path of token1 of the desired pool.
+//   - fee: The fee tier of the desired pool.
+//   - tickLower: The lower tick of the price range of the position.
+//   - tickUpper: The upper tick of the price range of the position.
+//   - liquidityAmount: The amount of liquidity to remove.
+//   - positionCaller: The caller address from the position contract.
+//
+// Returns:
+//   - amount0: The amount of token0 that was removed from the pool by burning the position.
+//   - amount1: The amount of token1 that was removed from the pool by burning the position.
 func Burn(
 	cur realm,
 	token0Path string,
@@ -106,7 +127,22 @@ func Burn(
 	)
 }
 
-// Collect transfers owed tokens from a position to recipient.
+// Collect collects swap fees in token0 and token1 accrued to a position. This function can only be called by the Position contract, not by users.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of token0 of the desired pool.
+//   - token1Path: The path of token1 of the desired pool.
+//   - fee: The fee tier of the desired pool.
+//   - recipient: The address that will receive the collected fees.
+//   - tickLower: The lower tick of the price range of the position.
+//   - tickUpper: The upper tick of the price range of the position.
+//   - amount0Requested: The maximum amount of token0 to collect from the pool.
+//   - amount1Requested: The maximum amount of token1 to collect from the pool.
+//
+// Returns:
+//   - amount0: The amount of token0 that was collected from the position.
+//   - amount1: The amount of token1 that was collected from the position.
 func Collect(
 	cur realm,
 	token0Path string,
@@ -130,28 +166,30 @@ func Collect(
 	)
 }
 
-// SetWithdrawalFee sets the withdrawal fee rate.
+// SetWithdrawalFee modifies the Withdrawal Fee.
 //
 // Parameters:
-//   - fee: withdrawal fee in basis points
+//   - cur: Pass `cross` as argument.
+//   - fee: The rate that will be set as the new Withdrawal Fee. (the value should be in bps)
 func SetWithdrawalFee(cur realm, fee uint64) {
 	getImplementation().SetWithdrawalFee(fee)
 }
 
-// HandleWithdrawalFee processes withdrawal fees for a position.
+// HandleWithdrawalFee handles withdrawal protocol fee for a position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - token0Path: path of the first token
-//   - amount0: amount of token0 to withdraw
-//   - token1Path: path of the second token
-//   - amount1: amount of token1 to withdraw
-//   - poolPath: pool identifier
-//   - positionCaller: caller address for the position
+//   - cur: Pass `cross` as argument.
+//   - positionId: The ID of position which being handled to withdrawal protocol fee.
+//   - token0Path: The path of token0 of the position.
+//   - amount0: The amount of token0 to calculate withdrawal fee.
+//   - token1Path: The path of token1 of the position.
+//   - amount1: The amount of token1 to calculate withdrawal fee.
+//   - poolPath: The path of pool of the position was minted.
+//   - positionCaller: The caller address from position contract.
 //
 // Returns:
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
+//   - amount0: The remaining amount of token0 after the protocol fee has been withdrawn.
+//   - amount1: The remaining amount of token1 after the protocol fee has been withdrawn.
 func HandleWithdrawalFee(
 	cur realm,
 	positionId uint64,
@@ -173,22 +211,23 @@ func HandleWithdrawalFee(
 	)
 }
 
-// Swap executes a token swap in the pool.
+// Swap swaps tokens from a pool from token0 to token1, or vice versa. This function can only be called by the Router contract, not by users.
 //
 // Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
-//   - fee: pool fee tier
-//   - recipient: recipient address for output tokens
-//   - zeroForOne: true if swapping token0 for token1
-//   - amountSpecified: amount to swap (positive for exact input, negative for exact output)
-//   - sqrtPriceLimitX96: price limit for the swap
-//   - payer: address that will pay for the swap
-//   - swapCallback: callback function for token transfer, callbackMarker is used to identify the callback
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of token0 of the desired pool.
+//   - token1Path: The path of token1 of the desired pool.
+//   - fee: The fee tier of the desired pool.
+//   - recipient: The address that will receive the output of the swap.
+//   - zeroForOne: The direction of the swap. Set to true for swapping token0 to token1, and false for vice versa.
+//   - amountSpecified: The amount of tokens to swap. Set to a positive value for an exact input, and a negative value for an exact output.
+//   - sqrtPriceLimitX96: The maximum price to accept for the swap.
+//   - payer: The address from which to send the output tokens. (Relates to the Router contract)
+//   - swapCallback: The callback function for token transfer.
 //
 // Returns:
-//   - string: amount of token0 delta
-//   - string: amount of token1 delta
+//   - amount0: The change in the amount of token0 as the result of the swap.
+//   - amount1: The change in the amount of token1 as the result of the swap.
 func Swap(
 	cur realm,
 	token0Path string,
@@ -216,9 +255,6 @@ func Swap(
 
 // DrySwap simulates a swap without executing it, returning the expected output.
 //
-// This is a read-only operation that does not modify pool state.
-// Used by router for multi-hop swap simulations and by clients for price quotes.
-//
 // Parameters:
 //   - token0Path: path of the first token
 //   - token1Path: path of the second token
@@ -228,9 +264,9 @@ func Swap(
 //   - sqrtPriceLimitX96: price limit for the swap
 //
 // Returns:
-//   - string: amount of token0 delta
-//   - string: amount of token1 delta
-//   - bool: swap success status
+//   - amount0Delta: amount of token0 delta
+//   - amount1Delta: amount of token1 delta
+//   - ok: swap success status
 func DrySwap(
 	token0Path string,
 	token1Path string,
@@ -243,33 +279,46 @@ func DrySwap(
 }
 
 // SetSwapEndHook sets the hook to be called at the end of a swap.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - hook: callback invoked after a swap completes for a pool path
 func SetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
 	getImplementation().SetSwapEndHook(hook)
 }
 
 // SetSwapStartHook sets the hook to be called at the start of a swap.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - hook: callback invoked before a swap starts for a pool path
 func SetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	getImplementation().SetSwapStartHook(hook)
 }
 
 // SetTickCrossHook sets the hook to be called when a tick is crossed during a swap.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//   - hook: callback invoked when a swap crosses a tick within a pool
 func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	getImplementation().SetTickCrossHook(hook)
 }
 
-// CollectProtocol collects protocol fees from a pool.
+// CollectProtocol collects the Protocol Fee claimable from a pool.
 //
 // Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
-//   - fee: pool fee tier
-//   - recipient: recipient address for fees
-//   - amount0Requested: amount of token0 to collect
-//   - amount1Requested: amount of token1 to collect
+//   - cur: Pass `cross` as argument.
+//   - token0Path: The path of token0 of the desired pool.
+//   - token1Path: The path of token1 of the desired pool.
+//   - fee: The fee tier of the desired pool.
+//   - recipient: The address that will receive the collected Protocol Fee.
+//   - amount0Requested: The maximum amount of token0 to collect from the pool.
+//   - amount1Requested: The maximum amount of token1 to collect from the pool.
 //
 // Returns:
-//   - string: amount of token0 collected
-//   - string: amount of token1 collected
+//   - amount0: The amount of token0 that was collected from the pool.
+//   - amount1: The amount of token1 that was collected from the pool.
 func CollectProtocol(
 	cur realm,
 	token0Path string,
@@ -289,11 +338,12 @@ func CollectProtocol(
 	)
 }
 
-// SetFeeProtocol sets the protocol fee rates for a pool.
+// SetFeeProtocol sets the Protocol Fee that is applied to all swaps.
 //
 // Parameters:
-//   - feeProtocol0: protocol fee rate for token0
-//   - feeProtocol1: protocol fee rate for token1
+//   - cur: Pass `cross` as argument.
+//   - feeProtocol0: The Protocol Fee for token0 of the desired pool.
+//   - feeProtocol1: The Protocol Fee for token1 of the desired pool.
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	getImplementation().SetFeeProtocol(feeProtocol0, feeProtocol1)
 }

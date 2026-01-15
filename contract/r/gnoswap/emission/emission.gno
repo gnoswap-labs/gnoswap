@@ -57,7 +57,8 @@ func setLastExecutedTimestamp(timestamp int64) {
 // last distribution and distributes them to predefined targets (staker, devops, etc.).
 //
 // Returns:
-//   - int64: Total amount of GNS distributed in this call
+//   - distributedAmount: total amount of GNS distributed in this call
+//   - success: true if distribution was attempted
 //
 // Note: Distribution only occurs if start timestamp is set and reached.
 // Any undistributed tokens from previous calls are carried forward.
@@ -220,6 +221,9 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 // SetOnDistributionPctChangeCallback sets a callback function to be called when distribution percentages change.
 // This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
+//
+// Parameters:
+//   - callback: function to call with emission amount per second when percentages change
 //
 // Only callable by the staker contract.
 func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {

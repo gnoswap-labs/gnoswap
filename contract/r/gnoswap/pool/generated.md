@@ -96,179 +96,141 @@
 - [TokenPair](#tokenpair)
 
 
+## Functions
+
 <a id="burn"></a>
 
-## Burn
+### Burn
 
 ```go
 
-func Burn(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	tickLower int32,
-	tickUpper int32,
-	liquidityAmount string,
-	positionCaller address
-) (string, string)
+func Burn(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string)
 
 ```
 
-Burn removes liquidity from a pool. This function can only be called by the Position contract, not by users.
+Burn removes liquidity from a position.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of token0 of the desired pool. |
-| `token1Path` | string | The path of token1 of the desired pool. |
-| `fee` | uint32 | The fee tier of the desired pool. |
-| `tickLower` | int32 | The lower tick of the price range of the position. |
-| `tickUpper` | int32 | The upper tick of the price range of the position. |
-| `liquidityAmount` | string | The amount of liquidity to remove. |
-| `positionCaller` | address | The caller address from the position contract. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| tickLower | int32 | lower tick boundary |
+| tickUpper | int32 | upper tick boundary |
+| liquidityAmount | string | amount of liquidity to remove |
+| positionCaller | address | caller address for the position |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The amount of token0 that was removed from the pool by burning the position. |
-| `amount1` | string | The amount of token1 that was removed from the pool by burning the position. |
+| amount0 | string | amount of token0 returned |
+| amount1 | string | amount of token1 returned |
 
 ---
 
 <a id="collect"></a>
 
-## Collect
+### Collect
 
 ```go
 
-func Collect(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient address,
-	tickLower int32,
-	tickUpper int32,
-	amount0Requested string,
-	amount1Requested string
-) (string, string)
+func Collect(cur realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string)
 
 ```
 
-Collect collects swap fees in token0 and token1 accrued to a position. This function can only be called by the Position contract, not by users.
+Collect transfers owed tokens from a position to recipient.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of token0 of the desired pool. |
-| `token1Path` | string | The path of token1 of the desired pool. |
-| `fee` | uint32 | The fee tier of the desired pool. |
-| `recipient` | address | The address that will receive the collected fees. |
-| `tickLower` | int32 | The lower tick of the price range of the position. |
-| `tickUpper` | int32 | The upper tick of the price range of the position. |
-| `amount0Requested` | string | The maximum amount of token0 to collect from the pool. |
-| `amount1Requested` | string | The maximum amount of token1 to collect from the pool. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| recipient | address | recipient address for collected tokens |
+| tickLower | int32 | lower tick boundary |
+| tickUpper | int32 | upper tick boundary |
+| amount0Requested | string | max amount of token0 to collect |
+| amount1Requested | string | max amount of token1 to collect |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The amount of token0 that was collected from the position. |
-| `amount1` | string | The amount of token1 that was collected from the position. |
+| amount0 | string | amount of token0 collected |
+| amount1 | string | amount of token1 collected |
 
 ---
 
 <a id="collectprotocol"></a>
 
-## CollectProtocol
+### CollectProtocol
 
 ```go
 
-func CollectProtocol(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient address,
-	amount0Requested string,
-	amount1Requested string
-) (string, string)
+func CollectProtocol(cur realm, token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string)
 
 ```
 
-CollectProtocol collects the Protocol Fee claimable from a pool.
+CollectProtocol collects protocol fees from a pool.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of token0 of the desired pool. |
-| `token1Path` | string | The path of token1 of the desired pool. |
-| `fee` | uint32 | The fee tier of the desired pool. |
-| `recipient` | address | The address that will receive the collected Protocol Fee. |
-| `amount0Requested` | string | The maximum amount of token0 to collect from the pool. |
-| `amount1Requested` | string | The maximum amount of token1 to collect from the pool. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| recipient | address | recipient address for fees |
+| amount0Requested | string | amount of token0 to collect |
+| amount1Requested | string | amount of token1 to collect |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The amount of token0 that was collected from the pool. |
-| `amount1` | string | The amount of token1 that was collected from the pool. |
+| amount0 | string | amount of token0 collected |
+| amount1 | string | amount of token1 collected |
 
 ---
 
 <a id="createpool"></a>
 
-## CreatePool
+### CreatePool
 
 ```go
 
-func CreatePool(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	sqrtPriceX96 string
-)
+func CreatePool(cur realm, token0Path string, token1Path string, fee uint32, sqrtPriceX96 string)
 
 ```
 
-CreatePool creates a liquidity pool.
+CreatePool creates a new liquidity pool for a token pair.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of the token0 of the pool to create. |
-| `token1Path` | string | The path of the token1 of the pool to create. |
-| `fee` | uint32 | The fee tier of the pool. (100 = 0.01%, 500 = 0.05%, 3000 = 0.3%, 10000 = 1%) |
-| `sqrtPriceX96` | string | The starting price of the pool. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| sqrtPriceX96 | string | initial sqrt price (Q64.96 format) |
 
 ---
 
 <a id="dryswap"></a>
 
-## DrySwap
+### DrySwap
 
 ```go
 
-func DrySwap(
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	zeroForOne bool,
-	amountSpecified string,
-	sqrtPriceLimitX96 string
-) (string, string, bool)
+func DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, bool)
 
 ```
 
@@ -278,32 +240,30 @@ DrySwap simulates a swap without executing it, returning the expected output.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0Path` | string | path of the first token |
-| `token1Path` | string | path of the second token |
-| `fee` | uint32 | pool fee tier |
-| `zeroForOne` | bool | true if swapping token0 for token1 |
-| `amountSpecified` | string | amount to swap |
-| `sqrtPriceLimitX96` | string | price limit for the swap |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| zeroForOne | bool | true if swapping token0 for token1 |
+| amountSpecified | string | amount to swap |
+| sqrtPriceLimitX96 | string | price limit for the swap |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0Delta` | string | amount of token0 delta |
-| `amount1Delta` | string | amount of token1 delta |
-| `ok` | bool | swap success status |
+| amount0Delta | string | amount of token0 delta |
+| amount1Delta | string | amount of token1 delta |
+| ok | bool | swap success status |
 
 ---
 
 <a id="existspoolpath"></a>
 
-## ExistsPoolPath
+### ExistsPoolPath
 
 ```go
 
-func ExistsPoolPath(
-	poolPath string
-) bool
+func ExistsPoolPath(poolPath string) bool
 
 ```
 
@@ -313,25 +273,23 @@ ExistsPoolPath checks if a pool exists at the given path.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `exists` | bool | true if the pool exists |
+| exists | bool | true if the pool exists |
 
 ---
 
 <a id="getbalancetoken0"></a>
 
-## GetBalanceToken0
+### GetBalanceToken0
 
 ```go
 
-func GetBalanceToken0(
-	poolPath string
-) string
+func GetBalanceToken0(poolPath string) string
 
 ```
 
@@ -341,25 +299,23 @@ GetBalanceToken0 returns the balance of token0 in the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `balance0` | string | balance of token0 |
+| balance0 | string | balance of token0 |
 
 ---
 
 <a id="getbalancetoken1"></a>
 
-## GetBalanceToken1
+### GetBalanceToken1
 
 ```go
 
-func GetBalanceToken1(
-	poolPath string
-) string
+func GetBalanceToken1(poolPath string) string
 
 ```
 
@@ -369,25 +325,23 @@ GetBalanceToken1 returns the balance of token1 in the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `balance1` | string | balance of token1 |
+| balance1 | string | balance of token1 |
 
 ---
 
 <a id="getbalances"></a>
 
-## GetBalances
+### GetBalances
 
 ```go
 
-func GetBalances(
-	poolPath string
-) (string, string)
+func GetBalances(poolPath string) (string, string)
 
 ```
 
@@ -397,26 +351,24 @@ GetBalances returns the balances of the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `balance0` | string | balance of token0 |
-| `balance1` | string | balance of token1 |
+| balance0 | string | balance of token0 |
+| balance1 | string | balance of token1 |
 
 ---
 
 <a id="getfee"></a>
 
-## GetFee
+### GetFee
 
 ```go
 
-func GetFee(
-	poolPath string
-) uint32
+func GetFee(poolPath string) uint32
 
 ```
 
@@ -426,25 +378,23 @@ GetFee returns the fee tier of the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `fee` | uint32 | pool fee tier |
+| fee | uint32 | pool fee tier |
 
 ---
 
 <a id="getfeeamounttickspacing"></a>
 
-## GetFeeAmountTickSpacing
+### GetFeeAmountTickSpacing
 
 ```go
 
-func GetFeeAmountTickSpacing(
-	fee uint32
-) (spacing int32)
+func GetFeeAmountTickSpacing(fee uint32) (spacing int32)
 
 ```
 
@@ -454,19 +404,19 @@ GetFeeAmountTickSpacing returns the tick spacing for a given fee tier.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `fee` | uint32 | pool fee tier |
+| fee | uint32 | pool fee tier |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `spacing` | int32 | tick spacing for the fee tier |
+| spacing | int32 | tick spacing for the fee tier |
 
 ---
 
 <a id="getfeeamounttickspacings"></a>
 
-## GetFeeAmountTickSpacings
+### GetFeeAmountTickSpacings
 
 ```go
 
@@ -476,23 +426,21 @@ func GetFeeAmountTickSpacings() map[uint32]int32
 
 GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeAmountTickSpacings` | map[uint32]int32 | mapping of fee tier to tick spacing |
+| feeAmountTickSpacings | map[uint32]int32 | mapping of fee tier to tick spacing |
 
 ---
 
 <a id="getfeegrowthglobal0x128"></a>
 
-## GetFeeGrowthGlobal0X128
+### GetFeeGrowthGlobal0X128
 
 ```go
 
-func GetFeeGrowthGlobal0X128(
-	poolPath string
-) string
+func GetFeeGrowthGlobal0X128(poolPath string) string
 
 ```
 
@@ -502,25 +450,23 @@ GetFeeGrowthGlobal0X128 returns the global fee growth for token0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal0X128` | string | fee growth for token0 as Q128.128 |
+| feeGrowthGlobal0X128 | string | fee growth for token0 as Q128.128 |
 
 ---
 
 <a id="getfeegrowthglobal1x128"></a>
 
-## GetFeeGrowthGlobal1X128
+### GetFeeGrowthGlobal1X128
 
 ```go
 
-func GetFeeGrowthGlobal1X128(
-	poolPath string
-) string
+func GetFeeGrowthGlobal1X128(poolPath string) string
 
 ```
 
@@ -530,25 +476,23 @@ GetFeeGrowthGlobal1X128 returns the global fee growth for token1.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal1X128` | string | fee growth for token1 as Q128.128 |
+| feeGrowthGlobal1X128 | string | fee growth for token1 as Q128.128 |
 
 ---
 
 <a id="getfeegrowthglobalx128"></a>
 
-## GetFeeGrowthGlobalX128
+### GetFeeGrowthGlobalX128
 
 ```go
 
-func GetFeeGrowthGlobalX128(
-	poolPath string
-) (*u256.Uint, *u256.Uint)
+func GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
 
 ```
 
@@ -558,26 +502,24 @@ GetFeeGrowthGlobalX128 returns the global fee growth for both tokens.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal0X128` | *u256.Uint | fee growth for token0 as Q128.128 |
-| `feeGrowthGlobal1X128` | *u256.Uint | fee growth for token1 as Q128.128 |
+| feeGrowthGlobal0X128 | *u256.Uint | fee growth for token0 as Q128.128 |
+| feeGrowthGlobal1X128 | *u256.Uint | fee growth for token1 as Q128.128 |
 
 ---
 
 <a id="getfeegrowthglobals"></a>
 
-## GetFeeGrowthGlobals
+### GetFeeGrowthGlobals
 
 ```go
 
-func GetFeeGrowthGlobals(
-	poolPath string
-) (string, string)
+func GetFeeGrowthGlobals(poolPath string) (string, string)
 
 ```
 
@@ -587,20 +529,20 @@ GetFeeGrowthGlobals returns the global fee growth for both tokens.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal0X128` | string | fee growth for token0 as Q128.128 |
-| `feeGrowthGlobal1X128` | string | fee growth for token1 as Q128.128 |
+| feeGrowthGlobal0X128 | string | fee growth for token0 as Q128.128 |
+| feeGrowthGlobal1X128 | string | fee growth for token1 as Q128.128 |
 
 ---
 
 <a id="getimplementationpackagepath"></a>
 
-## GetImplementationPackagePath
+### GetImplementationPackagePath
 
 ```go
 
@@ -610,25 +552,21 @@ func GetImplementationPackagePath() string
 
 GetImplementationPackagePath returns the package path of the currently active implementation.
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `packagePath` | string | package path of the active implementation |
+| packagePath | string | package path of the active implementation |
 
 ---
 
 <a id="getinitializedticksinrange"></a>
 
-## GetInitializedTicksInRange
+### GetInitializedTicksInRange
 
 ```go
 
-func GetInitializedTicksInRange(
-	poolPath string,
-	tickLower int32,
-	tickUpper int32
-) []int32
+func GetInitializedTicksInRange(poolPath string, tickLower int32, tickUpper int32) []int32
 
 ```
 
@@ -638,27 +576,25 @@ GetInitializedTicksInRange returns initialized ticks within the given range.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tickLower` | int32 | lower tick boundary |
-| `tickUpper` | int32 | upper tick boundary |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tickLower | int32 | lower tick boundary |
+| tickUpper | int32 | upper tick boundary |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ticks` | []int32 | initialized tick indices within the range |
+| ticks | []int32 | initialized tick indices within the range |
 
 ---
 
 <a id="getliquidity"></a>
 
-## GetLiquidity
+### GetLiquidity
 
 ```go
 
-func GetLiquidity(
-	poolPath string
-) string
+func GetLiquidity(poolPath string) string
 
 ```
 
@@ -668,25 +604,23 @@ GetLiquidity returns the current liquidity in the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidity` | string | current liquidity as a decimal string |
+| liquidity | string | current liquidity as a decimal string |
 
 ---
 
 <a id="getmaxliquiditypertick"></a>
 
-## GetMaxLiquidityPerTick
+### GetMaxLiquidityPerTick
 
 ```go
 
-func GetMaxLiquidityPerTick(
-	poolPath string
-) string
+func GetMaxLiquidityPerTick(poolPath string) string
 
 ```
 
@@ -696,26 +630,23 @@ GetMaxLiquidityPerTick returns the maximum liquidity per tick for the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `maxLiquidityPerTick` | string | max liquidity per tick as a decimal string |
+| maxLiquidityPerTick | string | max liquidity per tick as a decimal string |
 
 ---
 
 <a id="getobservation"></a>
 
-## GetObservation
+### GetObservation
 
 ```go
 
-func GetObservation(
-	poolPath string,
-	secondsAgo int64
-) (tickCumulative int64, liquidityCumulative string, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
+func GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative string, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
 
 ```
 
@@ -725,23 +656,23 @@ GetObservation returns observation data for calculating time-weighted averages.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `secondsAgo` | int64 | time window to look back from current block timestamp |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| secondsAgo | int64 | time window to look back from current block timestamp |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickCumulative` | int64 | tick cumulative |
-| `liquidityCumulative` | string | liquidity cumulative |
-| `secondsPerLiquidityCumulativeX128` | string | seconds per liquidity cumulative (Q128.128) |
-| `blockTimestamp` | int64 | block timestamp of the observation |
+| tickCumulative | int64 | tick cumulative |
+| liquidityCumulative | string | liquidity cumulative |
+| secondsPerLiquidityCumulativeX128 | string | seconds per liquidity cumulative (Q128.128) |
+| blockTimestamp | int64 | block timestamp of the observation |
 
 ---
 
 <a id="getpoolcount"></a>
 
-## GetPoolCount
+### GetPoolCount
 
 ```go
 
@@ -751,17 +682,17 @@ func GetPoolCount() int
 
 GetPoolCount returns the total number of pools.
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `count` | int | total number of pools |
+| count | int | total number of pools |
 
 ---
 
 <a id="getpoolcreationfee"></a>
 
-## GetPoolCreationFee
+### GetPoolCreationFee
 
 ```go
 
@@ -771,25 +702,21 @@ func GetPoolCreationFee() int64
 
 GetPoolCreationFee returns the current pool creation fee.
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolCreationFee` | int64 | pool creation fee |
+| poolCreationFee | int64 | pool creation fee |
 
 ---
 
 <a id="getpoolpath"></a>
 
-## GetPoolPath
+### GetPoolPath
 
 ```go
 
-func GetPoolPath(
-	token0Path string,
-	token1Path string,
-	fee uint32
-) string
+func GetPoolPath(token0Path string, token1Path string, fee uint32) string
 
 ```
 
@@ -799,28 +726,25 @@ GetPoolPath generates a unique pool path string based on the token paths and fee
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0Path` | string | path of the first token |
-| `token1Path` | string | path of the second token |
-| `fee` | uint32 | pool fee tier |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | deterministic pool path in token0:token1:fee form |
+| poolPath | string | deterministic pool path in token0:token1:fee form |
 
 ---
 
 <a id="getpoolpaths"></a>
 
-## GetPoolPaths
+### GetPoolPaths
 
 ```go
 
-func GetPoolPaths(
-	offset int,
-	count int
-) []string
+func GetPoolPaths(offset int, count int) []string
 
 ```
 
@@ -830,26 +754,24 @@ GetPoolPaths returns a paginated list of pool paths.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `offset` | int | starting index for pagination |
-| `count` | int | maximum number of pool paths to return |
+| offset | int | starting index for pagination |
+| count | int | maximum number of pool paths to return |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPaths` | []string | pool paths for the requested page |
+| poolPaths | []string | pool paths for the requested page |
 
 ---
 
 <a id="getpoolpositioncount"></a>
 
-## GetPoolPositionCount
+### GetPoolPositionCount
 
 ```go
 
-func GetPoolPositionCount(
-	poolPath string
-) int
+func GetPoolPositionCount(poolPath string) int
 
 ```
 
@@ -859,27 +781,23 @@ GetPoolPositionCount returns the number of positions in a pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `count` | int | number of positions in the pool |
+| count | int | number of positions in the pool |
 
 ---
 
 <a id="getpoolpositionkeys"></a>
 
-## GetPoolPositionKeys
+### GetPoolPositionKeys
 
 ```go
 
-func GetPoolPositionKeys(
-	poolPath string,
-	offset int,
-	count int
-) []string
+func GetPoolPositionKeys(poolPath string, offset int, count int) []string
 
 ```
 
@@ -889,28 +807,25 @@ GetPoolPositionKeys returns a paginated list of position keys in a pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `offset` | int | starting index for pagination |
-| `count` | int | maximum number of keys to return |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| offset | int | starting index for pagination |
+| count | int | maximum number of keys to return |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `keys` | []string | position keys for the requested page |
+| keys | []string | position keys for the requested page |
 
 ---
 
 <a id="getpositionfeegrowthinside0lastx128"></a>
 
-## GetPositionFeeGrowthInside0LastX128
+### GetPositionFeeGrowthInside0LastX128
 
 ```go
 
-func GetPositionFeeGrowthInside0LastX128(
-	poolPath string,
-	key string
-) string
+func GetPositionFeeGrowthInside0LastX128(poolPath string, key string) string
 
 ```
 
@@ -920,27 +835,24 @@ GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside0LastX128` | string | fee growth for token0 inside the position |
+| feeGrowthInside0LastX128 | string | fee growth for token0 inside the position |
 
 ---
 
 <a id="getpositionfeegrowthinside1lastx128"></a>
 
-## GetPositionFeeGrowthInside1LastX128
+### GetPositionFeeGrowthInside1LastX128
 
 ```go
 
-func GetPositionFeeGrowthInside1LastX128(
-	poolPath string,
-	key string
-) string
+func GetPositionFeeGrowthInside1LastX128(poolPath string, key string) string
 
 ```
 
@@ -950,27 +862,24 @@ GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside1LastX128` | string | fee growth for token1 inside the position |
+| feeGrowthInside1LastX128 | string | fee growth for token1 inside the position |
 
 ---
 
 <a id="getpositionfeegrowthinsidelastx128"></a>
 
-## GetPositionFeeGrowthInsideLastX128
+### GetPositionFeeGrowthInsideLastX128
 
 ```go
 
-func GetPositionFeeGrowthInsideLastX128(
-	poolPath string,
-	key string
-) (*u256.Uint, *u256.Uint)
+func GetPositionFeeGrowthInsideLastX128(poolPath string, key string) (*u256.Uint, *u256.Uint)
 
 ```
 
@@ -980,28 +889,25 @@ GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside f
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside0LastX128` | *u256.Uint | fee growth for token0 inside the position |
-| `feeGrowthInside1LastX128` | *u256.Uint | fee growth for token1 inside the position |
+| feeGrowthInside0LastX128 | *u256.Uint | fee growth for token0 inside the position |
+| feeGrowthInside1LastX128 | *u256.Uint | fee growth for token1 inside the position |
 
 ---
 
 <a id="getpositionfeegrowthinsidelasts"></a>
 
-## GetPositionFeeGrowthInsideLasts
+### GetPositionFeeGrowthInsideLasts
 
 ```go
 
-func GetPositionFeeGrowthInsideLasts(
-	poolPath string,
-	key string
-) (string, string)
+func GetPositionFeeGrowthInsideLasts(poolPath string, key string) (string, string)
 
 ```
 
@@ -1011,28 +917,25 @@ GetPositionFeeGrowthInsideLasts returns the last recorded fee growth inside for 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside0LastX128` | string | fee growth for token0 inside the position |
-| `feeGrowthInside1LastX128` | string | fee growth for token1 inside the position |
+| feeGrowthInside0LastX128 | string | fee growth for token0 inside the position |
+| feeGrowthInside1LastX128 | string | fee growth for token1 inside the position |
 
 ---
 
 <a id="getpositionliquidity"></a>
 
-## GetPositionLiquidity
+### GetPositionLiquidity
 
 ```go
 
-func GetPositionLiquidity(
-	poolPath string,
-	key string
-) *u256.Uint
+func GetPositionLiquidity(poolPath string, key string) *u256.Uint
 
 ```
 
@@ -1042,27 +945,24 @@ GetPositionLiquidity returns the liquidity of a position.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidity` | *u256.Uint | position liquidity |
+| liquidity | *u256.Uint | position liquidity |
 
 ---
 
 <a id="getpositiontokensowed"></a>
 
-## GetPositionTokensOwed
+### GetPositionTokensOwed
 
 ```go
 
-func GetPositionTokensOwed(
-	poolPath string,
-	key string
-) (string, string)
+func GetPositionTokensOwed(poolPath string, key string) (string, string)
 
 ```
 
@@ -1072,28 +972,25 @@ GetPositionTokensOwed returns the amount of tokens owed for both tokens.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tokensOwed0` | string | amount of token0 owed to the position |
-| `tokensOwed1` | string | amount of token1 owed to the position |
+| tokensOwed0 | string | amount of token0 owed to the position |
+| tokensOwed1 | string | amount of token1 owed to the position |
 
 ---
 
 <a id="getpositiontokensowed0"></a>
 
-## GetPositionTokensOwed0
+### GetPositionTokensOwed0
 
 ```go
 
-func GetPositionTokensOwed0(
-	poolPath string,
-	key string
-) string
+func GetPositionTokensOwed0(poolPath string, key string) string
 
 ```
 
@@ -1103,27 +1000,24 @@ GetPositionTokensOwed0 returns the amount of token0 owed to a position.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tokensOwed0` | string | amount of token0 owed to the position |
+| tokensOwed0 | string | amount of token0 owed to the position |
 
 ---
 
 <a id="getpositiontokensowed1"></a>
 
-## GetPositionTokensOwed1
+### GetPositionTokensOwed1
 
 ```go
 
-func GetPositionTokensOwed1(
-	poolPath string,
-	key string
-) string
+func GetPositionTokensOwed1(poolPath string, key string) string
 
 ```
 
@@ -1133,26 +1027,24 @@ GetPositionTokensOwed1 returns the amount of token1 owed to a position.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `key` | string | position key |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| key | string | position key |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tokensOwed1` | string | amount of token1 owed to the position |
+| tokensOwed1 | string | amount of token1 owed to the position |
 
 ---
 
 <a id="getprotocolfeestoken0"></a>
 
-## GetProtocolFeesToken0
+### GetProtocolFeesToken0
 
 ```go
 
-func GetProtocolFeesToken0(
-	poolPath string
-) string
+func GetProtocolFeesToken0(poolPath string) string
 
 ```
 
@@ -1162,25 +1054,23 @@ GetProtocolFeesToken0 returns accumulated protocol fees for token0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `protocolFeesToken0` | string | accumulated protocol fees for token0 |
+| protocolFeesToken0 | string | accumulated protocol fees for token0 |
 
 ---
 
 <a id="getprotocolfeestoken1"></a>
 
-## GetProtocolFeesToken1
+### GetProtocolFeesToken1
 
 ```go
 
-func GetProtocolFeesToken1(
-	poolPath string
-) string
+func GetProtocolFeesToken1(poolPath string) string
 
 ```
 
@@ -1190,25 +1080,23 @@ GetProtocolFeesToken1 returns accumulated protocol fees for token1.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `protocolFeesToken1` | string | accumulated protocol fees for token1 |
+| protocolFeesToken1 | string | accumulated protocol fees for token1 |
 
 ---
 
 <a id="getprotocolfeestokens"></a>
 
-## GetProtocolFeesTokens
+### GetProtocolFeesTokens
 
 ```go
 
-func GetProtocolFeesTokens(
-	poolPath string
-) (string, string)
+func GetProtocolFeesTokens(poolPath string) (string, string)
 
 ```
 
@@ -1218,26 +1106,24 @@ GetProtocolFeesTokens returns the accumulated protocol fees for both tokens.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `protocolFeesToken0` | string | accumulated protocol fees for token0 |
-| `protocolFeesToken1` | string | accumulated protocol fees for token1 |
+| protocolFeesToken0 | string | accumulated protocol fees for token0 |
+| protocolFeesToken1 | string | accumulated protocol fees for token1 |
 
 ---
 
 <a id="getslot0feeprotocol"></a>
 
-## GetSlot0FeeProtocol
+### GetSlot0FeeProtocol
 
 ```go
 
-func GetSlot0FeeProtocol(
-	poolPath string
-) uint8
+func GetSlot0FeeProtocol(poolPath string) uint8
 
 ```
 
@@ -1247,25 +1133,23 @@ GetSlot0FeeProtocol returns the protocol fee rate from slot0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeProtocol` | uint8 | protocol fee rate packed in slot0 |
+| feeProtocol | uint8 | protocol fee rate packed in slot0 |
 
 ---
 
 <a id="getslot0sqrtpricex96"></a>
 
-## GetSlot0SqrtPriceX96
+### GetSlot0SqrtPriceX96
 
 ```go
 
-func GetSlot0SqrtPriceX96(
-	poolPath string
-) *u256.Uint
+func GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
 
 ```
 
@@ -1275,25 +1159,23 @@ GetSlot0SqrtPriceX96 returns the current sqrt price from slot0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `sqrtPriceX96` | *u256.Uint | sqrt price in Q64.96 format |
+| sqrtPriceX96 | *u256.Uint | sqrt price in Q64.96 format |
 
 ---
 
 <a id="getslot0tick"></a>
 
-## GetSlot0Tick
+### GetSlot0Tick
 
 ```go
 
-func GetSlot0Tick(
-	poolPath string
-) int32
+func GetSlot0Tick(poolPath string) int32
 
 ```
 
@@ -1303,25 +1185,23 @@ GetSlot0Tick returns the current tick from slot0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tick` | int32 | current tick |
+| tick | int32 | current tick |
 
 ---
 
 <a id="getslot0unlocked"></a>
 
-## GetSlot0Unlocked
+### GetSlot0Unlocked
 
 ```go
 
-func GetSlot0Unlocked(
-	poolPath string
-) bool
+func GetSlot0Unlocked(poolPath string) bool
 
 ```
 
@@ -1331,26 +1211,23 @@ GetSlot0Unlocked returns the locked status from slot0.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `unlocked` | bool | true if pool is unlocked |
+| unlocked | bool | true if pool is unlocked |
 
 ---
 
 <a id="gettwap"></a>
 
-## GetTWAP
+### GetTWAP
 
 ```go
 
-func GetTWAP(
-	poolPath string,
-	secondsAgo uint32
-) (int32, *u256.Uint, error)
+func GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
 
 ```
 
@@ -1361,29 +1238,26 @@ Returns arithmetic mean tick and harmonic mean liquidity over the time period.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `secondsAgo` | uint32 | lookback window in seconds |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| secondsAgo | uint32 | lookback window in seconds |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `meanTick` | int32 | arithmetic mean tick |
-| `meanLiquidity` | *u256.Uint | harmonic mean liquidity |
-| `err` | error | non-nil on failure |
+| meanTick | int32 | arithmetic mean tick |
+| meanLiquidity | *u256.Uint | harmonic mean liquidity |
+| err | error | non-nil on failure |
 
 ---
 
 <a id="gettickbitmaps"></a>
 
-## GetTickBitmaps
+### GetTickBitmaps
 
 ```go
 
-func GetTickBitmaps(
-	poolPath string,
-	wordPos int16
-) (*u256.Uint, error)
+func GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error)
 
 ```
 
@@ -1393,28 +1267,25 @@ GetTickBitmaps returns the tick bitmap for a given word position.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `wordPos` | int16 | bitmap word position |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| wordPos | int16 | bitmap word position |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickBitmap` | *u256.Uint | tick bitmap copy |
-| `err` | error | non-nil if the bitmap cannot be loaded |
+| tickBitmap | *u256.Uint | tick bitmap copy |
+| err | error | non-nil if the bitmap cannot be loaded |
 
 ---
 
 <a id="gettickcumulativeoutside"></a>
 
-## GetTickCumulativeOutside
+### GetTickCumulativeOutside
 
 ```go
 
-func GetTickCumulativeOutside(
-	poolPath string,
-	tick int32
-) int64
+func GetTickCumulativeOutside(poolPath string, tick int32) int64
 
 ```
 
@@ -1424,27 +1295,24 @@ GetTickCumulativeOutside returns the tick cumulative value outside a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickCumulativeOutside` | int64 | tick cumulative outside the tick |
+| tickCumulativeOutside | int64 | tick cumulative outside the tick |
 
 ---
 
 <a id="gettickfeegrowthoutside0x128"></a>
 
-## GetTickFeeGrowthOutside0X128
+### GetTickFeeGrowthOutside0X128
 
 ```go
 
-func GetTickFeeGrowthOutside0X128(
-	poolPath string,
-	tick int32
-) string
+func GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string
 
 ```
 
@@ -1454,27 +1322,24 @@ GetTickFeeGrowthOutside0X128 returns fee growth outside for token0 at a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside0X128` | string | fee growth outside for token0 as Q128.128 |
+| feeGrowthOutside0X128 | string | fee growth outside for token0 as Q128.128 |
 
 ---
 
 <a id="gettickfeegrowthoutside1x128"></a>
 
-## GetTickFeeGrowthOutside1X128
+### GetTickFeeGrowthOutside1X128
 
 ```go
 
-func GetTickFeeGrowthOutside1X128(
-	poolPath string,
-	tick int32
-) string
+func GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string
 
 ```
 
@@ -1484,27 +1349,24 @@ GetTickFeeGrowthOutside1X128 returns fee growth outside for token1 at a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside1X128` | string | fee growth outside for token1 as Q128.128 |
+| feeGrowthOutside1X128 | string | fee growth outside for token1 as Q128.128 |
 
 ---
 
 <a id="gettickfeegrowthoutsidex128"></a>
 
-## GetTickFeeGrowthOutsideX128
+### GetTickFeeGrowthOutsideX128
 
 ```go
 
-func GetTickFeeGrowthOutsideX128(
-	poolPath string,
-	tick int32
-) (*u256.Uint, *u256.Uint)
+func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint)
 
 ```
 
@@ -1514,28 +1376,25 @@ GetTickFeeGrowthOutsideX128 returns fee growth outside for both tokens at a tick
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside0X128` | *u256.Uint | fee growth outside for token0 as Q128.128 |
-| `feeGrowthOutside1X128` | *u256.Uint | fee growth outside for token1 as Q128.128 |
+| feeGrowthOutside0X128 | *u256.Uint | fee growth outside for token0 as Q128.128 |
+| feeGrowthOutside1X128 | *u256.Uint | fee growth outside for token1 as Q128.128 |
 
 ---
 
 <a id="gettickfeegrowthoutsides"></a>
 
-## GetTickFeeGrowthOutsides
+### GetTickFeeGrowthOutsides
 
 ```go
 
-func GetTickFeeGrowthOutsides(
-	poolPath string,
-	tick int32
-) (string, string)
+func GetTickFeeGrowthOutsides(poolPath string, tick int32) (string, string)
 
 ```
 
@@ -1545,28 +1404,25 @@ GetTickFeeGrowthOutsides returns fee growth outside for both tokens at a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside0X128` | string | fee growth outside for token0 as Q128.128 |
-| `feeGrowthOutside1X128` | string | fee growth outside for token1 as Q128.128 |
+| feeGrowthOutside0X128 | string | fee growth outside for token0 as Q128.128 |
+| feeGrowthOutside1X128 | string | fee growth outside for token1 as Q128.128 |
 
 ---
 
 <a id="gettickinitialized"></a>
 
-## GetTickInitialized
+### GetTickInitialized
 
 ```go
 
-func GetTickInitialized(
-	poolPath string,
-	tick int32
-) bool
+func GetTickInitialized(poolPath string, tick int32) bool
 
 ```
 
@@ -1576,27 +1432,24 @@ GetTickInitialized returns whether a tick is initialized.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `initialized` | bool | true if the tick is initialized |
+| initialized | bool | true if the tick is initialized |
 
 ---
 
 <a id="gettickliquiditygross"></a>
 
-## GetTickLiquidityGross
+### GetTickLiquidityGross
 
 ```go
 
-func GetTickLiquidityGross(
-	poolPath string,
-	tick int32
-) string
+func GetTickLiquidityGross(poolPath string, tick int32) string
 
 ```
 
@@ -1606,27 +1459,24 @@ GetTickLiquidityGross returns the total liquidity that references a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidityGross` | string | gross liquidity for the tick |
+| liquidityGross | string | gross liquidity for the tick |
 
 ---
 
 <a id="gettickliquiditynet"></a>
 
-## GetTickLiquidityNet
+### GetTickLiquidityNet
 
 ```go
 
-func GetTickLiquidityNet(
-	poolPath string,
-	tick int32
-) string
+func GetTickLiquidityNet(poolPath string, tick int32) string
 
 ```
 
@@ -1636,27 +1486,24 @@ GetTickLiquidityNet returns the net liquidity change at a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidityNet` | string | net liquidity change at the tick |
+| liquidityNet | string | net liquidity change at the tick |
 
 ---
 
 <a id="getticksecondsoutside"></a>
 
-## GetTickSecondsOutside
+### GetTickSecondsOutside
 
 ```go
 
-func GetTickSecondsOutside(
-	poolPath string,
-	tick int32
-) uint32
+func GetTickSecondsOutside(poolPath string, tick int32) uint32
 
 ```
 
@@ -1666,27 +1513,24 @@ GetTickSecondsOutside returns seconds spent outside a tick.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `secondsOutside` | uint32 | seconds spent outside the tick |
+| secondsOutside | uint32 | seconds spent outside the tick |
 
 ---
 
 <a id="getticksecondsperliquidityoutsidex128"></a>
 
-## GetTickSecondsPerLiquidityOutsideX128
+### GetTickSecondsPerLiquidityOutsideX128
 
 ```go
 
-func GetTickSecondsPerLiquidityOutsideX128(
-	poolPath string,
-	tick int32
-) string
+func GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string
 
 ```
 
@@ -1696,26 +1540,24 @@ GetTickSecondsPerLiquidityOutsideX128 returns seconds per liquidity outside a ti
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
-| `tick` | int32 | tick index |
+| poolPath | string | pool identifier in token0:token1:fee form |
+| tick | int32 | tick index |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `secondsPerLiquidityOutsideX128` | string | seconds per liquidity outside the tick as Q128.128 |
+| secondsPerLiquidityOutsideX128 | string | seconds per liquidity outside the tick as Q128.128 |
 
 ---
 
 <a id="gettickspacing"></a>
 
-## GetTickSpacing
+### GetTickSpacing
 
 ```go
 
-func GetTickSpacing(
-	poolPath string
-) int32
+func GetTickSpacing(poolPath string) int32
 
 ```
 
@@ -1725,25 +1567,23 @@ GetTickSpacing returns the tick spacing of the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickSpacing` | int32 | tick spacing |
+| tickSpacing | int32 | tick spacing |
 
 ---
 
 <a id="gettoken0path"></a>
 
-## GetToken0Path
+### GetToken0Path
 
 ```go
 
-func GetToken0Path(
-	poolPath string
-) string
+func GetToken0Path(poolPath string) string
 
 ```
 
@@ -1753,25 +1593,23 @@ GetToken0Path returns the path of token0 in the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0Path` | string | token0 path |
+| token0Path | string | token0 path |
 
 ---
 
 <a id="gettoken1path"></a>
 
-## GetToken1Path
+### GetToken1Path
 
 ```go
 
-func GetToken1Path(
-	poolPath string
-) string
+func GetToken1Path(poolPath string) string
 
 ```
 
@@ -1781,19 +1619,19 @@ GetToken1Path returns the path of token1 in the pool.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token1Path` | string | token1 path |
+| token1Path | string | token1 path |
 
 ---
 
 <a id="getwithdrawalfee"></a>
 
-## GetWithdrawalFee
+### GetWithdrawalFee
 
 ```go
 
@@ -1803,70 +1641,55 @@ func GetWithdrawalFee() uint64
 
 GetWithdrawalFee returns the current withdrawal fee rate.
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `withdrawalFee` | uint64 | withdrawal fee in basis points |
+| withdrawalFee | uint64 | withdrawal fee in basis points |
 
 ---
 
 <a id="handlewithdrawalfee"></a>
 
-## HandleWithdrawalFee
+### HandleWithdrawalFee
 
 ```go
 
-func HandleWithdrawalFee(
-	cur realm,
-	positionId uint64,
-	token0Path string,
-	amount0 string,
-	token1Path string,
-	amount1 string,
-	poolPath string,
-	positionCaller address
-) (string, string)
+func HandleWithdrawalFee(cur realm, positionId uint64, token0Path string, amount0 string, token1Path string, amount1 string, poolPath string, positionCaller address) (string, string)
 
 ```
 
-HandleWithdrawalFee handles withdrawal protocol fee for a position.
+HandleWithdrawalFee processes withdrawal fees for a position.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `positionId` | uint64 | The ID of position which being handled to withdrawal protocol fee. |
-| `token0Path` | string | The path of token0 of the position. |
-| `amount0` | string | The amount of token0 to calculate withdrawal fee. |
-| `token1Path` | string | The path of token1 of the position. |
-| `amount1` | string | The amount of token1 to calculate withdrawal fee. |
-| `poolPath` | string | The path of pool of the position was minted. |
-| `positionCaller` | address | The caller address from position contract. |
+| cur | realm |  |
+| positionId | uint64 | ID of the position |
+| token0Path | string | path of the first token |
+| amount0 | string | amount of token0 to withdraw |
+| token1Path | string | path of the second token |
+| amount1 | string | amount of token1 to withdraw |
+| poolPath | string | pool identifier |
+| positionCaller | address | caller address for the position |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The remaining amount of token0 after the protocol fee has been withdrawn. |
-| `amount1` | string | The remaining amount of token1 after the protocol fee has been withdrawn. |
+| amount0 | string | net amount of token0 after fees |
+| amount1 | string | net amount of token1 after fees |
 
 ---
 
 <a id="increaseobservationcardinalitynext"></a>
 
-## IncreaseObservationCardinalityNext
+### IncreaseObservationCardinalityNext
 
 ```go
 
-func IncreaseObservationCardinalityNext(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	cardinalityNext uint16
-)
+func IncreaseObservationCardinalityNext(cur realm, token0Path string, token1Path string, fee uint32, cardinalityNext uint16)
 
 ```
 
@@ -1876,66 +1699,55 @@ IncreaseObservationCardinalityNext increases the observation cardinality for a p
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | path of the first token |
-| `token1Path` | string | path of the second token |
-| `fee` | uint32 | pool fee tier |
-| `cardinalityNext` | uint16 | new observation cardinality limit |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| cardinalityNext | uint16 | new observation cardinality limit |
 
 ---
 
 <a id="mint"></a>
 
-## Mint
+### Mint
 
 ```go
 
-func Mint(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	tickLower int32,
-	tickUpper int32,
-	liquidityAmount string,
-	positionCaller address
-) (string, string)
+func Mint(cur realm, token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string)
 
 ```
 
-Mint adds liquidity to a pool. This function can only be called by the Position contract, not by users.
+Mint adds liquidity to a position.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of token0 of the desired pool. |
-| `token1Path` | string | The path of token1 of the desired pool. |
-| `fee` | uint32 | The fee tier of the desired pool. |
-| `tickLower` | int32 | The lower tick of the price range of the position. |
-| `tickUpper` | int32 | The upper tick of the price range of the position. |
-| `liquidityAmount` | string | The amount of liquidity to add. This value is calculated by the Position contract based on the amounts of token0 & token1, and the price. |
-| `positionCaller` | address | The caller address from the position contract. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| tickLower | int32 | lower tick boundary |
+| tickUpper | int32 | upper tick boundary |
+| liquidityAmount | string | amount of liquidity to add |
+| positionCaller | address | caller address for the position |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The amount of token0 that added to the liquidity pool to mint the position. |
-| `amount1` | string | The amount of token1 that added to the liquidity pool to mint the position. |
+| amount0 | string | amount of token0 added |
+| amount1 | string | amount of token1 added |
 
 ---
 
 <a id="parsepoolpath"></a>
 
-## ParsePoolPath
+### ParsePoolPath
 
 ```go
 
-func ParsePoolPath(
-	poolPath string
-) (string, string, uint32)
+func ParsePoolPath(poolPath string) (string, string, uint32)
 
 ```
 
@@ -1949,28 +1761,25 @@ Panics if the poolPath is malformed or fee cannot be parsed.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `poolPath` | string | pool identifier in token0:token1:fee form |
+| poolPath | string | pool identifier in token0:token1:fee form |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0Path` | string | token0 path |
-| `token1Path` | string | token1 path |
-| `fee` | uint32 | fee tier |
+| token0Path | string | token0 path |
+| token1Path | string | token1 path |
+| fee | uint32 | fee tier |
 
 ---
 
 <a id="registerinitializer"></a>
 
-## RegisterInitializer
+### RegisterInitializer
 
 ```go
 
-func RegisterInitializer(
-	cur realm,
-	initializer func(IPoolStore) IPool
-)
+func RegisterInitializer(cur realm, initializer func(...))
 
 ```
 
@@ -1990,71 +1799,61 @@ Each package path can only register once to prevent duplicate registrations.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `initializer` | func(IPoolStore) IPool |  |
+| cur | realm |  |
+| initializer | func(...) |  |
 
 ---
 
 <a id="setfeeprotocol"></a>
 
-## SetFeeProtocol
+### SetFeeProtocol
 
 ```go
 
-func SetFeeProtocol(
-	cur realm,
-	feeProtocol0 uint8,
-	feeProtocol1 uint8
-)
+func SetFeeProtocol(cur realm, feeProtocol0 uint8, feeProtocol1 uint8)
 
 ```
 
-SetFeeProtocol sets the Protocol Fee that is applied to all swaps.
+SetFeeProtocol sets the protocol fee rates for a pool.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `feeProtocol0` | uint8 | The Protocol Fee for token0 of the desired pool. |
-| `feeProtocol1` | uint8 | The Protocol Fee for token1 of the desired pool. |
+| cur | realm |  |
+| feeProtocol0 | uint8 | protocol fee rate for token0 |
+| feeProtocol1 | uint8 | protocol fee rate for token1 |
 
 ---
 
 <a id="setpoolcreationfee"></a>
 
-## SetPoolCreationFee
+### SetPoolCreationFee
 
 ```go
 
-func SetPoolCreationFee(
-	cur realm,
-	fee int64
-)
+func SetPoolCreationFee(cur realm, fee int64)
 
 ```
 
-SetPoolCreationFee modifies the Pool Creation Fee.
+SetPoolCreationFee sets the pool creation fee.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `fee` | int64 | The amount of tokens that will be set as the new Pool Creation Fee. (the amount should be in uTokens) |
+| cur | realm |  |
+| fee | int64 | fee charged when creating a new pool |
 
 ---
 
 <a id="setswapendhook"></a>
 
-## SetSwapEndHook
+### SetSwapEndHook
 
 ```go
 
-func SetSwapEndHook(
-	cur realm,
-	hook func(realm, string) error
-)
+func SetSwapEndHook(cur realm, hook func(...))
 
 ```
 
@@ -2064,21 +1863,18 @@ SetSwapEndHook sets the hook to be called at the end of a swap.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `hook` | func(realm, string) error | callback invoked after a swap completes for a pool path |
+| cur | realm |  |
+| hook | func(...) | callback invoked after a swap completes for a pool path |
 
 ---
 
 <a id="setswapstarthook"></a>
 
-## SetSwapStartHook
+### SetSwapStartHook
 
 ```go
 
-func SetSwapStartHook(
-	cur realm,
-	hook func(realm, string, int64)
-)
+func SetSwapStartHook(cur realm, hook func(...))
 
 ```
 
@@ -2088,21 +1884,18 @@ SetSwapStartHook sets the hook to be called at the start of a swap.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `hook` | func(realm, string, int64) | callback invoked before a swap starts for a pool path |
+| cur | realm |  |
+| hook | func(...) | callback invoked before a swap starts for a pool path |
 
 ---
 
 <a id="settickcrosshook"></a>
 
-## SetTickCrossHook
+### SetTickCrossHook
 
 ```go
 
-func SetTickCrossHook(
-	cur realm,
-	hook func(realm, string, int32, bool, int64)
-)
+func SetTickCrossHook(cur realm, hook func(...))
 
 ```
 
@@ -2112,92 +1905,75 @@ SetTickCrossHook sets the hook to be called when a tick is crossed during a swap
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `hook` | func(realm, string, int32, bool, int64) | callback invoked when a swap crosses a tick within a pool |
+| cur | realm |  |
+| hook | func(...) | callback invoked when a swap crosses a tick within a pool |
 
 ---
 
 <a id="setwithdrawalfee"></a>
 
-## SetWithdrawalFee
+### SetWithdrawalFee
 
 ```go
 
-func SetWithdrawalFee(
-	cur realm,
-	fee uint64
-)
+func SetWithdrawalFee(cur realm, fee uint64)
 
 ```
 
-SetWithdrawalFee modifies the Withdrawal Fee.
+SetWithdrawalFee sets the withdrawal fee rate.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `fee` | uint64 | The rate that will be set as the new Withdrawal Fee. (the value should be in bps) |
+| cur | realm |  |
+| fee | uint64 | withdrawal fee in basis points |
 
 ---
 
 <a id="swap"></a>
 
-## Swap
+### Swap
 
 ```go
 
-func Swap(
-	cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient address,
-	zeroForOne bool,
-	amountSpecified string,
-	sqrtPriceLimitX96 string,
-	payer address,
-	swapCallback func(realm, int64, int64, *CallbackMarker) error
-) (string, string)
+func Swap(cur realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(...)) (string, string)
 
 ```
 
-Swap swaps tokens from a pool from token0 to token1, or vice versa. This function can only be called by the Router contract, not by users.
+Swap executes a token swap in the pool.
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `token0Path` | string | The path of token0 of the desired pool. |
-| `token1Path` | string | The path of token1 of the desired pool. |
-| `fee` | uint32 | The fee tier of the desired pool. |
-| `recipient` | address | The address that will receive the output of the swap. |
-| `zeroForOne` | bool | The direction of the swap. Set to true for swapping token0 to token1, and false for vice versa. |
-| `amountSpecified` | string | The amount of tokens to swap. Set to a positive value for an exact input, and a negative value for an exact output. |
-| `sqrtPriceLimitX96` | string | The maximum price to accept for the swap. |
-| `payer` | address | The address from which to send the output tokens. (Relates to the Router contract) |
-| `swapCallback` | func(realm, int64, int64, *CallbackMarker) error | The callback function for token transfer. |
+| cur | realm |  |
+| token0Path | string | path of the first token |
+| token1Path | string | path of the second token |
+| fee | uint32 | pool fee tier |
+| recipient | address | recipient address for output tokens |
+| zeroForOne | bool | true if swapping token0 for token1 |
+| amountSpecified | string | amount to swap (positive for exact input, negative for exact output) |
+| sqrtPriceLimitX96 | string | price limit for the swap |
+| payer | address | address that will pay for the swap |
+| swapCallback | func(...) | callback function for token transfer, callbackMarker is used to identify the callback |
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount0` | string | The change in the amount of token0 as the result of the swap. |
-| `amount1` | string | The change in the amount of token1 as the result of the swap. |
+| amount0Delta | string | amount of token0 delta |
+| amount1Delta | string | amount of token1 delta |
 
 ---
 
 <a id="upgradeimpl"></a>
 
-## UpgradeImpl
+### UpgradeImpl
 
 ```go
 
-func UpgradeImpl(
-	cur realm,
-	packagePath string
-)
+func UpgradeImpl(cur realm, packagePath string)
 
 ```
 
@@ -2212,8 +1988,8 @@ The new implementation must have been previously registered via RegisterInitiali
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cur` | realm |  |
-| `packagePath` | string |  |
+| cur | realm |  |
+| packagePath | string |  |
 
 
 ## Types
@@ -2370,7 +2146,7 @@ func (o *Observation) BlockTimestamp() int64
 
 Observation Getters methods
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2383,7 +2159,7 @@ Observation Getters methods
 func (o *Observation) Clone() *Observation
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2396,7 +2172,7 @@ func (o *Observation) Clone() *Observation
 func (o *Observation) Initialized() bool
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2409,7 +2185,7 @@ func (o *Observation) Initialized() bool
 func (o *Observation) LiquidityCumulative() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2422,7 +2198,7 @@ func (o *Observation) LiquidityCumulative() *u256.Uint
 func (o *Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2432,9 +2208,7 @@ func (o *Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint
 ##### SetBlockTimestamp
 
 ```go
-func (o *Observation) SetBlockTimestamp(
-	blockTimestamp int64
-)
+func (o *Observation) SetBlockTimestamp(blockTimestamp int64)
 ```
 
 Observation Setters methods
@@ -2443,67 +2217,59 @@ Observation Setters methods
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `blockTimestamp` | int64 |  |
+| blockTimestamp | int64 |  |
 
 <a id="observation.setinitialized"></a>
 ##### SetInitialized
 
 ```go
-func (o *Observation) SetInitialized(
-	initialized bool
-)
+func (o *Observation) SetInitialized(initialized bool)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `initialized` | bool |  |
+| initialized | bool |  |
 
 <a id="observation.setliquiditycumulative"></a>
 ##### SetLiquidityCumulative
 
 ```go
-func (o *Observation) SetLiquidityCumulative(
-	liquidityCumulative *u256.Uint
-)
+func (o *Observation) SetLiquidityCumulative(liquidityCumulative *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidityCumulative` | *u256.Uint |  |
+| liquidityCumulative | *u256.Uint |  |
 
 <a id="observation.setsecondsperliquiditycumulativex128"></a>
 ##### SetSecondsPerLiquidityCumulativeX128
 
 ```go
-func (o *Observation) SetSecondsPerLiquidityCumulativeX128(
-	secondsPerLiquidityCumulativeX128 *u256.Uint
-)
+func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `secondsPerLiquidityCumulativeX128` | *u256.Uint |  |
+| secondsPerLiquidityCumulativeX128 | *u256.Uint |  |
 
 <a id="observation.settickcumulative"></a>
 ##### SetTickCumulative
 
 ```go
-func (o *Observation) SetTickCumulative(
-	tickCumulative int64
-)
+func (o *Observation) SetTickCumulative(tickCumulative int64)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickCumulative` | int64 |  |
+| tickCumulative | int64 |  |
 
 <a id="observation.tickcumulative"></a>
 ##### TickCumulative
@@ -2512,7 +2278,7 @@ func (o *Observation) SetTickCumulative(
 func (o *Observation) TickCumulative() int64
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2547,7 +2313,7 @@ ObservationState manages the oracle's historical data
 func (os *ObservationState) Cardinality() uint16
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2560,7 +2326,7 @@ func (os *ObservationState) Cardinality() uint16
 func (os *ObservationState) CardinalityNext() uint16
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2573,7 +2339,7 @@ func (os *ObservationState) CardinalityNext() uint16
 func (os *ObservationState) Clone() *ObservationState
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2588,7 +2354,7 @@ func (os *ObservationState) Index() uint16
 
 ObservationState Getters methods
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2601,7 +2367,7 @@ ObservationState Getters methods
 func (os *ObservationState) Observations() map[uint16]*Observation
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2611,39 +2377,33 @@ func (os *ObservationState) Observations() map[uint16]*Observation
 ##### SetCardinality
 
 ```go
-func (os *ObservationState) SetCardinality(
-	cardinality uint16
-)
+func (os *ObservationState) SetCardinality(cardinality uint16)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cardinality` | uint16 |  |
+| cardinality | uint16 |  |
 
 <a id="observationstate.setcardinalitynext"></a>
 ##### SetCardinalityNext
 
 ```go
-func (os *ObservationState) SetCardinalityNext(
-	cardinalityNext uint16
-)
+func (os *ObservationState) SetCardinalityNext(cardinalityNext uint16)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cardinalityNext` | uint16 |  |
+| cardinalityNext | uint16 |  |
 
 <a id="observationstate.setindex"></a>
 ##### SetIndex
 
 ```go
-func (os *ObservationState) SetIndex(
-	index uint16
-)
+func (os *ObservationState) SetIndex(index uint16)
 ```
 
 ObservationState Setters methods
@@ -2652,22 +2412,20 @@ ObservationState Setters methods
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `index` | uint16 |  |
+| index | uint16 |  |
 
 <a id="observationstate.setobservations"></a>
 ##### SetObservations
 
 ```go
-func (os *ObservationState) SetObservations(
-	observations map[uint16]*Observation
-)
+func (os *ObservationState) SetObservations(observations map[uint16]*Observation)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `observations` | map[uint16]*Observation |  |
+| observations | map[uint16]*Observation |  |
 
 
 #### Constructors
@@ -2699,7 +2457,7 @@ A pool is identificed with a unique key (token0, token1, fee), where token0 < to
 func (p *Pool) BalanceToken0() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2712,7 +2470,7 @@ func (p *Pool) BalanceToken0() *u256.Uint
 func (p *Pool) BalanceToken1() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2725,7 +2483,7 @@ func (p *Pool) BalanceToken1() *u256.Uint
 func (p *Pool) Balances() Balances
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2738,7 +2496,7 @@ func (p *Pool) Balances() Balances
 func (p *Pool) Clone() *Pool
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2748,16 +2506,14 @@ func (p *Pool) Clone() *Pool
 ##### DeleteTick
 
 ```go
-func (p *Pool) DeleteTick(
-	tick int32
-)
+func (p *Pool) DeleteTick(tick int32)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tick` | int32 |  |
+| tick | int32 |  |
 
 <a id="pool.fee"></a>
 ##### Fee
@@ -2766,7 +2522,7 @@ func (p *Pool) DeleteTick(
 func (p *Pool) Fee() uint32
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2779,7 +2535,7 @@ func (p *Pool) Fee() uint32
 func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2792,7 +2548,7 @@ func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2805,7 +2561,7 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint
 func (p *Pool) Liquidity() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2818,7 +2574,7 @@ func (p *Pool) Liquidity() *u256.Uint
 func (p *Pool) MaxLiquidityPerTick() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2831,7 +2587,7 @@ func (p *Pool) MaxLiquidityPerTick() *u256.Uint
 func (p *Pool) ObservationState() *ObservationState
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2846,7 +2602,7 @@ func (p *Pool) PoolPath() string
 
 Pool Getters methods
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2859,7 +2615,7 @@ Pool Getters methods
 func (p *Pool) Positions() *avl.Tree
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2872,7 +2628,7 @@ func (p *Pool) Positions() *avl.Tree
 func (p *Pool) ProtocolFees() ProtocolFees
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2885,7 +2641,7 @@ func (p *Pool) ProtocolFees() ProtocolFees
 func (p *Pool) ProtocolFeesToken0() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2898,7 +2654,7 @@ func (p *Pool) ProtocolFeesToken0() *u256.Uint
 func (p *Pool) ProtocolFeesToken1() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -2908,264 +2664,228 @@ func (p *Pool) ProtocolFeesToken1() *u256.Uint
 ##### SetBalanceToken0
 
 ```go
-func (p *Pool) SetBalanceToken0(
-	token0 *u256.Uint
-)
+func (p *Pool) SetBalanceToken0(token0 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0` | *u256.Uint |  |
+| token0 | *u256.Uint |  |
 
 <a id="pool.setbalancetoken1"></a>
 ##### SetBalanceToken1
 
 ```go
-func (p *Pool) SetBalanceToken1(
-	token1 *u256.Uint
-)
+func (p *Pool) SetBalanceToken1(token1 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token1` | *u256.Uint |  |
+| token1 | *u256.Uint |  |
 
 <a id="pool.setbalances"></a>
 ##### SetBalances
 
 ```go
-func (p *Pool) SetBalances(
-	balances Balances
-)
+func (p *Pool) SetBalances(balances Balances)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `balances` | Balances |  |
+| balances | Balances |  |
 
 <a id="pool.setfee"></a>
 ##### SetFee
 
 ```go
-func (p *Pool) SetFee(
-	fee uint32
-)
+func (p *Pool) SetFee(fee uint32)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `fee` | uint32 |  |
+| fee | uint32 |  |
 
 <a id="pool.setfeegrowthglobal0x128"></a>
 ##### SetFeeGrowthGlobal0X128
 
 ```go
-func (p *Pool) SetFeeGrowthGlobal0X128(
-	feeGrowthGlobal0X128 *u256.Uint
-)
+func (p *Pool) SetFeeGrowthGlobal0X128(feeGrowthGlobal0X128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal0X128` | *u256.Uint |  |
+| feeGrowthGlobal0X128 | *u256.Uint |  |
 
 <a id="pool.setfeegrowthglobal1x128"></a>
 ##### SetFeeGrowthGlobal1X128
 
 ```go
-func (p *Pool) SetFeeGrowthGlobal1X128(
-	feeGrowthGlobal1X128 *u256.Uint
-)
+func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthGlobal1X128` | *u256.Uint |  |
+| feeGrowthGlobal1X128 | *u256.Uint |  |
 
 <a id="pool.setliquidity"></a>
 ##### SetLiquidity
 
 ```go
-func (p *Pool) SetLiquidity(
-	liquidity *u256.Uint
-)
+func (p *Pool) SetLiquidity(liquidity *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidity` | *u256.Uint |  |
+| liquidity | *u256.Uint |  |
 
 <a id="pool.setmaxliquiditypertick"></a>
 ##### SetMaxLiquidityPerTick
 
 ```go
-func (p *Pool) SetMaxLiquidityPerTick(
-	maxLiquidityPerTick *u256.Uint
-)
+func (p *Pool) SetMaxLiquidityPerTick(maxLiquidityPerTick *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `maxLiquidityPerTick` | *u256.Uint |  |
+| maxLiquidityPerTick | *u256.Uint |  |
 
 <a id="pool.setobservationstate"></a>
 ##### SetObservationState
 
 ```go
-func (p *Pool) SetObservationState(
-	observationState *ObservationState
-)
+func (p *Pool) SetObservationState(observationState *ObservationState)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `observationState` | *ObservationState |  |
+| observationState | *ObservationState |  |
 
 <a id="pool.setpositions"></a>
 ##### SetPositions
 
 ```go
-func (p *Pool) SetPositions(
-	positions *avl.Tree
-)
+func (p *Pool) SetPositions(positions *avl.Tree)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `positions` | *avl.Tree |  |
+| positions | *avl.Tree |  |
 
 <a id="pool.setprotocolfees"></a>
 ##### SetProtocolFees
 
 ```go
-func (p *Pool) SetProtocolFees(
-	protocolFees ProtocolFees
-)
+func (p *Pool) SetProtocolFees(protocolFees ProtocolFees)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `protocolFees` | ProtocolFees |  |
+| protocolFees | ProtocolFees |  |
 
 <a id="pool.setprotocolfeestoken0"></a>
 ##### SetProtocolFeesToken0
 
 ```go
-func (p *Pool) SetProtocolFeesToken0(
-	token0 *u256.Uint
-)
+func (p *Pool) SetProtocolFeesToken0(token0 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0` | *u256.Uint |  |
+| token0 | *u256.Uint |  |
 
 <a id="pool.setprotocolfeestoken1"></a>
 ##### SetProtocolFeesToken1
 
 ```go
-func (p *Pool) SetProtocolFeesToken1(
-	token1 *u256.Uint
-)
+func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token1` | *u256.Uint |  |
+| token1 | *u256.Uint |  |
 
 <a id="pool.setslot0"></a>
 ##### SetSlot0
 
 ```go
-func (p *Pool) SetSlot0(
-	slot0 Slot0
-)
+func (p *Pool) SetSlot0(slot0 Slot0)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `slot0` | Slot0 |  |
+| slot0 | Slot0 |  |
 
 <a id="pool.settickbitmaps"></a>
 ##### SetTickBitmaps
 
 ```go
-func (p *Pool) SetTickBitmaps(
-	tickBitmaps *avl.Tree
-)
+func (p *Pool) SetTickBitmaps(tickBitmaps *avl.Tree)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickBitmaps` | *avl.Tree |  |
+| tickBitmaps | *avl.Tree |  |
 
 <a id="pool.settickspacing"></a>
 ##### SetTickSpacing
 
 ```go
-func (p *Pool) SetTickSpacing(
-	tickSpacing int32
-)
+func (p *Pool) SetTickSpacing(tickSpacing int32)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickSpacing` | int32 |  |
+| tickSpacing | int32 |  |
 
 <a id="pool.setticks"></a>
 ##### SetTicks
 
 ```go
-func (p *Pool) SetTicks(
-	ticks *avl.Tree
-)
+func (p *Pool) SetTicks(ticks *avl.Tree)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ticks` | *avl.Tree |  |
+| ticks | *avl.Tree |  |
 
 <a id="pool.settoken0path"></a>
 ##### SetToken0Path
 
 ```go
-func (p *Pool) SetToken0Path(
-	token0Path string
-)
+func (p *Pool) SetToken0Path(token0Path string)
 ```
 
 Pool Setters methods
@@ -3174,22 +2894,20 @@ Pool Setters methods
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0Path` | string |  |
+| token0Path | string |  |
 
 <a id="pool.settoken1path"></a>
 ##### SetToken1Path
 
 ```go
-func (p *Pool) SetToken1Path(
-	token1Path string
-)
+func (p *Pool) SetToken1Path(token1Path string)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token1Path` | string |  |
+| token1Path | string |  |
 
 <a id="pool.slot0"></a>
 ##### Slot0
@@ -3198,7 +2916,7 @@ func (p *Pool) SetToken1Path(
 func (p *Pool) Slot0() Slot0
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3211,7 +2929,7 @@ func (p *Pool) Slot0() Slot0
 func (p *Pool) Slot0FeeProtocol() uint8
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3224,7 +2942,7 @@ func (p *Pool) Slot0FeeProtocol() uint8
 func (p *Pool) Slot0SqrtPriceX96() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3237,7 +2955,7 @@ func (p *Pool) Slot0SqrtPriceX96() *u256.Uint
 func (p *Pool) Slot0Tick() int32
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3250,7 +2968,7 @@ func (p *Pool) Slot0Tick() int32
 func (p *Pool) Slot0Unlocked() bool
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3263,7 +2981,7 @@ func (p *Pool) Slot0Unlocked() bool
 func (p *Pool) TickBitmaps() *avl.Tree
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3276,7 +2994,7 @@ func (p *Pool) TickBitmaps() *avl.Tree
 func (p *Pool) TickSpacing() int32
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3289,7 +3007,7 @@ func (p *Pool) TickSpacing() int32
 func (p *Pool) Ticks() *avl.Tree
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3302,7 +3020,7 @@ func (p *Pool) Ticks() *avl.Tree
 func (p *Pool) Token0Path() string
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3315,7 +3033,7 @@ func (p *Pool) Token0Path() string
 func (p *Pool) Token1Path() string
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3348,7 +3066,7 @@ type PositionInfo struct
 func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3361,7 +3079,7 @@ func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint
 func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3374,7 +3092,7 @@ func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint
 func (p *PositionInfo) Liquidity() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3384,76 +3102,66 @@ func (p *PositionInfo) Liquidity() *u256.Uint
 ##### SetFeeGrowthInside0LastX128
 
 ```go
-func (p *PositionInfo) SetFeeGrowthInside0LastX128(
-	feeGrowthInside0LastX128 *u256.Uint
-)
+func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside0LastX128` | *u256.Uint |  |
+| feeGrowthInside0LastX128 | *u256.Uint |  |
 
 <a id="positioninfo.setfeegrowthinside1lastx128"></a>
 ##### SetFeeGrowthInside1LastX128
 
 ```go
-func (p *PositionInfo) SetFeeGrowthInside1LastX128(
-	feeGrowthInside1LastX128 *u256.Uint
-)
+func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthInside1LastX128` | *u256.Uint |  |
+| feeGrowthInside1LastX128 | *u256.Uint |  |
 
 <a id="positioninfo.setliquidity"></a>
 ##### SetLiquidity
 
 ```go
-func (p *PositionInfo) SetLiquidity(
-	liquidity *u256.Uint
-)
+func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidity` | *u256.Uint |  |
+| liquidity | *u256.Uint |  |
 
 <a id="positioninfo.settokensowed0"></a>
 ##### SetTokensOwed0
 
 ```go
-func (p *PositionInfo) SetTokensOwed0(
-	tokensOwed0 *u256.Uint
-)
+func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tokensOwed0` | *u256.Uint |  |
+| tokensOwed0 | *u256.Uint |  |
 
 <a id="positioninfo.settokensowed1"></a>
 ##### SetTokensOwed1
 
 ```go
-func (p *PositionInfo) SetTokensOwed1(
-	tokensOwed1 *u256.Uint
-)
+func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tokensOwed1` | *u256.Uint |  |
+| tokensOwed1 | *u256.Uint |  |
 
 <a id="positioninfo.tokensowed0"></a>
 ##### TokensOwed0
@@ -3462,7 +3170,7 @@ func (p *PositionInfo) SetTokensOwed1(
 func (p *PositionInfo) TokensOwed0() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3475,7 +3183,7 @@ func (p *PositionInfo) TokensOwed0() *u256.Uint
 func (p *PositionInfo) TokensOwed1() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3525,7 +3233,7 @@ type Slot0 struct
 func (s *Slot0) FeeProtocol() uint8
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3535,61 +3243,53 @@ func (s *Slot0) FeeProtocol() uint8
 ##### SetFeeProtocol
 
 ```go
-func (s *Slot0) SetFeeProtocol(
-	feeProtocol uint8
-)
+func (s *Slot0) SetFeeProtocol(feeProtocol uint8)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeProtocol` | uint8 |  |
+| feeProtocol | uint8 |  |
 
 <a id="slot0.setsqrtpricex96"></a>
 ##### SetSqrtPriceX96
 
 ```go
-func (s *Slot0) SetSqrtPriceX96(
-	sqrtPriceX96 *u256.Uint
-)
+func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `sqrtPriceX96` | *u256.Uint |  |
+| sqrtPriceX96 | *u256.Uint |  |
 
 <a id="slot0.settick"></a>
 ##### SetTick
 
 ```go
-func (s *Slot0) SetTick(
-	tick int32
-)
+func (s *Slot0) SetTick(tick int32)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tick` | int32 |  |
+| tick | int32 |  |
 
 <a id="slot0.setunlocked"></a>
 ##### SetUnlocked
 
 ```go
-func (s *Slot0) SetUnlocked(
-	unlocked bool
-)
+func (s *Slot0) SetUnlocked(unlocked bool)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `unlocked` | bool |  |
+| unlocked | bool |  |
 
 <a id="slot0.sqrtpricex96"></a>
 ##### SqrtPriceX96
@@ -3598,7 +3298,7 @@ func (s *Slot0) SetUnlocked(
 func (s *Slot0) SqrtPriceX96() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3611,7 +3311,7 @@ func (s *Slot0) SqrtPriceX96() *u256.Uint
 func (s *Slot0) Tick() int32
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3624,7 +3324,7 @@ func (s *Slot0) Tick() int32
 func (s *Slot0) Unlocked() bool
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3655,7 +3355,7 @@ These keys are prefixed with the domain address to ensure namespace isolation.
 func (s StoreKey) String() string
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3686,7 +3386,7 @@ TIcks represent discrete price points that can be used as boundaries for positio
 func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3699,7 +3399,7 @@ func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint
 func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3712,7 +3412,7 @@ func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint
 func (t *TickInfo) Initialized() bool
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3727,7 +3427,7 @@ func (t *TickInfo) LiquidityGross() *u256.Uint
 
 TickInfo Getters methods
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3740,7 +3440,7 @@ TickInfo Getters methods
 func (t *TickInfo) LiquidityNet() *i256.Int
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3753,7 +3453,7 @@ func (t *TickInfo) LiquidityNet() *i256.Int
 func (t *TickInfo) SecondsOutside() uint32
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3766,7 +3466,7 @@ func (t *TickInfo) SecondsOutside() uint32
 func (t *TickInfo) SecondsPerLiquidityOutsideX128() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3776,54 +3476,46 @@ func (t *TickInfo) SecondsPerLiquidityOutsideX128() *u256.Uint
 ##### SetFeeGrowthOutside0X128
 
 ```go
-func (t *TickInfo) SetFeeGrowthOutside0X128(
-	feeGrowthOutside0X128 *u256.Uint
-)
+func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside0X128` | *u256.Uint |  |
+| feeGrowthOutside0X128 | *u256.Uint |  |
 
 <a id="tickinfo.setfeegrowthoutside1x128"></a>
 ##### SetFeeGrowthOutside1X128
 
 ```go
-func (t *TickInfo) SetFeeGrowthOutside1X128(
-	feeGrowthOutside1X128 *u256.Uint
-)
+func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `feeGrowthOutside1X128` | *u256.Uint |  |
+| feeGrowthOutside1X128 | *u256.Uint |  |
 
 <a id="tickinfo.setinitialized"></a>
 ##### SetInitialized
 
 ```go
-func (t *TickInfo) SetInitialized(
-	initialized bool
-)
+func (t *TickInfo) SetInitialized(initialized bool)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `initialized` | bool |  |
+| initialized | bool |  |
 
 <a id="tickinfo.setliquiditygross"></a>
 ##### SetLiquidityGross
 
 ```go
-func (t *TickInfo) SetLiquidityGross(
-	liquidityGross *u256.Uint
-)
+func (t *TickInfo) SetLiquidityGross(liquidityGross *u256.Uint)
 ```
 
 TickInfo Setters methods
@@ -3832,67 +3524,59 @@ TickInfo Setters methods
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidityGross` | *u256.Uint |  |
+| liquidityGross | *u256.Uint |  |
 
 <a id="tickinfo.setliquiditynet"></a>
 ##### SetLiquidityNet
 
 ```go
-func (t *TickInfo) SetLiquidityNet(
-	liquidityNet *i256.Int
-)
+func (t *TickInfo) SetLiquidityNet(liquidityNet *i256.Int)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `liquidityNet` | *i256.Int |  |
+| liquidityNet | *i256.Int |  |
 
 <a id="tickinfo.setsecondsoutside"></a>
 ##### SetSecondsOutside
 
 ```go
-func (t *TickInfo) SetSecondsOutside(
-	secondsOutside uint32
-)
+func (t *TickInfo) SetSecondsOutside(secondsOutside uint32)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `secondsOutside` | uint32 |  |
+| secondsOutside | uint32 |  |
 
 <a id="tickinfo.setsecondsperliquidityoutsidex128"></a>
 ##### SetSecondsPerLiquidityOutsideX128
 
 ```go
-func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(
-	secondsPerLiquidityOutsideX128 *u256.Uint
-)
+func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `secondsPerLiquidityOutsideX128` | *u256.Uint |  |
+| secondsPerLiquidityOutsideX128 | *u256.Uint |  |
 
 <a id="tickinfo.settickcumulativeoutside"></a>
 ##### SetTickCumulativeOutside
 
 ```go
-func (t *TickInfo) SetTickCumulativeOutside(
-	tickCumulativeOutside int64
-)
+func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `tickCumulativeOutside` | int64 |  |
+| tickCumulativeOutside | int64 |  |
 
 <a id="tickinfo.tickcumulativeoutside"></a>
 ##### TickCumulativeOutside
@@ -3901,7 +3585,7 @@ func (t *TickInfo) SetTickCumulativeOutside(
 func (t *TickInfo) TickCumulativeOutside() int64
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3934,7 +3618,7 @@ type TokenPair struct
 func (t *TokenPair) Clone() TokenPair
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3944,31 +3628,27 @@ func (t *TokenPair) Clone() TokenPair
 ##### SetToken0
 
 ```go
-func (t *TokenPair) SetToken0(
-	token0 *u256.Uint
-)
+func (t *TokenPair) SetToken0(token0 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token0` | *u256.Uint |  |
+| token0 | *u256.Uint |  |
 
 <a id="tokenpair.settoken1"></a>
 ##### SetToken1
 
 ```go
-func (t *TokenPair) SetToken1(
-	token1 *u256.Uint
-)
+func (t *TokenPair) SetToken1(token1 *u256.Uint)
 ```
 
 #### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `token1` | *u256.Uint |  |
+| token1 | *u256.Uint |  |
 
 <a id="tokenpair.token0"></a>
 ##### Token0
@@ -3977,7 +3657,7 @@ func (t *TokenPair) SetToken1(
 func (t *TokenPair) Token0() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -3990,7 +3670,7 @@ func (t *TokenPair) Token0() *u256.Uint
 func (t *TokenPair) Token1() *u256.Uint
 ```
 
-#### Return Values
+#### Returns
 
 | Name | Type | Description |
 | --- | --- | --- |

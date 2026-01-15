@@ -88,10 +88,10 @@ func (self *UintTree) Clone() *UintTree {
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.
 //
 // Parameters:
-// - num (uint64): The number to encode.
+//   - num: number to encode
 //
 // Returns:
-// - string: A zero-padded string representation of the number.
+//   - encoded: zero-padded string representation of the number
 //
 // Example:
 // Input: 12345
@@ -105,6 +105,16 @@ func EncodeUint(num uint64) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
+// EncodeInt64 converts a non-negative int64 into a zero-padded decimal string.
+//
+// Parameters:
+//   - num: number to encode
+//
+// Returns:
+//   - encoded: zero-padded string representation of the number
+//
+// Panics:
+// - If the number is negative.
 func EncodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
@@ -115,10 +125,10 @@ func EncodeInt64(num int64) string {
 // DecodeUint converts a zero-padded string back into a uint64 number.
 //
 // Parameters:
-// - s (string): The zero-padded string.
+//   - s: zero-padded string
 //
 // Returns:
-// - uint64: The decoded number.
+//   - value: decoded number
 //
 // Panics:
 // - If the string cannot be parsed into a uint64.
@@ -134,6 +144,16 @@ func DecodeUint(s string) uint64 {
 	return num
 }
 
+// DecodeInt64 converts a zero-padded string back into an int64 number.
+//
+// Parameters:
+//   - s: zero-padded string
+//
+// Returns:
+//   - value: decoded number
+//
+// Panics:
+// - If the string cannot be parsed into an int64.
 func DecodeInt64(s string) int64 {
 	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
@@ -145,6 +165,12 @@ func DecodeInt64(s string) int64 {
 // EncodeInt takes an int32 and returns a zero-padded decimal string
 // with up to 10 digits for the absolute value.
 // If the number is negative, the '-' sign comes first, followed by zeros, then digits.
+//
+// Parameters:
+//   - num: number to encode
+//
+// Returns:
+//   - encoded: zero-padded string representation of the number
 func EncodeInt(num int32) string {
 	// Convert the absolute value to a decimal string.
 	absValue := int64(num)
