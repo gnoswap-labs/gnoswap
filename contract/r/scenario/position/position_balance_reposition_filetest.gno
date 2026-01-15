@@ -336,7 +336,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] User FOO balance after reposition should be 99999999999999
 // [EXPECTED] Final position liquidity should be 432601712
 // [EXPECTED] Final position tick range should be [9000, 13000]
-// [EXPECTED] Final position token0 balance should be 0
+// [EXPECTED] Final position token0 balance should be 49999999
 // [EXPECTED] Final position token1 balance should be 0
 // [EXPECTED] Final pool token0 balance should be 50000002
 // [EXPECTED] Final pool token1 balance should be 1

@@ -113,6 +113,11 @@ func (p *positionV1) Reposition(
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	position.SetLiquidity(liquidity)
+
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
+	position.SetToken0Balance(calculatedToken0Balance)
+	position.SetToken1Balance(calculatedToken1Balance)
+
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
 	// > at this point, that position will have unclaimedFee which isn't intended
