@@ -1,20 +1,20 @@
 package router
 
-// ExactInSwapRoute executes a multi-hop swap with exact input amount.
+// ExactInSwapRoute runs a exact-in direction swap through the route that offers the most favorable exchange rate.
 //
 // Parameters:
-//   - inputToken: path of input token
-//   - outputToken: path of output token
-//   - amountIn: exact input amount
-//   - routeArr: encoded route array
-//   - quoteArr: encoded quote array
-//   - amountOutMin: minimum output amount
-//   - deadline: transaction deadline
-//   - referrer: referrer address for reward tracking
+//   - inputToken: The path of the input token.
+//   - outputToken: The path of the output token.
+//   - amountIn: The amount of the input token.
+//   - routeArr: The route of the swap.
+//   - quoteArr: The share of each split of the route.
+//   - amountOutMin: Limits the number of tokens while routing the swap. The minimum amount of tokens to receive.
+//   - deadline: The timestamp for transaction to be expired.
+//   - referrer: The referrer address for reward tracking.
 //
 // Returns:
-//   - amountIn: actual input amount
-//   - amountOut: actual output amount
+//   - tokenIn: The amount sent to the pool from the user (the input of the swap).
+//   - tokenOut: The amount sent to the user from the pool (the output of the swap).
 func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactInSwapRoute(inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
 }
@@ -38,21 +38,21 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 	return getImplementation().ExactInSingleSwapRoute(inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer)
 }
 
-// ExactOutSwapRoute executes a multi-hop swap with exact output amount.
+// ExactOutSwapRoute runs a exact-out direction swap through the route that offers the most favorable exchange rate.
 //
 // Parameters:
-//   - inputToken: path of input token
-//   - outputToken: path of output token
-//   - amountOut: exact output amount
-//   - routeArr: encoded route array
-//   - quoteArr: encoded quote array
-//   - amountInMax: maximum input amount
-//   - deadline: transaction deadline
-//   - referrer: referrer address for reward tracking
+//   - inputToken: The path of the input token.
+//   - outputToken: The path of the output token.
+//   - amountOut: The amount of the output token.
+//   - routeArr: The route of the swap.
+//   - quoteArr: The share of each split of the route.
+//   - amountInMax: Limits the number of tokens while routing the swap. The maximum amount of tokens to pay.
+//   - deadline: The timestamp for transaction to be expired.
+//   - referrer: The referrer address for reward tracking.
 //
 // Returns:
-//   - amountIn: actual input amount
-//   - amountOut: actual output amount
+//   - tokenIn: The amount sent to the pool from the user (the input of the swap).
+//   - tokenOut: The amount sent to the user from the pool (the output of the swap).
 func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactOutSwapRoute(inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer)
 }
@@ -120,18 +120,18 @@ func SwapCallback(token0Path string, token1Path string, amount0Delta int64, amou
 	}(cross)
 }
 
-// GetSwapFee returns the current swap fee rate.
+// GetSwapFee returns the current rate of the Swap Fee.
 //
 // Returns:
-//   - fee: swap fee in basis points
+//   - swapFee: The current rate of the swap fee.
 func GetSwapFee() uint64 {
 	return getImplementation().GetSwapFee()
 }
 
-// SetSwapFee sets the swap fee rate.
+// SetSwapFee modifies the Swap Fee.
 //
 // Parameters:
-//   - fee: new swap fee in basis points
+//   - fee: The rate that will be set as the new Swap Fee. (the value should be in bps)
 func SetSwapFee(cur realm, fee uint64) {
 	getImplementation().SetSwapFee(fee)
 }
