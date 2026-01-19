@@ -1,8 +1,6 @@
 package referral
 
 import (
-	"chain"
-	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/avl"
@@ -32,20 +30,7 @@ func NewKeeper() ReferralKeeper {
 
 // register creates or updates a referral relationship between addresses.
 // Setting refAddr to the contract's own address removes the referral.
-// Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr address) error {
-	return k.setReferral(addr, refAddr, "RegisterReferral")
-}
-
-// setReferral handles common logic for registering and updating referrals.
-// Setting refAddr to the contract's own address removes the referral.
-// Rate limiting applies to prevent abuse.
-func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
-	caller := runtime.PreviousRealm().Address()
-	if err := isValidCaller(caller); err != nil {
-		panic("unauthorized caller: " + caller.String())
-	}
-
 	if err := k.validateAddresses(addr, refAddr); err != nil {
 		return err
 	}
@@ -59,13 +44,6 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 			if !ok {
 				return ErrNotFound
 			}
-
-			chain.Emit(
-				eventType,
-				"prevAddr", caller.String(),
-				"address", addrStr,
-				"referral", refAddrStr,
-			)
 		}
 
 		return nil
@@ -77,13 +55,6 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 	k.store.Set(addrStr, refAddrStr)
 	k.lastOps.Set(addrStr, time.Now().Unix())
-
-	chain.Emit(
-		eventType,
-		"prevAddr", caller.String(),
-		"address", addrStr,
-		"referral", refAddrStr,
-	)
 
 	return nil
 }
