@@ -269,7 +269,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         runtime.ChainHeight(),
-				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 7 days - 1 second
+				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 3 days - 1 second
 				minimumStartDelayTime: projectMinimumStartDelayTime,
 			},
 			expectedHasError:     true,
@@ -289,7 +289,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         runtime.ChainHeight(),
-				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 7 days - 1 second
+				startTime:             int64(time.Now().Unix() + projectMinimumStartDelayTime - 1), // 3 days - 1 second
 				minimumStartDelayTime: projectMinimumStartDelayTime,
 			},
 			expectedHasError:     true,
@@ -346,7 +346,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
 				currentHeight:    runtime.ChainHeight(),
-				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 7 days
+				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,

@@ -946,6 +946,16 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			expectError:       false,
 		},
 		{
+			name:              "Invalid route",
+			route:             "invalid",
+			toSwap:            "1000",
+			swapType:          ExactIn,
+			expectedAmountIn:  "",
+			expectedAmountOut: "",
+			expectError:       true,
+			errorMsg:          "[GNOSWAP-ROUTER-008] invalid pool path || len(poolPathSplit) != 3, poolPath: invalid",
+		},
+		{
 			name:              "Empty route",
 			route:             "",
 			toSwap:            "1000",

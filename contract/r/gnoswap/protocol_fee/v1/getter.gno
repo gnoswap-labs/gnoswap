@@ -78,13 +78,3 @@ func (pf *protocolFeeV1) GetAccuTransferToGovStakerByTokenPath(path string) int6
 func (pf *protocolFeeV1) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetAccuTransferToDevOpsByTokenPath(path)
 }
-
-// GetHistoryOfDistributedToGovStakerByTokenPath returns the history of distributed to gov/staker by token path.
-func (pf *protocolFeeV1) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	return pf.getProtocolFeeState().GetDistributedToGovStakerHistoryByTokenPath(path)
-}
-
-// GetHistoryOfDistributedToDevOpsByTokenPath returns the history of distributed to devOps by token path.
-func (pf *protocolFeeV1) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	return pf.getProtocolFeeState().GetDistributedToDevOpsHistoryByTokenPath(path)
-}

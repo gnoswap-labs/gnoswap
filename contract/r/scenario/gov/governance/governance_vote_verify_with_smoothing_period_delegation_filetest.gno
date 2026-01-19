@@ -105,11 +105,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 12. Both voters vote - ProposalID: 1 (voter1: yes, voter2: no)")
-	voteProposals(proposalId1, false)
+	voteProposals(proposalId1, true)
 	println()
 
 	println("[SCENARIO] 13. Verify voting weights - ProposalID: 1")
-	verifyVotingWeight(proposalId1, false)
+	verifyVotingWeight(proposalId1, true)
 	println()
 
 	println("[SCENARIO] 14. Both voters vote - ProposalID: 2 (voter1: yes, voter2: no)")
@@ -280,16 +280,15 @@ func verifyVotingWeight(proposalId int64, hasVoter2VotingWeight bool) {
 //
 // [SCENARIO] 12. Both voters vote - ProposalID: 1 (voter1: yes, voter2: no)
 // [INFO] Voter1 voted YES
-// [INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time
+// [INFO] Voter2 voted NO
 // [INFO] Proposal state: active
 //
 // [SCENARIO] 13. Verify voting weights - ProposalID: 1
-// [INFO] Voter2 cannot vote - delegated AFTER proposal snapshot time
 // [EXPECTED] Voter1: vote weight=3000000000, xGNS=0, match=false
-// [EXPECTED] Voter2: vote weight=0, xGNS=0, match=true
-// [EXPECTED] Quorum amount: 1500000000
+// [EXPECTED] Voter2: vote weight=1000000000, xGNS=0, match=false
+// [EXPECTED] Quorum amount: 2000000000
 // [EXPECTED] Yea weight: 3000000000 (voter1)
-// [EXPECTED] Nay weight: 0 (voter2)
+// [EXPECTED] Nay weight: 1000000000 (voter2)
 //
 // [SCENARIO] 14. Both voters vote - ProposalID: 2 (voter1: yes, voter2: no)
 // [INFO] Voter1 voted YES
