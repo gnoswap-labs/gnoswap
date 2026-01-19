@@ -274,7 +274,7 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 			),
 			collectAmount: 50,
 			currentTime:   1200, // Before collectableTime (1500)
-			expectedError: staker.ErrWithdrawNotCollectable,
+			expectedError: errWithdrawNotCollectable,
 		},
 		{
 			name: "Cannot collect if no amount",
@@ -287,7 +287,7 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 			),
 			collectAmount: 50,
 			currentTime:   2000,
-			expectedError: staker.ErrWithdrawNotCollectable,
+			expectedError: errWithdrawNotCollectable,
 		},
 		{
 			name: "Cannot collect if already collected",
@@ -299,7 +299,7 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 			),
 			collectAmount: 50,
 			currentTime:   2000,
-			expectedError: staker.ErrWithdrawNotCollectable,
+			expectedError: errWithdrawNotCollectable,
 		},
 	}
 
@@ -387,7 +387,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 		err := resolver.Collect(100, collectableTime-1)
 
 		// then - should fail
-		uassert.ErrorIs(t, err, staker.ErrWithdrawNotCollectable)
+		uassert.ErrorIs(t, err, errWithdrawNotCollectable)
 		uassert.False(t, withdraw.IsCollected())
 	})
 
