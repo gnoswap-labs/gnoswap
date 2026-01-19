@@ -9,7 +9,8 @@ Launchpad enables new projects to distribute tokens to GNS stakers with tiered l
 ## Configuration
 
 - **Pool Tiers**: 30, 90, 180 days
-- **Minimum Start Delay**: 7 days
+- **Minimum Start Delay**: 3 days
+- **Minimum Deposit Amount**: 1,000,000 GNS (must be a multiple of 1,000,000)
 - **Auto-delegation**: Staked GNS converts to xGNS
 - **Tier Allocation**: Customizable per project
 

@@ -26,8 +26,6 @@ type IProtocolFeeGetter interface {
 	GetAccuTransfersToDevOps() map[string]int64
 	GetAccuTransferToGovStakerByTokenPath(path string) int64
 	GetAccuTransferToDevOpsByTokenPath(path string) int64
-	GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64
-	GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64
 }
 
 type IProtocolFeeStore interface {
@@ -47,18 +45,6 @@ type IProtocolFeeStore interface {
 	GetAccuToDevOps() *avl.Tree
 	GetAccuToDevOpsItem(tokenPath string) (int64, bool)
 	SetAccuToDevOpsItem(tokenPath string, amount int64) error
-
-	HasDistributedToGovStakerHistoryStoreKey() bool
-	InitializeDistributedToGovStakerHistory() error
-	GetDistributedToGovStakerHistory() *avl.Tree
-	GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool)
-	SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error
-
-	HasDistributedToDevOpsHistoryStoreKey() bool
-	InitializeDistributedToDevOpsHistory() error
-	GetDistributedToDevOpsHistory() *avl.Tree
-	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
-	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
 
 	HasTokenListWithAmountsStoreKey() bool
 	InitializeTokenListWithAmount() error
