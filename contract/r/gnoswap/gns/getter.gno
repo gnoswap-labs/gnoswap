@@ -139,6 +139,14 @@ func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
 	return state.getHalvingYearAccumulatedAmount(year)
 }
 
+// GetEmissionCreatedHeight returns the block height when emission schedule was created.
+//
+// Returns:
+//   - height: block height when emission schedule was created
+func GetEmissionCreatedHeight() int64 {
+	return getEmissionState().getCreatedHeight()
+}
+
 // GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
 //
 // Parameters:

@@ -16,9 +16,6 @@ import (
 //   - timestamp: timestamp when emission starts
 //
 // Only callable by emission contract. Panics if caller is not emission contract.
-func InitEmissionState(cur realm, height int64, timestamp int64) {
-// Only callable by emission contract. Sets up 12-year emission schedule
-// with halving every 2 years. Panics if caller is not emission contract.
 func InitEmissionState(cur realm, createdHeight int64, startTimestamp int64) {
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
