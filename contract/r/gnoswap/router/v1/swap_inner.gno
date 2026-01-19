@@ -10,6 +10,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256"
+	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/pool"
@@ -108,7 +109,7 @@ type RealSwapExecutor struct {
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	caller := runtime.PreviousRealm().Address()
-	recipient := routerAddr
+	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	return e.router.swapInner(
 		p.amountSpecified,

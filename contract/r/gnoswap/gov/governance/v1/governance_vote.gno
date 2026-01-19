@@ -107,12 +107,24 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(errAlreadyVoted, "user has already voted")
 	}
 
-	// Get user's voting weight at the proposal's snapshot time (lazy lookup)
+	// Get user's voting weight using average between proposal time and snapshot time.
 	snapshotTime := proposal.SnapshotTime()
+	createdAt := proposal.CreatedAt()
 
-	votingWeight, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, snapshotTime)
-	if !ok || votingWeight <= 0 {
-		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight at snapshot time")
+	weightAtSnapshot, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, snapshotTime)
+	if !ok {
+		weightAtSnapshot = 0
+	}
+
+	weightAtCreated, ok := gv.stakerAccessor.GetUserDelegationAmountAtSnapshot(voterAddress, createdAt)
+	if !ok {
+		weightAtCreated = 0
+	}
+
+	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
+	if votingWeight <= 0 {
+		return nil, 0, 0, makeErrorWithDetails(
+			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
 	// Create or update voting info for this user
@@ -130,7 +142,7 @@ func (gv *governanceV1) vote(
 	// Store the user's vote in the proposal voting infos
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
-	    return nil, 0, 0, makeErrorWithDetails(
+		return nil, 0, 0, makeErrorWithDetails(
 			errDataNotFound, "voting infos tree not found for proposal")
 	}
 
