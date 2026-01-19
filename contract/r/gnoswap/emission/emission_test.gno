@@ -562,7 +562,7 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 		name        string
 		blockHeight int64
 		setup       func() int64
-		wantCheck   func(t *testing.T, startTimestamp, startHeight, expectedHeight int64)
+		wantCheck   func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64)
 	}{
 		{
 			name:        "emission start height should be block height not timestamp",
@@ -577,17 +577,17 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 
 				return futureTimestamp
 			},
-			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
-				// startHeight should be the block height, not timestamp
-				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match current block height")
+			wantCheck: func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64) {
+				// createdHeight should be the block height, not timestamp
+				uassert.Equal(t, expectedHeight, createdHeight, "createdHeight should match current block height")
 
-				// startHeight should NOT equal startTimestamp (they should be very different)
-				uassert.NotEqual(t, startTimestamp, startHeight, "startHeight should not be timestamp")
+				// createdHeight should NOT equal startTimestamp (they should be very different)
+				uassert.NotEqual(t, startTimestamp, createdHeight, "createdHeight should not be timestamp")
 
-				// startTimestamp should be much larger than startHeight
+				// startTimestamp should be much larger than createdHeight
 				// (timestamps are in Unix epoch seconds ~1700000000+, block heights are small numbers)
 				uassert.True(t, startTimestamp > 1000000000, "startTimestamp should be Unix epoch timestamp")
-				uassert.True(t, startHeight < 1000, "startHeight should be block height (small number)")
+				uassert.True(t, createdHeight < 1000, "createdHeight should be block height (small number)")
 			},
 		},
 		{
@@ -602,12 +602,12 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 
 				return futureTimestamp
 			},
-			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
+			wantCheck: func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64) {
 				// Should capture the exact block height at initialization
-				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match expected height")
+				uassert.Equal(t, expectedHeight, createdHeight, "createdHeight should match expected height")
 
 				// Verify it's not the timestamp
-				uassert.NotEqual(t, startTimestamp, startHeight)
+				uassert.NotEqual(t, startTimestamp, createdHeight)
 			},
 		},
 	}
@@ -632,10 +632,10 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 			startTimestamp := tt.setup()
 
 			// Get the emission start height from GNS
-			startHeight := gns.GetEmissionStartHeight()
+			createdHeight := gns.GetEmissionCreatedHeight()
 
 			// Verify expectations
-			tt.wantCheck(t, startTimestamp, startHeight, tt.blockHeight)
+			tt.wantCheck(t, startTimestamp, createdHeight, tt.blockHeight)
 		})
 	}
 }
