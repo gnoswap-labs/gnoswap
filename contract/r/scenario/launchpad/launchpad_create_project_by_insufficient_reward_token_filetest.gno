@@ -76,7 +76,7 @@ func createProjectByInsufficientRewardToken() {
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-010] insufficient balance"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-008] insufficient balance"
 	uassert.AbortsContains(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -111,4 +111,4 @@ func createProjectByInsufficientRewardToken() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1235172690
-// [EXPECTED] Should abort with insufficient reward token error: [GNOSWAP-LAUNCHPAD-010] insufficient balance
+// [EXPECTED] Should abort with insufficient reward token error: [GNOSWAP-LAUNCHPAD-008] insufficient balance

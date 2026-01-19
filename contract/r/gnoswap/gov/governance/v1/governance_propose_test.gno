@@ -75,7 +75,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-004] not enough balance",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] not enough balance",
 		},
 		{
 			name:          "fail - empty title",
@@ -98,7 +98,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || title is empty",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || title is empty",
 		},
 		{
 			name:          "fail - empty description",
@@ -121,7 +121,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || description is empty",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || description is empty",
 		},
 		{
 			name:          "fail - already has active proposal",
@@ -144,7 +144,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 		},
 		{
 			name:          "fail - not enough voting weight",
@@ -165,7 +165,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupUserVotes:      map[string]*governance.VotingInfo{}, // Empty voting info
 			maxVotingWeight:     0,
 			expectedHasAbort:    true,
-			expectedAbortMsg:    "[GNOSWAP-GOVERNANCE-007] not enough voting power",
+			expectedAbortMsg:    "[GNOSWAP-GOVERNANCE-005] not enough voting power",
 		},
 	}
 
@@ -287,7 +287,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 		},
 		{
 			name:          "fail - zero amount",
@@ -313,7 +313,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 		},
 		{
 			name:          "fail - empty token path",
@@ -339,7 +339,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || tokenPath is empty",
 		},
 		{
 			name:          "fail - token path is not registered in grc20 registry",
@@ -480,7 +480,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
 		{
 			name:          "fail - invalid execution format",
@@ -505,7 +505,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-015] invalid message format || execution[0]: expected 3 parts (pkgPath, function, params), got 1",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-010] invalid message format || execution[0]: expected 3 parts (pkgPath, function, params), got 1",
 		},
 		{
 			name:          "fail - invalid package path (handler not found)",
@@ -530,7 +530,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
 		},
 		{
 			name:          "fail - invalid function name (handler not found)",
@@ -555,7 +555,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
 		},
 		{
 			name:          "fail - invalid parameter count (too few)",
@@ -580,7 +580,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: expected 2 parameters for gno.land/r/gnoswap/staker:SetPoolTier, got 1",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 2 parameters for gno.land/r/gnoswap/staker:SetPoolTier, got 1",
 		},
 		{
 			name:          "fail - invalid parameter count (too many)",
@@ -605,7 +605,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: expected 1 parameters for gno.land/r/gnoswap/pool:SetPoolCreationFee, got 2",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: expected 1 parameters for gno.land/r/gnoswap/pool:SetPoolCreationFee, got 2",
 		},
 		{
 			name:          "fail - empty package path",
@@ -630,7 +630,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: package path is empty",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: package path is empty",
 		},
 		{
 			name:          "fail - empty function name",
@@ -655,7 +655,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: function name is empty",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: function name is empty",
 		},
 	}
 
@@ -836,7 +836,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					100,
 				)
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 			shouldFail:    true,
 			description:   "Upcoming status blocks new proposal",
 		},
@@ -856,7 +856,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					100,
 				)
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 			shouldFail:    true,
 			description:   "Active status blocks new proposal",
 		},
@@ -879,7 +879,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 			shouldFail:    true,
 			description:   "Passed status blocks new proposal",
 		},
@@ -901,7 +901,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-011] already active proposal",
 			shouldFail:    true,
 			description:   "Executable status blocks new proposal",
 		},
@@ -1060,7 +1060,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			to:            address(""),
 			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
+			expectedError: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 			shouldFail:    true,
 		},
 		{
@@ -1068,7 +1068,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			to:            address("invalid_address_format"),
 			tokenPath:     gnsPath,
 			amount:        1_000_000_000,
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
+			expectedError: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 			shouldFail:    true,
 		},
 		{
@@ -1076,7 +1076,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			to:            testutils.TestAddress("recipient"),
 			tokenPath:     gnsPath,
 			amount:        0,
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+			expectedError: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 			shouldFail:    true,
 		},
 		{
@@ -1091,7 +1091,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			to:            testutils.TestAddress("recipient"),
 			tokenPath:     "",
 			amount:        1_000_000_000,
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+			expectedError: "[GNOSWAP-GOVERNANCE-001] invalid input || tokenPath is empty",
 			shouldFail:    true,
 		},
 		{
@@ -1207,7 +1207,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			name:          "fail - empty executions string",
 			numToExecute:  1,
 			executions:    "",
-			expectedError: "GNOSWAP-GOVERNANCE-002] invalid input || executions is empty",
+			expectedError: "[GNOSWAP-GOVERNANCE-001] invalid input || executions is empty",
 			shouldFail:    true,
 		},
 		{

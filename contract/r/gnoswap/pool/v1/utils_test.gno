@@ -322,9 +322,9 @@ func TestSafeConvertToInt128(t *testing.T) {
 		{"MAX_INT128", MAX_INT128, MAX_INT128, false, ""},
 
 		// Overflow cases
-		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
-		{"large overflow", MAX_UINT128, "", true, "[GNOSWAP-POOL-022] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
-		{"extreme overflow", MAX_UINT256, "", true, "[GNOSWAP-POOL-022] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
+		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
+		{"large overflow", MAX_UINT128, "", true, "[GNOSWAP-POOL-020] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
+		{"extreme overflow", MAX_UINT256, "", true, "[GNOSWAP-POOL-020] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
 	}
 
 	for _, tt := range tests {
@@ -565,7 +565,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 			name:        "MAX_INT128 + 1",
 			input:       "170141183460469231731687303715884105728",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},
 		// Negative values
 		{
@@ -588,7 +588,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 			name:        "Q128 exceeds range",
 			input:       Q128,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
 		},
 		// Special values
 		{
@@ -649,14 +649,14 @@ func TestCheckTickSpacing(t *testing.T) {
 			tick:        15,
 			tickSpacing: 10,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(15) MOD tickSpacing(10) != 0(5)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(15) MOD tickSpacing(10) != 0(5)",
 		},
 		{
 			name:        "Invalid tick - negative tick",
 			tick:        -35,
 			tickSpacing: 20,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-35) MOD tickSpacing(20) != 0(-15)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(-35) MOD tickSpacing(20) != 0(-15)",
 		},
 		// Edge cases with extreme tick values
 		{
@@ -740,7 +740,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        12345,
 			tickSpacing: 10,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(12345) MOD tickSpacing(10) != 0(5)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(12345) MOD tickSpacing(10) != 0(5)",
 		},
 		{
 			name:        "fee tier 3000 - valid tick",
@@ -753,7 +753,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -12359,
 			tickSpacing: 60,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-12359) MOD tickSpacing(60) != 0(-59)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(-12359) MOD tickSpacing(60) != 0(-59)",
 		},
 		{
 			name:        "fee tier 10000 - valid tick",
@@ -766,7 +766,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -12399,
 			tickSpacing: 200,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-12399) MOD tickSpacing(200) != 0(-199)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(-12399) MOD tickSpacing(200) != 0(-199)",
 		},
 		// Extreme boundary cases
 		{
@@ -780,7 +780,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -887271,
 			tickSpacing: 100,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887271) MOD tickSpacing(100) != 0(-71)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(-887271) MOD tickSpacing(100) != 0(-71)",
 		},
 		{
 			name:        "maximum tick spacing",
@@ -793,7 +793,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        1,
 			tickSpacing: 887272,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(887272) != 0(1)",
+			errorMsg:    "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(887272) != 0(1)",
 		},
 	}
 
@@ -887,7 +887,7 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 		// MAX_INT128 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			"[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 			func() { safeConvertToInt128(overValue) })
 	})
 }
@@ -1153,7 +1153,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 			name:        "max int128 + 1",
 			input:       new(i256.Int).Add(i256.MustFromDecimal(MAX_INT128), i256.One()),
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},
 		{
 			name:        "very large value",

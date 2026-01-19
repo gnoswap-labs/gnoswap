@@ -447,7 +447,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-016] cannot swap while pool is locked",
+			expectedError: "[GNOSWAP-POOL-014] cannot swap while pool is locked",
 			riskFactor:    "Prevent state inconsistency from concurrent transactions",
 		},
 		{
@@ -467,7 +467,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
 			riskFactor:    "Prevent gas waste and system load from meaningless trade",
 		},
 	}
@@ -1413,7 +1413,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 				// 2. Swap executes computeSwap and transfers output tokens
 				// 3. Swap calls swapCallback (maliciousCallback)
 				// 4. Inside callback, attacker attempts second Swap
-				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-016]
+				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-014]
 				// 6. Callback catches panic, completes token transfer
 				// 7. Original Swap completes successfully
 				// 8. defer unlocks pool -> pool.Slot0.unlocked = true
@@ -1422,7 +1422,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 
 				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
-					uassert.PanicsContains(t, "[GNOSWAP-POOL-016]", func() {
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014]", func() {
 						getMockInstance().Swap(
 							wugnotPath, gnsPath, STANDARD_FEE_TIER,
 							routerAddr, false, "50",

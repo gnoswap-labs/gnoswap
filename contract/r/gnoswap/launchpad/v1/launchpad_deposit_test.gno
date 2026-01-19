@@ -266,7 +266,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        0,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(0) should greater than minimum deposit amount(1000000)",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-010] invalid amount || amount(0) should greater than minimum deposit amount(1000000)",
 		},
 		{
 			name: "fail with negative amount",
@@ -280,7 +280,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        -1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-017] invalid amount || amount(-1000000) should greater than minimum deposit amount(1000000)",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-010] invalid amount || amount(-1000000) should greater than minimum deposit amount(1000000)",
 		},
 		{
 			name: "fail with invalid project tier ID format",
@@ -293,7 +293,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-016] invalid data || (invalid_format)",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid data || (invalid_format)",
 		},
 		{
 			name: "fail with non-existent project",
@@ -309,7 +309,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-016] invalid data || (non_existent_project:30)",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid data || (non_existent_project:30)",
 		},
 		{
 			name: "fail with invalid tier duration",
@@ -369,7 +369,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid tier || pool type(60) is not available",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-007] invalid tier || pool type(60) is not available",
 		},
 		{
 			name: "fail when project is inactive",
@@ -427,7 +427,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-005] project is inactive || gno.land/r/onbloc/obl:123",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl:123",
 		},
 		{
 			name: "fail when called from contract",
