@@ -79,7 +79,7 @@ func (gs *govStakerV1) ExistsDelegation(delegationID int64) bool {
 func (gs *govStakerV1) GetDelegation(delegationID int64) (*staker.Delegation, error) {
 	delegation, exists := gs.store.GetDelegation(delegationID)
 	if !exists {
-		return nil, ufmt.Errorf("delegation not found: %d", delegationID)
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("delegation not found: %d", delegationID))
 	}
 	return delegation, nil
 }
