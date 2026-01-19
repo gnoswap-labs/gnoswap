@@ -349,8 +349,8 @@ func (i *poolV1) collectProtocol(
 
 	uAmount0 := safeConvertToInt64(amount0)
 	uAmount1 := safeConvertToInt64(amount1)
-	common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
-	common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
+	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, uAmount0)
+	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, uAmount1)
 
 	return amount0.ToString(), amount1.ToString()
 }

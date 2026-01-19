@@ -41,17 +41,15 @@ func (i *poolV1) safeTransfer(
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	absAmount := amount.Abs()
-
 	token0 := p.BalanceToken0()
 	token1 := p.BalanceToken1()
 
-	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
+	if err := validatePoolBalance(token0, token1, amount, isToken0); err != nil {
 		panic(err)
 	}
 
-	// Effects: compute and apply new internal balance first
-	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
+	// compute and apply new internal balance first
+	newBalance, err := updatePoolBalance(token0, token1, amount, isToken0)
 	if err != nil {
 		panic(err)
 	}
@@ -66,8 +64,8 @@ func (i *poolV1) safeTransfer(
 
 	p.SetBalances(poolBalances)
 
-	// Interactions: perform external transfer after state change
-	amountInt64 := safeConvertToInt64(absAmount)
+	// perform external transfer after state change
+	amountInt64 := safeConvertToInt64(amount)
 	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 }
 
@@ -104,36 +102,39 @@ func (i *poolV1) safeTransferFrom(
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	amountInt64 := safeConvertToInt64(amount)
+	poolBalances := p.Balances()
 
-	token := common.GetToken(tokenPath)
-	beforeBalance := token.BalanceOf(to)
-
-	// Effects: update internal balances before interaction
+	// update internal balances before interaction
 	if isToken0 {
-		beforeToken0 := p.balances.token0.Clone()
-		p.balances.token0 = u256.Zero().Add(p.balances.token0, amount)
-		if p.balances.token0.Lt(beforeToken0) {
+		beforeToken0 := poolBalances.Token0().Clone()
+		poolBalances.SetToken0(u256.Zero().Add(poolBalances.Token0(), amount))
+		if poolBalances.Token0().Lt(beforeToken0) {
 			panic(ufmt.Sprintf(
 				"%v. token0(%s) < beforeToken0(%s)",
-				errBalanceUpdateFailed, p.balances.token0.ToString(), beforeToken0.ToString(),
+				errBalanceUpdateFailed, poolBalances.Token0().ToString(), beforeToken0.ToString(),
 			))
 		}
 	} else {
-		beforeToken1 := p.balances.token1.Clone()
-		p.balances.token1 = u256.Zero().Add(p.balances.token1, amount)
-		if p.balances.token1.Lt(beforeToken1) {
+		beforeToken1 := poolBalances.Token1().Clone()
+		poolBalances.SetToken1(u256.Zero().Add(poolBalances.Token1(), amount))
+		if poolBalances.Token1().Lt(beforeToken1) {
 			panic(ufmt.Sprintf(
 				"%v. token1(%s) < beforeToken1(%s)",
-				errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
+				errBalanceUpdateFailed, poolBalances.Token1().ToString(), beforeToken1.ToString(),
 			))
 		}
 	}
 
-	// Interactions: perform external transfer after state change
+	p.SetBalances(poolBalances)
+
+	token := common.GetToken(tokenPath)
+	beforeBalance := token.BalanceOf(to)
+
+	// perform external transfer after state change
+	amountInt64 := safeConvertToInt64(amount)
 	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
 
-	// Post-condition: verify external balance reflects the transfer
+	// verify external balance reflects the transfer
 	afterBalance := token.BalanceOf(to)
 	if (beforeBalance + amountInt64) != afterBalance {
 		panic(ufmt.Sprintf(
