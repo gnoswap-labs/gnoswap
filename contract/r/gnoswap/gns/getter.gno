@@ -242,7 +242,7 @@ func GetHalvingAmountsPerYear(year int64) int64 {
 // Returns:
 //   - height: emission start block height
 func GetEmissionStartHeight() int64 {
-	return getEmissionState().getStartHeight()
+	return getEmissionState().getCreatedHeight()
 }
 
 // GetEmissionStartTimestamp returns the timestamp when emission schedule begins.

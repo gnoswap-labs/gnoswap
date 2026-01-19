@@ -16,7 +16,7 @@ func init() {
 // EmissionState manages emission state and halving data.
 // Tracks emission timing, status, and halving year information for 12-year schedule.
 type EmissionState struct {
-	startHeight    int64
+	createdHeight  int64
 	startTimestamp int64
 	endTimestamp   int64
 	halvingData    *HalvingData
@@ -24,7 +24,7 @@ type EmissionState struct {
 
 // isInitialized returns true if emission state has been initialized with valid height and timestamp.
 func (e *EmissionState) isInitialized() bool {
-	return e.startHeight != 0 && e.startTimestamp != 0
+	return e.createdHeight != 0 && e.startTimestamp != 0
 }
 
 // isActive returns true if emission is currently active at the given timestamp.
@@ -64,9 +64,9 @@ func (e *EmissionState) getCurrentYear(timestamp int64) int64 {
 	return year + 1
 }
 
-// getStartHeight returns the blockchain height when emission started.
-func (e *EmissionState) getStartHeight() int64 {
-	return e.startHeight
+// getCreatedHeight returns the blockchain height when emission started.
+func (e *EmissionState) getCreatedHeight() int64 {
+	return e.createdHeight
 }
 
 // getStartTimestamp returns the timestamp when emission started.
@@ -137,7 +137,7 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 
 func (e *EmissionState) Clone() *EmissionState {
 	return &EmissionState{
-		startHeight:    e.startHeight,
+		createdHeight:  e.createdHeight,
 		startTimestamp: e.startTimestamp,
 		endTimestamp:   e.endTimestamp,
 		halvingData:    e.halvingData.Clone(),
@@ -146,11 +146,11 @@ func (e *EmissionState) Clone() *EmissionState {
 
 // NewEmissionState creates a new EmissionState with specified start height and timestamp.
 // Calculates emission end time based on 12-year schedule and initializes halving data.
-func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
+func NewEmissionState(createdHeight int64, startTimestamp int64) *EmissionState {
 	emissionEndTime := safeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
 
 	return &EmissionState{
-		startHeight:    startHeight,
+		createdHeight:  createdHeight,
 		startTimestamp: startTimestamp,
 		endTimestamp:   emissionEndTime,
 		halvingData:    NewHalvingData(startTimestamp),

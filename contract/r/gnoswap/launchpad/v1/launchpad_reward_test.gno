@@ -178,7 +178,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
 		},
 		{
-			name:                 "fail - 90 tier claimable wait 7 days - 1 second",
+			name:                 "fail - 90 tier claimable wait 1 days - 1 second",
 			projectID:            "project_1",
 			tier:                 90,
 			depositAmount:        1000000,
