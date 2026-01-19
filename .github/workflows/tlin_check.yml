@@ -2,8 +2,6 @@ name: tlin-check
 
 on:
   pull_request:
-    branches:
-      - main
 
 jobs:
   tlin-check:

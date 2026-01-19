@@ -2,7 +2,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -10,24 +10,27 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/rbac"
 )
 
 var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	// current distribution targets
-	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
-	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
-	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 	// new distribution targets for upgrade
 	newGovStakerAddr     = testutils.TestAddress("newGovStakerAddr")
@@ -43,7 +46,7 @@ func main() {
 
 	ufmt.Println("[SCENARIO] 2. Mint to distribution target (before upgrade)")
 	testing.SkipHeights(1)
-	ufmt.Println("[INFO] current block height", std.ChainHeight())
+	ufmt.Println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 
@@ -53,7 +56,7 @@ func main() {
 
 	println("[SCENARIO] 4. Mint to distribution target (after upgrade)")
 	testing.SkipHeights(1)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 }
@@ -67,7 +70,7 @@ func initEmission() {
 func mintAndDistribute() {
 	testing.SetRealm(adminRealm)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)
@@ -107,10 +110,10 @@ func mintAndDistribute() {
 func changeDistributionTarget() {
 	testing.SetOriginCaller(adminAddr)
 
-	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
-	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
-	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
-	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
+	rbac.UpdateRoleAddress(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
+	rbac.UpdateRoleAddress(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
+	rbac.UpdateRoleAddress(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
+	rbac.UpdateRoleAddress(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
 
 	ufmt.Printf("[EXPECTED] staker address should be changed %s to %s\n", stakerAddr, newStakerAddr)
 	ufmt.Printf("[EXPECTED] gov staker address should be changed %s to %s\n", govStakerAddr, newGovStakerAddr)
@@ -134,10 +137,10 @@ func changeDistributionTarget() {
 // [EXPECTED] (new) community pool balance change should be 0
 //
 // [SCENARIO] 3. Change distribution target for upgrade
-// [EXPECTED] staker address should be changed g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu to g1dejhw5m5v94k2ujpv3j8yh6lta047h6ly4ras8
-// [EXPECTED] gov staker address should be changed g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa to g1dejhw3m0wefhgcttv4eyzerywf047h6ldvhvcq
+// [EXPECTED] staker address should be changed g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 to g1dejhw5m5v94k2ujpv3j8yh6lta047h6ly4ras8
+// [EXPECTED] gov staker address should be changed g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 to g1dejhw3m0wefhgcttv4eyzerywf047h6ldvhvcq
 // [EXPECTED] dev ops address should be changed g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9 to g1dejhw3r9we8hqu6pv3j8yh6lta047h6lguneqv
-// [EXPECTED] community pool address should be changed g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049 to g1dejhwsm0d4kh2mnfw3u4qmm0d3qkgerj7zt4z6
+// [EXPECTED] community pool address should be changed g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 to g1dejhwsm0d4kh2mnfw3u4qmm0d3qkgerj7zt4z6
 //
 // [SCENARIO] 4. Mint to distribution target (after upgrade)
 // [INFO] current block height 125

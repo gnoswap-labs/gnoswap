@@ -1,15 +1,15 @@
 package rbac
 
 import (
-	"std"
+	"strings"
 
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-// assertIsOwner panics if addr is not the current owner.
-func assertIsOwner(addr std.Address) {
+// assertIsOwner panics if address is not the current owner.
+func assertIsOwner(addr address) {
 	if manager.Owner() != addr {
 		panic(makeErrorWithDetails(
 			errCallerIsNotOwner,
@@ -18,8 +18,8 @@ func assertIsOwner(addr std.Address) {
 	}
 }
 
-// assertIsPendingOwner panics if addr is not the pending owner.
-func assertIsPendingOwner(addr std.Address) {
+// assertIsPendingOwner panics if address is not the pending owner.
+func assertIsPendingOwner(addr address) {
 	if manager.PendingOwner() != addr {
 		panic(makeErrorWithDetails(
 			errCallerIsNotPendingOwner,
@@ -28,8 +28,8 @@ func assertIsPendingOwner(addr std.Address) {
 	}
 }
 
-// assertIsAdmin panics if addr is not authorized for admin role.
-func assertIsAdmin(addr std.Address) {
+// assertIsAdmin panics if address is not authorized for admin role.
+func assertIsAdmin(addr address) {
 	if !manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) {
 		panic(
 			makeErrorWithDetails(
@@ -40,18 +40,18 @@ func assertIsAdmin(addr std.Address) {
 	}
 }
 
-// assertIsValidRoleName panics if roleName is invalid (empty).
+// assertIsValidRoleName panics if roleName is invalid (empty or whitespace-only).
 func assertIsValidRoleName(roleName string) {
-	if roleName == "" {
+	if strings.TrimSpace(roleName) == "" {
 		panic(makeErrorWithDetails(
 			errInvalidRoleName,
-			ufmt.Sprintf("role name: %s", roleName),
+			ufmt.Sprintf("role name: %q", roleName),
 		))
 	}
 }
 
-func assertIsValidAddress(addr std.Address) {
-	if addr == "" || !addr.IsValid() {
+func assertIsValidAddress(addr address) {
+	if !addr.IsValid() {
 		panic(makeErrorWithDetails(
 			errInvalidAddress,
 			ufmt.Sprintf("address: %s", addr.String()),
@@ -59,7 +59,16 @@ func assertIsValidAddress(addr std.Address) {
 	}
 }
 
-func assertIsAdminOrGovernance(addr std.Address) {
+func assertNotAdminRole(roleName string) {
+	if roleName == prbac.ROLE_ADMIN.String() {
+		panic(makeErrorWithDetails(
+			errAdminRoleUpdateForbidden,
+			ufmt.Sprintf("role name: %s", roleName),
+		))
+	}
+}
+
+func assertIsAdminOrGovernance(addr address) {
 	if manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) || manager.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), addr) {
 		return
 	}

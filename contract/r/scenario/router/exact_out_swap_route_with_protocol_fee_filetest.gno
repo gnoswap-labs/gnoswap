@@ -1,14 +1,13 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/r/gnoswap/access"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -16,12 +15,17 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
 	"gno.land/r/gnoswap/gns"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
@@ -82,7 +86,7 @@ func mintPosition() {
 
 	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
-	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }
@@ -163,11 +167,11 @@ func swapRouteWithBalanceCheck() {
 // [INFO] protocol fee bar balance: 0
 // [INFO] protocol fee foo balance: 0
 // [INFO] Executing ExactOut swap
-// [EXPECTED] amountIn: 1013142
-// [EXPECTED] amountOut: -998500
-// [EXPECTED] admin bar balance change: 998500
-// [EXPECTED] admin foo balance change: -1013142
-// [EXPECTED] pool bar balance change: -1000000
-// [EXPECTED] pool foo balance change: 1013142
-// [EXPECTED] protocol fee bar balance change: 1500
+// [EXPECTED] amountIn: 1014679
+// [EXPECTED] amountOut: -1000000
+// [EXPECTED] admin bar balance change: 1000000
+// [EXPECTED] admin foo balance change: -1014679
+// [EXPECTED] pool bar balance change: -1001502
+// [EXPECTED] pool foo balance change: 1014679
+// [EXPECTED] protocol fee bar balance change: 1502
 // [EXPECTED] protocol fee foo balance change: 0

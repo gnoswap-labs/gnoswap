@@ -1,13 +1,16 @@
 package emission
 
 import (
-	"std"
+	"math"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 )
 
 var alice = testutils.TestAddress("alice")
@@ -19,7 +22,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 		name        string
 		setup       func()
 		timestamp   int64
-		caller      std.Address
+		caller      address
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -45,7 +48,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 			timestamp:   -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution start timestamp cannot be negative",
+			panicMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name: "update existing distribution start time",
@@ -78,7 +81,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 				tt.setup()
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
@@ -153,12 +156,746 @@ func TestMintAndDistributeGnsWithDistributionStartTime(t *testing.T) {
 				testing.SkipHeights(-tt.skipHeight)
 			}()
 
-			distributed := MintAndDistributeGns(cross)
+			distributed, _ := MintAndDistributeGns(cross)
 			if tt.verify != nil {
 				tt.verify(distributed)
 			}
 		})
 
 		resetObject(t)
+	}
+}
+
+func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+		errMsg  string
+		verify  func(t *testing.T)
+	}{
+		{
+			name: "success - distributes with leftover from previous round",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// First distribution to get some GNS minted
+				MintAndDistributeGns(cross)
+				// Skip more time to allow another mint
+				testing.SkipHeights(100)
+				// Now set leftover amount for next distribution
+				setLeftGNSAmount(100)
+			},
+			verify: func(t *testing.T) {
+				distributed, _ := MintAndDistributeGns(cross)
+				uassert.True(t, distributed >= 0)
+			},
+		},
+		{
+			name: "success - no distribution when start timestamp is 0",
+			setup: func() {
+				resetObject(t)
+				distributionStartTimestamp = 0
+			},
+			verify: func(t *testing.T) {
+				distributed, _ := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+			},
+		},
+		{
+			name: "success - no distribution when current time < start timestamp",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+1000000)
+			},
+			verify: func(t *testing.T) {
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+				uassert.True(t, ok)
+			},
+		},
+		{
+			name: "success - skip when already minted at this timestamp",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// First distribution
+				MintAndDistributeGns(cross)
+			},
+			verify: func(t *testing.T) {
+				// Second distribution at same timestamp should return 0
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.True(t, ok)
+				uassert.Equal(t, int64(0), distributed)
+			},
+		},
+		{
+			name: "success - prevent re-entrancy when lastExecutedTimestamp >= currentTimestamp",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				setLastExecutedTimestamp(now + 1000)
+			},
+			verify: func(t *testing.T) {
+				distributed, _ := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+			},
+		},
+		{
+			name: "success - tracks leftGNSAmount when remainder exists",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// Set distribution percentages that will create remainder
+				changeDistributionPcts(
+					LIQUIDITY_STAKER, 3333,
+					DEVOPS, 3333,
+					COMMUNITY_POOL, 3333,
+					GOV_STAKER, 1,
+				)
+			},
+			verify: func(t *testing.T) {
+				testing.SkipHeights(1)
+				initialLeft := GetLeftGNSAmount()
+				MintAndDistributeGns(cross)
+				// Should have some leftover due to rounding
+				finalLeft := GetLeftGNSAmount()
+				uassert.True(t, finalLeft >= initialLeft)
+			},
+		},
+		{
+			name: "success - no distribution when halted (halt check in emission layer)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200)
+				// Set halt to emergency level
+				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			},
+			verify: func(t *testing.T) {
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.Equal(t, int64(0), distributed)
+				uassert.False(t, ok)
+				// Reset halt for other tests
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			// When - Then
+			if tt.wantErr {
+				uassert.PanicsWithMessage(t, tt.errMsg, func() {
+					MintAndDistributeGns(cross)
+				})
+				return
+			}
+
+			// When
+			if tt.verify != nil {
+				tt.verify(t)
+			}
+		})
+	}
+}
+
+func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		setup     func()
+		timestamp int64
+		caller    address
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "success - set to exact current time + 1",
+			timestamp: time.Now().Unix() + 1,
+			caller:    adminAddr,
+			wantErr:   false,
+		},
+		{
+			name:      "panic - set to exact current time",
+			timestamp: time.Now().Unix(),
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
+		},
+		{
+			name:      "panic - zero timestamp must be positive",
+			timestamp: 0,
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be positive",
+		},
+		{
+			name:      "panic - max int64 timestamp",
+			timestamp: math.MaxInt64,
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution end timestamp must be before max int64 timestamp",
+		},
+		{
+			name:      "success - max int64 timestamp - total distribution duration",
+			timestamp: math.MaxInt64 - totalDistributionDuration,
+			caller:    adminAddr,
+			wantErr:   false,
+		},
+		{
+			name:      "panic - max int64 timestamp - total distribution duration + 1",
+			timestamp: math.MaxInt64 - totalDistributionDuration + 1,
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution end timestamp must be before max int64 timestamp",
+		},
+		{
+			name: "panic - set to past time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix() - 100, // past time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
+		},
+		{
+			name: "panic - set to current time when distribution already started (future time error takes precedence)",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+100)
+				testing.SkipHeights(200) // distribution started
+			},
+			timestamp: time.Now().Unix(), // current time
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be greater than current timestamp",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			resetObject(t)
+			if tt.setup != nil {
+				tt.setup()
+			}
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			// When - Then
+			if tt.wantErr {
+				uassert.AbortsWithMessage(t, tt.errMsg, func() {
+					SetDistributionStartTime(cross, tt.timestamp)
+				})
+				return
+			}
+
+			// When
+			SetDistributionStartTime(cross, tt.timestamp)
+
+			// Then
+			uassert.Equal(t, tt.timestamp, GetDistributionStartTimestamp())
+		})
+	}
+}
+
+func TestEmission_GetLeftGNSAmount(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func()
+		want  int64
+	}{
+		{
+			name:  "success - initial value is 0",
+			setup: func() { resetObject(t) },
+			want:  0,
+		},
+		{
+			name: "success - returns set value",
+			setup: func() {
+				resetObject(t)
+				setLeftGNSAmount(12345)
+			},
+			want: 12345,
+		},
+		{
+			name: "success - returns max int64",
+			setup: func() {
+				resetObject(t)
+				setLeftGNSAmount(9223372036854775807)
+			},
+			want: 9223372036854775807,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			tt.setup()
+
+			// When
+			got := GetLeftGNSAmount()
+
+			// Then
+			uassert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestEmission_GetLastExecutedTimestamp(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func()
+		want  int64
+	}{
+		{
+			name:  "success - initial value is 0",
+			setup: func() { resetObject(t) },
+			want:  0,
+		},
+		{
+			name: "success - returns set value",
+			setup: func() {
+				resetObject(t)
+				setLastExecutedTimestamp(1234567890)
+			},
+			want: 1234567890,
+		},
+		{
+			name: "success - returns max int64",
+			setup: func() {
+				resetObject(t)
+				setLastExecutedTimestamp(9223372036854775807)
+			},
+			want: 9223372036854775807,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			tt.setup()
+
+			// When
+			got := GetLastExecutedTimestamp()
+
+			// Then
+			uassert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestEmission_GetDistributionStartTimestamp(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func()
+		want  int64
+	}{
+		{
+			name:  "success - initial value is 0",
+			setup: func() { resetObject(t) },
+			want:  0,
+		},
+		{
+			name: "success - returns set value",
+			setup: func() {
+				resetObject(t)
+				now := time.Now().Unix()
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, now+1000)
+			},
+			want: time.Now().Unix() + 1000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			tt.setup()
+
+			// When
+			got := GetDistributionStartTimestamp()
+
+			// Then
+			if tt.name == "success - initial value is 0" {
+				uassert.Equal(t, tt.want, got)
+			} else {
+				// Allow small time difference for test execution
+				uassert.True(t, got >= time.Now().Unix()+999)
+			}
+		})
+	}
+}
+
+func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T) {
+	// This test verifies that InitEmissionState is called with actual block height,
+	// not timestamp value, fixing the semantic inconsistency issue.
+	tests := []struct {
+		name        string
+		blockHeight int64
+		setup       func() int64
+		wantCheck   func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64)
+	}{
+		{
+			name:        "emission start height should be block height not timestamp",
+			blockHeight: 150,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 10000
+
+				// Call SetDistributionStartTime which internally calls InitEmissionState
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64) {
+				// createdHeight should be the block height, not timestamp
+				uassert.Equal(t, expectedHeight, createdHeight, "createdHeight should match current block height")
+
+				// createdHeight should NOT equal startTimestamp (they should be very different)
+				uassert.NotEqual(t, startTimestamp, createdHeight, "createdHeight should not be timestamp")
+
+				// startTimestamp should be much larger than createdHeight
+				// (timestamps are in Unix epoch seconds ~1700000000+, block heights are small numbers)
+				uassert.True(t, startTimestamp > 1000000000, "startTimestamp should be Unix epoch timestamp")
+				uassert.True(t, createdHeight < 1000, "createdHeight should be block height (small number)")
+			},
+		},
+		{
+			name:        "emission start height tracks blockchain height correctly",
+			blockHeight: 500,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 20000
+
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, createdHeight, expectedHeight int64) {
+				// Should capture the exact block height at initialization
+				uassert.Equal(t, expectedHeight, createdHeight, "createdHeight should match expected height")
+
+				// Verify it's not the timestamp
+				uassert.NotEqual(t, startTimestamp, createdHeight)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset state before each test
+			resetObject(t)
+
+			// Set block height BEFORE any initialization
+			testing.SetHeight(tt.blockHeight)
+
+			// Manually reset GNS emission state with the correct height
+			// This ensures the emission state is initialized with the test's block height
+			testing.SetOriginCaller(adminAddr)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
+				gns.InitEmissionState(cross, tt.blockHeight, time.Now().Unix())
+			}(cross)
+
+			// Setup and get the start timestamp used
+			startTimestamp := tt.setup()
+
+			// Get the emission start height from GNS
+			createdHeight := gns.GetEmissionCreatedHeight()
+
+			// Verify expectations
+			tt.wantCheck(t, startTimestamp, createdHeight, tt.blockHeight)
+		})
+	}
+}
+
+func TestSetLeftGNSAmount_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:   "success - set zero value",
+			amount: 0,
+		},
+		{
+			name:   "success - set positive value",
+			amount: 100,
+		},
+		{
+			name:   "success - set max int64 value",
+			amount: 9223372036854775807,
+		},
+		{
+			name:        "panic - negative value",
+			amount:      -1,
+			shouldPanic: true,
+			panicMsg:    "left GNS amount cannot be negative",
+		},
+		{
+			name:        "panic - min int64 value",
+			amount:      -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "left GNS amount cannot be negative",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			resetObject(t)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					setLeftGNSAmount(tt.amount)
+				})
+				return
+			}
+
+			// When
+			setLeftGNSAmount(tt.amount)
+
+			// Then
+			uassert.Equal(t, tt.amount, GetLeftGNSAmount())
+		})
+	}
+}
+
+func TestSetLastExecutedTimestamp_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		timestamp   int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:      "success - set zero value",
+			timestamp: 0,
+		},
+		{
+			name:      "success - set positive value",
+			timestamp: 1234567890,
+		},
+		{
+			name:      "success - set max int64 value",
+			timestamp: 9223372036854775807,
+		},
+		{
+			name:        "panic - negative value",
+			timestamp:   -1,
+			shouldPanic: true,
+			panicMsg:    "last executed timestamp cannot be negative",
+		},
+		{
+			name:        "panic - min int64 value",
+			timestamp:   -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "last executed timestamp cannot be negative",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			resetObject(t)
+
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					setLastExecutedTimestamp(tt.timestamp)
+				})
+				return
+			}
+
+			// When
+			setLastExecutedTimestamp(tt.timestamp)
+
+			// Then
+			uassert.Equal(t, tt.timestamp, GetLastExecutedTimestamp())
+		})
+	}
+}
+
+func TestTargetToStr(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   int
+		expected string
+	}{
+		{
+			name:     "LIQUIDITY_STAKER",
+			target:   LIQUIDITY_STAKER,
+			expected: "LIQUIDITY_STAKER",
+		},
+		{
+			name:     "DEVOPS",
+			target:   DEVOPS,
+			expected: "DEVOPS",
+		},
+		{
+			name:     "COMMUNITY_POOL",
+			target:   COMMUNITY_POOL,
+			expected: "COMMUNITY_POOL",
+		},
+		{
+			name:     "GOV_STAKER",
+			target:   GOV_STAKER,
+			expected: "GOV_STAKER",
+		},
+		{
+			name:     "invalid target 0",
+			target:   0,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target -1",
+			target:   -1,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target 5",
+			target:   5,
+			expected: "UNKNOWN",
+		},
+		{
+			name:     "invalid target 999",
+			target:   999,
+			expected: "UNKNOWN",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When
+			result := targetToStr(tt.target)
+
+			// Then
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAssertValidDistributionPct_NegativeAndExceed(t *testing.T) {
+	tests := []struct {
+		name        string
+		pcts        [4]int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "success - default distribution",
+			pcts: [4]int64{7500, 2000, 500, 0},
+		},
+		{
+			name: "success - equal distribution",
+			pcts: [4]int64{2500, 2500, 2500, 2500},
+		},
+		{
+			name: "success - all to one target",
+			pcts: [4]int64{10000, 0, 0, 0},
+		},
+		{
+			name: "success - minimum valid percentages",
+			pcts: [4]int64{9997, 1, 1, 1},
+		},
+		{
+			name:        "panic - sum less than 10000",
+			pcts:        [4]int64{5000, 2000, 1000, 1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 9000",
+		},
+		{
+			name:        "panic - sum greater than 10000",
+			pcts:        [4]int64{5000, 3000, 2000, 1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 11000",
+		},
+		{
+			name:        "panic - negative first percentage",
+			pcts:        [4]int64{-1000, 5000, 3000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative second percentage",
+			pcts:        [4]int64{5000, -1000, 3000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 2 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative third percentage",
+			pcts:        [4]int64{5000, 3000, -1000, 3000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 3 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - negative fourth percentage",
+			pcts:        [4]int64{5000, 3000, 3000, -1000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 4 cannot be negative: -1000",
+		},
+		{
+			name:        "panic - percentage exceeds 100%",
+			pcts:        [4]int64{15000, 0, 0, -5000},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot exceed 100%: 15000",
+		},
+		{
+			name:        "panic - all zeros sum is 0",
+			pcts:        [4]int64{0, 0, 0, 0},
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When - Then
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					assertValidDistributionPct(tt.pcts[0], tt.pcts[1], tt.pcts[2], tt.pcts[3])
+				})
+				return
+			}
+
+			// When
+			uassert.NotPanics(t, func() {
+				assertValidDistributionPct(tt.pcts[0], tt.pcts[1], tt.pcts[2], tt.pcts[3])
+			})
+		})
 	}
 }

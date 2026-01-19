@@ -1,7 +1,8 @@
 package rbac
 
 import (
-	"std"
+	"chain/runtime"
+	"strings"
 )
 
 // RBAC encapsulates and manages roles and their permissions.
@@ -15,13 +16,13 @@ type RBAC struct {
 // New creates a new RBAC instance with the origin caller as owner.
 func New() *RBAC {
 	return &RBAC{
-		ownable: newOwnable2StepWithAddress(std.OriginCaller()),
+		ownable: newOwnable2StepWithAddress(runtime.OriginCaller()),
 		roles:   make(map[string]*Role),
 	}
 }
 
 // NewRBACWithAddress creates a new RBAC instance with addr as owner.
-func NewRBACWithAddress(addr std.Address) *RBAC {
+func NewRBACWithAddress(addr address) *RBAC {
 	return &RBAC{
 		ownable: newOwnable2StepWithAddress(addr),
 		roles:   make(map[string]*Role),
@@ -29,7 +30,7 @@ func NewRBACWithAddress(addr std.Address) *RBAC {
 }
 
 // IsAuthorized checks if addr has the specified roleName. Returns false if the role does not exist.
-func (rb *RBAC) IsAuthorized(roleName string, addr std.Address) bool {
+func (rb *RBAC) IsAuthorized(roleName string, addr address) bool {
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return false
@@ -38,8 +39,20 @@ func (rb *RBAC) IsAuthorized(roleName string, addr std.Address) bool {
 	return role.IsAuthorized(addr)
 }
 
-// RegisterRole registers a new role with roleName. Returns ErrRoleAlreadyExists if the role already exists.
-func (rb *RBAC) RegisterRole(roleName string, addr std.Address) error {
+// RegisterRole registers a new role with given role name and address.
+//
+// Errors:
+// `RegisterRole` returns an error in the following situations:
+//  - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
+//  - `ErrRoleAlreadyExists`: the role to be registered already exists in rbac.
+//    Since system roles are registered through `initRbac`, attempting to register
+//    a new role with a system role name will return an `ErrRoleAlreadyExists` error.
+func (rb *RBAC) RegisterRole(roleName string, addr address) error {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
+		return ErrInvalidRoleName
+	}
+
 	if rb.existsRole(roleName) {
 		return ErrRoleAlreadyExists
 	}
@@ -49,36 +62,44 @@ func (rb *RBAC) RegisterRole(roleName string, addr std.Address) error {
 	return nil
 }
 
-// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
-func (rb *RBAC) UpdateRoleAddress(roleName string, version int, addr std.Address) error {
+// UpdateRoleAddress assigns addr to roleName.
+//
+// Errors:
+//   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
+//   - `ErrInvalidAddress`: addr is empty or has an invalid format
+func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
+		return ErrInvalidRoleName
+	}
+
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ErrRoleDoesNotExist
 	}
 
-	if addr.String() == "" || !addr.IsValid() {
+	if addr == zeroAddress || !addr.IsValid() {
 		return ErrInvalidAddress
 	}
 
-	return role.setAddress(version, addr)
+	role.setAddress(addr)
+
+	return nil
 }
 
-// UpdateRoleAddressNextVersion creates a new version with the specified address for the role
-func (rb *RBAC) UpdateRoleAddressNextVersion(roleName string, addr std.Address) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ErrRoleDoesNotExist
-	}
-
-	if addr.String() == "" || !addr.IsValid() {
-		return ErrInvalidAddress
-	}
-
-	return role.nextVersionAddress(addr)
-}
-
-// RemoveRole removes roleName from the RBAC system. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrCannotRemoveSystemRole for system roles.
+// RemoveRole removes roleName from the RBAC system.
+//
+// Errors:
+//   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
+//   - `ErrCannotRemoveSystemRole`: attempting to remove a system role (e.g., admin, governance, pool, etc.)
 func (rb *RBAC) RemoveRole(roleName string) error {
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
+		return ErrInvalidRoleName
+	}
+
 	if !rb.existsRole(roleName) {
 		return ErrRoleDoesNotExist
 	}
@@ -94,79 +115,66 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 	return nil
 }
 
-func (rb *RBAC) GetAllRoleAddresses() map[string]std.Address {
-	addresses := make(map[string]std.Address)
+// GetAllRoleAddresses returns a map of all role names to their assigned addresses.
+func (rb *RBAC) GetAllRoleAddresses() map[string]address {
+	addresses := make(map[string]address)
 
 	for roleName, role := range rb.roles {
-		addresses[roleName] = role.CurrentAddress()
+		addresses[roleName] = role.Address()
 	}
 
 	return addresses
 }
 
-// GetRoleAddresses returns a map of all role names to their assigned addresses.
-func (rb *RBAC) GetRoleAddresses(roleName string) map[int]std.Address {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return map[int]std.Address{}
-	}
-
-	addresses := make(map[int]std.Address)
-
-	for version, addr := range role.addresses {
-		addresses[version] = std.Address(addr)
-	}
-
-	return addresses
-}
-
-func (rb *RBAC) GetRoleLatestVersion(roleName string) int {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return 0
-	}
-
-	return role.latestVersion
-}
-
-// GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
-func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
+// GetRoleAddress returns the address assigned to roleName.
+//
+// Errors:
+//   - `ErrRoleDoesNotExist`: the specified role does not exist in the RBAC system
+func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return "", ErrRoleDoesNotExist
 	}
 
-	return role.CurrentAddress(), nil
-}
-
-func (rb *RBAC) GetRoleAddressWithVersion(roleName string, version int) (std.Address, error) {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return "", ErrRoleDoesNotExist
-	}
-
-	addr, exists := role.getAddress(version)
-	if !exists {
-		return "", ErrVersionDoesNotExist
-	}
-
-	return std.Address(addr), nil
+	return role.Address(), nil
 }
 
 // Owner returns the current owner address.
-func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
+func (rb *RBAC) Owner() address {
+    return rb.ownable.Owner()
+}
 
 // PendingOwner returns the pending owner address during ownership transfer.
-func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }
+func (rb *RBAC) PendingOwner() address {
+    return rb.ownable.PendingOwner()
+}
 
-// AcceptOwnership completes the ownership transfer process. Must be called by the pending owner.
-func (rb *RBAC) AcceptOwnershipBy(addr std.Address) error { return rb.ownable.AcceptOwnershipBy(addr) }
+// AcceptOwnershipBy completes the ownership transfer process.
+// Must be called by the pending owner.
+//
+// Errors:
+//   - `ErrNoPendingOwner`: no ownership transfer is pending
+//   - `ErrPendingUnauthorized`: addr is not the pending owner
+func (rb *RBAC) AcceptOwnershipBy(addr address) error {
+    return rb.ownable.AcceptOwnershipBy(addr)
+}
 
-// DropOwnership removes the owner, effectively disabling owner-only actions. Only the current owner can call this function.
-func (rb *RBAC) DropOwnershipBy(addr std.Address) error { return rb.ownable.DropOwnershipBy(addr) }
+// DropOwnershipBy removes the owner, effectively disabling owner-only actions.
+// This is irreversible and will prevent any future owner-only operations.
+//
+// Errors:
+//   - `ErrUnauthorized`: addr is not the current owner
+func (rb *RBAC) DropOwnershipBy(addr address) error {
+    return rb.ownable.DropOwnershipBy(addr)
+}
 
-// TransferOwnership initiates the two-step ownership transfer process to newOwner. Only the current owner can call this function.
-func (rb *RBAC) TransferOwnershipBy(newOwner, caller std.Address) error {
+// TransferOwnershipBy initiates the two-step ownership transfer process.
+// The newOwner must call AcceptOwnershipBy to complete the transfer.
+//
+// Errors:
+//   - `ErrUnauthorized`: caller is not the current owner
+//   - `ErrInvalidAddress`: newOwner is empty or has an invalid format
+func (rb *RBAC) TransferOwnershipBy(newOwner, caller address) error {
 	return rb.ownable.TransferOwnershipBy(newOwner, caller)
 }
 

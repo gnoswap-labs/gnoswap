@@ -3,16 +3,20 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/launchpad"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
 	"gno.land/r/onbloc/obl"
 )
 
@@ -20,7 +24,7 @@ var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
@@ -45,14 +49,14 @@ func createProjectByInvalidRecipient() {
 
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
-	recipientAddr := std.Address("invalidAddress")
+	recipientAddr := address("invalidAddress")
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] admin attempting to create project with invalid recipient")
 	println("[INFO] create project with project name:", projectName)
@@ -98,10 +102,10 @@ func createProjectByInvalidRecipient() {
 // [INFO] create project with reward token path: gno.land/r/onbloc/obl
 // [INFO] create project with recipient: invalidAddress
 // [INFO] create project with reward amount: 1000000000
-// [INFO] create project with conditions token: gno.land/r/gnoswap/v1/gov/xgns
+// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
 // [INFO] create project with conditions amount: 1000000
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
-// [INFO] create project with start time: 1234571490
+// [INFO] create project with start time: 1235172690
 // [EXPECTED] Should abort with invalid recipient address error: [GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(invalidAddress)

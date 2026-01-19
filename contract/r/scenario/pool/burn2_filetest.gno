@@ -3,7 +3,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -14,7 +13,9 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -32,9 +33,9 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -95,7 +96,7 @@ func testInvalidTickRangeBurn() {
 	println("[INFO] Burn amount:", burnAmount)
 
 	// Then: Should abort with specific error message
-	expectedAbortMsg := "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)"
+	expectedAbortMsg := "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)"
 	println("[EXPECTED] Should abort with message:", expectedAbortMsg)
 
 	testing.SetRealm(posRealm)
@@ -122,5 +123,5 @@ func testInvalidTickRangeBurn() {
 // [INFO] Position minted successfully
 // [INFO] Attempting to burn with invalid tick range: 200 to 100
 // [INFO] Burn amount: 1000000
-// [EXPECTED] Should abort with message: [GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)
+// [EXPECTED] Should abort with message: [GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)
 // [SCENARIO] 3. Invalid Tick Range Burn - PASSED

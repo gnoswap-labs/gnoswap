@@ -3,8 +3,7 @@
 package main
 
 import (
-	"std"
-	"strconv"
+	"chain"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -13,10 +12,15 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
 
@@ -39,11 +43,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewUserRealm(routerAddr)
+	rouRealm        = testing.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -79,7 +83,7 @@ func main() {
 	testSqrt = testSqrt.Add(testSqrt, u256.One())
 	pool.CreatePool(cross, barPath, fooPath, fee100, testSqrt.ToString())
 
-	thisPool := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
 
 	println("[EXPECTED] Initial pool liquidity:", thisPool.Liquidity().ToString(), "expected: 0")
 	println("[EXPECTED] Initial pool tick:", thisPool.Slot0Tick(), "expected: -24081")
@@ -101,7 +105,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
-	thisPool = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after first mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -117,7 +121,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
-	thisPool = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after second mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -129,7 +133,7 @@ func main() {
 			testSqrt,
 			testSqrtSubOne,
 			u256.MustFromDecimal(liqToMint),
-			i256.MustFromDecimal("3"),
+			i256.MustFromDecimal("100"),
 			uint64(3000),
 		)
 
@@ -143,7 +147,7 @@ func main() {
 	println("[SCENARIO] 4. Executing swap to move tick")
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	pool.Swap(
 		cross,
 		barPath,
@@ -151,46 +155,44 @@ func main() {
 		fee100,
 		adminAddr,
 		true,
-		"3",
+		"100",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(fooPath, barPath, amount0Delta, amount1Delta)
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	thisPool = pool.GetPool(barPath, fooPath, fee100)
+	testing.SetRealm(adminRealm)
+	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
-	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())
+	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected: 23768044726356341008264205109")
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")
 	println()
 	println("[INFO] Scenario completed")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
 	const ugnotDenom = "ugnot"
 
-	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
-	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
-
-	if amount0Int64 > 0 {
+	if amount0Delta > 0 {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}
-	if amount1Int64 > 0 {
+	if amount1Delta > 0 {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -220,7 +222,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 //
 // [SCENARIO] 4. Executing swap to move tick
 // [EXPECTED] Pool tick after swap: -24082 expected: -24082
-// [EXPECTED] Pool sqrt price after swap: 23768044760938258284793355980 expected: 23768044760938258284793355980
+// [EXPECTED] Pool sqrt price after swap: 23768044726356341008264205109 expected: 23768044726356341008264205109
 // [EXPECTED] Pool liquidity after swap: 20000000000 expected: 20000000000
 //
 // [INFO] Scenario completed

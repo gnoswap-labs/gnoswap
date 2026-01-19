@@ -1,12 +1,11 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -14,6 +13,8 @@ import (
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
+
+var adminAddr = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 
 func resetObject(t *testing.T) {
 	t.Helper()
@@ -27,17 +28,26 @@ func resetGnsTokenObject(t *testing.T) {
 
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
 
-	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
-	owner = ownable.NewWithAddress(adminAddr)
-
-	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
+	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 }
 
 // resetEmissionState resets the emission state to a clean state for testing
 func resetEmissionState(t *testing.T) {
 	t.Helper()
 
-	blockHeight := std.ChainHeight()
+	blockHeight := runtime.ChainHeight()
 	startTimestamp := time.Now().Unix()
 	emissionState = NewEmissionState(blockHeight, startTimestamp)
+}
+
+// InitGnsTest initializes GNS state for testing by resetting emission amounts and state.
+// Matches init() function: lastMintedTimestamp starts at 0 (never minted).
+func InitGnsTest(t *testing.T) {
+	t.Helper()
+
+	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
+	setMintedEmissionAmount(0)
+	setLastMintedTimestamp(0)
+
+	resetEmissionState(t)
 }

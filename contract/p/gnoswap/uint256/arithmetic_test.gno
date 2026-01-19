@@ -51,21 +51,6 @@ func TestAdd(t *testing.T) {
 			y:    "18446744073709551615",
 			want: "36893488147419103230",
 		},
-
-		// Carry propagation
-		{
-			name: "carry_through_single_word",
-			x:    "0xFFFFFFFFFFFFFFFF",
-			y:    "1",
-			want: "0x10000000000000000",
-		},
-		{
-			name: "carry_through_multiple_words",
-			x:    "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			y:    "1",
-			want: "0x100000000000000000000000000000000",
-		},
-
 		// Maximum value edge cases
 		{
 			name: "max_plus_zero",
@@ -153,13 +138,6 @@ func TestAddOverflow(t *testing.T) {
 			overflow: true,
 		},
 		{
-			name:     "overflow_with_carry_propagation",
-			x:        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			y:        "1",
-			want:     "0",
-			overflow: true,
-		},
-		{
 			name:     "no_overflow_half_max_times_two",
 			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
@@ -239,20 +217,6 @@ func TestSub(t *testing.T) {
 			x:    MAX_UINT256,
 			y:    MAX_UINT256,
 			want: "0",
-		},
-
-		// Borrow propagation
-		{
-			name: "borrow_propagation_single_word",
-			x:    "0x10000000000000000",
-			y:    "1",
-			want: "0xFFFFFFFFFFFFFFFF",
-		},
-		{
-			name: "borrow_propagation_multiple_words",
-			x:    "0x100000000000000000000000000000000",
-			y:    "1",
-			want: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
 		},
 		{
 			name: "borrow_propagation_all_words",
@@ -373,12 +337,6 @@ func TestMul(t *testing.T) {
 			x:    "18446744073709551615",
 			y:    "2",
 			want: "36893488147419103230",
-		},
-		{
-			name: "large_numbers_no_overflow",
-			x:    "0xFFFFFFFFFFFFFFFF",
-			y:    "0xFFFFFFFFFFFFFFFF",
-			want: "0xFFFFFFFFFFFFFFFE0000000000000001",
 		},
 
 		// Maximum value cases
@@ -589,13 +547,6 @@ func TestDiv(t *testing.T) {
 			want:    "1",
 			wantErr: false,
 		},
-		{
-			name:    "large_div_large",
-			x:       "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			y:       "0xFFFFFFFFFFFFFFFF",
-			want:    "0x10000000000000001",
-			wantErr: false,
-		},
 
 		// Verify truncation (rounds down)
 		{
@@ -707,13 +658,6 @@ func TestMod(t *testing.T) {
 			x:       MAX_UINT256,
 			y:       "1000000",
 			want:    "639935",
-			wantErr: false,
-		},
-		{
-			name:    "power_of_two_mod",
-			x:       "0xFFFFFFFFFFFFFFFF",
-			y:       "0x10000000000000000",
-			want:    "0xFFFFFFFFFFFFFFFF",
 			wantErr: false,
 		},
 		{
@@ -848,30 +792,6 @@ func TestDivMod(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "divmod_by_256",
-			x:       "0xABCDEF1234567890",
-			y:       "0x100",
-			wantDiv: "0xABCDEF12345678",
-			wantMod: "0x90",
-			wantErr: false,
-		},
-		{
-			name:    "divmod_by_2_64",
-			x:       "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			y:       "0x10000000000000000", // 2^64
-			wantDiv: "0xFFFFFFFFFFFFFFFF",
-			wantMod: "0xFFFFFFFFFFFFFFFF",
-			wantErr: false,
-		},
-		{
-			name:    "max_divmod_power_of_two",
-			x:       MAX_UINT256,
-			y:       "0x10000000000000000", // 2^64
-			wantDiv: "6277101735386680763835789423207666416102355444464034512895",
-			wantMod: "0xFFFFFFFFFFFFFFFF",
-			wantErr: false,
-		},
-		{
 			name:    "divmod_by_2_128",
 			x:       MAX_UINT256,
 			y:       "340282366920938463463374607431768211456", // 2^128
@@ -974,15 +894,6 @@ func TestMulMod(t *testing.T) {
 			want:    "2", // (1000000 * 2000000) % 999999 = 2
 			wantErr: false,
 		},
-		{
-			name:    "fast_path_exact_256_bits",
-			x:       "0x1FFFFFFFFFFFFFFFF", // Just over 2^64
-			y:       "2",
-			m:       "0xFFFFFFFFFFFFFFFF", // 2^64 - 1
-			want:    "2",
-			wantErr: false,
-		},
-
 		// Large numbers that would overflow in regular multiplication
 		{
 			name:    "large_mulmod_no_overflow",
@@ -1108,145 +1019,6 @@ func TestNeg(t *testing.T) {
 	}
 }
 
-// TestExp verifies exponentiation operations
-func TestExp(t *testing.T) {
-	tests := []struct {
-		name     string
-		base     string
-		exponent string
-		want     string
-	}{
-		// Basic cases
-		{
-			name:     "zero_power_zero",
-			base:     "0",
-			exponent: "0",
-			want:     "1", // Mathematical convention
-		},
-		{
-			name:     "any_power_zero",
-			base:     "31337",
-			exponent: "0",
-			want:     "1",
-		},
-		{
-			name:     "zero_power_any",
-			base:     "0",
-			exponent: "31337",
-			want:     "0",
-		},
-		{
-			name:     "one_power_any",
-			base:     "1",
-			exponent: "31337",
-			want:     "1",
-		},
-		{
-			name:     "two_power_three",
-			base:     "2",
-			exponent: "3",
-			want:     "8",
-		},
-
-		// Powers of 2
-		{
-			name:     "two_power_64",
-			base:     "2",
-			exponent: "64",
-			want:     "18446744073709551616",
-		},
-		{
-			name:     "two_power_96",
-			base:     "2",
-			exponent: "96",
-			want:     "79228162514264337593543950336",
-		},
-		{
-			name:     "two_power_128",
-			base:     "2",
-			exponent: "128",
-			want:     "340282366920938463463374607431768211456",
-		},
-		{
-			name:     "two_power_255",
-			base:     "2",
-			exponent: "255",
-			want:     "57896044618658097711785492504343953926634992332820282019728792003956564819968",
-		},
-		{
-			name:     "two_power_256_wraps",
-			base:     "2",
-			exponent: "256",
-			want:     "0",
-		},
-
-		// Non-power-of-two cases
-		{
-			name:     "three_power_small",
-			base:     "3",
-			exponent: "5",
-			want:     "243",
-		},
-		{
-			name:     "three_power_large",
-			base:     "3",
-			exponent: "100",
-			want:     "515377520732011331036461129765621272702107522001",
-		},
-		{
-			name:     "five_power_fifty",
-			base:     "5",
-			exponent: "50",
-			want:     "88817841970012523233890533447265625",
-		},
-		{
-			name:     "seven_power_thirty",
-			base:     "7",
-			exponent: "30",
-			want:     "22539340290692258087863249",
-		},
-
-		// Other cases
-		{
-			name:     "large_base_small_exp",
-			base:     "31337",
-			exponent: "3",
-			want:     "30773171189753",
-		},
-		{
-			name:     "large_base_large_exp",
-			base:     "12345678901234567890",
-			exponent: "3",
-			want:     "1881676372353657772490265749424677022198701224860897069000",
-		},
-		{
-			name:     "max_base_exp_one",
-			base:     MAX_UINT256,
-			exponent: "1",
-			want:     MAX_UINT256,
-		},
-		{
-			name:     "max_base_exp_two",
-			base:     MAX_UINT256,
-			exponent: "2",
-			want:     "1", // Wraps around
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			base := parseUint(tc.base)
-			exponent := parseUint(tc.exponent)
-			want := parseUint(tc.want)
-
-			got := new(Uint).Exp(base, exponent)
-			if !got.Eq(want) {
-				t.Errorf("Exp(%s, %s) = %s, want %s", tc.base, tc.exponent, got.ToString(), tc.want)
-			}
-		})
-	}
-}
-
 // TestMustMul verifies MustMul panic behavior
 func TestMustMul(t *testing.T) {
 	t.Run("normal_multiplication", func(t *testing.T) {
@@ -1288,27 +1060,27 @@ func TestIsOverflow(t *testing.T) {
 	}{
 		{
 			name:     "zero_not_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, 0}},
+			input:    &Uint{0, 0, 0, 0},
 			expected: false,
 		},
 		{
 			name:     "max_value_not_overflow",
-			input:    &Uint{arr: [4]uint64{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0) >> 1}},
+			input:    &Uint{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0) >> 1},
 			expected: false,
 		},
 		{
 			name:     "bit_255_set_is_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, uint64(1) << 63}},
+			input:    &Uint{0, 0, 0, uint64(1) << 63},
 			expected: true,
 		},
 		{
 			name:     "all_bits_set_is_overflow",
-			input:    &Uint{arr: [4]uint64{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}},
+			input:    &Uint{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)},
 			expected: true,
 		},
 		{
 			name:     "max_plus_one_is_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, uint64(1) << 63}},
+			input:    &Uint{0, 0, 0, uint64(1) << 63},
 			expected: true,
 		},
 	}
@@ -1463,23 +1235,15 @@ func TestMulModPaths(t *testing.T) {
 			path: "fast",
 		},
 		{
-			name: "fast_path_exact_256_bits",
-			x:    "0x1FFFFFFFFFFFFFFFF", // Just over 2^64
-			y:    "2",
-			m:    "0xFFFFFFFFFFFFFFFF", // 2^64 - 1
-			want: "2",
-			path: "fast",
-		},
-		{
 			name: "boundary_case_m_arr3_zero",
 			x:    "340282366920938463463374607431768211456", // Q128
 			y:    "340282366920938463463374607431768211456",
-			m:    "340282366920938463463374607431768211455", // m.arr[3] != 0
+			m:    "340282366920938463463374607431768211455", // m[3] != 0
 			want: "1",
-			path: "fast", // Takes fast path because m.arr[3] == 0
+			path: "fast", // Takes fast path because m[3] == 0
 		},
 
-		// Reduce4 path: x*y > 2^256 and m.arr[3] != 0
+		// Reduce4 path: x*y > 2^256 and m[3] != 0
 		{
 			name: "reduce4_path_max_inputs",
 			x:    MAX_UINT256,
@@ -1552,34 +1316,6 @@ func TestDivModPowerOfTwo(t *testing.T) {
 			y:       "8",
 			wantDiv: "3917",
 			wantMod: "1",
-		},
-		{
-			name:    "divmod_by_256",
-			x:       "0xABCDEF1234567890",
-			y:       "0x100",
-			wantDiv: "0xABCDEF12345678",
-			wantMod: "0x90",
-		},
-		{
-			name:    "divmod_by_2_32",
-			x:       "0xFFFFFFFFFFFFFFFF",
-			y:       "0x100000000", // 2^32
-			wantDiv: "0xFFFFFFFF",
-			wantMod: "0xFFFFFFFF",
-		},
-		{
-			name:    "divmod_by_2_64",
-			x:       "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			y:       "0x10000000000000000", // 2^64
-			wantDiv: "0xFFFFFFFFFFFFFFFF",
-			wantMod: "0xFFFFFFFFFFFFFFFF",
-		},
-		{
-			name:    "max_divmod_power_of_two",
-			x:       MAX_UINT256,
-			y:       "0x10000000000000000", // 2^64
-			wantDiv: "6277101735386680763835789423207666416102355444464034512895",
-			wantMod: "0xFFFFFFFFFFFFFFFF",
 		},
 		{
 			name:    "divmod_by_2_96",
@@ -1822,62 +1558,5 @@ func TestExtremeValues(t *testing.T) {
 				}
 			})
 		}
-	}
-}
-
-// Benchmark functions
-func BenchmarkAdd(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890123456789")
-	y := MustFromDecimal("987654321098765432109876543210987654321")
-	z := new(Uint)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		z.Add(x, y)
-	}
-}
-
-func BenchmarkMul(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890")
-	y := MustFromDecimal("987654321098765432109876543210")
-	z := new(Uint)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		z.Mul(x, y)
-	}
-}
-
-func BenchmarkDiv(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890123456789012345678901234567890")
-	y := MustFromDecimal("123456789012345678901234567890")
-	z := new(Uint)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		z.Div(x, y)
-	}
-}
-
-func BenchmarkExp(b *testing.B) {
-	base := NewUint(2)
-	exp := NewUint(100)
-	z := new(Uint)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		z.Exp(base, exp)
-	}
-}
-
-func BenchmarkMulMod(b *testing.B) {
-	x := MustFromDecimal("123456789012345678901234567890")
-	y := MustFromDecimal("987654321098765432109876543210")
-	m := MustFromDecimal("1000000000000000000000000000000")
-	z := new(Uint)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		z.MulMod(x, y, m)
 	}
 }

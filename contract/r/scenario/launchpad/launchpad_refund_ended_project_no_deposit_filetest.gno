@@ -5,26 +5,31 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/launchpad"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
 	"gno.land/r/onbloc/obl"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	projectAddr      = testutils.TestAddress("project-owner")
-	projectRealm     = std.NewUserRealm(projectAddr)
+	launchpadRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
+
+	projectAddr  = testutils.TestAddress("project-owner")
+	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
 func main() {
@@ -52,12 +57,12 @@ func createOBLProject() {
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")
 	testing.SetRealm(adminRealm)
@@ -76,43 +81,47 @@ func createOBLProject() {
 		startTime,    // 5 block later
 	)
 
-	println("[INFO] Skipping 3600 blocks")
-	testing.SkipHeights(3600)
+	println("[INFO] Skipping 120960 blocks")
+	testing.SkipHeights(120960)
 
 	println("[EXPECTED] Project created with ID:", projectId)
 
 	// [INFO] Validate project info
-	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
-	println("[EXPECTED] Project name:", projectStats["name"])
-	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
-	println("[EXPECTED] Project deposit amount:", projectStats["depositAmount"])
-	println("[EXPECTED] Project tier30 ratio:", projectStats["tier30Ratio"])
-	println("[EXPECTED] Project tier90 ratio:", projectStats["tier90Ratio"])
-	println("[EXPECTED] Project tier180 ratio:", projectStats["tier180Ratio"])
+	testing.SetRealm(launchpadRealm)
+	project, _ := launchpad.GetProject(projectId)
+	println("[EXPECTED] Project name:", project.Name())
+	println("[EXPECTED] Project token path:", project.TokenPath())
+	println("[EXPECTED] Project deposit amount:", project.DepositAmount())
+	tiersRatios := project.TiersRatios()
+	println("[EXPECTED] Project tier30 ratio:", tiersRatios[30])
+	println("[EXPECTED] Project tier90 ratio:", tiersRatios[90])
+	println("[EXPECTED] Project tier180 ratio:", tiersRatios[180])
 
 	// [INFO] Validate tier info
-	tier30Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
-	println("[EXPECTED] Tier 30 amount:", tier30Stats["tierAmount"])
-	println("[EXPECTED] Tier 30 collect wait duration:", tier30Stats["collectWaitDuration"])
+	tier30, _ := launchpad.GetProjectTier(projectId, 30)
+	println("[EXPECTED] Tier 30 amount:", tier30.TotalDistributeAmount())
 
-	tier90Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
-	println("[EXPECTED] Tier 90 amount:", tier90Stats["tierAmount"])
-	println("[EXPECTED] Tier 90 collect wait duration:", tier90Stats["collectWaitDuration"])
+	tier90, _ := launchpad.GetProjectTier(projectId, 90)
+	println("[EXPECTED] Tier 90 amount:", tier90.TotalDistributeAmount())
 
-	tier180Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
-	println("[EXPECTED] Tier 180 amount:", tier180Stats["tierAmount"])
-	println("[EXPECTED] Tier 180 collect wait duration:", tier180Stats["collectWaitDuration"])
+	tier180, _ := launchpad.GetProjectTier(projectId, 180)
+	println("[EXPECTED] Tier 180 amount:", tier180.TotalDistributeAmount())
 }
 
 // Refund ended project without deposit
 func refundEndedProjectWithoutDeposit() {
-	testing.SetRealm(adminRealm)
 	projectId := "gno.land/r/onbloc/obl:123"
 
+	testing.SetRealm(launchpadRealm)
 	println("[INFO] Checking project status before refund")
-	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
-	println("[INFO] Project status:", projectStats["status"])
+	isActive, _ := launchpad.GetProjectActiveStatus(projectId)
+	if isActive {
+		println("[INFO] Project status: active")
+	} else {
+		println("[INFO] Project status: ended")
+	}
 
+	testing.SetRealm(adminRealm)
 	println("[INFO] Checking OBL balance before refund")
 	oblBalanceBefore := obl.BalanceOf(projectAddr)
 	println("[INFO] Project OBL balance before refund:", oblBalanceBefore)
@@ -124,37 +133,14 @@ func refundEndedProjectWithoutDeposit() {
 	oblBalanceAfter := obl.BalanceOf(projectAddr)
 	println("[INFO] Project OBL balance after refund:", oblBalanceAfter)
 
-	ufmt.Printf("[EXPECTED] OBL balance should be 0 after refund: %d OBL\n", oblBalanceAfter)
-}
-
-// Helper functions
-func unmarshal(data string) map[string]interface{} {
-	// This is a simplified unmarshal function for demonstration
-	// In a real implementation, you would use proper JSON unmarshaling
-	return map[string]interface{}{
-		"height":                 "123",
-		"now":                    "1234567890",
-		"depositAmount":          "1000000000",
-		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
-		"conditionPath":          "gno.land/r/gnoswap/v1/gov/xgns",
-		"conditionsAmount":       "1000000",
-		"tier30Ratio":            "10",
-		"tier90Ratio":            "20",
-		"tier180Ratio":           "70",
-		"tierAmount":             "100000000",
-		"collectWaitDuration":    "129600",
-		"tierAmountPerBlockX128": "26256355472294634526494954277142608908641",
-		"name":                   "OBL Launchpad Project",
-		"tokenPath":              "gno.land/r/onbloc/obl",
-		"status":                 "ended",
-	}
+	println("[EXPECTED] OBL balance after refund:", oblBalanceAfter)
 }
 
 // Output:
 // [SCENARIO] 1. Create OBL launchpad project
 // [INFO] Creating OBL launchpad project
 // [INFO] Admin creating OBL project
-// [INFO] Skipping 3600 blocks
+// [INFO] Skipping 120960 blocks
 // [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
 // [EXPECTED] Project name: OBL Launchpad Project
 // [EXPECTED] Project token path: gno.land/r/onbloc/obl
@@ -163,11 +149,8 @@ func unmarshal(data string) map[string]interface{} {
 // [EXPECTED] Project tier90 ratio: 20
 // [EXPECTED] Project tier180 ratio: 70
 // [EXPECTED] Tier 30 amount: 100000000
-// [EXPECTED] Tier 30 collect wait duration: 129600
-// [EXPECTED] Tier 90 amount: 100000000
-// [EXPECTED] Tier 90 collect wait duration: 129600
-// [EXPECTED] Tier 180 amount: 100000000
-// [EXPECTED] Tier 180 collect wait duration: 129600
+// [EXPECTED] Tier 90 amount: 200000000
+// [EXPECTED] Tier 180 amount: 700000000
 //
 // [SCENARIO] 2. Skip blocks to end project
 // [INFO] Skipping 7776000 + 6 blocks to end project
@@ -180,4 +163,4 @@ func unmarshal(data string) map[string]interface{} {
 // [INFO] Project recipient attempting refund
 // [INFO] Checking OBL balance after refund
 // [INFO] Project OBL balance after refund: 1000000000
-// [EXPECTED] OBL balance should be 0 after refund: 1000000000 OBL
+// [EXPECTED] OBL balance after refund: 1000000000

@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -14,18 +13,22 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/v1/common"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -34,11 +37,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -254,17 +257,17 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 200510
 // [EXPECTED] amount0: 1000, amount1: 1000
-// [EXPECTED] initial position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] initial position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. Stake and unstake in same block
 // [INFO] check initial state before staking
-// [INFO] initial owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [INFO] initial owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] initial GNS balance: 100000000000000
 // [INFO] approve NFT to staker
 // [INFO] stake position 01
-// [EXPECTED] owner after stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] owner after stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [INFO] immediately unstake position 01 (same block)
-// [EXPECTED] owner after unstake: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] GNS balance after unstake: 100000000000000
 // [EXPECTED] reward from same block staking/unstaking: 0
 // [INFO] no reward accumulated from same block staking/unstaking
@@ -272,8 +275,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 5. Verify final state
 // [INFO] verify final state after same block operations
-// [EXPECTED] final position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] final position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] position is back to original owner and staker state is clean
 // [INFO] test normal staking after same-block operations
-// [EXPECTED] verification - owner after normal stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] verification - owner after normal stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [INFO] same-block operations do not affect normal staking functionality

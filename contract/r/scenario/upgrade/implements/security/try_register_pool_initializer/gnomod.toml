@@ -1,0 +1,2 @@
+module = "gno.land/r/try_register_pool_initializer"
+gno = "0.9"

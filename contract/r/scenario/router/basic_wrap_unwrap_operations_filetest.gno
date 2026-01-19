@@ -6,7 +6,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -18,20 +19,24 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
 	"gno.land/r/gnoland/wugnot"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	user1Addr  = testutils.TestAddress("user1")
-	user1Realm = std.NewUserRealm(user1Addr)
+	user1Realm = testing.NewUserRealm(user1Addr)
 
 	user2Addr  = testutils.TestAddress("user2")
-	user2Realm = std.NewUserRealm(user2Addr)
+	user2Realm = testing.NewUserRealm(user2Addr)
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 
@@ -65,13 +70,13 @@ func setupInitialBalances() {
 	println("[INFO] Setting up initial balances")
 
 	// Issue initial tokens to users
-	testing.IssueCoins(user1Addr, std.Coins{{"ugnot", 10000000}})
-	testing.IssueCoins(user2Addr, std.Coins{{"ugnot", 0}})
+	testing.IssueCoins(user1Addr, chain.Coins{{"ugnot", 10000000}})
+	testing.IssueCoins(user2Addr, chain.Coins{{"ugnot", 0}})
 
 	// User2 gets WUGNOT through admin
 	testing.SetRealm(adminRealm)
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 10000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 10000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 	wugnot.Deposit(cross)
 	wugnot.Transfer(cross, user2Addr, 10000000)
 
@@ -84,18 +89,18 @@ func testBasicWrap() {
 	testing.SetRealm(user1Realm)
 
 	// Record balances before wrap
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	prevGnotBalance := banker.GetCoins(user1Addr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	prevGnotBalance := banker_.GetCoins(user1Addr).AmountOf("ugnot")
 	prevWugnotBalance := wugnot.BalanceOf(user1Addr)
 
 	// Wrap GNOT to WUGNOT through router
 	amountWrapped := int64(10_000_000)
-	testing.SetOriginSend(std.Coins{{"ugnot", amountWrapped}})
-	banker.SendCoins(user1Addr, std.DerivePkgAddr(wugnotPath), std.Coins{{"ugnot", amountWrapped}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", amountWrapped}})
+	banker_.SendCoins(user1Addr, chain.PackageAddress(wugnotPath), chain.Coins{{"ugnot", amountWrapped}})
 	wugnot.Deposit(cross)
 
 	// Check balances after wrap
-	afterGnotBalance := banker.GetCoins(user1Addr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(user1Addr).AmountOf("ugnot")
 	afterWugnotBalance := wugnot.BalanceOf(user1Addr)
 
 	println("[INFO] Amount wrapped actual:", amountWrapped, "expected: 10000000")
@@ -121,8 +126,8 @@ func testBasicUnwrap() {
 	wugnot.Approve(cross, routerAddr, 1000000)
 
 	// Record balances before unwrap
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	prevGnotBalance := banker.GetCoins(user2Addr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	prevGnotBalance := banker_.GetCoins(user2Addr).AmountOf("ugnot")
 	prevWugnotBalance := wugnot.BalanceOf(user2Addr)
 
 	// Unwrap WUGNOT to GNOT through router
@@ -130,7 +135,7 @@ func testBasicUnwrap() {
 	wugnot.Withdraw(cross, amountUnwrapped)
 
 	// Check balances after unwrap
-	afterGnotBalance := banker.GetCoins(user2Addr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(user2Addr).AmountOf("ugnot")
 	afterWugnotBalance := wugnot.BalanceOf(user2Addr)
 
 	println("[INFO] Amount unwrapped:", amountUnwrapped)
@@ -156,7 +161,7 @@ func testMinimumAmountBoundary() {
 	// Test 1: Try to wrap below minimum (999 ugnot)
 	println("[INFO] Attempting to wrap 999 ugnot (below minimum)")
 
-	testing.SetOriginSend(std.Coins{{"ugnot", 999}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 999}})
 
 	uassert.AbortsWithMessage(t, "Deposit below minimum: 999/1000 ugnot.", func() {
 		wugnot.Deposit(cross) // This should panic

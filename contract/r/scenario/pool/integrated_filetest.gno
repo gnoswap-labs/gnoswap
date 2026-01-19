@@ -3,8 +3,7 @@
 package main
 
 import (
-	"std"
-	"strconv"
+	"chain"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -12,13 +11,15 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -37,11 +38,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewUserRealm(routerAddr)
+	rouRealm        = testing.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -83,8 +84,6 @@ func setupPools(t *testing.T) {
 	if poolSetup {
 		return
 	}
-
-	pool.InitPoolTest(t)
 
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
@@ -185,7 +184,7 @@ func testPoolSwapping(t *testing.T) {
 	println("[INFO] Performing Bar to Foo swap")
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -196,7 +195,7 @@ func testPoolSwapping(t *testing.T) {
 		"16000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
@@ -220,7 +219,7 @@ func testPoolSwapping(t *testing.T) {
 		"16000",
 		MAX_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
@@ -299,7 +298,7 @@ func testPoolMultiToken(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -310,7 +309,7 @@ func testPoolMultiToken(t *testing.T) {
 		"16000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
@@ -362,30 +361,27 @@ func testPoolEdgeCases(t *testing.T) {
 	println("[SCENARIO] Pool Edge Cases Tests - PASSED")
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
 	const ugnotDenom = "ugnot"
 
-	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
-	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
-
-	if amount0Int64 > 0 {
+	if amount0Delta > 0 {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}
-	if amount1Int64 > 0 {
+	if amount1Delta > 0 {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

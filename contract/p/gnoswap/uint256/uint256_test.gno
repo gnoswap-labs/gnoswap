@@ -7,461 +7,100 @@ import (
 )
 
 func TestFromDecimal(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expected    string
-		shouldPanic bool
-		panicMsg    string
-	}{
-		// Basic cases
-		{
-			name:     "zero",
-			input:    "0",
-			expected: "0",
-		},
-		{
-			name:     "one",
-			input:    "1",
-			expected: "1",
-		},
-		{
-			name:     "max_uint64",
-			input:    "18446744073709551615",
-			expected: "18446744073709551615",
-		},
-		{
-			name:     "max_uint128",
-			input:    "340282366920938463463374607431768211455",
-			expected: "340282366920938463463374607431768211455",
-		},
-		{
-			name:     "max_uint256",
-			input:    MAX_UINT256,
-			expected: MAX_UINT256,
-		},
+	t.Run("valid_inputs", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    string
+			expected string
+		}{
+			{"zero", "0", "0"},
+			{"one", "1", "1"},
+			{"max_uint64", "18446744073709551615", "18446744073709551615"},
+			{"max_uint128", "340282366920938463463374607431768211455", "340282366920938463463374607431768211455"},
+			{"max_uint256", MAX_UINT256, MAX_UINT256},
+			{"leading_zeros", "00000000000000000000000001234567890", "1234567890"},
+			{"leading_zeros_over_max_len", "00000000000000000000000000000000000000000000000000000000000000000000000000000000", "0"},
+			{"plus_sign", "+12345", "12345"},
+		}
 
-		// Format cases
-		{
-			name:     "leading_zeros",
-			input:    "00000000000000000000000001234567890",
-			expected: "1234567890",
-		},
-		{
-			name:     "plus_sign",
-			input:    "+12345",
-			expected: "12345",
-		},
-
-		// Error cases
-		{
-			name:        "max_uint256_plus_one",
-			input:       "115792089237316195423570985008687907853269984665640564039457584007913129639936",
-			shouldPanic: true,
-			panicMsg:    "hex number > 256 bits",
-		},
-		{
-			name:        "multiple_plus_signs",
-			input:       "++12345",
-			shouldPanic: true,
-		},
-		{
-			name:        "negative_number",
-			input:       "-12345",
-			shouldPanic: true,
-		},
-		{
-			name:        "empty_string",
-			input:       "",
-			shouldPanic: true,
-			panicMsg:    "EOF",
-		},
-		{
-			name:        "invalid_characters",
-			input:       "123abc456",
-			shouldPanic: true,
-		},
-		{
-			name:        "spaces_in_number",
-			input:       "123 456",
-			shouldPanic: true,
-		},
-		{
-			name:        "decimal_point",
-			input:       "123.456",
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				if tt.panicMsg != "" {
-					uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-						MustFromDecimal(tt.input)
-					})
-				} else {
-					defer func() {
-						if r := recover(); r == nil {
-							t.Errorf("Expected panic but got none")
-						}
-					}()
-					MustFromDecimal(tt.input)
-				}
-			} else {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
 				result := MustFromDecimal(tt.input)
 				uassert.Equal(t, tt.expected, result.ToString())
-			}
-		})
-	}
-}
+			})
+		}
+	})
 
-func TestFromHex(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expected    string
-		shouldPanic bool
-		panicMsg    string
-	}{
-		// Basic cases
-		{
-			name:     "zero",
-			input:    "0x0",
-			expected: "0",
-		},
-		{
-			name:     "one",
-			input:    "0x1",
-			expected: "1",
-		},
-		{
-			name:     "max_uint256",
-			input:    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-			expected: MAX_UINT256,
-		},
+	t.Run("must_from_decimal_panics", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    string
+			panicMsg string
+		}{
+			{"max_uint256_plus_one", "115792089237316195423570985008687907853269984665640564039457584007913129639936", "decimal number > 256 bits"},
+			{"empty_string", "", "EOF"},
+		}
 
-		// Format cases
-		{
-			name:     "uppercase_0X",
-			input:    "0Xff",
-			expected: "255",
-		},
-		{
-			name:     "mixed_case",
-			input:    "0xAbCdEf",
-			expected: "11259375",
-		},
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					MustFromDecimal(tt.input)
+				})
+			})
+		}
 
-		// Error cases
-		{
-			name:        "hex_overflow_67_chars",
-			input:       "0x10000000000000000000000000000000000000000000000000000000000000000",
-			shouldPanic: true,
-			panicMsg:    "hex number > 256 bits",
-		},
-		{
-			name:        "no_0x_prefix",
-			input:       "ffffffff",
-			shouldPanic: true,
-			panicMsg:    "UnmarshalText: ffffffff: hex string without 0x prefix",
-		},
-		{
-			name:        "empty_string",
-			input:       "",
-			shouldPanic: true,
-			panicMsg:    "UnmarshalText: : empty hex string",
-		},
-		{
-			name:        "only_0x",
-			input:       "0x",
-			shouldPanic: true,
-			panicMsg:    "UnmarshalText: 0x: hex string \"0x\"",
-		},
-		{
-			name:        "invalid_hex_chars",
-			input:       "0xgg",
-			shouldPanic: true,
-			panicMsg:    "invalid hex string",
-		},
-	}
+		// Tests that panic without specific message check
+		panicInputs := []struct {
+			name  string
+			input string
+		}{
+			{"multiple_plus_signs", "++12345"},
+			{"negative_number", "-12345"},
+			{"sign_in_middle", "12-+345"},
+			{"suffixed_signs", "12345+"},
+			{"invalid_characters", "123abc456"},
+			{"spaces_in_number", "123 456"},
+			{"decimal_point", "123.456"},
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				if tt.panicMsg != "" {
-					uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-						MustFromHex(tt.input)
-					})
-				} else {
-					defer func() {
-						if r := recover(); r == nil {
-							t.Errorf("Expected panic but got none")
-						}
-					}()
-					MustFromHex(tt.input)
+		for _, tt := range panicInputs {
+			t.Run(tt.name, func(t *testing.T) {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic but got none")
+					}
+				}()
+				MustFromDecimal(tt.input)
+			})
+		}
+	})
+
+	t.Run("from_decimal_errors", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			input   string
+			wantErr error
+		}{
+			{"overflow", "115792089237316195423570985008687907853269984665640564039457584007913129639936", ErrBig256Range},
+			{"invalid_characters", "123abc456", nil}, // expects any error
+			{"empty_string", "", nil},                // expects any error
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				_, err := FromDecimal(tt.input)
+				if tt.wantErr != nil {
+					if err != tt.wantErr {
+						t.Errorf("FromDecimal(%q) error = %v, want %v", tt.input, err, tt.wantErr)
+					}
+					return
 				}
-			} else {
-				result := MustFromHex(tt.input)
-				uassert.Equal(t, tt.expected, result.ToString())
-			}
-		})
-	}
-}
-
-func TestComparisonOperations(t *testing.T) {
-	tests := []struct {
-		name      string
-		operation string
-		x         string
-		y         string
-		expected  bool
-	}{
-		// Equality tests
-		{
-			name:      "eq_true",
-			operation: "eq",
-			x:         "12345",
-			y:         "12345",
-			expected:  true,
-		},
-		{
-			name:      "eq_false",
-			operation: "eq",
-			x:         "12345",
-			y:         "12346",
-			expected:  false,
-		},
-
-		// Less than tests
-		{
-			name:      "lt_true",
-			operation: "lt",
-			x:         "12345",
-			y:         "12346",
-			expected:  true,
-		},
-		{
-			name:      "lt_false_greater",
-			operation: "lt",
-			x:         "12346",
-			y:         "12345",
-			expected:  false,
-		},
-		{
-			name:      "lt_false_equal",
-			operation: "lt",
-			x:         "12345",
-			y:         "12345",
-			expected:  false,
-		},
-
-		// Greater than tests
-		{
-			name:      "gt_true",
-			operation: "gt",
-			x:         "12346",
-			y:         "12345",
-			expected:  true,
-		},
-		{
-			name:      "gt_false_smaller",
-			operation: "gt",
-			x:         "12345",
-			y:         "12346",
-			expected:  false,
-		},
-		{
-			name:      "gt_false_equal",
-			operation: "gt",
-			x:         "12345",
-			y:         "12345",
-			expected:  false,
-		},
-
-		// Less than or equal tests
-		{
-			name:      "lte_true_less",
-			operation: "lte",
-			x:         "12345",
-			y:         "12346",
-			expected:  true,
-		},
-		{
-			name:      "lte_true_equal",
-			operation: "lte",
-			x:         "12345",
-			y:         "12345",
-			expected:  true,
-		},
-		{
-			name:      "lte_false",
-			operation: "lte",
-			x:         "12346",
-			y:         "12345",
-			expected:  false,
-		},
-
-		// Greater than or equal tests
-		{
-			name:      "gte_true_greater",
-			operation: "gte",
-			x:         "12346",
-			y:         "12345",
-			expected:  true,
-		},
-		{
-			name:      "gte_true_equal",
-			operation: "gte",
-			x:         "12345",
-			y:         "12345",
-			expected:  true,
-		},
-		{
-			name:      "gte_false",
-			operation: "gte",
-			x:         "12345",
-			y:         "12346",
-			expected:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			x := MustFromDecimal(tt.x)
-			y := MustFromDecimal(tt.y)
-
-			var result bool
-			switch tt.operation {
-			case "eq":
-				result = x.Eq(y)
-			case "lt":
-				result = x.Lt(y)
-			case "gt":
-				result = x.Gt(y)
-			case "lte":
-				result = x.Lte(y)
-			case "gte":
-				result = x.Gte(y)
-			}
-
-			uassert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestBitOperations(t *testing.T) {
-	tests := []struct {
-		name      string
-		operation string
-		x         string
-		n         uint
-		expected  string
-	}{
-		// Left shift tests
-		{
-			name:      "lsh_zero",
-			operation: "lsh",
-			x:         "0",
-			n:         100,
-			expected:  "0",
-		},
-		{
-			name:      "lsh_one_by_zero",
-			operation: "lsh",
-			x:         "1",
-			n:         0,
-			expected:  "1",
-		},
-		{
-			name:      "lsh_one_by_one",
-			operation: "lsh",
-			x:         "1",
-			n:         1,
-			expected:  "2",
-		},
-		{
-			name:      "lsh_one_by_64",
-			operation: "lsh",
-			x:         "1",
-			n:         64,
-			expected:  "18446744073709551616",
-		},
-		{
-			name:      "lsh_one_by_255",
-			operation: "lsh",
-			x:         "1",
-			n:         255,
-			expected:  "57896044618658097711785492504343953926634992332820282019728792003956564819968",
-		},
-		{
-			name:      "lsh_one_by_256",
-			operation: "lsh",
-			x:         "1",
-			n:         256,
-			expected:  "0", // Shifts out of range
-		},
-
-		// Right shift tests
-		{
-			name:      "rsh_zero",
-			operation: "rsh",
-			x:         "0",
-			n:         100,
-			expected:  "0",
-		},
-		{
-			name:      "rsh_by_zero",
-			operation: "rsh",
-			x:         "123456",
-			n:         0,
-			expected:  "123456",
-		},
-		{
-			name:      "rsh_by_one",
-			operation: "rsh",
-			x:         "123456",
-			n:         1,
-			expected:  "61728",
-		},
-		{
-			name:      "rsh_by_64",
-			operation: "rsh",
-			x:         "340282366920938463463374607431768211456", // 2^128
-			n:         64,
-			expected:  "18446744073709551616", // 2^64
-		},
-		{
-			name:      "rsh_max_by_255",
-			operation: "rsh",
-			x:         MAX_UINT256,
-			n:         255,
-			expected:  "1",
-		},
-		{
-			name:      "rsh_max_by_256",
-			operation: "rsh",
-			x:         MAX_UINT256,
-			n:         256,
-			expected:  "0", // Shifts out of range
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			x := MustFromDecimal(tt.x)
-			var result *Uint
-
-			switch tt.operation {
-			case "lsh":
-				result = new(Uint).Lsh(x, tt.n)
-			case "rsh":
-				result = new(Uint).Rsh(x, tt.n)
-			}
-
-			uassert.Equal(t, tt.expected, result.ToString())
-		})
-	}
+				if err == nil {
+					t.Errorf("FromDecimal(%q) expected error, got nil", tt.input)
+				}
+			})
+		}
+	})
 }
 
 func TestByteOperation(t *testing.T) {
@@ -507,168 +146,15 @@ func TestByteOperation(t *testing.T) {
 			n:        23,
 			expected: "1",
 		},
-		{
-			name:     "byte_in_middle",
-			x:        "0xff00ff00ff00ff00ff00", // Hexadecimal format without leading zeros
-			n:        15,
-			expected: "0",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var x *Uint
-			if len(tt.x) >= 2 && tt.x[:2] == "0x" {
-				x = MustFromHex(tt.x)
-			} else {
-				x = MustFromDecimal(tt.x)
-			}
-
+			x := MustFromDecimal(tt.x)
 			n := NewUint(tt.n)
 			result := x.Byte(n)
 
 			uassert.Equal(t, tt.expected, result.ToString())
-		})
-	}
-}
-
-func TestMulDiv(t *testing.T) {
-	tests := []struct {
-		name        string
-		x           string
-		y           string
-		denominator string
-		expected    string
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "reverts_if_denominator_is_0",
-			x:           "340282366920938463463374607431768211456", // Q128
-			y:           "5",
-			denominator: "0",
-			shouldPanic: true,
-			panicMsg:    "denominator must be greater than 0",
-		},
-		{
-			name:        "reverts_if_output_overflows_uint256",
-			x:           "340282366920938463463374607431768211456", // Q128
-			y:           "340282366920938463463374607431768211456", // Q128
-			denominator: "1",
-			shouldPanic: true,
-			panicMsg:    "overflow: denominator(1) must be greater than hi(1)",
-		},
-		{
-			name:        "all_max_inputs",
-			x:           MAX_UINT256,
-			y:           MAX_UINT256,
-			denominator: MAX_UINT256,
-			expected:    MAX_UINT256,
-		},
-		{
-			name:        "simple_case_no_remainder",
-			x:           "1000000",
-			y:           "1000000",
-			denominator: "1000",
-			expected:    "1000000000",
-		},
-		{
-			name:        "accurate_without_phantom_overflow",
-			x:           "340282366920938463463374607431768211456", // Q128
-			y:           "170141183460469231731687303715884105728", // 50 * Q128 / 100
-			denominator: "510423550381407695195061911147652317184", // 150 * Q128 / 100
-			expected:    "113427455640312821154458202477256070485", // Q128 / 3
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			x := MustFromDecimal(tt.x)
-			y := MustFromDecimal(tt.y)
-			denominator := MustFromDecimal(tt.denominator)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					MulDiv(x, y, denominator)
-				})
-			} else {
-				result := MulDiv(x, y, denominator)
-				uassert.Equal(t, tt.expected, result.ToString())
-			}
-		})
-	}
-}
-
-func TestMulDivRoundingUpSimple(t *testing.T) {
-	tests := []struct {
-		name        string
-		x           string
-		y           string
-		denominator string
-		expected    string
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "reverts_if_denominator_is_0",
-			x:           "340282366920938463463374607431768211456", // Q128
-			y:           "5",
-			denominator: "0",
-			shouldPanic: true,
-			panicMsg:    "denominator must be greater than 0",
-		},
-		{
-			name:        "rounds_up_when_remainder",
-			x:           "5",
-			y:           "2",
-			denominator: "3",
-			expected:    "4", // (5*2)/3 = 3.33, rounded up to 4
-		},
-		{
-			name:        "no_rounding_when_exact",
-			x:           "6",
-			y:           "3",
-			denominator: "2",
-			expected:    "9", // (6*3)/2 = 9, no rounding needed
-		},
-		{
-			name:        "accurate_with_rounding",
-			x:           "340282366920938463463374607431768211456",   // Q128
-			y:           "17014118346046923173168730371588410572800", // 50 * Q128
-			denominator: "51042355038140769519506191114765231718400", // 150 * Q128
-			expected:    "113427455640312821154458202477256070486",   // Q128/3 + 1
-		},
-		{
-			name:        "max_result_no_remainder",
-			x:           MAX_UINT256,
-			y:           "1",
-			denominator: "1",
-			expected:    MAX_UINT256,
-		},
-		{
-			name:        "rounding_overflow",
-			x:           MAX_UINT256,
-			y:           "2",
-			denominator: "1",
-			shouldPanic: true,
-			panicMsg:    "overflow: denominator(1) must be greater than hi(1)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			x := MustFromDecimal(tt.x)
-			y := MustFromDecimal(tt.y)
-			denominator := MustFromDecimal(tt.denominator)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					MulDivRoundingUp(x, y, denominator)
-				})
-			} else {
-				result := MulDivRoundingUp(x, y, denominator)
-				uassert.Equal(t, tt.expected, result.ToString())
-			}
 		})
 	}
 }
@@ -821,5 +307,47 @@ func TestOperationConsistency(t *testing.T) {
 		result = new(Uint).Lsh(x, n)
 		result = new(Uint).Rsh(result, n)
 		uassert.True(t, result.Eq(x))
+	})
+}
+
+func TestInt64Conversion(t *testing.T) {
+	t.Run("Int64", func(t *testing.T) {
+		tests := []struct {
+			name string
+			x    string
+			want int64
+		}{
+			{"zero", "0", 0},
+			{"small positive", "42", 42},
+			{"max int64", "9223372036854775807", 9223372036854775807},
+			{"max int64 plus one wraps", "9223372036854775808", -9223372036854775808},
+			{"2^64 wraps to zero", "18446744073709551616", 0},
+			{"all ones becomes -1", MAX_UINT256, -1},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				x := MustFromDecimal(tt.x)
+				if got := x.Int64(); got != tt.want {
+					t.Errorf("Int64(%s) = %d, want %d", tt.x, got, tt.want)
+				}
+			})
+		}
+	})
+
+	t.Run("NewUintFromInt64", func(t *testing.T) {
+		t.Run("positive", func(t *testing.T) {
+			uassert.Equal(t, uint64(123), NewUintFromInt64(123)[0])
+		})
+
+		t.Run("zero", func(t *testing.T) {
+			uassert.Equal(t, uint64(0), NewUintFromInt64(0)[0])
+		})
+
+		t.Run("negative panics", func(t *testing.T) {
+			uassert.PanicsContains(t, "val is negative", func() {
+				NewUintFromInt64(-1)
+			})
+		})
 	})
 }

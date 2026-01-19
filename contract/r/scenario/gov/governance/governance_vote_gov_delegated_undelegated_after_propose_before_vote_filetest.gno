@@ -5,27 +5,39 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	gns "gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/governance"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
+
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
+	gs "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+
 	dummyAddr        = testutils.TestAddress("dummyAddr")
 	currentBlockTime = int64(2)
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin and dummy")
@@ -34,7 +46,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose Text")
@@ -47,7 +59,7 @@ func main() {
 
 	println("[SCENARIO] 5. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 6. Vote for the proposal with dummy")
@@ -58,8 +70,7 @@ func main() {
 func delegateGnsToAdminAndDummy() {
 	delegatedAmount := int64(1_000_000_000)
 	// admin
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to admin %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
@@ -70,28 +81,28 @@ func delegateGnsToAdminAndDummy() {
 }
 
 func proposeText() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeText(cross, "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
 func undelegateFromDummy() {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gs.Undelegate(cross, adminAddr, int64(1_000_000))
 	ufmt.Printf("[INFO] undelegated from dummy %s (amount: %d)\n", dummyAddr.String(), int64(1_000_000))
 }
 
 func voteProposalWithDummy(proposalId int64) {
-	testing.SetRealm(std.NewUserRealm(dummyAddr))
+	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
-	state := governance.GetExecutionStateByProposalId(proposalId)
+	state, _ := governance.GetProposalStatusByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
 // Output:
 // [SCENARIO] 1. Delegate gns to admin and dummy
-// [INFO] gns delegated to admin g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d (amount: 1000000000)
+// [INFO] gns delegated to admin g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
 // [INFO] gns delegated to dummy g1v36k6mteg9jxgujlta047h6lta047h6lydhz9l (amount: 1000000000)
 //
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal

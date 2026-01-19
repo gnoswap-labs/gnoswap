@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -60,7 +59,7 @@ func setupTestManager() {
 	manager = prbac.NewRBACWithAddress(adminAddr)
 
 	// Register system roles
-	systemRoles := map[prbac.SystemRole]std.Address{
+	systemRoles := map[prbac.SystemRole]address{
 		prbac.ROLE_ADMIN:  testutils.TestAddress("admin"),
 		prbac.ROLE_DEVOPS: testutils.TestAddress("devops"),
 		prbac.ROLE_POOL:   testutils.TestAddress("pool"),
@@ -92,7 +91,7 @@ func testAdminRoleLifecycleManagement() {
 
 	// Step 2: Assign address to the new role
 	println("Step 2: Assigning address to 'api_service' role")
-	err = manager.UpdateRoleAddress("api_service", 1, customAddr1)
+	err = manager.UpdateRoleAddress("api_service", customAddr1)
 	uassert.NoError(t, err)
 
 	// Verify address is correctly assigned
@@ -105,12 +104,12 @@ func testAdminRoleLifecycleManagement() {
 	err = manager.RegisterRole("data_processor", testutils.TestAddress("data_processor"))
 	uassert.NoError(t, err)
 
-	err = manager.UpdateRoleAddress("data_processor", 1, customAddr2)
+	err = manager.UpdateRoleAddress("data_processor", customAddr2)
 	uassert.NoError(t, err)
 
 	// Step 4: Update the address of existing role
 	println("Step 4: Updating address of 'api_service' role")
-	err = manager.UpdateRoleAddress("api_service", 1, customAddr3)
+	err = manager.UpdateRoleAddress("api_service", customAddr3)
 	uassert.NoError(t, err)
 
 	// Verify address update
@@ -150,7 +149,7 @@ func testSystemRoleManagement() {
 
 	// Step 2: Admin can update system role addresses
 	println("Step 2: Admin updating system role address")
-	err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), 1, customAddr1)
+	err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), customAddr1)
 	uassert.NoError(t, err)
 
 	// Verify update
@@ -172,7 +171,7 @@ func testMultipleRoleAuthorization() {
 
 	// Step 1: Create multiple custom roles with different addresses
 	println("Step 1: Creating multiple roles")
-	roleAddresses := map[string]std.Address{
+	roleAddresses := map[string]address{
 		"frontend_service": customAddr1,
 		"backend_service":  customAddr2,
 		"database_service": customAddr3,
@@ -182,7 +181,7 @@ func testMultipleRoleAuthorization() {
 		err := manager.RegisterRole(role, addr)
 		uassert.NoError(t, err)
 
-		err = manager.UpdateRoleAddress(role, 1, addr)
+		err = manager.UpdateRoleAddress(role, addr)
 		uassert.NoError(t, err)
 	}
 
@@ -213,7 +212,7 @@ func testMultipleRoleAuthorization() {
 
 	// Step 4: Update role address and verify authorization changes
 	println("Step 4: Updating role address and testing authorization")
-	err := manager.UpdateRoleAddress("frontend_service", 1, customAddr2)
+	err := manager.UpdateRoleAddress("frontend_service", customAddr2)
 	uassert.NoError(t, err)
 
 	// Old address should no longer be authorized
@@ -239,7 +238,7 @@ func testErrorHandlingEdgeCases() {
 	uassert.Error(t, err)
 
 	// Try to update address of non-existent role
-	err = manager.UpdateRoleAddress("non_existent_role", 1, customAddr1)
+	err = manager.UpdateRoleAddress("non_existent_role", customAddr1)
 	uassert.Error(t, err)
 
 	// Try to remove non-existent role
@@ -269,7 +268,7 @@ func testErrorHandlingEdgeCases() {
 	uassert.Error(t, err)
 
 	// Try to update removed role
-	err = manager.UpdateRoleAddress("test_role", 1, customAddr1)
+	err = manager.UpdateRoleAddress("test_role", customAddr1)
 	uassert.Error(t, err)
 
 	// Try to authorize removed role
@@ -297,7 +296,7 @@ func testRoleAddressesIntegration() {
 	err := manager.RegisterRole("integ_test_role", testutils.TestAddress("integ_test_role"))
 	uassert.NoError(t, err)
 
-	err = manager.UpdateRoleAddress("integ_test_role", 1, customAddr2)
+	err = manager.UpdateRoleAddress("integ_test_role", customAddr2)
 	uassert.NoError(t, err)
 
 	// Verify it appears in role addresses

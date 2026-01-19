@@ -1,8 +1,6 @@
 package rbac
 
-import (
-	"std"
-)
+import "chain"
 
 const (
 	OwnershipTransferEvent        = "OwnershipTransfer"
@@ -12,34 +10,40 @@ const (
 // Ownable2Step implements a two-step ownership transfer mechanism.
 // It requires the new owner to explicitly accept ownership before the transfer is completed,
 // preventing accidental transfers to incorrect addresses.
+//
+// Note: This package does not verify callers. Consuming realms must extract the actual
+// caller using `runtime.PreviousRealm` or `runtime.OriginCaller` and pass it to these methods.
 type Ownable2Step struct {
-	owner        std.Address
-	pendingOwner std.Address
+	owner        address
+	pendingOwner address
 }
 
 // newOwnable2StepWithAddress creates a new Ownable2Step instance with addr as owner.
-func newOwnable2StepWithAddress(addr std.Address) *Ownable2Step {
+func newOwnable2StepWithAddress(addr address) *Ownable2Step {
 	return &Ownable2Step{
 		owner:        addr,
 		pendingOwner: "",
 	}
 }
 
-// TransferOwnership initiates ownership transfer by setting newOwner as pending owner.
-// The new owner must call AcceptOwnership to complete the transfer.
-// Only the current owner can call this function.
-func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller std.Address) error {
+// TransferOwnershipBy initiates ownership transfer by setting newOwner as pending owner.
+// The newOwner must call AcceptOwnershipBy to complete the transfer.
+//
+// Errors:
+//   - ErrUnauthorized: caller is not the current owner
+//   - ErrInvalidAddress: newOwner is empty or has an invalid format
+func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 	if !o.IsOwner(caller) {
 		return ErrUnauthorized
 	}
 
-	if newOwner.String() == "" || !newOwner.IsValid() {
+	if newOwner == zeroAddress || !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
 	o.pendingOwner = newOwner
 
-	std.Emit(
+	chain.Emit(
 		OwnershipTransferStartedEvent,
 		"from", o.owner.String(),
 		"to", newOwner.String(),
@@ -48,10 +52,14 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller std.Address) error {
 	return nil
 }
 
-// AcceptOwnership completes the ownership transfer.
-// Must be called by the pending owner. Panics if no pending owner exists or caller is not the pending owner.
-func (o *Ownable2Step) AcceptOwnershipBy(caller std.Address) error {
-	if o.pendingOwner == "" {
+// AcceptOwnershipBy completes the ownership transfer.
+// Must be called by the pending owner.
+//
+// Errors:
+//   - ErrNoPendingOwner: no ownership transfer is pending
+//   - ErrPendingUnauthorized: caller is not the pending owner
+func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
+	if o.pendingOwner == zeroAddress {
 		return ErrNoPendingOwner
 	}
 
@@ -63,7 +71,7 @@ func (o *Ownable2Step) AcceptOwnershipBy(caller std.Address) error {
 	o.owner = o.pendingOwner
 	o.pendingOwner = ""
 
-	std.Emit(
+	chain.Emit(
 		OwnershipTransferEvent,
 		"from", prevOwner.String(),
 		"to", o.owner.String(),
@@ -72,11 +80,12 @@ func (o *Ownable2Step) AcceptOwnershipBy(caller std.Address) error {
 	return nil
 }
 
-// DropOwnership removes the owner, disabling all owner-only actions.
-// When used at the top level, it disables all owner-only functions.
-// When embedded, it acts like a burn function, removing ownership from the struct.
-// Only the current owner can call this function.
-func (o *Ownable2Step) DropOwnershipBy(caller std.Address) error {
+// DropOwnershipBy removes the owner, disabling all owner-only actions.
+// This is irreversible - when ownership is dropped, no future owner-only operations can be performed.
+//
+// Errors:
+//   - ErrUnauthorized: caller is not the current owner
+func (o *Ownable2Step) DropOwnershipBy(caller address) error {
 	if !o.IsOwner(caller) {
 		return ErrUnauthorized
 	}
@@ -85,7 +94,7 @@ func (o *Ownable2Step) DropOwnershipBy(caller std.Address) error {
 	o.owner = ""
 	o.pendingOwner = ""
 
-	std.Emit(
+	chain.Emit(
 		OwnershipTransferEvent,
 		"from", prevOwner.String(),
 		"to", "",
@@ -95,21 +104,21 @@ func (o *Ownable2Step) DropOwnershipBy(caller std.Address) error {
 }
 
 // Owner returns the current owner address. Returns empty address if ownership has been dropped.
-func (o *Ownable2Step) Owner() std.Address {
+func (o *Ownable2Step) Owner() address {
 	return o.owner
 }
 
 // PendingOwner returns the pending owner address during ownership transfer. Returns empty address if no transfer is pending.
-func (o *Ownable2Step) PendingOwner() std.Address {
+func (o *Ownable2Step) PendingOwner() address {
 	return o.pendingOwner
 }
 
 // IsOwner returns true if the origin caller is the current owner.
-func (o *Ownable2Step) IsOwner(caller std.Address) bool {
+func (o *Ownable2Step) IsOwner(caller address) bool {
 	return o.owner == caller
 }
 
 // IsPendingOwner returns true if the origin caller is the pending owner.
-func (o *Ownable2Step) IsPendingOwner(caller std.Address) bool {
+func (o *Ownable2Step) IsPendingOwner(caller address) bool {
 	return o.pendingOwner == caller
 }

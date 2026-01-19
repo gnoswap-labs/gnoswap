@@ -1,0 +1,164 @@
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/r/gnoswap/common
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/commongas -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   265988'
+
+### TickMath Functions ###
+# TickMathGetSqrtRatioAtTick (minTick)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_MinTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7248726'
+
+# TickMathGetSqrtRatioAtTick (maxTick)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_MaxTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7562549'
+
+# TickMathGetSqrtRatioAtTick (zero)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4501757'
+
+# TickMathGetSqrtRatioAtTick
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   6498397'
+
+# TickMathGetTickAtSqrtRatio
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetTickAtSqrtRatio -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13119700'
+
+### Liquidity Functions ###
+# GetLiquidityForAmounts
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func GetLiquidityForAmounts -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   9430805'
+
+# GetAmountsForLiquidity
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func GetAmountsForLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   9121103'
+
+# LiquidityMathAddDelta (positive)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta_Positive -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7101767'
+
+# LiquidityMathAddDelta (negative)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta_Negative -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7090509'
+
+# LiquidityMathAddDelta
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7101677'
+
+### GNOT Path Functions ###
+# IsGNOTPath
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1316243'
+
+# IsGNOTNativePath
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTNativePath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1316255'
+
+# IsGNOTWrappedPath
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTWrappedPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1316265'
+
+# ExistsUserSendCoins
+gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func ExistsUserSendCoins -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1589188'
+
+-- gnomod.toml --
+module = "gno.land/r/gnoswap/commongas"
+gno = "0.9"
+-- main.gno --
+package commongas
+
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	"gno.land/r/gnoswap/common"
+)
+
+func TickMathGetSqrtRatioAtTick_MinTick(cur realm) {
+	common.TickMathGetSqrtRatioAtTick(-887272)
+}
+
+func TickMathGetSqrtRatioAtTick_MaxTick(cur realm) {
+	common.TickMathGetSqrtRatioAtTick(887272)
+}
+
+func TickMathGetSqrtRatioAtTick_Zero(cur realm) {
+	common.TickMathGetSqrtRatioAtTick(0)
+}
+
+func TickMathGetSqrtRatioAtTick(cur realm) {
+	common.TickMathGetSqrtRatioAtTick(1000)
+}
+
+func TickMathGetTickAtSqrtRatio(cur realm) {
+	sqrtPriceX96 := u256.MustFromDecimal("79228162514264337593543950336")
+	common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+}
+
+func GetLiquidityForAmounts(cur realm) {
+	sqrtPriceX96 := u256.MustFromDecimal("79228162514264337593543950336")
+	sqrtPriceAX96 := u256.MustFromDecimal("70710678118654752440084436210")
+	sqrtPriceBX96 := u256.MustFromDecimal("88817841970012523233890533447")
+	amount0 := u256.MustFromDecimal("1000000")
+	amount1 := u256.MustFromDecimal("1000000")
+
+	common.GetLiquidityForAmounts(sqrtPriceX96, sqrtPriceAX96, sqrtPriceBX96, amount0, amount1)
+}
+
+func GetAmountsForLiquidity(cur realm) {
+	sqrtPriceX96 := u256.MustFromDecimal("79228162514264337593543950336")
+	sqrtPriceAX96 := u256.MustFromDecimal("70710678118654752440084436210")
+	sqrtPriceBX96 := u256.MustFromDecimal("88817841970012523233890533447")
+	liquidity := u256.MustFromDecimal("1000000")
+
+	common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceAX96, sqrtPriceBX96, liquidity)
+}
+
+func LiquidityMathAddDelta_Positive(cur realm) {
+	x := u256.MustFromDecimal("1000000")
+	y := i256.MustFromDecimal("500000")
+
+	common.LiquidityMathAddDelta(x, y)
+}
+
+func LiquidityMathAddDelta_Negative(cur realm) {
+	x := u256.MustFromDecimal("1000000")
+	y := i256.MustFromDecimal("-300000")
+
+	common.LiquidityMathAddDelta(x, y)
+}
+
+func LiquidityMathAddDelta(cur realm) {
+	x := u256.MustFromDecimal("1000000")
+	y := i256.MustFromDecimal("500000")
+
+	common.LiquidityMathAddDelta(x, y)
+}
+
+func IsGNOTPath(cur realm) {
+	common.IsGNOTPath("ugnot")
+}
+
+func IsGNOTNativePath(cur realm) {
+	common.IsGNOTNativePath("ugnot")
+}
+
+func IsGNOTWrappedPath(cur realm) {
+	common.IsGNOTWrappedPath("gno.land/r/gnoland/wugnot")
+}
+
+func ExistsUserSendCoins(cur realm) {
+	common.ExistsUserSendCoins()
+}
+
+func Empty(cur realm) {
+	return
+}

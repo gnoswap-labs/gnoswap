@@ -2,7 +2,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 
-	_ "gno.land/r/gnoswap/v1/staker"
+	_ "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -22,7 +21,7 @@ var t *testing.T
 
 var (
 	user01Addr  = testutils.TestAddress("user01Addr")
-	user01Realm = std.NewUserRealm(user01Addr)
+	user01Realm = testing.NewUserRealm(user01Addr)
 
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 )
@@ -51,7 +50,7 @@ func initEmissionCallback() {
 }
 
 func mintGNS() {
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
 

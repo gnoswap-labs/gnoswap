@@ -100,7 +100,7 @@ func getNextPriceAmount1Add(
 	if amount.Lte(max160) {
 		// Use local variables to avoid allocation conflicts
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
-		quotient = u256.Zero().Div(shifted, liquidity)
+		quotient = u256.Zero().MustDiv(shifted, liquidity)
 	} else {
 		quotient = u256.MulDiv(amount, q96, liquidity)
 	}
@@ -251,6 +251,14 @@ func getAmount1DeltaHelper(
 // GetAmount0Delta calculates the token0 amount difference within a price range, returning
 // a signed int256 value that is negative when liquidity is negative. Rounds down for
 // negative liquidity and up for positive liquidity.
+//
+// Parameters:
+//   - sqrtRatioAX96: first sqrt price in Q96 format
+//   - sqrtRatioBX96: second sqrt price in Q96 format
+//   - liquidity: signed liquidity value
+//
+// Returns the token0 amount difference as a signed int256 value.
+//
 // Panics if any input is nil or if the result overflows int256.
 func GetAmount0Delta(
 	sqrtRatioAX96, sqrtRatioBX96 *u256.Uint,
@@ -283,6 +291,14 @@ func GetAmount0Delta(
 // GetAmount1Delta calculates the token1 amount difference within a price range, returning
 // a signed int256 value that is negative when liquidity is negative. Rounds down for
 // negative liquidity and up for positive liquidity.
+//
+// Parameters:
+//   - sqrtRatioAX96: first sqrt price in Q96 format
+//   - sqrtRatioBX96: second sqrt price in Q96 format
+//   - liquidity: signed liquidity value
+//
+// Returns the token1 amount difference as a signed int256 value.
+//
 // Panics if any input is nil or if the result overflows int256.
 func GetAmount1Delta(
 	sqrtRatioAX96, sqrtRatioBX96 *u256.Uint,

@@ -1,37 +1,56 @@
 package rbac
 
-import "std"
+import (
+	"chain/runtime"
+
+	"gno.land/p/nt/ufmt"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
+)
 
 // IsOwner returns true if addr is the current owner.
-func IsOwner(addr std.Address) bool {
+func IsOwner(addr address) bool {
 	return manager.Owner() == addr
 }
 
 // IsPendingOwner returns true if addr is the pending owner.
-func IsPendingOwner(addr std.Address) bool {
+func IsPendingOwner(addr address) bool {
 	return manager.PendingOwner() == addr
 }
 
 // GetOwner returns the current owner address.
-func GetOwner() std.Address {
+func GetOwner() address {
 	return manager.Owner()
 }
 
 // GetPendingOwner returns the pending owner address.
-func GetPendingOwner() std.Address {
+func GetPendingOwner() address {
 	return manager.PendingOwner()
 }
 
 // AcceptOwnership completes the ownership transfer process.
 // Only callable by pending owner.
 func AcceptOwnership(cur realm) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsPendingOwner(caller)
 
 	err := manager.AcceptOwnershipBy(caller)
 	if err != nil {
 		panic(err)
 	}
+
+	newOwner := manager.Owner()
+	err = manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), newOwner)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf(
+				"role name: %s, address: %s",
+				prbac.ROLE_ADMIN.String(), newOwner.String()),
+		))
+	}
+	access.SetRoleAddress(cross, prbac.ROLE_ADMIN.String(), newOwner)
 }
 
 // TransferOwnership initiates the ownership transfer process.
@@ -40,8 +59,8 @@ func AcceptOwnership(cur realm) {
 //   - addr: address to transfer ownership to
 //
 // Only callable by current owner.
-func TransferOwnership(cur realm, addr std.Address) {
-	caller := std.PreviousRealm().Address()
+func TransferOwnership(cur realm, addr address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwner(caller)
 	assertIsValidAddress(addr)
 

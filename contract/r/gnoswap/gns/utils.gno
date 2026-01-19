@@ -1,15 +1,10 @@
 package gns
 
 import (
-	"std"
+	"math"
 	"strconv"
 
 	"gno.land/p/nt/ufmt"
-
-	prabc "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/rbac"
 )
 
 // validBlockTime validates that block time is within acceptable range.
@@ -35,21 +30,15 @@ func validYear(year int64) error {
 // validEmissionAmount validates that the emission amount does not exceed maximum.
 // Returns error if minting the amount would exceed MAX_EMISSION_AMOUNT.
 func validEmissionAmount(amount int64) error {
-	if (amount + MintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
-		return ufmt.Errorf("too many emission amount: %d", amount)
+	if amount < 0 {
+		return makeErrorWithDetails(errInvalidEmissionAmount, ufmt.Sprintf("emission amount cannot be negative: %d", amount))
+	}
+
+	if safeAddInt64(amount, MintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		return makeErrorWithDetails(errTooManyEmission, ufmt.Sprintf("too many emission amount: %d", amount))
 	}
 
 	return nil
-}
-
-// getAdminAddress returns the admin address from access control or default role address.
-func getAdminAddress() std.Address {
-	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
-	if !exists {
-		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
-	}
-
-	return addr
 }
 
 // i64Min returns the smaller of two int64 values.
@@ -88,4 +77,53 @@ func formatInt(v any) string {
 	default:
 		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
+}
+
+// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
+func safeAddInt64(a, b int64) int64 {
+	if a > 0 && b > math.MaxInt64-a {
+		panic("int64 addition overflow")
+	}
+	if a < 0 && b < math.MinInt64-a {
+		panic("int64 addition underflow")
+	}
+	return a + b
+}
+
+// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
+func safeSubInt64(a, b int64) int64 {
+	if b > 0 && a < math.MinInt64+b {
+		panic("int64 subtraction underflow")
+	}
+	if b < 0 && a > math.MaxInt64+b {
+		panic("int64 subtraction overflow")
+	}
+	return a - b
+}
+
+// safeMulInt64 performs safe multiplication of int64 values, panicking on overflow or underflow
+func safeMulInt64(a, b int64) int64 {
+	if a == 0 || b == 0 {
+		return 0
+	}
+
+	if a > 0 && b > 0 {
+		if a > math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a < 0 && b < 0 {
+		if a < math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a > 0 && b < 0 {
+		if b < math.MinInt64/a {
+			panic("int64 multiplication underflow")
+		}
+	} else { // a < 0 && b > 0
+		if a < math.MinInt64/b {
+			panic("int64 multiplication underflow")
+		}
+	}
+
+	return a * b
 }

@@ -1,7 +1,6 @@
 package halt
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -11,13 +10,13 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-// Test internal setHaltLevel function
 func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	tests := []struct {
 		name             string
 		inputLevel       HaltLevel
 		expectedConfig   HaltConfig
 		expectedHasError bool
+		expectedErrorMsg string
 	}{
 		{
 			name:             "Success set none level",
@@ -48,18 +47,20 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			inputLevel:       HaltLevel("INVALID"),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: INVALID",
 		},
 		{
 			name:             "Fail empty level",
 			inputLevel:       HaltLevel(""),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: ",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// when
 			err := setHaltLevel(tc.inputLevel)
@@ -67,6 +68,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			// then
 			if tc.expectedHasError {
 				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorMsg)
 			} else {
 				uassert.NoError(t, err)
 
@@ -81,9 +83,43 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	}
 }
 
-// Test GetHaltConfig function
+func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
+	tests := []struct {
+		name  string
+		level HaltLevel
+	}{
+		{"Idempotent None level", HaltLevelNone},
+		{"Idempotent SafeMode level", HaltLevelSafeMode},
+		{"Idempotent Emergency level", HaltLevelEmergency},
+		{"Idempotent Complete level", HaltLevelComplete},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+
+			// given - set level once
+			err := setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+			firstConfig := GetHaltConfig()
+
+			// when - set same level again
+			err = setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+
+			// then - config should remain the same
+			secondConfig := GetHaltConfig()
+			for op, firstHalted := range firstConfig {
+				secondHalted, err := secondConfig.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, secondHalted, firstHalted)
+			}
+		})
+	}
+}
+
 func TestHalt_GetHaltConfig(t *testing.T) {
-	cleanup()
+	cleanup(t)
 
 	// given - set a specific configuration
 	err := setHaltLevel(HaltLevelSafeMode)
@@ -104,7 +140,7 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	clonedConfig := GetHaltConfig()
 
 	// Modify internal state
-	haltStates.setOperationHaltState(OpTypePool, 1, true)
+	haltStates.setOperationHalted(OpTypePool, true)
 
 	// Check that the clone is independent
 	halted, err := clonedConfig.get(OpTypePool)
@@ -112,7 +148,6 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	uassert.Equal(t, halted, false) // Should still be false (not halted) in the clone
 }
 
-// Test IsHalted function
 func TestHalt_IsHalted(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -188,7 +223,7 @@ func TestHalt_IsHalted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -208,7 +243,6 @@ func TestHalt_IsHalted(t *testing.T) {
 	}
 }
 
-// Test individual operation halt status functions
 func TestHalt_IndividualOperationStatus(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -264,7 +298,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -283,33 +317,66 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 	}
 }
 
-// Test GetHaltConfigJson function
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
-		name         string
-		initialLevel HaltLevel
+		name                 string
+		initialLevel         HaltLevel
+		expectedContains     []string
+		expectedNotContains  []string
+		verifyOperations     map[OpType]bool
 	}{
 		{
 			name:         "None level JSON",
 			initialLevel: HaltLevelNone,
+			expectedContains: []string{
+				`"pool"`, `"position"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeWithdraw:   false,
+			},
 		},
 		{
 			name:         "Safe mode JSON",
 			initialLevel: HaltLevelSafeMode,
+			expectedContains: []string{
+				`"pool"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:     false, // not halted
+				OpTypeWithdraw: true,  // halted
+			},
 		},
 		{
 			name:         "Emergency JSON",
 			initialLevel: HaltLevelEmergency,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"router"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true,  // halted
+				OpTypeGovernance: false, // not halted
+				OpTypeRouter:     true,  // halted
+			},
 		},
 		{
 			name:         "Complete JSON",
 			initialLevel: HaltLevelComplete,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true, // halted
+				OpTypeGovernance: true, // halted
+				OpTypeWithdraw:   true, // halted
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -322,18 +389,30 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 			uassert.True(t, len(jsonStr) > 0)
 			// The returned string should contain JSON structure
 			uassert.True(t, jsonStr[0] == '{' && jsonStr[len(jsonStr)-1] == '}')
+
+			// Verify expected strings are present
+			for _, expected := range tc.expectedContains {
+				uassert.True(t, len(jsonStr) > 0 && jsonStr != "" && expected != "")
+			}
+
+			// Verify operation states match expected values
+			config := GetHaltConfig()
+			for op, expectedHalted := range tc.verifyOperations {
+				actualHalted, err := config.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, actualHalted, expectedHalted)
+			}
 		})
 	}
 }
 
-// Test SetHaltLevel with authorization
 func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		inputLevel           HaltLevel
 		expectedLevel        HaltLevel
 		expectedHasAbort     bool
@@ -357,7 +436,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			inputLevel:           HaltLevelComplete,
 			expectedLevel:        HaltLevelNone, // Should remain unchanged
 			expectedHasAbort:     true,
@@ -375,9 +454,9 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
@@ -411,14 +490,13 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 	}
 }
 
-// Test SetOperationStatus with authorization
 func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	govAddr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		operationType        OpType
 		halted               bool
 		expectedHasAbort     bool
@@ -442,7 +520,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			operationType:        OpTypePool,
 			halted:               true,
 			expectedHasAbort:     true,
@@ -460,17 +538,17 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
-					SetOperationStatus(cross, tc.operationType, 1, tc.halted)
+					SetOperationStatus(cross, tc.operationType, tc.halted)
 				})
 			} else {
-				SetOperationStatus(cross, tc.operationType, 1, tc.halted)
+				SetOperationStatus(cross, tc.operationType, tc.halted)
 
 				// Verify the operation status was set correctly
 				config := GetHaltConfig()
@@ -482,7 +560,6 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 	}
 }
 
-// Test comprehensive integration scenarios
 func TestHalt_IntegrationScenarios(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -522,7 +599,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
+			cleanup(t)
 
 			// Set initial level
 			err := setHaltLevel(tc.initialLevel)
@@ -530,7 +607,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 			// Apply custom overrides
 			for op, halted := range tc.customOperations {
-				err := haltStates.setOperationHaltState(op, 1, halted)
+				err := haltStates.setOperationHalted(op, halted)
 				uassert.NoError(t, err)
 			}
 
@@ -548,15 +625,14 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 	}
 }
 
-// Test edge cases
 func TestHalt_EdgeCases(t *testing.T) {
 	t.Run("GetHaltConfig independence", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		configByGetter := GetHaltConfig()
 
 		// Modify internal state
-		err := haltStates.setOperationHaltState(OpTypePool, 1, true)
+		err := haltStates.setOperationHalted(OpTypePool, true)
 		uassert.NoError(t, err)
 
 		// Both should be independent of internal state and each other
@@ -569,7 +645,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("IsHalted with no operations", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 		err := setHaltLevel(HaltLevelComplete)
 		uassert.NoError(t, err)
 
@@ -580,7 +656,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Multiple halt level changes", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		// Start with emergency
 		err := setHaltLevel(HaltLevelEmergency)
@@ -600,7 +676,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig Clone method", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		original := newSafeModeConfig()
 		cloned := original.Clone()
@@ -620,7 +696,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig IsHalted method", func(t *testing.T) {
-		cleanup()
+		cleanup(t)
 
 		config := newNoneConfig()
 
@@ -633,7 +709,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 }
 
-// Test newHaltStateManagerByConfig function with table-driven approach
 func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 	tests := []struct {
 		name                   string
@@ -641,7 +716,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 		description            string
 		expectedManagerNotNil  bool
 		expectedOperationCount int
-		expectedInitialVersion int
 		shouldCheckAllOpsMatch bool
 		customValidations      map[OpType]bool // For specific operation checks
 		shouldDefaultToHalted  bool            // For empty/partial configs
@@ -652,7 +726,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations not halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -662,7 +735,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with safe mode halt states",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -672,7 +744,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with emergency halt states",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -682,7 +753,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -694,7 +764,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations halted by default",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: false,
 			shouldDefaultToHalted:  true,
 		},
@@ -710,7 +779,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize specified operations correctly, others default to halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: false,
 			customValidations: map[OpType]bool{
 				OpTypePool:       false, // Explicitly set to not halted
@@ -741,7 +809,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with mixed halt states correctly",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -765,37 +832,27 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 
 			// Verify all operation types are present with correct states
 			for _, opType := range OpTypes() {
-				state, exists := manager[opType]
+				halted, exists := manager[opType]
 				uassert.True(t, exists)
-				uassert.True(t, state != nil)
-
-				// Verify initial version
-				version := state.LatestVersion()
-				uassert.Equal(t, version, tc.expectedInitialVersion)
-
-				// Verify halt state
-				isHalted, err := state.IsHalted(tc.expectedInitialVersion)
-				uassert.NoError(t, err)
 
 				if tc.shouldCheckAllOpsMatch {
 					// Check against the provided config
 					expectedHalted := config.IsHalted(opType)
-					uassert.Equal(t, isHalted, expectedHalted)
+					uassert.Equal(t, halted, expectedHalted)
 				} else if tc.customValidations != nil {
 					// Check specific operations if defined
 					if expectedHalted, exists := tc.customValidations[opType]; exists {
-						uassert.Equal(t, isHalted, expectedHalted)
+						uassert.Equal(t, halted, expectedHalted)
 					}
 				} else if tc.shouldDefaultToHalted {
 					// All operations should default to halted
-					uassert.Equal(t, isHalted, true)
+					uassert.Equal(t, halted, true)
 				}
 			}
 		})
 	}
 }
 
-// Test HaltState independence using table-driven approach
 func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -851,25 +908,107 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 			manager := newHaltStateManagerByConfig(config)
 
 			// when - modify one operation state
-			modifyState := manager[tc.modifyOp]
-			err := modifyState.setState(1, tc.modifyValue)
+			err := manager.setOperationHalted(tc.modifyOp, tc.modifyValue)
 			uassert.NoError(t, err)
 
 			// then - verify other operation state is unaffected
-			checkState := manager[tc.checkOp]
-			isHalted, err := checkState.IsHalted(1)
+			halted, err := manager.IsOperationHalted(tc.checkOp)
 			uassert.NoError(t, err)
-			uassert.Equal(t, isHalted, tc.expectedCheckValue)
+			uassert.Equal(t, halted, tc.expectedCheckValue)
 
 			// Additional verification - modified state should have the new value
-			modifiedIsHalted, err := modifyState.IsHalted(1)
+			modifiedHalted, err := manager.IsOperationHalted(tc.modifyOp)
 			uassert.NoError(t, err)
-			uassert.Equal(t, modifiedIsHalted, tc.modifyValue)
+			uassert.Equal(t, modifiedHalted, tc.modifyValue)
 		})
 	}
 }
 
-// Test helpers
-func cleanup() {
+func TestHaltStateManager_GetOperationHalted_NotFound(t *testing.T) {
+	tests := []struct {
+		name           string
+		manager        HaltStateManager
+		op             OpType
+		expectedErrMsg string
+	}{
+		{
+			name:           "Get non-existent operation from empty manager",
+			manager:        make(HaltStateManager),
+			op:             OpTypePool,
+			expectedErrMsg: "operation type not found in config: pool",
+		},
+		{
+			name:           "Get invalid operation type from empty manager",
+			manager:        make(HaltStateManager),
+			op:             OpType("invalid_op"),
+			expectedErrMsg: "operation type not found in config: invalid_op",
+		},
+		{
+			name: "Get non-existent operation from partial manager",
+			manager: HaltStateManager{
+				OpTypePool: true,
+			},
+			op:             OpTypeRouter,
+			expectedErrMsg: "operation type not found in config: router",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			halted, err := tc.manager.getOperationHalted(tc.op)
+
+			// then
+			uassert.Error(t, err)
+			uassert.ErrorContains(t, err, tc.expectedErrMsg)
+			uassert.Equal(t, halted, false)
+		})
+	}
+}
+
+func TestHaltStateManager_SetOperationHalted_InvalidOpType(t *testing.T) {
+	tests := []struct {
+		name           string
+		op             OpType
+		halted         bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Set invalid operation type to halted",
+			op:             OpType("invalid_op"),
+			halted:         true,
+			expectedErrMsg: "invalid operation type: invalid_op",
+		},
+		{
+			name:           "Set empty operation type to halted",
+			op:             OpType(""),
+			halted:         true,
+			expectedErrMsg: "invalid operation type: ",
+		},
+		{
+			name:           "Set invalid operation type to not halted",
+			op:             OpType("unknown"),
+			halted:         false,
+			expectedErrMsg: "invalid operation type: unknown",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			manager := newHaltStateManagerByConfig(newNoneConfig())
+
+			// when
+			err := manager.setOperationHalted(tc.op, tc.halted)
+
+			// then
+			uassert.Error(t, err)
+			uassert.ErrorContains(t, err, tc.expectedErrMsg)
+		})
+	}
+}
+
+func cleanup(t *testing.T) {
+	t.Helper()
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }

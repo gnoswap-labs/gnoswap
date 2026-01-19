@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	errHalted              = errors.New("halted")
-	errInvalidOpType       = errors.New("invalid operation type")
-	errInvalidHaltLevel    = errors.New("invalid halt level")
-	errCannotUpdateVersion = errors.New("cannot update version")
+	errHalted           = errors.New("halted")
+	errInvalidOpType    = errors.New("invalid operation type")
+	errInvalidHaltLevel = errors.New("invalid halt level")
+	errOpTypeNotFound   = errors.New("operation type not found in config")
 )
 
 // makeErrorWithDetails creates an error with additional details appended to the base error message.

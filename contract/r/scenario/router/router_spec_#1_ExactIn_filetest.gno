@@ -1,19 +1,23 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -25,7 +29,7 @@ var (
 	user1Addr = testutils.TestAddress("user1")
 
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -94,7 +98,7 @@ func testPositionMint() {
 	println("[EXPECTED] amount0:", amount0, "expected: 100000000")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000000")
 
-	pool := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
+	pool, _ := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 
@@ -110,7 +114,7 @@ func testExactInputSinglePool() {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	println("[INFO] Setting swap permission with user1 account")
-	user1Realm := std.NewUserRealm(user1Addr)
+	user1Realm := testing.NewUserRealm(user1Addr)
 	testing.SetRealm(user1Realm)
 
 	println("[INFO] Approving bar and baz tokens")

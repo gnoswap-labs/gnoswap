@@ -1,7 +1,7 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -16,7 +16,7 @@ func init() {
 // EmissionState manages emission state and halving data.
 // Tracks emission timing, status, and halving year information for 12-year schedule.
 type EmissionState struct {
-	startHeight    int64
+	createdHeight  int64
 	startTimestamp int64
 	endTimestamp   int64
 	halvingData    *HalvingData
@@ -24,7 +24,7 @@ type EmissionState struct {
 
 // isInitialized returns true if emission state has been initialized with valid height and timestamp.
 func (e *EmissionState) isInitialized() bool {
-	return e.startHeight != 0 && e.startTimestamp != 0
+	return e.createdHeight != 0 && e.startTimestamp != 0
 }
 
 // isActive returns true if emission is currently active at the given timestamp.
@@ -64,9 +64,9 @@ func (e *EmissionState) getCurrentYear(timestamp int64) int64 {
 	return year + 1
 }
 
-// getStartHeight returns the blockchain height when emission started.
-func (e *EmissionState) getStartHeight() int64 {
-	return e.startHeight
+// getCreatedHeight returns the blockchain height when emission started.
+func (e *EmissionState) getCreatedHeight() int64 {
+	return e.createdHeight
 }
 
 // getStartTimestamp returns the timestamp when emission started.
@@ -117,10 +117,9 @@ func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64
 	}
 
 	accumulatedAmount := e.halvingData.getAccumAmount(year)
-	accumulatedAmount += amount
+	accumulatedAmount = safeAddInt64(accumulatedAmount, amount)
 
-	e.halvingData.setAccumAmount(year, accumulatedAmount)
-	return nil
+	return e.halvingData.setAccumAmount(year, accumulatedAmount)
 }
 
 // subHalvingYearLeftAmount subtracts from the remaining emission amount for the specified halving year.
@@ -131,24 +130,27 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	}
 
 	leftAmount := e.halvingData.getLeftAmount(year)
-	leftAmount -= amount
+	leftAmount = safeSubInt64(leftAmount, amount)
 
-	e.halvingData.setLeftAmount(year, leftAmount)
-	return nil
+	return e.halvingData.setLeftAmount(year, leftAmount)
 }
 
-// updateHalvingData initializes halving data with the given start timestamp.
-func (e *EmissionState) updateHalvingData(startTimestamp int64) {
-	e.halvingData = NewHalvingData(startTimestamp)
+func (e *EmissionState) Clone() *EmissionState {
+	return &EmissionState{
+		createdHeight:  e.createdHeight,
+		startTimestamp: e.startTimestamp,
+		endTimestamp:   e.endTimestamp,
+		halvingData:    e.halvingData.Clone(),
+	}
 }
 
 // NewEmissionState creates a new EmissionState with specified start height and timestamp.
 // Calculates emission end time based on 12-year schedule and initializes halving data.
-func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
-	emissionEndTime := startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
+func NewEmissionState(createdHeight int64, startTimestamp int64) *EmissionState {
+	emissionEndTime := safeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
 
 	return &EmissionState{
-		startHeight:    startHeight,
+		createdHeight:  createdHeight,
 		startTimestamp: startTimestamp,
 		endTimestamp:   emissionEndTime,
 		halvingData:    NewHalvingData(startTimestamp),
@@ -156,10 +158,9 @@ func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 }
 
 // getEmissionState returns the singleton emission state instance.
-// Creates a new instance with current height and timestamp if one doesn't exist.
 func getEmissionState() *EmissionState {
 	if emissionState == nil {
-		emissionState = NewEmissionState(std.ChainHeight(), time.Now().Unix())
+		emissionState = NewEmissionState(runtime.ChainHeight(), time.Now().Unix())
 	}
 
 	return emissionState

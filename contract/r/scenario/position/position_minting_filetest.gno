@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 
@@ -15,13 +14,17 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 // Constants for addresses and approvals
@@ -32,14 +35,14 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 	bobAddr    = testutils.TestAddress("bob")
-	bobRealm   = std.NewUserRealm(bobAddr)
+	bobRealm   = testing.NewUserRealm(bobAddr)
 )
 
 var (
@@ -89,7 +92,7 @@ func setupPool() {
 	}
 }
 
-func tokenFaucet(tokenPath string, to std.Address) {
+func tokenFaucet(tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 
@@ -141,8 +144,8 @@ func testBasicPositionMinting() {
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
-	println("[EXPECTED] Position is not burned:", !pn.PositionGetPositionIsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.PositionIsInRange(positionId))
+	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
+	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
 }
 
 func testZeroLiquidityMintingFailure() {

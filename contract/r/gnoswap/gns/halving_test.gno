@@ -1,39 +1,24 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
+	"math"
 	"testing"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/uassert"
 
 	"gno.land/p/nt/ufmt"
 )
 
 var (
-	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
+	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance")
 
-	startHeight int64 = std.ChainHeight()
+	startHeight int64 = runtime.ChainHeight()
 
 	blockTime      int64 = 2000
 	startTimestamp int64 = time.Now().Unix() + 2 // blockTime in seconds
 )
-
-var FIRST_TIMESTAMP_OF_HALVING_YEAR = []int64{
-	startTimestamp + (SECONDS_IN_YEAR * 0),
-	startTimestamp + (SECONDS_IN_YEAR * 1),
-	startTimestamp + (SECONDS_IN_YEAR * 2),
-	startTimestamp + (SECONDS_IN_YEAR * 3),
-	startTimestamp + (SECONDS_IN_YEAR * 4),
-	startTimestamp + (SECONDS_IN_YEAR * 5),
-	startTimestamp + (SECONDS_IN_YEAR * 6),
-	startTimestamp + (SECONDS_IN_YEAR * 7),
-	startTimestamp + (SECONDS_IN_YEAR * 8),
-	startTimestamp + (SECONDS_IN_YEAR * 9),
-	startTimestamp + (SECONDS_IN_YEAR * 10),
-	startTimestamp + (SECONDS_IN_YEAR * 11),
-}
 
 func TestGetHalvingYear(t *testing.T) {
 	resetObject(t)
@@ -41,7 +26,7 @@ func TestGetHalvingYear(t *testing.T) {
 
 	t.Run("during halving years", func(t *testing.T) {
 		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-			firstTimestampOfYear := FIRST_TIMESTAMP_OF_HALVING_YEAR[year-1]
+			firstTimestampOfYear := GetHalvingYearStartTimestamp(year)
 			uassert.Equal(t, year, GetHalvingYear(firstTimestampOfYear))
 		}
 	})
@@ -51,84 +36,7 @@ func TestGetHalvingYear(t *testing.T) {
 	})
 }
 
-func TestHalvingYearStartTimestamp(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the start timestamp for a valid year
-	startTimestamp := GetHalvingYearStartTimestamp(1)
-	uassert.True(t, startTimestamp > 0)
-}
-
-func TestHalvingYearTimestamp(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the timestamp for a valid year
-	timestamp := GetHalvingYearTimestamp(2)
-	uassert.True(t, timestamp > 0)
-}
-
-func TestHalvingYearMaxAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the max amount for a valid year
-	maxAmount := GetHalvingYearMaxAmount(3)
-	uassert.True(t, maxAmount > 0)
-}
-
-func TestHalvingYearMintAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the mint amount for a valid year (initially 0)
-	mintAmount := GetHalvingYearMintAmount(4)
-	uassert.Equal(t, int64(0), mintAmount)
-}
-
-func TestHalvingYearAccuAmount(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the accumulated amount for a valid year (initially 0)
-	accuAmount := GetHalvingYearAccuAmount(5)
-	uassert.Equal(t, int64(0), accuAmount)
-}
-
-func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
-	resetObject(t)
-	InitGnsTest(t)
-
-	// Test that we can get the amount per seconds for a valid year
-	amountPerSeconds := GetAmountPerSecondPerHalvingYear(6)
-	uassert.True(t, amountPerSeconds > 0)
-}
-
-func TestGetHalvingInfo(t *testing.T) {
-	jsonStr, err := json.Unmarshal([]byte(GetHalvingInfo()))
-	uassert.NoError(t, err)
-
-	halving := jsonStr.MustKey("halvings").MustArray()
-	uassert.Equal(t, len(halving), 12)
-}
-
-func TestValidBlockTime(t *testing.T) {
-	// Test valid block time validation
-	err := validBlockTime(0)
-	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
-
-	err = validBlockTime(-5)
-	uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
-
-	err = validBlockTime(1000)
-	uassert.NoError(t, err)
-}
-
-func TestEmissionState(t *testing.T) {
-	/*
-		Test basic emission state functionality
-	*/
+func TestEmissionState_CalculateAmountPerSeconds(t *testing.T) {
 	resetObject(t)
 	InitGnsTest(t)
 
@@ -142,18 +50,7 @@ func TestEmissionState(t *testing.T) {
 	// Test amount per seconds for year 1
 	expected := es.getHalvingYearAmountPerSecond(1)
 	uassert.True(t, expected > 0)
-}
 
-func TestAmountPerSecondsCalculation(t *testing.T) {
-	/*
-		Test that the amount per seconds is correctly calculated for all years
-	*/
-	resetObject(t)
-	InitGnsTest(t)
-
-	es := getEmissionState()
-
-	// Test each year has correct amount per seconds calculation
 	for y := int64(1); y <= HALVING_END_YEAR; y++ {
 		amountPerSeconds := es.getHalvingYearAmountPerSecond(y)
 		yearMaxAmount := GetHalvingYearMaxAmount(y)
@@ -166,6 +63,98 @@ func TestAmountPerSecondsCalculation(t *testing.T) {
 			amountPerSeconds,
 			ufmt.Sprintf("year %d amount per seconds mismatch: expected=%d, got=%d", y, expected, amountPerSeconds),
 		)
+	}
+}
+
+func TestHalvingYearGetters(t *testing.T) {
+	resetObject(t)
+	InitGnsTest(t)
+
+	t.Run("valid years (1-12)", func(t *testing.T) {
+		var prevendTimestamp int64
+
+		for year := int64(1); year <= HALVING_END_YEAR; year++ {
+			startTimestamp := GetHalvingYearStartTimestamp(year)
+			endTimestamp := GetHalvingYearEndTimestamp(year)
+
+			// StartTimestamp and EndTimestamp should be positive
+			uassert.True(t, startTimestamp > 0)
+			uassert.True(t, endTimestamp > startTimestamp)
+
+			// EndTimestamp should be startTimestamp + SECONDS_IN_YEAR - 1
+			uassert.Equal(t, startTimestamp+SECONDS_IN_YEAR-1, endTimestamp)
+
+			// GetHalvingYearStartTimestamp should equal GetHalvingYearStartTimestamp
+			uassert.Equal(t, startTimestamp, GetHalvingYearStartTimestamp(year))
+
+			// Year N+1 start should be Year N end + 1
+			if year > 1 {
+				uassert.Equal(t, prevendTimestamp+1, startTimestamp)
+			}
+			prevendTimestamp = endTimestamp
+
+			// MaxAmount should match GetHalvingAmountsPerYear
+			uassert.Equal(t, GetHalvingAmountsPerYear(year), GetHalvingYearMaxAmount(year))
+
+			// MintAmount and AccuAmount should be 0 initially
+			uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year))
+			uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year))
+		}
+	})
+
+	t.Run("invalid year 0", func(t *testing.T) {
+		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
+		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
+		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
+		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(0))
+		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
+	})
+
+	t.Run("invalid year 13", func(t *testing.T) {
+		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
+		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
+		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
+		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(13))
+		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(13))
+	})
+}
+
+func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
+	resetObject(t)
+	InitGnsTest(t)
+
+	// Test that we can get the amount per seconds for a valid year
+	amountPerSeconds := GetAmountPerSecondPerHalvingYear(6)
+	uassert.True(t, amountPerSeconds > 0)
+}
+
+func TestValidBlockTime(t *testing.T) {
+	const maxBlockTime int64 = 1_000_000_000 // 1e9
+
+	tests := []struct {
+		name        string
+		blockTime   int64
+		shouldError bool
+	}{
+		// Lower boundary
+		{"blockTime = -1 (invalid)", -1, true},
+		{"blockTime = 0 (invalid)", 0, true},
+		{"blockTime = 1 (valid, min boundary)", 1, false},
+
+		// Upper boundary
+		{"blockTime = maxBlockTime-1 (valid, max boundary)", maxBlockTime - 1, false},
+		{"blockTime = maxBlockTime (invalid)", maxBlockTime, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validBlockTime(tt.blockTime)
+			if tt.shouldError {
+				uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
 	}
 }
 
@@ -299,6 +288,16 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 
 		// Year -1 tests (negative year, should return 0)
 		{"StartTimestamp with year -1", -1, hd.getStartTimestamp, 0},
+		{"EndTimestamp with year -1", -1, hd.getEndTimestamp, 0},
+		{"MaxAmount with year -1", -1, hd.getMaxAmount, 0},
+
+		// Year 13 tests (beyond max, should return 0)
+		{"StartTimestamp with year 13", 13, hd.getStartTimestamp, 0},
+		{"EndTimestamp with year 13", 13, hd.getEndTimestamp, 0},
+		{"MaxAmount with year 13", 13, hd.getMaxAmount, 0},
+
+		// Year 100 tests (far beyond max, should return 0)
+		{"StartTimestamp with year 100", 100, hd.getStartTimestamp, 0},
 
 		// Valid year tests
 		{"StartTimestamp with year 1", 1, hd.getStartTimestamp, 1000},
@@ -324,6 +323,265 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 			result := tt.getter(tt.year)
 			uassert.Equal(t, tt.expected, result,
 				"Unexpected result for %s", tt.name)
+		})
+	}
+}
+
+// TestHalvingDataSettersWithInvalidYear tests all HalvingData setters with invalid years
+func TestHalvingDataSettersWithInvalidYear(t *testing.T) {
+	hd := NewHalvingData(1000)
+
+	tests := []struct {
+		name        string
+		year        int64
+		setter      func(int64) error
+		shouldError bool
+	}{
+		// Year 0 tests
+		{"setStartTimestamp with year 0", 0, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, true},
+		{"setEndTimestamp with year 0", 0, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, true},
+		{"setMaxAmount with year 0", 0, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
+		{"setMintedAmount with year 0", 0, func(y int64) error { return hd.setMintedAmount(y, 1000) }, true},
+		{"setAccumAmount with year 0", 0, func(y int64) error { return hd.setAccumAmount(y, 1000) }, true},
+		{"setLeftAmount with year 0", 0, func(y int64) error { return hd.setLeftAmount(y, 1000) }, true},
+		{"setAmountPerSecond with year 0", 0, func(y int64) error { return hd.setAmountPerSecond(y, 1000) }, true},
+		{"addAccumAmount with year 0", 0, func(y int64) error { return hd.addAccumAmount(y, 1000) }, true},
+
+		// Negative year tests
+		{"setStartTimestamp with year -1", -1, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, true},
+		{"setEndTimestamp with year -1", -1, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, true},
+		{"setMaxAmount with year -1", -1, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
+		{"setMaxAmount with year -100", -100, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
+
+		// Year > 12 tests
+		{"setStartTimestamp with year 13", 13, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, true},
+		{"setEndTimestamp with year 13", 13, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, true},
+		{"setMaxAmount with year 13", 13, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
+		{"setMaxAmount with year 100", 100, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
+
+		// Valid year tests
+		{"setStartTimestamp with year 1", 1, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, false},
+		{"setEndTimestamp with year 1", 1, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, false},
+		{"setMaxAmount with year 1", 1, func(y int64) error { return hd.setMaxAmount(y, 1000) }, false},
+		{"setStartTimestamp with year 12", 12, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, false},
+		{"setEndTimestamp with year 12", 12, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, false},
+		{"setMaxAmount with year 12", 12, func(y int64) error { return hd.setMaxAmount(y, 1000) }, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.setter(tt.year)
+
+			if tt.shouldError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestHalvingDataBoundaryTimestamps tests HalvingData with boundary timestamp values
+func TestHalvingDataBoundaryTimestamps(t *testing.T) {
+	tests := []struct {
+		name           string
+		startTimestamp int64
+		year           int64
+		expectedStart  int64
+		expectedEnd    int64
+	}{
+		{
+			name:           "Very small timestamp",
+			startTimestamp: 1,
+			year:           1,
+			expectedStart:  1,
+			expectedEnd:    1 + SECONDS_IN_YEAR - 1,
+		},
+		{
+			name:           "Large timestamp",
+			startTimestamp: 9999999999,
+			year:           1,
+			expectedStart:  9999999999,
+			expectedEnd:    9999999999 + SECONDS_IN_YEAR - 1,
+		},
+		{
+			name:           "Zero timestamp",
+			startTimestamp: 0,
+			year:           1,
+			expectedStart:  0,
+			expectedEnd:    SECONDS_IN_YEAR - 1,
+		},
+		{
+			name:           "Year 12 with normal timestamp",
+			startTimestamp: 1000,
+			year:           12,
+			expectedStart:  1000 + (SECONDS_IN_YEAR * 11),
+			expectedEnd:    1000 + (SECONDS_IN_YEAR * 12) - 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hd := NewHalvingData(tt.startTimestamp)
+
+			startTimestamp := hd.getStartTimestamp(tt.year)
+			endTimestamp := hd.getEndTimestamp(tt.year)
+
+			uassert.Equal(t, tt.expectedStart, startTimestamp, "Start timestamp mismatch")
+			uassert.Equal(t, tt.expectedEnd, endTimestamp, "End timestamp mismatch")
+		})
+	}
+}
+
+// TestHalvingDataAmountOperations tests amount calculations with edge values
+func TestHalvingDataAmountOperations(t *testing.T) {
+	hd := NewHalvingData(1000)
+
+	tests := []struct {
+		name           string
+		year           int64
+		operation      func()
+		validateAmount func(*testing.T)
+	}{
+		{
+			name: "Add accumAmount multiple times",
+			year: 1,
+			operation: func() {
+				hd.addAccumAmount(1, 100)
+				hd.addAccumAmount(1, 200)
+				hd.addAccumAmount(1, 300)
+			},
+			validateAmount: func(t *testing.T) {
+				amount := hd.getAccumAmount(1)
+				uassert.Equal(t, int64(600), amount, "Accumulated amount should be sum of additions")
+			},
+		},
+		{
+			name: "Set and modify left amount",
+			year: 5,
+			operation: func() {
+				initialMax := hd.getMaxAmount(5)
+				hd.setLeftAmount(5, initialMax-1000)
+			},
+			validateAmount: func(t *testing.T) {
+				left := hd.getLeftAmount(5)
+				max := hd.getMaxAmount(5)
+				uassert.Equal(t, max-1000, left, "Left amount should be reduced")
+			},
+		},
+		{
+			name: "Amount per second consistency",
+			year: 7,
+			operation: func() {
+				// No operation needed, just validation
+			},
+			validateAmount: func(t *testing.T) {
+				yearAmount := hd.getMaxAmount(7)
+				perSecond := hd.getAmountPerSecond(7)
+
+				// perSecond * SECONDS_IN_YEAR should be approximately equal to yearAmount
+				calculatedTotal := perSecond * SECONDS_IN_YEAR
+				diff := yearAmount - calculatedTotal
+
+				// Allow small difference due to integer division
+				uassert.True(t, diff >= 0 && diff < SECONDS_IN_YEAR,
+					"Amount per second calculation should be consistent")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.operation()
+			tt.validateAmount(t)
+		})
+	}
+}
+
+// TestHalvingDataAddAccumAmountOverflow tests overflow protection in HalvingData.addAccumAmount
+func TestHalvingDataAddAccumAmountOverflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		year         int64
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "normal addition year 1",
+			year:         1,
+			initialValue: 1000,
+			addAmount:    2000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "normal addition year 12",
+			year:         12,
+			initialValue: 5000,
+			addAmount:    3000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "overflow - MaxInt64 + 1",
+			year:         1,
+			initialValue: math.MaxInt64,
+			addAmount:    1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - near MaxInt64",
+			year:         2,
+			initialValue: math.MaxInt64 - 50,
+			addAmount:    100,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - large positive values",
+			year:         3,
+			initialValue: math.MaxInt64/2 + 1,
+			addAmount:    math.MaxInt64/2 + 1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "boundary - exactly MaxInt64",
+			year:         4,
+			initialValue: math.MaxInt64 - 500,
+			addAmount:    500,
+			shouldPanic:  false,
+		},
+		{
+			name:         "add zero",
+			year:         5,
+			initialValue: math.MaxInt64,
+			addAmount:    0,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hd := NewHalvingData(1000)
+
+			// Set initial accumulated amount
+			hd.setAccumAmount(tt.year, tt.initialValue)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					hd.addAccumAmount(tt.year, tt.addAmount)
+				})
+			} else {
+				err := hd.addAccumAmount(tt.year, tt.addAmount)
+				uassert.NoError(t, err)
+
+				// Verify the result
+				expected := tt.initialValue + tt.addAmount
+				actual := hd.getAccumAmount(tt.year)
+				uassert.Equal(t, expected, actual)
+			}
 		})
 	}
 }

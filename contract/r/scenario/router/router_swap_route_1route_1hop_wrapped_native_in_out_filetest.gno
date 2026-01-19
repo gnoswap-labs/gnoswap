@@ -1,18 +1,23 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/qux"
@@ -22,7 +27,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -75,8 +80,8 @@ func testPositionMintQuxGnot(t *testing.T) {
 
 	println("[INFO] Issuing native tokens to admin")
 	// send
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
 
 	println("[INFO] Depositing native tokens to get wrapped tokens")
 	// Deposit(wrap)
@@ -88,7 +93,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in qux-wugnot pool")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -116,7 +121,7 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 		"100", // quoteArr
 		"1",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 2711")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 2707")
 	println()
 }
 
@@ -161,7 +166,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 //
 // [SCENARIO] Given: Dry swap route qux to wugnot exact in preparation
 // [INFO] Executing dry swap route (qux → wugnot)
-// [EXPECTED] dry swap result: 2711 expected: 2711
+// [EXPECTED] dry swap result: 2707 expected: 2707
 //
 // [SCENARIO] Given: Dry swap route qux to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (qux → wugnot)

@@ -1,22 +1,26 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -26,7 +30,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -78,7 +82,7 @@ func main() {
 	println("[EXPECTED] amount0:", amount0, "expected: 99962")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
-	pool := pl.GetPool(barPath, bazPath, fee500)
+	pool, _ := pl.GetPool(barPath, bazPath, fee500)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
@@ -97,23 +101,25 @@ func main() {
 	bar.Approve(cross, routerAddr, max_approve)
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
-	println("[INFO] Attempting ExactOut swap (bar → 120000 baz)")
+	expectedAmountSpecified := "119820"
+
+	println("[INFO] Attempting ExactOut swap (bar →", expectedAmountSpecified, "baz) with fee is almost 120000")
 	println("[INFO] Expected to fail due to insufficient liquidity")
 
-	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
+	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
+		`[GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
 		func() {
 			router.ExactOutSwapRoute(
 				cross,
-				barPath,  // inputToken
-				bazPath,  // outputToken
-				"120000", // amountSpecified
-				poolPath, // strRouteArr
-				"100",    // quoteArr
-				"0",      // tokenAmountLimit
+				barPath,                 // inputToken
+				bazPath,                 // outputToken
+				expectedAmountSpecified, // amountSpecified
+				poolPath,                // strRouteArr
+				"100",                   // quoteArr
+				"0",                     // tokenAmountLimit
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
@@ -136,11 +142,11 @@ func createPool(t *testing.T,
 	token1 string,
 	fee uint32,
 	sqrtPriceX96 string,
-	caller std.Address,
+	caller address,
 ) {
 	t.Helper()
 
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
@@ -176,15 +182,15 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	)
 }
 
-func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
+func barApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
+	testing.SetRealm(testing.NewUserRealm(owner))
 	bar.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
+func bazApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
+	testing.SetRealm(testing.NewUserRealm(owner))
 	baz.Approve(cross, spender, amount)
 }
 
@@ -208,7 +214,7 @@ func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
 // [INFO] Setting up additional pools and positions
 // [INFO] Setting swap permissions
 // [INFO] Approving tokens for swap
-// [INFO] Attempting ExactOut swap (bar → 120000 baz)
+// [INFO] Attempting ExactOut swap (bar → 119820 baz) with fee is almost 120000
 // [INFO] Expected to fail due to insufficient liquidity
-// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)
+// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)
 // [INFO] Scenario completed

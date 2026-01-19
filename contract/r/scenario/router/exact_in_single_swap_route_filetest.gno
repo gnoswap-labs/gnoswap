@@ -5,28 +5,35 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	"gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/router/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -51,7 +58,7 @@ func main() {
 
 	println("[SCENARIO] 3. ExactInSwapRoute")
 	exactInSingleSwapRouteBy(
-		"gnot",
+		"ugnot",
 		gnsPath,
 		"10000000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
@@ -65,12 +72,12 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
-	testing.IssueCoins(std.NewCodeRealm(wugnotPath).Address(), std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -100,7 +107,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -142,15 +149,15 @@ func exactInSingleSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	beforeGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 
 	specifiedAmountInt, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
-	sendBanker := std.NewBanker(std.BankerTypeRealmSend)
-	sendBanker.SendCoins(adminAddr, routerAddr, std.Coins{{"ugnot", specifiedAmountInt}})
-	testing.SetOriginSend(std.Coins{{"ugnot", specifiedAmountInt}})
+	sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
+	sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", specifiedAmountInt}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", specifiedAmountInt}})
 	testing.SetRealm(adminRealm)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336
@@ -166,7 +173,7 @@ func exactInSingleSwapRouteBy(
 		"",
 	)
 
-	afterGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount(GNS): %s\n", inputTokenAmount)
@@ -190,7 +197,7 @@ func exactInSingleSwapRouteBy(
 //
 //[SCENARIO] 3. ExactInSwapRoute
 //[INFO] ExactInSwapRoute
-//[INFO] inputToken: gnot
+//[INFO] inputToken: ugnot
 //[INFO] outputToken: gno.land/r/gnoswap/gns
 //[INFO] specifiedAmount: 10000000
 //[INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500

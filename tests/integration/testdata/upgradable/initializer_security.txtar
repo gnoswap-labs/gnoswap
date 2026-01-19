@@ -1,0 +1,49 @@
+loadpkg gno.land/p/nt/avl
+loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+
+loadpkg gno.land/r/gnoswap/pool
+loadpkg gno.land/r/gnoswap/pool/v1
+
+gnoland start
+
+# fund admin for tx fees
+gnokey maketx send -send 1000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/register_duplicated_version -pkgpath gno.land/r/gnoswap/pool/register_duplicated_version -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/try_register_pool_initializer -pkgpath gno.land/r/try_register_pool_initializer -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/pool/v1"
+
+## Unauthorized package cannot register initializer
+! gnokey maketx call -pkgpath gno.land/r/try_register_pool_initializer -func TryRegister -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stderr 'version_manager: caller is not in the domain path'
+
+## Authorized package can register once
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/register_duplicated_version -func RegisterVersion -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+# stdout OK!
+
+## Second registration attempt from same package fails
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/register_duplicated_version -func RegisterVersion -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stderr 'version_manager: initializer already registered'

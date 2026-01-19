@@ -1,17 +1,21 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/r/gnoswap/access"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
@@ -21,7 +25,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -95,7 +99,7 @@ func testDrySwapRouteBarQuxExactIn() {
 		"100",
 	)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 7337")
+	println("[EXPECTED] dryResult:", dryResult, "expected: 7326")
 	println()
 }
 
@@ -227,7 +231,7 @@ func TestDrySwapRouteQuxBarExactOut() {
 		"100000",
 	)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 7351")
+	println("[EXPECTED] dryResult:", dryResult, "expected: 7359")
 	println()
 }
 
@@ -269,7 +273,7 @@ func TestSwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route bar to qux exact in preparation
 // [INFO] Executing dry swap route (bar → baz → qux)
-// [EXPECTED] dryResult: 7337 expected: 7337
+// [EXPECTED] dryResult: 7326 expected: 7326
 //
 // [SCENARIO] Given: Swap route bar to qux exact in preparation
 // [INFO] Approving tokens for swap
@@ -299,12 +303,12 @@ func TestSwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route qux to bar exact out preparation
 // [INFO] Executing dry swap route exact out (qux → baz → bar)
-// [EXPECTED] dryResult: 7351 expected: 7351
+// [EXPECTED] dryResult: 7359 expected: 7359
 //
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (qux → baz → bar)
-// [EXPECTED] amountIn: 7365 expected: 7365
-// [EXPECTED] amountOut: -999 expected: -999
+// [EXPECTED] amountIn: 7373 expected: 7365
+// [EXPECTED] amountOut: -1000 expected: -999
 //
 // [INFO] Scenario completed

@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
@@ -13,35 +14,39 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -57,7 +62,7 @@ func main() {
 	initializeWithDefaults()
 	println()
 
-	println("[SCENARIO] 2. Create gnot:gns:3000 pool")
+	println("[SCENARIO] 2. Create ugnot:gns:3000 pool")
 	createPool()
 	println()
 
@@ -86,10 +91,10 @@ func initializeWithDefaults() {
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] prepare wugnot by depositing ugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(nil)
 
@@ -307,7 +312,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create gnot:gns:3000 pool
+// [SCENARIO] 2. Create ugnot:gns:3000 pool
 // [INFO] set pool creation fee to 0
 // [INFO] create wugnot:gns:3000 pool
 // [EXPECTED] pool created with price ratio 1:1
@@ -339,7 +344,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Unstake position 02
 // [INFO] unstake position 02
-// [EXPECTED] position 02 owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position 02 owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 7. Collect rewards after unstaking
 // [INFO] collect reward for position 01 after position 02 unstaked

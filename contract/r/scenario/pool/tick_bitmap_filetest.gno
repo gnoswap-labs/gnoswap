@@ -10,6 +10,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	plp "gno.land/p/gnoswap/gnsmath"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 const (
@@ -487,7 +489,10 @@ func TickBitmapFlipTick_Helper(
 	// 1 << bitPos
 	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-	tickBitmaps[wordPos] = tickBitmaps[wordPos].NilToZero()
+	if tickBitmaps[wordPos] == nil {
+		tickBitmaps[wordPos] = u256.Zero()
+	}
+	tickBitmaps[wordPos] = tickBitmaps[wordPos]
 	tickBitmaps[wordPos] = new(u256.Uint).Xor(tickBitmaps[wordPos], mask)
 }
 
@@ -516,7 +521,10 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 
 		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
 
-		tickBitmaps[wordPos] = tickBitmaps[wordPos].NilToZero()
+		if tickBitmaps[wordPos] == nil {
+			tickBitmaps[wordPos] = u256.Zero()
+		}
+		tickBitmaps[wordPos] = tickBitmaps[wordPos]
 
 		masked := new(u256.Uint).And(tickBitmaps[wordPos], mask)
 
@@ -539,7 +547,10 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 	_mask = new(u256.Uint).Sub(_mask, u256.NewUint(1))
 	mask := BitwiseNotForUint256BitmapIndexing_Helper(_mask)
 
-	tickBitmaps[wordPos] = tickBitmaps[wordPos].NilToZero()
+	if tickBitmaps[wordPos] == nil {
+		tickBitmaps[wordPos] = u256.Zero()
+	}
+	tickBitmaps[wordPos] = tickBitmaps[wordPos]
 	masked := new(u256.Uint).And(tickBitmaps[wordPos], mask)
 
 	initialized := !(masked.IsZero())

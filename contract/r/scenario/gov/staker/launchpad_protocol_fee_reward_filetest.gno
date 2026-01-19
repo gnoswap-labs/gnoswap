@@ -3,7 +3,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -11,29 +10,40 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	pf "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/staker"
-	lp "gno.land/r/gnoswap/v1/launchpad"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
+	"gno.land/r/gnoswap/gov/staker"
+
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	lp "gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
 
 var (
 	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm = std.NewUserRealm(admin)
+	adminRealm = testing.NewUserRealm(admin)
 
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = std.NewUserRealm(stakerAddr)
+	stakerRealm   = testing.NewUserRealm(stakerAddr)
 
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm   = testing.NewUserRealm(govStakerAddr)
+
 	projectAddr  = testutils.TestAddress("projectAddr")
-	projectRealm = std.NewUserRealm(projectAddr)
+	projectRealm = testing.NewUserRealm(projectAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -59,7 +69,7 @@ func main() {
 
 func createLaunchpadProject() {
 	rewardAmount := int64(1_000_000_000)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, launchpadAddr, rewardAmount)
@@ -77,8 +87,8 @@ func createLaunchpadProject() {
 		startTime,
 	)
 
-	testing.SkipHeights(3600)
-	ufmt.Printf("[INFO] skipped 3600 blocks\n")
+	testing.SkipHeights(120960)
+	ufmt.Printf("[INFO] skipped 120960 blocks\n")
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, launchpadAddr, rewardAmount)
@@ -95,19 +105,37 @@ func setupProtocolFeeDeposit() {
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 
-	ufmt.Printf("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
+	println("[INFO] protocol fee deposited: bar(1000), qux(2500)")
 }
 
 func skipBlocksAndDistribute() {
 	testing.SkipHeights(10)
-	ufmt.Printf("[INFO] skipped 10 blocks\n")
+	println("[INFO] skipped 10 blocks")
+}
+
+func formatProtocolFees(fees map[string]int64) string {
+	if len(fees) == 0 {
+		return "map[]"
+	}
+	result := "map["
+	first := true
+	for k, v := range fees {
+		if !first {
+			result += " "
+		}
+		result += k + ":" + ufmt.Sprintf("%d", v)
+		first = false
+	}
+	result += "]"
+	return result
 }
 
 func protocolFeeRewardProjectRecipient() {
-	gcr := staker.GetClaimableRewardByLaunchpad(projectAddr)
-	ufmt.Printf("[INFO] claimable reward (project recipient): %s\n", gcr)
-	testing.SetRealm(projectRealm)
+	testing.SetRealm(govStakerRealm)
+	emissionReward, protocolFees, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
+	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
+	testing.SetRealm(projectRealm)
 	prevBarBalance := bar.BalanceOf(projectAddr)
 	prevQuxBalance := qux.BalanceOf(projectAddr)
 
@@ -116,14 +144,14 @@ func protocolFeeRewardProjectRecipient() {
 	afterBarBalance := bar.BalanceOf(projectAddr)
 	afterQuxBalance := qux.BalanceOf(projectAddr)
 
-	ufmt.Printf("[INFO] collected protocol fee reward for project recipient\n")
+	println("[INFO] collected protocol fee reward for project recipient")
 	ufmt.Printf("[EXPECTED] collected bar amount: %d\n", afterBarBalance-prevBarBalance)
 	ufmt.Printf("[EXPECTED] collected qux amount: %d\n", afterQuxBalance-prevQuxBalance)
 }
 
 // Output:
 // [SCENARIO] 1. Create launchpad project and deposit
-// [INFO] skipped 3600 blocks
+// [INFO] skipped 120960 blocks
 //
 // [SCENARIO] 1. Setup protocol fee deposit (bar, qux)
 // [INFO] protocol fee deposited: bar(1000), qux(2500)
@@ -132,7 +160,7 @@ func protocolFeeRewardProjectRecipient() {
 // [INFO] skipped 10 blocks
 //
 // [SCENARIO] 3. Check and collect protocol fee reward for project recipient
-// [INFO] claimable reward (project recipient): {"height":"3733","now":"1234585940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"999"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2499"}]}
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar:999 gno.land/r/onbloc/qux:2499]
 // [INFO] collected protocol fee reward for project recipient
 // [EXPECTED] collected bar amount: 999
 // [EXPECTED] collected qux amount: 2499

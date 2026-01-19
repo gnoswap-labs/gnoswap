@@ -1,12 +1,21 @@
 package gns
 
-import (
-	"std"
-	"strconv"
-	"time"
+import "time"
 
-	"gno.land/p/onbloc/json"
-)
+// GetMaxEmissionAmount returns the maximum amount of emission allowed.
+func GetMaxEmissionAmount() int64 {
+	return MAX_EMISSION_AMOUNT
+}
+
+// GetMaximumSupply returns the maximum supply of gns tokens.
+func GetMaximumSupply() int64 {
+	return MAXIMUM_SUPPLY
+}
+
+// GetInitialMintAmount returns the initial amount of gns tokens to be minted.
+func GetInitialMintAmount() int64 {
+	return INITIAL_MINT_AMOUNT
+}
 
 // IsEmissionInitialized returns true if emission schedule has been initialized.
 func IsEmissionInitialized() bool {
@@ -37,8 +46,8 @@ func GetCurrentYear() int64 {
 // Returns two slices: timestamps when halving periods start and corresponding emission rates per second.
 func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
 	halvingData := getEmissionState().getHalvingData()
-	halvingTimes := make([]int64, 0)
-	halvingEmissions := make([]int64, 0)
+	halvingTimes := make([]int64, 0, HALVING_END_YEAR)
+	halvingEmissions := make([]int64, 0, HALVING_END_YEAR)
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		startTimestamp := halvingData.getStartTimestamp(year)
@@ -60,22 +69,25 @@ func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64
 // GetEmissionAmountPerSecondByTimestamp returns the emission rate per second for a given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionAmountPerSecondByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearAmountPerSecond(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearAmountPerSecond(year)
 }
 
 // GetEmissionLeftAmountByTimestamp returns the remaining emission amount for the halving year at given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionLeftAmountByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearLeftAmount(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearLeftAmount(year)
 }
 
 // GetEmissionAccumulatedAmountByTimestamp returns the accumulated emission amount for the halving year at given timestamp.
 // Returns 0 if timestamp is outside emission period.
 func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
-	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearAccumulatedAmount(year)
+	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
+	return state.getHalvingYearAccumulatedAmount(year)
 }
 
 // GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
@@ -88,12 +100,6 @@ func GetHalvingYearStartTimestamp(year int64) int64 {
 func GetHalvingYearEndTimestamp(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getEndTimestamp(year)
-}
-
-// GetHalvingYearTimestamp returns the start timestamp for the specified halving year.
-func GetHalvingYearTimestamp(year int64) int64 {
-	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getStartTimestamp(year)
 }
 
 // GetHalvingYearMaxAmount returns the maximum token issuance for the specified halving year.
@@ -127,8 +133,17 @@ func GetAmountPerSecondPerHalvingYear(year int64) int64 {
 }
 
 // GetHalvingAmountsPerYear returns the total emission amount allocated for the specified year.
+// Returns 0 if year is outside the valid range (1-12).
 func GetHalvingAmountsPerYear(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
 	return halvingAmountsPerYear[year-1]
+}
+
+// GetEmissionCreatedHeight returns the block height when emission schedule was created.
+func GetEmissionCreatedHeight() int64 {
+	return getEmissionState().getCreatedHeight()
 }
 
 // GetEmissionStartTimestamp returns the timestamp when emission schedule begins.
@@ -145,41 +160,31 @@ func GetEmissionEndTimestamp() int64 {
 // Returns (year, startTimestamp, endTimestamp). Year is 0 if outside emission period.
 func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	state := getEmissionState()
+	year := state.getCurrentYear(timestamp)
 
-	endTimestamp := state.getEndTimestamp()
-	startTimestamp := state.getStartTimestamp()
+	// If outside emission period, return 0 values
+	if year == 0 {
+		return 0, 0, 0
+	}
 
-	year := getEmissionState().getCurrentYear(timestamp)
-
-	return year, startTimestamp + (SECONDS_IN_YEAR * year), endTimestamp
+	// Use cached timestamps from HalvingData
+	halvingData := state.getHalvingData()
+	return year, halvingData.getStartTimestamp(year), halvingData.getEndTimestamp(year)
 }
 
-// GetHalvingInfo returns comprehensive halving information as JSON string.
-// Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
-func GetHalvingInfo() string {
-	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+// GetHalvingInfo returns a clone of the halving data.
+func GetHalvingInfo() *HalvingData {
+	return getEmissionState().getHalvingData().Clone()
+}
 
-	halvings := make([]*json.Node, 0)
+// CalculateMintGnsAmount returns the amount of GNS that would be minted for the given timestamp range.
+func CalculateMintGnsAmount(fromTimestamp, toTimestamp int64) int64 {
+	state := getEmissionState().Clone()
 
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
-			"year":      json.StringNode("year", strconv.FormatInt(year, 10)),
-			"timestamp": json.NumberNode("timestamp", float64(GetHalvingYearTimestamp(year))),
-			"amount":    json.NumberNode("amount", float64(GetAmountPerSecondPerHalvingYear(year))),
-		}))
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":      json.NumberNode("height", float64(currentHeight)),
-		"currentTime": json.NumberNode("timestamp", float64(currentTime)),
-		"halvings":    json.ArrayNode("", halvings),
-	})
-
-	b, err := json.Marshal(node)
+	amountToMint, err := calculateAmountToMint(state, fromTimestamp, toTimestamp)
 	if err != nil {
-		panic(err.Error())
+		return 0
 	}
 
-	return string(b)
+	return amountToMint
 }

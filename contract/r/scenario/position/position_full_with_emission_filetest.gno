@@ -5,8 +5,8 @@
 package main
 
 import (
-	"std"
-	"strconv"
+	"chain"
+	"chain/banker"
 	"testing"
 	"time"
 
@@ -14,35 +14,43 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
 )
 
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	STAKER_PATH string      = "gno.land/r/gnoswap/v1/staker"
-	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	STAKER_PATH string  = "gno.land/r/gnoswap/staker"
+	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	MIN_PRICE string = "4295128740"
 )
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = testing.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 	bobAddr    = testutils.TestAddress("bob")
-	bobRealm   = std.NewUserRealm(bobAddr)
+	bobRealm   = testing.NewUserRealm(bobAddr)
 
 	token0Path = "gno.land/r/gnoland/wugnot"
 	token1Path = "gno.land/r/gnoswap/gns"
@@ -80,7 +88,7 @@ func main() {
 }
 
 func initPoolAndEmission() {
-	testing.SetRealm(std.NewCodeRealm(STAKER_PATH))
+	testing.SetRealm(testing.NewCodeRealm(STAKER_PATH))
 
 	testing.SetRealm(adminRealm)
 
@@ -92,20 +100,20 @@ func initPoolAndEmission() {
 
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
-	mintedGnotCoin := std.Coins{{"ugnot", 100000000000000}}
-	distributedGnotCoin := std.Coins{{"ugnot", defaultTokenAmount}}
+	mintedGnotCoin := chain.Coins{{"ugnot", 100000000000000}}
+	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, WUGNOT_ADDR, std.Coins{{"ugnot", defaultTokenAmount * 3}})
-	testing.SetOriginSend(std.Coins{{"ugnot", defaultTokenAmount * 3}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	banker.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
-	banker.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
+	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
+	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
@@ -131,7 +139,7 @@ func mintAlicePosition() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
 		token0Path,
@@ -169,7 +177,7 @@ func executeSwaps() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap WUGNOT -> GNS")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -181,7 +189,7 @@ func executeSwaps() {
 		"10000000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -220,29 +228,26 @@ func verifyFinalBalances() {
 	ufmt.Printf("[EXPECTED] Alice final GNS balance should be %d\n", aliceGnsBalance)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
 	const ugnotDenom = "ugnot"
 
-	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
-	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
-
 	if zeroForOne {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

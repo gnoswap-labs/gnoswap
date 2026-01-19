@@ -12,6 +12,8 @@ class GnoModuleManager
     @scenario_dir = scenario_dir
   end
 
+  TEST_FILE_PATTERNS = ["*_test.gno", "*_filetest.gno"].freeze
+
   def extract_module_path(file_path)
     begin
       toml = TOML.load_file(file_path)
@@ -31,6 +33,12 @@ class GnoModuleManager
     path_parts[1..-1].join('/')
   end
 
+  def has_test_files?(module_dir)
+    TEST_FILE_PATTERNS.any? do |pattern|
+      Dir.glob(File.join(module_dir, "**", pattern)).any?
+    end
+  end
+
   # generate matrix for github actions
   #
   # traverse all directories and find gnomod.toml
@@ -48,7 +56,9 @@ class GnoModuleManager
 
         # Get the directory containing gnomod.toml
         module_dir = File.dirname(mod_file)
-        
+        # Skip modules without any test files
+        next unless has_test_files?(module_dir)
+
         # Extract relative path after gno.land/
         relative_path = module_path.sub("gno.land/", "")
         
@@ -71,6 +81,8 @@ class GnoModuleManager
 
           # Get the directory containing gnomod.toml
           module_dir = File.dirname(mod_file)
+          # Skip modules without any test files
+          next unless has_test_files?(module_dir)
           
           # Extract relative path after gno.land/
           relative_path = module_path.sub("gno.land/", "")

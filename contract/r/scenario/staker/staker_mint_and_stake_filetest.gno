@@ -5,14 +5,15 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -20,11 +21,15 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -33,16 +38,16 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -93,8 +98,8 @@ func createPools() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 	testing.SkipHeights(1)
 
-	println("[INFO] create gnot:gns:3000 pool")
-	pl.CreatePool(cross, "gnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	println("[INFO] create ugnot:gns:3000 pool")
+	pl.CreatePool(cross, "ugnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -116,7 +121,7 @@ func mintAndStakeNative() {
 	testing.SkipHeights(2)
 
 	println("[INFO] prepare 100000 ugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
 
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
@@ -125,18 +130,18 @@ func mintAndStakeNative() {
 	ufmt.Printf("[INFO] position contract ugnot balance before: %d\n", positionUgnotBalance)
 
 	println("[INFO] send ugnot to staker and set origin send")
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
-		"gnot",
+		"ugnot",
 		"gno.land/r/gnoswap/gns",
 		fee3000,
 		int32(-5040),
@@ -196,9 +201,9 @@ func mintAndStakeGRC20Pair() {
 	testing.SkipHeights(1)
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 
@@ -229,7 +234,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pools
 // [INFO] approve gns for pool creation
-// [INFO] create gnot:gns:3000 pool
+// [INFO] create ugnot:gns:3000 pool
 // [INFO] create bar:qux:3000 pool
 // [INFO] set bar:qux:3000 pool to tier 1
 //

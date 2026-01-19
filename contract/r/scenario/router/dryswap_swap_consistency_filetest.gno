@@ -2,8 +2,6 @@
 package main
 
 import (
-	"std"
-	"strconv"
 	"testing"
 	"time"
 
@@ -11,16 +9,19 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
-	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -35,13 +36,13 @@ const (
 
 var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -87,6 +88,14 @@ func main() {
 	testReverseDirection()
 	println()
 	testMaxSlippage()
+	println()
+
+	ufmt.Println("[SCENARIO] 6. Test Multi-Hop Routes")
+	testMultiHop_ExactIn()
+	println()
+	testMultiHop_ExactOut()
+	println()
+	testMultiHop_ThreeHops()
 	println()
 }
 
@@ -138,10 +147,8 @@ func testExactIn_Small() {
 	dryIn, dryOut, _ := router.DrySwapRoute(
 		barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 
 	common.SafeGRC20Approve(cross, barPath, routerAddr, 100000)
 	actualIn, actualOut := router.ExactInSwapRoute(
@@ -162,10 +169,8 @@ func testExactIn_Medium() {
 	dryIn, dryOut, _ := router.DrySwapRoute(
 		barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 
 	common.SafeGRC20Approve(cross, barPath, routerAddr, 10000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
@@ -186,10 +191,8 @@ func testExactIn_Large() {
 	dryIn, dryOut, _ := router.DrySwapRoute(
 		barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 
 	common.SafeGRC20Approve(cross, barPath, routerAddr, 1000000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
@@ -210,10 +213,8 @@ func testExactIn_AlmostAll() {
 	dryIn, dryOut, _ := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_IN", route, "100", "1",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 
 	common.SafeGRC20Approve(cross, fooPath, routerAddr, 100000000000)
 	actualIn, actualOut := router.ExactInSwapRoute(
@@ -236,10 +237,8 @@ func testExactOut_Small() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if !drySuccess {
@@ -265,10 +264,8 @@ func testExactOut_Medium() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if !drySuccess {
@@ -294,10 +291,8 @@ func testExactOut_Large() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if !drySuccess {
@@ -323,10 +318,8 @@ func testExactOut_BugScenario() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if drySuccess {
@@ -350,10 +343,8 @@ func testExactOut_JustBelowOverflow() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 }
 
@@ -367,16 +358,14 @@ func testExactOut_JustAtOverflow() {
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
 		fooPath, barPath, amount, "EXACT_OUT", route, "100", "999999999999999",
 	)
-	dryOutWithFee := applyFee(dryOut)
 	ufmt.Printf("[EXPECTED] DrySwap amountIn should be %s\n", dryIn)
 	ufmt.Printf("[EXPECTED] DrySwap amountOut should be %s\n", dryOut)
-	ufmt.Printf("[EXPECTED] DrySwap amountOut with fee should be %s\n", dryOutWithFee)
 	ufmt.Printf("[EXPECTED] DrySwap success should be %t\n", drySuccess)
 
 	if drySuccess {
 		ufmt.Println("[ERROR] DrySwap should have failed but succeeded!")
 		common.SafeGRC20Approve(cross, fooPath, routerAddr, 999999999999999)
-		uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-026] overflow", func() {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-022] overflow", func() {
 			router.ExactOutSwapRoute(
 				cross, fooPath, barPath, amount, route, "100", "999999999999999",
 				time.Now().Add(time.Hour).Unix(), "",
@@ -390,19 +379,33 @@ func testExactOut_JustAtOverflow() {
 func testZeroAmount() {
 	testing.SetRealm(aliceRealm)
 
-	ufmt.Println("[INFO] Testing zero amount swap")
+	ufmt.Println("[INFO] Testing zero amount validation")
 
-	// Test exact in with zero
-	dryIn, dryOut, drySuccess := router.DrySwapRoute(
-		barPath, fooPath, "0", "EXACT_IN", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
-	)
-	ufmt.Printf("[EXPECTED] Zero exact in - DrySwap should return in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	// Test exact in with zero - should abort
+	result := uassert.AbortsContains(t, "must be positive", func() {
+		router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_IN",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
+		)
+	})
+	if result {
+		ufmt.Println("[EXPECTED] Zero exact in - Correctly aborted with expected message")
+	} else {
+		panic("[FAIL] Zero exact in - Did not abort as expected")
+	}
 
-	// Test exact out with zero
-	dryIn2, dryOut2, drySuccess2 := router.DrySwapRoute(
-		barPath, fooPath, "0", "EXACT_OUT", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999999999",
-	)
-	ufmt.Printf("[EXPECTED] Zero exact out - DrySwap should return in=%s out=%s success=%t\n", dryIn2, dryOut2, drySuccess2)
+	// Test exact out with zero - should abort
+	result = uassert.AbortsContains(t, "must be positive", func() {
+		router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_OUT",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999999999",
+		)
+	})
+	if result {
+		ufmt.Println("[EXPECTED] Zero exact out - Correctly aborted with expected message")
+	} else {
+		panic("[FAIL] Zero exact out - Did not abort as expected")
+	}
 }
 
 func testReverseDirection() {
@@ -422,7 +425,7 @@ func testReverseDirection() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Forward swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out=%s\n",
-		dryInFwd, applyFee(dryOutFwd), actualInFwd, actualOutFwd)
+		dryInFwd, dryOutFwd, actualInFwd, actualOutFwd)
 
 	// Reverse: FOO -> BAR
 	dryInRev, dryOutRev, _ := router.DrySwapRoute(
@@ -435,7 +438,7 @@ func testReverseDirection() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	ufmt.Printf("[EXPECTED] Reverse swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out=%s\n",
-		dryInRev, applyFee(dryOutRev), actualInRev, actualOutRev)
+		dryInRev, dryOutRev, actualInRev, actualOutRev)
 }
 
 func testMaxSlippage() {
@@ -459,27 +462,89 @@ func testMaxSlippage() {
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[EXPECTED] Swap - Dry: in=%s out(with fee)=%s | Actual: in=%s out(with fee)=%s\n",
-			dryIn, applyFee(dryOut), actualIn, actualOut)
+			dryIn, dryOut, actualIn, actualOut)
 	}
 }
 
-func applyFee(amount string) string {
-	amountInt, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil {
-		panic(err)
+func testMultiHop_ExactIn() {
+	testing.SetRealm(aliceRealm)
+
+	amount := "100000"
+
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact In")
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, barPath, amount, "EXACT_IN",
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"100", "1",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 100000)
+		actualIn, actualOut := router.ExactInSwapRoute(
+			cross, barPath, barPath, amount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100", "1", time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop - in=%s out=%s\n", actualIn, actualOut)
+		ufmt.Printf("[EXPECTED] Results should match: DryIn=%s ActualIn=%s, DryOut=%s ActualOut=%s\n",
+			dryIn, actualIn, dryOut, actualOut)
 	}
+}
 
-	isNegative := amountInt < 0
-	if isNegative {
-		amountInt = -amountInt
+func testMultiHop_ExactOut() {
+	testing.SetRealm(aliceRealm)
+
+	amount := "100000"
+
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - swapCount=2")
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, barPath, amount, "EXACT_OUT",
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"100", "999999999",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut - in=%s out=%s success=%t (swapCount=2, tolerance=2)\n",
+		dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 999999999)
+		actualIn, actualOut := router.ExactOutSwapRoute(
+			cross, barPath, barPath, amount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100", "999999999", time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop ExactOut - in=%s out=%s\n", actualIn, actualOut)
+		ufmt.Printf("[EXPECTED] Results should match: DryIn=%s ActualIn=%s, DryOut=%s ActualOut=%s\n",
+			dryIn, actualIn, dryOut, actualOut)
+	} else {
+		ufmt.Println("[INFO] DrySwap returned success=false, skipping actual swap")
 	}
+}
 
-	feeAmount := u256.Zero().Mul(u256.NewUintFromInt64(amountInt), u256.NewUint(swapFee))
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
+func testMultiHop_ThreeHops() {
+	testing.SetRealm(aliceRealm)
 
-	result := amountInt - feeAmount.Int64()
+	amount := "10000"
 
-	return strconv.FormatInt(result, 10)
+	ufmt.Println("[INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3")
+
+	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500*POOL*gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 3-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 10000)
+		actualIn, actualOut := router.ExactInSwapRoute(
+			cross, barPath, fooPath, amount, route, "100", "1",
+			time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 3-hop - in=%s out=%s\n", actualIn, actualOut)
+	}
 }
 
 // Output:
@@ -492,85 +557,89 @@ func applyFee(amount string) string {
 // [SCENARIO] 2. Test Exact In Swaps - DrySwap vs Actual Swap
 // [INFO] Testing Exact In - Small amount
 // [EXPECTED] DrySwap amountIn should be 100000
-// [EXPECTED] DrySwap amountOut should be 99949
-// [EXPECTED] DrySwap amountOut with fee should be 99800
+// [EXPECTED] DrySwap amountOut should be 99800
 // [EXPECTED] Actual amountIn should be 100000
 // [EXPECTED] Actual amountOut should be -99800
 //
 // [INFO] Testing Exact In - Medium amount
 // [EXPECTED] DrySwap amountIn should be 10000000
-// [EXPECTED] DrySwap amountOut should be 9992334
-// [EXPECTED] DrySwap amountOut with fee should be 9977346
+// [EXPECTED] DrySwap amountOut should be 9977346
 // [EXPECTED] Actual amountIn should be 10000000
 // [EXPECTED] Actual amountOut should be -9977346
 //
 // [INFO] Testing Exact In - Large amount
 // [EXPECTED] DrySwap amountIn should be 1000000000
-// [EXPECTED] DrySwap amountOut should be 973515420
-// [EXPECTED] DrySwap amountOut with fee should be 972055147
+// [EXPECTED] DrySwap amountOut should be 972055147
 // [EXPECTED] Actual amountIn should be 1000000000
 // [EXPECTED] Actual amountOut should be -972055147
 //
 // [INFO] Testing Exact In - Almost all liquidity
 // [EXPECTED] DrySwap amountIn should be 100000000000
-// [EXPECTED] DrySwap amountOut should be 10659820767
-// [EXPECTED] DrySwap amountOut with fee should be 10643831036
+// [EXPECTED] DrySwap amountOut should be 10643831036
 // [EXPECTED] Actual amountIn should be 100000000000
 // [EXPECTED] Actual amountOut should be -10643831036
 //
 // [SCENARIO] 3. Test Exact Out Swaps - DrySwap vs Actual Swap
 // [INFO] Testing Exact Out - Small amount
-// [EXPECTED] DrySwap amountIn should be 37948787
+// [EXPECTED] DrySwap amountIn should be 38005732
 // [EXPECTED] DrySwap amountOut should be 100000
-// [EXPECTED] DrySwap amountOut with fee should be 99850
 // [EXPECTED] DrySwap success should be true
-// [EXPECTED] Actual amountIn should be 37948787
-// [EXPECTED] Actual amountOut should be -99850
+// [EXPECTED] Actual amountIn should be 38005732
+// [EXPECTED] Actual amountOut should be -100000
 //
 // [INFO] Testing Exact Out - Medium amount
-// [EXPECTED] DrySwap amountIn should be 3950253991
+// [EXPECTED] DrySwap amountIn should be 3956433712
 // [EXPECTED] DrySwap amountOut should be 10000000
-// [EXPECTED] DrySwap amountOut with fee should be 9985000
 // [EXPECTED] DrySwap success should be true
-// [EXPECTED] Actual amountIn should be 3950253991
-// [EXPECTED] Actual amountOut should be -9985000
+// [EXPECTED] Actual amountIn should be 3956433712
+// [EXPECTED] Actual amountOut should be -10000000
 //
 // [INFO] Testing Exact Out - Large amount
-// [EXPECTED] DrySwap amountIn should be 678388481026
+// [EXPECTED] DrySwap amountIn should be 679799534408
 // [EXPECTED] DrySwap amountOut should be 1000000000
-// [EXPECTED] DrySwap amountOut with fee should be 998500000
 // [EXPECTED] DrySwap success should be true
-// [EXPECTED] Actual amountIn should be 678388481026
-// [EXPECTED] Actual amountOut should be -998500000
+// [EXPECTED] Actual amountIn should be 679799534408
+// [EXPECTED] Actual amountOut should be -1000000000
 //
 // [INFO] Testing Bug Scenario - Large exact out
 // [EXPECTED] DrySwap amountIn should be 0
 // [EXPECTED] DrySwap amountOut should be 0
-// [EXPECTED] DrySwap amountOut with fee should be 0
 // [EXPECTED] DrySwap success should be false
 //
 // [SCENARIO] 4. Test Edge Cases - Overflow Boundary
 // [INFO] Testing overflow boundary - amount 10983000000
 // [EXPECTED] DrySwap amountIn should be 0
 // [EXPECTED] DrySwap amountOut should be 0
-// [EXPECTED] DrySwap amountOut with fee should be 0
 // [EXPECTED] DrySwap success should be false
 //
 // [INFO] Testing overflow trigger - amount 10982000000
 // [EXPECTED] DrySwap amountIn should be 0
 // [EXPECTED] DrySwap amountOut should be 0
-// [EXPECTED] DrySwap amountOut with fee should be 0
 // [EXPECTED] DrySwap success should be false
 //
 // [SCENARIO] 5. Test Additional Edge Cases
-// [INFO] Testing zero amount swap
-// [EXPECTED] Zero exact in - DrySwap should return in=0 out=0 success=false
-// [EXPECTED] Zero exact out - DrySwap should return in=0 out=0 success=false
+// [INFO] Testing zero amount validation
+// [EXPECTED] Zero exact in - Correctly aborted with expected message
+// [EXPECTED] Zero exact out - Correctly aborted with expected message
 //
 // [INFO] Testing reverse direction swap consistency
-// [EXPECTED] Forward swap - Dry: in=1000000 out(with fee)=930799962 | Actual: in=1000000 out=-930799962
-// [EXPECTED] Reverse swap - Dry: in=1000000 out(with fee)=1071 | Actual: in=1000000 out=-1071
+// [EXPECTED] Forward swap - Dry: in=1000000 out(with fee)=931857046 | Actual: in=1000000 out=-931857046
+// [EXPECTED] Reverse swap - Dry: in=1000000 out(with fee)=1069 | Actual: in=1000000 out=-1069
 //
 // [INFO] Testing with maximum slippage protection
-// [EXPECTED] Tight slippage - DrySwap returns in=1000000 out=931502661 success=true
-// [EXPECTED] Swap - Dry: in=1000000 out(with fee)=930105408 | Actual: in=1000000 out(with fee)=-930105408
+// [EXPECTED] Tight slippage - DrySwap returns in=1000000 out=931161307 success=true
+// [EXPECTED] Swap - Dry: in=1000000 out(with fee)=931161307 | Actual: in=1000000 out(with fee)=-931161307
+//
+// [SCENARIO] 6. Test Multi-Hop Routes
+// [INFO] Testing Multi-Hop (2-hop) Exact In
+// [EXPECTED] DrySwap 2-hop - in=100000 out=99743 success=true
+// [EXPECTED] Actual swap 2-hop - in=100000 out=-99751
+// [EXPECTED] Results should match: DryIn=100000 ActualIn=100000, DryOut=99743 ActualOut=-99751
+//
+// [INFO] Testing Multi-Hop (2-hop) Exact Out - swapCount=2
+// [EXPECTED] DrySwap 2-hop ExactOut - in=100259 out=93317738 success=false (swapCount=2, tolerance=2)
+// [INFO] DrySwap returned success=false, skipping actual swap
+//
+// [INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3
+// [EXPECTED] DrySwap 3-hop - in=10000 out=9297854 success=true
+// [EXPECTED] Actual swap 3-hop - in=10000 out=-9298785

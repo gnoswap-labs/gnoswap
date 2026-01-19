@@ -2,26 +2,30 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -31,10 +35,10 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -119,10 +123,10 @@ func mintBarBaz3000_1_4() {
 	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
 	testing.SkipHeights(1)
 
-	t1Liq := pn.PositionGetPositionLiquidity(1).Clone()
-	t2Liq := pn.PositionGetPositionLiquidity(2).Clone()
-	t3Liq := pn.PositionGetPositionLiquidity(3).Clone()
-	t4Liq := pn.PositionGetPositionLiquidity(4).Clone()
+	t1Liq := pn.GetPositionLiquidity(1).Clone()
+	t2Liq := pn.GetPositionLiquidity(2).Clone()
+	t3Liq := pn.GetPositionLiquidity(3).Clone()
+	t4Liq := pn.GetPositionLiquidity(4).Clone()
 
 	all := u256.Zero()
 	all.Add(all, t1Liq)

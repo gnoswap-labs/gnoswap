@@ -1,0 +1,355 @@
+package staker
+
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+// MockResponse is a simple mock response helper
+type MockResponse struct {
+	data      map[string][]any
+	callCount map[string]int
+}
+
+func NewMockResponse() *MockResponse {
+	return &MockResponse{
+		data:      make(map[string][]any),
+		callCount: make(map[string]int),
+	}
+}
+
+func (m *MockResponse) Set(key string, values ...any) {
+	m.data[key] = values
+}
+
+func (m *MockResponse) Get(key string) ([]any, bool) {
+	if m.callCount == nil {
+		m.callCount = make(map[string]int)
+	}
+	m.callCount[key]++
+
+	val, ok := m.data[key]
+	return val, ok
+}
+
+func (m *MockResponse) CallCount(key string) int {
+	if m.callCount == nil {
+		return 0
+	}
+	return m.callCount[key]
+}
+
+type MockGovStaker struct {
+	Version  string
+	Response *MockResponse
+}
+
+func (m *MockGovStaker) Delegate(to address, amount int64, referrer string) int64 {
+	res, ok := m.Response.Get("Delegate")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) Undelegate(from address, amount int64) int64 {
+	res, ok := m.Response.Get("Undelegate")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) Redelegate(delegatee, newDelegatee address, amount int64) int64 {
+	res, ok := m.Response.Get("Redelegate")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) CollectUndelegatedGns() int64 {
+	res, ok := m.Response.Get("CollectUndelegatedGns")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) CollectReward() {
+	m.Response.Get("CollectReward")
+}
+
+func (m *MockGovStaker) CollectRewardFromLaunchPad(to address) {
+	m.Response.Get("CollectRewardFromLaunchPad")
+}
+
+func (m *MockGovStaker) SetAmountByProjectWallet(addr address, amount int64, add bool) {
+	m.Response.Get("SetAmountByProjectWallet")
+}
+
+func (m *MockGovStaker) GetUnDelegationLockupPeriod() int64 {
+	res, ok := m.Response.Get("GetUnDelegationLockupPeriod")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetEmissionRewardBalance() int64 {
+	res, ok := m.Response.Get("GetEmissionRewardBalance")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetTotalxGnsSupply() int64 {
+	res, ok := m.Response.Get("GetTotalxGnsSupply")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetTotalDelegated() int64 {
+	res, ok := m.Response.Get("GetTotalDelegated")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetTotalLockedAmount() int64 {
+	res, ok := m.Response.Get("GetTotalLockedAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetLockedAmount() int64 {
+	res, ok := m.Response.Get("GetLockedAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetDelegationCount() int {
+	res, ok := m.Response.Get("GetDelegationCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetDelegationIDs(offset, count int) []int64 {
+	res, ok := m.Response.Get("GetDelegationIDs")
+	if !ok {
+		return []int64{}
+	}
+	return res[0].([]int64)
+}
+
+func (m *MockGovStaker) ExistsDelegation(delegationID int64) bool {
+	res, ok := m.Response.Get("ExistsDelegation")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
+func (m *MockGovStaker) GetDelegation(delegationID int64) (*Delegation, error) {
+	res, ok := m.Response.Get("GetDelegation")
+	if !ok {
+		return nil, nil
+	}
+	if res[1] != nil {
+		return nil, res[1].(error)
+	}
+	return res[0].(*Delegation), nil
+}
+
+func (m *MockGovStaker) GetDelegatorDelegateeCount(delegator address) int {
+	res, ok := m.Response.Get("GetDelegatorDelegateeCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
+	res, ok := m.Response.Get("GetDelegatorDelegateeAddresses")
+	if !ok {
+		return []address{}
+	}
+	return res[0].([]address)
+}
+
+func (m *MockGovStaker) GetUserDelegationCount(delegator address, delegatee address) int {
+	res, ok := m.Response.Get("GetUserDelegationCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	res, ok := m.Response.Get("GetUserDelegationIDs")
+	if !ok {
+		return []int64{}
+	}
+	return res[0].([]int64)
+}
+
+func (m *MockGovStaker) HasDelegationSnapshotsKey() bool {
+	res, ok := m.Response.Get("HasDelegationSnapshotsKey")
+	if !ok {
+		return false
+	}
+	return res[0].(bool)
+}
+
+func (m *MockGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	res, ok := m.Response.Get("GetTotalDelegationAmountAtSnapshot")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
+}
+
+func (m *MockGovStaker) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	res, ok := m.Response.Get("GetUserDelegationAmountAtSnapshot")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
+}
+
+func (m *MockGovStaker) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
+	res, ok := m.Response.Get("GetClaimableRewardByAddress")
+	if !ok {
+		return 0, nil, nil
+	}
+	return res[0].(int64), res[1].(map[string]int64), nil
+}
+
+func (m *MockGovStaker) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
+	res, ok := m.Response.Get("GetClaimableRewardByLaunchpad")
+	if !ok {
+		return 0, nil, nil
+	}
+	return res[0].(int64), res[1].(map[string]int64), nil
+}
+
+func (m *MockGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
+	res, ok := m.Response.Get("GetClaimableRewardByRewardID")
+	if !ok {
+		return 0, nil, nil
+	}
+	return res[0].(int64), res[1].(map[string]int64), nil
+}
+
+func (m *MockGovStaker) GetLaunchpadProjectDeposit(projectAddr string) (int64, bool) {
+	res, ok := m.Response.Get("GetLaunchpadProjectDeposit")
+	if !ok {
+		return 0, false
+	}
+	return res[0].(int64), res[1].(bool)
+}
+
+func (m *MockGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
+	res, ok := m.Response.Get("GetDelegationWithdrawCount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int)
+}
+
+func (m *MockGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error) {
+	res, ok := m.Response.Get("GetDelegationWithdraws")
+	if !ok {
+		return nil, nil
+	}
+	if len(res) < 2 || res[1] == nil {
+		return res[0].([]*DelegationWithdraw), nil
+	}
+	return res[0].([]*DelegationWithdraw), res[1].(error)
+}
+
+func (m *MockGovStaker) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	res, ok := m.Response.Get("GetCollectableWithdrawAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *u256.Uint {
+	res, ok := m.Response.Get("GetProtocolFeeAccumulatedX128PerStake")
+	if !ok {
+		return nil
+	}
+	if res[0] == nil {
+		return nil
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAmount(tokenPath string) int64 {
+	res, ok := m.Response.Get("GetProtocolFeeAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetProtocolFeeAccumulatedTimestamp() int64 {
+	res, ok := m.Response.Get("GetProtocolFeeAccumulatedTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetEmissionAccumulatedX128PerStake() *u256.Uint {
+	res, ok := m.Response.Get("GetEmissionAccumulatedX128PerStake")
+	if !ok {
+		return nil
+	}
+	if res[0] == nil {
+		return nil
+	}
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockGovStaker) GetEmissionDistributedAmount() int64 {
+	res, ok := m.Response.Get("GetEmissionDistributedAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) GetEmissionAccumulatedTimestamp() int64 {
+	res, ok := m.Response.Get("GetEmissionAccumulatedTimestamp")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
+	m.Response.Get("CleanStakerDelegationSnapshotByAdmin")
+}
+
+func (m *MockGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
+	m.Response.Get("SetUnDelegationLockupPeriodByAdmin")
+}
+
+func newMockGovStaker(version string) *MockGovStaker {
+	return &MockGovStaker{
+		Version:  version,
+		Response: NewMockResponse(),
+	}
+}

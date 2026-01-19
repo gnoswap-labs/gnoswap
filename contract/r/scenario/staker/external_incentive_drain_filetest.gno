@@ -14,7 +14,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -25,16 +24,20 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -43,11 +46,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
+	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
@@ -251,7 +254,7 @@ func demonstrateVulnerability() {
 	println("[FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times")
 	println("[EXPECTED] Second call should fail with 'cannot end non existent incentive' error")
 
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-012]", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-STAKER-008]", func() {
 		sr.EndExternalIncentive(
 			cross,
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -272,23 +275,8 @@ func checkFinalState() {
 	println("[VERIFIED] The vulnerability has been successfully fixed")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic("positionId is nil")
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic("unsupported positionId type")
-	}
+func positionIdFrom(positionId int) grc721.TokenID {
+	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
 // Output:
@@ -321,10 +309,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive FIRST TIME and collect remaining GNS
 // [INFO] FIRST END - Staker GNS balance before: 20000000000
-// [INFO] FIRST END - Staker GNS balance after: 18999994215
+// [INFO] FIRST END - Staker GNS balance after: 18996826213
 // [INFO] FIRST END - Creator GNS balance before: 0
-// [INFO] FIRST END - Creator GNS balance after: 1000005785
-// [INFO] FIRST END - Creator received: 1000005785 GNS
+// [INFO] FIRST END - Creator GNS balance after: 1003173787
+// [INFO] FIRST END - Creator received: 1003173787 GNS
 //
 // [SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times
 // [FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times
@@ -332,7 +320,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Final verification
 // [RESULT] Final balances after fix:
-//   - Staker GNS balance: 18999994215
-//   - Creator GNS balance: 1000005785
+//   - Staker GNS balance: 18996826213
+//   - Creator GNS balance: 1003173787
 // [VERIFIED] Staker was NOT drained - only one GNS deposit was refunded
 // [VERIFIED] The vulnerability has been successfully fixed

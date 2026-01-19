@@ -3,17 +3,21 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/launchpad"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
 	"gno.land/r/onbloc/obl"
 )
 
@@ -21,7 +25,7 @@ var t *testing.T
 
 var (
 	nonAdminAddr  = testutils.TestAddress("non-admin")
-	nonAdminRealm = std.NewUserRealm(nonAdminAddr)
+	nonAdminRealm = testing.NewUserRealm(nonAdminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
@@ -48,12 +52,12 @@ func createProjectByNonAdmin() {
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
 	tier180Ratio := int64(70)
-	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] non-admin attempting to create project")
 	println("[INFO] create project with project name:", projectName)
@@ -99,10 +103,10 @@ func createProjectByNonAdmin() {
 // [INFO] create project with reward token path: gno.land/r/onbloc/obl
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
-// [INFO] create project with conditions token: gno.land/r/gnoswap/v1/gov/xgns
+// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
 // [INFO] create project with conditions amount: 1000000
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
-// [INFO] create project with start time: 1234571490
+// [INFO] create project with start time: 1235172690
 // [EXPECTED] Should abort with authorization error: unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance

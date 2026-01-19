@@ -1,14 +1,13 @@
 package referral
 
-import "std"
+import (
+	"chain"
+	"chain/runtime"
+)
 
 var gReferralKeeper ReferralKeeper
 
-const (
-	EventReferralInvalid = "ReferralInvalid"
-	EventRegisterFailed  = "ReferralRegistrationFailed"
-	EventRegisterSuccess = "ReferralRegistrationSuccess"
-)
+const EventRegisterFailed = "ReferralRegistrationFailed"
 
 func init() {
 	if gReferralKeeper == nil {
@@ -16,14 +15,9 @@ func init() {
 	}
 }
 
-// getKeeper returns the global referral keeper instance.
-func getKeeper() ReferralKeeper {
-	return gReferralKeeper
-}
-
 // GetReferral returns the referral address for the given address.
 func GetReferral(addr string) string {
-	referral, err := gReferralKeeper.get(std.Address(addr))
+	referral, err := gReferralKeeper.get(address(addr))
 	if err != nil {
 		return ""
 	}
@@ -32,16 +26,25 @@ func GetReferral(addr string) string {
 
 // HasReferral returns true if the given address has a referral.
 func HasReferral(addr string) bool {
-	referral, err := gReferralKeeper.get(std.Address(addr))
-	if err != nil {
-		return false
-	}
-	return referral != zeroAddress
+	_, err := gReferralKeeper.get(address(addr))
+	return err == nil
 }
 
 // IsEmpty returns true if no referrals exist in the system.
 func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
+}
+
+// GetLastOpTimestamp returns the last operation timestamp for the given address.
+// Returns ErrNotFound if no operation exists.
+func GetLastOpTimestamp(addr string) (int64, error) {
+	return gReferralKeeper.getLastOpTimestamp(address(addr))
+}
+
+// ContractAddress returns the address of the referral contract.
+// Use this address as the referral parameter in TryRegister to remove an existing referral.
+func ContractAddress() string {
+	return selfAddress.String()
 }
 
 // TryRegister attempts to register a new referral.
@@ -51,22 +54,30 @@ func IsEmpty() bool {
 //   - referral: referral address string
 //
 // Returns true on success, false on failure.
-func TryRegister(cur realm, addr std.Address, referral string) bool {
-	refAddr := std.Address(referral)
+// Panics if the caller is not authorized.
+func TryRegister(cur realm, addr address, referral string) bool {
+	caller := runtime.PreviousRealm().Address()
+	assertValidCaller(caller)
+
+	refAddr := address(referral)
+
 	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
-		std.Emit(
+		chain.Emit(
 			EventRegisterFailed,
 			"address", addr.String(),
 			"error", err.Error(),
 		)
+
 		return false
 	}
 
-	std.Emit(
-		EventRegisterSuccess,
+	chain.Emit(
+		"RegisterReferral",
+		"prevAddr", caller.String(),
 		"address", addr.String(),
-		"referral", referral,
+		"referral", refAddr.String(),
 	)
+
 	return true
 }

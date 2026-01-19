@@ -1,11 +1,10 @@
 package emission
 
 import (
-	"std"
-	"strconv"
+	"chain"
+	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -16,7 +15,8 @@ import (
 )
 
 const (
-	LIQUIDITY_STAKER int = iota + 1
+	_ int = iota
+	LIQUIDITY_STAKER
 	DEVOPS
 	COMMUNITY_POOL
 	GOV_STAKER
@@ -26,7 +26,7 @@ var (
 	// Stores the percentage (in basis points) for each distribution target
 	// 1 basis point = 0.01%
 	// These percentages can be modified through governance.
-	distributionBpsPct *avl.Tree
+	distributionBpsPct map[int]int64
 
 	distributedToStaker        int64 // can be cleared by staker contract
 	distributedToDevOps        int64
@@ -48,18 +48,21 @@ var (
 //
 // ref: https://docs.gnoswap.io/gnoswap-token/emission
 func init() {
-	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), int64(7500))
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), int64(2000))
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), int64(500))
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
+	distributionBpsPct = map[int]int64{
+		LIQUIDITY_STAKER: 7500,
+		DEVOPS:           2000,
+		COMMUNITY_POOL:   500,
+		GOV_STAKER:       0,
+	}
 }
 
 // ChangeDistributionPct changes distribution percentages for emission targets.
 //
 // This function redistributes how newly minted GNS tokens are allocated across
-// protocol components. Changes take effect immediately for future emissions.
-// Historical distributions are not affected.
+// protocol components. Before applying new ratios, it distributes any accumulated
+// emissions using the current ratios, ensuring emissions are distributed according
+// to the ratios in effect when they were generated. This prevents retroactive
+// application of new ratios to past emissions.
 //
 // Parameters:
 //   - target01-04: Target identifiers (1=LIQUIDITY_STAKER, 2=DEVOPS, 3=COMMUNITY_POOL, 4=GOV_STAKER)
@@ -90,11 +93,22 @@ func ChangeDistributionPct(
 ) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionTargets(target01, target02, target03, target04)
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
+
+	// Distribute accumulated emissions with current ratios before changing ratios.
+	// This prevents retroactive application of new ratios to emissions that occurred
+	// under previous ratio configurations.
+	MintAndDistributeGns(cross)
+
+	if onDistributionPctChangeCallback != nil {
+		currentTimestamp := time.Now().Unix()
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
 
 	changeDistributionPcts(
 		target01, pct01,
@@ -103,8 +117,8 @@ func ChangeDistributionPct(
 		target04, pct04,
 	)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -117,12 +131,6 @@ func ChangeDistributionPct(
 		"target04", targetToStr(target04),
 		"pct04", formatInt(pct04),
 	)
-
-	// Call the callback if registered
-	if onDistributionPctChangeCallback != nil {
-		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
-	}
 }
 
 // changeDistributionPcts updates the distribution percentages in the AVL tree.
@@ -146,40 +154,47 @@ func changeDistributionPcts(
 func distributeToTarget(amount int64) (int64, error) {
 	totalSent := int64(0)
 
-	var err error
-
-	distributionBpsPct.Iterate("", "", func(targetStr string, iPct any) bool {
-		targetInt, distErr := strconv.Atoi(targetStr)
-		if distErr != nil {
-			err = distErr
-			return true
-		}
-
-		pct, ok := iPct.(int64)
-		if !ok {
-			panic("failed to cast distributionBpsPct's element to int64")
-		}
-
+	for target, pct := range distributionBpsPct {
 		distAmount := calculateAmount(amount, pct)
 
 		// Skip zero amounts to avoid unnecessary transfers
 		if distAmount == 0 {
-			return false
+			continue
 		}
 
-		totalSent += distAmount
+		totalSent = safeAddInt64(totalSent, distAmount)
 
-		distErr = transferToTarget(targetInt, distAmount)
-		if distErr != nil {
-			err = distErr
+		err := transferToTarget(target, distAmount)
+		if err != nil {
+			return totalSent, err
+		}
+	}
 
-			return true
+	return totalSent, nil
+}
+
+func calculateDistributableAmounts(amount int64, bps map[int]int64) (map[int]int64, int64) {
+	distributed := make(map[int]int64, 0)
+	if bps == nil {
+		return distributed, amount
+	}
+
+	targets := []int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER}
+	totalSent := int64(0)
+
+	for _, target := range targets {
+		pct := bps[target]
+		distAmount := calculateAmount(amount, pct)
+		if distAmount == 0 {
+			continue
 		}
 
-		return false
-	})
+		distributed[target] = distAmount
+		totalSent = safeAddInt64(totalSent, distAmount)
+	}
 
-	return totalSent, err
+	leftAmount := safeSubInt64(amount, totalSent)
+	return distributed, leftAmount
 }
 
 // calculateAmount converts basis points to actual token amount.
@@ -216,9 +231,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToStaker = safeAddInt64(distributedToStaker, amount)
+		accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
 		gns.Transfer(cross, stakerAddr, amount)
-		distributedToStaker += amount
-		accuDistributedToStaker += amount
 
 	case DEVOPS:
 		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
@@ -229,9 +244,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
+		accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
 		gns.Transfer(cross, devOpsAddr, amount)
-		distributedToDevOps += amount
-		accuDistributedToDevOps += amount
 
 	case COMMUNITY_POOL:
 		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
@@ -242,9 +257,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
+		accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
 		gns.Transfer(cross, communityPoolAddr, amount)
-		distributedToCommunityPool += amount
-		accuDistributedToCommunityPool += amount
 
 	case GOV_STAKER:
 		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
@@ -255,9 +270,9 @@ func transferToTarget(target int, amount int64) error {
 			)
 		}
 
+		distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
+		accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
 		gns.Transfer(cross, govStakerAddr, amount)
-		distributedToGovStaker += amount
-		accuDistributedToGovStaker += amount
 
 	default:
 		return makeErrorWithDetails(
@@ -276,17 +291,12 @@ func GetDistributionBpsPct(target int) int64 {
 		panic("distributionBpsPct is nil")
 	}
 
-	iInt64, exist := distributionBpsPct.Get(strconv.Itoa(target))
+	pct, exist := distributionBpsPct[target]
 	if !exist {
 		panic(makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
 		))
-	}
-
-	pct, ok := iInt64.(int64)
-	if !ok {
-		panic("failed to cast distributionBpsPct's element to int64")
 	}
 
 	return pct
@@ -312,6 +322,14 @@ func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
+func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
+    toStaker = GetDistributedToStaker()
+    toDevOps = GetDistributedToDevOps()
+    toCommunityPool = GetDistributedToCommunityPool()
+    toGovStaker = GetDistributedToGovStaker()
+    return
+}
+
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
@@ -332,10 +350,15 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
+// GetEmissionAmountPerSecondBy returns the emission amount per second for a given timestamp and distribution percentage.
+func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
+	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
+}
+
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
 func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
-	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(currentTimestamp), GetDistributionBpsPct(LIQUIDITY_STAKER))
+	return GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
@@ -353,7 +376,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 //
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
 	distributedToStaker = 0
@@ -363,7 +386,7 @@ func ClearDistributedToStaker(cur realm) {
 //
 // Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 	distributedToGovStaker = 0
 }
@@ -372,10 +395,10 @@ func ClearDistributedToGovStaker(cur realm) {
 // Creates new AVL tree if nil.
 func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
-		distributionBpsPct = avl.NewTree()
+		distributionBpsPct = make(map[int]int64)
 	}
 
-	distributionBpsPct.Set(strconv.Itoa(target), pct)
+	distributionBpsPct[target] = pct
 }
 
 // targetToStr converts target constant to string representation.

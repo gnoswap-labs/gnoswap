@@ -5,28 +5,33 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -35,15 +40,15 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -75,7 +80,7 @@ func main() {
 	mintPosition01()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with native coin (gnot)")
+	println("[SCENARIO] 4. Create external incentive with native coin (ugnot)")
 	createExternalIncentiveWithNativeCoin()
 	println()
 
@@ -157,17 +162,17 @@ func createExternalIncentiveWithNativeCoin() {
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	println("[INFO] prepare native coins for external incentive")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 1_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 1_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
 
-	println("[INFO] create external incentive with gnot (native coin)")
+	println("[INFO] create external incentive with ugnot (native coin)")
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"gnot",                      // rewardToken (native coin)
-		1_000_000_000,               // rewardAmount (100 gnot)
+		"ugnot",                     // rewardToken (native coin)
+		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
@@ -262,13 +267,13 @@ func collectExternalRewardWithoutUnwrap() {
 	}
 
 	if wugnotIncrease <= 0 {
-		panic("should have received wrapped wugnot")
+		panic("should have received wrapped ugnot")
 	}
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 
@@ -308,10 +313,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] liquidity: 2050516
 // [EXPECTED] amount0: 100000, amount1: 100000
 //
-// [SCENARIO] 4. Create external incentive with native coin (gnot)
+// [SCENARIO] 4. Create external incentive with native coin (ugnot)
 // [INFO] approve wugnot for external incentive
 // [INFO] prepare native coins for external incentive
-// [INFO] create external incentive with gnot (native coin)
+// [INFO] create external incentive with ugnot (native coin)
 // [INFO] native coin external incentive created
 // [INFO] start time: 1234569600, end time: 1242345600
 //

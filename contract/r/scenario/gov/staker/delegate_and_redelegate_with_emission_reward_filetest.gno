@@ -3,30 +3,35 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/gov/xgns"
+
+	"gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
 
 var t *testing.T
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = testing.NewUserRealm(adminAddr)
 
-	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
+	dummyRealm = testing.NewUserRealm(dummyAddr)
 
 	reDelegate = testutils.TestAddress("reDelegate")
 	minAmount  = int64(1_000_000)
@@ -51,7 +56,7 @@ func checkInitialState() {
 	// check admin's initial GNS and xGNS balance
 	ufmt.Printf("[INFO] admin GNS balance: %d\n", gns.BalanceOf(adminAddr))
 	ufmt.Printf("[INFO] admin xGNS balance: %d\n", xgns.BalanceOf(adminAddr))
-	ufmt.Printf("[EXPECTED] admin GNS: 100000000000000, xGNS: 0\n")
+	println("[EXPECTED] admin GNS: 100000000000000, xGNS: 0")
 }
 
 // Admin delegates GNS to dummy
@@ -62,7 +67,7 @@ func adminDelegateToDummy() {
 	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)
-	ufmt.Printf("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000\n")
+	println("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000")
 }
 
 // Admin redelegates from dummy to reDelegate

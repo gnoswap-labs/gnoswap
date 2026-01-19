@@ -1,50 +1,63 @@
 package access
 
 import (
-	"std"
+    "chain"
+	"chain/runtime"
+	"strings"
 
 	"gno.land/p/nt/ufmt"
 )
 
-var (
-	roleAddresses     map[string]map[int]std.Address
-	roleLatestVersion map[string]int
-)
+var roleAddresses map[string]address
 
 func init() {
-	roleAddresses = make(map[string]map[int]std.Address)
-	roleLatestVersion = make(map[string]int)
+	roleAddresses = make(map[string]address)
 }
 
 // SetRoleAddress sets or updates a role's address.
 // Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
+//   - cur: current realm (required by interrealm spec; not used directly)
 //   - roleName: name of the role
-//   - version: version of the role
 //   - roleAddress: address for the role
 //
 // Only callable by RBAC contract.
-func SetRoleAddress(cur realm, roleName string, version int, roleAddress std.Address) {
-	caller := std.PreviousRealm().Address()
+func SetRoleAddress(cur realm, roleName string, roleAddress address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
+	// capture old value for event
+	oldAddr, _ := roleAddresses[strings.TrimSpace(roleName)]
+
+	if err := setRoleAddress(roleName, roleAddress); err != nil {
+		panic(err)
+	}
+
+	chain.Emit(
+	    "SetRoleAddress",
+		"prevAddr", caller.String(),
+		"role", roleName,
+		"prevRoleAddr", oldAddr.String(),
+		"roleAddress", roleAddress.String(),
+	)
+}
+
+// setRoleAddress is the internal implementation of SetRoleAddress.
+// Separated for testability.
+func setRoleAddress(roleName string, roleAddress address) error {
+    roleName = strings.TrimSpace(roleName)
+    if roleName == "" {
+		panic("role name cannot be empty")
+	}
+
 	// Validate address
-	if !roleAddress.IsValid() || roleAddress == std.Address("") {
-		panic(ufmt.Errorf("invalid address for role %s: %s", roleName, roleAddress))
+	if !roleAddress.IsValid() || roleAddress == address("") {
+		return ufmt.Errorf(errInvalidAddress, roleName, roleAddress)
 	}
 
-	_, ok := roleAddresses[roleName]
-	if !ok {
-		roleAddresses[roleName] = make(map[int]std.Address)
-	}
-
-	roleAddresses[roleName][version] = roleAddress
-
-	currentVersion, ok := roleLatestVersion[roleName]
-	if !ok || currentVersion < version {
-		roleLatestVersion[roleName] = version
-	}
+	roleAddresses[roleName] = roleAddress
+	return nil
 }
 
 // RemoveRole removes a role from the system.
@@ -54,15 +67,26 @@ func SetRoleAddress(cur realm, roleName string, version int, roleAddress std.Add
 //
 // Only callable by RBAC contract.
 func RemoveRole(cur realm, roleName string) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
+	// Validate role name
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
+		panic("role name cannot be empty")
+	}
+
 	if _, ok := roleAddresses[roleName]; !ok {
-		panic("role does not exist")
+		panic(ufmt.Errorf("role %s does not exist", roleName))
 	}
 
 	delete(roleAddresses, roleName)
-	delete(roleLatestVersion, roleName)
+
+	chain.Emit(
+		"RemoveRole",
+		"prevAddr", caller.String(),
+		"role", roleName,
+	)
 }
 
 // IsAuthorized checks if caller has the specified role.
@@ -72,25 +96,8 @@ func RemoveRole(cur realm, roleName string) {
 //   - caller: address to verify
 //
 // Returns true if authorized, false otherwise.
-func IsAuthorized(role string, caller std.Address) bool {
+func IsAuthorized(role string, caller address) bool {
 	addr, ok := GetAddress(role)
-	if !ok {
-		return false
-	}
-
-	return caller == addr
-}
-
-// IsAuthorizedWithVersion checks if caller has the specified role and version.
-//
-// Parameters:
-//   - role: role name to check
-//   - version: version to check
-//   - caller: address to verify
-//
-// Returns true if authorized, false otherwise.
-func IsAuthorizedWithVersion(role string, version int, caller std.Address) bool {
-	addr, ok := GetAddressWithVersion(role, version)
 	if !ok {
 		return false
 	}
@@ -99,48 +106,15 @@ func IsAuthorizedWithVersion(role string, version int, caller std.Address) bool 
 }
 
 // GetAddress returns the address for a role and whether it exists.
-func GetAddress(role string) (std.Address, bool) {
-	addresses, ok := roleAddresses[role]
-	if !ok {
-		return "", false
-	}
-
-	// If the role is not found in roleLatestVersion, find the latest version from the addresses
-	latestVersion, ok := roleLatestVersion[role]
-	if !ok {
-		for version := range addresses {
-			if latestVersion < version {
-				latestVersion = version
-			}
-		}
-	}
-
-	addr, ok := addresses[latestVersion]
-	if !ok {
-		return "", false
-	}
-
-	return addr, true
-}
-
-// GetAddressWithVersion returns the address for a role and whether it exists.
-func GetAddressWithVersion(role string, version int) (std.Address, bool) {
-	addresses, ok := roleAddresses[role]
-	if !ok {
-		return "", false
-	}
-
-	addr, ok := addresses[version]
-	if !ok {
-		return "", false
-	}
-
-	return addr, true
+func GetAddress(role string) (address, bool) {
+    role = strings.TrimSpace(role)
+	addr, ok := roleAddresses[role]
+	return addr, ok
 }
 
 // GetRoleAddresses returns a copy of all role addresses.
-func GetRoleAddresses() map[string]map[int]std.Address {
-	addresses := make(map[string]map[int]std.Address)
+func GetRoleAddresses() map[string]address {
+	addresses := make(map[string]address)
 
 	for role, data := range roleAddresses {
 		addresses[role] = data
@@ -149,19 +123,13 @@ func GetRoleAddresses() map[string]map[int]std.Address {
 	return addresses
 }
 
-func MustGetAddress(role string) std.Address {
+// MustGetAddress returns the address for a role or panics if it doesn't exist.
+// Use this when the role is expected to exist and failure is critical.
+func MustGetAddress(role string) address {
+    role = strings.TrimSpace(role)
 	addr, ok := GetAddress(role)
 	if !ok {
-		panic(ufmt.Errorf("role %s not found", role))
-	}
-
-	return addr
-}
-
-func MustGetAddressWithVersion(role string, version int) std.Address {
-	addr, ok := GetAddressWithVersion(role, version)
-	if !ok {
-		panic(ufmt.Errorf("role %s version %d not found", role, version))
+		panic(ufmt.Errorf(errRoleNotFound, role))
 	}
 
 	return addr

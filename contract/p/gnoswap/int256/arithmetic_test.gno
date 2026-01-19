@@ -1,1016 +1,690 @@
 package int256
 
 import (
+	"math"
 	"testing"
 
-	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
-func TestAdd(t *testing.T) {
+func TestNewInt(t *testing.T) {
 	tests := []struct {
-		x, y, want string
+		name string
+		v    int64
 	}{
-		{"0", "1", "1"},
-		{"1", "0", "1"},
-		{"1", "1", "2"},
-		{"1", "2", "3"},
-		// NEGATIVE
-		{"-1", "1", "0"},
-		{"1", "-1", "0"},
-		{"3", "-3", "0"},
-		{"-1", "-1", "-2"},
-		{"-1", "-2", "-3"},
-		{"-1", "3", "2"},
-		{"3", "-1", "2"},
-		// OVERFLOW
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "1", "0"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Add(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Add(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestAddUint256(t *testing.T) {
-	tests := []struct {
-		x, y, want string
-	}{
-		{"0", "1", "1"},
-		{"1", "0", "1"},
-		{"1", "1", "2"},
-		{"1", "2", "3"},
-		{"-1", "1", "0"},
-		{"-1", "3", "2"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639934", "115792089237316195423570985008687907853269984665640564039457584007913129639935", "1"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "115792089237316195423570985008687907853269984665640564039457584007913129639934", "-1"},
-		// OVERFLOW
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "115792089237316195423570985008687907853269984665640564039457584007913129639935", "0"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := uint256.FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.AddUint256(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("AddUint256(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestAddDelta(t *testing.T) {
-	tests := []struct {
-		z, x, y, want string
-	}{
-		{"0", "0", "0", "0"},
-		{"0", "0", "1", "1"},
-		{"0", "1", "0", "1"},
-		{"0", "1", "1", "2"},
-		{"1", "2", "3", "5"},
-		{"5", "10", "-3", "7"},
-		// underflow
-		{"1", "2", "-3", "115792089237316195423570985008687907853269984665640564039457584007913129639935"},
-	}
-
-	for _, tc := range tests {
-		z, err := uint256.FromDecimal(tc.z)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		x, err := uint256.FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := uint256.FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		AddDelta(z, x, y)
-
-		if z.Neq(want) {
-			t.Errorf("AddDelta(%s, %s, %s) = %v, want %v", tc.z, tc.x, tc.y, z.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestAddDeltaOverflow(t *testing.T) {
-	tests := []struct {
-		z, x, y string
-		want    bool
-	}{
-		{"0", "0", "0", false},
-		// underflow
-		{"1", "2", "-3", true},
-	}
-
-	for _, tc := range tests {
-		z, err := uint256.FromDecimal(tc.z)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		x, err := uint256.FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		result := AddDeltaOverflow(z, x, y)
-		if result != tc.want {
-			t.Errorf("AddDeltaOverflow(%s, %s, %s) = %v, want %v", tc.z, tc.x, tc.y, result, tc.want)
-		}
-	}
-}
-
-func TestAddOverflow(t *testing.T) {
-	maxInt256 := MaxInt256()
-	minInt256 := MinInt256()
-
-	tests := []struct {
-		name         string
-		x            *Int
-		y            *Int
-		wantResult   string
-		wantOverflow bool
-	}{
-		// Basic cases (no overflow)
 		{
-			name:         "positive + positive (no overflow)",
-			x:            NewInt(100),
-			y:            NewInt(200),
-			wantResult:   "300",
-			wantOverflow: false,
+			name: "positive",
+			v:    int64(math.MaxInt64),
 		},
 		{
-			name:         "negative + negative (no overflow)",
-			x:            NewInt(-100),
-			y:            NewInt(-200),
-			wantResult:   "-300",
-			wantOverflow: false,
-		},
-		// Boundary cases - near maximum value
-		{
-			name:         "max_int256 + 0",
-			x:            maxInt256,
-			y:            Zero(),
-			wantResult:   maxInt256.ToString(),
-			wantOverflow: false,
+			name: "negative",
+			v:    int64(math.MinInt64),
 		},
 		{
-			name:         "max_int256 - 1 + 1",
-			x:            new(Int).Sub(maxInt256, One()),
-			y:            One(),
-			wantResult:   maxInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "max_int256 + 1",
-			x:            maxInt256,
-			y:            One(),
-			wantResult:   "", // overflow
-			wantOverflow: true,
-		},
-
-		// Boundary cases - near minimum value
-		{
-			name:         "min_int256 + 0",
-			x:            minInt256,
-			y:            Zero(),
-			wantResult:   minInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "min_int256 + 1 - 1",
-			x:            new(Int).Add(minInt256, One()),
-			y:            NewInt(-1),
-			wantResult:   minInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "min_int256 + (-1)",
-			x:            minInt256,
-			y:            NewInt(-1),
-			wantResult:   "", // overflow
-			wantOverflow: true,
-		},
-
-		// Special cases
-		{
-			name:         "max_int256 + min_int256",
-			x:            maxInt256,
-			y:            minInt256,
-			wantResult:   "-1",
-			wantOverflow: false,
+			name: "zero",
+			v:    int64(0),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			z := new(Int)
-			gotResult, gotOverflow := z.AddOverflow(tt.x, tt.y)
-
-			if gotOverflow != tt.wantOverflow {
-				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
-				return
-			}
-
-			if !gotOverflow {
-				if gotResult == nil {
-					t.Error("unexpected nil result for non-overflow case")
-					return
-				}
-				if gotResult.ToString() != tt.wantResult {
-					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
-				}
-			}
-
-			// Commutativity test only for non-overflow cases
-			if !tt.wantOverflow {
-				reverseResult, reverseOverflow := z.AddOverflow(tt.y, tt.x)
-				if reverseOverflow != gotOverflow {
-					t.Error("addition is not commutative for overflow")
-				}
-				if reverseResult.ToString() != gotResult.ToString() {
-					t.Error("addition is not commutative for result")
-				}
-			}
+			z := NewInt(tt.v)
+			uassert.True(t, z.IsInt64())
+			uassert.Equal(t, tt.v, z.Int64())
 		})
 	}
 }
 
-func TestSub(t *testing.T) {
+func TestIsMinI256(t *testing.T) {
 	tests := []struct {
-		x, y, want string
-	}{
-		{"1", "0", "1"},
-		{"1", "1", "0"},
-		{"-1", "1", "-2"},
-		{"1", "-1", "2"},
-		{"-1", "-1", "0"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "-115792089237316195423570985008687907853269984665640564039457584007913129639935", "0"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "0", "-115792089237316195423570985008687907853269984665640564039457584007913129639935"},
-		{x: "-115792089237316195423570985008687907853269984665640564039457584007913129639935", y: "1", want: "0"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Sub(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Sub(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestSubUint256(t *testing.T) {
-	tests := []struct {
-		x, y, want string
-	}{
-		{"0", "1", "-1"},
-		{"1", "0", "1"},
-		{"1", "1", "0"},
-		{"1", "2", "-1"},
-		{"-1", "1", "-2"},
-		{"-1", "3", "-4"},
-		// underflow
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "1", "-0"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "2", "-1"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "3", "-2"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := uint256.FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.SubUint256(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("SubUint256(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestMul(t *testing.T) {
-	tests := []struct {
-		x, y, want string
-	}{
-		{"5", "3", "15"},
-		{"-5", "3", "-15"},
-		{"5", "-3", "-15"},
-		{"0", "3", "0"},
-		{"3", "0", "0"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Mul(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Mul(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestInt_SubOverflow(t *testing.T) {
-	maxInt256 := MaxInt256()
-	minInt256 := MinInt256()
-
-	tests := []struct {
-		name         string
-		x            *Int
-		y            *Int
-		wantResult   string
-		wantOverflow bool
+		name     string
+		x        string
+		expected bool
 	}{
 		{
-			name:         "positive - positive (no overflow)",
-			x:            NewInt(200),
-			y:            NewInt(100),
-			wantResult:   "100",
-			wantOverflow: false,
+			name:     "exact min",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
 		},
 		{
-			name:         "negative - negative (no overflow)",
-			x:            NewInt(-200),
-			y:            NewInt(-300),
-			wantResult:   "100",
-			wantOverflow: false,
+			name:     "min plus one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
 		},
 		{
-			name:         "positive - negative (no overflow)",
-			x:            NewInt(200),
-			y:            NewInt(-100),
-			wantResult:   "300",
-			wantOverflow: false,
+			name:     "negative but not min",
+			x:        "-1",
+			expected: false,
 		},
 		{
-			name:         "max_int256 - 0",
-			x:            maxInt256,
-			y:            Zero(),
-			wantResult:   maxInt256.ToString(),
-			wantOverflow: false,
+			name:     "zero",
+			x:        "0",
+			expected: false,
 		},
 		{
-			name:         "min_int256 - 0",
-			x:            minInt256,
-			y:            Zero(),
-			wantResult:   minInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "max_int256 - (-1)", // max_int256 + 1 -> overflow
-			x:            maxInt256,
-			y:            NewInt(-1),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-		{
-			name:         "min_int256 - 1", // min_int256 - 1 -> overflow
-			x:            minInt256,
-			y:            One(),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-		{
-			name:         "0 - 0",
-			x:            Zero(),
-			y:            Zero(),
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "min_int256 - min_int256",
-			x:            minInt256,
-			y:            minInt256,
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "max_int256 - max_int256",
-			x:            maxInt256,
-			y:            maxInt256,
-			wantResult:   "0",
-			wantOverflow: false,
+			name:     "max int",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// z := new(Int)
-			z := New()
-			gotResult, gotOverflow := z.SubOverflow(tt.x, tt.y)
-
-			if gotOverflow != tt.wantOverflow {
-				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
-				return
-			}
-
-			if !gotOverflow {
-				if gotResult == nil {
-					t.Error("unexpected nil result for non-overflow case")
-					return
-				}
-				if gotResult.ToString() != tt.wantResult {
-					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
-				}
-			}
-		})
-	}
-}
-
-func TestMulUint256(t *testing.T) {
-	tests := []struct {
-		x, y, want string
-	}{
-		{"0", "1", "0"},
-		{"1", "0", "0"},
-		{"1", "1", "1"},
-		{"1", "2", "2"},
-		{"-1", "1", "-1"},
-		{"-1", "3", "-3"},
-		{"3", "4", "12"},
-		{"-3", "4", "-12"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639934", "2", "-115792089237316195423570985008687907853269984665640564039457584007913129639932"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639934", "2", "115792089237316195423570985008687907853269984665640564039457584007913129639932"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := uint256.FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.MulUint256(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("MulUint256(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestInt_MulOverflow(t *testing.T) {
-	maxInt256 := MaxInt256()
-	minInt256 := MinInt256()
-
-	tests := []struct {
-		name         string
-		x            *Int
-		y            *Int
-		wantResult   string
-		wantOverflow bool
-	}{
-		{
-			name:         "positive * positive (no overflow)",
-			x:            NewInt(100),
-			y:            NewInt(100),
-			wantResult:   "10000",
-			wantOverflow: false,
-		},
-		{
-			name:         "negative * negative (no overflow)",
-			x:            NewInt(-100),
-			y:            NewInt(-100),
-			wantResult:   "10000",
-			wantOverflow: false,
-		},
-		{
-			name:         "positive * negative (no overflow)",
-			x:            NewInt(100),
-			y:            NewInt(-100),
-			wantResult:   "-10000",
-			wantOverflow: false,
-		},
-		{
-			name:         "0 * positive",
-			x:            Zero(),
-			y:            NewInt(100),
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "positive * 0",
-			x:            NewInt(100),
-			y:            Zero(),
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "0 * 0",
-			x:            Zero(),
-			y:            Zero(),
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "max_int256 * 1",
-			x:            maxInt256,
-			y:            One(),
-			wantResult:   maxInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "min_int256 * 1",
-			x:            minInt256,
-			y:            One(),
-			wantResult:   minInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "min_int256 * -1",
-			x:            minInt256,
-			y:            NewInt(-1),
-			wantResult:   "", // overflow because abs(min_int256) > max_int256
-			wantOverflow: true,
-		},
-		{
-			name:         "max_int256 * 2",
-			x:            maxInt256,
-			y:            NewInt(2),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-		{
-			name:         "min_int256 * 2",
-			x:            minInt256,
-			y:            NewInt(2),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-		{
-			name:         "half_max * 2",
-			x:            MustFromDecimal("28948022309329048855892746252171976963317496332820282019728792003956564819983"), // (2^255-1)/2
-			y:            NewInt(2),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-		{
-			name:         "(half_max + 1) * 2",
-			x:            new(Int).Add(new(Int).Div(maxInt256, NewInt(2)), One()),
-			y:            NewInt(2),
-			wantResult:   "",
-			wantOverflow: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			z := new(Int)
-			gotResult, gotOverflow := z.MulOverflow(tt.x, tt.y)
-
-			if gotOverflow != tt.wantOverflow {
-				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
-				return
-			}
-
-			if !gotOverflow {
-				if gotResult == nil {
-					t.Error("unexpected nil result for non-overflow case")
-					return
-				}
-				if gotResult.ToString() != tt.wantResult {
-					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
-				}
-			}
-
-			if !tt.wantOverflow {
-				reverseResult, reverseOverflow := z.MulOverflow(tt.y, tt.x)
-				if reverseOverflow != gotOverflow {
-					t.Error("multiplication is not commutative for overflow")
-				}
-				if reverseResult.ToString() != gotResult.ToString() {
-					t.Error("multiplication is not commutative for result")
-				}
-			}
-		})
-	}
-}
-
-func TestDiv(t *testing.T) {
-	tests := []struct {
-		x, y, expected string
-	}{
-		{"1", "1", "1"},
-		{"0", "1", "0"},
-		{"-1", "1", "-1"},
-		{"1", "-1", "-1"},
-		{"-1", "-1", "1"},
-		{"-6", "3", "-2"},
-		{"10", "-2", "-5"},
-		{"-10", "3", "-3"},
-		{"7", "3", "2"},
-		{"-7", "3", "-2"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "2", "57896044618658097711785492504343953926634992332820282019728792003956564819967"}, // Max uint256 / 2
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.x+"/"+tt.y, func(t *testing.T) {
 			x := MustFromDecimal(tt.x)
-			y := MustFromDecimal(tt.y)
-			result := Zero().Div(x, y)
-			if result.ToString() != tt.expected {
-				t.Errorf("Div(%s, %s) = %s, want %s", tt.x, tt.y, result.ToString(), tt.expected)
-			}
-			if result.abs.IsZero() && result.neg {
-				t.Errorf("Div(%s, %s) resulted in negative zero", tt.x, tt.y)
-			}
+			uassert.Equal(t, tt.expected, x.IsMinI256())
 		})
 	}
-
-	t.Run("Division by zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Div(1, 0) did not panic")
-			}
-		}()
-		x := MustFromDecimal("1")
-		y := MustFromDecimal("0")
-		Zero().Div(x, y)
-	})
 }
 
-func TestDivUint256(t *testing.T) {
+func TestGetSetInt64(t *testing.T) {
 	tests := []struct {
-		x, y, want string
+		name string
+		v    int64
 	}{
-		{"0", "1", "0"},
-		{"1", "0", "0"},
-		{"1", "1", "1"},
-		{"1", "2", "0"},
-		{"-1", "1", "-1"},
-		{"-1", "3", "0"},
-		{"4", "3", "1"},
-		{"25", "5", "5"},
-		{"25", "4", "6"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639934", "2", "-57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639934", "2", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{
+			name: "positive",
+			v:    int64(math.MaxInt64),
+		},
+		{
+			name: "negative",
+			v:    int64(math.MinInt64),
+		},
+		{
+			name: "zero",
+			v:    int64(0),
+		},
 	}
 
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := uint256.FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.DivUint256(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("DivUint256(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			z := new(Int).SetInt64(tt.v)
+			uassert.Equal(t, tt.v, z.Int64())
+		})
 	}
 }
 
-func TestQuo(t *testing.T) {
+func TestIsInt64(t *testing.T) {
 	tests := []struct {
-		x, y, want string
+		name     string
+		x        string
+		expected bool
 	}{
-		{"0", "1", "0"},
-		{"0", "-1", "0"},
-		{"10", "1", "10"},
-		{"10", "-1", "-10"},
-		{"-10", "1", "-10"},
-		{"-10", "-1", "10"},
-		{"10", "-3", "-3"},
-		{"10", "3", "3"},
+		{
+			name:     "max int64",
+			x:        "9223372036854775807",
+			expected: true,
+		},
+		{
+			name:     "min int64",
+			x:        "-9223372036854775808",
+			expected: true,
+		},
+		{
+			name:     "max int64 + 1",
+			x:        "9223372036854775808",
+			expected: false,
+		},
+		{
+			name:     "min int64 - 1",
+			x:        "-9223372036854775809",
+			expected: false,
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: true,
+		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: true,
+		},
 	}
 
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.Equal(t, tt.expected, x.IsInt64())
+		})
+	}
+}
 
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
+func TestIsUint64(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		expected bool
+	}{
+		{
+			name:     "max uint64",
+			x:        "18446744073709551615",
+			expected: true,
+		},
+		{
+			name:     "max uint64 + 1",
+			x:        "18446744073709551616",
+			expected: false,
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: true,
+		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: true,
+		},
+		{
+			name:     "negative value is -1",
+			x:        "-1",
+			expected: false,
+		},
+		{
+			name:     "negative value is negative max uint64",
+			x:        "-18446744073709551615",
+			expected: false,
+		},
+		{
+			name:     "negative value is negative max uint64 - 1",
+			x:        "-18446744073709551616",
+			expected: false,
+		},
+	}
 
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Quo(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Quo(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.Equal(t, tt.expected, x.IsUint64())
+		})
 	}
 }
 
 func TestRem(t *testing.T) {
 	tests := []struct {
-		x, y, want string
-	}{
-		{"0", "1", "0"},
-		{"0", "-1", "0"},
-		{"10", "1", "0"},
-		{"10", "-1", "0"},
-		{"-10", "1", "0"},
-		{"-10", "-1", "0"},
-		{"10", "3", "1"},
-		{"10", "-3", "1"},
-		{"-10", "3", "-1"},
-		{"-10", "-3", "-1"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Rem(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Rem(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestMod(t *testing.T) {
-	tests := []struct {
-		x, y, want string
-	}{
-		{"0", "1", "0"},
-		{"0", "-1", "0"},
-		{"10", "0", "0"},
-		{"10", "1", "0"},
-		{"10", "-1", "0"},
-		{"-10", "0", "0"},
-		{"-10", "1", "0"},
-		{"-10", "-1", "0"},
-		{"10", "3", "1"},
-		{"10", "-3", "1"},
-		{"-10", "3", "2"},
-		{"-10", "-3", "2"},
-	}
-
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		y, err := FromDecimal(tc.y)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		want, err := FromDecimal(tc.want)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Mod(x, y)
-
-		if got.Neq(want) {
-			t.Errorf("Mod(%s, %s) = %v, want %v", tc.x, tc.y, got.ToString(), want.ToString())
-		}
-	}
-}
-
-func TestNilInitialization(t *testing.T) {
-	tests := []struct {
-		name    string
-		setup   func() (*Int, error)
-		wantStr string
+		name        string
+		x           string
+		y           string
+		expected    string
+		shouldPanic bool
 	}{
 		{
-			name: "AddUint256 with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := uint256.NewUint(5)
-				return z.AddUint256(z, x), nil
-			},
-			wantStr: "5",
+			name:     "positive % negative",
+			x:        "3",
+			y:        "-2",
+			expected: "1",
 		},
 		{
-			name: "SubUint256 with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := uint256.NewUint(5)
-				return z.SubUint256(z, x), nil
-			},
-			wantStr: "-5",
+			name:     "positive % positive",
+			x:        "13",
+			y:        "3",
+			expected: "1",
 		},
 		{
-			name: "MulUint256 with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := uint256.NewUint(5)
-				return z.MulUint256(z, x), nil
-			},
-			wantStr: "0",
+			name:     "negative % positive",
+			x:        "-13",
+			y:        "3",
+			expected: "-1",
 		},
 		{
-			name: "DivUint256 with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := uint256.NewUint(5)
-				return z.DivUint256(z, x), nil
-			},
-			wantStr: "0",
+			name:     "positive % negative (truncated)",
+			x:        "13",
+			y:        "-3",
+			expected: "1",
 		},
 		{
-			name: "Mod with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := MustFromDecimal("5")
-				defer func() {
-					if r := recover(); r != nil {
-						t.Errorf("Mod with nil abs panicked: %v", r)
-					}
-				}()
-				return z.Mod(z, x), nil
-			},
-			wantStr: "0",
+			name:     "negative % negative",
+			x:        "-13",
+			y:        "-3",
+			expected: "-1",
 		},
 		{
-			name: "Chained operations with nil abs",
-			setup: func() (*Int, error) {
-				z := new(Int)
-				x := uint256.NewUint(5)
-				y := uint256.NewUint(3)
-				// (0 + 5) * 3
-				return z.AddUint256(z, x).MulUint256(z, y), nil
-			},
-			wantStr: "15",
+			name:     "min negative % positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "35719473219571942749314729421",
+			expected: "-34167184328512991083512640217",
+		},
+		{
+			name:     "max positive % negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-35719473219571942749314729421",
+			expected: "34167184328512991083512640216",
+		},
+		{
+			name:     "large negative % large negative",
+			x:        "-43179374921751324719573491471294",
+			y:        "-43127519734921524",
+			expected: "-22155214380278890",
+		},
+		{
+			name:     "zero % negative",
+			x:        "0",
+			y:        "-2",
+			expected: "0",
+		},
+		{
+			name:     "zero % positive",
+			x:        "0",
+			y:        "2",
+			expected: "0",
+		},
+		{
+			name:     "large positive % smaller positive",
+			x:        "4372195701247205721942146816424",
+			y:        "1974924792517421647328142",
+			expected: "549633341738318150337156",
+		},
+		{
+			name:     "same values",
+			x:        "1974924792517421647328142",
+			y:        "1974924792517421647328142",
+			expected: "0",
+		},
+		{
+			name:     "max positive % small positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "2",
+			expected: "1",
+		},
+		{
+			name:     "max positive % one positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "1",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "2",
+			expected: "0",
+		},
+		{
+			name:     "min negative + 1 % small positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "2",
+			expected: "-1",
+		},
+		{
+			name:     "min positive % one positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "1",
+			expected: "0",
+		},
+		{
+			name:     "max positive % small negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-2",
+			expected: "1",
+		},
+		{
+			name:     "max positive % one negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-1",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small negative",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-2",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small negative + 1",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-2",
+			expected: "-1",
+		},
+		{
+			name:     "min negative % one negative",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-1",
+			expected: "0",
+		},
+		{
+			name:        "remainder by zero",
+			x:           "1",
+			y:           "0",
+			expected:    "",
+			shouldPanic: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := tt.setup()
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-				return
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Rem should panic on division by zero")
+					}
+				}()
 			}
 
-			got := result.ToString()
-			if got != tt.wantStr {
-				t.Errorf("%s: got %v, want %v", tt.name, got, tt.wantStr)
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			z := new(Int).Rem(x, y)
+			if !tt.shouldPanic {
+				uassert.Equal(t, tt.expected, z.ToString())
 			}
+		})
+	}
+}
+
+func TestIsPositive(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		expected bool
+	}{
+		{
+			name:     "positive number",
+			x:        "100",
+			expected: true,
+		},
+		{
+			name:     "smallest positive",
+			x:        "1",
+			expected: true,
+		},
+		{
+			name:     "max positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "negative number",
+			x:        "-100",
+			expected: false,
+		},
+		{
+			name:     "negative one",
+			x:        "-1",
+			expected: false,
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: false,
+		},
+		{
+			name:     "min int256",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.Equal(t, tt.expected, x.IsPositive())
+		})
+	}
+}
+
+func TestLte(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		y        string
+		expected bool
+	}{
+		{
+			name:     "min negative <= max positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "equal values",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "max positive > min negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: false,
+		},
+		{
+			name:     "max positive <= zero is false",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: false,
+		},
+		{
+			name:     "zero <= max positive is true",
+			x:        "0",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "max negative <= zero is false",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "0",
+			expected: true,
+		},
+		{
+			name:     "zero <= min negative is true",
+			x:        "0",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			uassert.Equal(t, tt.expected, x.Lte(y))
+		})
+	}
+}
+
+func TestGte(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		y        string
+		expected bool
+	}{
+		{
+			name:     "min negative < max positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+		{
+			name:     "equal values",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "max positive >= min negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
+		},
+		{
+			name:     "max positive >= zero is true",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: true,
+		},
+		{
+			name:     "zero >= max positive is false",
+			x:        "0",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+		{
+			name:     "max negative >= zero is false",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "0",
+			expected: false,
+		},
+		{
+			name:     "zero >= min negative is true",
+			x:        "0",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			uassert.Equal(t, tt.expected, x.Gte(y))
+		})
+	}
+}
+
+func TestXor(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		y        string
+		expected string
+	}{
+		{
+			name:     "min negative ^ negative",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-100",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819868",
+		},
+		{
+			name:     "max positive ^ positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "41457129491534261876432718654783265437285638275",
+			expected: "57896044618658097711785492504302496797143458070943849301074008738519279181692",
+		},
+		{
+			name:     "min negative ^ max positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: "-1",
+		},
+		{
+			name:     "max positive ^ zero",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+		{
+			name:     "min negative ^ zero",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "0",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "max positive ^ one",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819966",
+		},
+		{
+			name:     "min negative ^ one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "1",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+		{
+			name:     "min negative ^ negative one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+		{
+			name:     "zero ^ zero",
+			x:        "0",
+			y:        "0",
+			expected: "0",
+		},
+		{
+			name:     "positive ^ same positive (identity)",
+			x:        "12345678901234567890",
+			y:        "12345678901234567890",
+			expected: "0",
+		},
+		{
+			name:     "negative ^ same negative (identity)",
+			x:        "-12345678901234567890",
+			y:        "-12345678901234567890",
+			expected: "0",
+		},
+		{
+			name:     "max positive ^ max positive (identity)",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: "0",
+		},
+		{
+			name:     "min negative ^ min negative (identity)",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: "0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			z := new(Int).Xor(x, y)
+			uassert.Equal(t, tt.expected, z.ToString())
+		})
+	}
+}
+
+func TestNot(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		expected string
+	}{
+		{
+			name:     "positive number",
+			x:        "100",
+			expected: "-101",
+		},
+		{
+			name:     "negative number",
+			x:        "-100",
+			expected: "99",
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: "-1",
+		},
+		{
+			name:     "one",
+			x:        "1",
+			expected: "-2",
+		},
+		{
+			name:     "negative one",
+			x:        "-1",
+			expected: "0",
+		},
+		{
+			name:     "max int256",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "min int256",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			z := new(Int).Not(x)
+			uassert.Equal(t, tt.expected, z.ToString())
 		})
 	}
 }
