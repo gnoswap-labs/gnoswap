@@ -160,7 +160,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested",
+			expectedPanicMsg: "[GNOSWAP-POOL-017] invalid tick and tick spacing requested",
 		},
 		{
 			name:             "mint and stake with fee tier 10000",
@@ -194,7 +194,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested",
+			expectedPanicMsg: "[GNOSWAP-POOL-017] invalid tick and tick spacing requested",
 		},
 		{
 			name:             "mint and stake with invalid minimum amounts",
@@ -407,7 +407,7 @@ func TestMintAndStakeWithoutNativeToken(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper",
+			expectedPanicMsg: "[GNOSWAP-POOL-018] tickLower is greater than or equal to tickUpper",
 		},
 		{
 			name:           "valid referrer address",

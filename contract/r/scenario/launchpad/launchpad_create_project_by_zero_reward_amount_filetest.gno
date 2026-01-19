@@ -74,7 +74,7 @@ func createProjectByZeroRewardAmount() {
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-007] invalid input data || deposit amount cannot be 0"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || deposit amount cannot be 0"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -109,4 +109,4 @@ func createProjectByZeroRewardAmount() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1235172690
-// [EXPECTED] Should abort with invalid input data error: [GNOSWAP-LAUNCHPAD-007] invalid input data || deposit amount cannot be 0
+// [EXPECTED] Should abort with invalid input data error: [GNOSWAP-LAUNCHPAD-005] invalid input data || deposit amount cannot be 0
