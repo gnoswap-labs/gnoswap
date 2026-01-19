@@ -59,7 +59,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			startTime:            time.Now().Unix() - projectMinimumStartDelayTime, // 3 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234308690) must be greater than now(1234827090)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-005] invalid input data || start time(1234308690) must be greater than now(1234827090)",
 		},
 		{
 			name:                 "create project failed by start time is less than minimum start delay time",
@@ -75,7 +75,7 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			startTime:            time.Now().Unix() + projectMinimumStartDelayTime - 1, // 3 days
 			callerAddress:        adminAddr,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234827089) must be greater than now(1234827090)",
+			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-005] invalid input data || start time(1234827089) must be greater than now(1234827090)",
 		},
 	}
 
@@ -215,7 +215,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:10, 90:20, 180:60) should be 100",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-005] invalid input data || invalid ratio, sum of all tiers(30:10, 90:20, 180:60) should be 100",
 		},
 		{
 			name: "create project failed by project name is empty",
@@ -234,7 +234,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime),
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-005] invalid input data || project name cannot be empty",
 		},
 		{
 			name: "create project failed by project owner address is invalid",
@@ -293,7 +293,7 @@ func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 				minimumStartDelayTime: projectMinimumStartDelayTime,
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/test/token) not registered",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath(gno.land/r/test/token) not registered",
 		},
 	}
 
@@ -372,7 +372,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				startTime:        int64(time.Now().Unix() + projectMinimumStartDelayTime), // 3 days
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-006] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
 		},
 	}
 

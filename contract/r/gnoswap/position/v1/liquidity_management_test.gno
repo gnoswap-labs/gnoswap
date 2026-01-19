@@ -80,7 +80,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			errorType:       "abort",
 			expectedAmount0: "0",
 			expectedAmount1: "0",
-			expectedMessage: "[GNOSWAP-POOL-008] zero liquidity",
+			expectedMessage: "[GNOSWAP-POOL-007] zero liquidity",
 		},
 		{
 			name: "add liquidity is failed by invalid tick range",
@@ -96,7 +96,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(-600)",
+			expectedMessage: "[GNOSWAP-POOL-018] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(-600)",
 		},
 		{
 			name: "add liquidity is failed by non-existent pool",
@@ -112,7 +112,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-006] requested data not found || expected poolPath(invalid/pool/path) to exist",
+			expectedMessage: "[GNOSWAP-POOL-005] requested data not found || expected poolPath(invalid/pool/path) to exist",
 		},
 		{
 			name: "add liquidity is failed by insufficient balance",
@@ -305,7 +305,7 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 			expectedAmount0: "100",
 			expectedAmount1: "100",
 			expectError:     true,
-			expectedMessage: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(60) != 0(1)",
+			expectedMessage: "[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(60) != 0(1)",
 		},
 	}
 

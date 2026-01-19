@@ -58,7 +58,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Cancel Proposal is aborted by already canceled proposal")
-	cancelProposalWithError(proposalId, true, "[GNOSWAP-GOVERNANCE-008]")
+	cancelProposalWithError(proposalId, true, "[GNOSWAP-GOVERNANCE-006]")
 	println()
 
 	println("[SCENARIO] 6. Propose community pool spend")
@@ -71,7 +71,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 8. Cancel Proposal is aborted by active proposal")
-	cancelProposalWithError(proposalId2, true, "[GNOSWAP-GOVERNANCE-009]")
+	cancelProposalWithError(proposalId2, true, "[GNOSWAP-GOVERNANCE-007]")
 	println()
 }
 
@@ -133,3 +133,4 @@ func cancelProposalWithError(proposalId int64, hasAborted bool, abortMessage str
 //
 // [SCENARIO] 8. Cancel Proposal is aborted by active proposal
 // [EXPECTED] proposal canceled and archived
+

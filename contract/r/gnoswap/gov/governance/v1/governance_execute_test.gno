@@ -103,7 +103,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 			proposalId:       999,
 			executor:         testutils.TestAddress("executor"),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] requested data not found",
 		},
 		{
 			name:       "fail - text proposal not executable",
@@ -126,7 +126,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				100,
 			),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-008] cannot execute text proposal",
 		},
 		{
 			name:       "fail - execution period not started",
@@ -154,7 +154,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 		},
 		{
 			name:       "fail - proposal not passed",
@@ -181,7 +181,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 		},
 	}
 
@@ -306,7 +306,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 			executedHeight:       1000,
 			executedBy:           testutils.TestAddress("executor"),
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] requested data not found",
 		},
 		{
 			name:           "fail - text proposal not executable",
@@ -331,7 +331,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 				100,
 			),
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-008] cannot execute text proposal",
 		},
 		{
 			name:           "fail - proposal not executable",
@@ -361,7 +361,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 		},
 	}
 
@@ -466,14 +466,14 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				100,
 			),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-022] not proposer",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] not proposer",
 		},
 		{
 			name:             "fail - proposal not found",
 			proposalId:       999,
 			canceler:         testutils.TestAddress("canceler"),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-020] proposal not found",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-012] proposal not found",
 		},
 		{
 			name:       "fail - proposal already executed",
@@ -502,7 +502,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-007] unable to cancel voting proposal",
 		},
 		{
 			name:       "fail - proposal already canceled",
@@ -531,7 +531,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-008] cannot cancel already canceled proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] cannot cancel already canceled proposal",
 		},
 	}
 
@@ -586,13 +586,13 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 		{
 			name:          "fail - negative proposal ID",
 			proposalId:    -1,
-			expectedError: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedError: "[GNOSWAP-GOVERNANCE-002] requested data not found",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - zero proposal ID",
 			proposalId:    0,
-			expectedError: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedError: "[GNOSWAP-GOVERNANCE-002] requested data not found",
 			shouldFail:    true,
 		},
 		{
@@ -615,7 +615,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-008] cannot execute text proposal",
 			shouldFail:    true,
 		},
 		{
@@ -634,7 +634,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					100,
 				)
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 		{
@@ -653,7 +653,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					100,
 				)
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 		{
@@ -675,7 +675,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				statusResolver.vote(false, 6_000_000_000) // Majority no votes
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 		{
@@ -698,7 +698,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				statusResolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 		{
@@ -717,7 +717,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					100,
 				)
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 		{
@@ -739,7 +739,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				statusResolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("proposer"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			shouldFail:    true,
 		},
 	}
@@ -789,7 +789,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 			name:             "fail - execute before execution delay",
 			proposalTime:     time.Now().Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay-1)), // execution window end
 			executionTime:    time.Now(),
-			expectedError:    "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError:    "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			expectedHasAbort: true,
 			description:      "Execution before delay should fail",
 		},
@@ -818,7 +818,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 			name:             "fail - execute after window expires",
 			proposalTime:     time.Now().Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay+testConfig.ExecutionWindow)), // execution window end
 			executionTime:    time.Now(),
-			expectedError:    "[GNOSWAP-GOVERNANCE-021] proposal not executable",
+			expectedError:    "[GNOSWAP-GOVERNANCE-013] proposal not executable",
 			expectedHasAbort: true,
 			description:      "Execution after window expiry should fail",
 		},
@@ -1125,7 +1125,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedError:      "[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal",
+			expectedError:      "[GNOSWAP-GOVERNANCE-007] unable to cancel voting proposal",
 			expectedHasAbort:   true,
 		},
 		{
@@ -1136,7 +1136,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedError:      "[GNOSWAP-GOVERNANCE-020] proposal not found",
+			expectedError:      "[GNOSWAP-GOVERNANCE-012] proposal not found",
 			expectedHasAbort:   true,
 			description:        "Test with proposalId 999 (nonexistent)",
 		},
@@ -1148,7 +1148,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedError:      "[GNOSWAP-GOVERNANCE-022] not proposer",
+			expectedError:      "[GNOSWAP-GOVERNANCE-014] not proposer",
 			expectedHasAbort:   true,
 			description:        "Test with proposalId 1 (existent)",
 		},
@@ -1240,7 +1240,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 		})
 
 		// then - second execution should fail
-		errNotExecutableMsg := "[GNOSWAP-GOVERNANCE-021] proposal not executable"
+		errNotExecutableMsg := "[GNOSWAP-GOVERNANCE-013] proposal not executable"
 		uassert.AbortsContains(t, errNotExecutableMsg, func() {
 			func(cur realm) {
 				testing.SetRealm(govRealm)

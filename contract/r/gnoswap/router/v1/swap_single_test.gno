@@ -186,7 +186,7 @@ func TestSingleSwapInputValidation(t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "abort",
-			errorMessage: "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
+			errorMessage: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
 		},
 		{
 			name: "Success: Valid parameters",

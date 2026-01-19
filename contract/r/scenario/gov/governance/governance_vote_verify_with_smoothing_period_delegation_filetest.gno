@@ -192,7 +192,7 @@ func voteProposals(proposalId int64, hasVoter2VotingWeight bool) {
 		governance.Vote(cross, proposalId, false)
 		ufmt.Printf("[INFO] Voter2 voted NO\n")
 	} else {
-		uassert.AbortsContains(t, "[GNOSWAP-GOVERNANCE-007] not enough voting power", func() {
+		uassert.AbortsContains(t, "[GNOSWAP-GOVERNANCE-005] not enough voting power", func() {
 			testing.SetRealm(testing.NewUserRealm(voter2Addr))
 			governance.Vote(cross, proposalId, false)
 		})
