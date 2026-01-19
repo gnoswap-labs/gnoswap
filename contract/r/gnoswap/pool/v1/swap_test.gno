@@ -875,7 +875,7 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			expectedAmounts:      []string{},
 			tradingContext:       "Swap terminated when sqrtPriceLimitX96 is over tick range",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POOL-017] swap price out of range",
+			expectedPanicMessage: "[GNOSWAP-POOL-015] swap price out of range",
 		},
 	}
 
