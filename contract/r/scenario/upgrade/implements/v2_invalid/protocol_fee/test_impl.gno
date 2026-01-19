@@ -136,20 +136,6 @@ func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 
 	return t.instance.GetAccuTransferToDevOpsByTokenPath(path)
 }
 
-func (t *TestProtocolFee) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	if !t.isActive("GetHistoryOfDistributedToGovStakerByTokenPath") {
-		panic("test implementation: GetHistoryOfDistributedToGovStakerByTokenPath not supported")
-	}
-	return t.instance.GetHistoryOfDistributedToGovStakerByTokenPath(path)
-}
-
-func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	if !t.isActive("GetHistoryOfDistributedToDevOpsByTokenPath") {
-		panic("test implementation: GetHistoryOfDistributedToDevOpsByTokenPath not supported")
-	}
-	return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(path)
-}
-
 func (t *TestProtocolFee) GetTokenList() []string {
 	if !t.isActive("GetTokenList") {
 		panic("test implementation: GetTokenList not supported")

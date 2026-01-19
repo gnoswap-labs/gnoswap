@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -79,8 +78,8 @@ func main() {
 	earlyVotersVote(proposalId)
 	println()
 
-	println("[SCENARIO] 7. Voter3 attempts to vote (should fail - delegated after snapshot)")
-	lateVoterAttempt(proposalId)
+	println("[SCENARIO] 7. Voter3 to vote (should succeed - delegated after snapshot)")
+	lateVoterSuccess(proposalId)
 	println()
 
 	println("[SCENARIO] 8. Verify voting results")
@@ -141,34 +140,31 @@ func earlyVotersVote(proposalId int64) {
 	ufmt.Printf("[INFO] Proposal state: %s\n", state)
 }
 
-func lateVoterAttempt(proposalId int64) {
+func lateVoterSuccess(proposalId int64) {
 	// Voter3 delegated AFTER the proposal was created,
 	// so their delegation is not in the snapshot
-	uassert.AbortsContains(t, "[GNOSWAP-GOVERNANCE-007] not enough voting power", func() {
-		testing.SetRealm(testing.NewUserRealm(voter3Addr))
-		governance.Vote(cross, proposalId, false)
-	})
-	ufmt.Printf("[INFO] Voter3 cannot vote - delegated AFTER proposal snapshot time\n")
-	ufmt.Printf("[EXPECTED] This is correct: late delegations don't affect existing proposals\n")
+	testing.SetRealm(testing.NewUserRealm(voter3Addr))
+	governance.Vote(cross, proposalId, false)
+
+	voter3Weight, _ := governance.GetVoteWeight(proposalId, voter3Addr)
+	ufmt.Printf("[INFO] Voter3 vote weight: %d\n", voter3Weight)
 }
 
 func verifyVotingResults(proposalId int64) {
 	// Get vote weights - only voter1 and voter2 voted
 	voter1Weight, _ := governance.GetVoteWeight(proposalId, voter1Addr)
 	voter2Weight, _ := governance.GetVoteWeight(proposalId, voter2Addr)
+	voter3Weight, _ := governance.GetVoteWeight(proposalId, voter3Addr)
 
 	// Get proposal totals
 	yeaWeight, _ := governance.GetYeaByProposalId(proposalId)
 	nayWeight, _ := governance.GetNayByProposalId(proposalId)
 	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 
-	// Get current xGNS (for comparison)
-	voter3Xgns := xgns.BalanceOf(voter3Addr)
-
 	ufmt.Printf("[RESULT] Voting weights:\n")
 	ufmt.Printf("  - Voter1: weight=%d (voted YES)\n", voter1Weight)
 	ufmt.Printf("  - Voter2: weight=%d (voted NO)\n", voter2Weight)
-	ufmt.Printf("  - Voter3: could not vote (late delegation, xGNS=%d)\n", voter3Xgns)
+	ufmt.Printf("  - Voter3: weight=%d (voted NO)\n", voter3Weight)
 
 	ufmt.Printf("[RESULT] Proposal summary:\n")
 	ufmt.Printf("  - Quorum amount (based on snapshot, excludes voter3): %d\n", quorumAmount)
@@ -176,13 +172,13 @@ func verifyVotingResults(proposalId int64) {
 	ufmt.Printf("  - Nay weight: %d\n", nayWeight)
 
 	ufmt.Printf("[EXPECTED] Yea (%d) = voter1 (%d): %t\n", yeaWeight, voter1Weight, yeaWeight == voter1Weight)
-	ufmt.Printf("[EXPECTED] Nay (%d) = voter2 (%d): %t\n", nayWeight, voter2Weight, nayWeight == voter2Weight)
+	ufmt.Printf("[EXPECTED] Nay (%d) = voter2 + voter3 (%d): %t\n", nayWeight, voter2Weight+voter3Weight, nayWeight == voter2Weight+voter3Weight)
 
 	// Explain the behavior
 	ufmt.Printf("[EXPLANATION] Snapshot mechanism:\n")
 	ufmt.Printf("  - Voter1 and Voter2 delegated BEFORE proposal creation\n")
 	ufmt.Printf("  - Voter3 delegated AFTER proposal creation, so excluded from this vote\n")
-	ufmt.Printf("  - Voter3 CAN participate in future proposals\n")
+	ufmt.Printf("  - Voter3 participate in proposals\n")
 }
 
 // Output:
@@ -210,22 +206,21 @@ func verifyVotingResults(proposalId int64) {
 // [INFO] Voter2 voted NO
 // [INFO] Proposal state: active
 //
-// [SCENARIO] 7. Voter3 attempts to vote (should fail - delegated after snapshot)
-// [INFO] Voter3 cannot vote - delegated AFTER proposal snapshot time
-// [EXPECTED] This is correct: late delegations don't affect existing proposals
+// [SCENARIO] 7. Voter3 to vote (should succeed - delegated after snapshot)
+// [INFO] Voter3 vote weight: 1500000000
 //
 // [SCENARIO] 8. Verify voting results
 // [RESULT] Voting weights:
 //   - Voter1: weight=4000000000 (voted YES)
 //   - Voter2: weight=2000000000 (voted NO)
-//   - Voter3: could not vote (late delegation, xGNS=0)
+//   - Voter3: weight=1500000000 (voted NO)
 // [RESULT] Proposal summary:
 //   - Quorum amount (based on snapshot, excludes voter3): 3000000000
 //   - Yea weight: 4000000000
-//   - Nay weight: 2000000000
+//   - Nay weight: 3500000000
 // [EXPECTED] Yea (4000000000) = voter1 (4000000000): true
-// [EXPECTED] Nay (2000000000) = voter2 (2000000000): true
+// [EXPECTED] Nay (3500000000) = voter2 + voter3 (3500000000): true
 // [EXPLANATION] Snapshot mechanism:
 //   - Voter1 and Voter2 delegated BEFORE proposal creation
 //   - Voter3 delegated AFTER proposal creation, so excluded from this vote
-//   - Voter3 CAN participate in future proposals
+//   - Voter3 participate in proposals

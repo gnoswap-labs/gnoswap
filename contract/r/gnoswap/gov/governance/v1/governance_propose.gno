@@ -410,8 +410,8 @@ func (gv *governanceV1) createProposal(
 	return proposal, nil
 }
 
-// getVotingWeightSnapshot retrieves the total voting weight at a specific snapshot time.
-// Returns the snapshot time and total voting weight for proposal creation.
+// getVotingWeightSnapshot retrieves the averaged total voting weight for proposal creation.
+// It uses two snapshots (current and current - smoothingPeriod) and averages them.
 func (gv *governanceV1) getVotingWeightSnapshot(
 	current,
 	smoothingPeriod int64,
@@ -423,8 +423,18 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 	}
 
 	// Get total delegation amount at snapshot time from staker contract via accessor
-	totalVotingWeight, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)
-	if !ok || totalVotingWeight <= 0 {
+	totalAtSnapshot, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)
+	if !ok {
+		totalAtSnapshot = 0
+	}
+
+	totalAtCurrent, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(current)
+	if !ok {
+		totalAtCurrent = 0
+	}
+
+	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
+	if totalVotingWeight <= 0 {
 		return 0, snapshotTime, errNotEnoughVotingWeight
 	}
 
