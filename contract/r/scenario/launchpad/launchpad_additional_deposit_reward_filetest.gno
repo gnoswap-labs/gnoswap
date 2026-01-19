@@ -238,7 +238,7 @@ func collectRewardSilent(ownerAddr address, depositId string) {
 }
 
 func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-019] invalid reward state"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-011] invalid reward state"
 	uassert.AbortsContains(t, expectedPanicMessage, func() {
 		testing.SetRealm(testing.NewUserRealm(ownerAddr))
 		launchpad.CollectRewardByDepositId(cross, depositId)
@@ -326,6 +326,6 @@ func assertCollectNotYetClaimable(ownerAddr address, depositId string) {
 // [INFO] OBL balance after: 5004918
 // [INFO] Reward collected: 4822
 //
-// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state
-// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state
-// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-019] invalid reward state
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-011] invalid reward state
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-011] invalid reward state
+// [EXPECTED] Collect should abort before claimable time: [GNOSWAP-LAUNCHPAD-011] invalid reward state

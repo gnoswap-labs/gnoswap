@@ -131,7 +131,7 @@ func TestGetProject(t *testing.T) {
 			createProject:    false,
 			expectedNotNil:   false,
 			expectedHasError: true,
-			expectedError:    "project not found",
+			expectedError:    "project(nonexistent-project-id) not found",
 		},
 	}
 

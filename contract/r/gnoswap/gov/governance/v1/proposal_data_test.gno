@@ -101,28 +101,28 @@ func TestProposalData_Validation(t *testing.T) {
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), validTokenPath, 1000),
 			expectedError:        true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || to is invalid address",
 		},
 		{
 			name:                 "Failure - CommunityPoolSpend with zero amount",
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, 0),
 			expectedError:        true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 		},
 		{
 			name:                 "Failure - CommunityPoolSpend with negative amount",
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, -100),
 			expectedError:        true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || amount is not positive",
 		},
 		{
 			name:                 "Failure - Invalid ParameterChange proposal",
 			proposalType:         governance.ParameterChange,
 			execution:            governance.NewExecutionInfo(0, []string{}),
 			expectedError:        true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
 	}
 
