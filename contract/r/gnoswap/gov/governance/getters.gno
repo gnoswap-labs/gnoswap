@@ -1,6 +1,6 @@
 package governance
 
-import "gno.land/p/nt/ufmt"
+import "errors"
 
 // ==================================
 // Store Data Getters
@@ -376,7 +376,7 @@ func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInf
 
 	proposalData := proposal.Data()
 	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
-		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
+		return nil, errors.New("proposal is not a community pool spend proposal")
 	}
 
 	return proposalData.CommunityPoolSpend().Clone(), nil
@@ -399,7 +399,7 @@ func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
 	proposalData := proposal.Data()
 
 	if proposalData == nil || proposalData.Execution() == nil {
-		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
+		return nil, errors.New("proposal is not a parameter change proposal")
 	}
 
 	return proposalData.Execution().Clone(), nil

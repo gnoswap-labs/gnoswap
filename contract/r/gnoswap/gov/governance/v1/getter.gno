@@ -1,13 +1,13 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
-
 
 // GetLatestConfigVersion returns the current config version.
 func (gv *governanceV1) GetLatestConfigVersion() int64 {
@@ -23,7 +23,6 @@ func (gv *governanceV1) GetCurrentProposalID() int64 {
 func (gv *governanceV1) GetMaxSmoothingPeriod() int64 {
 	return maxSmoothingPeriod
 }
-
 
 // GetLatestConfig returns the latest governance configuration.
 func (gv *governanceV1) GetLatestConfig() governance.Config {
@@ -45,7 +44,6 @@ func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error
 
 	return config, nil
 }
-
 
 // GetProposalCount returns the total number of proposals.
 func (gv *governanceV1) GetProposalCount() int {
@@ -173,7 +171,6 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
-
 // GetVoteStatus returns the vote status of a proposal.
 //
 // Returns:
@@ -267,7 +264,6 @@ func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error
 	return votingInfo.VotedAt(), nil
 }
 
-
 // GetUserProposalCount returns the number of proposals created by a user.
 func (gv *governanceV1) GetUserProposalCount(user address) int {
 	proposalIDs, exists := gv.store.GetUserProposalIDs(user.String())
@@ -296,7 +292,6 @@ func (gv *governanceV1) GetUserProposalIDs(user address, offset, count int) []in
 
 	return proposalIDs[offset:end]
 }
-
 
 // GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
 // This is used by gov/staker to prevent cleanup of delegation history that is still needed
@@ -330,13 +325,12 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	return oldestSnapshotTime, hasActiveProposal
 }
 
-
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
 func (gv *governanceV1) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
 	current := time.Now().Unix()
 	config, ok := gv.getCurrentConfig()
 	if !ok {
-		return 0, 0, ufmt.Errorf("current config not found")
+		return 0, 0, errors.New("current config not found")
 	}
 
 	return gv.getVotingWeightSnapshot(current, config.VotingWeightSmoothingDuration)
