@@ -119,3 +119,4 @@ func voteProposalWithDummy(proposalId int64) {
 //
 // [SCENARIO] 6. Vote for the proposal with dummy
 // [EXPECTED] after voting - active
+

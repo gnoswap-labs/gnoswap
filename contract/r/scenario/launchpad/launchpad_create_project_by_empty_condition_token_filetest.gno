@@ -74,7 +74,7 @@ func createProjectByEmptyConditionToken() {
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath() not registered"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath() not registered"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -109,4 +109,4 @@ func createProjectByEmptyConditionToken() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1235172690
-// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath() not registered
+// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-005] invalid input data || tokenPath() not registered

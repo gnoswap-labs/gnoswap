@@ -311,7 +311,7 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 				return tree, "key1", 100, false
 			},
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough balance: current(50) < requested(100)",
+			expectedPanicMessage: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough balance: current(50) < requested(100)",
 		},
 	}
 

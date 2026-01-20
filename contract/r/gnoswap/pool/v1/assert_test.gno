@@ -23,7 +23,7 @@ func TestAssertIsNotAllowedEOA(t *testing.T) {
 			name:         "fail - called from EOA",
 			currentRealm: testing.NewUserRealm(adminAddr),
 			shouldPanic:  true,
-			panicMsg:     "[GNOSWAP-POOL-025] not access EOA || previousRealm(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is EOA",
+			panicMsg:     "[GNOSWAP-POOL-023] not access EOA || previousRealm(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is EOA",
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestAssertIsNotEqualsTokens(t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 	}
 
@@ -208,7 +208,7 @@ func TestAssertAmountSpecifiedIsNotZero(t *testing.T) {
 			name:            "fail - zero amount",
 			amountSpecified: "0",
 			shouldPanic:     true,
-			panicMsg:        "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
+			panicMsg:        "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
 		},
 	}
 

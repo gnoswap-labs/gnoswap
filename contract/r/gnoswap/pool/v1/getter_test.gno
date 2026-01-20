@@ -337,7 +337,7 @@ func TestPositionGetters(t *testing.T) {
 			expectedTokensOwed0:              "0",
 			expectedTokensOwed1:              "0",
 			expectedHasPanic:                 true,
-			expectedPanicMessage:             "[GNOSWAP-POOL-006] requested data not found",
+			expectedPanicMessage:             "[GNOSWAP-POOL-005] requested data not found",
 		},
 	}
 

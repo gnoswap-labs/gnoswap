@@ -573,7 +573,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [EXPECTED] Project token path: gno.land/r/onbloc/obl
 // [EXPECTED] Project deposit amount: 10000000
 // [EXPECTED] Project recipient: g1wpex76n9vd6rzh6lta047h6lta047h6lztprp7
-// [EXPECTED] Project condition error (no condition set): condition not found
+// [EXPECTED] Project condition error (no condition set): [GNOSWAP-LAUNCHPAD-003] requested data not found || condition(gno.land/r/gnoswap/gns) not found
 // [EXPECTED] Project tiers ratios:
 // [EXPECTED] - Tier 30: 30
 // [EXPECTED] - Tier 90: 30

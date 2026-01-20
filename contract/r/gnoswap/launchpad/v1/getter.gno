@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/p/nt/ufmt"
+
 	"gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -39,7 +41,7 @@ func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) 
 	projects := lp.store.GetProjects()
 	value, exists := projects.Get(projectId)
 	if !exists {
-		return nil, errors.New("project not found")
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectId))
 	}
 
 	project, ok := value.(*launchpad.Project)
@@ -105,7 +107,7 @@ func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, errors.New("condition not found")
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("condition(%s) not found", tokenPath))
 	}
 
 	return condition, nil
@@ -311,7 +313,7 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return nil, errors.New("deposit not found")
+		return nil, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -328,7 +330,7 @@ func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return "", errors.New("deposit not found")
+		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -345,7 +347,7 @@ func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -362,7 +364,7 @@ func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error)
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return "", errors.New("deposit not found")
+		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -379,7 +381,7 @@ func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -396,7 +398,7 @@ func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -413,7 +415,7 @@ func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) 
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -430,7 +432,7 @@ func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) 
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -447,7 +449,7 @@ func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -464,7 +466,7 @@ func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
 	deposits := lp.store.GetDeposits()
 	value, exists := deposits.Get(depositId)
 	if !exists {
-		return 0, errors.New("deposit not found")
+		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
 	}
 
 	deposit, ok := value.(*launchpad.Deposit)
@@ -487,7 +489,7 @@ func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launc
 	managers := lp.store.GetProjectTierRewardManagers()
 	value, exists := managers.Get(projectTierId)
 	if !exists {
-		return nil, errors.New("reward manager not found")
+		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
 	}
 
 	manager, ok := value.(*launchpad.RewardManager)
@@ -614,7 +616,7 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	managers := lp.store.GetProjectTierRewardManagers()
 	value, exists := managers.Get(projectTierId)
 	if !exists {
-		return nil, errors.New("reward manager not found")
+		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
 	}
 
 	manager, ok := value.(*launchpad.RewardManager)
@@ -625,7 +627,7 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	rewards := manager.Rewards()
 	rewardValue, exists := rewards.Get(depositId)
 	if !exists {
-		return nil, errors.New("reward state not found")
+		return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
 	}
 
 	rewardState, ok := rewardValue.(*launchpad.RewardState)
