@@ -924,7 +924,7 @@ func TestCheckTickSpacingWithPoolTicks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t,
-					ufmt.Sprintf("[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(%d) MOD tickSpacing(%d) != 0(%d)",
+					ufmt.Sprintf("[GNOSWAP-POOL-017] invalid tick and tick spacing requested || tick(%d) MOD tickSpacing(%d) != 0(%d)",
 						tt.tick, tt.tickSpacing, tt.tick%tt.tickSpacing),
 					func() {
 						checkTickSpacing(tt.tick, tt.tickSpacing)

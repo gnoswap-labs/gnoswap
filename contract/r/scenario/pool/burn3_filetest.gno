@@ -55,7 +55,7 @@ func testNonExistentPoolBurn() {
 	testing.SetRealm(posRealm)
 
 	// Then: Should abort with specific error message
-	expectedAbortMsg := "[GNOSWAP-POOL-006] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist"
+	expectedAbortMsg := "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist"
 	println("[EXPECTED] Should abort with message:", expectedAbortMsg)
 
 	uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
@@ -81,5 +81,5 @@ func testNonExistentPoolBurn() {
 // [INFO] Fee tier: 500
 // [INFO] Tick range: -100 to 100
 // [INFO] Burn amount: 1000000
-// [EXPECTED] Should abort with message: [GNOSWAP-POOL-006] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist
+// [EXPECTED] Should abort with message: [GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500) to exist
 // [SCENARIO] 4. Non-existent Pool Burn - PASSED

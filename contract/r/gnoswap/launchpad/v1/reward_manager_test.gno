@@ -288,7 +288,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 			existingDeposits: []*launchpad.Deposit{},
 			expectedAmount:   0,
 			expectedHasError: true,
-			expectedError:    "[GNOSWAP-LAUNCHPAD-020] not exist deposit",
+			expectedError:    "[GNOSWAP-LAUNCHPAD-012] not exist deposit",
 		},
 	}
 

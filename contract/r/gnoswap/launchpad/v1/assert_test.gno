@@ -32,31 +32,31 @@ func TestAssert_assertIsValidAmount(t *testing.T) {
 			name:          "panic when amount is not a multiple of minimum ",
 			amount:        10_000_001,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-017",
+			expectedError: "GNOSWAP-LAUNCHPAD-010",
 		},
 		{
 			name:          "panic when amount is not a multiple of minimum",
 			amount:        1_000_001,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-017",
+			expectedError: "GNOSWAP-LAUNCHPAD-010",
 		},
 		{
 			name:          "panic when amount is less than minimum",
 			amount:        999_999,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-017",
+			expectedError: "GNOSWAP-LAUNCHPAD-010",
 		},
 		{
 			name:          "panic when amount is zero",
 			amount:        0,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-017",
+			expectedError: "GNOSWAP-LAUNCHPAD-010",
 		},
 		{
 			name:          "panic when amount is negative",
 			amount:        -1,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-017",
+			expectedError: "GNOSWAP-LAUNCHPAD-010",
 		},
 	}
 
@@ -116,7 +116,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 			depositID:     "non_existent_deposit",
 			caller:        ownerAddr,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-020",
+			expectedError: "GNOSWAP-LAUNCHPAD-012",
 		},
 		{
 			name: "panic when caller is not owner",
@@ -138,7 +138,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 			},
 			caller:        otherAddr,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-026",
+			expectedError: "GNOSWAP-LAUNCHPAD-014",
 		},
 		{
 			name: "panic when depositID is empty",
@@ -148,7 +148,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 			depositID:     "",
 			caller:        ownerAddr,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-020",
+			expectedError: "GNOSWAP-LAUNCHPAD-012",
 		},
 	}
 
@@ -220,7 +220,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        otherUser,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-026",
+			expectedError: "GNOSWAP-LAUNCHPAD-014",
 		},
 		{
 			name: "panic when projects tree is empty",
@@ -229,7 +229,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        otherUser,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-026",
+			expectedError: "GNOSWAP-LAUNCHPAD-014",
 		},
 		{
 			name: "valid - caller owns one of multiple projects",
@@ -286,7 +286,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        nonProjectOwner,
 			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-026",
+			expectedError: "GNOSWAP-LAUNCHPAD-014",
 		},
 	}
 

@@ -85,7 +85,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			yes:              true,
 			voter:            testutils.TestAddress("voter"),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] requested data not found || not found proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] requested data not found || not found proposal",
 		},
 		{
 			name:       "fail - no voting weight",
@@ -112,7 +112,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("voter_no_weight").String(): governance.NewVotingInfo(0),
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight at snapshot time",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-005] not enough voting power || no voting weight at snapshot time",
 		},
 		{
 			name:       "fail - voting period ended",
@@ -139,7 +139,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - already voted",
@@ -171,7 +171,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				}(),
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] cannot vote twice || user has already voted",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-004] cannot vote twice || user has already voted",
 		},
 	}
 
@@ -299,7 +299,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedHeight:      100,
 			votedAt:          time.Now().Unix(),
 			expectedHasError: true,
-			expectedError:    "[GNOSWAP-GOVERNANCE-003] requested data not found || not found proposal",
+			expectedError:    "[GNOSWAP-GOVERNANCE-002] requested data not found || not found proposal",
 		},
 		{
 			name:         "fail - voter not found",
@@ -325,7 +325,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				100,
 			),
 			expectedHasError: true,
-			expectedError:    "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight at snapshot time",
+			expectedError:    "[GNOSWAP-GOVERNANCE-005] not enough voting power || no voting weight at snapshot time",
 		},
 		{
 			name:         "fail - no voting weight",
@@ -352,7 +352,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			),
 			setupVotingInfo:  governance.NewVotingInfo(0),
 			expectedHasError: true,
-			expectedError:    "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight",
+			expectedError:    "[GNOSWAP-GOVERNANCE-005] not enough voting power || no voting weight",
 		},
 		{
 			name:         "fail - voting info store error",
@@ -445,14 +445,14 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			proposalID:    -1,
 			yes:           true,
 			voter:         testutils.TestAddress("voter"),
-			expectedError: "[GNOSWAP-GOVERNANCE-003] requested data not found || not found proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-002] requested data not found || not found proposal",
 		},
 		{
 			name:          "fail - proposal not found",
 			proposalID:    999,
 			yes:           true,
 			voter:         testutils.TestAddress("voter"),
-			expectedError: "[GNOSWAP-GOVERNANCE-003] requested data not found || not found proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-002] requested data not found || not found proposal",
 		},
 		{
 			name:       "fail - halt state voting",
@@ -497,7 +497,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				resolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - executed proposal voting",
@@ -522,7 +522,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				resolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - expired proposal voting",
@@ -543,7 +543,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 		},
 	}
 
@@ -592,7 +592,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			name:          "fail - voting before start delay",
 			proposalTime:  time.Now().Unix() - testConfig.VotingStartDelay + 1,
 			voteTime:      time.Now().Unix(), // Before 24h delay
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 			shouldPass:    false,
 		},
 		{
@@ -617,7 +617,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			name:          "fail - voting after period end",
 			proposalTime:  time.Now().Unix() - testConfig.VotingStartDelay - testConfig.VotingPeriod,
 			voteTime:      time.Now().Unix(), // 1 second after end
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
 			shouldPass:    false,
 		},
 	}
@@ -695,13 +695,13 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 		{
 			name:            "fail - only launchpad weight",
 			launchpadWeight: 1_000_000_000,
-			expectedError:   "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight at snapshot time",
+			expectedError:   "[GNOSWAP-GOVERNANCE-005] not enough voting power || no voting weight at snapshot time",
 			shouldFail:      true,
 		},
 		{
 			name:          "fail - zero weight",
 			voterWeight:   0,
-			expectedError: "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight at snapshot time",
+			expectedError: "[GNOSWAP-GOVERNANCE-005] not enough voting power || no voting weight at snapshot time",
 			shouldFail:    true,
 		},
 	}

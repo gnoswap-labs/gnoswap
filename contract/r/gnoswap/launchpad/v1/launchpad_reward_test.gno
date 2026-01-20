@@ -39,7 +39,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			depositAmount: 1000,
 			setupProject:  false,
 			setupManager:  false,
-			expectedError: "[GNOSWAP-LAUNCHPAD-028] invalid time || currentTime must be positive",
+			expectedError: "[GNOSWAP-LAUNCHPAD-015] invalid time || currentTime must be positive",
 		},
 		{
 			name:          "FAIL: project not found",
@@ -165,7 +165,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
 			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:                 "fail - 30 tier claimable wait 1 days - 1 second",
@@ -175,7 +175,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
 			skipBeforeCollect:    secondsPerDay - 1,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:                 "fail - 90 tier claimable wait 1 days - 1 second",
@@ -185,7 +185,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
 			skipBeforeCollect:    secondsPerDay - 1,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:                 "fail - 180 tier claimable wait 14 days - 1 second",
@@ -195,7 +195,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3 * secondsPerDay, // 3 day
 			skipBeforeCollect:    secondsPerDay - 1,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:              "success - 30 tier claimable wait start time(3 days) + 30 days when ended project",
@@ -232,7 +232,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3*secondsPerDay + 30*secondsPerDay - 5, // wait start time(3 days) + 30 days - 5 seconds
 			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:                 "fail - 90 tier claimable wait start time(3 days) + 90 days - 5 seconds but not ended project",
@@ -242,7 +242,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3*secondsPerDay + 90*secondsPerDay - 5, // wait start time(3 days) + 90 days - 5 seconds
 			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 		{
 			name:                 "fail - 180 tier claimable wait start time(3 days) + 180 days - 5 seconds but not ended project",
@@ -252,7 +252,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(t *testing.T) {
 			skipBeforeDeposit:    3*secondsPerDay + 180*secondsPerDay - 5, // wait start time(3 days) + 180 days - 5 seconds
 			skipBeforeCollect:    0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-019] invalid reward state",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-011] invalid reward state",
 		},
 	}
 
@@ -516,7 +516,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			setupDeposit:     true,
 			depositOwner:     "owner1",
 			caller:           "nonOwner1",
-			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-026] invalid owner",
+			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-014] invalid owner",
 		},
 		{
 			name:             "FAIL: deposit does not exist",
@@ -524,7 +524,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			setupDeposit:     false,
 			caller:           "anyUser",
 			depositIDToUse:   "nonexistent_dep",
-			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-020] not exist deposit",
+			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-012] not exist deposit",
 		},
 		{
 			name: "FAIL: emergency halt",

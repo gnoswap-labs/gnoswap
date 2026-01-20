@@ -72,7 +72,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
 			name:        "fail - same wrapped tokens",
@@ -81,7 +81,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "fail - same wrapped tokens reversed",
@@ -90,7 +90,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
@@ -257,7 +257,7 @@ func TestGetPool(t *testing.T) {
 				mockInstanceSetPoolCreationFee(0)
 			},
 			shouldError: true,
-			expected:    "[GNOSWAP-POOL-006] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+			expected:    "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
 		},
 		{
 			name: "success - get pool (bar:foo:500)",

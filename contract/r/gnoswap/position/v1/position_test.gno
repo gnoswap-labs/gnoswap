@@ -820,7 +820,7 @@ func TestMint(t *testing.T) {
 			mintTo:           alice,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
+			expectedErrorMsg: "[GNOSWAP-POOL-018] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},

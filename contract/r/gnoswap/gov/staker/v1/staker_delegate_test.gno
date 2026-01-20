@@ -76,7 +76,7 @@ func TestStakerDelegate_Delegate(t *testing.T) {
 			amount:        minimumAmount - 1,
 			referrer:      "",
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
 			setupMocks: func() {
 				cleanupStakerDelegateTest(t, gs)
 			},
@@ -91,7 +91,7 @@ func TestStakerDelegate_Delegate(t *testing.T) {
 			amount:        minimumAmount + 1,
 			referrer:      "",
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000",
+			expectedError: "[GNOSWAP-GOV_STAKER-002] invalid amount || amount must be multiple of 1000000",
 			setupMocks: func() {
 				cleanupStakerDelegateTest(t, gs)
 			},
@@ -382,7 +382,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
 			},
 			undelegateAmt: 0,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
 			description:   "Should reject zero amount",
 		},
 		{
@@ -395,7 +395,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations_EdgeCases(t *testing.T) {
 			},
 			undelegateAmt: -minimumAmount,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
 			description:   "Should reject negative amount",
 		},
 	}
@@ -703,7 +703,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(t *testing.T) {
 			amount:        minimumAmount - 1,
 			setupBalance:  minimumAmount * 2,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
 		},
 		{
 			name:          "fail - amount not multiple of minimum",
@@ -712,7 +712,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(t *testing.T) {
 			amount:        minimumAmount + 1,
 			setupBalance:  minimumAmount * 2,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000",
+			expectedError: "[GNOSWAP-GOV_STAKER-002] invalid amount || amount must be multiple of 1000000",
 		},
 		{
 			name:          "fail - zero amount",
@@ -721,7 +721,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(t *testing.T) {
 			amount:        0,
 			setupBalance:  minimumAmount * 2,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
 		},
 		{
 			name:          "fail - negative amount",
@@ -730,7 +730,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(t *testing.T) {
 			amount:        -minimumAmount,
 			setupBalance:  minimumAmount * 2,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
+			expectedError: "[GNOSWAP-GOV_STAKER-007] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
 		},
 		{
 			name:         "success - self delegation",
@@ -748,7 +748,7 @@ func TestStakerDelegate_DelegationValidationEdgeCases(t *testing.T) {
 			amount:        9223372036854775800, // Close to MAX_INT64 but multiple of minimumAmount
 			setupBalance:  9223372036854775807,
 			expectPanic:   true,
-			expectedError: "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000",
+			expectedError: "[GNOSWAP-GOV_STAKER-002] invalid amount || amount must be multiple of 1000000",
 		},
 	}
 
