@@ -835,6 +835,32 @@ func CreateParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
+		{
+			pkgPath:    ROUTER_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade router implementation
+				rr.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    PROTOCOL_FEE_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade protocol fee implementation
+				pf.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
 	}
 
 	// Register all configured handlers in the registry
