@@ -742,16 +742,16 @@ func CreateParameterHandlers() *ParameterRegistry {
 				// Create a new launchpad project
 				lp.CreateProject(
 					cross,
-					params[0],                                     // name
-					params[1],                                     // tokenPath
-					address(params[2]),                            // recipient
-					parseNumber(params[3], kindInt64).(int64),     // depositAmount
-					params[4],                                     // conditionTokens
-					params[5],                                     // conditionAmounts
-					parseNumber(params[6], kindInt64).(int64),     // tier30Ratio
-					parseNumber(params[7], kindInt64).(int64),     // tier90Ratio
-					parseNumber(params[8], kindInt64).(int64),     // tier180Ratio
-					parseNumber(params[9], kindInt64).(int64),     // startTime
+					params[0],          // name
+					params[1],          // tokenPath
+					address(params[2]), // recipient
+					parseNumber(params[3], kindInt64).(int64), // depositAmount
+					params[4], // conditionTokens
+					params[5], // conditionAmounts
+					parseNumber(params[6], kindInt64).(int64), // tier30Ratio
+					parseNumber(params[7], kindInt64).(int64), // tier90Ratio
+					parseNumber(params[8], kindInt64).(int64), // tier180Ratio
+					parseNumber(params[9], kindInt64).(int64), // startTime
 				)
 				return nil
 			},
