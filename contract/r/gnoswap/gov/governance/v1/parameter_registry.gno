@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/gov/governance"
+	gs "gno.land/r/gnoswap/gov/staker"
 	lp "gno.land/r/gnoswap/launchpad"
 	pl "gno.land/r/gnoswap/pool"
 	pos "gno.land/r/gnoswap/position"
@@ -45,6 +46,7 @@ const (
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/gov/governance"
+	GOV_STAKER_PATH     = "gno.land/r/gnoswap/gov/staker"
 )
 
 // ParameterHandler interface defines the contract for parameter execution handlers.
@@ -816,7 +818,46 @@ func CreateParameterHandlers() *ParameterRegistry {
 			},
 			handlerFunc: func(params []string) error {
 				// Upgrade governance implementation
-				governance.UpgradeImpl(cross, params[0]) // targetPackagePath
+				governance.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    GOV_STAKER_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade gov staker implementation
+				gs.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    ROUTER_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade router implementation
+				rr.UpgradeImpl(cross, params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    PROTOCOL_FEE_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(params []string) error {
+				// Upgrade protocol fee implementation
+				pf.UpgradeImpl(cross, params[0]) // packagePath
 				return nil
 			},
 		},
