@@ -607,6 +607,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"fromPoolPath", deposit.TargetPoolPath(),
 		"feeTokenPath", GNS_PATH,
 		"feeAmount", formatAnyInt(feeAmount),
+		"currentTime", formatAnyInt(currentTime),
+		"currentHeight", formatAnyInt(blockHeight),
 	)
 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
@@ -673,6 +675,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"rewardPenalty", rewardPenalty,
 		"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
 		"currentTime", formatAnyInt(currentTime),
+		"currentHeight", formatAnyInt(blockHeight),
 	)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
