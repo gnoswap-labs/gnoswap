@@ -7,7 +7,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -202,32 +201,40 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-func tickTreeToString(tickTree *avl.Tree) string {
-	if tickTree == nil {
+// ticksToString converts a list of tick indices to their string representation,
+// including detailed tick information from the pool's tick storage.
+func ticksToString(pool *pl.Pool, ticks []int32) string {
+	if len(ticks) == 0 {
 		return "[]"
 	}
 
-	tickInfoStrings := make([]string, 0, tickTree.Size())
+	tickInfoStrings := make([]string, 0, len(ticks))
 
-	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tick, err := strconv.ParseInt(tickKey, 10, 32)
-		if err != nil {
-			panic(err)
+	for _, tick := range ticks {
+		tickStr := strconv.Itoa(int(tick))
+		iTickInfo, exist := pool.Ticks().Get(tickStr)
+		if !exist {
+			continue
 		}
-		tickInfo, ok := tickValue.(pl.TickInfo)
+
+		tickInfo, ok := iTickInfo.(pl.TickInfo)
 		if !ok {
-			panic("failed to cast tick info to TickInfo")
+			continue
 		}
 
 		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
-			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
+			`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
 			tick,
+			tickInfo.LiquidityGross().ToString(),
+			tickInfo.LiquidityNet().ToString(),
 			tickInfo.FeeGrowthOutside0X128().ToString(),
 			tickInfo.FeeGrowthOutside1X128().ToString(),
+			tickInfo.TickCumulativeOutside(),
+			tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
+			tickInfo.SecondsOutside(),
+			formatBool(tickInfo.Initialized()),
 		))
-
-		return false
-	})
+	}
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
