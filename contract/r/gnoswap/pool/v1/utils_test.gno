@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -1613,6 +1614,151 @@ func TestU256Min_EdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := u256Min(tt.a, tt.b)
 			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
+		})
+	}
+}
+
+func TestTicksToString(t *testing.T) {
+	type positionSetup struct {
+		tickLower int32
+		tickUpper int32
+		liquidity string
+	}
+
+	tests := []struct {
+		name                string
+		positions           []positionSetup
+		inputTicks          []int32
+		expectedResult      string
+		expectedContains    []string
+		expectedNotContains []string
+		expectedMinLength   int
+		expectedTickCount   int
+	}{
+		{
+			name:           "empty ticks array",
+			positions:      []positionSetup{},
+			inputTicks:     []int32{},
+			expectedResult: "[]",
+		},
+		{
+			name:           "non-existent ticks",
+			positions:      []positionSetup{},
+			inputTicks:     []int32{100, 200},
+			expectedResult: "[]",
+		},
+		{
+			name: "single tick with shortened field names",
+			positions: []positionSetup{
+				{tickLower: -10, tickUpper: 10, liquidity: "1000000"},
+			},
+			inputTicks:        []int32{-10},
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":`, `"lg":`, `"ln":`, `"fg0":`, `"fg1":`,
+				`"tco":`, `"spl":`, `"so":`, `"i":`,
+			},
+			expectedNotContains: []string{
+				`"tick":`, `"liquidityGross":`, `"liquidityNet":`,
+				`"feeGrowthOutside0X128":`, `"feeGrowthOutside1X128":`,
+				`"tickCumulativeOutside":`, `"secondsPerLiquidityOutsideX128":`,
+				`"secondsOutside":`, `"initialized":`,
+			},
+		},
+		{
+			name: "multiple ticks",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 100, liquidity: "1000000"},
+			},
+			inputTicks:        []int32{-100, 100},
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":100`,
+			},
+			expectedTickCount: 2,
+		},
+		{
+			name: "mixed existent and non-existent ticks",
+			positions: []positionSetup{
+				{tickLower: -50, tickUpper: 50, liquidity: "1000000"},
+			},
+			inputTicks:        []int32{-50, 0, 50, 100},
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-50`, `"t":50`,
+			},
+			expectedNotContains: []string{
+				`"t":0`, `"t":100`,
+			},
+		},
+		{
+			name: "multiple positions with overlapping ticks",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 0, liquidity: "500000"},
+				{tickLower: 0, tickUpper: 100, liquidity: "750000"},
+			},
+			inputTicks:        []int32{-100, 0, 100},
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":0`, `"t":100`,
+			},
+			expectedTickCount: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
+			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
+			pool := newPool(poolParams)
+
+			// Setup positions
+			for _, pos := range tt.positions {
+				params := ModifyPositionParams{
+					owner:          addr01,
+					tickLower:      pos.tickLower,
+					tickUpper:      pos.tickUpper,
+					liquidityDelta: i256.MustFromDecimal(pos.liquidity),
+				}
+				_, _, _, err := modifyPosition(pool, params)
+				if err != nil {
+					t.Fatalf("Failed to create position: %v", err)
+				}
+			}
+
+			result := ticksToString(pool, tt.inputTicks)
+
+			// Exact match assertion
+			if tt.expectedResult != "" {
+				uassert.Equal(t, tt.expectedResult, result)
+				return
+			}
+
+			// Minimum length assertion
+			if tt.expectedMinLength > 0 {
+				uassert.True(t, len(result) >= tt.expectedMinLength,
+					ufmt.Sprintf("result length %d should be >= %d", len(result), tt.expectedMinLength))
+			}
+
+			// Contains assertions
+			for _, substr := range tt.expectedContains {
+				uassert.True(t, strings.Contains(result, substr),
+					ufmt.Sprintf("result should contain '%s'", substr))
+			}
+
+			// Not contains assertions
+			for _, substr := range tt.expectedNotContains {
+				uassert.False(t, strings.Contains(result, substr),
+					ufmt.Sprintf("result should not contain '%s'", substr))
+			}
+
+			// Tick count assertion
+			if tt.expectedTickCount > 0 {
+				actualCount := strings.Count(result, `"t":`)
+				uassert.Equal(t, tt.expectedTickCount, actualCount,
+					ufmt.Sprintf("expected %d ticks, got %d", tt.expectedTickCount, actualCount))
+			}
 		})
 	}
 }

@@ -67,6 +67,7 @@ type SwapCache struct {
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
+	crossedTicks                      []int32    // ticks that were crossed during the swap
 }
 
 func newSwapCache(
@@ -80,6 +81,7 @@ func newSwapCache(
 		tickCumulative:                    0,
 		secondsPerLiquidityCumulativeX128: u256.Zero(),
 		computedLatestObservation:         false,
+		crossedTicks:                      make([]int32, 0),
 	}
 }
 
