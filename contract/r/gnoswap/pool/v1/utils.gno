@@ -201,6 +201,49 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
+// formatTickInfo converts a single tick and its information to JSON string format.
+func formatTickInfo(tick int32, tickInfo pl.TickInfo) string {
+	return ufmt.Sprintf(
+		`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
+		tick,
+		tickInfo.LiquidityGross().ToString(),
+		tickInfo.LiquidityNet().ToString(),
+		tickInfo.FeeGrowthOutside0X128().ToString(),
+		tickInfo.FeeGrowthOutside1X128().ToString(),
+		tickInfo.TickCumulativeOutside(),
+		tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
+		tickInfo.SecondsOutside(),
+		formatBool(tickInfo.Initialized()),
+	)
+}
+
+// collectTicksInRange iterates over ticks within the specified range and collects valid tick info strings.
+func collectTicksInRange(pool *pl.Pool, startTick, endTick int32, tickSpacing int32, results *[]string) {
+	pool.Ticks().Iterate(
+		strconv.Itoa(int(startTick)),
+		strconv.Itoa(int(endTick)),
+		func(key string, value any) bool {
+			tickValue, err := strconv.Atoi(key)
+			if err != nil {
+				return false
+			}
+			tick := int32(tickValue)
+
+			if tick < startTick || tick > endTick || tick%tickSpacing != 0 {
+				return false
+			}
+
+			tickInfo, ok := value.(pl.TickInfo)
+			if !ok {
+				return false
+			}
+
+			*results = append(*results, formatTickInfo(tick, tickInfo))
+			return false
+		},
+	)
+}
+
 // ticksToString converts tick indices within a range to their string representation,
 // including detailed tick information from the pool's tick storage.
 func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
@@ -214,30 +257,22 @@ func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
 	tickInfoStrings := make([]string, 0)
 	tickSpacing := pool.TickSpacing()
 
-	for tick := minTick; tick <= maxTick; tick += tickSpacing {
-		tickStr := strconv.Itoa(int(tick))
-		iTickInfo, exist := pool.Ticks().Get(tickStr)
-		if !exist {
-			continue
+	// Collect negative ticks: from minTick to -1
+	if minTick < 0 {
+		negativeEnd := int32(-1)
+		if maxTick < 0 {
+			negativeEnd = maxTick
 		}
+		collectTicksInRange(pool, minTick, negativeEnd, tickSpacing, &tickInfoStrings)
+	}
 
-		tickInfo, ok := iTickInfo.(pl.TickInfo)
-		if !ok {
-			continue
+	// Collect non-negative ticks: from 0 to maxTick
+	if maxTick >= 0 {
+		positiveStart := int32(0)
+		if minTick > 0 {
+			positiveStart = minTick
 		}
-
-		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
-			`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
-			tick,
-			tickInfo.LiquidityGross().ToString(),
-			tickInfo.LiquidityNet().ToString(),
-			tickInfo.FeeGrowthOutside0X128().ToString(),
-			tickInfo.FeeGrowthOutside1X128().ToString(),
-			tickInfo.TickCumulativeOutside(),
-			tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
-			tickInfo.SecondsOutside(),
-			formatBool(tickInfo.Initialized()),
-		))
+		collectTicksInRange(pool, positiveStart, maxTick, tickSpacing, &tickInfoStrings)
 	}
 
 	if len(tickInfoStrings) == 0 {
