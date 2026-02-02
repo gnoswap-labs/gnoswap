@@ -55,6 +55,47 @@ func TestSwapCallback_Pay(t *testing.T) {
 			expectedToken1PoolBalanceChange: -998,
 		},
 		{
+			name: "zero for one swap is success for paid amount equal to specified amount with multiple positions",
+			poolInfo: swapPaidCreatePoolParams{
+				token0Path: barPath,
+				token1Path: bazPath,
+				feeTier:    FeeTier500,
+			},
+			positionInfo: []swapPaidMintPositionParams{
+				{
+					token0Path:       barPath,
+					token1Path:       bazPath,
+					feeTier:          FeeTier500,
+					tickLower:        -200,
+					tickUpper:        200,
+					amount0Requested: 10000000,
+					amount1Requested: 10000000,
+				},
+				{
+					token0Path:       barPath,
+					token1Path:       bazPath,
+					feeTier:          FeeTier500,
+					tickLower:        -6000,
+					tickUpper:        6000,
+					amount0Requested: 10000000,
+					amount1Requested: 10000000,
+				},
+			},
+			swapInfo: swapPaidSwapParams{
+				token0Path:               barPath,
+				token1Path:               bazPath,
+				specifiedAmount:          "15000000",
+				recipient:                adminAddr,
+				payer:                    adminAddr,
+				zeroForOne:               true,
+				sqrtPriceLimitX96:        MIN_PRICE,
+				callbackSendToken0Amount: 15000000, // equal to specified amount
+				callbackSendToken1Amount: 0,
+			},
+			expectedToken0PoolBalanceChange: 15000000,
+			expectedToken1PoolBalanceChange: -14780173,
+		},
+		{
 			name: "zero for one swap is success for paid amount greater than specified amount",
 			poolInfo: swapPaidCreatePoolParams{
 				token0Path: barPath,
