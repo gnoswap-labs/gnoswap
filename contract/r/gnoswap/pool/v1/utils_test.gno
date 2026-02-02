@@ -1628,7 +1628,8 @@ func TestTicksToString(t *testing.T) {
 	tests := []struct {
 		name                string
 		positions           []positionSetup
-		inputTicks          []int32
+		startTick           int32
+		endTick             int32
 		expectedResult      string
 		expectedContains    []string
 		expectedNotContains []string
@@ -1636,15 +1637,17 @@ func TestTicksToString(t *testing.T) {
 		expectedTickCount   int
 	}{
 		{
-			name:           "empty ticks array",
+			name:           "no ticks in range",
 			positions:      []positionSetup{},
-			inputTicks:     []int32{},
+			startTick:      100,
+			endTick:        200,
 			expectedResult: "[]",
 		},
 		{
-			name:           "non-existent ticks",
+			name:           "non-existent ticks in range",
 			positions:      []positionSetup{},
-			inputTicks:     []int32{100, 200},
+			startTick:      100,
+			endTick:        200,
 			expectedResult: "[]",
 		},
 		{
@@ -1652,7 +1655,8 @@ func TestTicksToString(t *testing.T) {
 			positions: []positionSetup{
 				{tickLower: -10, tickUpper: 10, liquidity: "1000000"},
 			},
-			inputTicks:        []int32{-10},
+			startTick:         -10,
+			endTick:           -10,
 			expectedMinLength: 3,
 			expectedContains: []string{
 				`"t":`, `"lg":`, `"ln":`, `"fg0":`, `"fg1":`,
@@ -1666,11 +1670,12 @@ func TestTicksToString(t *testing.T) {
 			},
 		},
 		{
-			name: "multiple ticks",
+			name: "multiple ticks in range",
 			positions: []positionSetup{
 				{tickLower: -100, tickUpper: 100, liquidity: "1000000"},
 			},
-			inputTicks:        []int32{-100, 100},
+			startTick:         -100,
+			endTick:           100,
 			expectedMinLength: 3,
 			expectedContains: []string{
 				`"t":-100`, `"t":100`,
@@ -1678,11 +1683,12 @@ func TestTicksToString(t *testing.T) {
 			expectedTickCount: 2,
 		},
 		{
-			name: "mixed existent and non-existent ticks",
+			name: "range with only initialized ticks",
 			positions: []positionSetup{
 				{tickLower: -50, tickUpper: 50, liquidity: "1000000"},
 			},
-			inputTicks:        []int32{-50, 0, 50, 100},
+			startTick:         -50,
+			endTick:           100,
 			expectedMinLength: 3,
 			expectedContains: []string{
 				`"t":-50`, `"t":50`,
@@ -1697,12 +1703,26 @@ func TestTicksToString(t *testing.T) {
 				{tickLower: -100, tickUpper: 0, liquidity: "500000"},
 				{tickLower: 0, tickUpper: 100, liquidity: "750000"},
 			},
-			inputTicks:        []int32{-100, 0, 100},
+			startTick:         -100,
+			endTick:           100,
 			expectedMinLength: 3,
 			expectedContains: []string{
 				`"t":-100`, `"t":0`, `"t":100`,
 			},
 			expectedTickCount: 3,
+		},
+		{
+			name: "reversed range (endTick < startTick)",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 100, liquidity: "1000000"},
+			},
+			startTick:         100,
+			endTick:           -100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":100`,
+			},
+			expectedTickCount: 2,
 		},
 	}
 
@@ -1727,7 +1747,7 @@ func TestTicksToString(t *testing.T) {
 				}
 			}
 
-			result := ticksToString(pool, tt.inputTicks)
+			result := ticksToString(pool, tt.startTick, tt.endTick)
 
 			// Exact match assertion
 			if tt.expectedResult != "" {

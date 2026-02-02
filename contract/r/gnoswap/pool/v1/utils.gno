@@ -201,16 +201,20 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-// ticksToString converts a list of tick indices to their string representation,
+// ticksToString converts tick indices within a range to their string representation,
 // including detailed tick information from the pool's tick storage.
-func ticksToString(pool *pl.Pool, ticks []int32) string {
-	if len(ticks) == 0 {
-		return "[]"
+func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
+	minTick := startTick
+	maxTick := endTick
+	if startTick > endTick {
+		minTick = endTick
+		maxTick = startTick
 	}
 
-	tickInfoStrings := make([]string, 0, len(ticks))
+	tickInfoStrings := make([]string, 0)
+	tickSpacing := pool.TickSpacing()
 
-	for _, tick := range ticks {
+	for tick := minTick; tick <= maxTick; tick += tickSpacing {
 		tickStr := strconv.Itoa(int(tick))
 		iTickInfo, exist := pool.Ticks().Get(tickStr)
 		if !exist {
@@ -234,6 +238,10 @@ func ticksToString(pool *pl.Pool, ticks []int32) string {
 			tickInfo.SecondsOutside(),
 			formatBool(tickInfo.Initialized()),
 		))
+	}
+
+	if len(tickInfoStrings) == 0 {
+		return "[]"
 	}
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"

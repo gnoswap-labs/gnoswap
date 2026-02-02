@@ -168,6 +168,7 @@ func (i *poolV1) Swap(
 	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
 	pool.SetSlot0(slot0Start)
+	startTick := pool.Slot0Tick()
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
@@ -279,7 +280,7 @@ func (i *poolV1) Swap(
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
-		"ticks", ticksToString(pool, comp.Cache.crossedTicks),
+		"ticks", ticksToString(pool, startTick, pool.Slot0Tick()),
 		"tickCumulative", formatInt(lastObservation.TickCumulative()),
 		"liquidityCumulative", lastObservation.LiquidityCumulative().ToString(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128().ToString(),
@@ -720,9 +721,6 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			cache.tickCumulative,
 			cache.blockTimestamp,
 		)
-
-		// Record crossed tick for event emission
-		cache.crossedTicks = append(cache.crossedTicks, step.tickNext)
 
 		if zeroForOne {
 			liquidityNet = i256.Zero().Neg(liquidityNet)
