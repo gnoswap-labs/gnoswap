@@ -1,6 +1,12 @@
 package v1
 
 import (
+	"chain"
+	"chain/runtime"
+	"strings"
+
+	"gno.land/p/nt/ufmt"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -126,10 +132,7 @@ func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool,
 		return
 	}
 
-	tick, err := pool.GetTick(tickId)
-	if err != nil {
-		return
-	}
+	tick := pool.Ticks().Get(tickId)
 
 	// Skip ticks with zero staked liquidity (no reward impact)
 	if tick.StakedLiquidityDelta().Sign() == 0 {
@@ -231,15 +234,41 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	// Phase 4: Update individual tick outside accumulations for reward tracking
 	// While we optimize pool updates, each tick still needs its accumulation updated
 	// for proper reward distribution calculations
-	for _, tickCross := range batch.Crosses() {
-		tick, err := batch.Pool().GetTick(tickCross.TickID())
-		if err != nil {
-			return err
-		}
+	tickInfos := make([]string, 0, len(batch.Crosses()))
 
+	for _, tickCross := range batch.Crosses() {
+		tick := batch.Pool().Ticks().Get(tickCross.TickID())
 		tickResolver := NewTickResolver(tick)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
+
+		// Collect tick info for event
+		// - t: Tick ID
+		// - slg: Staked Liquidity Gross
+		// - sld: Staked Liquidity Delta
+		// - oa: Outside Accumulation
+		tickInfos = append(tickInfos, ufmt.Sprintf(
+			`{"t":%d,"slg":"%s","sld":"%s","oa":"%s"}`,
+			tickCross.TickID(),
+			tick.StakedLiquidityGross().ToString(),
+			tick.StakedLiquidityDelta().ToString(),
+			tickResolver.CurrentOutsideAccumulation(timestamp).ToString(),
+		))
 	}
+
+	// Emit event with staker-side tick cross information
+	previousRealm := runtime.PreviousRealm()
+	stakedLiquidity := poolResolver.CurrentStakedLiquidity(timestamp)
+
+	chain.Emit(
+		"SwapTickCross",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"poolPath", batch.PoolPath(),
+		"blockTimestamp", formatAnyInt(timestamp),
+		"stakedLiquidity", stakedLiquidity.ToString(),
+		"globalRewardRatioAccX128", newAcc.ToString(),
+		"crossedTicks", "["+strings.Join(tickInfos, ",")+"]",
+	)
 
 	return nil
 }
