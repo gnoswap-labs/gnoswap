@@ -126,7 +126,11 @@ func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool,
 		return
 	}
 
-	tick := pool.Ticks().Get(tickId)
+	tick, err := pool.GetTick(tickId)
+	if err != nil {
+		return
+	}
+
 	// Skip ticks with zero staked liquidity (no reward impact)
 	if tick.StakedLiquidityDelta().Sign() == 0 {
 		return
@@ -228,7 +232,11 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	// While we optimize pool updates, each tick still needs its accumulation updated
 	// for proper reward distribution calculations
 	for _, tickCross := range batch.Crosses() {
-		tick := batch.Pool().Ticks().Get(tickCross.TickID())
+		tick, err := batch.Pool().GetTick(tickCross.TickID())
+		if err != nil {
+			return err
+		}
+
 		tickResolver := NewTickResolver(tick)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 	}

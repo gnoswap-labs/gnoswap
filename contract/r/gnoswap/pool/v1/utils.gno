@@ -247,33 +247,30 @@ func collectTicksInRange(pool *pl.Pool, startTick, endTick int32, tickSpacing in
 // ticksToString converts tick indices within a range to their string representation,
 // including detailed tick information from the pool's tick storage.
 func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
-	minTick := startTick
-	maxTick := endTick
-	if startTick > endTick {
-		minTick = endTick
-		maxTick = startTick
+	minTick, maxTick := startTick, endTick
+
+	if minTick > maxTick {
+		minTick, maxTick = maxTick, minTick
 	}
 
 	tickInfoStrings := make([]string, 0)
-	tickSpacing := pool.TickSpacing()
 
-	// Collect negative ticks: from minTick to -1
-	if minTick < 0 {
-		negativeEnd := int32(-1)
-		if maxTick < 0 {
-			negativeEnd = maxTick
-		}
-		collectTicksInRange(pool, minTick, negativeEnd, tickSpacing, &tickInfoStrings)
-	}
+	pool.IterateTicks(minTick, maxTick, func(tick int32, tickInfo pl.TickInfo) bool {
+		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
+			`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
+			tick,
+			tickInfo.LiquidityGross().ToString(),
+			tickInfo.LiquidityNet().ToString(),
+			tickInfo.FeeGrowthOutside0X128().ToString(),
+			tickInfo.FeeGrowthOutside1X128().ToString(),
+			tickInfo.TickCumulativeOutside(),
+			tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
+			tickInfo.SecondsOutside(),
+			formatBool(tickInfo.Initialized()),
+		))
 
-	// Collect non-negative ticks: from 0 to maxTick
-	if maxTick >= 0 {
-		positiveStart := int32(0)
-		if minTick > 0 {
-			positiveStart = minTick
-		}
-		collectTicksInRange(pool, positiveStart, maxTick, tickSpacing, &tickInfoStrings)
-	}
+		return false
+	})
 
 	if len(tickInfoStrings) == 0 {
 		return "[]"
