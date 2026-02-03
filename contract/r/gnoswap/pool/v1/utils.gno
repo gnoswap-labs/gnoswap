@@ -217,33 +217,6 @@ func formatTickInfo(tick int32, tickInfo pl.TickInfo) string {
 	)
 }
 
-// collectTicksInRange iterates over ticks within the specified range and collects valid tick info strings.
-func collectTicksInRange(pool *pl.Pool, startTick, endTick int32, tickSpacing int32, results *[]string) {
-	pool.Ticks().Iterate(
-		strconv.Itoa(int(startTick)),
-		strconv.Itoa(int(endTick)),
-		func(key string, value any) bool {
-			tickValue, err := strconv.Atoi(key)
-			if err != nil {
-				return false
-			}
-			tick := int32(tickValue)
-
-			if tick < startTick || tick > endTick || tick%tickSpacing != 0 {
-				return false
-			}
-
-			tickInfo, ok := value.(pl.TickInfo)
-			if !ok {
-				return false
-			}
-
-			*results = append(*results, formatTickInfo(tick, tickInfo))
-			return false
-		},
-	)
-}
-
 // ticksToString converts tick indices within a range to their string representation,
 // including detailed tick information from the pool's tick storage.
 func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
@@ -256,18 +229,7 @@ func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
 	tickInfoStrings := make([]string, 0)
 
 	pool.IterateTicks(minTick, maxTick, func(tick int32, tickInfo pl.TickInfo) bool {
-		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
-			`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
-			tick,
-			tickInfo.LiquidityGross().ToString(),
-			tickInfo.LiquidityNet().ToString(),
-			tickInfo.FeeGrowthOutside0X128().ToString(),
-			tickInfo.FeeGrowthOutside1X128().ToString(),
-			tickInfo.TickCumulativeOutside(),
-			tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
-			tickInfo.SecondsOutside(),
-			formatBool(tickInfo.Initialized()),
-		))
+		tickInfoStrings = append(tickInfoStrings, formatTickInfo(tick, tickInfo))
 
 		return false
 	})
