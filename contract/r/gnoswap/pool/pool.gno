@@ -168,7 +168,7 @@ func (p *Pool) DeleteTick(tick int32) {
 
 func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, tickInfo TickInfo) bool) {
 	startTickKey := encodeTickKey(startTick)
-	endTickKey := encodeTickKey(endTick)
+	endTickKey := encodeTickKey(endTick + 1) // endTick inclusive
 
 	p.ticks.Iterate(startTickKey, endTickKey, func(key string, value any) bool {
 		tick := decodeTickKey(key)
