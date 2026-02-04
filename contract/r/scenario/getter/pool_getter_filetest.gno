@@ -1089,8 +1089,9 @@ func getObservationState() {
 //
 // [SCENARIO] 2.41. GetInitializedTicksInRange
 // [INFO] Check GetInitializedTicksInRange method
-// [EXPECTED] initialized ticks count: 1
+// [EXPECTED] initialized ticks count: 2
 // [EXPECTED] initialized tick[0]: -887220
+// [EXPECTED] initialized tick[1]: 887220
 //
 // [SCENARIO] 2.42. GetTickLiquidityGross
 // [INFO] Check GetTickLiquidityGross method
