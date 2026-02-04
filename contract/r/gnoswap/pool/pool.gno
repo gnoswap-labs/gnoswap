@@ -136,12 +136,12 @@ func (p *Pool) SetObservationState(observationState *ObservationState) {
 }
 
 func (p *Pool) HasTick(tick int32) bool {
-	tickKey := encodeTickKey(tick)
+	tickKey := EncodeTickKey(tick)
 	return p.ticks.Has(tickKey)
 }
 
 func (p *Pool) GetTick(tick int32) (TickInfo, error) {
-	tickKey := encodeTickKey(tick)
+	tickKey := EncodeTickKey(tick)
 
 	iTickInfo, ok := p.ticks.Get(tickKey)
 	if !ok {
@@ -157,21 +157,21 @@ func (p *Pool) GetTick(tick int32) (TickInfo, error) {
 }
 
 func (p *Pool) SetTick(tick int32, tickInfo TickInfo) {
-	tickKey := encodeTickKey(tick)
+	tickKey := EncodeTickKey(tick)
 	p.ticks.Set(tickKey, tickInfo)
 }
 
 func (p *Pool) DeleteTick(tick int32) {
-	tickKey := encodeTickKey(tick)
+	tickKey := EncodeTickKey(tick)
 	p.ticks.Remove(tickKey)
 }
 
 func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, tickInfo TickInfo) bool) {
-	startTickKey := encodeTickKey(startTick)
-	endTickKey := encodeTickKey(endTick + 1) // endTick inclusive
+	startTickKey := EncodeTickKey(startTick)
+	endTickKey := EncodeTickKey(endTick + 1) // endTick inclusive
 
 	p.ticks.Iterate(startTickKey, endTickKey, func(key string, value any) bool {
-		tick := decodeTickKey(key)
+		tick := DecodeTickKey(key)
 
 		tickInfo, ok := value.(TickInfo)
 		if !ok {

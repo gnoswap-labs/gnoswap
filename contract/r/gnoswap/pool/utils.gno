@@ -36,8 +36,8 @@ func ParsePoolPath(poolPath string) (string, string, uint32) {
 	return parts[0], parts[1], uint32(fee)
 }
 
-// encodeTickKey encodes a tick to a string key for the tick tree.
-func encodeTickKey(tick int32) string {
+// EncodeTickKey encodes a tick to a string key for the tick tree.
+func EncodeTickKey(tick int32) string {
 	adjustTick := tick + ENCODED_TICK_OFFSET
 	if adjustTick < 0 {
 		panic(ufmt.Sprintf("tick(%d) + ENCODED_TICK_OFFSET(%d) < 0", tick, ENCODED_TICK_OFFSET))
@@ -52,8 +52,8 @@ func encodeTickKey(tick int32) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
-// decodeTickKey decodes a string key to a tick.
-func decodeTickKey(s string) int32 {
+// DecodeTickKey decodes a string key to a tick.
+func DecodeTickKey(s string) int32 {
 	adjustTick, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
 		panic(ufmt.Sprintf("invalid tick key: %s", s))

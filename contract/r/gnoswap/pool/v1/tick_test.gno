@@ -494,7 +494,7 @@ func TestTickCross(t *testing.T) {
 		initialized:           true,
 	}
 
-	pool.Ticks().Set("100", tickInfo.toTickInfo())
+	pool.Ticks().Set(pl.EncodeTickKey(100), tickInfo.toTickInfo())
 
 	tests := []struct {
 		name                 string
@@ -542,7 +542,7 @@ func TestGetTick(t *testing.T) {
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
 	}
-	ticks.Set("50", tickInfo.toTickInfo())
+	ticks.Set(pl.EncodeTickKey(50), tickInfo.toTickInfo())
 
 	pool.SetTicks(ticks)
 
