@@ -293,8 +293,19 @@ func TestSwapCallback_Pay(t *testing.T) {
 			initSwapPaid(t)
 			defer initSwapPaid(t)
 
-			initSwapPaidCreatePool(t, barPath, bazPath, FeeTier500)
-			initSwapPaidSetFeeMintPosition(t, barPath, bazPath, FeeTier500, -200, 200, 10000000, 10000000)
+			initSwapPaidCreatePool(t, tt.poolInfo.token0Path, tt.poolInfo.token1Path, tt.poolInfo.feeTier)
+			for _, pos := range tt.positionInfo {
+				initSwapPaidSetFeeMintPosition(
+					t,
+					pos.token0Path,
+					pos.token1Path,
+					pos.feeTier,
+					pos.tickLower,
+					pos.tickUpper,
+					pos.amount0Requested,
+					pos.amount1Requested,
+				)
+			}
 
 			token0PoolBalanceChange := int64(0)
 			token1PoolBalanceChange := int64(0)
