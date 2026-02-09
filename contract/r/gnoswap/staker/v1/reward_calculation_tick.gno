@@ -5,8 +5,6 @@ import (
 	"chain/runtime"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -241,18 +239,13 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 		tickResolver := NewTickResolver(tick)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 
-		// Collect tick info for event
-		// - t: Tick ID
-		// - slg: Staked Liquidity Gross
-		// - sld: Staked Liquidity Delta
-		// - oa: Outside Accumulation
-		tickInfos = append(tickInfos, ufmt.Sprintf(
-			`{"t":%d,"slg":"%s","sld":"%s","oa":"%s"}`,
+		tickCrossEventInfo := NewTickCrossEventInfo(
 			tickCross.TickID(),
-			tick.StakedLiquidityGross().ToString(),
-			tick.StakedLiquidityDelta().ToString(),
-			tickResolver.CurrentOutsideAccumulation(timestamp).ToString(),
-		))
+			tick.StakedLiquidityGross(),
+			tick.StakedLiquidityDelta(),
+			tickResolver.CurrentOutsideAccumulation(timestamp),
+		)
+		tickInfos = append(tickInfos, tickCrossEventInfo.ToString())
 	}
 
 	// Emit event with staker-side tick cross information

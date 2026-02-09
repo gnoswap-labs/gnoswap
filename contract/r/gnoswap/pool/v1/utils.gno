@@ -201,22 +201,6 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-// formatTickInfo converts a single tick and its information to JSON string format.
-func formatTickInfo(tick int32, tickInfo pl.TickInfo) string {
-	return ufmt.Sprintf(
-		`{"t":%d,"lg":"%s","ln":"%s","fg0":"%s","fg1":"%s","tco":%d,"spl":"%s","so":%d,"i":%s}`,
-		tick,
-		tickInfo.LiquidityGross().ToString(),
-		tickInfo.LiquidityNet().ToString(),
-		tickInfo.FeeGrowthOutside0X128().ToString(),
-		tickInfo.FeeGrowthOutside1X128().ToString(),
-		tickInfo.TickCumulativeOutside(),
-		tickInfo.SecondsPerLiquidityOutsideX128().ToString(),
-		tickInfo.SecondsOutside(),
-		formatBool(tickInfo.Initialized()),
-	)
-}
-
 // ticksToString converts tick indices within a range to their string representation,
 // including detailed tick information from the pool's tick storage.
 func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
@@ -229,7 +213,8 @@ func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
 	tickInfoStrings := make([]string, 0)
 
 	pool.IterateTicks(minTick, maxTick, func(tick int32, tickInfo pl.TickInfo) bool {
-		tickInfoStrings = append(tickInfoStrings, formatTickInfo(tick, tickInfo))
+		tickEventInfo := NewTickEventInfo(tick, tickInfo)
+		tickInfoStrings = append(tickInfoStrings, tickEventInfo.ToString())
 
 		return false
 	})
