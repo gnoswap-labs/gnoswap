@@ -313,16 +313,8 @@ func (i *poolV1) GetInitializedTicksInRange(poolPath string, tickLower, tickUppe
 
 	ticks := make([]int32, 0)
 
-	tickLowerStr := strconv.FormatInt(int64(tickLower), 10)
-	tickUpperStr := strconv.FormatInt(int64(tickUpper), 10)
-
-	pool.Ticks().Iterate(tickLowerStr, tickUpperStr, func(key string, _ any) bool {
-		tick, err := strconv.ParseInt(key, 10, 32)
-		if err != nil {
-			return false
-		}
-
-		ticks = append(ticks, int32(tick))
+	pool.IterateTicks(tickLower, tickUpper, func(tick int32, _ pl.TickInfo) bool {
+		ticks = append(ticks, tick)
 		return false
 	})
 
@@ -338,18 +330,7 @@ func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
 		return pl.TickInfo{}, err
 	}
 
-	tickStr := strconv.Itoa(int(tick))
-	iTickInfo, ok := pool.Ticks().Get(tickStr)
-	if !ok {
-		return pl.TickInfo{}, ufmt.Errorf("tick %d not found", tick)
-	}
-
-	tickInfo, ok := iTickInfo.(pl.TickInfo)
-	if !ok {
-		return pl.TickInfo{}, ufmt.Errorf("failed to cast tickInfo: %T", iTickInfo)
-	}
-
-	return tickInfo, nil
+	return pool.GetTick(tick)
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.

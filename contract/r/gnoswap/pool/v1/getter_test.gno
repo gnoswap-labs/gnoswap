@@ -54,7 +54,7 @@ func testInitData(t *testing.T) {
 	tickInfo.SetSecondsOutside(7)
 	tickInfo.SetInitialized(true)
 
-	mockTicks.Set("0", tickInfo)
+	mockTicks.Set(pl.EncodeTickKey(0), tickInfo)
 	mockPool.SetTicks(mockTicks)
 
 	mockPositions := avl.NewTree()

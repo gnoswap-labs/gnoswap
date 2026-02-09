@@ -168,6 +168,7 @@ func (i *poolV1) Swap(
 	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
 	pool.SetSlot0(slot0Start)
+	startTick := pool.Slot0Tick()
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
@@ -279,7 +280,7 @@ func (i *poolV1) Swap(
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
-		"ticks", tickTreeToString(pool.Ticks()),
+		"ticks", ticksToString(pool, startTick, pool.Slot0Tick()),
 		"tickCumulative", formatInt(lastObservation.TickCumulative()),
 		"liquidityCumulative", lastObservation.LiquidityCumulative().ToString(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128().ToString(),

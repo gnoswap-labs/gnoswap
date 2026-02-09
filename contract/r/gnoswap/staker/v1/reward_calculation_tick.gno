@@ -1,6 +1,10 @@
 package v1
 
 import (
+	"chain"
+	"chain/runtime"
+	"strings"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -127,6 +131,7 @@ func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool,
 	}
 
 	tick := pool.Ticks().Get(tickId)
+
 	// Skip ticks with zero staked liquidity (no reward impact)
 	if tick.StakedLiquidityDelta().Sign() == 0 {
 		return
@@ -227,11 +232,36 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	// Phase 4: Update individual tick outside accumulations for reward tracking
 	// While we optimize pool updates, each tick still needs its accumulation updated
 	// for proper reward distribution calculations
+	tickInfos := make([]string, 0, len(batch.Crosses()))
+
 	for _, tickCross := range batch.Crosses() {
 		tick := batch.Pool().Ticks().Get(tickCross.TickID())
 		tickResolver := NewTickResolver(tick)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
+
+		tickCrossEventInfo := NewTickCrossEventInfo(
+			tickCross.TickID(),
+			tick.StakedLiquidityGross(),
+			tick.StakedLiquidityDelta(),
+			tickResolver.CurrentOutsideAccumulation(timestamp),
+		)
+		tickInfos = append(tickInfos, tickCrossEventInfo.ToString())
 	}
+
+	// Emit event with staker-side tick cross information
+	previousRealm := runtime.PreviousRealm()
+	stakedLiquidity := poolResolver.CurrentStakedLiquidity(timestamp)
+
+	chain.Emit(
+		"SwapTickCross",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"poolPath", batch.PoolPath(),
+		"blockTimestamp", formatAnyInt(timestamp),
+		"stakedLiquidity", stakedLiquidity.ToString(),
+		"globalRewardRatioAccX128", newAcc.ToString(),
+		"crossedTicks", "["+strings.Join(tickInfos, ",")+"]",
+	)
 
 	return nil
 }

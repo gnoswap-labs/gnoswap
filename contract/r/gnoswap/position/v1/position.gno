@@ -507,6 +507,8 @@ func (p *positionV1) collectFee(
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
 		"unwrapResult", formatBool(unwrapResult),
+		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128().ToString(),
+		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128().ToString(),
 	)
 
 	chain.Emit(

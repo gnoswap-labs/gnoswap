@@ -1,12 +1,14 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -1613,6 +1615,330 @@ func TestU256Min_EdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := u256Min(tt.a, tt.b)
 			uassert.Equal(t, tt.expected.ToString(), result.ToString(), tt.description)
+		})
+	}
+}
+
+func TestTicksToString(t *testing.T) {
+	type positionSetup struct {
+		tickLower int32
+		tickUpper int32
+		liquidity string
+	}
+
+	tests := []struct {
+		name                string
+		positions           []positionSetup
+		startTick           int32
+		endTick             int32
+		expectedResult      string
+		expectedContains    []string
+		expectedNotContains []string
+		expectedMinLength   int
+		expectedTickCount   int
+	}{
+		{
+			name:           "no ticks in range",
+			positions:      []positionSetup{},
+			startTick:      100,
+			endTick:        200,
+			expectedResult: "[]",
+		},
+		{
+			name:           "non-existent ticks in range",
+			positions:      []positionSetup{},
+			startTick:      100,
+			endTick:        200,
+			expectedResult: "[]",
+		},
+		{
+			name: "single tick with shortened field names",
+			positions: []positionSetup{
+				{tickLower: -10, tickUpper: 10, liquidity: "1000000"},
+			},
+			startTick:         -10,
+			endTick:           -10,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":`, `"lg":`, `"ln":`, `"fg0":`, `"fg1":`,
+				`"tco":`, `"spl":`, `"so":`, `"i":`,
+			},
+			expectedNotContains: []string{
+				`"tick":`, `"liquidityGross":`, `"liquidityNet":`,
+				`"feeGrowthOutside0X128":`, `"feeGrowthOutside1X128":`,
+				`"tickCumulativeOutside":`, `"secondsPerLiquidityOutsideX128":`,
+				`"secondsOutside":`, `"initialized":`,
+			},
+		},
+		{
+			name: "multiple ticks in range",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 100, liquidity: "1000000"},
+			},
+			startTick:         -100,
+			endTick:           100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":100`,
+			},
+			expectedTickCount: 2,
+		},
+		{
+			name: "range with only initialized ticks",
+			positions: []positionSetup{
+				{tickLower: -50, tickUpper: 50, liquidity: "1000000"},
+			},
+			startTick:         -50,
+			endTick:           100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-50`, `"t":50`,
+			},
+			expectedNotContains: []string{
+				`"t":0`, `"t":100`,
+			},
+		},
+		{
+			name: "multiple positions with overlapping ticks",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 0, liquidity: "500000"},
+				{tickLower: 0, tickUpper: 100, liquidity: "750000"},
+			},
+			startTick:         -100,
+			endTick:           100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":0`, `"t":100`,
+			},
+			expectedTickCount: 3,
+		},
+		{
+			name: "reversed range (endTick < startTick)",
+			positions: []positionSetup{
+				{tickLower: -100, tickUpper: 100, liquidity: "1000000"},
+			},
+			startTick:         100,
+			endTick:           -100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":-100`, `"t":100`,
+			},
+			expectedTickCount: 2,
+		},
+		{
+			name: "positive ticks only - string ordering problem",
+			positions: []positionSetup{
+				{tickLower: 0, tickUpper: 10, liquidity: "1000000"},
+				{tickLower: 10, tickUpper: 20, liquidity: "1000000"},
+				{tickLower: 20, tickUpper: 30, liquidity: "1000000"},
+				{tickLower: 90, tickUpper: 100, liquidity: "1000000"},
+			},
+			startTick:         0,
+			endTick:           100,
+			expectedMinLength: 3,
+			expectedContains: []string{
+				`"t":0`, `"t":10`, `"t":20`, `"t":30`, `"t":90`, `"t":100`,
+			},
+			expectedTickCount: 6,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
+			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
+			pool := newPool(poolParams)
+
+			// Setup positions
+			for _, pos := range tt.positions {
+				params := ModifyPositionParams{
+					owner:          addr01,
+					tickLower:      pos.tickLower,
+					tickUpper:      pos.tickUpper,
+					liquidityDelta: i256.MustFromDecimal(pos.liquidity),
+				}
+				_, _, _, err := modifyPosition(pool, params)
+				if err != nil {
+					t.Fatalf("Failed to create position: %v", err)
+				}
+			}
+
+			result := ticksToString(pool, tt.startTick, tt.endTick)
+
+			// Exact match assertion
+			if tt.expectedResult != "" {
+				uassert.Equal(t, tt.expectedResult, result)
+				return
+			}
+
+			// Minimum length assertion
+			if tt.expectedMinLength > 0 {
+				uassert.True(t, len(result) >= tt.expectedMinLength,
+					ufmt.Sprintf("result length %d should be >= %d", len(result), tt.expectedMinLength))
+			}
+
+			// Contains assertions
+			for _, substr := range tt.expectedContains {
+				uassert.True(t, strings.Contains(result, substr),
+					ufmt.Sprintf("result should contain '%s'", substr))
+			}
+
+			// Not contains assertions
+			for _, substr := range tt.expectedNotContains {
+				uassert.False(t, strings.Contains(result, substr),
+					ufmt.Sprintf("result should not contain '%s'", substr))
+			}
+
+			// Tick count assertion
+			if tt.expectedTickCount > 0 {
+				actualCount := strings.Count(result, `"t":`)
+				uassert.Equal(t, tt.expectedTickCount, actualCount,
+					ufmt.Sprintf("expected %d ticks, got %d", tt.expectedTickCount, actualCount))
+			}
+		})
+	}
+}
+
+func TestIterateTicksBoundary(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupTicks    []int32
+		startTick     int32
+		endTick       int32
+		expectedTicks []int32
+		description   string
+	}{
+		{
+			name:          "single tick - startTick equals endTick",
+			setupTicks:    []int32{-100, 0, 100},
+			startTick:     0,
+			endTick:       0,
+			expectedTicks: []int32{0},
+			description:   "When startTick == endTick, should return only that tick",
+		},
+		{
+			name:          "endTick is inclusive",
+			setupTicks:    []int32{0, 10, 20, 30},
+			startTick:     0,
+			endTick:       20,
+			expectedTicks: []int32{0, 10, 20},
+			description:   "endTick should be included in the result",
+		},
+		{
+			name:          "startTick is inclusive",
+			setupTicks:    []int32{0, 10, 20, 30},
+			startTick:     10,
+			endTick:       30,
+			expectedTicks: []int32{10, 20, 30},
+			description:   "startTick should be included in the result",
+		},
+		{
+			name:          "no ticks in range",
+			setupTicks:    []int32{-100, 100},
+			startTick:     -50,
+			endTick:       50,
+			expectedTicks: []int32{},
+			description:   "Range with no ticks should return empty",
+		},
+		{
+			name:          "startTick greater than endTick",
+			setupTicks:    []int32{0, 10, 20},
+			startTick:     20,
+			endTick:       0,
+			expectedTicks: []int32{},
+			description:   "Reversed range should return empty (not swap)",
+		},
+		{
+			name:          "negative ticks range",
+			setupTicks:    []int32{-100, -50, -20, -10},
+			startTick:     -100,
+			endTick:       -10,
+			expectedTicks: []int32{-100, -50, -20, -10},
+			description:   "Negative ticks should be in numeric order",
+		},
+		{
+			name:          "across zero boundary",
+			setupTicks:    []int32{-20, -10, 0, 10, 20},
+			startTick:     -10,
+			endTick:       10,
+			expectedTicks: []int32{-10, 0, 10},
+			description:   "Range crossing zero should work correctly",
+		},
+		{
+			name:          "MIN_TICK boundary",
+			setupTicks:    []int32{-887270, -887260, -887250},
+			startTick:     -887270,
+			endTick:       -887250,
+			expectedTicks: []int32{-887270, -887260, -887250},
+			description:   "Should handle MIN_TICK region correctly",
+		},
+		{
+			name:          "MAX_TICK boundary",
+			setupTicks:    []int32{887250, 887260, 887270},
+			startTick:     887250,
+			endTick:       887270,
+			expectedTicks: []int32{887250, 887260, 887270},
+			description:   "Should handle MAX_TICK region correctly (inclusive)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
+			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
+			pool := newPool(poolParams)
+
+			// Setup ticks by creating positions
+			for i, tick := range tt.setupTicks {
+				var tickLower, tickUpper int32
+				if i < len(tt.setupTicks)-1 {
+					tickLower = tick
+					tickUpper = tt.setupTicks[i+1]
+				} else {
+					// Last tick: create a small range
+					tickLower = tick - tickSpacing
+					tickUpper = tick
+				}
+
+				params := ModifyPositionParams{
+					owner:          addr01,
+					tickLower:      tickLower,
+					tickUpper:      tickUpper,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+				_, _, _, err := modifyPosition(pool, params)
+				if err != nil {
+					t.Logf("Warning: Failed to create position for tick %d: %v", tick, err)
+				}
+			}
+
+			// Iterate ticks
+			actualTicks := []int32{}
+			pool.IterateTicks(tt.startTick, tt.endTick, func(tick int32, _ pl.TickInfo) bool {
+				actualTicks = append(actualTicks, tick)
+				return false
+			})
+
+			// Verify results
+			if len(tt.expectedTicks) != len(actualTicks) {
+				t.Errorf("%s\nExpected %d ticks: %v\nGot %d ticks: %v",
+					tt.description,
+					len(tt.expectedTicks), tt.expectedTicks,
+					len(actualTicks), actualTicks)
+				return
+			}
+
+			for i, expectedTick := range tt.expectedTicks {
+				if actualTicks[i] != expectedTick {
+					t.Errorf("%s\nAt index %d: expected tick %d, got %d",
+						tt.description, i, expectedTick, actualTicks[i])
+				}
+			}
+
+			t.Logf("✓ %s", tt.description)
+			t.Logf("  Range: [%d, %d], Result: %v", tt.startTick, tt.endTick, actualTicks)
 		})
 	}
 }

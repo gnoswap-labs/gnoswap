@@ -148,7 +148,7 @@ func (i *poolV1) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	err := i.setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
+	err := i.setFeeProtocolInternal(feeProtocol0, feeProtocol1)
 	if err != nil {
 		panic(err)
 	}
@@ -203,7 +203,7 @@ func (i *poolV1) savePool(pool *pl.Pool) error {
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
-func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
+func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8) error {
 	oldFee := i.store.GetSlot0FeeProtocol()
 	newFee, err := i.setFeeProtocol(feeProtocol0, feeProtocol1)
 	if err != nil {
@@ -215,7 +215,7 @@ func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventN
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
-		eventName,
+		"SetFeeProtocol",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"prevFeeProtocol0", formatUint(feeProtocol0Old),

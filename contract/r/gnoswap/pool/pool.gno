@@ -1,10 +1,10 @@
 package pool
 
 import (
-	"strconv"
 	"time"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -135,9 +135,51 @@ func (p *Pool) SetObservationState(observationState *ObservationState) {
 	p.observationState = observationState
 }
 
+func (p *Pool) HasTick(tick int32) bool {
+	tickKey := EncodeTickKey(tick)
+	return p.ticks.Has(tickKey)
+}
+
+func (p *Pool) GetTick(tick int32) (TickInfo, error) {
+	tickKey := EncodeTickKey(tick)
+
+	iTickInfo, ok := p.ticks.Get(tickKey)
+	if !ok {
+		return TickInfo{}, ufmt.Errorf("tick %d not found", tick)
+	}
+
+	tickInfo, ok := iTickInfo.(TickInfo)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", iTickInfo))
+	}
+
+	return tickInfo, nil
+}
+
+func (p *Pool) SetTick(tick int32, tickInfo TickInfo) {
+	tickKey := EncodeTickKey(tick)
+	p.ticks.Set(tickKey, tickInfo)
+}
+
 func (p *Pool) DeleteTick(tick int32) {
-	tickStr := strconv.Itoa(int(tick))
-	p.ticks.Remove(tickStr)
+	tickKey := EncodeTickKey(tick)
+	p.ticks.Remove(tickKey)
+}
+
+func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, tickInfo TickInfo) bool) {
+	startTickKey := EncodeTickKey(startTick)
+	endTickKey := EncodeTickKey(endTick + 1) // endTick inclusive
+
+	p.ticks.Iterate(startTickKey, endTickKey, func(key string, value any) bool {
+		tick := DecodeTickKey(key)
+
+		tickInfo, ok := value.(TickInfo)
+		if !ok {
+			return false
+		}
+
+		return fn(tick, tickInfo)
+	})
 }
 
 func (p *Pool) Clone() *Pool {
