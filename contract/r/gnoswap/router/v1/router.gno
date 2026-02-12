@@ -96,8 +96,15 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 // SwapValidator provides validation methods for swap operations
 type SwapValidator struct{}
 
+// maxRoundingErrorPerHop is the maximum rounding error allowed per swap hop.
+// Each pool swap involves multiple integer rounding points (sqrtPrice math,
+// amount delta computation, fee calculation), and these errors compound
+// across hops when the output of one hop feeds into the next.
+const maxRoundingErrorPerHop = 4
+
 // exactOutAmount checks if output amount meets specified requirements.
-// For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
+// For exact-out swaps, the output must be within an acceptable rounding
+// tolerance derived from the number of swap hops.
 func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swapCount int64) error {
 	diff := int64(0)
 
@@ -107,7 +114,8 @@ func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swap
 		diff = specifiedAmount - resultAmount
 	}
 
-	if diff > swapCount {
+	tolerance := swapCount * maxRoundingErrorPerHop
+	if diff > tolerance {
 		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount, resultAmount)
 	}
 
