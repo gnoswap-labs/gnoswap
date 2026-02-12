@@ -126,6 +126,7 @@ func (p *MultiSwapProcessor) processBackwardSwap(sp SwapParams, numPools int, sw
 // processBackwardDrySwap handles backward simulated swaps.
 func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int, swapPath string) (int64, int64, error) {
 	firstAmountIn := int64(0)
+	lastAmountOut := int64(0)
 	currentPoolIndex := numPools - 1
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 	payer := routerAddr
@@ -134,6 +135,12 @@ func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int,
 		callbackData := newSwapCallbackData(sp, payer)
 		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
 
+		// The first iteration processes the last pool, whose output
+		// is the final amount the user receives.
+		if currentPoolIndex == numPools-1 {
+			lastAmountOut = amountOut
+		}
+
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
 		}
@@ -141,7 +148,7 @@ func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int,
 		currentPoolIndex--
 
 		if currentPoolIndex == -1 {
-			return firstAmountIn, amountOut, nil
+			return firstAmountIn, lastAmountOut, nil
 		}
 
 		// Update parameters for the next hop
