@@ -637,8 +637,9 @@ func testMultiHop_ThreeHops() {
 // [EXPECTED] Results should match: DryIn=100000 ActualIn=100000, DryOut=99743 ActualOut=-99751
 //
 // [INFO] Testing Multi-Hop (2-hop) Exact Out - swapCount=2
-// [EXPECTED] DrySwap 2-hop ExactOut - in=100259 out=93317738 success=false (swapCount=2, tolerance=2)
-// [INFO] DrySwap returned success=false, skipping actual swap
+// [EXPECTED] DrySwap 2-hop ExactOut - in=100259 out=100000 success=true (swapCount=2, tolerance=2)
+// [EXPECTED] Actual swap 2-hop ExactOut - in=100259 out=-100007
+// [EXPECTED] Results should match: DryIn=100259 ActualIn=100259, DryOut=100000 ActualOut=-100007
 //
 // [INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3
 // [EXPECTED] DrySwap 3-hop - in=10000 out=9297854 success=true
