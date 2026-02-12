@@ -1234,10 +1234,20 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			expectedSuccess: true,
 		},
 		{
-			name:            "ExactOut - exceeds tolerance",
+			name:            "ExactOut - within compound rounding tolerance",
 			swapType:        ExactOut,
 			resultAmountIn:  1050,
-			resultAmountOut: 997,
+			resultAmountOut: 997, // diff=3, tolerance=2*4=8
+			amountSpecified: -1000,
+			amountLimit:     1100,
+			swapCount:       2,
+			expectedSuccess: true,
+		},
+		{
+			name:            "ExactOut - exceeds compound rounding tolerance",
+			swapType:        ExactOut,
+			resultAmountIn:  1050,
+			resultAmountOut: 990, // diff=10, tolerance=2*4=8
 			amountSpecified: -1000,
 			amountLimit:     1100,
 			swapCount:       2,

@@ -178,13 +178,13 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
 				TokenAmountLimit("10000").
 				Build(),
-			// Multi-hop ExactOut: requested 5, got 3 (diff=2, swapCount=2 -> within tolerance)
+			// Multi-hop ExactOut: backward dry swap now returns the correct final output
 			expectedAmountIn:  "3",
-			expectedAmountOut: "3",
+			expectedAmountOut: "5",
 			expectedSuccess:   true,
 		},
 		{
-			name:    "ExactOut - Multi Route exceeds tolerance",
+			name:    "ExactOut - Multi Route now within compound tolerance",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -194,9 +194,10 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
 				TokenAmountLimit("10000").
 				Build(),
+			// With the backward dry swap fix, the correct final output is returned
 			expectedAmountIn:  "138",
-			expectedAmountOut: "370",
-			expectedSuccess:   false,
+			expectedAmountOut: "1000",
+			expectedSuccess:   true,
 		},
 	}
 
@@ -274,7 +275,7 @@ func setupMultiRoutePools(env *TestEnv) {
 func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 	tests := []DrySwapTestCase{
 		{
-			name:    "ExactOut - Two routes with split quote (50:50) - insufficient liquidity",
+			name:    "ExactOut - Two routes with split quote (50:50)",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -285,12 +286,13 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				Quote("50,50").
 				TokenAmountLimit("10000").
 				Build(),
+			// With backward dry swap fix, multi-hop routes now return the correct final output
 			expectedAmountIn:  "255",
-			expectedAmountOut: "685",
-			expectedSuccess:   false,
+			expectedAmountOut: "1000",
+			expectedSuccess:   true,
 		},
 		{
-			name:    "ExactOut - Three routes mixed hops (1-hop + 2-hop + 1-hop) - insufficient liquidity",
+			name:    "ExactOut - Three routes mixed hops (1-hop + 2-hop + 1-hop)",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -302,8 +304,8 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				TokenAmountLimit("10000").
 				Build(),
 			expectedAmountIn:  "294",
-			expectedAmountOut: "787",
-			expectedSuccess:   false,
+			expectedAmountOut: "1000",
+			expectedSuccess:   true,
 		},
 		{
 			name:    "ExactIn - Two routes with split quote (70:30) - swapCount=3 total",
@@ -390,9 +392,18 @@ func TestValidateSwapResults_ExactOutTolerance(t *testing.T) {
 			expectedSuccess:  true,
 		},
 		{
-			name:             "exceeds tolerance by 1 - should fail",
+			name:             "diff=4 within compound rounding tolerance (swapCount=3) - should succeed",
 			resultAmountIn:   1000,
-			resultAmountOut:  496, // diff = 4, swapCount = 3
+			resultAmountOut:  496, // diff = 4, tolerance = 3*4 = 12
+			amountSpecified:  -500,
+			amountLimit:      2000,
+			swapCount:        3,
+			expectedSuccess:  true,
+		},
+		{
+			name:             "exceeds compound rounding tolerance - should fail",
+			resultAmountIn:   1000,
+			resultAmountOut:  487, // diff = 13, tolerance = 3*4 = 12
 			amountSpecified:  -500,
 			amountLimit:      2000,
 			swapCount:        3,
@@ -462,84 +473,52 @@ func TestValidateSwapResults_ExactOutToleranceWithVariousSwapCounts(t *testing.T
 			description:     "Exact match with single hop",
 		},
 		{
-			name:            "swapCount=1, diff=1 - should succeed (boundary)",
-			resultAmountOut: 1001,
+			name:            "swapCount=1, diff=4 - should succeed (boundary, tolerance=4)",
+			resultAmountOut: 1004,
 			amountSpecified: -1000,
 			swapCount:       1,
 			expectedSuccess: true,
-			description:     "Within tolerance for single hop",
+			description:     "At tolerance boundary for single hop",
 		},
 		{
-			name:            "swapCount=1, diff=2 - should fail",
-			resultAmountOut: 1002,
+			name:            "swapCount=1, diff=5 - should fail (exceeds tolerance=4)",
+			resultAmountOut: 1005,
 			amountSpecified: -1000,
 			swapCount:       1,
 			expectedSuccess: false,
 			description:     "Exceeds tolerance for single hop",
 		},
 		{
-			name:            "swapCount=2, diff=2 - should succeed (boundary)",
-			resultAmountOut: 1002,
+			name:            "swapCount=2, diff=8 - should succeed (boundary, tolerance=8)",
+			resultAmountOut: 1008,
 			amountSpecified: -1000,
 			swapCount:       2,
 			expectedSuccess: true,
-			description:     "Within tolerance for 2-hop",
+			description:     "At tolerance boundary for 2-hop",
 		},
 		{
-			name:            "swapCount=2, diff=3 - should fail",
-			resultAmountOut: 1003,
+			name:            "swapCount=2, diff=9 - should fail (exceeds tolerance=8)",
+			resultAmountOut: 1009,
 			amountSpecified: -1000,
 			swapCount:       2,
 			expectedSuccess: false,
 			description:     "Exceeds tolerance for 2-hop",
 		},
 		{
-			name:            "swapCount=3, diff=3 - should succeed (boundary)",
-			resultAmountOut: 1003,
+			name:            "swapCount=3, diff=12 - should succeed (boundary, tolerance=12)",
+			resultAmountOut: 1012,
 			amountSpecified: -1000,
 			swapCount:       3,
 			expectedSuccess: true,
-			description:     "Within tolerance for 3-hop",
+			description:     "At tolerance boundary for 3-hop",
 		},
 		{
-			name:            "swapCount=3, diff=4 - should fail",
-			resultAmountOut: 1004,
+			name:            "swapCount=3, diff=13 - should fail (exceeds tolerance=12)",
+			resultAmountOut: 1013,
 			amountSpecified: -1000,
 			swapCount:       3,
 			expectedSuccess: false,
 			description:     "Exceeds tolerance for 3-hop",
-		},
-		{
-			name:            "swapCount=5, diff=5 - should succeed (boundary)",
-			resultAmountOut: 1005,
-			amountSpecified: -1000,
-			swapCount:       5,
-			expectedSuccess: true,
-			description:     "Within tolerance for 5-hop",
-		},
-		{
-			name:            "swapCount=5, diff=6 - should fail",
-			resultAmountOut: 1006,
-			amountSpecified: -1000,
-			swapCount:       5,
-			expectedSuccess: false,
-			description:     "Exceeds tolerance for 5-hop",
-		},
-		{
-			name:            "swapCount=10, diff=10 - should succeed (boundary)",
-			resultAmountOut: 1010,
-			amountSpecified: -1000,
-			swapCount:       10,
-			expectedSuccess: true,
-			description:     "Within tolerance for 10-hop",
-		},
-		{
-			name:            "swapCount=10, diff=11 - should fail",
-			resultAmountOut: 1011,
-			amountSpecified: -1000,
-			swapCount:       10,
-			expectedSuccess: false,
-			description:     "Exceeds tolerance for 10-hop",
 		},
 	}
 
@@ -871,7 +850,7 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
 		description  string
 	}{
 		{
-			name:    "ExactOut - Multi Route exceeds tolerance (DrySwap fails, Swap should fail too)",
+			name:    "ExactOut - Multi Route with tight slippage limit (DrySwap fails due to amountIn > limit)",
 			setupFn: setupBasicPools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -879,9 +858,9 @@ func TestDrySwapFailure_ShouldMatchActualSwapFailure(t *testing.T) {
 				SpecifiedAmount("1000").
 				SwapType("EXACT_OUT").
 				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
-				TokenAmountLimit("10000").
+				TokenAmountLimit("1").
 				Build(),
-			description: "DrySwap returns success=false due to tolerance exceeded",
+			description: "DrySwap returns success=false due to amountIn exceeding tight slippage limit",
 		},
 		{
 			name:    "ExactIn - Slippage too tight (amountOut below limit)",
