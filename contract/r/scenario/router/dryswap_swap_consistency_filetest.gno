@@ -568,6 +568,54 @@ func printExactOutTolerance(requested string, dryOut string, tolerance int64) {
 	ufmt.Printf("[EXPECTED] ExactOut tolerance check: requested=%s dryOut=%s diff=%d tolerance=%d withinTolerance=%t\n", requested, dryOut, diff, tolerance, withinTolerance)
 }
 
+func drySwapExactOutForAmount(inputToken, outputToken string, amount int64, route, quote, amountLimit string) (string, bool, int64, bool) {
+	amountStr := strconv.FormatInt(amount, 10)
+	_, dryOut, drySuccess := router.DrySwapRoute(
+		inputToken, outputToken, amountStr, "EXACT_OUT", route, quote, amountLimit,
+	)
+
+	dryOutAmount, okDryOut := parseInt64(dryOut)
+	if !okDryOut {
+		return dryOut, drySuccess, 0, false
+	}
+
+	diff := absInt64(amount - dryOutAmount)
+	return dryOut, drySuccess, diff, true
+}
+
+func findNearestFailAmountExactOut(inputToken, outputToken string, route, quote, amountLimit string, knownSuccess, knownFail int64) (int64, string, bool, int64, bool) {
+	left := knownSuccess + 1
+	right := knownFail
+	bestAmount := knownFail
+	bestDryOut := ""
+	bestSuccess := false
+	bestDiff := int64(0)
+	bestParsed := false
+
+	for left <= right {
+		mid := left + (right-left)/2
+		dryOut, drySuccess, diff, parsed := drySwapExactOutForAmount(inputToken, outputToken, mid, route, quote, amountLimit)
+
+		if !drySuccess {
+			bestAmount = mid
+			bestDryOut = dryOut
+			bestSuccess = drySuccess
+			bestDiff = diff
+			bestParsed = parsed
+			right = mid - 1
+		} else {
+			left = mid + 1
+		}
+	}
+
+	if bestDryOut == "" {
+		dryOut, drySuccess, diff, parsed := drySwapExactOutForAmount(inputToken, outputToken, knownFail, route, quote, amountLimit)
+		return knownFail, dryOut, drySuccess, diff, parsed
+	}
+
+	return bestAmount, bestDryOut, bestSuccess, bestDiff, bestParsed
+}
+
 func testMultiHop_TwoHop_ExactIn_Success() {
 	testing.SetRealm(aliceRealm)
 
@@ -625,13 +673,18 @@ func testMultiHop_TwoHop_ExactOut_Success() {
 func testMultiHop_TwoHop_ExactOut_Fail() {
 	testing.SetRealm(aliceRealm)
 
-	amount := "1000000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
+	amountLimit := "999999999"
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		barPath, fooPath, route, "100", amountLimit,
+		663, 1000000000,
+	)
+	amount := strconv.FormatInt(requestedAmount, 10)
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
-		barPath, fooPath, amount, "EXACT_OUT", route, "100", "999999999",
+		barPath, fooPath, amount, "EXACT_OUT", route, "100", amountLimit,
 	)
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(amount, dryOut, 2)
@@ -639,7 +692,7 @@ func testMultiHop_TwoHop_ExactOut_Fail() {
 	if drySuccess {
 		common.SafeGRC20Approve(cross, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
-			cross, barPath, fooPath, amount, route, "100", "999999999",
+			cross, barPath, fooPath, amount, route, "100", amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[EXPECTED] Actual swap 2-hop ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
@@ -704,14 +757,19 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Success() {
 func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail() {
 	testing.SetRealm(aliceRealm)
 
-	amount := "1000000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500"
 	quote := "50,50"
+	amountLimit := "999999999"
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		barPath, fooPath, route, quote, amountLimit,
+		1000, 1000000000,
+	)
+	amount := strconv.FormatInt(requestedAmount, 10)
 
 	ufmt.Println("[INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
-		barPath, fooPath, amount, "EXACT_OUT", route, quote, "999999999",
+		barPath, fooPath, amount, "EXACT_OUT", route, quote, amountLimit,
 	)
 	ufmt.Printf("[EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(amount, dryOut, 4)
@@ -719,7 +777,7 @@ func testMultiHop_TwoRoute_TwoHop_ExactOut_Fail() {
 	if drySuccess {
 		common.SafeGRC20Approve(cross, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
-			cross, barPath, fooPath, amount, route, quote, "999999999",
+			cross, barPath, fooPath, amount, route, quote, amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[EXPECTED] Actual swap 2-hop two-route ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
@@ -861,14 +919,19 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Success() {
 func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 	testing.SetRealm(aliceRealm)
 
-	amount := "1000000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"
 	quote := "90,10"
+	amountLimit := "999999999"
+	requestedAmount, _, _, _, _ := findNearestFailAmountExactOut(
+		barPath, quxPath, route, quote, amountLimit,
+		2, 1000000,
+	)
+	amount := strconv.FormatInt(requestedAmount, 10)
 
 	ufmt.Println("[INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail")
 
 	dryIn, dryOut, drySuccess := router.DrySwapRoute(
-		barPath, quxPath, amount, "EXACT_OUT", route, quote, "999999999",
+		barPath, quxPath, amount, "EXACT_OUT", route, quote, amountLimit,
 	)
 	ufmt.Printf("[EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
 	printExactOutTolerance(amount, dryOut, 4)
@@ -876,7 +939,7 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 	if drySuccess {
 		common.SafeGRC20Approve(cross, barPath, routerAddr, 999999999)
 		actualIn, actualOut := router.ExactOutSwapRoute(
-			cross, barPath, quxPath, amount, route, quote, "999999999",
+			cross, barPath, quxPath, amount, route, quote, amountLimit,
 			time.Now().Add(time.Hour).Unix(), "",
 		)
 		ufmt.Printf("[EXPECTED] Actual swap 3-hop two-route ExactOut fail - in=%s out=%s\n", actualIn, actualOut)
@@ -983,8 +1046,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 2-hop ExactOut success - in=246 out=-663
 //
 // [INFO] Testing Multi-Hop (2-hop) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop ExactOut fail - in=376170159201 out=1010369843075 success=false
-// [EXPECTED] ExactOut tolerance check: requested=1000000000000 dryOut=1010369843075 diff=10369843075 tolerance=2 withinTolerance=false
+// [EXPECTED] DrySwap 2-hop ExactOut fail - in=738 out=2000 success=false
+// [EXPECTED] ExactOut tolerance check: requested=1997 dryOut=2000 diff=3 tolerance=2 withinTolerance=false
 // [INFO] DrySwap fail case returned success=false, skipping actual swap
 //
 // [INFO] 2-hop two-route matrix
@@ -998,8 +1061,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 2-hop two-route ExactOut success - in=372 out=-1000
 //
 // [INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=372458437844 out=1005410834065 success=false
-// [EXPECTED] ExactOut tolerance check: requested=1000000000000 dryOut=1005410834065 diff=5410834065 tolerance=4 withinTolerance=false
+// [EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=1476 out=3998 success=false
+// [EXPECTED] ExactOut tolerance check: requested=3993 dryOut=3998 diff=5 tolerance=4 withinTolerance=false
 // [INFO] DrySwap 2-hop two-route fail case returned success=false
 //
 // [INFO] 3-hop single-route matrix
@@ -1028,6 +1091,6 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 3-hop two-route ExactOut success - in=6 out=-2
 //
 // [INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=441402590793 out=1017028767505 success=false
-// [EXPECTED] ExactOut tolerance check: requested=1000000000000 dryOut=1017028767505 diff=17028767505 tolerance=4 withinTolerance=false
+// [EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=962 out=2221 success=false
+// [EXPECTED] ExactOut tolerance check: requested=2216 dryOut=2221 diff=5 tolerance=4 withinTolerance=false
 // [INFO] DrySwap 3-hop two-route fail case returned success=false
