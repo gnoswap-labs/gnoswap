@@ -264,7 +264,7 @@ func (p *positionV1) IncreaseLiquidity(
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
-		"poolLiquidity", pl.GetLiquidity(poolPath).ToString(),
+		"poolLiquidity", pl.GetLiquidity(poolPath),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
 		"token1Balance", pl.GetBalanceToken1(poolPath),
 		"tickCumulative", formatInt(tickCumulative),
