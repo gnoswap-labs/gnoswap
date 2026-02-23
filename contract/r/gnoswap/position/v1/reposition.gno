@@ -160,7 +160,7 @@ func (p *positionV1) Reposition(
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
-            "poolLiquidity", pl.GetLiquidity(poolKey),
+		"poolLiquidity", pl.GetLiquidity(poolKey),
 		"token0Balance", poolToken0Balance,
 		"token1Balance", poolToken1Balance,
 		"tickCumulative", formatInt(tickCumulative),
