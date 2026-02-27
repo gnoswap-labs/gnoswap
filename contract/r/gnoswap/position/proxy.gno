@@ -1,27 +1,28 @@
 package position
 
-// Mint creates a new liquidity position NFT.
+// Mint adds liquidity to a pool. Internally calls the `mint` function of the pool contract.
 //
 // Parameters:
-//   - token0: path of the first token
-//   - token1: path of the second token
-//   - fee: pool fee tier
-//   - tickLower: lower tick boundary
-//   - tickUpper: upper tick boundary
-//   - amount0Desired: desired amount of token0
-//   - amount1Desired: desired amount of token1
-//   - amount0Min: minimum amount of token0
-//   - amount1Min: minimum amount of token1
-//   - deadline: transaction deadline
-//   - mintTo: recipient address for the position NFT
-//   - caller: caller address
-//   - referrer: referrer address for reward tracking
+//   - cur: Pass `cross` as argument.
+//   - token0: The path of the token0 of the desired pool.
+//   - token1: The path of the token1 of the desired pool.
+//   - fee: The fee tier of the pool.
+//   - tickLower: The lower tick of the price range of the position.
+//   - tickUpper: The upper tick of the price range of the position.
+//   - amount0Desired: The maximum amount of token0 to add.
+//   - amount1Desired: The maximum amount of token1 to add.
+//   - amount0Min: The minimum amount of token0 to add.
+//   - amount1Min: The minimum amount of token1 to add.
+//   - deadline: The deadline at which the transaction will expire.
+//   - mintTo: The address to receive the minted position.
+//   - caller: The caller address from staker (for one-click staking).
+//   - referrer: The referrer address for reward tracking.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
+//   - positionId: The ID of the position that was minted.
+//   - liquidity: The amount of liquidity added to the pool.
+//   - amount0: The amount of token0 added to the pool.
+//   - amount1: The amount of token1 added to the pool.
 func Mint(
 	cur realm,
 	token0 string,
@@ -41,22 +42,23 @@ func Mint(
 	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, caller, referrer)
 }
 
-// IncreaseLiquidity adds liquidity to an existing position.
+// IncreaseLiquidity adds additional liquidity to an existing position. Calling this function on a closed position will reopen it.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - amount0DesiredStr: desired amount of token0
-//   - amount1DesiredStr: desired amount of token1
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
+//   - cur: Pass `cross` as argument.
+//   - positionId: The ID of the position NFT in which to increase liquidity.
+//   - amount0DesiredStr: The maximum amount of token0 to increase.
+//   - amount1DesiredStr: The maximum amount of token1 to increase.
+//   - amount0MinStr: The minimum amount of token0 to increase.
+//   - amount1MinStr: The minimum amount of token1 to increase.
+//   - deadline: The deadline at which the transaction will expire.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
-//   - string: pool path
+//   - positionId: The ID of the position that the liquidity was increased.
+//   - liquidity: The amount of liquidity added to the position.
+//   - amount0: The amount of token0 added to the position.
+//   - amount1: The amount of token1 added to the position.
+//   - poolPath: The path of the pool from which the position exists.
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -69,24 +71,25 @@ func IncreaseLiquidity(
 	return getImplementation().IncreaseLiquidity(positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-// DecreaseLiquidity removes liquidity from a position.
+// DecreaseLiquidity decreases liquidity of an existing position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - liquidityStr: amount of liquidity to remove
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
+//   - cur: Pass `cross` as argument.
+//   - positionId: The ID of the position to decrease liquidity from.
+//   - liquidityStr: The amount of liquidity to decrease.
+//   - amount0MinStr: The minimum amount of token0 to decrease.
+//   - amount1MinStr: The minimum amount of token1 to decrease.
+//   - deadline: The deadline at which the transaction will expire.
+//   - unwrapResult: Whether or not to receive tokens in native `ugnot` if either token0 or token1 is `wugnot`.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: removed liquidity amount
-//   - string: amount of token0 removed
-//   - string: amount of token1 removed
-//   - string: pool path
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
+//   - positionId: The ID of the position that the liquidity was decreased.
+//   - liquidity: The amount of liquidity decreased from the position.
+//   - fee0: The amount of token0 fees collected.
+//   - fee1: The amount of token1 fees collected.
+//   - amount0: The amount of token0 decreased from the position.
+//   - amount1: The amount of token1 decreased from the position.
+//   - poolPath: The path of the pool in which the position exists.
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -99,25 +102,26 @@ func DecreaseLiquidity(
 	return getImplementation().DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline, unwrapResult)
 }
 
-// Reposition changes the tick range of a position.
+// Reposition modifies the price range of a closed position while maintaining the `positionId`.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - tickLower: new lower tick boundary
-//   - tickUpper: new upper tick boundary
-//   - amount0DesiredStr: desired amount of token0
-//   - amount1DesiredStr: desired amount of token1
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
+//   - cur: Pass `cross` as argument.
+//   - positionId: The ID of the position.
+//   - tickLower: The lower tick of the price range of the position.
+//   - tickUpper: The upper tick of the price range of the position.
+//   - amount0DesiredStr: The maximum amount of token0 to add.
+//   - amount1DesiredStr: The maximum amount of token1 to add.
+//   - amount0MinStr: The minimum amount of token0 to add.
+//   - amount1MinStr: The minimum amount of token1 to add.
+//   - deadline: The deadline at which the transaction will expire.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - int32: new lower tick
-//   - int32: new upper tick
-//   - string: amount of token0 used
-//   - string: amount of token1 used
+//   - positionId: The ID of the position.
+//   - liquidity: The new liquidity amount.
+//   - tickLower: The modified lower tick.
+//   - tickUpper: The modified upper tick.
+//   - amount0: The amount of token0 added to the position.
+//   - amount1: The amount of token1 added to the position.
 func Reposition(
 	cur realm,
 	positionId uint64,
@@ -132,19 +136,20 @@ func Reposition(
 	return getImplementation().Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-// CollectFee collects accumulated fees from a position.
+// CollectFee collects fee accrued to a position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
+//   - cur: Pass `cross` as argument.
+//   - positionId: The ID of the position.
+//   - unwrapResult: (if position has wugnot fee) whether to receive fee in ugnot or not.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: amount of token0 collected
-//   - string: amount of token1 collected
-//   - string: pool path
-//   - string: token0 path
-//   - string: token1 path
+//   - positionId: The ID of the position.
+//   - afterFee0: The amount of token0 that was collected.
+//   - afterFee1: The amount of token1 that was collected.
+//   - poolPath: The path of the pool from which the position exists.
+//   - origFee0: The fee amount of token0 before taking protocol fee.
+//   - origFee1: The fee amount of token1 before taking protocol fee.
 func CollectFee(
 	cur realm,
 	positionId uint64,
@@ -156,6 +161,7 @@ func CollectFee(
 // SetPositionOperator sets an operator for a position.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - positionId: ID of the position
 //   - operator: address of the operator
 func SetPositionOperator(

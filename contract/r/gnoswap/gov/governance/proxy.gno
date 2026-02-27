@@ -1,13 +1,14 @@
 package governance
 
-// ProposeText creates a new text proposal for general governance decisions.
+// ProposeText creates a new text proposal with the provided data.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
+//   - cur: Pass `cross` as argument.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
 func ProposeText(
 	cur realm,
 	title string,
@@ -19,17 +20,18 @@ func ProposeText(
 	)
 }
 
-// ProposeCommunityPoolSpend creates a new community pool spending proposal.
+// ProposeCommunityPoolSpend creates a CommunityPoolSpend proposal with the provided data.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
-//   - to: recipient address
-//   - tokenPath: token path to transfer
-//   - amount: amount to transfer
+//   - cur: Pass `cross` as argument.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
+//   - to: The address to receive the spent token.
+//   - tokenPath: The path of the token to be sent.
+//   - amount: The amount of the token to be sent.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -47,16 +49,17 @@ func ProposeCommunityPoolSpend(
 	)
 }
 
-// ProposeParameterChange creates a new parameter change proposal.
+// ProposeParameterChange creates a ParameterChange proposal with the provided data.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
-//   - numToExecute: number of executions to perform
-//   - executions: encoded execution messages
+//   - cur: Pass `cross` as argument.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
+//   - numToExecute: The number of changes to execute.
+//   - executions: The list of changes to execute.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
 func ProposeParameterChange(
 	cur realm,
 	title string,
@@ -72,14 +75,15 @@ func ProposeParameterChange(
 	)
 }
 
-// Vote casts a vote on a proposal.
+// Vote allows a user to vote on a given proposal.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to vote on
-//   - yes: true for yes vote, false for no vote
+//   - cur: Pass `cross` as argument.
+//   - proposalId: The ID of the proposal to vote.
+//   - yes: The flag to vote as yes or not.
 //
 // Returns:
-//   - string: voting result information
+//   - voteKey: The key of the vote.
 func Vote(
 	cur realm,
 	proposalId int64,
@@ -91,13 +95,14 @@ func Vote(
 	)
 }
 
-// Execute executes a passed proposal that is in the execution window.
+// Execute executes the given proposal.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to execute
+//   - cur: Pass `cross` as argument.
+//   - proposalId: The ID of the proposal to execute.
 //
 // Returns:
-//   - int64: execution result code
+//   - proposalId: The ID of the proposal.
 func Execute(
 	cur realm,
 	proposalId int64,
@@ -105,14 +110,14 @@ func Execute(
 	return getImplementation().Execute(proposalId)
 }
 
-// Cancel cancels a proposal before voting begins.
-// Only callable by the proposer.
+// Cancel cancels the proposal with the given ID.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to cancel
+//   - cur: Pass `cross` as argument.
+//   - proposalId: The ID of the proposal to cancel.
 //
 // Returns:
-//   - int64: cancellation result code
+//   - proposalId: The ID of the proposal.
 func Cancel(
 	cur realm,
 	proposalId int64,
@@ -124,6 +129,7 @@ func Cancel(
 // Only callable by admin or governance.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)

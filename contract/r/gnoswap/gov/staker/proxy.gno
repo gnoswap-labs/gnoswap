@@ -2,63 +2,73 @@ package staker
 
 // Delegation operations
 
-// Delegate stakes GNS tokens to a delegatee address.
+// Delegate delegates GNS to a delegate.
 //
 // Parameters:
-//   - to: address to delegate to
-//   - amount: amount of GNS to delegate
-//   - referrer: referrer address for reward tracking
+//   - cur: Pass `cross` as argument.
+//   - to: The address to delegate.
+//   - amount: The amount of GNS.
+//   - referrer: The referrer address for reward tracking.
 //
 // Returns:
-//   - int64: delegation ID
+//   - delegationId: The ID of the delegation.
 func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 	return getImplementation().Delegate(to, amount, referrer)
 }
 
-// Undelegate initiates the undelegation process for staked GNS.
+// Undelegate undelegates xGNS from the existing delegate.
 //
 // Parameters:
-//   - from: delegatee address to undelegate from
-//   - amount: amount of GNS to undelegate
+//   - cur: Pass `cross` as argument.
+//   - from: The address to undelegate.
+//   - amount: The amount of xGNS.
 //
 // Returns:
-//   - int64: undelegation result code
+//   - tokenId: The ID of the position.
 func Undelegate(cur realm, from address, amount int64) int64 {
 	return getImplementation().Undelegate(from, amount)
 }
 
-// Redelegate moves delegation from one delegatee to another.
+// Redelegate redelegates xGNS from the existing delegate to another.
 //
 // Parameters:
-//   - delegatee: current delegatee address
-//   - newDelegatee: new delegatee address
-//   - amount: amount to redelegate
+//   - cur: Pass `cross` as argument.
+//   - delegatee: The address to undelegate.
+//   - newDelegatee: The address to delegate.
+//   - amount: The amount of xGNS.
 //
 // Returns:
-//   - int64: redelegation result code
+//   - resultCode: The redelegation result code.
 func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
 	return getImplementation().Redelegate(delegatee, newDelegatee, amount)
 }
 
-// CollectUndelegatedGns collects GNS tokens after the undelegation lockup period.
+// CollectUndelegatedGns collects the amount of the undelegated GNS.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
 //
 // Returns:
-//   - int64: amount of GNS collected
+//   - amount: The amount of GNS token collected.
 func CollectUndelegatedGns(cur realm) int64 {
 	return getImplementation().CollectUndelegatedGns()
 }
 
 // Reward operations
 
-// CollectReward claims accumulated staking rewards.
+// CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
+//
+// Parameters:
+//   - cur: Pass `cross` as argument.
 func CollectReward(cur realm) {
 	getImplementation().CollectReward()
 }
 
-// CollectRewardFromLaunchPad claims rewards from launchpad projects.
+// CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract (only callable by the launchpad contract).
 //
 // Parameters:
-//   - to: address to collect rewards for
+//   - cur: Pass `cross` as argument.
+//   - to: The address to delegate.
 func CollectRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectRewardFromLaunchPad(to)
 }
@@ -67,6 +77,7 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 // Only callable by launchpad contract.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - addr: project wallet address
 //   - amount: reward amount
 //   - add: true to add, false to subtract
@@ -80,6 +91,7 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 // Only callable by admin.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - threshold: timestamp threshold for cleanup
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold)
@@ -89,6 +101,7 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 // Only callable by admin.
 //
 // Parameters:
+//   - cur: Pass `cross` as argument.
 //   - period: lockup period in seconds
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	getImplementation().SetUnDelegationLockupPeriodByAdmin(period)
