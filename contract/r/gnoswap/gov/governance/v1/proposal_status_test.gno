@@ -46,6 +46,24 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			expectedStatus:  governance.StatusActive,
 		},
 		{
+			name:            "Status Rejected - voting ended with no votes",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         0,
+			voteNo:          0,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
+			name:            "Status Rejected - voting ended with quorum not reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         400,
+			voteNo:          0,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
 			name:            "Status Rejected - no votes win and voting finished",
 			currentTime:     baseTime.Add(time.Duration(350) * time.Second), // After voting ended (1300)
 			maxVotingWeight: 1000,
