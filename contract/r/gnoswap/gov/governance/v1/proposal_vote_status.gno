@@ -20,57 +20,6 @@ func (p *ProposalVoteStatusResolver) TotalVoteWeight() int64 {
 	return safeAddInt64(p.YesWeight(), p.NoWeight())
 }
 
-// DiffVoteWeight returns the absolute difference between yes and no votes.
-// This can be used to determine the margin of victory or defeat.
-//
-// Returns:
-//   - int64: absolute difference between yes and no vote weights
-func (p *ProposalVoteStatusResolver) DiffVoteWeight() int64 {
-	yes := p.YesWeight()
-	no := p.NoWeight()
-	if yes > no {
-		return safeSubInt64(yes, no)
-	}
-
-	return safeSubInt64(no, yes)
-}
-
-// IsVotingFinished determines if voting has effectively ended due to mathematical impossibility
-// of changing the outcome. This happens when the remaining uncast votes cannot change the result.
-//
-// Returns:
-//   - bool: true if voting outcome is mathematically determined
-func (p *ProposalVoteStatusResolver) IsVotingFinished() bool {
-	totalVotes := p.TotalVoteWeight()
-
-	// If we haven't reached quorum yet, voting is not finished
-	if totalVotes < p.QuorumAmount() {
-		return false
-	}
-
-	// Calculate remaining votes that could still be cast
-	remainingVotes := safeSubInt64(p.MaxVotingWeight(), totalVotes)
-
-	// If the difference between yes/no is greater than remaining votes,
-	// the outcome cannot change, so voting is effectively finished
-	return safeSubInt64(remainingVotes, p.DiffVoteWeight()) <= 0
-}
-
-// IsRejected determines if the proposal has been rejected by voting.
-// A proposal is rejected if voting is finished and it did not pass.
-//
-// Returns:
-//   - bool: true if proposal has been rejected
-func (p *ProposalVoteStatusResolver) IsRejected() bool {
-	// Only consider rejection if voting is finished
-	if !p.IsVotingFinished() {
-		return false
-	}
-
-	// Proposal is rejected if it didn't pass
-	return !p.IsPassed()
-}
-
 // IsPassed determines if the proposal has passed the voting requirements.
 // A proposal passes if it receives at least the quorum amount of "yes" votes.
 func (p *ProposalVoteStatusResolver) IsPassed() bool {

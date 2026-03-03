@@ -175,7 +175,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 		voteYes         int64
 		voteNo          int64
 		expectedTotal   int64
-		expectedDiff    int64
 	}{
 		{
 			name:            "Voting with majority yes",
@@ -184,7 +183,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         600,
 			voteNo:          300,
 			expectedTotal:   900,
-			expectedDiff:    300,
 		},
 		{
 			name:            "Voting with majority no",
@@ -193,7 +191,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         300,
 			voteNo:          600,
 			expectedTotal:   900,
-			expectedDiff:    300,
 		},
 		{
 			name:            "Equal votes",
@@ -202,7 +199,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         400,
 			voteNo:          400,
 			expectedTotal:   800,
-			expectedDiff:    0,
 		},
 	}
 
@@ -233,7 +229,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 
 			statusResolver := NewProposalStatusResolver(status)
 			uassert.Equal(t, statusResolver.TotalVoteWeight(), tc.expectedTotal)
-			uassert.Equal(t, statusResolver.voteStatusResolver.DiffVoteWeight(), tc.expectedDiff)
 		})
 	}
 }
