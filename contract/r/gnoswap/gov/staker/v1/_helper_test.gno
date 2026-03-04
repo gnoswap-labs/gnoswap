@@ -121,9 +121,14 @@ func ugnotFaucet(t *testing.T, to address, amount uint64) {
 func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(addr))
+
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(addr, WUGNOT_ADDR, chain.Coins{{gnotDenom, int64(amount)}})
+
+	testing.SetOriginSend(chain.Coins{{gnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
+
+	testing.SetOriginSend(chain.Coins{})
 }
 
 func unmarshal(data string) *json.Node {

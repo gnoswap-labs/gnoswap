@@ -1277,6 +1277,7 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	// Add liquidity
 	testing.SetRealm(posRealm)

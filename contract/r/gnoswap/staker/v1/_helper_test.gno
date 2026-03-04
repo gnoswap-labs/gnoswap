@@ -412,7 +412,9 @@ func ugnotDeposit(t *testing.T, addr address, amount int64) {
 	wugnotAddr := chain.PackageAddress(wugnotPath)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 }
 
 type gnsBalanceTracker struct {

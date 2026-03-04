@@ -1456,6 +1456,7 @@ func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminRealm.Address(), wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Transfer(cross, communityPoolAddr, gnotAmount)
 }

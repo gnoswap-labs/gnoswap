@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"math"
 	"strconv"
 	"strings"
@@ -272,15 +271,13 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(positionOwner, wugnotAddr, newCoins)
-			wugnot.Deposit(cross)
+			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
+				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
@@ -292,7 +289,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				teller.Approve(poolContract, maxApprove)
 			}(cross)
 
-			testing.SetOriginSend(chain.Coins{})
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -446,16 +442,13 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := chain.Coins{{"ugnot", int64(20000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(positionOwner, wugnotAddr, chain.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit(cross)
+			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
+				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
-			banker_.SendCoins(positionOwner, tt.recipient, chain.Coins{{"ugnot", int64(10000000000)}})
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
@@ -468,7 +461,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}(cross)
 
 			// Position Creation
-			testing.SetOriginSend(chain.Coins{})
 			positionId, _, _, _ := pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -493,15 +485,13 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to parse amount0Requested: %v", err)
 			}
-			newCoinsForAdd := chain.Coins{{"ugnot", addAmount}}
-			testing.SetOriginSend(newCoinsForAdd)
-			banker_ = banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
+			testing.IssueCoins(tt.recipient, chain.Coins{{"ugnot", addAmount}})
+			ugnotDeposit(t, tt.recipient, uint64(addAmount))
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
+			wugnot.Approve(cross, positionAddr, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			testing.SetOriginSend(chain.Coins{})
 			pn.IncreaseLiquidity(
 				cross,
 				positionId,
@@ -629,16 +619,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := chain.Coins{{"ugnot", int64(20000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(positionOwner, wugnotAddr, chain.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit(cross)
+			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
+				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
-			banker_.SendCoins(positionOwner, tt.recipient, chain.Coins{{"ugnot", int64(10000000000)}})
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
@@ -651,7 +638,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}(cross)
 
 			// Position Creation
-			testing.SetOriginSend(chain.Coins{})
 			pn.Mint(
 				cross,
 				tt.tokenPath0,

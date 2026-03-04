@@ -749,12 +749,16 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	// Transfer WUGNOT to gov staker
 	gnotAmount := amount * 10
 	newCoins := chain.Coins{{"ugnot", gnotAmount}}
+
 	testing.IssueCoins(adminRealm.Address(), newCoins)
 	testing.SetOriginSend(newCoins)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
+
+	testing.SetOriginSend(newCoins)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Transfer(cross, govStakerAddr, amount)
 }

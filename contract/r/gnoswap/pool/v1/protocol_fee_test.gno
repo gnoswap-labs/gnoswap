@@ -184,6 +184,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000}})
 				wugnot.Deposit(cross)
+
+				testing.SetOriginSend(chain.Coins{})
 				wugnot.Transfer(cross, poolAddr, 1000000000)
 				gns.Transfer(cross, poolAddr, 1000000000)
 

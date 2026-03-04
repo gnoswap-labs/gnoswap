@@ -2,12 +2,16 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
 	"gno.land/p/nt/uassert"
+
+	prbac "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -64,7 +68,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			expectPanic:    false,
 		},
 		{
-			name:             "mint and stake with GNOT - insufficient amount",
+			name:             "mint and stake with GNOT - insufficient wugnot balance",
 			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(100),
@@ -78,24 +82,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
-		},
-		{
-			name:             "mint and stake with GNOT - zero amount",
-			token0:           GNOT_DENOM,
-			token1:           fooPath,
-			fee:              uint32(100),
-			tickLower:        -887220,
-			tickUpper:        887220,
-			amount0Desired:   "0",
-			amount1Desired:   "100000000",
-			amount0Min:       "0",
-			amount1Min:       "0",
-			ugnotSent:        0,
-			deadline:         time.Now().Unix() + 10000000,
-			referrer:         "",
-			expectPanic:      true,
-			expectedPanicMsg: "too less ugnot sent",
+			expectedPanicMsg: "insufficient wugnot balance: have(99999999) need(100000000)",
 		},
 		{
 			name:           "mint and stake with valid referrer",
@@ -287,14 +274,13 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			testing.SetOriginSend(chain.Coins{})
 
 			if tt.ugnotSent > 0 {
-				sendCoins := chain.Coins{chain.Coin{GNOT_DENOM, tt.ugnotSent}}
-
+				// Give admin wugnot and approve position contract to transfer it
 				testing.SetRealm(adminRealm)
-				testing.SetOriginSend(sendCoins)
-
-				testing.IssueCoins(adminAddr, sendCoins)
-				banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-				banker_.SendCoins(adminAddr, stakerAddr, sendCoins)
+				ugnotFaucet(t, adminAddr, tt.ugnotSent)
+				ugnotDeposit(t, adminAddr, tt.ugnotSent)
+				positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
+				testing.SetRealm(adminRealm)
+				wugnot.Approve(cross, positionAddr, tt.ugnotSent)
 			}
 
 			if tt.expectPanic {
