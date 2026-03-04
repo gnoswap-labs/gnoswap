@@ -133,6 +133,7 @@ func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
