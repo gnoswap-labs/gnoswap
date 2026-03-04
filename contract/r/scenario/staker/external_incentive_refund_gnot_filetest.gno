@@ -1,5 +1,5 @@
 // External incentive GNOT refund test
-// Test 1: Create incentive with GNOT -> refunds in GNOT
+// Test 1: Create incentive with GNOT -> refunds in WUGNOT
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -42,6 +42,8 @@ var (
 	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
+
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -140,19 +142,21 @@ func mintPosition() {
 func createExternalIncentiveWithGNOT() {
 	testing.SetRealm(adminRealm)
 
+	println("[INFO] prepare WUGNOT by depositing ugnot")
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 1_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	testing.SetOriginSend(nil)
+
 	println("[INFO] approve WUGNOT and GNS for external incentive")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] prepare native GNOT for incentive")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 1_000_000_000}})
-
-	oldUgnotBal := ugnotBalanceOf(adminAddr)
-	ufmt.Printf("[INFO] GNOT balance before creating incentive: %d\n", oldUgnotBal)
-
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
+	oldWugnotBal := wugnot.BalanceOf(adminAddr)
+	ufmt.Printf("[INFO] WUGNOT balance before creating incentive: %d\n", oldWugnotBal)
 
 	println("[INFO] create external incentive with GNOT (native coin)")
 	defer func() {
@@ -177,9 +181,9 @@ func createExternalIncentiveWithGNOT() {
 	createdIncentiveID = ufmt.Sprintf("%s:%d:1", adminAddr.String(), currentTime)
 	ufmt.Printf("[INFO] external incentive created successfully with ID: %s\n", createdIncentiveID)
 
-	newUgnotBal := ugnotBalanceOf(adminAddr)
-	ufmt.Printf("[INFO] GNOT balance after creating incentive: %d\n", newUgnotBal)
-	ufmt.Printf("[INFO] GNOT spent for incentive: %d\n", oldUgnotBal-newUgnotBal)
+	newWugnotBal := wugnot.BalanceOf(adminAddr)
+	ufmt.Printf("[INFO] WUGNOT balance after creating incentive: %d\n", newWugnotBal)
+	ufmt.Printf("[INFO] WUGNOT spent for incentive: %d\n", oldWugnotBal-newWugnotBal)
 
 	testing.SkipHeights(1)
 }
@@ -190,7 +194,7 @@ func endIncentiveAndVerifyGNOTRefund() {
 	println("[INFO] skip time to after incentive end time")
 	testing.SkipHeights(999999999) // Skip far into the future
 
-	println("[INFO] end external incentive early and check GNOT refund")
+	println("[INFO] end external incentive and check WUGNOT refund")
 
 	oldUgnotBal := ugnotBalanceOf(adminAddr)
 	oldWugnotBal := wugnot.BalanceOf(adminAddr)
@@ -211,21 +215,21 @@ func endIncentiveAndVerifyGNOTRefund() {
 	ufmt.Printf("[INFO] GNOT balance after ending: %d\n", newUgnotBal)
 	ufmt.Printf("[INFO] WUGNOT balance after ending: %d\n", newWugnotBal)
 
-	gnotRefunded := newUgnotBal - oldUgnotBal
-	wugnotChange := newWugnotBal - oldWugnotBal
+	ugnotChange := newUgnotBal - oldUgnotBal
+	wugnotRefunded := newWugnotBal - oldWugnotBal
 
-	ufmt.Printf("[EXPECTED] GNOT refunded: %d\n", gnotRefunded)
-	ufmt.Printf("[EXPECTED] WUGNOT change (should be 0): %d\n", wugnotChange)
+	ufmt.Printf("[EXPECTED] GNOT change (should be 0): %d\n", ugnotChange)
+	ufmt.Printf("[EXPECTED] WUGNOT refunded: %d\n", wugnotRefunded)
 
-	if gnotRefunded <= 0 {
-		panic("[FAIL] Expected GNOT refund but got none")
+	if ugnotChange != 0 {
+		panic("[FAIL] GNOT balance should not change, refund is now in WUGNOT")
 	}
 
-	if wugnotChange != 0 {
-		panic("[FAIL] WUGNOT balance should not change when refunding GNOT incentive")
+	if wugnotRefunded <= 0 {
+		panic("[FAIL] Expected WUGNOT refund but got none")
 	}
 
-	println("[PASS] GNOT incentive correctly refunded as GNOT")
+	println("[PASS] GNOT incentive correctly refunded as WUGNOT")
 }
 
 func ugnotBalanceOf(addr address) uint64 {
@@ -250,23 +254,23 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] liquidity: 50002491
 //
 // [STEP 4] Create external incentive with GNOT
+// [INFO] prepare WUGNOT by depositing ugnot
 // [INFO] approve WUGNOT and GNS for external incentive
-// [INFO] prepare native GNOT for incentive
-// [INFO] GNOT balance before creating incentive: 99999000000000
+// [INFO] WUGNOT balance before creating incentive: 1000000000
 // [INFO] create external incentive with GNOT (native coin)
 // [INFO] current time: 1234567900
 // [INFO] external incentive created successfully with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
-// [INFO] GNOT balance after creating incentive: 99999000000000
-// [INFO] GNOT spent for incentive: 0
+// [INFO] WUGNOT balance after creating incentive: 0
+// [INFO] WUGNOT spent for incentive: 1000000000
 //
 // [STEP 5] End external incentive and verify GNOT refund
 // [INFO] skip time to after incentive end time
-// [INFO] end external incentive early and check GNOT refund
+// [INFO] end external incentive and check WUGNOT refund
 // [INFO] GNOT balance before ending: 99999000000000
 // [INFO] WUGNOT balance before ending: 0
 // [INFO] ending incentive with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
-// [INFO] GNOT balance after ending: 100000000000000
-// [INFO] WUGNOT balance after ending: 0
-// [EXPECTED] GNOT refunded: 1000000000
-// [EXPECTED] WUGNOT change (should be 0): 0
-// [PASS] GNOT incentive correctly refunded as GNOT
+// [INFO] GNOT balance after ending: 99999000000000
+// [INFO] WUGNOT balance after ending: 1000000000
+// [EXPECTED] GNOT change (should be 0): 0
+// [EXPECTED] WUGNOT refunded: 1000000000
+// [PASS] GNOT incentive correctly refunded as WUGNOT

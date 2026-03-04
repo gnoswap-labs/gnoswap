@@ -112,6 +112,7 @@ func initWithShortWarmUp() {
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	testing.SetOriginSend(nil)
 
 	wugnotBalance := wugnot.BalanceOf(adminAddr)

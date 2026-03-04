@@ -99,6 +99,7 @@ func initAccountAndEmission() {
 
 	println("[INFO] wrap ugnot to wugnot")
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	testing.SetOriginSend(nil)
 
 	println("[INFO] register gns change callback")
