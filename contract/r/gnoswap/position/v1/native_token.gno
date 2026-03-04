@@ -13,15 +13,18 @@ const (
 	GNOT_DENOM  = "ugnot"
 )
 
-// wrap transfers WUGNOT from the caller to the position contract.
-// The caller must have already deposited GNOT into WUGNOT and approved this contract.
+// wrap validates that the user has sufficient WUGNOT balance.
+// In the new flow, users must pre-wrap GNOT into WUGNOT.
+// Pool pulls WUGNOT directly from the user via TransferFrom.
 func (p *positionV1) wrap(wugnotAmount int64, from address) error {
 	if wugnotAmount <= 0 {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
-	positionAddr := mustGetPositionAddress()
-	wugnot.TransferFrom(cross, from, positionAddr, wugnotAmount)
+	balance := wugnot.BalanceOf(from)
+	if balance < wugnotAmount {
+		return ufmt.Errorf("insufficient wugnot balance: have(%d) need(%d)", balance, wugnotAmount)
+	}
 
 	return nil
 }
@@ -47,24 +50,20 @@ func isWrappedToken(tokenPath string) bool {
 	return tokenPath == WUGNOT_PATH
 }
 
-// safeWrapNativeToken safely transfers WUGNOT from the user to the position contract.
-// The user must have already deposited GNOT into WUGNOT and approved this contract.
-// Returns the amount of WUGNOT that was successfully transferred.
+// safeWrapNativeToken validates that the user has sufficient WUGNOT balance for the native token swap.
+// In the new flow, users must pre-wrap GNOT into WUGNOT before calling position functions.
+// Pool will pull WUGNOT directly from the user via TransferFrom.
+// Returns the amount that will be used for the native token side.
 func (p *positionV1) safeWrapNativeToken(amount int64, fromAddress address) (int64, error) {
 	if amount == 0 {
 		return 0, nil
 	}
 
-	positionAddr := mustGetPositionAddress()
-	beforeBalance := wugnot.BalanceOf(positionAddr)
-
-	wugnot.TransferFrom(cross, fromAddress, positionAddr, amount)
-
-	balanceDiff := wugnot.BalanceOf(positionAddr) - beforeBalance
-	if balanceDiff != amount {
+	balance := wugnot.BalanceOf(fromAddress)
+	if balance < amount {
 		return 0, makeErrorWithDetails(
 			errWrapUnwrap,
-			ufmt.Sprintf("expected wugnot transfer(%d) but got(%d)", amount, balanceDiff),
+			ufmt.Sprintf("insufficient wugnot balance: have(%d) need(%d)", balance, amount),
 		)
 	}
 

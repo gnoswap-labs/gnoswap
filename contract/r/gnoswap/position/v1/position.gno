@@ -276,18 +276,11 @@ func (p *positionV1) IncreaseLiquidity(
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
-// unwrapLeftoverWrappedToken unwraps leftover wrapped tokens to native tokens.
+// unwrapLeftoverWrappedToken is a no-op after WUGNOT migration.
+// In the new flow, users keep their WUGNOT and pool only pulls what's needed.
+// Any excess WUGNOT remains with the user automatically.
+// TODO: remove no-op function
 func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller address) error {
-	unwrappable := isWrappedToken(token) && wrapped > amount
-	if !unwrappable {
-		return nil
-	}
-
-	err := p.unwrap(wrapped-amount, caller)
-	if err != nil {
-		return makeErrorWithDetails(errWrapUnwrap, err.Error())
-	}
-
 	return nil
 }
 

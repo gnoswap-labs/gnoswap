@@ -42,18 +42,18 @@ func TestWrapInPosition(t *testing.T) {
 			shouldPanic:    true,
 		},
 		{
-			name: "wrap is success by valid amount",
+			name: "wrap succeeds - validates user has sufficient wugnot",
 			action: func(t *testing.T, from, to address) error {
-				// Give the user wugnot and approve position
+				// Give the user wugnot
 				ugnotFaucet(t, from, 1000)
 				ugnotDeposit(t, from, 1000)
-				TokenApprove(t, wugnotPath, from, positionAddr, 1000)
 
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 				return mockInstance.wrap(1000, from)
 			},
 			verify: func(t *testing.T, addr address) int64 {
-				return TokenBalance(t, wugnotPath, positionAddr)
+				// User should still have their wugnot (wrap just validates, doesn't transfer)
+				return TokenBalance(t, wugnotPath, alice)
 			},
 			from:        alice,
 			to:          bob,
@@ -250,10 +250,9 @@ func TestSafeWrapNativeToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.amount > 0 {
-				// Give user wugnot and approve position
+				// Give user wugnot
 				ugnotFaucet(t, tt.fromAddress, tt.amount)
 				ugnotDeposit(t, tt.fromAddress, tt.amount)
-				TokenApprove(t, wugnotPath, tt.fromAddress, positionAddr, tt.amount)
 			}
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
