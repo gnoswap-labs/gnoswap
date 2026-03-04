@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"testing"
 	"time"
 
@@ -75,92 +76,29 @@ func TestAssertIsNotExpired(t *testing.T) {
 }
 
 // Test assertIsValidUserCoinSend
+// After WUGNOT migration, this function simply rejects any native coins sent via --send.
 func TestAssertIsValidUserCoinSend(t *testing.T) {
-	tests := []struct {
-		name        string
-		tokenPath   string
-		amount      string
-		shouldPanic bool
-		errorMsg    string
-	}{
-		{
-			name:        "valid non-native token with zero amount",
-			tokenPath:   "gno.land/r/demo/gns",
-			amount:      "0",
-			shouldPanic: false,
-		},
-		{
-			name:        "valid non-native token with positive amount",
-			tokenPath:   "gno.land/r/demo/gns",
-			amount:      "1000",
-			shouldPanic: false,
-		},
-		{
-			name:        "invalid amount format - non-numeric",
-			tokenPath:   "ugnot",
-			amount:      "abc",
-			shouldPanic: true,
-			errorMsg:    "invalid syntax",
-		},
-		{
-			name:        "invalid amount format - empty string",
-			tokenPath:   "ugnot",
-			amount:      "",
-			shouldPanic: true,
-			errorMsg:    "invalid syntax",
-		},
-		{
-			name:        "invalid amount format - decimal number",
-			tokenPath:   "ugnot",
-			amount:      "100.5",
-			shouldPanic: true,
-			errorMsg:    "invalid syntax",
-		},
-		{
-			name:        "valid large amount",
-			tokenPath:   "gno.land/r/demo/gns",
-			amount:      "999999999999999",
-			shouldPanic: false,
-		},
-		{
-			name:        "negative amount",
-			tokenPath:   "gno.land/r/demo/gns",
-			amount:      "-100",
-			shouldPanic: false, // ParseInt will succeed, validation happens in common package
-		},
-		{
-			name:        "amount with leading zeros",
-			tokenPath:   "gno.land/r/demo/gns",
-			amount:      "0001000",
-			shouldPanic: false,
-		},
-		{
-			name:        "amount with spaces",
-			tokenPath:   "ugnot",
-			amount:      " 1000 ",
-			shouldPanic: true,
-			errorMsg:    "invalid syntax",
-		},
-		{
-			name:        "amount overflow int64",
-			tokenPath:   "ugnot",
-			amount:      "9223372036854775808", // int64 max + 1
-			shouldPanic: true,
-			errorMsg:    "value out of range",
-		},
-	}
+	t.Run("no coins sent - should pass", func(t *testing.T) {
+		testing.SetOriginSend(chain.Coins{})
+		assertIsValidUserCoinSend("gno.land/r/demo/gns", "1000")
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.errorMsg, func() {
-					assertIsValidUserCoinSend(tt.tokenPath, tt.amount)
-				})
-			} else {
-				assertIsValidUserCoinSend(tt.tokenPath, tt.amount)
-			}
-		})
-	}
+	t.Run("no coins sent with native token path - should pass", func(t *testing.T) {
+		testing.SetOriginSend(chain.Coins{})
+		assertIsValidUserCoinSend("ugnot", "1000")
+	})
+
+	t.Run("native coins sent - should panic", func(t *testing.T) {
+		testing.SetOriginSend(chain.Coins{{"ugnot", 1000}})
+		uassert.PanicsWithMessage(
+			t,
+			"[GNOSWAP-COMMON-008] handle native coin is not allowed",
+			func() {
+				assertIsValidUserCoinSend("gno.land/r/demo/gns", "1000")
+			},
+		)
+		testing.SetOriginSend(chain.Coins{})
+	})
 }
 
 // Test assertIsValidSqrtPriceLimitX96

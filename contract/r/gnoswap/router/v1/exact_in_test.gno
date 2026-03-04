@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"strings"
 	"testing"
 	"time"
@@ -262,15 +261,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(positionOwner, wugnotAddr, newCoins)
-			wugnot.Deposit(cross)
+			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
+				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
@@ -281,8 +278,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				teller := common.GetTokenTeller(wugnotPath)
 				teller.Approve(poolAddr, maxApprove)
 			}(cross)
-
-			testing.SetOriginSend(chain.Coins{})
 
 			// Position Creation
 			pn.Mint(
@@ -358,18 +353,16 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	wugnot.Approve(cross, routerAddr, 1000000)
 	qux.Approve(cross, routerAddr, 1000000)
 
+	// Sending native coins should panic with "handle native coin is not allowed"
+	// since WUGNOT migration rejects all native coin sends.
 	testing.SetOriginCaller(adminAddr)
-	newCoins := chain.Coins{{"ugnot", 12345}}
-	testing.IssueCoins(adminAddr, newCoins)
-	testing.SetOriginSend(newCoins)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, routerAddr, newCoins)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 12345}})
 
 	router := mockRouter()
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-004] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
+		`[GNOSWAP-COMMON-008] handle native coin is not allowed`,
 		func() {
 			testing.SetRealm(routerRealm)
 			router.ExactOutSwapRoute(
@@ -384,6 +377,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 			)
 		},
 	)
+	testing.SetOriginSend(chain.Coins{})
 }
 
 // Test NewExactInSwapOperation

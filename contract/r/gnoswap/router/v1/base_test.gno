@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain"
-	"chain/runtime"
 	"errors"
 	"math"
 	"strconv"
@@ -17,7 +15,6 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -94,114 +91,61 @@ func TestExecuteSwapOperation(t *testing.T) {
 }
 
 func TestHandleNativeTokenWrapping(t *testing.T) {
-	tests := []struct {
-		name            string
-		inputToken      string
-		outputToken     string
-		specifiedAmount int64
-		sentAmount      int64
-		expectError     bool
-		expectedError   string
-	}{
-		{
-			name:            "Pass: non-GNOT token swap",
-			inputToken:      "token1",
-			outputToken:     "token2",
-			specifiedAmount: 100,
-			sentAmount:      0,
-			expectError:     false,
-		},
-		{
-			name:            "Pass: WUGNOT input token",
-			inputToken:      "gno.land/r/gnoland/wugnot",
-			outputToken:     "token2",
-			specifiedAmount: 100,
-			sentAmount:      0,
-			expectError:     false,
-		},
-		{
-			name:            "Pass: WUGNOT output token",
-			inputToken:      "token1",
-			outputToken:     "gno.land/r/gnoland/wugnot",
-			specifiedAmount: 100,
-			sentAmount:      0,
-			expectError:     false,
-		},
-		{
-			name:            "Fail: GNOT input with insufficient sent amount",
-			inputToken:      "ugnot",
-			outputToken:     "token2",
-			specifiedAmount: 1000,
-			sentAmount:      500,
-			expectError:     true,
-			expectedError:   "ugnot sent by user(500) is not equal to amountSpecified(1000)",
-		},
-		{
-			name:            "Fail: GNOT input with excess sent amount",
-			inputToken:      "ugnot",
-			outputToken:     "token2",
-			specifiedAmount: 1000,
-			sentAmount:      1500,
-			expectError:     true,
-			expectedError:   "ugnot sent by user(1500) is not equal to amountSpecified(1000)",
-		},
-		{
-			name:            "Fail: GNOT input with zero sent amount",
-			inputToken:      "ugnot",
-			outputToken:     "token2",
-			specifiedAmount: 1000,
-			sentAmount:      0,
-			expectError:     true,
-			expectedError:   "ugnot sent by user(0) is not equal to amountSpecified(1000)",
-		},
-		{
-			name:            "Pass: GNOT input with zero specified amount",
-			inputToken:      "ugnot",
-			outputToken:     "token2",
-			specifiedAmount: 0,
-			sentAmount:      0,
-			expectError:     false,
-		},
-		{
-			name:            "Pass: non-GNOT input with non-zero sent amount",
-			inputToken:      "token1",
-			outputToken:     "token2",
-			specifiedAmount: 100,
-			sentAmount:      1000,
-			expectError:     false,
-		},
-	}
+	t.Run("Pass: non-GNOT token swap", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("token1", "token2", 100)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			op := &baseSwapOperation{}
+	t.Run("Pass: WUGNOT input token", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("gno.land/r/gnoland/wugnot", "token2", 100)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
-			testUser := testutils.TestAddress("test_user")
-			testing.SetOriginCaller(testUser)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+	t.Run("Pass: WUGNOT output token does not set withUnwrap", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("token1", "gno.land/r/gnoland/wugnot", 100)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		uassert.False(t, op.withUnwrap)
+	})
 
-			testCoins := chain.Coins{{"ugnot", tt.sentAmount}}
-			testing.IssueCoins(runtime.OriginCaller(), testCoins)
-			if tt.sentAmount > 0 {
-				testing.IssueCoins(routerAddr, testCoins)
-			}
-			testing.SetOriginSend(testCoins)
+	t.Run("Pass: GNOT output token sets withUnwrap", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("token1", "ugnot", 100)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		uassert.True(t, op.withUnwrap)
+	})
 
-			err := op.handleNativeTokenWrapping(
-				tt.inputToken,
-				tt.outputToken,
-				tt.specifiedAmount,
-			)
-			testing.SetOriginSend(testCoins)
+	t.Run("Pass: GNOT input with zero specified amount", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("ugnot", "token2", 0)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
-			if tt.expectError && err == nil {
-				t.Errorf("expected an error but got nil")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-		})
-	}
+	t.Run("Pass: non-GNOT input ignores native token handling", func(t *testing.T) {
+		op := &baseSwapOperation{}
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+		err := op.handleNativeTokenWrapping("token1", "token2", 100)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 }
 
 func TestProcessRoute(t *testing.T) {
