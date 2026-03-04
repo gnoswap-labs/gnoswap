@@ -16,12 +16,11 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 //
 // Parameters:
 //   - positionId: ID of the position to unstake
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
 //   - string: collected reward details
-func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) string {
-	return getImplementation().UnStakeToken(positionId, unwrapResult)
+func UnStakeToken(cur realm, positionId uint64) string {
+	return getImplementation().UnStakeToken(positionId)
 }
 
 // MintAndStake creates a new position and immediately stakes it.
@@ -78,15 +77,14 @@ func MintAndStake(
 //
 // Parameters:
 //   - positionId: ID of the staked position
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
 //   - string: pool path
 //   - string: staking details
 //   - map[string]int64: internal rewards
 //   - map[string]int64: external rewards
-func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
-	return getImplementation().CollectReward(positionId, unwrapResult)
+func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
+	return getImplementation().CollectReward(positionId)
 }
 
 // SetPoolTier sets the reward tier for a pool.

@@ -523,10 +523,10 @@ func mockInstanceStakeToken(positionId uint64, referrer string) {
 	}(cross)
 }
 
-func mockInstanceCollectReward(positionId uint64, unwrapResult bool) {
+func mockInstanceCollectReward(positionId uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CollectReward(positionId, unwrapResult)
+		getMockInstance().CollectReward(positionId)
 	}(cross)
 }
 
@@ -574,11 +574,11 @@ func mockInstanceSetWarmupPeriod(poolPath string, warmupPeriod int64) {
 	}(cross)
 }
 
-func mockInstanceUnStakeToken(positionId uint64, unwrapResult bool) string {
+func mockInstanceUnStakeToken(positionId uint64) string {
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		poolPath = getMockInstance().UnStakeToken(positionId, unwrapResult)
+		poolPath = getMockInstance().UnStakeToken(positionId)
 	}(cross)
 	return poolPath
 }
