@@ -140,7 +140,7 @@ func (p *positionV1) processTokens(
 		token0IsNative = true
 
 		amount0DesiredInt := mustParseInt64(amount0Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount0DesiredInt, caller)
+		wrappedAmount, err = p.validateAndReturnWugnotAmount(amount0DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
@@ -149,7 +149,7 @@ func (p *positionV1) processTokens(
 		token1IsNative = true
 
 		amount1DesiredInt := mustParseInt64(amount1Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount1DesiredInt, caller)
+		wrappedAmount, err = p.validateAndReturnWugnotAmount(amount1DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}

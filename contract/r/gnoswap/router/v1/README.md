@@ -175,13 +175,13 @@ This approval is required because:
 
 - Router wraps native GNOT to WUGNOT for internal processing
 - Unused GNOT is refunded by transferring WUGNOT from user and unwrapping it
-- The `unwrapWithTransferFrom` function requires WUGNOT transfer approval
+- The `relayWugnot` function requires WUGNOT transfer approval
 
 #### Refund Logic
 
 - **ExactIn Functions**: Unused GNOT is automatically refunded after swap
 - **ExactOut Functions**: Excess GNOT (difference between `amountInMax` and actual input used) is refunded
-- Refunds use `unwrapWithTransferFrom` which requires prior WUGNOT approval
+- Refunds use `relayWugnot` which requires prior WUGNOT approval
 
 #### Example with Native GNOT
 

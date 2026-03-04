@@ -205,7 +205,7 @@ func (p *positionV1) IncreaseLiquidity(
 			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
 		}
 
-		if _, err := p.safeWrapNativeToken(inputWrappedAmount, caller); err != nil {
+		if _, err := p.validateAndReturnWugnotAmount(inputWrappedAmount, caller); err != nil {
 			panic(err)
 		}
 	}

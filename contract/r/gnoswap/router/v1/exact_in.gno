@@ -163,7 +163,7 @@ func (r *routerV1) exactInSwapRoute(
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount)
+		err = transferWugnot(runtime.PreviousRealm().Address(), outputAmount)
 		if err != nil {
 			panic(err)
 		}

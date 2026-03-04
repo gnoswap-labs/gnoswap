@@ -58,7 +58,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	if rewardToken == GNOT_DENOM {
 		isRequestUnwrap = true
 		rewardToken = WUGNOT_PATH
-		err := wrapWithTransfer(caller, stakerAddr, rewardAmount)
+		err := transferWugnotFrom(caller, stakerAddr, rewardAmount)
 		if err != nil {
 			panic(err)
 		}
@@ -200,7 +200,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// handle refund based on original token type
 	if incentiveResolver.IsRequestUnwrap() {
 		// unwrap to GNOT if originally deposited as native GNOT
-		transferErr := unwrapWithTransfer(incentiveResolver.Refundee(), refund)
+		transferErr := transferWugnot(incentiveResolver.Refundee(), refund)
 		if transferErr != nil {
 			panic(transferErr)
 		}
