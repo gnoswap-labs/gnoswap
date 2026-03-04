@@ -47,7 +47,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSend(rewardToken, rewardAmount)
+	common.AssertIsNotHandleNativeCoin()
 
 	en.MintAndDistributeGns(cross)
 

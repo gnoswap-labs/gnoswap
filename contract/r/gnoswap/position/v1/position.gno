@@ -68,7 +68,7 @@ func (p *positionV1) Mint(
 	assertValidNumberString(amount1Min)
 
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
+	common.AssertIsNotHandleNativeCoin()
 	assertIsNotExpired(deadline)
 
 	success := referral.TryRegister(cross, caller, referrer)
@@ -187,7 +187,7 @@ func (p *positionV1) IncreaseLiquidity(
 	token0, token1, _ := splitOf(position.PoolKey())
 
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+	common.AssertIsNotHandleNativeCoin()
 
 	receivedCoins := common.ExistsUserSendCoins()
 
@@ -229,13 +229,6 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	if err := p.unwrapLeftoverWrappedToken(token0, wrappedAmount, safeConvertToInt64(amount0), caller); err != nil {
-		panic(err)
-	}
-	if err := p.unwrapLeftoverWrappedToken(token1, wrappedAmount, safeConvertToInt64(amount1), caller); err != nil {
-		panic(err)
-	}
-
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolPath, 0)
 
@@ -262,14 +255,6 @@ func (p *positionV1) IncreaseLiquidity(
 	)
 
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
-}
-
-// unwrapLeftoverWrappedToken is a no-op after WUGNOT migration.
-// In the new flow, users keep their WUGNOT and pool only pulls what's needed.
-// Any excess WUGNOT remains with the user automatically.
-// TODO: remove no-op function
-func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller address) error {
-	return nil
 }
 
 // DecreaseLiquidity decreases liquidity of an existing position.

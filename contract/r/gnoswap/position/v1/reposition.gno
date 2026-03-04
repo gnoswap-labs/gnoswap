@@ -47,7 +47,7 @@ func (p *positionV1) Reposition(
 
 	// assert that the user has sent the correct amount of native coin
 	token0, token1, _ := splitOf(position.PoolKey())
-	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+	common.AssertIsNotHandleNativeCoin()
 
 	receivedCoins := common.ExistsUserSendCoins()
 	if receivedCoins {

@@ -51,7 +51,7 @@ func (r *routerV1) ExactInSwapRoute(
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
 
-	assertIsValidUserCoinSend(inputToken, amountIn)
+	common.AssertIsNotHandleNativeCoin()
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
@@ -111,7 +111,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
 
-	assertIsValidUserCoinSend(inputToken, amountIn)
+	common.AssertIsNotHandleNativeCoin()
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotExpired(deadline)

@@ -30,7 +30,6 @@ const (
 	errInvalidQuoteSum      = "quote sum(%d) must be 100"
 
 	// balance and overflow validation
-	errOverflowInBalance  = "overflow in balance calculation: beforeBalance(%d) + wrappedAmount(%d)"
 	errTooMuchWugnotSpent = "too much wugnot spent (wrapped: %d, spend: %d)"
 
 	// swap type validation

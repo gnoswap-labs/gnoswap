@@ -109,20 +109,6 @@ func assertSlippageIsNotExceeded(amount0, amount1, amount0Min, amount1Min *u256.
 	}
 }
 
-// assertIsValidUserCoinSendWithTokenPair asserts that no native coins were sent with the transaction.
-// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-// TODO: change into direct call
-func assertIsValidUserCoinSendWithTokenPair(token0, token1 string, amount0, amount1 string) {
-	common.AssertIsNotHandleNativeCoin()
-}
-
-// assertIsValidUserCoinSendWithWrappedTokenPair asserts that no native coins were sent with the transaction.
-// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-// TODO: change into direct call
-func assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1 string, amount0, amount1 string) {
-	common.AssertIsNotHandleNativeCoin()
-}
-
 // assertValidOperatorAddress validates operator address.
 // Empty address is allowed (for operator removal), but non-empty addresses must be valid.
 func assertValidOperatorAddress(operator address) {

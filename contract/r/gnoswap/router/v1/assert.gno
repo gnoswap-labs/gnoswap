@@ -24,13 +24,6 @@ func assertIsNotExpired(deadline int64) {
 	}
 }
 
-// assertIsValidUserCoinSend asserts that no native coins were sent with the transaction.
-// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-// TODO: change into direct call
-func assertIsValidUserCoinSend(tokenPath string, amount string) {
-	common.AssertIsNotHandleNativeCoin()
-}
-
 func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
 	if sqrtPriceLimitX96 == "" {
 		panic(makeErrorWithDetails(
