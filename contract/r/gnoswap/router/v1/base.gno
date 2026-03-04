@@ -80,21 +80,13 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 		return nil
 	}
 
-	// save current user's WGNOT amount
+	// save current user's WUGNOT amount
 	op.userBeforeWugnotBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
 
 	// Handle input token independently
 	if isInputNativeToken {
-		caller := runtime.PreviousRealm().Address()
-
-		// User must have already deposited GNOT into WUGNOT and approved this contract.
-		// Transfer WUGNOT from user to this contract.
-		if specifiedAmount > 0 {
-			if err := wrapWithTransfer(caller, runtime.CurrentRealm().Address(), specifiedAmount); err != nil {
-				return err
-			}
-		}
-
+		// User must have already deposited GNOT into WUGNOT and approved the router.
+		// The swap callback will transfer WUGNOT directly from user to pool.
 		op.userWrappedWugnot = specifiedAmount
 	}
 

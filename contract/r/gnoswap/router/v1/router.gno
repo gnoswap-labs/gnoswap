@@ -61,36 +61,24 @@ func (h *GnotSwapHandler) UpdateNewBalance() {
 	h.NewBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
 }
 
-// HandleInputSwap manages unwrapping logic for GNOT input tokens.
+// HandleInputSwap validates that the user did not spend more WUGNOT than intended.
 //
-// When user sends native GNOT for swap:
-// 1. GNOT was wrapped to WUGNOT at start
-// 2. Swap consumed some WUGNOT
-// 3. Remaining WUGNOT must be unwrapped back to GNOT
+// In the new flow (post wugnot migration):
+// 1. User already has WUGNOT and approved the router
+// 2. Pool callback transfers WUGNOT directly from user to pool
+// 3. We validate the user's balance decreased by at most WrappedAmount
 //
 // Returns:
-//   - error: overflow/insufficient balance errors, or unwrap errors
+//   - error: if user spent more WUGNOT than the specified swap amount
 func (h *GnotSwapHandler) HandleInputSwap() error {
-	// Check for overflow when adding balances
-	if h.BeforeBalance > 0 && h.WrappedAmount > 0 {
-		if h.BeforeBalance > (1<<63-1)-h.WrappedAmount {
-			return ufmt.Errorf(errOverflowInBalance,
-				h.BeforeBalance, h.WrappedAmount)
-		}
-	}
-
-	totalBefore := h.BeforeBalance + h.WrappedAmount
-	spend := totalBefore - h.NewBalance
+	spend := h.BeforeBalance - h.NewBalance
 
 	if spend > h.WrappedAmount {
 		return ufmt.Errorf(errTooMuchWugnotSpent,
 			h.WrappedAmount, spend)
 	}
 
-	toUnwrap := h.WrappedAmount - spend
-
-	caller := runtime.PreviousRealm().Address()
-	return unwrapWithTransferFrom(caller, caller, toUnwrap)
+	return nil
 }
 
 // SwapValidator provides validation methods for swap operations

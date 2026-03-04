@@ -102,20 +102,8 @@ func (p *positionV1) Mint(
 	params := newMintParams(processedInput, mintInput)
 	id, liquidity, amount0, amount1 := p.mint(params)
 
-	// refund leftover wrapped tokens
-	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount0) {
-		err = p.unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount0), caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
-	}
-
-	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount1) {
-		err = p.unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount1), caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
-	}
+	// In the new flow, users hold WUGNOT directly and pool pulls via TransferFrom.
+	// No refund needed - user keeps any unspent WUGNOT automatically.
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
