@@ -88,6 +88,12 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize account and emission")
 	initAccount()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	initAccountPostDeposit()
 	println()
 
 	println("[SCENARIO] 2. Create wugnot:gns:3000 pool (tier 1)")
@@ -159,11 +165,11 @@ func initAccount() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	testing.SetOriginSend(nil)
+	// Deposit is done in main()
+}
 
+func initAccountPostDeposit() {
+	testing.SetRealm(adminRealm)
 	wugnotBalance := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[EXPECTED] wugnot balance: %d\n", wugnotBalance)
 
@@ -552,3 +558,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
+

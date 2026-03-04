@@ -41,6 +41,13 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 100")
 	initPool()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (-12000~12000)")
@@ -57,11 +64,6 @@ func initPool() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000}})
-
-	// Wrap ugnot to wugnot for position operations
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
 	println("[INFO] GNOT balance of admin", currentBanker.GetCoins(adminAddr).AmountOf("ugnot"))

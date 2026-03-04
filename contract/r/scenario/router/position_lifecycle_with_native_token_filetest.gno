@@ -64,6 +64,10 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Mint Position with GNOT")
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	testMintPositionWithGnot()
 	println()
 
@@ -109,11 +113,6 @@ func setupInitialEnvironment() {
 func testMintPositionWithGnot() {
 	println("[INFO] Minting position with 100,000,000 GNOT + 100,000,000 GNS")
 	testing.SetRealm(userRealm)
-
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevGnsBalance := gns.BalanceOf(userAddr)

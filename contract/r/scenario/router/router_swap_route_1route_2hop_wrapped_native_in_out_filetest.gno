@@ -73,6 +73,14 @@ func main() {
 	println()
 	testPositionMintBarBaz(t)
 	testPositionMintBazQux(t)
+
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	testPositionMintQuxGnot(t)
 
 	testDrySwapRouteBarGnotExactIn(t)
@@ -130,16 +138,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	println("[SCENARIO] Given: Position minting preparation for qux-wugnot pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Issuing native tokens to admin")
-	// send
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
-
-	println("[INFO] Depositing native tokens to get wrapped tokens")
-	// Deposit(wrap)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	println("[INFO] Deposit already done in main()")
 
 	println("[INFO] Approving tokens for pool operations")
 	qux.Approve(cross, poolAddr, max_approve)
@@ -265,8 +264,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 // [EXPECTED] amount1: 100000 expected: 100000
 //
 // [SCENARIO] Given: Position minting preparation for qux-wugnot pool
-// [INFO] Issuing native tokens to admin
-// [INFO] Depositing native tokens to get wrapped tokens
+// [INFO] Deposit already done in main()
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in qux-wugnot pool
 // [INFO] positionId: 3

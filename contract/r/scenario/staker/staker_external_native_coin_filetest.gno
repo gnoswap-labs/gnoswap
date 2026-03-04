@@ -81,6 +81,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with native coin (ugnot)")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	createExternalIncentiveWithNativeCoin()
 	println()
 
@@ -157,14 +163,9 @@ func mintPosition01() {
 func createExternalIncentiveWithNativeCoin() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] prepare wugnot by depositing ugnot")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	// Deposit already done in main()
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 1_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	testing.SetOriginSend(nil)
 
 	println("[INFO] approve wugnot and gns for external incentive")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
@@ -317,7 +318,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] amount0: 100000, amount1: 100000
 //
 // [SCENARIO] 4. Create external incentive with native coin (ugnot)
-// [INFO] prepare wugnot by depositing ugnot
 // [INFO] approve wugnot and gns for external incentive
 // [INFO] create external incentive with ugnot (native coin)
 // [INFO] native coin external incentive created

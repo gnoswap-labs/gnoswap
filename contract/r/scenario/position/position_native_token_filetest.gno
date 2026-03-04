@@ -52,6 +52,14 @@ func main() {
 	initPool()
 	println()
 
+	// pre deposit amount of mintPosition(50000000) + executeSwap(1234567)
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 51234567}})
+	testing.IssueCoins(positionAddr, chain.Coins{{"ugnot", 200000000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 51234567}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	ufmt.Println("[SCENARIO] 2. Mint position with native token")
 	mintPosition()
 	println()
@@ -98,14 +106,7 @@ func mintPosition() {
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
 
-	ufmt.Println("[INFO] Issue initial GNOT")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 50000000}})
-	testing.IssueCoins(positionAddr, chain.Coins{{"ugnot", 200000000}})
-
-	ufmt.Println("[INFO] Wrap GNOT to WUGNOT")
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	ufmt.Println("[INFO] WUGNOT pre-deposited in main()")
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -140,11 +141,6 @@ func checkUnclaimedFeesBeforeSwap() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-
-	ufmt.Println("[INFO] Wrapping GNOT for swap")
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1234567}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
@@ -227,20 +223,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	const ugnotDenom = "ugnot"
 
 	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
@@ -252,8 +236,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Creating GNOT/GNS pool
 //
 // [SCENARIO] 2. Mint position with native token
-// [INFO] Issue initial GNOT
-// [INFO] Wrap GNOT to WUGNOT
+// [INFO] WUGNOT pre-deposited in main()
 // [INFO] Minting position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Amount0 should be 49984837
@@ -265,7 +248,6 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
 //
 // [SCENARIO] 4. Execute swap with native token
-// [INFO] Wrapping GNOT for swap
 // [INFO] Executing swap
 // [EXPECTED] Swap amount0 should be 1234567
 // [EXPECTED] Swap amount1 should be -1224110

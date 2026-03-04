@@ -52,6 +52,14 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with GNOT/GNS pair")
 	initPool()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 300000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	initPoolPostDeposit()
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint in-range position")
@@ -93,18 +101,22 @@ func initPool() {
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
 	mintedGnotCoin := chain.Coins{{"ugnot", 100000000000000}}
-	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+}
+
+func initPoolPostDeposit() {
+	testing.SetRealm(adminRealm)
+
+	defaultTokenAmount := int64(100000000)
+	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
@@ -252,20 +264,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	const ugnotDenom = "ugnot"
 
 	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

@@ -94,16 +94,31 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint Position with GNOT")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	afterMint := mintPositionWithGnot()
 	printBalanceSnapshot("After Position Mint", afterMint)
 	println()
 
 	println("[SCENARIO] 4. Perform Swaps (Both Directions)")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	afterSwaps := performSwaps()
 	printBalanceSnapshot("After Swaps", afterSwaps)
 	println()
 
 	println("[SCENARIO] 5. Add Liquidity with GNOT")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 20000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	afterAddLiquidity := addLiquidityWithGnot()
 	printBalanceSnapshot("After Add Liquidity", afterAddLiquidity)
 	println()
@@ -197,10 +212,7 @@ func createPoolWithGnot() BalanceSnapshot {
 func mintPositionWithGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	// Approve GNS for position
 	gns.Approve(cross, poolAddr, 50000000)
@@ -239,10 +251,7 @@ func performSwaps() BalanceSnapshot {
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
 
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
@@ -286,10 +295,7 @@ func performSwaps() BalanceSnapshot {
 func addLiquidityWithGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 20000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	// Add liquidity with WUGNOT
 	gns.Approve(cross, poolAddr, 20000000)

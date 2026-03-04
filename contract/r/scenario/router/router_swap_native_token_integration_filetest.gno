@@ -66,10 +66,23 @@ func main() {
 	println()
 
 	println("[SCENARIO] 1. Initial Setup")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	// Admin deposit for pool setup
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	setupPoolsAndLiquidity()
 	println()
 
 	println("[SCENARIO] 2. ExactIn: GNOT → GNS")
+	// User deposit for ExactIn swap
+	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 1000000}})
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	testExactInGnotToGns()
 	println()
 
@@ -78,6 +91,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Multi-hop: GNOT → GNS → USDC")
+	// User deposit for multi-hop swap
+	testing.SetRealm(userRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	testMultiHopGnotToUsdc()
 	println()
 
@@ -92,11 +110,7 @@ func setupPoolsAndLiquidity() {
 	// Set pool creation fee to 0 for testing
 	pl.SetPoolCreationFee(cross, 0)
 
-	// Issue tokens to admin for pool creation
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	// Create pools
 	println("[INFO] Creating WUGNOT/GNS pool (fee: 0.05%)")
@@ -140,10 +154,7 @@ func testExactInGnotToGns() {
 	println("[INFO] Testing ExactIn swap: 1,000,000 GNOT → GNS")
 	testing.SetRealm(userRealm)
 
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevGnsBalance := gns.BalanceOf(userAddr)
@@ -246,10 +257,7 @@ func testMultiHopGnotToUsdc() {
 	println("[INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC")
 	testing.SetRealm(userRealm)
 
-	// Wrap GNOT to WUGNOT first
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Deposit already done in main()
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevUsdcBalance := usdc.BalanceOf(userAddr)

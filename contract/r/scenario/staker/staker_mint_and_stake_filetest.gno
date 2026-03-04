@@ -71,6 +71,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint and stake native token position")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintAndStakeNative()
 	println()
 
@@ -120,19 +126,13 @@ func mintAndStakeNative() {
 
 	testing.SkipHeights(2)
 
-	println("[INFO] prepare 100000 ugnot")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
-
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
 
 	positionUgnotBalance := ugnotBalanceOf(positionAddr)
 	ufmt.Printf("[INFO] position contract ugnot balance before: %d\n", positionUgnotBalance)
 
-	println("[INFO] wrap ugnot to wugnot and approve")
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	println("[INFO] Deposit already done in main()")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
@@ -241,10 +241,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 3. Mint and stake native token position
 // [INFO] approve tokens for native mint and stake
-// [INFO] prepare 100000 ugnot
 // [INFO] admin ugnot balance before: 100000
 // [INFO] position contract ugnot balance before: 0
-// [INFO] wrap ugnot to wugnot and approve
+// [INFO] Deposit already done in main()
 // [INFO] admin wugnot balance before mint and stake: 100000
 // [INFO] mint and stake native position
 // [EXPECTED] native mint and stake - LP token ID: 1

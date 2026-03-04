@@ -63,6 +63,12 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize account and emission")
 	initAccountAndEmission()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	initAccountAndEmissionPostDeposit()
 	println()
 
 	println("[SCENARIO] 2. Create pool")
@@ -95,12 +101,11 @@ func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	// Deposit is done in main()
+}
 
-	println("[INFO] wrap ugnot to wugnot")
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	testing.SetOriginSend(nil)
+func initAccountAndEmissionPostDeposit() {
+	testing.SetRealm(adminRealm)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -205,7 +210,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // Output:
 // [SCENARIO] 1. Initialize account and emission
 // [INFO] send coins to admin
-// [INFO] wrap ugnot to wugnot
 // [INFO] register gns change callback
 //
 // [SCENARIO] 2. Create pool
@@ -224,3 +228,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Collect reward for 1 blocks
 // [EXPECTED] position 1's reward for 1 blocks: 8026540
+

@@ -47,16 +47,33 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
 	initializeSetup()
+
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 	println()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (WUGNOT:GNS:500)")
 	createPool(wugnotPath, gnsPath, 500, 0)
+
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
-
 	println("[SCENARIO] 3. First User Swap with Referrer (should register referrer)")
+
 	user1Addr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
+
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(user1Addr, chain.Coins{{"ugnot", 100000000}})
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	wugnot.Deposit(cross)
+
+	testing.SetOriginSend(chain.Coins{})
 	setupUser(user1Addr)
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
@@ -99,6 +116,15 @@ func main() {
 	println("[SCENARIO] 6. New User Swap with Referrer (should register new referrer)")
 	user2Addr := testutils.TestAddress("user2")
 	referrer2Addr := testutils.TestAddress("referrer3")
+
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(user2Addr, chain.Coins{{"ugnot", 100000000}})
+	testing.SetRealm(testing.NewUserRealm(user2Addr))
+
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	wugnot.Deposit(cross)
+
+	testing.SetOriginSend(chain.Coins{})
 	setupUser(user2Addr)
 
 	testing.SetRealm(testing.NewUserRealm(user2Addr))
@@ -139,15 +165,9 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
-	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 
 	gns.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, poolAddr, maxInt64)
@@ -157,16 +177,8 @@ func initializeSetup() {
 }
 
 func setupUser(userAddr address) {
-	// Issue GNOT to user
-	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 100000000}})
-
-	// Deposit to get WUGNOT
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	// Approve router (Deposit and IssueCoins done in main())
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	// Approve router
 	wugnot.Approve(cross, routerAddr, maxInt64)
 	gns.Approve(cross, routerAddr, maxInt64)
 

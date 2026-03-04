@@ -64,6 +64,14 @@ func main() {
 	println()
 
 	println("[INFO] Executing test scenarios")
+
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 200000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 200000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	testPositionMintGnsGnot()
 	testPositionMintGnotBar()
 	testDrySwapRouteGnsBarExactIn()
@@ -76,16 +84,7 @@ func testPositionMintGnsGnot() {
 	println("[SCENARIO] Given: Position minting preparation for gns-wugnot pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Issuing native tokens to admin")
-	// send
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
-
-	println("[INFO] Depositing native tokens to get wrapped tokens")
-	// Deposit(wrap)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	println("[INFO] Deposit already done in main()")
 
 	println("[INFO] Approving tokens for pool operations")
 	gns.Approve(cross, poolAddr, max_approve)
@@ -110,16 +109,7 @@ func testPositionMintGnotBar() {
 	println("[SCENARIO] Given: Position minting preparation for wugnot-bar pool")
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Issuing native tokens to admin")
-	// send
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
-
-	println("[INFO] Depositing native tokens to get wrapped tokens")
-	// Deposit(wrap)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	println("[INFO] Deposit already done in main()")
 
 	println("[INFO] Approving tokens for pool operations")
 	gns.Approve(cross, poolAddr, max_approve)
@@ -198,8 +188,7 @@ func testSwapRouteGnsBarExactIn() {
 //
 // [INFO] Executing test scenarios
 // [SCENARIO] Given: Position minting preparation for gns-wugnot pool
-// [INFO] Issuing native tokens to admin
-// [INFO] Depositing native tokens to get wrapped tokens
+// [INFO] Deposit already done in main()
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in gns-wugnot pool
 // [INFO] positionId: 1
@@ -211,8 +200,7 @@ func testSwapRouteGnsBarExactIn() {
 // [EXPECTED] amount1: 36790 expected: 36790
 //
 // [SCENARIO] Given: Position minting preparation for wugnot-bar pool
-// [INFO] Issuing native tokens to admin
-// [INFO] Depositing native tokens to get wrapped tokens
+// [INFO] Deposit already done in main()
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in wugnot-bar pool
 // [INFO] positionId: 2

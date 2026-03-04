@@ -60,6 +60,11 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize with default settings")
 	initializeWithDefaults()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	println()
 
 	println("[SCENARIO] 2. Create ugnot:gns:3000 pool")
@@ -94,10 +99,7 @@ func initializeWithDefaults() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	testing.SetOriginSend(nil)
+	// Deposit is done in main()
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -352,3 +354,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position 01 reward after unstaking pos 02: 8026540
 // [WARNING] expected around 3210615, got 8026540
 // [INFO] position 01 now receives full rewards since position 02 is unstaked
+

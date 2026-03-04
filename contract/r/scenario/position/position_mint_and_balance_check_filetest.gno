@@ -56,6 +56,14 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize tokens and pool")
 	initTokensAndPool()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 3000000000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	initTokensAndPoolPostDeposit()
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint first position with Alice")
@@ -87,19 +95,23 @@ func initTokensAndPool() {
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
 	mintedGnotCoin := chain.Coins{{"ugnot", 100000000000000}}
-	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+}
+
+func initTokensAndPoolPostDeposit() {
+	testing.SetRealm(adminRealm)
+
+	defaultTokenAmount := int64(1000000000000)
+	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 	wugnot.Transfer(cross, bobAddr, defaultTokenAmount)
 
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, bobAddr, distributedGnotCoin)
