@@ -95,6 +95,7 @@ func initTokensAndPool() {
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 	wugnot.Transfer(cross, bobAddr, defaultTokenAmount)

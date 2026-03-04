@@ -58,6 +58,11 @@ func initPool() {
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000}})
 
+	// Wrap ugnot to wugnot for position operations
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	currentBanker := banker.NewBanker(banker.BankerTypeReadonly)
 	println("[INFO] GNOT balance of admin", currentBanker.GetCoins(adminAddr).AmountOf("ugnot"))
 
@@ -82,14 +87,7 @@ func mintInitialPositionWithNativeCoin() {
 	wugnot.Approve(cross, positionAddr, amount0Int)
 	foo.Approve(cross, poolAddr, amount1Int)
 
-	// Send coins to pool contract
-	sendCoins := chain.Coins{{"ugnot", amount0Int}}
-
-	currentBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	currentBanker.SendCoins(adminAddr, positionAddr, sendCoins)
-
-	// Set origin send to the same coins as sent to the pool contract
-	testing.SetOriginSend(sendCoins)
+	testing.SetOriginSend(chain.Coins{})
 
 	inputToken0Path := "ugnot"
 	inputToken1Path := fooPath
@@ -145,14 +143,7 @@ func increasePositionLiquidity() {
 
 	ufmt.Println("[INFO] Minting initial position with native coin")
 
-	// Send coins to pool contract
-	sendCoins := chain.Coins{{"ugnot", amount0Int}}
-
-	currentBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	currentBanker.SendCoins(adminAddr, positionAddr, sendCoins)
-
-	// Set origin send to the same coins as sent to the pool contract
-	testing.SetOriginSend(sendCoins)
+	testing.SetOriginSend(chain.Coins{})
 
 	amount0Desired := ufmt.Sprintf("%d", amount0Int)
 	amount1Desired := ufmt.Sprintf("%d", amount1Int)
@@ -219,8 +210,8 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Liquidity should be 109604855
 // [EXPECTED] Amount0 should be 48904002
 // [EXPECTED] Amount1 should be 50000000
-// [EXPECTED] GNOT balance changed: -48904002
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -48904002
 // [EXPECTED] FOO balance changed: -50000000
 //
 // [SCENARIO] 3. Increase position liquidity
@@ -234,6 +225,6 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Added liquidity should be 109604855
 // [EXPECTED] Amount0 added should be 48904002
 // [EXPECTED] Amount1 added should be 50000000
-// [EXPECTED] GNOT balance changed: -48904002
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -48904002
 // [EXPECTED] FOO balance changed: -50000000

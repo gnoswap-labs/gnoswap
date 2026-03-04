@@ -70,6 +70,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
@@ -101,13 +102,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	if nativeCoinAmount > 0 {
-		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", nativeCoinAmount}})
-		testing.SetOriginSend(chain.Coins{{"ugnot", nativeCoinAmount}})
-	} else {
-		testing.SetOriginSend(chain.Coins{})
-	}
+	testing.SetOriginSend(chain.Coins{})
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,

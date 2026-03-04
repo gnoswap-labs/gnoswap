@@ -101,6 +101,7 @@ func initPool() {
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 
@@ -254,6 +255,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 		if token0Path == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
@@ -261,6 +263,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 		if token1Path == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)

@@ -6,7 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -103,10 +102,10 @@ func mintPosition() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 50000000}})
 	testing.IssueCoins(positionAddr, chain.Coins{{"ugnot", 200000000}})
 
-	ufmt.Println("[INFO] Send GNOT to position contract")
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", 50000000}})
+	ufmt.Println("[INFO] Wrap GNOT to WUGNOT")
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
@@ -125,8 +124,6 @@ func mintPosition() {
 		adminAddr,
 		"",
 	)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 0}})
-
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
@@ -147,6 +144,7 @@ func executeSwap() {
 	ufmt.Println("[INFO] Wrapping GNOT for swap")
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1234567}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
@@ -234,6 +232,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 		if token0Path == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
@@ -241,6 +240,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 		if token1Path == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
@@ -255,7 +255,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 //
 // [SCENARIO] 2. Mint position with native token
 // [INFO] Issue initial GNOT
-// [INFO] Send GNOT to position contract
+// [INFO] Wrap GNOT to WUGNOT
 // [INFO] Minting position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Amount0 should be 49984837
