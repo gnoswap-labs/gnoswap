@@ -6,8 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
-	"strconv"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -82,6 +80,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -155,11 +154,7 @@ func exactInSwapRouteByWithPanic(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	specifiedAmountInt, _ := strconv.ParseInt(specifiedAmount, 10, 64)
-
-	sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", specifiedAmountInt}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", specifiedAmountInt}})
+	testing.SetOriginSend(chain.Coins{})
 	testing.SetRealm(adminRealm)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336

@@ -74,6 +74,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -197,4 +198,4 @@ func exactInSwapRouteBy(
 // [EXPECTED] inputTokenAmount(GNS): 1000
 // [EXPECTED] outputTokenAmount(GNOT): -2000
 // [EXPECTED] GNS balance changed: -1000
-// [EXPECTED] GNOT balance changed: 2000
+// [EXPECTED] GNOT balance changed: 0

@@ -120,6 +120,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -202,18 +203,11 @@ func exactInSwapRouteBy(
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 	specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
+	testing.SetOriginSend(chain.Coins{})
+
 	if common.IsGNOTNativePath(inputToken) {
-
-		sendCoins := chain.Coins{{Denom: common.GNOT_DENOM, Amount: specifiedAmountInt64}}
-		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(adminAddr, routerAddr, sendCoins)
-
-		testing.SetOriginSend(sendCoins)
-
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, specifiedAmountInt64)
 	} else {
-		testing.SetOriginSend(chain.Coins{})
-
 		common.SafeGRC20Approve(cross, inputToken, routerAddr, specifiedAmountInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
@@ -295,8 +289,8 @@ func exactInSwapRouteBy(
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
 // [EXPECTED] outputTokenAmount: -975329
-// [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: 975329
+// [EXPECTED] WUGNOT balance changed: 975329
+// [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] BAR balance changed: -1000000
 //
@@ -325,7 +319,7 @@ func exactInSwapRouteBy(
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
 // [EXPECTED] outputTokenAmount: -1004036
-// [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: -1000000
+// [EXPECTED] WUGNOT balance changed: -1000000
+// [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] BAR balance changed: 1004036

@@ -197,14 +197,17 @@ func createPoolWithGnot() BalanceSnapshot {
 func mintPositionWithGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
+	// Wrap GNOT to WUGNOT first
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	// Approve GNS for position
 	gns.Approve(cross, poolAddr, 50000000)
 	wugnot.Approve(cross, poolAddr, 50000000)
 
 	// Mint position with GNOT
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 50000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+	testing.SetOriginSend(chain.Coins{})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"ugnot",
@@ -235,12 +238,16 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(userAddr, routerAddr, chain.Coins{{"ugnot", 10000000}})
+
+	// Wrap GNOT to WUGNOT first
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
 
-	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+	testing.SetOriginSend(chain.Coins{})
 	amountIn1, amountOut1 := router.ExactInSwapRoute(
 		cross,
 		gnotPath,
@@ -279,13 +286,16 @@ func performSwaps() BalanceSnapshot {
 func addLiquidityWithGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
-	// Add liquidity with GNOT
+	// Wrap GNOT to WUGNOT first
+	testing.SetOriginSend(chain.Coins{{"ugnot", 20000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	// Add liquidity with WUGNOT
 	gns.Approve(cross, poolAddr, 20000000)
 	wugnot.Approve(cross, poolAddr, 20000000)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 20000000}})
 
-	testing.SetOriginSend(chain.Coins{{"ugnot", 20000000}})
+	testing.SetOriginSend(chain.Coins{})
 	_, liquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
 		cross,
 		1,
@@ -438,13 +448,13 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Amount0 (GNS): 50000000
 // [INFO] Amount1 (WUGNOT): 50000000
 // [BALANCE] After Position Mint
-//   User - GNOT: 950000000 WUGNOT: 0 GNS: 950000000
+//   User - GNOT: 1000000000 WUGNOT: 0 GNS: 950000000
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 50000000 GNS: 50000000
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 0
 //   Router Total GNS Fees: 0
-//   System Total - GNOT: 950000000 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 0
 //
 // [SCENARIO] 4. Perform Swaps (Both Directions)
 // [INFO] Swap 1: 10,000,000 GNOT → GNS
@@ -452,26 +462,26 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Swap 2: GNS → 5,000,000 GNOT
 // [INFO] Swap 2 - In: 4597249 Out: -5000000
 // [BALANCE] After Swaps
-//   User - GNOT: 945000000 WUGNOT: 0 GNS: 954828983
+//   User - GNOT: 1000000000 WUGNOT: 5000000 GNS: 954828983
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 54992489 GNS: 45156857
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7511
 //   Router Total GNS Fees: 14160
-//   System Total - GNOT: 945000000 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 5000000
 //
 // [SCENARIO] 5. Add Liquidity with GNOT
 // [INFO] Added liquidity: 61880386
 // [INFO] GNS added: 20000000
 // [INFO] GNOT added: 16423575
 // [BALANCE] After Add Liquidity
-//   User - GNOT: 925000000 WUGNOT: 0 GNS: 938405408
+//   User - GNOT: 1000000000 WUGNOT: 5000000 GNS: 938405408
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 74992489 GNS: 61580432
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7511
 //   Router Total GNS Fees: 14160
-//   System Total - GNOT: 925000000 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 5000000
 //
 // [SCENARIO] 6. Remove Liquidity to GNOT
 // [INFO] Removed liquidity: 69603822
@@ -480,25 +490,25 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] GNS fees: 4950
 // [INFO] GNOT fees: 2276
 // [BALANCE] After Remove Liquidity
-//   User - GNOT: 947501196 WUGNOT: 0 GNS: 956881123
+//   User - GNOT: 1000000000 WUGNOT: 27501196 GNS: 956881123
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 52491244 GNS: 43104695
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 947501196 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 27501196
 //
 // [SCENARIO] 7. Collect All Fees as GNOT
 // [INFO] GNS fees collected: 0
 // [INFO] WUGNOT fees collected (unwrapped to GNOT): 0
 // [BALANCE] After Collect Fees
-//   User - GNOT: 947501196 WUGNOT: 0 GNS: 956881123
+//   User - GNOT: 1000000000 WUGNOT: 27501196 GNS: 956881123
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 52491244 GNS: 43104695
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 947501196 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 27501196
 //
 // [SCENARIO] 8. Close Position Receiving GNOT
 // [INFO] Final liquidity removed: 0
@@ -507,13 +517,13 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Final GNS fees: 0
 // [INFO] Final GNOT fees: 0
 // [BALANCE] Final State
-//   User - GNOT: 999992438 WUGNOT: 0 GNS: 999985814
+//   User - GNOT: 1000000000 WUGNOT: 79992438 GNS: 999985814
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 2 GNS: 4
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 999992438 WUGNOT: 0
+//   System Total - GNOT: 1000000000 WUGNOT: 79992438
 //
 // [SCENARIO] 9. Final Reconciliation
 // [VALIDATION] User final GNOT balance accounts for:

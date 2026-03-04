@@ -6,8 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
-	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -85,6 +83,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -154,11 +153,7 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] amountInMax:", amountInMax)
 
-	amountUint64, _ := strconv.ParseUint(amountInMax, 10, 64)
-	testing.SetOriginSend(chain.Coins{{"ugnot", int64(amountUint64)}})
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", int64(amountUint64)}})
+	testing.SetOriginSend(chain.Coins{})
 
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,

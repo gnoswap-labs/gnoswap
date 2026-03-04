@@ -6,8 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
-	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -76,6 +74,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -149,15 +148,10 @@ func exactInSingleSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
+	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 
-	specifiedAmountInt, _ := strconv.ParseInt(specifiedAmount, 10, 64)
-
-	sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", specifiedAmountInt}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", specifiedAmountInt}})
+	testing.SetOriginSend(chain.Coins{})
 	testing.SetRealm(adminRealm)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336
@@ -173,13 +167,13 @@ func exactInSingleSwapRouteBy(
 		"",
 	)
 
-	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
+	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount(GNS): %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(GNOT): %s\n", outputTokenAmount)
 	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)
-	ufmt.Printf("[EXPECTED] GNOT balance changed: %d\n", afterGNOTBalance-beforeGNOTBalance)
+	ufmt.Printf("[EXPECTED] WUGNOT balance changed: %d\n", afterWUGNOTBalance-beforeWUGNOTBalance)
 }
 
 // Output:
@@ -206,4 +200,4 @@ func exactInSingleSwapRouteBy(
 //[EXPECTED] inputTokenAmount(GNS): 10000000
 //[EXPECTED] outputTokenAmount(GNOT): -9695218
 //[EXPECTED] GNS balance changed: 9695218
-//[EXPECTED] GNOT balance changed: -10000000
+//[EXPECTED] WUGNOT balance changed: -10000000

@@ -6,7 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -120,6 +119,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -195,26 +195,17 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] maxAmountIn:", maxAmountIn)
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 
+	testing.SetOriginSend(chain.Coins{})
+
 	if common.IsGNOTNativePath(inputToken) {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
-
-		sendCoins := chain.Coins{{Denom: common.GNOT_DENOM, Amount: maxAmountInInt64}}
-		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(adminAddr, routerAddr, sendCoins)
-
-		testing.SetOriginSend(sendCoins)
-
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)
 	} else {
-		testing.SetOriginSend(chain.Coins{})
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
-
 		common.SafeGRC20Approve(cross, inputToken, routerAddr, maxAmountInInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
@@ -229,7 +220,6 @@ func exactOutSwapRouteBy(
 		"",
 	)
 
-	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 	afterBARBalance := bar.BalanceOf(adminAddr)
@@ -237,7 +227,6 @@ func exactOutSwapRouteBy(
 	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
 	ufmt.Printf("[EXPECTED] WUGNOT balance changed: %d\n", afterWUGNOTBalance-beforeWUGNOTBalance)
-	ufmt.Printf("[EXPECTED] GNOT balance changed: %d\n", afterGNOTBalance-beforeGNOTBalance)
 	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)
 	ufmt.Printf("[EXPECTED] BAR balance changed: %d\n", afterBARBalance-beforeBARBalance)
 }
@@ -282,7 +271,6 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 1013515
 // [EXPECTED] outputTokenAmount: -1000000
 // [EXPECTED] WUGNOT balance changed: 1000000
-// [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] BAR balance changed: -1013515
 //
@@ -296,8 +284,7 @@ func exactOutSwapRouteBy(
 // [INFO] maxAmountIn: 100000000000
 // [EXPECTED] inputTokenAmount: 1025608
 // [EXPECTED] outputTokenAmount: -1000000
-// [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: 1000000
+// [EXPECTED] WUGNOT balance changed: 1000000
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] BAR balance changed: -1025608
 //
@@ -312,7 +299,6 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 1001565
 // [EXPECTED] outputTokenAmount: -1000000
 // [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 1000000
 // [EXPECTED] BAR balance changed: -1001565
 //
@@ -326,7 +312,6 @@ func exactOutSwapRouteBy(
 // [INFO] maxAmountIn: 100000000000
 // [EXPECTED] inputTokenAmount: 995511
 // [EXPECTED] outputTokenAmount: -1000000
-// [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: -995511
+// [EXPECTED] WUGNOT balance changed: -995511
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] BAR balance changed: 1000000

@@ -142,6 +142,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -163,6 +164,7 @@ func setupUser(userAddr address) {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	// Approve router
 	wugnot.Approve(cross, routerAddr, maxInt64)

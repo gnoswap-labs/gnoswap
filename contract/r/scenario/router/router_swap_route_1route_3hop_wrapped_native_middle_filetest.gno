@@ -85,6 +85,7 @@ func testPositionMintGnsGnot() {
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	println("[INFO] Approving tokens for pool operations")
 	gns.Approve(cross, poolAddr, max_approve)
@@ -118,6 +119,7 @@ func testPositionMintGnotBar() {
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	println("[INFO] Approving tokens for pool operations")
 	gns.Approve(cross, poolAddr, max_approve)

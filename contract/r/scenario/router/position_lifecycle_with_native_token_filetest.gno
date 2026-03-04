@@ -7,7 +7,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
@@ -97,25 +96,26 @@ func setupInitialEnvironment() {
 
 	// Verify initial balances
 	testing.SetRealm(userRealm)
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
+	userWugnotBalance := wugnot.BalanceOf(userAddr)
 	userGnsBalance := gns.BalanceOf(userAddr)
 
-	println("[INFO] User initial GNOT balance:", userGnotBalance)
+	println("[INFO] User initial WUGNOT balance:", userWugnotBalance)
 	println("[INFO] User initial GNS balance:", userGnsBalance)
 	println("[INFO] Router fee: 0.15%")
 	println("[INFO] Withdrawal fee: 0.1%")
-	println("[EXPECTED] GNOT: 1000000000, GNS: 1000000000")
+	println("[EXPECTED] WUGNOT: 0, GNS: 1000000000")
 }
 
 func testMintPositionWithGnot() {
 	println("[INFO] Minting position with 100,000,000 GNOT + 100,000,000 GNS")
 	testing.SetRealm(userRealm)
 
-	// Record gas cost baseline
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 100000000}})
-	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
+	// Wrap GNOT to WUGNOT first
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for position
@@ -123,7 +123,7 @@ func testMintPositionWithGnot() {
 	wugnot.Approve(cross, poolAddr, 100000000)
 
 	// Mint position with GNOT (auto-wrap should occur)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+	testing.SetOriginSend(chain.Coins{})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"ugnot",
@@ -142,9 +142,8 @@ func testMintPositionWithGnot() {
 	)
 
 	// Check balances after mint
-	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
-	afterGnsBalance := gns.BalanceOf(userAddr)
 	afterWugnotBalance := wugnot.BalanceOf(userAddr)
+	afterGnsBalance := gns.BalanceOf(userAddr)
 
 	// Verify pool received exact WUGNOT amount
 	poolWugnotBalance := wugnot.BalanceOf(poolAddr)
@@ -153,7 +152,7 @@ func testMintPositionWithGnot() {
 	println("[INFO] Liquidity:", liquidity)
 	println("[INFO] Amount0 (GNS) used:", amount0)
 	println("[INFO] Amount1 (WUGNOT) used:", amount1)
-	println("[INFO] GNOT spent:", prevGnotBalance-afterGnotBalance)
+	println("[INFO] WUGNOT spent:", prevWugnotBalance-afterWugnotBalance)
 	println("[INFO] GNS spent:", prevGnsBalance-afterGnsBalance)
 	println("[INFO] User WUGNOT balance:", afterWugnotBalance)
 	println("[INFO] Pool WUGNOT balance:", poolWugnotBalance)
@@ -204,8 +203,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 	println("[INFO] Burning 50% of position liquidity with unwrap=true")
 	testing.SetRealm(userRealm)
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
+	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 	prevGnsBalance := gns.BalanceOf(userAddr)
 	beforeProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
 	beforeProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)
@@ -221,7 +219,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 		true, // unwrap to GNOT
 	)
 
-	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
+	afterWugnotBalance := wugnot.BalanceOf(userAddr)
 	afterGnsBalance := gns.BalanceOf(userAddr)
 	afterProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
 	afterProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)
@@ -239,7 +237,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 	println("[EXPECTED] Total WUGNOT unwrapped:", totalWugnot)
 	println("[EXPECTED] Protocol fee WUGNOT balance:", afterProtocolFeeWugnot-beforeProtocolFeeWugnot)
 	println("[EXPECTED] Protocol fee GNS balance:", afterProtocolFeeGns-beforeProtocolFeeGns)
-	println("[EXPECTED] GNOT received:", afterGnotBalance-prevGnotBalance)
+	println("[EXPECTED] WUGNOT received:", afterWugnotBalance-prevWugnotBalance)
 	println("[EXPECTED] GNS received:", afterGnsBalance-prevGnsBalance)
 }
 
@@ -249,11 +247,11 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 //
 // [SCENARIO] 1. Initial Setup
 // [INFO] Setting up initial environment
-// [INFO] User initial GNOT balance: 1000000000
+// [INFO] User initial WUGNOT balance: 0
 // [INFO] User initial GNS balance: 1000000000
 // [INFO] Router fee: 0.15%
 // [INFO] Withdrawal fee: 0.1%
-// [EXPECTED] GNOT: 1000000000, GNS: 1000000000
+// [EXPECTED] WUGNOT: 0, GNS: 1000000000
 //
 // [SCENARIO] 2. Mint Position with GNOT
 // [INFO] Minting position with 100,000,000 GNOT + 100,000,000 GNS
@@ -261,7 +259,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 // [INFO] Liquidity: 340264708
 // [INFO] Amount0 (GNS) used: 100000000
 // [INFO] Amount1 (WUGNOT) used: 100000000
-// [INFO] GNOT spent: 0
+// [INFO] WUGNOT spent: 100000000
 // [INFO] GNS spent: 100000000
 // [INFO] User WUGNOT balance: 0
 // [INFO] Pool WUGNOT balance: 100000000
@@ -287,5 +285,5 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 // [EXPECTED] Total WUGNOT unwrapped: 100024499
 // [EXPECTED] Protocol fee WUGNOT balance: 0
 // [EXPECTED] Protocol fee GNS balance: 500
-// [EXPECTED] GNOT received: 11371739
+// [EXPECTED] WUGNOT received: 11371739
 // [EXPECTED] GNS received: 100024499

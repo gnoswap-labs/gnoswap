@@ -78,6 +78,7 @@ func setupInitialBalances() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10000000}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	wugnot.Transfer(cross, user2Addr, 10000000)
 
 	println("[EXPECTED] User1: GNOT: 10000000, WUGNOT: 0")
@@ -98,6 +99,7 @@ func testBasicWrap() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", amountWrapped}})
 	banker_.SendCoins(user1Addr, chain.PackageAddress(wugnotPath), chain.Coins{{"ugnot", amountWrapped}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	// Check balances after wrap
 	afterGnotBalance := banker_.GetCoins(user1Addr).AmountOf("ugnot")

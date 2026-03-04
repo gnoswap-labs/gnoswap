@@ -7,7 +7,6 @@ package main
 import (
 	"chain"
 	"chain/banker"
-	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -130,6 +129,7 @@ func initializeSetup() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
@@ -208,15 +208,7 @@ func exactInSwapRouteBy(
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 
-	specifiedAmountInt, _ := strconv.ParseInt(specifiedAmount, 10, 64)
-
-	if inputToken == "ugnot" {
-		sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-		sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", specifiedAmountInt}})
-		testing.SetOriginSend(chain.Coins{{"ugnot", specifiedAmountInt}})
-	} else {
-		testing.SetOriginSend(chain.Coins{})
-	}
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.SetRealm(adminRealm)
 
@@ -267,14 +259,7 @@ func exactOutSwapRouteBy(
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 
-	if inputToken == "ugnot" {
-		maxAmountInInt, _ := strconv.ParseInt(maxAmountIn, 10, 64)
-		sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-		sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", maxAmountInInt}})
-		testing.SetOriginSend(chain.Coins{{"ugnot", maxAmountInInt}})
-	} else {
-		testing.SetOriginSend(chain.Coins{})
-	}
+	testing.SetOriginSend(chain.Coins{})
 
 	testing.SetRealm(adminRealm)
 
@@ -326,8 +311,8 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10000 (ugnot)
 // [EXPECTED] outputTokenAmount: -9975 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: -10000
-// [EXPECTED] WUGNOT balance changed: 9975
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -25
 //
 // [SCENARIO] 4. ExactOutSwapRoute (GNOT -> GNS -> WUGNOT)
 // [INFO] ExactOutSwapRoute
@@ -340,8 +325,8 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10029 (ugnot)
 // [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: -10029
-// [EXPECTED] WUGNOT balance changed: 10001
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -28
 //
 // [SCENARIO] 5. ExactInSwapRoute (WUGNOT -> GNS -> GNOT)
 // [INFO] ExactInSwapRoute
@@ -354,8 +339,8 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10000 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] outputTokenAmount: -9975 (ugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: 9975
-// [EXPECTED] WUGNOT balance changed: -10000
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -25
 //
 // [SCENARIO] 6. ExactOutSwapRoute (WUGNOT -> GNS -> GNOT)
 // [INFO] ExactOutSwapRoute
@@ -368,8 +353,8 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] outputTokenAmount: -10001 (ugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: 10001
-// [EXPECTED] WUGNOT balance changed: -10029
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -28
 //
 // [SCENARIO] 7. ExactInSwapRoute (GNOT -> GNS -> GNOT)
 // [INFO] ExactInSwapRoute
@@ -382,8 +367,8 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10000 (ugnot)
 // [EXPECTED] outputTokenAmount: -9975 (ugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: -25
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -25
 //
 // [SCENARIO] 8. ExactOutSwapRoute (GNOT -> GNS -> GNOT)
 // [INFO] ExactOutSwapRoute
@@ -396,5 +381,5 @@ func exactOutSwapRouteBy(
 // [EXPECTED] inputTokenAmount: 10029 (ugnot)
 // [EXPECTED] outputTokenAmount: -10001 (ugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: -28
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -28

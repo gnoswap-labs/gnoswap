@@ -87,6 +87,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	println("[INFO] Approving tokens for pool operations")
 	qux.Approve(cross, poolAddr, max_approve)
