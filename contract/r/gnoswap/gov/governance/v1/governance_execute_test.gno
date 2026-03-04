@@ -26,6 +26,13 @@ var testConfig = governance.Config{
 }
 
 func TestGovernanceExecute_Execute(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name string
 		// given
@@ -224,6 +231,13 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 }
 
 func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name string
 		// given
@@ -400,6 +414,13 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 }
 
 func TestGovernanceExecute_Cancel(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	executableDelay := int64(0)
 
 	tests := []struct {
@@ -576,6 +597,13 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 
 // Test comprehensive execution validation
 func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name          string
 		proposalId    int64
@@ -777,6 +805,13 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 
 // Test execution timing validation
 func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name             string
 		proposalTime     time.Time
@@ -868,6 +903,13 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 
 // Test community pool spend execution scenarios
 func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name                 string
 		tokenPath            string
@@ -981,6 +1023,13 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 
 // Test parameter change execution scenarios
 func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name             string
 		numToExecute     int64
@@ -1090,8 +1139,14 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 	}
 }
 
-// Test comprehensive cancellation scenarios
 func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	now := time.Now()
 
 	tests := []struct {
@@ -1208,11 +1263,17 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 
 // Test re-execution prevention
 func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	t.Run("prevent double execution", func(t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
-		setupGovernanceExecuteTestCommunityPoolBalance(t)
 		proposal := governance.NewProposal(
 			1,
 			NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
@@ -1252,6 +1313,13 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 
 // TestGovernanceExecute_executeCommunityPoolSpend tests the private executeCommunityPoolSpend function
 func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupGovernanceExecuteTestCommunityPoolBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, communityPoolAddr, int64(1_000_000_000)*10)
+
 	tests := []struct {
 		name             string
 		setupProposal    func() *governance.Proposal
@@ -1455,8 +1523,4 @@ func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminRealm.Address(), wugnotAddr, newCoins)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	wugnot.Transfer(cross, communityPoolAddr, gnotAmount)
 }

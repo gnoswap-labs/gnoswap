@@ -74,15 +74,15 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			fee:              uint32(100),
 			tickLower:        -887220,
 			tickUpper:        887220,
-			amount0Desired:   "100000000",
-			amount1Desired:   "100000000",
+			amount0Desired:   "2000000000",
+			amount1Desired:   "2000000000",
 			amount0Min:       "0",
 			amount1Min:       "0",
-			ugnotSent:        100000000 - 1,
+			ugnotSent:        2000000000,
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "insufficient wugnot balance: have(99999999) need(100000000)",
+			expectedPanicMsg: "insufficient wugnot balance",
 		},
 		{
 			name:           "mint and stake with valid referrer",
@@ -218,6 +218,19 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 	}
 
+	// Deposit wugnot BEFORE the for loop to avoid "invalid non-origin call"
+	// from wugnot.Deposit(cross) inside t.Run subtests.
+	// Total ugnotSent across all subtests: ~1_100_000_000
+	{
+		totalDeposit := int64(1_100_000_000)
+		testing.SetRealm(adminRealm)
+		ugnotFaucet(t, adminAddr, totalDeposit)
+		ugnotDepositPrepare(t, adminAddr, totalDeposit)
+		testing.SetOriginSend(chain.Coins{{"ugnot", totalDeposit}})
+		wugnot.Deposit(cross)
+		testing.SetOriginSend(chain.Coins{})
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initStakerTest(t)
@@ -274,10 +287,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			testing.SetOriginSend(chain.Coins{})
 
 			if tt.ugnotSent > 0 {
-				// Give admin wugnot and approve position contract to transfer it
-				testing.SetRealm(adminRealm)
-				ugnotFaucet(t, adminAddr, tt.ugnotSent)
-				ugnotDeposit(t, adminAddr, tt.ugnotSent)
+				// Approve position contract to transfer wugnot (already deposited above)
 				positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 				testing.SetRealm(adminRealm)
 				wugnot.Approve(cross, positionAddr, tt.ugnotSent)

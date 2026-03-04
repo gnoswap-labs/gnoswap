@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -354,6 +353,13 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 }
 
 func TestDrySwap_ValidationAndFailures(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	// Given: Pool setup
 	_ = NewPoolTestEnv(t).
 		AsAdmin().
@@ -429,6 +435,13 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 }
 
 func TestSwap_ExecutionAndSecurity(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	securityTests := []SwapValidationTest{
 		{
 			name:        "locked_pool_protection",
@@ -504,6 +517,14 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 }
 
 func TestSwapConsistency_DryVsActual(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance.
+	// Large amount to cover all subtests including setup helpers that need wugnot.
+	ugnotFaucet(t, adminAddr, 10_000_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 10_000_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	consistencyTests := []struct {
 		name            string
 		description     string
@@ -743,8 +764,6 @@ func setupWideRangePositionPool(t *testing.T) {
 
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(adminRealm)
-	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
@@ -772,8 +791,6 @@ func setupNarrowRangePositionPool(t *testing.T) {
 
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(adminRealm)
-	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
@@ -797,6 +814,13 @@ func setupNarrowRangePositionPool(t *testing.T) {
 }
 
 func TestSwap_TradingPatterns(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	tradingPatterns := []struct {
 		name                 string
 		description          string
@@ -925,6 +949,13 @@ func TestSwap_TradingPatterns(t *testing.T) {
 }
 
 func TestSwap_ExtremeMarketConditions(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 10_000_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 10_000_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	extremeTests := []struct {
 		name           string
 		description    string
@@ -1000,6 +1031,13 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 }
 
 func TestSwap_FeeTierOptimization(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 10_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 10_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	// Test ultra-low fee tier (stablecoin)
 	t.Run("ultra_low_fee_stablecoin_swap", func(t *testing.T) {
 		// Given: Ultra-low fee tier stablecoin pool
@@ -1077,8 +1115,6 @@ func setupScatteredLiquidityPool(t *testing.T) {
 
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(adminRealm)
-	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
@@ -1110,8 +1146,6 @@ func setupExtremePriceRangePool(t *testing.T) {
 
 	testing.SetOriginCaller(adminAddr)
 	testing.SetRealm(adminRealm)
-	ugnotFaucet(t, adminAddr, 1_000_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 1_000_000_000_000_000)
 
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
@@ -1269,16 +1303,6 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 	gns.Approve(cross, poolAddr, maxApprove)
 	mockInstanceCreatePool(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 
-	// Prepare tokens
-	testing.SetOriginCaller(adminAddr)
-	newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
-	testing.IssueCoins(adminAddr, newCoins)
-	testing.SetOriginSend(newCoins)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, wugnotAddr, newCoins)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
 	// Add liquidity
 	testing.SetRealm(posRealm)
 	mockInstanceMint(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
@@ -1416,6 +1440,13 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 // 3. Without proper reentrancy protection, the second Swap would succeed
 // 4. This could allow manipulation of pool state or token theft
 func TestSwap_ReentrancyProtection(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	tests := []struct {
 		name        string
 		description string
@@ -1649,6 +1680,13 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 //   - amount0Delta < 0: Pool sends token0 (output to user)
 //   - amount1Delta > 0: Pool receives token1 (input from user)
 func TestSwapCallback_DeltaConvention(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	tests := []struct {
 		name                    string
 		description             string
@@ -1810,6 +1848,13 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 // TestSwapCallback_CallbackUsage demonstrates that a generic callback
 // can handle both swap directions by checking delta signs.
 func TestSwapCallback_CallbackUsage(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	resetObject(t)
 	burnTokens(t)
 	InitialisePoolTest(t)
@@ -1886,6 +1931,13 @@ func TestSwapCallback_CallbackUsage(t *testing.T) {
 // 3. Pool transfers output tokens to recipient  <-- OUTPUT SECOND (wrong)
 // This prevented callbacks from using output tokens.
 func TestSwap_FlashSwapPattern(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	tests := []struct {
 		name        string
 		description string
@@ -1973,6 +2025,13 @@ func TestSwap_FlashSwapPattern(t *testing.T) {
 // TestSwap_FlashSwapArbitragePattern tests a practical flash swap use case:
 // using received output tokens within the callback for arbitrage or chained operations.
 func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
+	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	// Setup
 	resetObject(t)
 	burnTokens(t)

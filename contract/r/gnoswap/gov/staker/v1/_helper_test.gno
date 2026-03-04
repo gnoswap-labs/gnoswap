@@ -10,8 +10,6 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoland/wugnot"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -118,7 +116,7 @@ func ugnotFaucet(t *testing.T, to address, amount uint64) {
 	ugnotTransfer(t, admin, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr address, amount uint64) {
+func ugnotDepositPrepare(t *testing.T, addr address, amount uint64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(addr))
 
@@ -126,9 +124,6 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 	banker_.SendCoins(addr, WUGNOT_ADDR, chain.Coins{{gnotDenom, int64(amount)}})
 
 	testing.SetOriginSend(chain.Coins{{gnotDenom, int64(amount)}})
-	wugnot.Deposit(cross)
-
-	testing.SetOriginSend(chain.Coins{})
 }
 
 func unmarshal(data string) *json.Node {

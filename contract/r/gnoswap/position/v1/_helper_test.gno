@@ -386,14 +386,18 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr address, amount int64) {
+// ugnotDepositPrepare sets up the realm and sends coins to wugnot address
+// in preparation for a wugnot.Deposit(cross) call.
+// IMPORTANT: The caller must call wugnot.Deposit(cross) and
+// testing.SetOriginSend(chain.Coins{}) directly at the top-level test
+// function body (not inside a helper or t.Run callback) to satisfy
+// runtime.AssertOriginCall() frame count requirement.
+func ugnotDepositPrepare(t *testing.T, addr address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(addr))
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 }
 
 func burnTokens(t *testing.T) {

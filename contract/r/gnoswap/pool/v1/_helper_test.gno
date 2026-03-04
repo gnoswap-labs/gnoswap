@@ -101,11 +101,17 @@ const (
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
+// InitialisePoolTest sets up a basic pool environment for testing.
+// IMPORTANT: Before calling this function, the caller must ensure
+// that adminAddr has sufficient wugnot balance. Call the following
+// at the top level of each TestXxx function (NOT inside t.Run or helpers):
+//
+//	ugnotFaucet(t, adminAddr, amount)
+//	ugnotDepositPrepare(t, adminAddr, amount)
+//	wugnot.Deposit(cross)
+//	testing.SetOriginSend(chain.Coins{})
 func InitialisePoolTest(t *testing.T) {
 	t.Helper()
-
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	testing.SetOriginCaller(adminAddr)
 	func() {
@@ -549,7 +555,7 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr address, amount int64) {
+func ugnotDepositPrepare(t *testing.T, addr address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(addr))
 
@@ -557,9 +563,6 @@ func ugnotDeposit(t *testing.T, addr address, amount int64) {
 	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{ugnotDenom, int64(amount)}})
 
 	testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
-	wugnot.Deposit(cross)
-
-	testing.SetOriginSend(chain.Coins{})
 }
 
 // resetObject resets the object state(clear or make it default values)
@@ -622,22 +625,15 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 	func(cur realm) {
 		testing.SetRealm(adminRealm)
 
-		if amount0Delta > 0 {
-			if token0Path == wugnotPath {
-				testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-				wugnot.Deposit(cross)
-				testing.SetOriginSend(chain.Coins{})
-			}
+		// NOTE: wugnot.Deposit(cross) cannot be called here due to
+		// runtime.AssertOriginCall() frame count restrictions.
+		// The admin must already have sufficient wugnot pre-deposited
+		// at the top level of each TestXxx function.
 
+		if amount0Delta > 0 {
 			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 		}
 		if amount1Delta > 0 {
-			if token1Path == wugnotPath {
-				testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-				wugnot.Deposit(cross)
-				testing.SetOriginSend(chain.Coins{})
-			}
-
 			common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 		}
 	}(cross)

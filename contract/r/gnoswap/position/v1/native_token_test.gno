@@ -1,11 +1,14 @@
 package v1
 
 import (
+	"chain"
 	"errors"
 	"strconv"
 	"testing"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoland/wugnot"
 )
 
 func TestWrapInPosition(t *testing.T) {
@@ -44,10 +47,7 @@ func TestWrapInPosition(t *testing.T) {
 		{
 			name: "wrap succeeds - validates user has sufficient wugnot",
 			action: func(t *testing.T, from, to address) error {
-				// Give the user wugnot
-				ugnotFaucet(t, from, 1000)
-				ugnotDeposit(t, from, 1000)
-
+				// wugnot was pre-deposited at top-level TestWrapInPosition body
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 				return mockInstance.validateWugnotBalance(1000, from)
 			},
@@ -61,6 +61,14 @@ func TestWrapInPosition(t *testing.T) {
 			shouldPanic: false,
 		},
 	}
+	// Pre-deposit wugnot for "wrap succeeds" test case at top level
+	// to satisfy runtime.AssertOriginCall() frame count requirement.
+	ugnotFaucet(t, alice, 1000)
+	ugnotDepositPrepare(t, alice, 1000)
+	testing.SetRealm(testing.NewUserRealm(alice))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.shouldPanic {
@@ -100,10 +108,6 @@ func TestUnWrap(t *testing.T) {
 		{
 			name: "unwrap is success by valid amount",
 			action: func(t *testing.T, from, to address) error {
-				// Give position some wugnot first
-				ugnotFaucet(t, positionAddr, 1000)
-				ugnotDeposit(t, positionAddr, 1000)
-
 				// unwrap sends wugnot from position to user
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 				return mockInstance.transferWugnot(1000, to)
@@ -117,6 +121,14 @@ func TestUnWrap(t *testing.T) {
 			shouldPanic: false,
 		},
 	}
+	// Pre-deposit wugnot for "unwrap is success" test case at top level
+	// to satisfy runtime.AssertOriginCall() frame count requirement.
+	ugnotFaucet(t, positionAddr, 1000)
+	ugnotDepositPrepare(t, positionAddr, 1000)
+	testing.SetRealm(testing.NewUserRealm(positionAddr))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.shouldPanic {
@@ -247,14 +259,18 @@ func TestSafeWrapNativeToken(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot for all subtests that need it at top level
+	// to satisfy runtime.AssertOriginCall() frame count requirement.
+	// Total needed: 1050 + 1000 = 2050 for alice.
+	totalDeposit := int64(2050)
+	ugnotFaucet(t, alice, totalDeposit)
+	ugnotDepositPrepare(t, alice, totalDeposit)
+	testing.SetRealm(testing.NewUserRealm(alice))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.amount > 0 {
-				// Give user wugnot
-				ugnotFaucet(t, tt.fromAddress, tt.amount)
-				ugnotDeposit(t, tt.fromAddress, tt.amount)
-			}
-
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 			wrappedAmount, err := mockInstance.validateAndReturnWugnotAmount(tt.amount, tt.fromAddress)
 			if tt.expectError {

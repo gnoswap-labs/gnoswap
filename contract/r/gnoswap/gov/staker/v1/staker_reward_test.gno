@@ -13,6 +13,13 @@ import (
 
 // Test CollectReward function
 func TestStakerReward_CollectReward(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name             string
 		caller           address
@@ -128,6 +135,13 @@ func TestStakerReward_CollectReward(t *testing.T) {
 
 // Test CollectRewardFromLaunchPad function
 func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name           string
 		caller         address
@@ -210,6 +224,13 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 
 // Test SetAmountByProjectWallet function
 func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -312,6 +333,13 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 
 // Test transferToken function
 func TestStakerReward_transferToken(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -400,6 +428,13 @@ func TestStakerReward_transferToken(t *testing.T) {
 
 // Test comprehensive launchpad reward scenarios including exclusion from governance
 func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name                 string
 		caller               address
@@ -499,6 +534,13 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 
 // Test comprehensive token transfer scenarios
 func TestStakerReward_TokenTransferScenarios(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -616,6 +658,13 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 
 // Test reward calculation accuracy
 func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
+	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
+	setupStakerRewardStakerTokenBalance(t)
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
+
 	tests := []struct {
 		name                     string
 		userStake                int64
@@ -757,10 +806,6 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	banker_.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
 
 	testing.SetOriginSend(newCoins)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	wugnot.Transfer(cross, govStakerAddr, amount)
 }
 
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {

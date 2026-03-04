@@ -35,16 +35,20 @@ type DSLPositionInfo struct {
 	liquidity *u256.Uint
 }
 
-// NewPoolTestEnv initializes the base test environment
+// NewPoolTestEnv initializes the base test environment.
+// IMPORTANT: Before calling this function, the caller must ensure
+// that adminAddr has sufficient wugnot balance. Call the following
+// at the top level of each TestXxx function (NOT inside t.Run or helpers):
+//
+//	ugnotFaucet(t, adminAddr, amount)
+//	ugnotDepositPrepare(t, adminAddr, amount)
+//	wugnot.Deposit(cross)
+//	testing.SetOriginSend(chain.Coins{})
 func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 	t.Helper()
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr := address("g15h3ywez2g2xqqsksm9mfkau0xz2puma2qvwmqd") // pool contract address
-
-	// Initialize basic pool setup
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	return &PoolTestEnv{
 		t:              t,

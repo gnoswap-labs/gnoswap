@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"errors"
 	"strconv"
 	"testing"
@@ -20,6 +21,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
+	"gno.land/r/gnoland/wugnot"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -690,6 +692,25 @@ func TestProcessTokens(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot at top level to satisfy runtime.AssertOriginCall()
+	// frame count requirement. wugnot.Deposit(cross) must be called directly
+	// from the test function body, not from helpers or t.Run callbacks.
+	//
+	// "token0 is native" test: alice needs 1300 wugnot
+	ugnotFaucet(t, alice, 1300)
+	ugnotDepositPrepare(t, alice, 1300)
+	testing.SetRealm(testing.NewUserRealm(alice))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	// "token1 is native" test: user3 needs 1250 wugnot
+	user3 := testutils.TestAddress("user3")
+	ugnotFaucet(t, user3, 1250)
+	ugnotDepositPrepare(t, user3, 1250)
+	testing.SetRealm(testing.NewUserRealm(user3))
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
@@ -708,14 +729,10 @@ func TestProcessTokens(t *testing.T) {
 
 			if tt.token0 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, tt.caller, amount)
-				ugnotDeposit(t, tt.caller, amount)
 				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
 			}
 			if tt.token1 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, tt.caller, amount)
-				ugnotDeposit(t, tt.caller, amount)
 				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
 			}
 

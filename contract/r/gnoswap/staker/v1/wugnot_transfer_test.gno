@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"errors"
 	"testing"
 
@@ -49,14 +50,21 @@ func TestTransferWugnotFrom(t *testing.T) {
 		},
 	}
 
+	// Deposit wugnot BEFORE the for loop to avoid "invalid non-origin call"
+	// from wugnot.Deposit(cross) inside t.Run subtests.
+	// Total needed: 2 subtests * 1000 = 2000
+	{
+		totalDeposit := int64(2_000)
+		ugnotFaucet(t, user1Addr, totalDeposit)
+		ugnotDepositPrepare(t, user1Addr, totalDeposit)
+		testing.SetRealm(testing.NewUserRealm(user1Addr))
+		testing.SetOriginSend(chain.Coins{{"ugnot", totalDeposit}})
+		wugnot.Deposit(cross)
+		testing.SetOriginSend(chain.Coins{})
+	}
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Give caller wugnot and approve staker
-			if tc.amount > 0 {
-				ugnotFaucet(t, tc.callerAddr, 1_000)
-				ugnotDeposit(t, tc.callerAddr, 1_000)
-			}
-
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddr))
 			wugnot.Approve(cross, tc.toAddr, tc.amount)
 
@@ -105,11 +113,21 @@ func TestTransferWugnot(t *testing.T) {
 		},
 	}
 
+	// Deposit wugnot BEFORE the for loop to avoid "invalid non-origin call"
+	// from wugnot.Deposit(cross) inside t.Run subtests.
+	// Total needed: 2 subtests * 1000 = 2000
+	{
+		totalDeposit := int64(2_000)
+		ugnotFaucet(t, stakerAddr, totalDeposit)
+		ugnotDepositPrepare(t, stakerAddr, totalDeposit)
+		testing.SetRealm(testing.NewUserRealm(stakerAddr))
+		testing.SetOriginSend(chain.Coins{{"ugnot", totalDeposit}})
+		wugnot.Deposit(cross)
+		testing.SetOriginSend(chain.Coins{})
+	}
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ugnotFaucet(t, stakerAddr, 1_000)
-			ugnotDeposit(t, stakerAddr, 1_000)
-
 			testing.SetRealm(stakerRealm)
 
 			// transferWugnot sends wugnot (not ugnot)

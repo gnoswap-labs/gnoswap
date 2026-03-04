@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -376,25 +375,15 @@ func swapPaidSwapCallback(
 ) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
+	// NOTE: wugnot.Deposit(cross) cannot be called here due to
+	// runtime.AssertOriginCall() frame count restrictions.
+	// The admin must already have sufficient wugnot pre-deposited
+	// at the top level of each TestXxx function.
 
 	if amount0Delta > 0 {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-			testing.SetOriginSend(chain.Coins{})
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

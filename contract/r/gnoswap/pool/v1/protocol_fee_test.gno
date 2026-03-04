@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain"
+	"chain/banker"
 	"strconv"
 	"strings"
 	"testing"
@@ -141,6 +142,15 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 }
 
 func TestHandleWithdrawalFee(t *testing.T) {
+	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 100000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	tests := []struct {
 		name        string
 		action      func(t *testing.T)
@@ -181,11 +191,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 
 				mockInstanceCreatePool(wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000}})
-				wugnot.Deposit(cross)
 
-				testing.SetOriginSend(chain.Coins{})
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				wugnot.Transfer(cross, poolAddr, 1000000000)
 				gns.Transfer(cross, poolAddr, 1000000000)
 
