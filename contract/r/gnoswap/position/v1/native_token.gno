@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
@@ -11,64 +9,32 @@ import (
 )
 
 const (
-	UGNOT_MIN_DEPOSIT_TO_WRAP = int64(1000)
-	WUGNOT_PATH               = "gno.land/r/gnoland/wugnot"
-	GNOT_DENOM                = "ugnot"
+	WUGNOT_PATH = "gno.land/r/gnoland/wugnot"
+	GNOT_DENOM  = "ugnot"
 )
 
-// wrap wraps the specified amount of the native token ugnot into the wrapped token wugnot.
-// Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
-func (p *positionV1) wrap(ugnotAmount int64, to address) error {
-	if ugnotAmount == 0 || ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
-		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
-	}
-
-	positionAddr := mustGetPositionAddress()
-	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
-	p.transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
-
-	wugnot.Deposit(cross)                   // position has wugnot
-	wugnot.Transfer(cross, to, ugnotAmount) // send wugnot: position -> user
-
-	return nil
-}
-
-// unwrap converts a specified amount of WUGNOT tokens into UGNOT tokens
-// and transfers the resulting UGNOT back to the specified recipient address.
-func (p *positionV1) unwrap(wugnotAmount int64, to address) error {
+// wrap transfers WUGNOT from the caller to the position contract.
+// The caller must have already deposited GNOT into WUGNOT and approved this contract.
+func (p *positionV1) wrap(wugnotAmount int64, from address) error {
 	if wugnotAmount <= 0 {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
 	positionAddr := mustGetPositionAddress()
+	wugnot.TransferFrom(cross, from, positionAddr, wugnotAmount)
 
-	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // send wugnot: user -> position
-	wugnot.Withdraw(cross, wugnotAmount)                       // position has ugnot
-	p.transferUGNOT(positionAddr, to, wugnotAmount)            // send ugnot: position -> user
 	return nil
 }
 
-// transferUGNOT transfers a specified amount of UGNOT tokens from one address to another.
-// The function ensures that no transaction occurs if the transfer amount is zero.
-// Panics if amount is negative or if sender has insufficient balance.
-func (p *positionV1) transferUGNOT(from, to address, amount int64) {
-	if amount < 0 {
-		panic(ufmt.Sprintf("amount(%d) is negative", amount))
-	}
-	if amount == 0 {
-		return
+// unwrap transfers WUGNOT back to the specified recipient address.
+// The recipient receives WUGNOT directly (no longer unwraps to GNOT).
+func (p *positionV1) unwrap(wugnotAmount int64, to address) error {
+	if wugnotAmount <= 0 {
+		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	fromBalance := banker_.GetCoins(from).AmountOf(GNOT_DENOM)
-	if fromBalance < amount {
-		panic(newErrorWithDetail(
-			errInsufficientUGNOT,
-			ufmt.Sprintf("from(%s) balance(%d) is less than amount(%d)", from, fromBalance, amount)))
-	}
-	banker_.SendCoins(from, to, chain.Coins{
-		{Denom: GNOT_DENOM, Amount: amount},
-	})
+	wugnot.Transfer(cross, to, wugnotAmount)
+	return nil
 }
 
 // isNative checks whether the given token is a native token.
@@ -81,76 +47,50 @@ func isWrappedToken(tokenPath string) bool {
 	return tokenPath == WUGNOT_PATH
 }
 
-// safeWrapNativeToken safely wraps the native token ugnot into the wrapped token wugnot for a user.
-// Returns the amount of ugnot that was successfully wrapped into wugnot.
-// Returns an error if the sent ugnot amount is zero, less than requested, or if wrapping fails.
-func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64, error) {
-	// if amount is zero, return 0
+// safeWrapNativeToken safely transfers WUGNOT from the user to the position contract.
+// The user must have already deposited GNOT into WUGNOT and approved this contract.
+// Returns the amount of WUGNOT that was successfully transferred.
+func (p *positionV1) safeWrapNativeToken(amount int64, fromAddress address) (int64, error) {
 	if amount == 0 {
 		return 0, nil
 	}
 
-	beforeWrappedBalance := wugnot.BalanceOf(toAddress)
-	nativeSentAmount := banker.OriginSend().AmountOf(GNOT_DENOM)
+	positionAddr := mustGetPositionAddress()
+	beforeBalance := wugnot.BalanceOf(positionAddr)
 
-	if nativeSentAmount <= 0 {
-		return 0, makeErrorWithDetails(errZeroUGNOT, "amount of ugnot is zero")
-	}
+	wugnot.TransferFrom(cross, fromAddress, positionAddr, amount)
 
-	if nativeSentAmount < amount {
-		return 0, makeErrorWithDetails(errInsufficientUGNOT, "amount of ugnot is less than desired amount")
-	}
-
-	// If nativeSentAmount is greater than amount, refund the excess amount.
-	if nativeSentAmount > amount {
-		excessAmount := nativeSentAmount - amount
-		p.transferUGNOT(mustGetPositionAddress(), toAddress, excessAmount)
-
-		nativeSentAmount = amount
-	}
-
-	if err := p.wrapWithTransfer(nativeSentAmount, toAddress); err != nil {
-		return 0, err
-	}
-
-	balanceDiff := wugnot.BalanceOf(toAddress) - beforeWrappedBalance
-
-	if balanceDiff != nativeSentAmount {
+	balanceDiff := wugnot.BalanceOf(positionAddr) - beforeBalance
+	if balanceDiff != amount {
 		return 0, makeErrorWithDetails(
 			errWrapUnwrap,
-			ufmt.Sprintf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", nativeSentAmount, balanceDiff),
+			ufmt.Sprintf("expected wugnot transfer(%d) but got(%d)", amount, balanceDiff),
 		)
 	}
 
-	return nativeSentAmount, nil
+	return amount, nil
 }
 
-func (p *positionV1) wrapWithTransfer(ugnotAmount int64, toAddress address) error {
-	if ugnotAmount <= 0 {
-		return makeErrorWithDetails(errWrapUnwrap, "cannot wrap 0 ugnot")
+// wrapWithTransfer transfers WUGNOT from the caller to the specified address.
+// The caller must have already deposited GNOT into WUGNOT and approved this contract.
+func (p *positionV1) wrapWithTransfer(fromAddress, toAddress address, wugnotAmount int64) error {
+	if wugnotAmount <= 0 {
+		return makeErrorWithDetails(errWrapUnwrap, "cannot transfer 0 wugnot")
 	}
 
-	if ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
-		return makeErrorWithDetails(
-			errWugnotMinimum,
-			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
-		)
-	}
-
-	// wrap it
-	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	currentRealmAddr := runtime.CurrentRealm().Address()
 
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, wugnotAddr, chain.Coins{{GNOT_DENOM, ugnotAmount}})
-	wugnot.Deposit(cross) // Position has wugnot
-
-	// send wugnot: position -> user
-	wugnot.Transfer(cross, toAddress, ugnotAmount)
+	if toAddress == currentRealmAddr {
+		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
+	} else {
+		wugnot.TransferFrom(cross, fromAddress, toAddress, wugnotAmount)
+	}
 
 	return nil
 }
 
+// unwrapWithTransferFrom transfers WUGNOT from a source address to the target address.
+// The recipient receives WUGNOT directly (no longer unwraps to GNOT).
 func (p *positionV1) unwrapWithTransferFrom(fromAddress, toAddress address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
@@ -161,10 +101,9 @@ func (p *positionV1) unwrapWithTransferFrom(fromAddress, toAddress address, wugn
 		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
 	}
 
-	wugnot.Withdraw(cross, wugnotAmount)
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{GNOT_DENOM, wugnotAmount}})
+	if toAddress != currentRealmAddr {
+		wugnot.Transfer(cross, toAddress, wugnotAmount)
+	}
 
 	return nil
 }
