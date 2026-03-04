@@ -124,13 +124,13 @@ run_test() {
         return
     fi
 
-    if ! gno test "$folder" -root-dir "$GNO_PATH" -v; then
+    cd "$folder"
+
+    if ! gno test -v .; then
         echo "❌ Test failed for $folder"
     else
         echo "✅ Test passed for $folder"
     fi
-
-    cd "$folder"
     # shellcheck disable=SC2207
     UNITTESTS=($(ls *_test.gno 2>/dev/null || true))
     for testfile in "${UNITTESTS[@]}"; do
@@ -152,7 +152,7 @@ run_test() {
       base_name="${base_path##*/}"
       mv "$testfile" "$base_name.gno"
 
-      if ! gno test "$folder" -root-dir "$GNO_PATH" -v; then
+      if ! gno test -v .; then
         echo "❌ Test failed for $folder file: $base_name.gno"
         FAILED_TESTS+=("$folder file: $base_name.gno test failed")
       else

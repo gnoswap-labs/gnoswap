@@ -7,7 +7,7 @@ require 'open3'
 class TestRunner
   def initialize(folder, root_dir = nil)
     @folder = folder
-    @root_dir = root_dir || "/home/runner/work/gnoswap/gnoswap/gno"
+    @root_dir = root_dir
   end
 
   def run_command(command)
@@ -28,18 +28,18 @@ class TestRunner
     # With gnowork.toml, we can run tests directly from each directory
     # No need to search for workspace root anymore
     test_dir = File.expand_path(@folder)
-    
+
     unless File.directory?(test_dir)
       puts "Error: Directory #{test_dir} does not exist"
       exit 1
     end
 
-    # Change to the test directory
+    # Change to the test directory and run gno test without -root-dir
+    # so that dependencies are resolved from the local workspace
     Dir.chdir(test_dir) do
       puts "Running tests in: #{Dir.pwd}"
-      
-      # Run gno test -v . to execute all tests in the current directory
-      run_command("gno test -v . -root-dir #{@root_dir}")
+
+      run_command("gno test -v .")
     end
   end
 
