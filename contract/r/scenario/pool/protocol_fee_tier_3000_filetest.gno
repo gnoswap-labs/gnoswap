@@ -175,6 +175,7 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 		if barPath == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 		common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
 	}
@@ -182,6 +183,7 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 		if fooPath == wugnotPath {
 			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
+			testing.SetOriginSend(chain.Coins{})
 		}
 		common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
 	}
