@@ -245,6 +245,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
+	testing.SetOriginCaller(positionOwner)
+	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+	ugnotDepositPrepare(t, positionOwner, 10000000000)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
@@ -261,8 +268,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)

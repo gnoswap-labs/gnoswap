@@ -255,6 +255,13 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
+	testing.SetOriginCaller(positionOwner)
+	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+	ugnotDepositPrepare(t, positionOwner, 10000000000)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initRouterTest(t)
@@ -271,8 +278,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
@@ -426,6 +431,19 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
+	testing.SetOriginCaller(positionOwner)
+	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+	ugnotDepositPrepare(t, positionOwner, 10000000000)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	// Pre-deposit wugnot for alice (for IncreaseLiquidity)
+	testing.IssueCoins(alice, chain.Coins{{"ugnot", int64(100000000)}})
+	ugnotDepositPrepare(t, alice, 100000000)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initRouterTest(t)
@@ -442,8 +460,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
@@ -479,14 +495,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			)
 			testing.SkipHeights(1)
 
-			// Add Liquidity
+			// Add Liquidity (wugnot already deposited at top level)
 			testing.SetOriginCaller(tt.recipient)
-			addAmount, err := strconv.ParseInt(tt.amount0Requested, 10, 64)
-			if err != nil {
-				t.Errorf("failed to parse amount0Requested: %v", err)
-			}
-			testing.IssueCoins(tt.recipient, chain.Coins{{"ugnot", addAmount}})
-			ugnotDeposit(t, tt.recipient, uint64(addAmount))
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			wugnot.Approve(cross, positionAddr, maxApprove)
@@ -603,6 +613,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		},
 	}
 
+	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
+	testing.SetOriginCaller(positionOwner)
+	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
+	ugnotDepositPrepare(t, positionOwner, 10000000000)
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initRouterTest(t)
@@ -619,8 +636,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-			ugnotDeposit(t, positionOwner, 10000000000)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
