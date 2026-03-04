@@ -72,7 +72,13 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Protocol fee deposit")
-	depositProtocolFee()
+	depositProtocolFeePre()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	depositProtocolFeePost()
 	println()
 
 	println("[SCENARIO] 5. Skip blocks and distribute emission/protocol fee")
@@ -118,7 +124,7 @@ func delegateDummyToDummy() {
 	ufmt.Printf("[INFO] delegated %d GNS from dummy to dummy\n", amount)
 }
 
-func depositProtocolFee() {
+func depositProtocolFeePre() {
 	// protocol fee deposit (bar, qux, wugnot)
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, protocolFeeAddr, 1000)
@@ -127,12 +133,12 @@ func depositProtocolFee() {
 	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-
 	banker_.SendCoins(adminAddr, wugnotAddr, coins)
+	// Deposit is done in main()
+}
 
-	testing.SetOriginSend(coins)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+func depositProtocolFeePost() {
+	testing.SetRealm(adminRealm)
 	wugnot.Transfer(cross, protocolFeeAddr, 10000)
 
 	testing.SetRealm(stakerRealm)
