@@ -109,41 +109,17 @@ func assertSlippageIsNotExceeded(amount0, amount1, amount0Min, amount1Min *u256.
 	}
 }
 
-// assertIsValidUserCoinSendWithTokenPair asserts that the user has sent the correct amount of native coin.
+// assertIsValidUserCoinSendWithTokenPair asserts that no native coins were sent with the transaction.
+// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
+// TODO: change into direct call
 func assertIsValidUserCoinSendWithTokenPair(token0, token1 string, amount0, amount1 string) {
-	if common.IsGNOTNativePath(token0) {
-		common.AssertIsUserSendGNOTAmount(mustParseInt64(amount0))
-
-		return
-	}
-
-	if common.IsGNOTNativePath(token1) {
-		common.AssertIsUserSendGNOTAmount(mustParseInt64(amount1))
-
-		return
-	}
-
 	common.AssertIsNotHandleNativeCoin()
 }
 
-// assertIsValidUserCoinSendWithWrappedTokenPair asserts that the user has sent the correct amount of native coin.
+// assertIsValidUserCoinSendWithWrappedTokenPair asserts that no native coins were sent with the transaction.
+// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
+// TODO: change into direct call
 func assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1 string, amount0, amount1 string) {
-	isExistsUserSendCoins := common.ExistsUserSendCoins()
-
-	if isExistsUserSendCoins {
-		if common.IsGNOTPath(token0) {
-			common.AssertIsUserSendGNOTAmount(mustParseInt64(amount0))
-
-			return
-		}
-
-		if common.IsGNOTPath(token1) {
-			common.AssertIsUserSendGNOTAmount(mustParseInt64(amount1))
-
-			return
-		}
-	}
-
 	common.AssertIsNotHandleNativeCoin()
 }
 

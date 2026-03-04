@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,18 +24,11 @@ func assertIsNotExpired(deadline int64) {
 	}
 }
 
-// assertIsValidUserCoinSend asserts that the user has sent the correct amount of native coin.
+// assertIsValidUserCoinSend asserts that no native coins were sent with the transaction.
+// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
+// TODO: change into direct call
 func assertIsValidUserCoinSend(tokenPath string, amount string) {
-	if common.IsGNOTNativePath(tokenPath) {
-		amountInt64, err := strconv.ParseInt(amount, 10, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		common.AssertIsUserSendGNOTAmount(amountInt64)
-	} else {
-		common.AssertIsNotHandleNativeCoin()
-	}
+	common.AssertIsNotHandleNativeCoin()
 }
 
 func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
