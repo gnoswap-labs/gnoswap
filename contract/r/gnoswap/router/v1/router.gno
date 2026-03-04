@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain/runtime"
+	"errors"
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -155,7 +156,7 @@ func NewRouteParser() *RouteParser {
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, ufmt.Errorf(errEmptyRoutes)
+		return nil, nil, errors.New(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')
