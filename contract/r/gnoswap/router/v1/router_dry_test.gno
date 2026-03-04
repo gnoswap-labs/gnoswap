@@ -6,14 +6,186 @@ import (
 
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
 )
+
+func TestDrySwapRoute_IBCSingleRoute(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+	)
+
+	ibcToken0 := realmPath + "." + ibcSlugCAEF
+	ibcToken1 := realmPath + "." + ibcSlugF9A6
+	route := BuildSingleHopRoutePath(ibcToken0, ibcToken1, fee3000)
+
+	initRouterTest(t)
+
+	if err := common.IsRegistered(ibcToken0); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	}
+	if err := common.IsRegistered(ibcToken1); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+	}
+
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	common.SafeGRC20Approve(cross, ibcToken0, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcToken1, poolAddr, maxApprove)
+	pl.CreatePool(cross, ibcToken0, ibcToken1, fee3000, "79228162514264337593543950336")
+
+	_, _, _, _ = pn.Mint(
+		cross,
+		ibcToken0,
+		ibcToken1,
+		fee3000,
+		-120,
+		120,
+		"100000",
+		"100000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	router := mockRouter()
+
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+	func(cur realm) {
+		testing.SetRealm(routerRealm)
+		amountIn, amountOut, success := router.DrySwapRoute(
+			ibcToken0,
+			ibcToken1,
+			"1000",
+			"EXACT_IN",
+			route,
+			"100",
+			"1",
+		)
+		uassert.Equal(t, true, success)
+		uassert.NotEqual(t, "", amountIn)
+		uassert.NotEqual(t, "", amountOut)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+	func(cur realm) {
+		testing.SetRealm(routerRealm)
+		amountIn, amountOut, success := router.DrySwapRoute(
+			ibcToken0,
+			ibcToken1,
+			"100",
+			"EXACT_OUT",
+			route,
+			"100",
+			"100000",
+		)
+		uassert.Equal(t, true, success)
+		uassert.NotEqual(t, "", amountIn)
+		uassert.NotEqual(t, "", amountOut)
+	}(cross)
+}
+
+func TestDrySwapRoute_IBC_MultiRouteSplitQuote_ExactIn(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+	)
+
+	ibcTokenA := realmPath + "." + ibcSlugCAEF
+	ibcTokenB := realmPath + "." + ibcSlugF9A6
+	midToken := barPath
+
+	routeDirect := BuildSingleHopRoutePath(ibcTokenA, ibcTokenB, fee3000)
+	routeTwoHops := BuildMultiHopRoutePath(
+		BuildSingleHopRoutePath(ibcTokenA, midToken, fee3000),
+		BuildSingleHopRoutePath(midToken, ibcTokenB, fee3000),
+	)
+	routes := routeDirect + "," + routeTwoHops
+
+	initRouterTest(t)
+
+	if err := common.IsRegistered(ibcTokenA); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	}
+	if err := common.IsRegistered(ibcTokenB); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+	}
+
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	common.SafeGRC20Approve(cross, ibcTokenA, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcTokenB, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, midToken, poolAddr, maxApprove)
+
+	pl.CreatePool(cross, ibcTokenA, midToken, fee3000, "79228162514264337593543950336")
+	pl.CreatePool(cross, midToken, ibcTokenB, fee3000, "79228162514264337593543950336")
+	pl.CreatePool(cross, ibcTokenA, ibcTokenB, fee3000, "79228162514264337593543950336")
+
+	_, _, _, _ = pn.Mint(
+		cross,
+		ibcTokenA,
+		midToken,
+		fee3000,
+		-120,
+		120,
+		"100000",
+		"100000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	_, _, _, _ = pn.Mint(
+		cross,
+		midToken,
+		ibcTokenB,
+		fee3000,
+		-120,
+		120,
+		"100000",
+		"100000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	_, _, _, _ = pn.Mint(cross, ibcTokenA, ibcTokenB, fee3000, -120, 120, "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+
+	router := mockRouter()
+	testing.SetRealm(testing.NewUserRealm(user1Addr))
+	func(cur realm) {
+		testing.SetRealm(routerRealm)
+		amountIn, amountOut, success := router.DrySwapRoute(
+			ibcTokenA,
+			ibcTokenB,
+			"1000",
+			"EXACT_IN",
+			routes,
+			"70,30",
+			"1",
+		)
+		uassert.Equal(t, true, success)
+		uassert.Equal(t, "1000", amountIn)
+		uassert.NotEqual(t, "", amountOut)
+	}(cross)
+}
 
 type DrySwapTestCase struct {
 	name              string

@@ -10,10 +10,42 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/onbloc/bar"
 )
+
+func TestCommunityPool_IBCTransferAndBalance(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+	)
+
+	ibcTokenPath := realmPath + "." + ibcSlugCAEF
+	fundAmount := int64(2_000_000)
+	transferAmount := int64(500_000)
+
+	if err := common.IsRegistered(ibcTokenPath); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	}
+
+	testing.SetRealm(adminRealm)
+	common.SafeGRC20Transfer(cross, ibcTokenPath, communityPoolAddr, fundAmount)
+
+	beforePool := GetBalanceOf(ibcTokenPath)
+	beforeUser := common.BalanceOf(ibcTokenPath, dummyReceiver)
+
+	testing.SetRealm(adminRealm)
+	TransferToken(cross, ibcTokenPath, dummyReceiver, transferAmount)
+
+	afterPool := GetBalanceOf(ibcTokenPath)
+	afterUser := common.BalanceOf(ibcTokenPath, dummyReceiver)
+
+	uassert.Equal(t, beforePool-transferAmount, afterPool)
+	uassert.Equal(t, beforeUser+transferAmount, afterUser)
+}
 
 var (
 	adminAddr  = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
@@ -191,6 +223,19 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 			panicMsg:    "unknown token",
 		},
 		{
+			name: "panic with unregistered IBC token path",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, communityPoolAddr, 10_000)
+			},
+			caller:      adminRealm,
+			tokenPath:   "gno.land/r/aib/ibc/apps/transfer.ibc/3333333333333333333333333333333333333333333333333333333333333333",
+			to:          dummyReceiver,
+			amount:      100,
+			shouldPanic: true,
+			panicMsg:    "unknown token",
+		},
+		{
 			name: "panic with empty to address",
 			setup: func() {
 				testing.SetRealm(adminRealm)
@@ -291,6 +336,15 @@ func TestCommunityPool_GetBalanceOf(t *testing.T) {
 				testing.SetRealm(adminRealm)
 			},
 			tokenPath:   "gno.land/r/demo/unregistered_token",
+			shouldPanic: true,
+			panicMsg:    "unknown token",
+		},
+		{
+			name: "panics with unregistered IBC token path",
+			setup: func() {
+				testing.SetRealm(adminRealm)
+			},
+			tokenPath:   "gno.land/r/aib/ibc/apps/transfer.ibc/4444444444444444444444444444444444444444444444444444444444444444",
 			shouldPanic: true,
 			panicMsg:    "unknown token",
 		},

@@ -5,10 +5,12 @@ import (
 	"chain/banker"
 	"testing"
 
+	"gno.land/p/demo/tokens/grc20"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -815,4 +817,17 @@ func mockInstanceSafeTransferFrom(pool *pl.Pool, from, to address, tokenPath str
 		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
 		getMockInstance().safeTransferFrom(pool, from, to, tokenPath, amount, isToken0)
 	}(cross)
+}
+
+func registerIBCVoucherToken(
+	realmPath, slug, baseDenom string,
+	mintTo address,
+	mintAmount int64,
+) {
+	testing.SetRealm(testing.NewCodeRealm(realmPath))
+	token, ledger := grc20.NewToken(baseDenom, slug, 0)
+	if err := ledger.Mint(mintTo, mintAmount); err != nil {
+		panic(err)
+	}
+	grc20reg.Register(cross, token, slug)
 }

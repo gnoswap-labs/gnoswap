@@ -233,6 +233,59 @@ func TestHandleWithdrawalFee(t *testing.T) {
 	}
 }
 
+func TestHandleWithdrawalFee_IBC(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+	)
+
+	ibcToken0 := realmPath + "." + ibcSlugCAEF
+	ibcToken1 := realmPath + "." + ibcSlugF9A6
+
+	initPoolTest(t)
+	burnTokens(t)
+
+	testing.SetRealm(testing.NewCodeRealm(realmPath))
+	registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0)
+	mockInstanceSetWithdrawalFee(100)
+	common.SafeGRC20Approve(cross, ibcToken0, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcToken1, poolAddr, maxApprove)
+
+	mockInstanceCreatePool(ibcToken0, ibcToken1, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(
+		ibcToken0,
+		ibcToken1,
+		fee3000,
+		int32(1020),
+		int32(5040),
+		"1000",
+		adminAddr,
+	)
+
+	poolPath := GetPoolPath(ibcToken0, ibcToken1, fee3000)
+
+	testing.SetRealm(posRealm)
+	afterAmount0, afterAmount1 := mockInstanceHandleWithdrawalFee(
+		2,
+		ibcToken0,
+		"1000",
+		ibcToken1,
+		"1000",
+		poolPath,
+		adminAddr,
+	)
+
+	uassert.Equal(t, "900", afterAmount0)
+	uassert.Equal(t, "900", afterAmount1)
+}
+
 func TestSetWithdrawalFee(t *testing.T) {
 	tests := []struct {
 		name        string

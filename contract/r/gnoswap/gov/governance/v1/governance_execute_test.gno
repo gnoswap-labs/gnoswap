@@ -10,9 +10,11 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/onbloc/bar"
 )
 
 var testConfig = governance.Config{
@@ -221,6 +223,101 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 			uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 		})
 	}
+}
+
+func TestGovernanceExecute_ExecuteCommunityPoolSpend_IBC(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+	)
+
+	ibcTokenPath := realmPath + "." + ibcSlugCAEF
+	recipient := testutils.TestAddress("recipient")
+	spendAmount := int64(1_000_000)
+
+	gov := newMockGovernance()
+
+	if err := common.IsRegistered(ibcTokenPath); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", admin, 1_000_000_000)
+	}
+
+	testing.SetRealm(adminRealm)
+	common.SafeGRC20Transfer(cross, ibcTokenPath, communityPoolAddr, spendAmount*2)
+
+	proposal := governance.NewProposal(
+		1,
+		NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+		governance.NewProposalMetadata("IBC Community Pool Spend", "Spend IBC token"),
+		NewProposalCommunityPoolSpendData(
+			ibcTokenPath,
+			recipient,
+			spendAmount,
+			"gno.land/r/gnoswap/community_pool",
+		),
+		testutils.TestAddress("proposer"),
+		1,
+		time.Now().Add(-time.Hour*24*15).Unix(),
+		time.Now().Add(-time.Hour*24*15).Unix(),
+		100,
+	)
+	statusResolver := NewProposalStatusResolver(proposal.Status())
+	statusResolver.vote(true, 6_000_000_000)
+	setupExecuteTestProposal(t, gov, proposal)
+
+	before := common.BalanceOf(ibcTokenPath, recipient)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
+	var executedID int64
+	func(cur realm) {
+		testing.SetRealm(govRealm)
+		executedID = gov.Execute(1)
+	}(cross)
+
+	uassert.Equal(t, int64(1), executedID)
+
+	after := common.BalanceOf(ibcTokenPath, recipient)
+	uassert.Equal(t, before+spendAmount, after)
+}
+
+func TestGovernanceExecute_ExecuteCommunityPoolSpend_IBC_Unregistered(t *testing.T) {
+	const (
+		realmPath       = "gno.land/r/aib/ibc/apps/transfer"
+		ibcUnregistered = "ibc/2222222222222222222222222222222222222222222222222222222222222222"
+	)
+
+	ibcTokenPath := realmPath + "." + ibcUnregistered
+	recipient := testutils.TestAddress("recipient")
+	spendAmount := int64(1_000_000)
+
+	gov := newMockGovernance()
+
+	proposal := governance.NewProposal(
+		1,
+		NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+		governance.NewProposalMetadata("IBC Community Pool Spend", "Spend unregistered IBC token"),
+		NewProposalCommunityPoolSpendData(
+			ibcTokenPath,
+			recipient,
+			spendAmount,
+			"gno.land/r/gnoswap/community_pool",
+		),
+		testutils.TestAddress("proposer"),
+		1,
+		time.Now().Add(-time.Hour*24*15).Unix(),
+		time.Now().Add(-time.Hour*24*15).Unix(),
+		100,
+	)
+	statusResolver := NewProposalStatusResolver(proposal.Status())
+	statusResolver.vote(true, 6_000_000_000)
+	setupExecuteTestProposal(t, gov, proposal)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
+	uassert.AbortsContains(t, "is not registered", func() {
+		func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.Execute(1)
+		}(cross)
+	})
 }
 
 func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {

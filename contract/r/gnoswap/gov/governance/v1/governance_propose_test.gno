@@ -8,11 +8,106 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	_ "gno.land/r/gnoswap/halt"
+	_ "gno.land/r/onbloc/bar"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
+
+func TestGovernancePropose_ProposeCommunityPoolSpend_IBC(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+	)
+
+	ibcTokenPath := realmPath + "." + ibcSlugCAEF
+	proposer := testutils.TestAddress("proposer")
+	recipient := testutils.TestAddress("recipient")
+
+	gov := newMockGovernance()
+	setupTestConfig(t, gov, &governance.Config{
+		VotingStartDelay:              86400,
+		VotingPeriod:                  604800,
+		VotingWeightSmoothingDuration: 86400,
+		Quorum:                        50,
+		ProposalCreationThreshold:     1_000_000_000,
+		ExecutionDelay:                86400,
+		ExecutionWindow:               2592000,
+	})
+	setupTestGnsBalance(t, proposer, 10_000_000_000)
+	setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+		proposer.String(): governance.NewVotingInfo(5_000_000_000),
+	}, 5_000_000_000)
+
+	if err := common.IsRegistered(ibcTokenPath); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", admin, 1_000_000_000)
+	}
+
+	testing.SetRealm(testing.NewUserRealm(proposer))
+
+	var proposalId int64
+	func(cur realm) {
+		testing.SetRealm(govRealm)
+		proposalId = gov.ProposeCommunityPoolSpend(
+			"IBC Community Pool Spend",
+			"Spend IBC token",
+			recipient,
+			ibcTokenPath,
+			1_000_000,
+		)
+	}(cross)
+
+	uassert.Equal(t, int64(1), proposalId)
+
+	proposal, ok := gov.getProposal(proposalId)
+	uassert.Equal(t, true, ok)
+	uassert.Equal(t, governance.CommunityPoolSpend.String(), proposal.Type().String())
+	uassert.Equal(t, ibcTokenPath, proposal.Data().CommunityPoolSpend().TokenPath())
+	uassert.Equal(t, recipient, proposal.Data().CommunityPoolSpend().To())
+	uassert.Equal(t, int64(1_000_000), proposal.Data().CommunityPoolSpend().Amount())
+}
+
+func TestGovernancePropose_ProposeCommunityPoolSpend_IBC_Unregistered(t *testing.T) {
+	const (
+		realmPath       = "gno.land/r/aib/ibc/apps/transfer"
+		ibcUnregistered = "ibc/1111111111111111111111111111111111111111111111111111111111111111"
+	)
+
+	ibcTokenPath := realmPath + "." + ibcUnregistered
+	proposer := testutils.TestAddress("proposer")
+	recipient := testutils.TestAddress("recipient")
+
+	gov := newMockGovernance()
+	setupTestConfig(t, gov, &governance.Config{
+		VotingStartDelay:              86400,
+		VotingPeriod:                  604800,
+		VotingWeightSmoothingDuration: 86400,
+		Quorum:                        50,
+		ProposalCreationThreshold:     1_000_000_000,
+		ExecutionDelay:                86400,
+		ExecutionWindow:               2592000,
+	})
+	setupTestGnsBalance(t, proposer, 10_000_000_000)
+	setupTestUserVotesWithDelegation(t, gov, map[string]*governance.VotingInfo{
+		proposer.String(): governance.NewVotingInfo(5_000_000_000),
+	}, 5_000_000_000)
+
+	testing.SetRealm(testing.NewUserRealm(proposer))
+	uassert.AbortsContains(t, "is not registered", func() {
+		func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.ProposeCommunityPoolSpend(
+				"IBC Community Pool Spend",
+				"Spend unregistered IBC token",
+				recipient,
+				ibcTokenPath,
+				1_000_000,
+			)
+		}(cross)
+	})
+}
 
 func TestGovernancePropose_ProposeText(t *testing.T) {
 	tests := []struct {

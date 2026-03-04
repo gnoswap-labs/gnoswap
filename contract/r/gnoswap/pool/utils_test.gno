@@ -145,3 +145,17 @@ func TestParsePoolPath(t *testing.T) {
 		})
 	}
 }
+
+func TestPoolPathWithIBCVoucherTokenIDs(t *testing.T) {
+	// Values are taken from gno-realms IBC transfer filetests.
+	ibcTokenCAEF := "gno.land/r/aib/ibc/apps/transfer.ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+	ibcTokenF9A6 := "gno.land/r/aib/ibc/apps/transfer.ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+
+	poolPath := GetPoolPath(ibcTokenF9A6, ibcTokenCAEF, 3000)
+
+	token0, token1, fee := ParsePoolPath(poolPath)
+
+	uassert.Equal(t, ibcTokenCAEF, token0)
+	uassert.Equal(t, ibcTokenF9A6, token1)
+	uassert.Equal(t, uint32(3000), fee)
+}

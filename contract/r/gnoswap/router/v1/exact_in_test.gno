@@ -193,6 +193,94 @@ func TestExactInSwapRoute(t *testing.T) {
 	}
 }
 
+func TestExactInAndExactOutSwapRoute_IBC(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+	)
+
+	ibcTokenIn := realmPath + "." + ibcSlugCAEF
+	ibcTokenOut := realmPath + "." + ibcSlugF9A6
+	route := BuildSingleHopRoutePath(ibcTokenIn, ibcTokenOut, fee3000)
+	user := user1Addr
+
+	initRouterTest(t)
+
+	if err := common.IsRegistered(ibcTokenIn); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	}
+	if err := common.IsRegistered(ibcTokenOut); err != nil {
+		registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+	}
+
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	common.SafeGRC20Approve(cross, ibcTokenIn, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcTokenOut, poolAddr, maxApprove)
+	pl.CreatePool(cross, ibcTokenIn, ibcTokenOut, fee3000, "79228162514264337593543950336")
+
+	_, _, _, _ = pn.Mint(
+		cross,
+		ibcTokenIn,
+		ibcTokenOut,
+		fee3000,
+		-120,
+		120,
+		"100000",
+		"100000",
+		"0",
+		"0",
+		max_timeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	common.SafeGRC20Transfer(cross, ibcTokenIn, user, 1_000_000)
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	common.SafeGRC20Approve(cross, ibcTokenIn, routerAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcTokenIn, poolAddr, maxApprove)
+	common.SafeGRC20Approve(cross, ibcTokenOut, poolAddr, maxApprove)
+
+	router := mockRouter()
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	func(cur realm) {
+		testing.SetRealm(routerRealm)
+		amountIn, amountOut := router.ExactInSwapRoute(
+			ibcTokenIn,
+			ibcTokenOut,
+			"1000",
+			route,
+			"100",
+			"1",
+			time.Now().Add(time.Hour).Unix(),
+			"",
+		)
+		uassert.NotEqual(t, "", amountIn)
+		uassert.NotEqual(t, "", amountOut)
+	}(cross)
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	func(cur realm) {
+		testing.SetRealm(routerRealm)
+		amountIn, amountOut := router.ExactOutSwapRoute(
+			ibcTokenIn,
+			ibcTokenOut,
+			"100",
+			route,
+			"100",
+			"100000",
+			time.Now().Add(time.Hour).Unix(),
+			"",
+		)
+		uassert.NotEqual(t, "", amountIn)
+		uassert.NotEqual(t, "", amountOut)
+	}(cross)
+}
+
 func TestExactInZeroForOneFalse(t *testing.T) {
 	const maxTimeout int64 = 9999999999
 

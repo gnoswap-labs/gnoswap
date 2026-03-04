@@ -496,3 +496,74 @@ type swapPaidSwapParams struct {
 	callbackSendToken0Amount int64
 	callbackSendToken1Amount int64
 }
+
+func TestSwap_IBCSinglePool_BothDirections(t *testing.T) {
+	const (
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+	)
+
+	ibcToken0 := realmPath + "." + ibcSlugCAEF
+	ibcToken1 := realmPath + "." + ibcSlugF9A6
+
+	tests := []struct {
+		name           string
+		zeroForOne     bool
+		sqrtPriceLimit string
+	}{
+		{
+			name:           "zeroForOne swap on IBC pool",
+			zeroForOne:     true,
+			sqrtPriceLimit: MIN_PRICE,
+		},
+		{
+			name:           "oneForZero swap on IBC pool",
+			zeroForOne:     false,
+			sqrtPriceLimit: MAX_PRICE,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			burnTokens(t)
+			initPoolTest(t)
+
+			testing.SetRealm(testing.NewCodeRealm(realmPath))
+			registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+			registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+
+			testing.SetRealm(adminRealm)
+			mockInstanceSetPoolCreationFee(0)
+			common.SafeGRC20Approve(cross, ibcToken0, poolAddr, maxApprove)
+			common.SafeGRC20Approve(cross, ibcToken1, poolAddr, maxApprove)
+
+			mockInstanceCreatePool(ibcToken0, ibcToken1, STANDARD_FEE_TIER, "79228162514264337593543950336")
+			testing.SetRealm(posRealm)
+			mockInstanceMint(ibcToken0, ibcToken1, STANDARD_FEE_TIER, -120, 120, "100000000", adminAddr)
+
+			amount0, amount1 := mockInstanceSwap(
+				ibcToken0,
+				ibcToken1,
+				STANDARD_FEE_TIER,
+				adminAddr,
+				tt.zeroForOne,
+				"1000",
+				tt.sqrtPriceLimit,
+				adminAddr,
+				func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+					return mockSwapCallback(ibcToken0, ibcToken1, amount0Delta, amount1Delta)
+				},
+			)
+
+			if tt.zeroForOne {
+				uassert.True(t, amount0[0] != '-')
+				uassert.True(t, amount1[0] == '-')
+			} else {
+				uassert.True(t, amount0[0] == '-')
+				uassert.True(t, amount1[0] != '-')
+			}
+		})
+	}
+}

@@ -436,3 +436,70 @@ func TestSetFeeProtocol_BoundaryValues(t *testing.T) {
 		})
 	}
 }
+
+func TestCreatePool_RegisteredIBCVoucherKeys(t *testing.T) {
+	const (
+		ibcSlugCAEF = "ibc/CAEF9CA8CE6C302D73A831A49E34E59149D3A9AD96CCEBDFBF62F6D5710D92D8"
+		ibcSlugF9A6 = "ibc/F9A67CB19B2CAD2ADEC20AD475BE86DF851DEC2B6F6CABC9B7B781BD9131D18F"
+		realmPath    = "gno.land/r/aib/ibc/apps/transfer"
+	)
+
+	ibcTokenKeyCAEF := realmPath + "." + ibcSlugCAEF
+	ibcTokenKeyF9A6 := realmPath + "." + ibcSlugF9A6
+
+	initPoolTest(t)
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0)
+
+	testing.SetRealm(testing.NewCodeRealm(realmPath))
+	registerIBCVoucherToken(realmPath, ibcSlugCAEF, "uphoton", adminAddr, 1_000_000_000)
+	registerIBCVoucherToken(realmPath, ibcSlugF9A6, "uatone", adminAddr, 1_000_000_000)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceCreatePool(ibcTokenKeyF9A6, ibcTokenKeyCAEF, FeeTier3000, "79228162514264337593543950336")
+
+	poolPath := GetPoolPath(ibcTokenKeyCAEF, ibcTokenKeyF9A6, FeeTier3000)
+	pool := getMockInstance().mustGetPool(poolPath)
+
+	uassert.Equal(t, ibcTokenKeyCAEF, pool.Token0Path())
+	uassert.Equal(t, ibcTokenKeyF9A6, pool.Token1Path())
+}
+
+func TestCreatePool_UnregisteredIBCVoucherKeys(t *testing.T) {
+	const (
+		ibcTokenKey1111 = "gno.land/r/aib/ibc/apps/transfer.ibc/1111111111111111111111111111111111111111111111111111111111111111"
+		ibcTokenKey2222 = "gno.land/r/aib/ibc/apps/transfer.ibc/2222222222222222222222222222222222222222222222222222222222222222"
+	)
+
+	tests := []struct {
+		name          string
+		token0Path    string
+		token1Path    string
+		expectedPanic string
+	}{
+		{
+			name:          "ibc with unregistered token pair is rejected",
+			token0Path:    ibcTokenKey1111,
+			token1Path:    barPath,
+			expectedPanic: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/aib/ibc/apps/transfer.ibc/1111111111111111111111111111111111111111111111111111111111111111)",
+		},
+		{
+			name:          "ibc pair is rejected with first token detail",
+			token0Path:    ibcTokenKey1111,
+			token1Path:    ibcTokenKey2222,
+			expectedPanic: "[GNOSWAP-COMMON-002] token is not registered || token(gno.land/r/aib/ibc/apps/transfer.ibc/1111111111111111111111111111111111111111111111111111111111111111)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			testing.SetRealm(adminRealm)
+			mockInstanceSetPoolCreationFee(0)
+
+			uassert.AbortsWithMessage(t, tt.expectedPanic, func() {
+				mockInstanceCreatePool(tt.token0Path, tt.token1Path, FeeTier3000, "79228162514264337593543950336")
+			})
+		})
+	}
+}
