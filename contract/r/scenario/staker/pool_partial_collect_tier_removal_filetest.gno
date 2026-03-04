@@ -173,7 +173,7 @@ func firstPartialCollect() {
 
 	println("[INFO] first partial collect")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	firstCollectReward = afterGns - beforeGns
 
@@ -206,7 +206,7 @@ func secondCollectAfterRemoval() {
 
 	println("[INFO] collect remaining rewards from before tier removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondCollectReward = afterGns - beforeGns
 
@@ -227,7 +227,7 @@ func thirdCollectNoReward() {
 
 	println("[INFO] third collect attempt")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	thirdCollectReward = afterGns - beforeGns
 

@@ -191,7 +191,6 @@ func decreaseLiquidityNoUnwrap() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
@@ -212,7 +211,6 @@ func decreaseLiquidityWithUnwrap() {
 		"0",
 		"0",
 		9999999999,
-		true,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)

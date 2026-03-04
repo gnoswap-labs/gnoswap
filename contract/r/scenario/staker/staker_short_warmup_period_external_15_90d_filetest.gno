@@ -200,10 +200,10 @@ func rewardFor1Block() {
 	testing.SkipHeights(1)   // active // but no block passed since active
 	testing.SetRealm(adminRealm)
 
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
-	sr.CollectReward(cross, 3, false)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross, 4)
 
 	println("[INFO] skipping 1 block to check rewards")
 	testing.SkipHeights(1)
@@ -223,7 +223,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux := qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newQux := qux.BalanceOf(adminUser)
 	diff := newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 01 reward: %d QUX\n", diff)
@@ -236,7 +236,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 02 reward: %d QUX\n", diff)
@@ -249,7 +249,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 03 reward: %d QUX\n", diff)
@@ -262,7 +262,7 @@ func rewardFor1Block() {
 	testing.SetRealm(adminRealm)
 
 	oldQux = qux.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 4)
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 04 reward: %d QUX\n", diff)

@@ -44,11 +44,11 @@ func (t *TestStaker) StakeToken(positionId uint64, referrer string) string {
 	).(string)
 }
 
-func (t *TestStaker) UnStakeToken(positionId uint64, unwrapResult bool) string {
+func (t *TestStaker) UnStakeToken(positionId uint64) string {
 	return t.ExecuteFn(
 		"UnStakeToken",
-		func(args ...any) any { return t.instance.UnStakeToken(args[0].(uint64), args[1].(bool)) },
-		positionId, unwrapResult,
+		func(args ...any) any { return t.instance.UnStakeToken(args[0].(uint64)) },
+		positionId,
 	).(string)
 }
 
@@ -64,14 +64,14 @@ func (t *TestStaker) MintAndStake(token0 string, token1 string, fee uint32, tick
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string)
 }
 
-func (t *TestStaker) CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
+func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	result := t.ExecuteFn(
 		"CollectReward",
 		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.CollectReward(args[0].(uint64), args[1].(bool))
+			r1, r2, r3, r4 := t.instance.CollectReward(args[0].(uint64))
 			return []any{r1, r2, r3, r4}
 		},
-		positionId, unwrapResult,
+		positionId,
 	).([]any)
 	return result[0].(string), result[1].(string), result[2].(map[string]int64), result[3].(map[string]int64)
 }

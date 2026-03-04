@@ -132,7 +132,6 @@ func testRoundTripUltraTight() {
 		liquidity, // burn all liquidity
 		"0", "0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[BURN] Liquidity burned: %s\n", burnedLiquidity)
@@ -229,7 +228,6 @@ func testRoundTripVariousAmounts() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		// Verify invariant
@@ -295,7 +293,6 @@ func testRoundTripPriceBoundaries() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		ufmt.Printf("[RESULT] Range: [%d,%d], In: (%s,%s), Out: (%s,%s)\n",
@@ -342,7 +339,6 @@ func testMultipleRoundTrips() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		currentBar := bar.BalanceOf(aliceAddr)

@@ -331,7 +331,6 @@ func removeLiquidityToGnot() BalanceSnapshot {
 		"0",
 		"0",
 		max_timeout,
-		true, // unwrap to GNOT
 	)
 
 	println("[INFO] Removed liquidity:", removeLiquidity)
@@ -350,7 +349,6 @@ func collectAllFeesAsGnot() BalanceSnapshot {
 	_, token0Collected, token1Collected, _, _, _ := pn.CollectFee(
 		cross,
 		1,
-		true, // unwrap to GNOT
 	)
 
 	println("[INFO] GNS fees collected:", token0Collected)
@@ -376,7 +374,6 @@ func closePositionToGnot() BalanceSnapshot {
 		"0",
 		"0",
 		max_timeout,
-		true, // unwrap to GNOT
 	)
 
 	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")

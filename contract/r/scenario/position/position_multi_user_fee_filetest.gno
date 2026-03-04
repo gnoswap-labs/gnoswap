@@ -219,7 +219,7 @@ func collectUser1Fees() {
 	baz.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] User1 collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] User1 collected fee1 should be %s\n", fee1)
 }
@@ -230,7 +230,7 @@ func collectUser2Fees() {
 	baz.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees for user2")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 2, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 2)
 	ufmt.Printf("[EXPECTED] User2 collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] User2 collected fee1 should be %s\n", fee1)
 }

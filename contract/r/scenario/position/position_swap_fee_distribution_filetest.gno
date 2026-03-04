@@ -149,12 +149,12 @@ func checkFeesBeforeSwap() {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 
 	ufmt.Println("[INFO] Checking fees for position 2")
-	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2, false)
+	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 }
@@ -191,12 +191,12 @@ func checkFeesAfterSwap() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Checking fees for position 1")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 
 	ufmt.Println("[INFO] Checking fees for position 2")
-	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2, false)
+	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
 }

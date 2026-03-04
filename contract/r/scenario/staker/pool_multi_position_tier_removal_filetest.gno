@@ -259,7 +259,7 @@ func waitAndCollectRewards() {
 	testing.SetRealm(user1Realm)
 	println("[INFO] User A attempts to collect rewards")
 	beforeGnsA := gns.BalanceOf(user1Addr)
-	sr.CollectReward(cross, positionA, false)
+	sr.CollectReward(cross, positionA)
 	afterGnsA := gns.BalanceOf(user1Addr)
 	rewardUserA = afterGnsA - beforeGnsA
 

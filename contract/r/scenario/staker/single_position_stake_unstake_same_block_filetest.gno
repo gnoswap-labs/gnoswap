@@ -164,7 +164,7 @@ func stakeAndUnstakeInSameBlock() {
 	}
 
 	println("[INFO] immediately unstake position 01 (same block)")
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)

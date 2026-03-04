@@ -210,7 +210,7 @@ func collectFeesAndRewards() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees and rewards")
-	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross, 1)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)

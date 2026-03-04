@@ -388,7 +388,6 @@ func testDecreaseLiquiditySuccess() {
 		"0",
 		"0",
 		max_timeout,
-		false,
 	)
 
 	println("[INFO] Verifying position after decrease")

@@ -137,7 +137,6 @@ func removePosition(positionId uint64) {
 		"0",
 		"0",
 		9999999999,
-		true,
 	)
 
 	ufmt.Printf("[EXPECTED] positionId: %d\n", positionId)

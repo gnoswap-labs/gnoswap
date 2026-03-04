@@ -162,7 +162,7 @@ func stakePosition() {
 	before := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	after := gns.BalanceOf(adminUser)
 
@@ -176,7 +176,7 @@ func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(blocks)
 
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	after := gns.BalanceOf(adminUser)
 	diff := after - before
 

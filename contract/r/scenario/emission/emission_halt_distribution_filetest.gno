@@ -181,7 +181,7 @@ func collectRewards(positionId uint64) {
 		emission.MintAndDistributeGns(cross)
 		totalStakerBalanceChanges = totalStakerBalanceChanges + gns.BalanceOf(stakerAddr) - stakerBalanceBeforeMint
 
-		staker.CollectReward(cross, positionId, false)
+		staker.CollectReward(cross, positionId)
 		totalAdminRewards = gns.BalanceOf(adminAddr) - beforeGns
 	})
 

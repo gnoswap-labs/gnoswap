@@ -288,7 +288,7 @@ func collectRewardsMidway() {
 	println("[INFO] collecting rewards at midway point")
 
 	// Collect rewards without unwrap
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	adminGnsAfter := gns.BalanceOf(adminUser)
 	midwayRewards := adminGnsAfter - adminGnsBefore
@@ -312,7 +312,7 @@ func collectFinalRewards() {
 	println("[INFO] collecting final rewards")
 
 	// Collect remaining rewards
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	adminGnsAfter := gns.BalanceOf(adminUser)
 	finalRewards := adminGnsAfter - adminGnsBefore
@@ -328,7 +328,7 @@ func unstakePosition() {
 	println("[INFO] unstaking position to collect remaining rewards")
 
 	// Unstake position (this will collect any remaining rewards)
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	adminGnsAfter := gns.BalanceOf(adminUser)
 	unstakeRewards := adminGnsAfter - adminGnsBefore

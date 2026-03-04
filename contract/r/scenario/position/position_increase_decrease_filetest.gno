@@ -196,7 +196,7 @@ func decreasePositionLiquidity() {
 	foo.Approve(cross, poolAddr, 100000000)
 
 	ufmt.Println("[INFO] Collecting fees before decrease")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
@@ -208,7 +208,6 @@ func decreasePositionLiquidity() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
@@ -224,7 +223,7 @@ func checkFinalPositionState() {
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
 
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Final fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Final fee1 should be %s\n", fee1)
 }

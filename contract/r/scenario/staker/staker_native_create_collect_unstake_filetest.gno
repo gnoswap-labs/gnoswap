@@ -365,7 +365,7 @@ func collectReward01() {
 	ufmt.Printf("[INFO] ugnot balance before collect: %d\n", ugnotBalanceBefore)
 
 	println("[INFO] collect reward for token 01 (no unwrap)")
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 
@@ -394,7 +394,7 @@ func unstakeToken02() {
 	ufmt.Printf("[INFO] ugnot balance before unstake: %d\n", ugnotBalanceBefore)
 
 	println("[INFO] unstake token 02 (no unwrap)")
-	sr.UnStakeToken(cross, 2, false)
+	sr.UnStakeToken(cross, 2)
 	testing.SkipHeights(1)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(2))
@@ -461,7 +461,7 @@ func unstakeToken01() {
 	ufmt.Printf("[INFO] ugnot balance before unstake: %d\n", ugnotBalanceBefore)
 
 	println("[INFO] unstake token 01 (no unwrap)")
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 	testing.SkipHeights(1)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(1))

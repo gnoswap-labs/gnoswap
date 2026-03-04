@@ -290,7 +290,6 @@ func testPositionDeletion() {
 		"0",
 		"0",
 		max_timeout,
-		false,
 	)
 
 	println("[INFO] Verifying position is burned after deletion")

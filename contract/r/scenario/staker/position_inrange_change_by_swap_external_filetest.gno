@@ -227,7 +227,7 @@ func collectExternalRewardWhileInRange() {
 
 	println("[INFO] collect external reward while position is in-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar := bar.BalanceOf(adminUser)
 	inRangeReward := afterBar - beforeBar
 
@@ -307,7 +307,7 @@ func collectExternalRewardWhileOutOfRange() {
 
 	println("[INFO] collect external reward while position is out-of-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar := bar.BalanceOf(adminUser)
 	outOfRangeReward := afterBar - beforeBar
 
@@ -372,7 +372,7 @@ func collectExternalRewardAfterReturningInRange() {
 
 	println("[INFO] collect external reward after position returned to in-range")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar := bar.BalanceOf(adminUser)
 	backInRangeReward := afterBar - beforeBar
 

@@ -227,7 +227,7 @@ func collectEmissionRewardsWithSkipHeights(skippedHeights int64) {
 
 	// collect rewards to get collected GNS amount
 	beforeGnsBalance := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGnsBalance := gns.BalanceOf(adminUser)
 	collectedGns := afterGnsBalance - beforeGnsBalance
 
@@ -239,7 +239,7 @@ func collectEmissionRewardsWithSkipHeights(skippedHeights int64) {
 
 	// collect rewards again to get reward amount per height
 	beforeGnsBalance = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGnsBalance = gns.BalanceOf(adminUser)
 	rewardPerHeight := afterGnsBalance - beforeGnsBalance
 

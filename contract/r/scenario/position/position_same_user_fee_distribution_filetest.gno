@@ -269,13 +269,13 @@ func checkSameRangeFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 1")
-	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1)
 
 	ufmt.Printf("[EXPECTED] Position 1 fee0 should be %s\n", fee01)
 	ufmt.Printf("[EXPECTED] Position 1 fee1 should be %s\n", fee11)
 
 	ufmt.Println("[INFO] Collecting fees from position 2")
-	_, fee02, fee12, _, _, _ := position.CollectFee(cross, 2, false)
+	_, fee02, fee12, _, _, _ := position.CollectFee(cross, 2)
 
 	ufmt.Printf("[EXPECTED] Position 2 fee0 should be %s\n", fee02)
 	ufmt.Printf("[EXPECTED] Position 2 fee1 should be %s\n", fee12)
@@ -287,13 +287,13 @@ func checkDifferentRangeFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 3")
-	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3, false)
+	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3)
 
 	ufmt.Printf("[EXPECTED] Position 3 fee0 should be %s\n", fee03)
 	ufmt.Printf("[EXPECTED] Position 3 fee1 should be %s\n", fee13)
 
 	ufmt.Println("[INFO] Collecting fees from position 4")
-	_, fee04, fee14, _, _, _ := position.CollectFee(cross, 4, false)
+	_, fee04, fee14, _, _, _ := position.CollectFee(cross, 4)
 
 	ufmt.Printf("[EXPECTED] Position 4 fee0 should be %s\n", fee04)
 	ufmt.Printf("[EXPECTED] Position 4 fee1 should be %s\n", fee14)

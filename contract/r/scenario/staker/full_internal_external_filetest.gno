@@ -321,7 +321,7 @@ func collectRewardsAllWarmUp() {
 
 	println("[INFO] collect rewards for 30% warm-up")
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 	}
 	testing.SkipHeights(1)
 
@@ -332,7 +332,7 @@ func collectRewardsAllWarmUp() {
 	testing.SkipHeights(blocksIn5Days)
 
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 	}
 	testing.SkipHeights(1)
 }
@@ -363,7 +363,7 @@ func performSwaps() {
 
 	println("[INFO] check reward for position 01 after swap")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -414,7 +414,7 @@ func oneClickStakingPos07OutRange() {
 
 	println("[INFO] collect reward for position 07")
 	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
-	sr.CollectReward(cross, 7, false)
+	sr.CollectReward(cross, 7)
 	newAdminGnsBalance := gns.BalanceOf(adminAddr)
 
 	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
@@ -428,7 +428,7 @@ func unstakeToken01() {
 
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns

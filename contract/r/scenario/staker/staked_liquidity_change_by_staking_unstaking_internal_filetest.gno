@@ -205,14 +205,14 @@ func collectRewardsBothPositions() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] clear any accumulated rewards first")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for position 01")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward1 := afterGns - beforeGns
 
@@ -225,7 +225,7 @@ func collectRewardsBothPositions() {
 
 	println("[INFO] collect reward for position 02")
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	reward2 := afterGns - beforeGns
 
@@ -241,7 +241,7 @@ func unstakePosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 02")
-	sr.UnStakeToken(cross, 2, false)
+	sr.UnStakeToken(cross, 2)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
@@ -257,7 +257,7 @@ func collectRewardsAfterUnstaking() {
 	println("[INFO] collect reward for position 01 after position 02 unstaked")
 	beforeGns := gns.BalanceOf(adminUser)
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 

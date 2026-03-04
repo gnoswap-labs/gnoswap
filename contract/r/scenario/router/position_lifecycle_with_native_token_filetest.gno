@@ -216,7 +216,6 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 		"0", // amount0Min
 		"0", // amount1Min
 		max_timeout,
-		true, // unwrap to GNOT
 	)
 
 	afterWugnotBalance := wugnot.BalanceOf(userAddr)

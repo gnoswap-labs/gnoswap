@@ -193,7 +193,7 @@ func collectReward01() {
 	ufmt.Printf("[INFO] community pool GNS balance before: %d\n", communityPoolBefore)
 
 	println("[INFO] collect reward for position 01")
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	gnsAfter := gns.BalanceOf(adminUser)
 	communityPoolAfter := gns.BalanceOf(communityPoolAddr)

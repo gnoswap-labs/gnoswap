@@ -200,7 +200,7 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	ufmt.Printf("[INFO] devOps GNS before: %d\n", devOpsGnsBefore)
 	
 	println("[INFO] collect rewards during warmup period")
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	
 	println("[INFO] check balances after collection")
 	userGnsAfter := gns.BalanceOf(adminUser)

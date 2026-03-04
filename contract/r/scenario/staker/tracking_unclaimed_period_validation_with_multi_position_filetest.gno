@@ -134,11 +134,11 @@ func testPoolInitializationBehavior() {
 	testing.SkipHeights(2)
 
 	println("[INFO] collect reward immediately after first stake")
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	println("[EXPECTED] no unclaimable rewards sent to community pool")
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 	testing.SkipHeights(5)
 }
 
@@ -204,13 +204,13 @@ func testUnclaimablePeriodRewardDistribution() {
 	testing.SkipHeights(10)
 
 	println("[INFO] unstake first position (pool still has liquidity from second position)")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 
 	println("[INFO] wait 5 blocks with pool still having liquidity")
 	testing.SkipHeights(5)
 
 	println("[INFO] unstake second position to enter true unclaimable period")
-	sr.UnStakeToken(cross, positionId2, false)
+	sr.UnStakeToken(cross, positionId2)
 	actualUnclaimableStart := time.Now().Unix()
 	ufmt.Printf("[EXPECTED] unclaimable period start: %d\n", actualUnclaimableStart)
 
@@ -223,12 +223,12 @@ func testUnclaimablePeriodRewardDistribution() {
 	sr.StakeToken(cross, positionId, "")
 
 	communityBalanceBefore1 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
 	unclaimableRound1 := communityBalanceAfter1 - communityBalanceBefore1
 
 	println("[INFO] unstake first position again to continue unclaimable")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 
 	println("[INFO] wait 5 more blocks")
 	testing.SkipHeights(5)
@@ -239,7 +239,7 @@ func testUnclaimablePeriodRewardDistribution() {
 	endTime := time.Now().Unix()
 
 	communityBalanceBefore2 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	communityBalanceAfter2 := gns.BalanceOf(communityPoolAddr)
 	unclaimableRound2 := communityBalanceAfter2 - communityBalanceBefore2
 
@@ -262,7 +262,7 @@ func testUnclaimablePeriodRewardDistribution() {
 	}
 
 	println("[INFO] unstake positions for cleanup")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 	// positionId2 is already unstaked
 	testing.SkipHeights(5)
 }
@@ -312,7 +312,7 @@ func testClaimablePeriodCollection() {
 	collectionTime := time.Now().Unix()
 
 	communityBalanceBefore1 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
 	unclaimableDuringClaimable := communityBalanceAfter1 - communityBalanceBefore1
 
@@ -320,7 +320,7 @@ func testClaimablePeriodCollection() {
 	ufmt.Printf("[EXPECTED] unclaimable sent during claimable: %d\n", unclaimableDuringClaimable)
 
 	println("[INFO] unstake to enter unclaimable period")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 	actualUnclaimableStart := time.Now().Unix()
 
 	println("[INFO] wait 10 blocks during unclaimable")
@@ -332,7 +332,7 @@ func testClaimablePeriodCollection() {
 	actualUnclaimableEnd := time.Now().Unix()
 
 	communityBalanceBefore2 := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	communityBalanceAfter2 := gns.BalanceOf(communityPoolAddr)
 	unclaimableAfterPeriod := communityBalanceAfter2 - communityBalanceBefore2
 
@@ -345,7 +345,7 @@ func testClaimablePeriodCollection() {
 	}
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {

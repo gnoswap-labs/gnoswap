@@ -203,7 +203,7 @@ func collectExternalRewardWithUnwrap() {
 
 	println("[INFO] skip blocks to accumulate rewards")
 	testing.SkipHeights(900)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 
@@ -215,7 +215,7 @@ func collectExternalRewardWithUnwrap() {
 	ufmt.Printf("[INFO] wugnot balance before: %d\n", oldWugnotBal)
 
 	println("[INFO] collect reward with unwrap=true")
-	sr.CollectReward(cross, 1, true) // unwrap=true (now transfers WUGNOT)
+	sr.CollectReward(cross, 1) // unwrap=true (now transfers WUGNOT)
 
 	newUgnotBal := ugnotBalanceOf(adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
@@ -251,7 +251,7 @@ func collectExternalRewardWithoutUnwrap() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward with unwrap=false")
-	sr.CollectReward(cross, 1, false) // unwrap=false
+	sr.CollectReward(cross, 1) // unwrap=false
 
 	newUgnotBal := ugnotBalanceOf(adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)

@@ -157,7 +157,7 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] Position liquidity before decrease should be %s\n", liquidityBefore)
 
 	ufmt.Println("[INFO] Collecting fees")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
@@ -175,7 +175,6 @@ func testDecreaseLiquidityAndBalance() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)

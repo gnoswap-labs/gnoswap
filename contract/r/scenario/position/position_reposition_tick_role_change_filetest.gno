@@ -146,7 +146,6 @@ func repositionToNewRange() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 	ufmt.Printf("[EXPECTED] Decreased amount0: %s\n", amount0Decreased)
 	ufmt.Printf("[EXPECTED] Decreased amount1: %s\n", amount1Decreased)

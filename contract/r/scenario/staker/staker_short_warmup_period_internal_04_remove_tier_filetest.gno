@@ -242,8 +242,8 @@ func stakeToken_2() {
 	sr.StakeToken(cross, 2, "")
 
 	// clear reward
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	ufmt.Printf("[EXPECTED] position 02 staked and rewards cleared\n")
 	testing.SkipHeights(1)
@@ -254,7 +254,7 @@ func removePoolTier() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // position 01 is in tier1 pool
+	sr.CollectReward(cross, 1) // position 01 is in tier1 pool
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 01 reward before tier removal: %d GNS\n", diff)
@@ -266,7 +266,7 @@ func removePoolTier() {
 	// tier2 pool has been removed, only 1 pool exist in tier 1
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // position 01 is in tier1 pool
+	sr.CollectReward(cross, 1) // position 01 is in tier1 pool
 	afterGns = gns.BalanceOf(adminUser)
 	diff = afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 01 reward after tier removal: %d GNS\n", diff)

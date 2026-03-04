@@ -282,7 +282,7 @@ func drainBarIncentive() {
 
 		for i := 2; i <= 21; i++ { // Position IDs 2-21 are temporary
 			beforeBar := bar.BalanceOf(adminUser)
-			sr.CollectReward(cross, uint64(i), false)
+			sr.CollectReward(cross, uint64(i))
 			afterBar := bar.BalanceOf(adminUser)
 			drained := afterBar - beforeBar
 			totalBarDrained += drained
@@ -313,7 +313,7 @@ func demonstratePartialFailure(positionId uint64) {
 
 	println("[ACTION] Collect rewards from main position (ID=1)")
 
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 
 	// Check balances after collection
 	afterBar := bar.BalanceOf(adminUser)
@@ -344,7 +344,7 @@ func verifyPermanentLoss(positionId uint64) {
 	beforeBar := bar.BalanceOf(adminUser)
 	beforeBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 
 	afterBar := bar.BalanceOf(adminUser)
 	afterBaz := baz.BalanceOf(adminUser)
@@ -361,7 +361,7 @@ func verifyPermanentLoss(positionId uint64) {
 	beforeBar = bar.BalanceOf(adminUser)
 	beforeBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 
 	immediateBar := bar.BalanceOf(adminUser) - beforeBar
 	immediateBaz := baz.BalanceOf(adminUser) - beforeBaz
@@ -378,7 +378,7 @@ func verifyPermanentLoss(positionId uint64) {
 	finalBeforeBar := bar.BalanceOf(adminUser)
 	finalBeforeBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 
 	finalBar := bar.BalanceOf(adminUser) - finalBeforeBar
 	finalBaz := baz.BalanceOf(adminUser) - finalBeforeBaz

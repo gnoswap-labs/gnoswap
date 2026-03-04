@@ -247,7 +247,7 @@ func collectRewardsForBarAndGns() {
 	oldBar := bar.BalanceOf(adminUser)
 	oldGns := gns.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	newBar := bar.BalanceOf(adminUser)
 	newGns := gns.BalanceOf(adminUser)

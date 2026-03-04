@@ -201,7 +201,6 @@ func decreaseLiquidityPartially() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
@@ -238,7 +237,7 @@ func executeMoreSwaps() {
 
 func verifyFinalTokensOwed() {
 	testing.SetRealm(aliceRealm)
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)

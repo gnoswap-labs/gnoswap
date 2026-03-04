@@ -186,7 +186,7 @@ func collectRewards(positionIds ...uint64) {
 
 		for _, positionId := range positionIds {
 			beforeCollectedGns := gns.BalanceOf(adminAddr)
-			staker.CollectReward(cross, positionId, false)
+			staker.CollectReward(cross, positionId)
 			afterCollectedGns := gns.BalanceOf(adminAddr)
 
 			totalAdminRewards += (afterCollectedGns - beforeCollectedGns)

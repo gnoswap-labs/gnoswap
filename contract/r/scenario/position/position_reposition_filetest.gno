@@ -178,7 +178,7 @@ func repositionToNewRange() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees before reposition")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
@@ -190,7 +190,6 @@ func repositionToNewRange() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Println("[INFO] Repositioning to new range")
@@ -259,7 +258,7 @@ func checkFinalPositionState() {
 	ufmt.Printf("[EXPECTED] Final position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Final position tickUpper should be %d\n", pos.TickUpper())
 
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Final fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Final fee1 should be %s\n", fee1)
 }
