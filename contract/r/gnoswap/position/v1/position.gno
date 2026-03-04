@@ -303,7 +303,7 @@ func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount in
 //   - amount0MinStr: Min token0 to receive (slippage)
 //   - amount1MinStr: Min token1 to receive (slippage)
 //   - deadline: Transaction expiration
-//   - unwrapResult: Convert WUGNOT to GNOT if true
+//   - unwrapResult: Deprecated. Always returns WUGNOT (no longer unwraps to GNOT) TODO: remove
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -386,7 +386,7 @@ func (p *positionV1) DecreaseLiquidity(
 //
 // Parameters:
 //   - positionId: NFT token ID
-//   - unwrapResult: Convert WUGNOT to GNOT if true
+//   - unwrapResult: Deprecated. Always returns WUGNOT (no longer unwraps to GNOT) TODO: remove
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -477,17 +477,8 @@ func (p *positionV1) collectFee(
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	if isWrappedToken(token0) && unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
-	} else {
-		common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
-	}
-
-	if isWrappedToken(token1) && unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
-	} else {
-		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
-	}
+	common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
+	common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 

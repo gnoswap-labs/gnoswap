@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/banker"
 	"chain/runtime"
 	"errors"
 	"strings"
@@ -86,21 +85,17 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 	// Handle input token independently
 	if isInputNativeToken {
-		sent := banker.OriginSend()
-		ugnotSentByUser := sent.AmountOf(GNOT_DENOM)
+		caller := runtime.PreviousRealm().Address()
 
-		if ugnotSentByUser != specifiedAmount {
-			return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, specifiedAmount)
-		}
-
-		// wrap user's GNOT to WUGNOT
-		if ugnotSentByUser > 0 {
-			if err := wrapWithTransfer(runtime.PreviousRealm().Address(), ugnotSentByUser); err != nil {
+		// User must have already deposited GNOT into WUGNOT and approved this contract.
+		// Transfer WUGNOT from user to this contract.
+		if specifiedAmount > 0 {
+			if err := wrapWithTransfer(caller, runtime.CurrentRealm().Address(), specifiedAmount); err != nil {
 				return err
 			}
 		}
 
-		op.userWrappedWugnot = ugnotSentByUser
+		op.userWrappedWugnot = specifiedAmount
 	}
 
 	// Handle output token independently

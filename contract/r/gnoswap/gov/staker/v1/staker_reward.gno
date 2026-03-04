@@ -2,14 +2,12 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"chain/runtime"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -262,19 +260,7 @@ func transferToken(
 		)
 	}
 
-	// Handle native GNOT transfer through wUGNOT unwrapping
-	isGnoNativeCoin := tokenPath == WUGNOT_PATH
-	if isGnoNativeCoin {
-		wugnot.Withdraw(cross, amount)
-
-		sendCoin := chain.Coin{Denom: common.GNOT_DENOM, Amount: amount}
-		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(from, to, chain.Coins{sendCoin})
-
-		return nil
-	}
-
-	// Handle GRC20 token transfer
+	// Handle all token transfers (including WUGNOT) via GRC20 Transfer
 	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
 	return nil
