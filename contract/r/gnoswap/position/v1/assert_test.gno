@@ -585,6 +585,8 @@ func TestAssertSlippageIsNotExceeded(t *testing.T) {
 }
 
 func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
+	// After WUGNOT migration, this function always rejects native coin sends.
+	// Users must use WUGNOT (GRC20) instead of sending ugnot via --send.
 	tests := []struct {
 		name                 string
 		token0               string
@@ -596,35 +598,16 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		shouldPanic          bool
 	}{
 		{
-			name:        "GNOT native path in token0",
+			name:        "No coins sent - GNOT token pair passes",
 			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			amount0:     "1000",
 			amount1:     "2000",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
+			sentCoins:   chain.Coins{},
 			shouldPanic: false,
 		},
 		{
-			name:        "GNOT native path in token1",
-			token0:      gnsPath,
-			token1:      common.GNOT_DENOM,
-			amount0:     "2000",
-			amount1:     "1000",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			shouldPanic: false,
-		},
-		{
-			name:                 "GNOT native path with wrong amount",
-			token0:               common.GNOT_DENOM,
-			token1:               gnsPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
-			shouldPanic:          true,
-		},
-		{
-			name:        "No native tokens",
+			name:        "No coins sent - non-native pair passes",
 			token0:      gnsPath,
 			token1:      barPath,
 			amount0:     "1000",
@@ -633,7 +616,17 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
-			name:                 "No native tokens but coins sent",
+			name:                 "Native coins sent - always rejected",
+			token0:               common.GNOT_DENOM,
+			token1:               gnsPath,
+			amount0:              "1000",
+			amount1:              "2000",
+			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
+			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
+			shouldPanic:          true,
+		},
+		{
+			name:                 "Native coins sent with non-native tokens - rejected",
 			token0:               gnsPath,
 			token1:               barPath,
 			amount0:              "1000",
@@ -641,44 +634,6 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
 			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
 			shouldPanic:          true,
-		},
-		{
-			name:                 "Invalid amount0 (non-numeric)",
-			token0:               common.GNOT_DENOM,
-			token1:               gnsPath,
-			amount0:              "abc",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{},
-			expectedPanicMessage: "strconv.ParseInt: parsing \"abc\": invalid syntax",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Invalid amount1 (non-numeric)",
-			token0:               gnsPath,
-			token1:               common.GNOT_DENOM,
-			amount0:              "1000",
-			amount1:              "xyz",
-			sentCoins:            chain.Coins{},
-			expectedPanicMessage: "strconv.ParseInt: parsing \"xyz\": invalid syntax",
-			shouldPanic:          true,
-		},
-		{
-			name:        "Large valid amounts",
-			token0:      common.GNOT_DENOM,
-			token1:      gnsPath,
-			amount0:     "999999999999",
-			amount1:     "888888888888",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 999999999999}},
-			shouldPanic: false,
-		},
-		{
-			name:        "Zero amount for GNOT",
-			token0:      common.GNOT_DENOM,
-			token1:      gnsPath,
-			amount0:     "0",
-			amount1:     "1000",
-			sentCoins:   chain.Coins{},
-			shouldPanic: false,
 		},
 	}
 
@@ -688,9 +643,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 
 			testing.SetOriginSend(chain.Coins{})
 
-			// Setup sent coins context
 			if len(tt.sentCoins) > 0 {
-				// Simulate user sent coins by setting the proper realm
 				userAddr := address("g1user")
 				testing.SetRealm(testing.NewUserRealm(userAddr))
 				testing.SetOriginSend(tt.sentCoins)
@@ -704,13 +657,14 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 				})
 			} else {
 				assertIsValidUserCoinSendWithTokenPair(tt.token0, tt.token1, tt.amount0, tt.amount1)
-				uassert.Equal(t, true, true)
 			}
 		})
 	}
 }
 
 func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
+	// After WUGNOT migration, this function always rejects native coin sends.
+	// Users must use WUGNOT (GRC20) instead of sending ugnot via --send.
 	tests := []struct {
 		name                 string
 		token0               string
@@ -722,25 +676,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 		shouldPanic          bool
 	}{
 		{
-			name:        "WUGNOT path in token0 with coins",
-			token0:      wugnotPath,
-			token1:      gnsPath,
-			amount0:     "1000",
-			amount1:     "2000",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			shouldPanic: false,
-		},
-		{
-			name:        "WUGNOT path in token1 with coins",
-			token0:      gnsPath,
-			token1:      wugnotPath,
-			amount0:     "2000",
-			amount1:     "1000",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			shouldPanic: false,
-		},
-		{
-			name:        "WUGNOT path without coins (pre-wrapped)",
+			name:        "WUGNOT path without coins passes",
 			token0:      wugnotPath,
 			token1:      gnsPath,
 			amount0:     "1000",
@@ -749,17 +685,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
-			name:                 "WUGNOT path with wrong amount",
-			token0:               wugnotPath,
-			token1:               gnsPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
-			shouldPanic:          true,
-		},
-		{
-			name:        "No wrapped tokens, no coins",
+			name:        "No wrapped tokens, no coins passes",
 			token0:      gnsPath,
 			token1:      barPath,
 			amount0:     "1000",
@@ -768,7 +694,17 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
-			name:                 "No wrapped tokens but coins sent",
+			name:                 "Native coins sent with WUGNOT - rejected",
+			token0:               wugnotPath,
+			token1:               gnsPath,
+			amount0:              "1000",
+			amount1:              "2000",
+			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
+			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
+			shouldPanic:          true,
+		},
+		{
+			name:                 "Native coins sent without wrapped tokens - rejected",
 			token0:               gnsPath,
 			token1:               barPath,
 			amount0:              "1000",
@@ -776,62 +712,6 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
 			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
 			shouldPanic:          true,
-		},
-		{
-			name:                 "Invalid amount0 for wrapped token",
-			token0:               wugnotPath,
-			token1:               gnsPath,
-			amount0:              "invalid",
-			amount1:              "1000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			expectedPanicMessage: "strconv.ParseInt: parsing \"invalid\": invalid syntax",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Invalid amount1 for wrapped token",
-			token0:               gnsPath,
-			token1:               wugnotPath,
-			amount0:              "1000",
-			amount1:              "notanumber",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			expectedPanicMessage: "strconv.ParseInt: parsing \"notanumber\": invalid syntax",
-			shouldPanic:          true,
-		},
-		{
-			name:        "Large amounts with wrapped tokens",
-			token0:      wugnotPath,
-			token1:      gnsPath,
-			amount0:     "999999999999",
-			amount1:     "888888888888",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 999999999999}},
-			shouldPanic: false,
-		},
-		{
-			name:                 "Zero amount for wrapped token with coins",
-			token0:               wugnotPath,
-			token1:               gnsPath,
-			amount0:              "0",
-			amount1:              "1000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
-			shouldPanic:          true,
-		},
-		{
-			name:      "Zero send amount for wrapped token with coins",
-			token0:    wugnotPath,
-			token1:    gnsPath,
-			amount0:   "0",
-			amount1:   "1000",
-			sentCoins: chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 0}},
-		},
-		{
-			name:        "Both tokens are wrapped tokens (edge case)",
-			token0:      wugnotPath,
-			token1:      wugnotPath,
-			amount0:     "1000",
-			amount1:     "1000",
-			sentCoins:   chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			shouldPanic: false,
 		},
 	}
 

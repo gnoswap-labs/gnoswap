@@ -389,10 +389,11 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 func ugnotDeposit(t *testing.T, addr address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(addr))
-	wugnotAddr := wugnotAddr
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
 	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 }
 
 func burnTokens(t *testing.T) {

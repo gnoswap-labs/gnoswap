@@ -1,9 +1,7 @@
 package v1
 
 import (
-	"chain"
 	"errors"
-	"math"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,7 +12,6 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
@@ -712,17 +709,18 @@ func TestProcessTokens(t *testing.T) {
 
 			if tt.token0 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
+				ugnotFaucet(t, tt.caller, amount)
+				ugnotDeposit(t, tt.caller, amount)
+				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
 			}
 			if tt.token1 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
+				ugnotFaucet(t, tt.caller, amount)
+				ugnotDeposit(t, tt.caller, amount)
+				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
 			}
 
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 			token0, token1, native0, native1, wrapped, err := mockInstance.processTokens(
 				tt.token0,
 				tt.token1,
@@ -1781,22 +1779,16 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			testing.SetRealm(adminRealm)
-			wugnot.Approve(cross, positionAddr, math.MaxInt64)
-
 			if tt.wrapped > 0 {
 				amount := tt.wrapped
 				if tt.wrapped < 1000 {
 					amount = 1000
 				}
 
-				testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
-				wugnot.Deposit(cross)
-
-				testing.IssueCoins(address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"), chain.Coins{{"ugnot", amount}})
+				// Give position contract wugnot directly
+				ugnotFaucet(t, positionAddr, amount)
+				ugnotDeposit(t, positionAddr, amount)
 			}
-
-			testing.SetOriginSend(chain.Coins{})
 			testing.SetRealm(adminRealm)
 
 			unwrapLeftoverWrappedTokenFn := func(cur realm) error {

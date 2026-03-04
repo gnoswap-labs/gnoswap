@@ -8,67 +8,11 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-func TestTransferUGNOT(t *testing.T) {
-	tests := []struct {
-		name        string
-		action      func(t *testing.T, from, to address)
-		verify      func(t *testing.T, to address) int64
-		from        address
-		to          address
-		expected    string
-		shouldPanic bool
-	}{
-		{
-			name: "transferUGNOT is success by zero amount",
-			action: func(t *testing.T, from, to address) {
-				mockInstance.transferUGNOT(from, to, 0)
-			},
-			verify: func(t *testing.T, to address) int64 {
-				return ugnotBalanceOf(t, to)
-			},
-			from:        alice,
-			to:          bob,
-			expected:    "0",
-			shouldPanic: false,
-		},
-		{
-			name: "transferUGNOT is success by valid transfer",
-			action: func(t *testing.T, from, to address) {
-				ugnotFaucet(t, from, 100)
-				testing.SetRealm(testing.NewUserRealm(from))
-				mockInstance.transferUGNOT(from, to, 100)
-			},
-			verify: func(t *testing.T, to address) int64 {
-				return ugnotBalanceOf(t, to)
-			},
-			from:        positionAddr,
-			to:          bob,
-			expected:    "100",
-			shouldPanic: false,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			if !tc.shouldPanic {
-				tc.action(t, tc.from, tc.to)
-				if tc.verify != nil {
-					balance := tc.verify(t, tc.to)
-					uassert.Equal(t, tc.expected, strconv.FormatInt(balance, 10))
-				}
-			} else {
-				uassert.PanicsWithMessage(t, tc.expected, func() {
-					tc.action(t, tc.from, tc.to)
-				})
-			}
-		})
-	}
-}
-
 func TestWrapInPosition(t *testing.T) {
 	tests := []struct {
 		name           string
 		action         func(t *testing.T, from, to address) error
-		verify         func(t *testing.T, to address) int64
+		verify         func(t *testing.T, addr address) int64
 		from           address
 		to             address
 		expected       string
@@ -76,38 +20,42 @@ func TestWrapInPosition(t *testing.T) {
 		expectedErrMsg string
 	}{
 		{
-			name: "wrap is failed by amount less than minimum",
+			name: "wrap is failed by zero amount",
 			action: func(t *testing.T, from, to address) error {
-				return mockInstance.wrap(999, to)
+				return mockInstance.wrap(0, from)
 			},
 			verify:         nil,
 			from:           alice,
 			to:             bob,
-			expectedErrMsg: "amount(999) < minimum(1000)",
+			expectedErrMsg: "amount(0) is zero or negative",
 			shouldPanic:    true,
 		},
 		{
-			name: "wrap is failed by zero amount",
+			name: "wrap is failed by negative amount",
 			action: func(t *testing.T, from, to address) error {
-				return mockInstance.wrap(0, to)
+				return mockInstance.wrap(-1, from)
 			},
 			verify:         nil,
 			from:           alice,
 			to:             bob,
-			expectedErrMsg: "amount(0) < minimum(1000)",
+			expectedErrMsg: "amount(-1) is zero or negative",
 			shouldPanic:    true,
 		},
 		{
 			name: "wrap is success by valid amount",
 			action: func(t *testing.T, from, to address) error {
+				// Give the user wugnot and approve position
 				ugnotFaucet(t, from, 1000)
-				testing.SetRealm(testing.NewUserRealm(from))
-				return mockInstance.wrap(1000, to)
+				ugnotDeposit(t, from, 1000)
+				TokenApprove(t, wugnotPath, from, positionAddr, 1000)
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
+				return mockInstance.wrap(1000, from)
 			},
-			verify: func(t *testing.T, to address) int64 {
-				return TokenBalance(t, wugnotPath, to)
+			verify: func(t *testing.T, addr address) int64 {
+				return TokenBalance(t, wugnotPath, positionAddr)
 			},
-			from:        positionAddr,
+			from:        alice,
 			to:          bob,
 			expected:    "1000",
 			shouldPanic: false,
@@ -152,17 +100,16 @@ func TestUnWrap(t *testing.T) {
 		{
 			name: "unwrap is success by valid amount",
 			action: func(t *testing.T, from, to address) error {
-				ugnotFaucet(t, from, 1000)
+				// Give position some wugnot first
+				ugnotFaucet(t, positionAddr, 1000)
+				ugnotDeposit(t, positionAddr, 1000)
 
-				testing.SetRealm(testing.NewUserRealm(from))
-				err := mockInstance.wrap(1000, to)
-				uassert.Nil(t, err, "wrap should not return error")
-
-				TokenApprove(t, wugnotPath, to, from, 1000)
+				// unwrap sends wugnot from position to user
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 				return mockInstance.unwrap(1000, to)
 			},
 			verify: func(t *testing.T, to address) int64 {
-				return ugnotBalanceOf(t, to)
+				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        positionAddr,
 			to:          bob,
@@ -271,93 +218,46 @@ func TestIsWrappedToken(t *testing.T) {
 func TestSafeWrapNativeToken(t *testing.T) {
 	tests := []struct {
 		name          string
-		amountDesired string
-		userAddress   address
-		sentAmount    int64
+		amount        int64
+		fromAddress   address
 		expectError   bool
 		expectedWrap  int64
 		expectedError string
 	}{
 		{
-			name:          "safeWrapNativeToken is failed by zero UGNOT",
-			amountDesired: "50",
-			userAddress:   alice,
-			sentAmount:    0,
-			expectError:   true,
-			expectedError: "[GNOSWAP-POSITION-007] cannot wrap less than minimum amount || amount(50) < minimum(1000)",
+			name:         "safeWrapNativeToken succeeds with zero amount (noop)",
+			amount:       0,
+			fromAddress:  alice,
+			expectError:  false,
+			expectedWrap: 0,
 		},
 		{
-			name:          "safeWrapNativeToken is failed by insufficient UGNOT",
-			amountDesired: "150",
-			userAddress:   alice,
-			sentAmount:    100,
-			expectError:   true,
-			expectedError: "[GNOSWAP-POSITION-007] cannot wrap less than minimum amount || amount(150) < minimum(1000)",
+			name:         "safeWrapNativeToken succeeds with valid amount",
+			amount:       1050,
+			fromAddress:  alice,
+			expectError:  false,
+			expectedWrap: 1050,
 		},
 		{
-			name:          "safeWrapNativeToken is failed by invalid desired amount",
-			amountDesired: "invalid",
-			userAddress:   alice,
-			sentAmount:    200,
-			expectError:   true,
-			expectedError: "[GNOSWAP-POSITION-003] wrap, unwrap failed || strconv.ParseInt: parsing \"invalid\": invalid syntax",
-		},
-		{
-			name:          "safeWrapNativeToken is success by exact amount",
-			amountDesired: "1050",
-			userAddress:   alice,
-			sentAmount:    1050,
-			expectError:   false,
-			expectedWrap:  1050,
-		},
-		{
-			name:          "safeWrapNativeToken is success by excess refund",
-			amountDesired: "1000",
-			userAddress:   alice,
-			sentAmount:    1500,
-			expectError:   false,
-			expectedWrap:  1000,
-		},
-		{
-			name:          "safeWrapNativeToken is success by boundary test",
-			amountDesired: "1000",
-			userAddress:   alice,
-			sentAmount:    1000,
-			expectError:   false,
-			expectedWrap:  1000,
-		},
-		{
-			name:          "safeWrapNativeToken is success by zero desired amount", // unable to catch this panic
-			amountDesired: "0",
-			userAddress:   alice,
-			sentAmount:    100,
-			expectError:   false,
-			expectedWrap:  0,
-		},
-		{
-			name:          "safeWrapNativeToken is failed by wrap error",
-			amountDesired: "100",
-			userAddress:   alice,
-			sentAmount:    100,
-			expectError:   true, // Simulate wrap error internally
-			expectedError: "[GNOSWAP-POSITION-007] cannot wrap less than minimum amount || amount(100) < minimum(1000)",
+			name:         "safeWrapNativeToken succeeds with exact minimum",
+			amount:       1000,
+			fromAddress:  alice,
+			expectError:  false,
+			expectedWrap: 1000,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// we ignore the error here because we need to test
-			// the invalid amount case
-			amount, _ := strconv.ParseInt(tt.amountDesired, 10, 64)
-			if amount > 0 {
-				ugnotFaucet(t, positionAddr, amount)
+			if tt.amount > 0 {
+				// Give user wugnot and approve position
+				ugnotFaucet(t, tt.fromAddress, tt.amount)
+				ugnotDeposit(t, tt.fromAddress, tt.amount)
+				TokenApprove(t, wugnotPath, tt.fromAddress, positionAddr, tt.amount)
 			}
-			testing.SetRealm(testing.NewUserRealm(positionAddr))
 
-			mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
-
-			// Verify wrapped amount
-			wrappedAmount, err := mockInstance.safeWrapNativeToken(amount, tt.userAddress)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
+			wrappedAmount, err := mockInstance.safeWrapNativeToken(tt.amount, tt.fromAddress)
 			if tt.expectError {
 				uassert.ErrorIs(t, err, errors.New(tt.expectedError))
 			} else {
