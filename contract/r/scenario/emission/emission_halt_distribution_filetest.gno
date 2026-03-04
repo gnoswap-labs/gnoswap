@@ -73,6 +73,10 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position and stake")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintPositionAndStake()
 	testing.SkipHeights(1)
 	println()
@@ -126,9 +130,6 @@ func initPool() {
 
 func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
