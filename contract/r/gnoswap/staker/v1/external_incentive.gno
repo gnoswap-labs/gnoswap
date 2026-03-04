@@ -230,7 +230,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		"refundToken", incentiveResolver.RewardToken(),
 		"refundAmount", formatAnyInt(refund),
 		"refundGnsAmount", formatAnyInt(incentiveResolver.DepositGnsAmount()),
-		"isRequestUnwrap", formatBool(incentiveResolver.IsRequestUnwrap()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
