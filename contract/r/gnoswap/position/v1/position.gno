@@ -196,8 +196,6 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
-	wrappedAmount := int64(0)
-
 	if receivedCoins {
 		inputWrappedAmount := int64(0)
 
@@ -207,8 +205,7 @@ func (p *positionV1) IncreaseLiquidity(
 			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
 		}
 
-		wrappedAmount, err = p.safeWrapNativeToken(inputWrappedAmount, caller)
-		if err != nil {
+		if _, err := p.safeWrapNativeToken(inputWrappedAmount, caller); err != nil {
 			panic(err)
 		}
 	}
@@ -269,7 +266,6 @@ func (p *positionV1) IncreaseLiquidity(
 //   - amount0MinStr: Min token0 to receive (slippage)
 //   - amount1MinStr: Min token1 to receive (slippage)
 //   - deadline: Transaction expiration
-//   - unwrapResult: Deprecated. Always returns WUGNOT (no longer unwraps to GNOT) TODO: remove
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -285,7 +281,6 @@ func (p *positionV1) DecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
@@ -300,13 +295,12 @@ func (p *positionV1) DecreaseLiquidity(
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		positionId:   positionId,
-		liquidity:    liquidityStr,
-		amount0Min:   amount0Min,
-		amount1Min:   amount1Min,
-		deadline:     deadline,
-		unwrapResult: unwrapResult,
-		caller:       caller,
+		positionId: positionId,
+		liquidity:  liquidityStr,
+		amount0Min: amount0Min,
+		amount1Min: amount1Min,
+		deadline:   deadline,
+		caller:     caller,
 	}
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := p.decreaseLiquidity(decreaseLiquidityParams)
@@ -329,7 +323,6 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"unwrapResult", formatBool(unwrapResult),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
@@ -352,7 +345,6 @@ func (p *positionV1) DecreaseLiquidity(
 //
 // Parameters:
 //   - positionId: NFT token ID
-//   - unwrapResult: Deprecated. Always returns WUGNOT (no longer unwraps to GNOT) TODO: remove
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -365,10 +357,7 @@ func (p *positionV1) DecreaseLiquidity(
 // Requirements:
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
-func (p *positionV1) CollectFee(
-	positionId uint64,
-	unwrapResult bool,
-) (uint64, string, string, string, string, string) {
+func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -377,15 +366,11 @@ func (p *positionV1) CollectFee(
 
 	emission.MintAndDistributeGns(cross)
 
-	return p.collectFee(positionId, unwrapResult, caller)
+	return p.collectFee(positionId, caller)
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
-func (p *positionV1) collectFee(
-	positionId uint64,
-	unwrapResult bool,
-	caller address,
-) (uint64, string, string, string, string, string) {
+func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, string, string, string, string, string) {
 	// verify position
 	position := p.mustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.PoolKey())
@@ -467,7 +452,6 @@ func (p *positionV1) collectFee(
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
-		"unwrapResult", formatBool(unwrapResult),
 		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128().ToString(),
 		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128().ToString(),
 	)
@@ -505,10 +489,7 @@ func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int
 
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
-func (p *positionV1) SetPositionOperator(
-	id uint64,
-	operator address,
-) {
+func (p *positionV1) SetPositionOperator(id uint64, operator address) {
 	halt.AssertIsNotHaltedPosition()
 
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
@@ -546,10 +527,7 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 }
 
 // computePositionKey generates a unique base64-encoded key for a liquidity position.
-func computePositionKey(
-	tickLower int32,
-	tickUpper int32,
-) string {
+func computePositionKey(tickLower, tickUpper int32) string {
 	currentRealmPath := runtime.CurrentRealm().PkgPath()
 	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))

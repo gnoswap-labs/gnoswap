@@ -3,7 +3,6 @@ package v1
 import (
 	"errors"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -1021,7 +1020,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		amount0Min        string
 		amount1Min        string
 		deadlineOffset    time.Duration
-		unwrapResult      bool
 		expectedHasAbort  bool
 		expectedErrorMsg  string
 		expectedLiquidity string
@@ -1034,7 +1032,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "8000",
 			amount1Min:        "15000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "400000",
 			expectedFee0:      "0",
@@ -1046,7 +1043,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "600000",
 			expectedFee0:      "0",
@@ -1059,7 +1055,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-009] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
@@ -1069,7 +1064,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "200000",
 			amount1Min:        "400000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
@@ -1081,7 +1075,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    -time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
@@ -1094,7 +1087,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "12000",
 			amount1Min:        "25000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "1270796",
 			expectedFee0:      "0",
@@ -1130,7 +1122,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 						tc.amount0Min,
 						tc.amount1Min,
 						deadline,
-						tc.unwrapResult,
 					)
 				})
 			} else {
@@ -1140,7 +1131,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 					tc.amount0Min,
 					tc.amount1Min,
 					deadline,
-					tc.unwrapResult,
 				)
 				uassert.Equal(t, tc.expectedLiquidity, liquidity)
 				uassert.Equal(t, tc.expectedFee0, fee0)
@@ -1158,7 +1148,6 @@ func TestCollectFees(t *testing.T) {
 		mintAmount1        string
 		increaseAmount0    string
 		increaseAmount1    string
-		unwrapResult       bool
 		liquidityToRemove  string
 		expectedFee0       string
 		expectedFee1       string
@@ -1175,7 +1164,6 @@ func TestCollectFees(t *testing.T) {
 			increaseAmount0:   "500000",
 			increaseAmount1:   "1000000",
 			liquidityToRemove: "50",
-			unwrapResult:      false,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
@@ -1187,7 +1175,6 @@ func TestCollectFees(t *testing.T) {
 			mintAmount0:       "1000000",
 			mintAmount1:       "2000000",
 			liquidityToRemove: "100",
-			unwrapResult:      true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
@@ -1237,16 +1224,15 @@ func TestCollectFees(t *testing.T) {
 					"0",
 					"0",
 					time.Now().Add(time.Hour).Unix(),
-					tt.unwrapResult,
 				)
 			}
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
+					mockInstanceCollectFee(1, adminAddr)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
+				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, adminAddr)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1343,7 +1329,6 @@ func TestReposition(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 
 			// Step 4: Attempt Reposition
@@ -1697,139 +1682,6 @@ func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
 	}
 }
 
-func TestUnwrapLeftoverWrappedToken(t *testing.T) {
-	tests := []struct {
-		name                 string
-		token                string
-		wrapped              int64
-		amount               int64
-		expectError          bool
-		shouldCall           bool // whether unwrap should be called
-		expectPanic          bool
-		expectedPanicMessage string
-	}{
-		{
-			name:        "Unwrap leftover - wrapped > amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000,
-			amount:      700,
-			expectError: false,
-			shouldCall:  true,
-		},
-		{
-			name:        "No unwrap - wrapped == amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000,
-			amount:      1000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "No unwrap - wrapped < amount",
-			token:       WUGNOT_PATH,
-			wrapped:     7000,
-			amount:      10000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "No unwrap - not wrapped token",
-			token:       gnsPath,
-			wrapped:     10000,
-			amount:      7000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "Unwrap zero leftover",
-			token:       WUGNOT_PATH,
-			wrapped:     0,
-			amount:      0,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "Large leftover amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000000000,
-			amount:      500000000,
-			expectError: false,
-			shouldCall:  true,
-		},
-		{
-			name:        "Small leftover amount",
-			token:       WUGNOT_PATH,
-			wrapped:     100,
-			amount:      99,
-			shouldCall:  true,
-			expectError: false,
-			expectPanic: false,
-		},
-		{
-			name:        "No unwrap - non-native token with leftover",
-			token:       barPath,
-			wrapped:     1000,
-			amount:      500,
-			expectError: false,
-			shouldCall:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			if tt.wrapped > 0 {
-				amount := tt.wrapped
-				if tt.wrapped < 1000 {
-					amount = 1000
-				}
-
-				// Give position contract wugnot directly
-				ugnotFaucet(t, positionAddr, amount)
-				ugnotDeposit(t, positionAddr, amount)
-			}
-			testing.SetRealm(adminRealm)
-
-			unwrapLeftoverWrappedTokenFn := func(cur realm) error {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
-				return mockInstance.unwrapLeftoverWrappedToken(tt.token, tt.wrapped, tt.amount, adminAddr)
-			}
-
-			if tt.expectPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					unwrapLeftoverWrappedTokenFn(cross)
-				})
-			} else {
-				err := unwrapLeftoverWrappedTokenFn(cross)
-				if err != nil {
-					t.Errorf("expected no error but got: %v", err)
-				}
-
-				if tt.expectError {
-					uassert.NotNil(t, err, "expected error but got nil")
-				} else {
-					if err != nil {
-						t.Errorf("expected no error but got: %v", err)
-					}
-				}
-
-				// Verify logic correctness
-				isWrapped := isWrappedToken(tt.token)
-				hasLeftover := tt.wrapped > tt.amount
-				shouldUnwrap := isWrapped && hasLeftover
-
-				uassert.Equal(t, tt.shouldCall, shouldUnwrap)
-			}
-		})
-	}
-}
-
-// Helper function to check if string contains substring
-func contains(str, substr string) bool {
-	return strings.Contains(str, substr)
-}
-
 // TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
 // is enforced on actually collected amounts, not on burned amounts.
 // This prevents cases where user receives less than expected due to pool constraints.
@@ -1903,7 +1755,6 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 						tc.amount0Min,
 						tc.amount1Min,
 						deadline,
-						false,
 					)
 				})
 			} else {
@@ -1913,7 +1764,6 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 					tc.amount0Min,
 					tc.amount1Min,
 					deadline,
-					false,
 				)
 
 				// Verify liquidity was decreased
@@ -1978,7 +1828,6 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 			"400000", // amount0Min - higher than what pool can provide
 			"1",      // amount1Min - low to isolate amount0 failure
 			deadline,
-			false,
 		)
 	})
 
@@ -1997,7 +1846,6 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 			"1",      // amount0Min - low
 			"400000", // amount1Min - higher than what pool can provide
 			deadline,
-			false,
 		)
 	})
 }
@@ -2058,7 +1906,6 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 
 			// Step 3: Attempt reposition with test deadline
@@ -2141,7 +1988,6 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 		})
 }

@@ -41,7 +41,6 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Generate params for reposition
@@ -122,7 +121,6 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Generate params for reposition
@@ -193,7 +191,6 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Verify position is now empty
@@ -289,7 +286,6 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		repositionParams := NewRandomizedPositionRepositionParams(ft, tokenId)

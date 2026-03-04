@@ -13,13 +13,12 @@ import (
 
 // positionDecreaseLiquidityParams is the parameters for DecreaseLiquidity fuzzing test
 type positionDecreaseLiquidityParams struct {
-	positionId   uint64
-	liquidity    string
-	amount0Min   string
-	amount1Min   string
-	deadline     int64
-	unwrapResult bool
-	poolPath     string
+	positionId uint64
+	liquidity  string
+	amount0Min string
+	amount1Min string
+	deadline   int64
+	poolPath   string
 }
 
 func (p *positionDecreaseLiquidityParams) IsValid() bool {
@@ -76,10 +75,9 @@ func (p *positionDecreaseLiquidityParams) IsValid() bool {
 }
 
 func (p *positionDecreaseLiquidityParams) ToString() string {
-	return ufmt.Sprintf("positionId: %d, liquidity: %s, unwrapResult: %t",
+	return ufmt.Sprintf("positionId: %d, liquidity: %s",
 		p.positionId,
 		p.liquidity,
-		p.unwrapResult,
 	)
 }
 
@@ -109,13 +107,12 @@ func NewRandomizedPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId 
 		return params
 	default:
 		return &positionDecreaseLiquidityParams{
-			positionId:   existingPositionId + uint64(fuzz.Int64Range(1, 1_000_000).Draw(t, "positionOffset").(int64)),
-			liquidity:    "1000",
-			amount0Min:   "0",
-			amount1Min:   "0",
-			deadline:     time.Now().Add(time.Hour).Unix(),
-			unwrapResult: fuzz.Bool().Draw(t, "unwrapResult").(bool),
-			poolPath:     "",
+			positionId: existingPositionId + uint64(fuzz.Int64Range(1, 1_000_000).Draw(t, "positionOffset").(int64)),
+			liquidity:  "1000",
+			amount0Min: "0",
+			amount1Min: "0",
+			deadline:   time.Now().Add(time.Hour).Unix(),
+			poolPath:   "",
 		}
 	}
 }
@@ -135,12 +132,11 @@ func newValidPositionDecreaseLiquidityParams(t *fuzz.T, positionId uint64) *posi
 	deadline := time.Now().Add(time.Duration(deadlineSeconds) * time.Second).Unix()
 
 	return &positionDecreaseLiquidityParams{
-		positionId:   positionId,
-		liquidity:    liq.ToString(),
-		amount0Min:   "0",
-		amount1Min:   "0",
-		deadline:     deadline,
-		unwrapResult: fuzz.Bool().Draw(t, "unwrapResult").(bool),
-		poolPath:     position.GetPositionPoolKey(positionId),
+		positionId: positionId,
+		liquidity:  liq.ToString(),
+		amount0Min: "0",
+		amount1Min: "0",
+		deadline:   deadline,
+		poolPath:   position.GetPositionPoolKey(positionId),
 	}
 }

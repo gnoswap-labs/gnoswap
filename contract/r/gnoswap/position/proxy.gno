@@ -77,7 +77,6 @@ func IncreaseLiquidity(
 //   - amount0MinStr: minimum amount of token0
 //   - amount1MinStr: minimum amount of token1
 //   - deadline: transaction deadline
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
 //   - uint64: position ID
@@ -94,9 +93,8 @@ func DecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	return getImplementation().DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline, unwrapResult)
+	return getImplementation().DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 // Reposition changes the tick range of a position.
@@ -136,7 +134,6 @@ func Reposition(
 //
 // Parameters:
 //   - positionId: ID of the position
-//   - unwrapResult: whether to unwrap WGNOT to GNOT
 //
 // Returns:
 //   - uint64: position ID
@@ -148,9 +145,8 @@ func Reposition(
 func CollectFee(
 	cur realm,
 	positionId uint64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
-	return getImplementation().CollectFee(positionId, unwrapResult)
+	return getImplementation().CollectFee(positionId)
 }
 
 // SetPositionOperator sets an operator for a position.

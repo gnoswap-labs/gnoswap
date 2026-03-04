@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/common"
 )
 
 const (
@@ -216,9 +215,3 @@ func isMidnight(startTime time.Time) bool {
 	return hour == 0 && minute == 0 && second == 0
 }
 
-// assertIsValidUserCoinSend asserts that no native coins were sent with the transaction.
-// Since WUGNOT migration, users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-// TODO: change into direct call
-func assertIsValidUserCoinSend(tokenPath string, amount int64) {
-	common.AssertIsNotHandleNativeCoin()
-}

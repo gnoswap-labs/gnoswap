@@ -7,7 +7,6 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
 
 // assertIsNotExpired panics if the deadline is expired.

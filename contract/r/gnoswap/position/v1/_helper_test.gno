@@ -550,7 +550,6 @@ func mockInstanceDecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	return func(cur realm) (uint64, string, string, string, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
@@ -560,7 +559,6 @@ func mockInstanceDecreaseLiquidity(
 			amount0MinStr,
 			amount1MinStr,
 			deadline,
-			unwrapResult,
 		)
 	}(cross)
 }
@@ -600,13 +598,12 @@ func mockInstanceReposition(
 
 func mockInstanceCollectFee(
 	positionId uint64,
-	unwrapResult bool,
 	caller address,
 ) (uint64, string, string, string, string, string) {
 	testing.SetRealm(testing.NewUserRealm(caller))
 
 	return func(cur realm) (uint64, string, string, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.CollectFee(positionId, unwrapResult)
+		return mockInstance.CollectFee(positionId)
 	}(cross)
 }

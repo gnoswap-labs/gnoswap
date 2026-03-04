@@ -18,7 +18,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
-	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.unwrapResult, params.caller)
+	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
 	if position.Liquidity().IsZero() {

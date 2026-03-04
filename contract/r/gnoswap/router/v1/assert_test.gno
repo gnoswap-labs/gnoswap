@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain"
 	"testing"
 	"time"
 
@@ -73,32 +72,6 @@ func TestAssertIsNotExpired(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Test assertIsValidUserCoinSend
-// After WUGNOT migration, this function simply rejects any native coins sent via --send.
-func TestAssertIsValidUserCoinSend(t *testing.T) {
-	t.Run("no coins sent - should pass", func(t *testing.T) {
-		testing.SetOriginSend(chain.Coins{})
-		assertIsValidUserCoinSend("gno.land/r/demo/gns", "1000")
-	})
-
-	t.Run("no coins sent with native token path - should pass", func(t *testing.T) {
-		testing.SetOriginSend(chain.Coins{})
-		assertIsValidUserCoinSend("ugnot", "1000")
-	})
-
-	t.Run("native coins sent - should panic", func(t *testing.T) {
-		testing.SetOriginSend(chain.Coins{{"ugnot", 1000}})
-		uassert.PanicsWithMessage(
-			t,
-			"[GNOSWAP-COMMON-008] handle native coin is not allowed",
-			func() {
-				assertIsValidUserCoinSend("gno.land/r/demo/gns", "1000")
-			},
-		)
-		testing.SetOriginSend(chain.Coins{})
-	})
 }
 
 // Test assertIsValidSqrtPriceLimitX96

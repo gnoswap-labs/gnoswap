@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain"
 	"testing"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"gno.land/p/nt/uassert"
 	ufmt "gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/mock"
 )
 
@@ -578,165 +576,6 @@ func TestAssertSlippageIsNotExceeded(t *testing.T) {
 				})
 			} else {
 				assertSlippageIsNotExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
-				uassert.Equal(t, true, true)
-			}
-		})
-	}
-}
-
-func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
-	// After WUGNOT migration, this function always rejects native coin sends.
-	// Users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-	tests := []struct {
-		name                 string
-		token0               string
-		token1               string
-		amount0              string
-		amount1              string
-		sentCoins            chain.Coins
-		expectedPanicMessage string
-		shouldPanic          bool
-	}{
-		{
-			name:        "No coins sent - GNOT token pair passes",
-			token0:      common.GNOT_DENOM,
-			token1:      gnsPath,
-			amount0:     "1000",
-			amount1:     "2000",
-			sentCoins:   chain.Coins{},
-			shouldPanic: false,
-		},
-		{
-			name:        "No coins sent - non-native pair passes",
-			token0:      gnsPath,
-			token1:      barPath,
-			amount0:     "1000",
-			amount1:     "2000",
-			sentCoins:   chain.Coins{},
-			shouldPanic: false,
-		},
-		{
-			name:                 "Native coins sent - always rejected",
-			token0:               common.GNOT_DENOM,
-			token1:               gnsPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Native coins sent with non-native tokens - rejected",
-			token0:               gnsPath,
-			token1:               barPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
-			shouldPanic:          true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			testing.SetOriginSend(chain.Coins{})
-
-			if len(tt.sentCoins) > 0 {
-				userAddr := address("g1user")
-				testing.SetRealm(testing.NewUserRealm(userAddr))
-				testing.SetOriginSend(tt.sentCoins)
-			} else {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-			}
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					assertIsValidUserCoinSendWithTokenPair(tt.token0, tt.token1, tt.amount0, tt.amount1)
-				})
-			} else {
-				assertIsValidUserCoinSendWithTokenPair(tt.token0, tt.token1, tt.amount0, tt.amount1)
-			}
-		})
-	}
-}
-
-func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
-	// After WUGNOT migration, this function always rejects native coin sends.
-	// Users must use WUGNOT (GRC20) instead of sending ugnot via --send.
-	tests := []struct {
-		name                 string
-		token0               string
-		token1               string
-		amount0              string
-		amount1              string
-		sentCoins            chain.Coins
-		expectedPanicMessage string
-		shouldPanic          bool
-	}{
-		{
-			name:        "WUGNOT path without coins passes",
-			token0:      wugnotPath,
-			token1:      gnsPath,
-			amount0:     "1000",
-			amount1:     "2000",
-			sentCoins:   chain.Coins{},
-			shouldPanic: false,
-		},
-		{
-			name:        "No wrapped tokens, no coins passes",
-			token0:      gnsPath,
-			token1:      barPath,
-			amount0:     "1000",
-			amount1:     "2000",
-			sentCoins:   chain.Coins{},
-			shouldPanic: false,
-		},
-		{
-			name:                 "Native coins sent with WUGNOT - rejected",
-			token0:               wugnotPath,
-			token1:               gnsPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 1000}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Native coins sent without wrapped tokens - rejected",
-			token0:               gnsPath,
-			token1:               barPath,
-			amount0:              "1000",
-			amount1:              "2000",
-			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
-			shouldPanic:          true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			testing.SetOriginSend(chain.Coins{})
-
-			// Setup sent coins context
-			if len(tt.sentCoins) > 0 {
-				// Simulate user sent coins by setting the proper realm
-				userAddr := address("g1user")
-				testing.SetRealm(testing.NewUserRealm(userAddr))
-				testing.SetOriginSend(tt.sentCoins)
-			} else {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-			}
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					assertIsValidUserCoinSendWithWrappedTokenPair(tt.token0, tt.token1, tt.amount0, tt.amount1)
-				})
-			} else {
-				assertIsValidUserCoinSendWithWrappedTokenPair(tt.token0, tt.token1, tt.amount0, tt.amount1)
 				uassert.Equal(t, true, true)
 			}
 		})
