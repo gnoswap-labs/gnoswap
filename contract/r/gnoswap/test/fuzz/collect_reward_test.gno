@@ -63,7 +63,6 @@ func runTestCollectReward(ft *fuzz.T, params *collectRewardParams) {
 	staker.CollectReward(
 		cross,
 		params.positionID,
-		false,
 	)
 
 	isStartedDistribution := params.isStartedDistribution()
