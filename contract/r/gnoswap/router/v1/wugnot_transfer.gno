@@ -33,7 +33,7 @@ func transferWugnotFrom(fromAddress, toAddress address, amount int64) error {
 // relayWugnot transfers WUGNOT from a source address to the target address.
 // The recipient receives WUGNOT directly (no longer unwraps to GNOT).
 func relayWugnot(fromAddress, toAddress address, wugnotAmount int64) error {
-	if wugnotAmount == 0 {
+	if wugnotAmount <= 0 {
 		return nil
 	}
 

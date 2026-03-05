@@ -91,7 +91,7 @@ func (p *positionV1) transferWugnotFrom(fromAddress, toAddress address, wugnotAm
 // relayWugnot transfers WUGNOT from a source address to the target address.
 // The recipient receives WUGNOT directly (no longer unwraps to GNOT).
 func (p *positionV1) relayWugnot(fromAddress, toAddress address, wugnotAmount int64) error {
-	if wugnotAmount == 0 {
+	if wugnotAmount <= 0 {
 		return nil
 	}
 

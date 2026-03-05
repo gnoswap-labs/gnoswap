@@ -439,6 +439,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	testing.SetOriginSend(chain.Coins{})
 
 	// Pre-deposit wugnot for alice (for IncreaseLiquidity)
+	testing.SetOriginCaller(alice)
 	testing.IssueCoins(alice, chain.Coins{{"ugnot", int64(100000000)}})
 	ugnotDepositPrepare(t, alice, 100000000)
 	wugnot.Deposit(cross)

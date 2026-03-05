@@ -786,6 +786,7 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 func cleanupStakerRewardTest(t *testing.T) {
 	// Create new test govStaker instance for fresh state
 	setupStakerRewardStakerTokenBalance(t)
+	testing.SetOriginSend(chain.Coins{})
 }
 
 func setupStakerRewardStakerTokenBalance(t *testing.T) {
