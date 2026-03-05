@@ -67,4 +67,5 @@ jobs:
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
-            -f "${{ matrix.folder }}"
+            -f "${{ matrix.folder }}" \
+            -r "/home/runner/work/gnoswap/gnoswap/gno"
