@@ -133,7 +133,7 @@ gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno
 # stdout "4500000"
 
 ### Collect fees before reposition
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args false -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "0"
 # stdout "2227"
@@ -150,7 +150,7 @@ gnokey query vm/qeval --data "gno.land/r/onbloc/bar.BalanceOf(\"${test1_user_add
 # stdout 99998899485663
 
 ### Decrease liquidity to clearing the position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1669251248" -args "0" -args "0" -args 9999999999 -args false -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1669251248" -args "0" -args "0" -args 9999999999 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'GAS USED:   (6|7)[0-9]{7}'
 # stdout 'STORAGE DELTA:  -1[0-9]{4} bytes'

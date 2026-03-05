@@ -159,7 +159,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -a
 
 ### Native GNOT -> GNS (Exact out with native input)
 ### This test uses native GNOT as input for the swap
-gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -send "10000000ugnot" -args "ugnot" -args gno.land/r/gnoswap/gns -args "1000000" -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "10000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args "ugnot" -args gno.land/r/gnoswap/gns -args "1000000" -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'GAS USED:   (7|8)[0-9]{7}'
 # stdout 'STORAGE DELTA:  (4|5)[0-9] bytes'
