@@ -1,0 +1,61 @@
+services:
+  gno:
+    build:
+      context: .
+      dockerfile: gno/Dockerfile
+    ports:
+      - "46657:26657"
+      - "48888:8888"
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:26657/status"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 180s
+
+  tx-indexer:
+    image: ghcr.io/gnolang/tx-indexer:latest
+    command:
+      - start
+      - -remote
+      - http://gno:26657
+      - -listen-address
+      - 0.0.0.0:8546
+    ports:
+      - "48546:8546"
+    depends_on:
+      gno:
+        condition: service_healthy
+
+  atomone:
+    build:
+      context: ./atomone
+    ports:
+      - "36657:26657"
+      - "1317:1317"
+      - "9090:9090"
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:26657/status"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  relayer:
+    image: ghcr.io/allinbits/ibc-v2-ts-relayer:latest
+    entrypoint: ["/entrypoint.sh"]
+    command: ["ibc-v2-ts-relayer", "relay"]
+    volumes:
+      - ./relayer/entrypoint.sh:/entrypoint.sh
+    cap_add:
+      - IPC_LOCK
+    env_file: .env
+    depends_on:
+      gno:
+        condition: service_healthy
+      tx-indexer:
+        condition: service_started
+      atomone:
+        condition: service_healthy
