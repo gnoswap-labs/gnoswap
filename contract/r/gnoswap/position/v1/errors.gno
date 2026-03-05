@@ -9,7 +9,7 @@ import (
 var (
 	errNoPermission         = errors.New("[GNOSWAP-POSITION-001] caller has no permission")
 	errSlippage             = errors.New("[GNOSWAP-POSITION-002] slippage failed")
-	errWrapUnwrap           = errors.New("[GNOSWAP-POSITION-003] wrap, unwrap failed")
+	errInvalidAmount        = errors.New("[GNOSWAP-POSITION-003] invalid amount")
 	errInvalidInput         = errors.New("[GNOSWAP-POSITION-004] invalid input data")
 	errDataNotFound         = errors.New("[GNOSWAP-POSITION-005] requested data not found")
 	errExpired              = errors.New("[GNOSWAP-POSITION-006] transaction expired")

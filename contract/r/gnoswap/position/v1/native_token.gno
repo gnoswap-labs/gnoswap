@@ -59,10 +59,17 @@ func (p *positionV1) validateAndReturnWugnotAmount(amount int64, fromAddress add
 		return 0, nil
 	}
 
+	if amount < 0 {
+		return 0, makeErrorWithDetails(
+			errInvalidAmount,
+			ufmt.Sprintf("amount(%d) is negative", amount),
+		)
+	}
+
 	balance := wugnot.BalanceOf(fromAddress)
 	if balance < amount {
 		return 0, makeErrorWithDetails(
-			errWrapUnwrap,
+			errInvalidAmount,
 			ufmt.Sprintf("insufficient wugnot balance: have(%d) need(%d)", balance, amount),
 		)
 	}
@@ -74,7 +81,7 @@ func (p *positionV1) validateAndReturnWugnotAmount(amount int64, fromAddress add
 // The caller must have already deposited GNOT into WUGNOT and approved this contract.
 func (p *positionV1) transferWugnotFrom(fromAddress, toAddress address, wugnotAmount int64) error {
 	if wugnotAmount <= 0 {
-		return makeErrorWithDetails(errWrapUnwrap, "cannot transfer 0 wugnot")
+		return makeErrorWithDetails(errInvalidAmount, "cannot transfer 0 wugnot")
 	}
 
 	currentRealmAddr := runtime.CurrentRealm().Address()
