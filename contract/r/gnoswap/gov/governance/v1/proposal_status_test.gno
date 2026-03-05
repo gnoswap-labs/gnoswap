@@ -82,12 +82,30 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			expectedStatus:  governance.StatusRejected,
 		},
 		{
+			name:            "Status Rejected - tie but quorum not reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         200,
+			voteNo:          200,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
 			name:            "Status Passed - in execution delay",
 			currentTime:     baseTime.Add(time.Duration(350) * time.Second), // After voting (1300), before executable (1400)
 			maxVotingWeight: 1000,
 			executable:      true,
 			voteYes:         600, // 60% - passed quorum and majority
 			voteNo:          300,
+			expectedStatus:  governance.StatusPassed,
+		},
+		{
+			name:            "Status Passed - tie with quorum reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         500,
+			voteNo:          500,
 			expectedStatus:  governance.StatusPassed,
 		},
 		{
