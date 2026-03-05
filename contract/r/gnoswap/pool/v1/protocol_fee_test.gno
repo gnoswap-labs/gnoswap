@@ -321,8 +321,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "normal case",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(100), // 1%
-			expectedFee:  u256.NewUint(100),
-			expectedRest: u256.NewUint(900),
+			expectedFee:  u256.NewUint(10),
+			expectedRest: u256.NewUint(990),
 		},
 		{
 			name:         "zero amount",
@@ -342,15 +342,15 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "max fee",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(MaxBpsValue),
-			expectedFee:  u256.NewUint(1000),
-			expectedRest: u256.NewUint(0),
+			expectedFee:  u256.NewUint(100),
+			expectedRest: u256.NewUint(900),
 		},
 		{
 			name:         "large amount",
 			amount:       u256.MustFromDecimal("1000000000000000000"),
 			fee:          u256.NewUint(100),
-			expectedFee:  u256.MustFromDecimal("100000000000000000"),
-			expectedRest: u256.MustFromDecimal("900000000000000000"),
+			expectedFee:  u256.MustFromDecimal("10000000000000000"),
+			expectedRest: u256.MustFromDecimal("990000000000000000"),
 		},
 	}
 
