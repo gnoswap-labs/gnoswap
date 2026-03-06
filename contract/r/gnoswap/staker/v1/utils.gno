@@ -9,7 +9,17 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/common"
 )
+
+// normalizeNativeTokenPath converts native GNOT paths to WUGNOT for uniform GRC20 handling.
+func normalizeNativeTokenPath(tokenPath string) string {
+	if common.IsGNOTNativePath(tokenPath) {
+		return common.WUGNOT_PATH
+	}
+	return tokenPath
+}
 
 // poolPathDivide splits a pool path into token addresses and fee tier.
 func poolPathDivide(poolPath string) (string, string, string) {
