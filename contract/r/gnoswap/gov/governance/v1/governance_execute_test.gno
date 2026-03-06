@@ -24,8 +24,6 @@ var testConfig = governance.Config{
 }
 
 func TestGovernanceExecute_Execute(t *testing.T) {
-	setupGovernanceExecuteTestCommunityPoolBalance(t)
-
 	tests := []struct {
 		name string
 		// given
@@ -224,8 +222,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 }
 
 func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
-	setupGovernanceExecuteTestCommunityPoolBalance(t)
-
 	tests := []struct {
 		name string
 		// given
