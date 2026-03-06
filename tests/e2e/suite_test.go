@@ -65,7 +65,7 @@ func (s *E2ETestSuite) waitForIBCClients() {
 		}
 		s.atomoneClientID = id
 		return true
-	}, 3*time.Minute, 2*time.Second, "IBC client on AtomOne not created in time")
+	}, 8*time.Minute, 2*time.Second, "IBC client on AtomOne not created in time")
 
 	r.Eventually(func() bool {
 		id, err := queryGnoClients(s.gnoContainer, s.cfg.GnoGnokeyRemote)
@@ -74,12 +74,12 @@ func (s *E2ETestSuite) waitForIBCClients() {
 		}
 		s.gnoClientID = id
 		return true
-	}, 3*time.Minute, 2*time.Second, "IBC client on Gno not created in time")
+	}, 8*time.Minute, 2*time.Second, "IBC client on Gno not created in time")
 
 	r.Eventually(func() bool {
 		_, err := queryGnoClientCounterparty(s.gnoContainer, s.cfg.GnoGnokeyRemote, s.gnoClientID)
 		return err == nil
-	}, time.Minute, 2*time.Second, "counterparty not registered on Gno in time")
+	}, 8*time.Minute, 2*time.Second, "counterparty not registered on Gno in time")
 }
 
 func (s *E2ETestSuite) recoverGnoKey(keyName, mnemonic string) {

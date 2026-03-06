@@ -8,7 +8,7 @@ services:
       - "48888:8888"
     env_file: .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:26657/status"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:26657/status >/dev/null && { [ \"${DEPLOY_GNOSWAP:-1}\" != \"1\" ] || [ -f /tmp/gnoswap-ready ]; }"]
       interval: 5s
       timeout: 10s
       retries: 60
@@ -34,7 +34,7 @@ services:
     ports:
       - "36657:26657"
       - "1317:1317"
-      - "9090:9090"
+      - "${ATOMONE_GRPC_HOST_PORT:-19090}:9090"
     env_file: .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:26657/status"]

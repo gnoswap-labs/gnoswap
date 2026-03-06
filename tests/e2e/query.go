@@ -63,6 +63,28 @@ func gnoQuery(containerID, rpcEndpoint, realmPath, renderArgs string) (string, e
 	return content, nil
 }
 
+func gnoQEval(containerID, rpcEndpoint, expression string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stdout, stderr, err := dockerExec(ctx, containerID,
+		"gnokey", "query", "vm/qeval",
+		"-data", expression,
+		"-remote", rpcEndpoint,
+	)
+	if err != nil {
+		return "", fmt.Errorf("gnokey qeval %s: %w: %s", expression, err, stderr)
+	}
+
+	const prefix = "data: "
+	idx := strings.Index(stdout, prefix)
+	if idx < 0 {
+		return "", fmt.Errorf("unexpected gnokey output (no 'data: ' prefix): %s", stdout)
+	}
+
+	return strings.TrimSpace(stdout[idx+len(prefix):]), nil
+}
+
 func queryAtomOneClientStates(restURL string) (string, error) {
 	body, err := httpGet(restURL + "/ibc/core/client/v1/client_states")
 	if err != nil {

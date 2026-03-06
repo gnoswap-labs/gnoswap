@@ -2,7 +2,6 @@
 
 GOMODCACHE ?= $(CURDIR)/.cache/gomod
 GOCACHE ?= $(CURDIR)/.cache/go-build
-
 up:
 	docker compose up -d --build --force-recreate
 
@@ -11,8 +10,7 @@ down:
 
 test:
 	docker compose up -d --build --force-recreate
-	mkdir -p "$(GOMODCACHE)" "$(GOCACHE)"
-	GOMODCACHE="$(GOMODCACHE)" GOCACHE="$(GOCACHE)" go test -v -timeout 15m -count=1 ./...; ret=$$?; docker compose down -v; exit $$ret
+	$(MAKE) test-only; ret=$$?; docker compose down -v; exit $$ret
 
 test-keep-up:
 	docker compose up -d --build --force-recreate
