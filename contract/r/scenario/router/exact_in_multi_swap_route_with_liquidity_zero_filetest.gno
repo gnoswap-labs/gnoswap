@@ -111,7 +111,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -153,7 +152,6 @@ func exactInSwapRouteByWithPanic(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	testing.SetOriginSend(chain.Coins{})
 	testing.SetRealm(adminRealm)
 
 	uassert.AbortsContains(t, "[GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:1, got:0)", func() {

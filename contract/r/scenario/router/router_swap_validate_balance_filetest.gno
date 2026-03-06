@@ -219,7 +219,6 @@ func mintPositionWithGnot() BalanceSnapshot {
 	wugnot.Approve(cross, poolAddr, 50000000)
 
 	// Mint position with GNOT
-	testing.SetOriginSend(chain.Coins{})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -256,7 +255,6 @@ func performSwaps() BalanceSnapshot {
 	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
 
-	testing.SetOriginSend(chain.Coins{})
 	amountIn1, amountOut1 := router.ExactInSwapRoute(
 		cross,
 		gnotPath,
@@ -275,7 +273,6 @@ func performSwaps() BalanceSnapshot {
 	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
-	testing.SetOriginSend(chain.Coins{})
 	amountIn2, amountOut2 := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,
@@ -301,7 +298,6 @@ func addLiquidityWithGnot() BalanceSnapshot {
 	gns.Approve(cross, poolAddr, 20000000)
 	wugnot.Approve(cross, poolAddr, 20000000)
 
-	testing.SetOriginSend(chain.Coins{})
 	_, liquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
 		cross,
 		1,
@@ -329,7 +325,6 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
 	removeLiquidity := liquidityInt * 30 / 100
 
-	testing.SetOriginSend(chain.Coins{})
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
 		cross,
 		1,

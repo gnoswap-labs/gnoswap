@@ -139,7 +139,6 @@ func mintAndStakeNative() {
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
-	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		wugnotPath,

@@ -153,7 +153,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	common.Approve(cross, token0Path, poolAddr, maxInt64)
 	common.Approve(cross, token1Path, poolAddr, maxInt64)
 
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		token0Path,
@@ -198,8 +197,6 @@ func exactOutSwapRouteBy(
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
-
-	testing.SetOriginSend(chain.Coins{})
 
 	if inputToken == wugnotPath {		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)

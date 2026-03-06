@@ -94,9 +94,6 @@ func mintInitialPositionWithNativeCoin() {
 
 	foo.Approve(cross, poolAddr, amount1DesiredInt)
 
-	// Set none native coin send
-	testing.SetOriginSend(chain.Coins{})
-
 	inputToken0Path := wugnotPath
 	inputToken1Path := fooPath
 	minTick := int32(-12000)
@@ -153,9 +150,6 @@ func increasePositionLiquidity(amount0DesiredInt, amount1DesiredInt int64) {
 
 		ufmt.Printf("[INFO] Origin send ugnot amount: %d\n", amount0DesiredInt)
 	}
-
-	// Do not send native coins - use wugnot instead
-	testing.SetOriginSend(chain.Coins{})
 
 	amount0Desired := ufmt.Sprintf("%d", amount0DesiredInt)
 	amount1Desired := ufmt.Sprintf("%d", amount1DesiredInt)

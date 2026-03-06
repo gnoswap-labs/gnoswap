@@ -221,7 +221,6 @@ func mintNativePosition01Post() {
 	ufmt.Printf("[INFO] admin ugnot balance after wrap: %d\n", ugnotBalanceAfterWrap)
 
 	println("[INFO] mint native position 01 (gns:ugnot)")
-	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		gnsPath,
@@ -273,7 +272,6 @@ func mintNativePosition02Post() {
 	ufmt.Printf("[INFO] admin wugnot balance before second mint: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint native position 02 (gns:ugnot)")
-	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		gnsPath,

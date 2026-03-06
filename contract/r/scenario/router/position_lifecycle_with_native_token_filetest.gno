@@ -122,7 +122,6 @@ func testMintPositionWithGnot() {
 	wugnot.Approve(cross, poolAddr, 100000000)
 
 	// Mint position with GNOT (auto-wrap should occur)
-	testing.SetOriginSend(chain.Coins{})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -170,7 +169,6 @@ func testExecuteSwapsForFees() {
 		gns.Approve(cross, poolAddr, 10000000)
 		gns.Approve(cross, routerAddr, max_approve) // For router fee
 
-		testing.SetOriginSend(chain.Coins{})
 		amountIn, amountOut := router.ExactInSwapRoute(
 			cross,
 			gnsPath,

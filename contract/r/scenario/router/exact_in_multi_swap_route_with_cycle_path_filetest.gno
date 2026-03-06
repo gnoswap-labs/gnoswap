@@ -112,7 +112,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		token0Path,
@@ -157,7 +156,6 @@ func exactInSwapRoute(
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 
-	testing.SetOriginSend(chain.Coins{})
 	testing.SetRealm(adminRealm)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(

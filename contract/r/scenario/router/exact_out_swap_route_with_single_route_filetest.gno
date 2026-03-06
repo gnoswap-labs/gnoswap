@@ -111,7 +111,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -152,8 +151,6 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] routeQueryString:", routeQueryString)
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] amountInMax:", amountInMax)
-
-	testing.SetOriginSend(chain.Coins{})
 
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,

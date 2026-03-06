@@ -123,13 +123,11 @@ func setupPoolsAndLiquidity() {
 	// WUGNOT/GNS pool
 	wugnot.Approve(cross, poolAddr, 100000000)
 	gns.Approve(cross, poolAddr, 100000000)
-	testing.SetOriginSend(chain.Coins{})
 	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// GNS/USDC pool
 	gns.Approve(cross, poolAddr, 100000000)
 	usdc.Approve(cross, poolAddr, 100000000)
-	testing.SetOriginSend(chain.Coins{})
 	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// Transfer tokens to user
@@ -164,7 +162,6 @@ func testExactInGnotToGns() {
 	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactIn swap with GNOT
-	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnotPath,  // input token (GNOT)
@@ -217,7 +214,6 @@ func testExactOutGnsToGnot() {
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactOut swap requesting GNOT
-	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,   // input token
@@ -268,7 +264,6 @@ func testMultiHopGnotToUsdc() {
 	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop swap
-	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnotPath,  // input token (GNOT)
@@ -306,7 +301,6 @@ func testMultiHopUsdcToGnot() {
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap
-	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		usdcPath,  // input token

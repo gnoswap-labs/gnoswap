@@ -89,8 +89,6 @@ func mintInitialPositionWithNativeCoin() {
 	wugnot.Approve(cross, positionAddr, amount0Int)
 	foo.Approve(cross, poolAddr, amount1Int)
 
-	testing.SetOriginSend(chain.Coins{})
-
 	inputToken0Path := wugnotPath
 	inputToken1Path := fooPath
 	minTick := int32(-12000)
@@ -144,8 +142,6 @@ func increasePositionLiquidity() {
 	foo.Approve(cross, poolAddr, amount1Int)
 
 	ufmt.Println("[INFO] Minting initial position with native coin")
-
-	testing.SetOriginSend(chain.Coins{})
 
 	amount0Desired := ufmt.Sprintf("%d", amount0Int)
 	amount1Desired := ufmt.Sprintf("%d", amount1Int)
