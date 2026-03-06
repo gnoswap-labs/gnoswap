@@ -25,121 +25,68 @@ import (
 
 func TestFinalizeSwap(t *testing.T) {
 	t.Skip("finalize swap's behaviour seems change. need to check")
-	ugnot := "ugnot"
 
 	tests := []struct {
-		name                    string
-		inputToken              string
-		outputToken             string
-		resultAmountIn          int64
-		resultAmountOut         int64
-		swapType                SwapType
-		tokenAmountLimit        int64
-		userBeforeWugnotBalance int64
-		userWrappedWugnot       int64
-		amountSpecified         int64
-		swapCount               int64
-		expectError             bool
-		errorMessage            string
+		name             string
+		inputToken       string
+		outputToken      string
+		resultAmountIn   int64
+		resultAmountOut  int64
+		swapType         SwapType
+		tokenAmountLimit int64
+		amountSpecified  int64
+		swapCount        int64
+		expectError      bool
+		errorMessage     string
 	}{
 		{
-			name:                    "Pass: ExactIn",
-			inputToken:              barPath,
-			outputToken:             bazPath,
-			resultAmountIn:          100,
-			resultAmountOut:         90,
-			swapType:                ExactIn,
-			tokenAmountLimit:        85,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			amountSpecified:         100,
-			swapCount:               1,
-			expectError:             false,
+			name:             "Pass: ExactIn",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   100,
+			resultAmountOut:  90,
+			swapType:         ExactIn,
+			tokenAmountLimit: 85,
+			amountSpecified:  100,
+			swapCount:        1,
+			expectError:      false,
 		},
 		{
-			name:                    "Pass: ExactOut",
-			inputToken:              barPath,
-			outputToken:             bazPath,
-			resultAmountIn:          110,
-			resultAmountOut:         100,
-			swapType:                ExactOut,
-			tokenAmountLimit:        120,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			amountSpecified:         100,
-			swapCount:               1,
-			expectError:             false,
+			name:             "Pass: ExactOut",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   110,
+			resultAmountOut:  100,
+			swapType:         ExactOut,
+			tokenAmountLimit: 120,
+			amountSpecified:  100,
+			swapCount:        1,
+			expectError:      false,
 		},
 		{
-			name:                    "ExactOut: Slippage error",
-			inputToken:              barPath,
-			outputToken:             bazPath,
-			resultAmountIn:          100,
-			resultAmountOut:         90,
-			swapType:                ExactOut,
-			tokenAmountLimit:        100,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			amountSpecified:         100,
-			swapCount:               1,
-			expectError:             true,
-			errorMessage:            "[GNOSWAP-ROUTER-001] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
+			name:             "ExactOut: Slippage error",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   100,
+			resultAmountOut:  90,
+			swapType:         ExactOut,
+			tokenAmountLimit: 100,
+			amountSpecified:  100,
+			swapCount:        1,
+			expectError:      true,
+			errorMessage:     "[GNOSWAP-ROUTER-001] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
 		{
-			name:                    "GNOT: Slippage error",
-			inputToken:              ugnot,
-			outputToken:             barPath,
-			resultAmountIn:          300,
-			resultAmountOut:         90,
-			swapType:                ExactIn,
-			tokenAmountLimit:        85,
-			userBeforeWugnotBalance: 1000000,
-			userWrappedWugnot:       20000,
-			swapCount:               1,
-			expectError:             true,
-			errorMessage:            "too much wugnot spent",
-		},
-		{
-			name:                    "ExactOut: Real world slippage error",
-			inputToken:              barPath,
-			outputToken:             bazPath,
-			resultAmountIn:          843455035,
-			resultAmountOut:         600901351,
-			swapType:                ExactOut,
-			tokenAmountLimit:        843455036,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			amountSpecified:         600901352,
-			swapCount:               1,
-			expectError:             false,
-		},
-		{
-			name:                    "GNOT: Overflow in balance calculation",
-			inputToken:              ugnot,
-			outputToken:             barPath,
-			resultAmountIn:          100,
-			resultAmountOut:         90,
-			swapType:                ExactIn,
-			tokenAmountLimit:        85,
-			userBeforeWugnotBalance: 1<<63 - 1,
-			userWrappedWugnot:       1,
-			swapCount:               1,
-			expectError:             true,
-			errorMessage:            "overflow in balance calculation",
-		},
-		{
-			name:                    "GNOT: Large balance causing excessive spend error",
-			inputToken:              ugnot,
-			outputToken:             barPath,
-			resultAmountIn:          100,
-			resultAmountOut:         90,
-			swapType:                ExactIn,
-			tokenAmountLimit:        85,
-			userBeforeWugnotBalance: 1 << 61,
-			userWrappedWugnot:       1 << 61,
-			swapCount:               1,
-			expectError:             true,
-			errorMessage:            "too much wugnot spent",
+			name:             "ExactOut: Real world slippage error",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   843455035,
+			resultAmountOut:  600901351,
+			swapType:         ExactOut,
+			tokenAmountLimit: 843455036,
+			amountSpecified:  600901352,
+			swapCount:        1,
+			expectError:      false,
 		},
 	}
 
@@ -175,8 +122,6 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.resultAmountOut,
 				tt.swapType,
 				tt.tokenAmountLimit,
-				tt.userBeforeWugnotBalance,
-				tt.userWrappedWugnot,
 				tt.amountSpecified,
 				tt.swapCount,
 				false,
@@ -882,7 +827,6 @@ func TestHandleMultiSwap(t *testing.T) {
 					tt.route,
 					tt.numHops,
 					amountSpecified,
-					false,
 				)
 			}
 
@@ -1790,40 +1734,6 @@ func TestSwapValidator_ExactOutAmount(t *testing.T) {
 	}
 }
 
-// Test GnotSwapHandler
-func TestGnotSwapHandler_Creation(t *testing.T) {
-	tests := []struct {
-		name          string
-		beforeBalance int64
-		wrappedAmount int64
-	}{
-		{
-			name:          "zero balances",
-			beforeBalance: 0,
-			wrappedAmount: 0,
-		},
-		{
-			name:          "positive balances",
-			beforeBalance: 1000,
-			wrappedAmount: 500,
-		},
-		{
-			name:          "large balances",
-			beforeBalance: 9223372036854775807,
-			wrappedAmount: 1000000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := newGnotSwapHandler(tt.beforeBalance, tt.wrappedAmount)
-
-			uassert.NotNil(t, handler)
-			uassert.Equal(t, handler.BeforeBalance, tt.beforeBalance)
-			uassert.Equal(t, handler.WrappedAmount, tt.wrappedAmount)
-		})
-	}
-}
 
 // Test validateRoutesAndQuotes convenience function
 func TestValidateRoutesAndQuotes(t *testing.T) {

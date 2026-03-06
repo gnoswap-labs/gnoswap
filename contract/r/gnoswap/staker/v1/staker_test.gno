@@ -597,7 +597,6 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 		100_000_000,
 		1000,
 		currentTime-86400,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)

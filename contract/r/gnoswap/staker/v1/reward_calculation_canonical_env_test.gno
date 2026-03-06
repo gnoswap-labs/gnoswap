@@ -496,7 +496,6 @@ func newExternalIncentiveBy(
 		0,
 		currentHeight,
 		currentTimestamp,
-		false,
 	)
 
 	externalIncentive.SetRewardPerSecond(rewardPerSecond)

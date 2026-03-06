@@ -70,7 +70,6 @@ func setupBasicTestState(t *testing.T) *testState {
 		1_000_000_000,             // depositGnsAmount
 		state.fixedBlockHeight,    // createdHeight
 		state.fixedTimestamp,      // currentTime
-		false,                     // isRequestUnwrap
 	)
 	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
 	state.instance.store.GetExternalIncentives().Set(state.incentiveId, state.incentive)
@@ -251,7 +250,6 @@ func TestGetterPoolIncentiveIdList(t *testing.T) {
 		500_000_000,
 		state.fixedBlockHeight,
 		state.fixedTimestamp,
-		false,
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 
@@ -676,7 +674,6 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 				100_000,
 				100,
 				fixedTime,
-				false,
 			)
 			if tt.refunded {
 				incentive.SetRefunded(true)
@@ -732,7 +729,6 @@ func TestGetterPoolIncentive(t *testing.T) {
 		500_000_000,
 		state.fixedBlockHeight,
 		state.fixedTimestamp,
-		false,
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 

@@ -52,6 +52,7 @@ func (r *routerV1) ExactOutSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
+
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
@@ -112,6 +113,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
+
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotExpired(deadline)
@@ -162,14 +164,7 @@ func (r *routerV1) exactOutSwapRoute(
 		panic(err)
 	}
 
-	if params.IsUnwrap() {
-		err = transferWugnot(runtime.PreviousRealm().Address(), outputAmount)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
-	}
+	common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
 
 	// handle referral registration
 	previousRealm := runtime.PreviousRealm()
@@ -213,7 +208,6 @@ func NewExactOutSwapOperation(r *routerV1, pp ExactOutParams) *ExactOutSwapOpera
 		router: r,
 		params: pp,
 		baseSwapOperation: baseSwapOperation{
-			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
 			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
 		},
 	}
@@ -243,10 +237,6 @@ func (op *ExactOutSwapOperation) Validate() error {
 
 // Process executes the exact-out swap operation.
 func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
-	if err := op.handleNativeTokenWrapping(); err != nil {
-		return nil, err
-	}
-
 	resultAmountIn, resultAmountOut, err := op.processRoutes(op.router, ExactOut)
 	if err != nil {
 		return nil, err
@@ -258,15 +248,5 @@ func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 		Routes:          op.routes,
 		Quotes:          op.quotes,
 		AmountSpecified: op.amountSpecified,
-		WithUnwrap:      op.withUnwrap,
 	}, nil
-}
-
-// handleNativeTokenWrapping manages native token wrapping for exact-out swaps.
-func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
-	return op.baseSwapOperation.handleNativeTokenWrapping(
-		op.params.InputToken,
-		op.params.OutputToken,
-		op.params.AmountInMax,
-	)
 }

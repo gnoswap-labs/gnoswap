@@ -26,11 +26,6 @@ import (
 //   - deadline: Transaction expiration timestamp
 //   - referrer: Optional referral address
 //
-// Native token support:
-//   - Accepts GNOT via std.OriginSend()
-//   - Auto-wraps to WUGNOT for liquidity
-//   - Minimum 1 GNOT required
-//
 // Returns:
 //   - positionId: New NFT token ID
 //   - liquidity: Amount of liquidity minted

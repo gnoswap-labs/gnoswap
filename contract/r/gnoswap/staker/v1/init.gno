@@ -19,7 +19,7 @@ const (
 	defaultUnstakingFee = int64(100) // 1%
 )
 
-var defaultAllowedTokens = []string{GNS_PATH, GNOT_DENOM}
+var defaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}
 
 func init() {
 	registerStakerV1()

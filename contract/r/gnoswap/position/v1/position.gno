@@ -186,28 +186,11 @@ func (p *positionV1) IncreaseLiquidity(
 	position := p.mustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.PoolKey())
 
-	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
-
-	receivedCoins := common.ExistsUserSendCoins()
 
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
-	}
-
-	if receivedCoins {
-		inputWrappedAmount := int64(0)
-
-		if common.IsGNOTPath(token0) {
-			inputWrappedAmount = mustParseInt64(amount0DesiredStr)
-		} else if common.IsGNOTPath(token1) {
-			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
-		}
-
-		if _, err := p.validateAndReturnWugnotAmount(inputWrappedAmount, caller); err != nil {
-			panic(err)
-		}
 	}
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)

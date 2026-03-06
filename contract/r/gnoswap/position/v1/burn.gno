@@ -12,7 +12,6 @@ import (
 )
 
 // decreaseLiquidity reduces position liquidity and collects fees.
-// If unwrapResult is true, unwraps WUGNOT to GNOT.
 // Returns positionId, liquidity, fee0, fee1, amount0, amount1, poolPath.
 func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller

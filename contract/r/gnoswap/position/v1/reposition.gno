@@ -45,18 +45,8 @@ func (p *positionV1) Reposition(
 	// position should be burned to reposition
 	position := p.mustGetPosition(positionId)
 
-	// assert that the user has sent the correct amount of native coin
 	token0, token1, _ := splitOf(position.PoolKey())
 	common.AssertIsNotHandleNativeCoin()
-
-	receivedCoins := common.ExistsUserSendCoins()
-	if receivedCoins {
-		if common.IsGNOTPath(token0) {
-			token0 = common.GNOT_DENOM
-		} else if common.IsGNOTPath(token1) {
-			token1 = common.GNOT_DENOM
-		}
-	}
 
 	oldTickLower := position.TickLower()
 	oldTickUpper := position.TickUpper()
@@ -74,15 +64,8 @@ func (p *positionV1) Reposition(
 		))
 	}
 
-	token0, token1, _, _, _, err := p.processTokens(
-		token0,
-		token1,
-		amount0DesiredStr,
-		amount1DesiredStr,
-		caller,
-	)
-	if err != nil {
-		panic(err)
+	if err := validateTokenPath(token0, token1); err != nil {
+		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
 	poolKey := position.PoolKey()
