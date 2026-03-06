@@ -59,7 +59,7 @@ func main() {
 
 	println("[SCENARIO] 3. ExactInSwapRoute")
 	exactInSwapRouteBy(
-		"ugnot",
+		wugnotPath,
 		gnsPath,
 		"1000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
@@ -188,7 +188,7 @@ func exactInSwapRouteBy(
 //
 // [SCENARIO] 3. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: ugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500

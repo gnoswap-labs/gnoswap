@@ -224,8 +224,8 @@ func mintNativePosition01Post() {
 	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/gns",
-		"ugnot",
+		gnsPath,
+		wugnotPath,
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -276,8 +276,8 @@ func mintNativePosition02Post() {
 	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/gns",
-		"ugnot",
+		gnsPath,
+		wugnotPath,
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -325,7 +325,7 @@ func createExternalIncentiveNativePost() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
-		"ugnot",                     // rewardToken (native)
+		wugnotPath,                  // rewardToken (wugnot)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp

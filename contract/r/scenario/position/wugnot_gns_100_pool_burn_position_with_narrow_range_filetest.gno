@@ -39,7 +39,6 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	gnotPath   = "ugnot"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )
@@ -60,7 +59,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint Position (-1 ~ 1)")
-	mintPosition(gnotPath, gnsPath, 100, -1, 1, "1000000000", "1000000000", 1000000000)
+	mintPosition(wugnotPath, gnsPath, 100, -1, 1, "1000000000", "1000000000", 1000000000)
 	println()
 
 	println("[SCENARIO] 4. Remove Position (-1 ~ 1)")

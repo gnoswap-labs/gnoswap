@@ -164,9 +164,6 @@ func createExternalIncentiveWithNativeCoin() {
 	testing.SetRealm(adminRealm)
 
 	// Deposit already done in main()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 1_000_000_000}})
-
 	println("[INFO] approve wugnot and gns for external incentive")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
@@ -175,7 +172,7 @@ func createExternalIncentiveWithNativeCoin() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"ugnot",                     // rewardToken (native coin)
+		wugnotPath,                  // rewardToken (wugnot)
 		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -330,20 +327,20 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Collect external reward with unwrap
 // [INFO] skip blocks to accumulate rewards
 // [INFO] check balances before collecting with unwrap
-// [INFO] ugnot balance before: 99999000000000
+// [INFO] ugnot balance before: 100000000000000
 // [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=true
-// [EXPECTED] ugnot balance after: 99999000000000
+// [EXPECTED] ugnot balance after: 100000000000000
 // [EXPECTED] wugnot balance after: 108479
 // [EXPECTED] ugnot change (should be 0): 0
 // [EXPECTED] wugnot increase (unwrap now transfers wugnot): 191
 //
 // [SCENARIO] 7. Collect external reward without unwrap
 // [INFO] check balances before collecting without unwrap
-// [INFO] ugnot balance before: 99999000000000
+// [INFO] ugnot balance before: 100000000000000
 // [INFO] wugnot balance before: 108479
 // [INFO] collect reward with unwrap=false
-// [EXPECTED] ugnot balance after: 99999000000000
+// [EXPECTED] ugnot balance after: 100000000000000
 // [EXPECTED] wugnot balance after: 108671
 // [EXPECTED] ugnot change (should be 0): 0
 // [EXPECTED] wugnot increase (wrapped): 192

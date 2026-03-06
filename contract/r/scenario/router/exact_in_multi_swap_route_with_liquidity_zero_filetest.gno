@@ -66,7 +66,7 @@ func main() {
 
 	println("[SCENARIO] 4. ExactInSwapRoute")
 	exactInSwapRouteByWithPanic(
-		"ugnot",
+		wugnotPath,
 		barPath,
 		"10000000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500",
@@ -156,22 +156,21 @@ func exactInSwapRouteByWithPanic(
 	testing.SetOriginSend(chain.Coins{})
 	testing.SetRealm(adminRealm)
 
-	// current sqrtPriceX96 is 76228162514264337593543950336
-	uassert.AbortsContains(t, "[GNOSWAP-ROUTER-004] invalid input data || invalid EXACT_IN SwapOperation: quote sum(1) must be 100", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-ROUTER-001] slippage check failed || ExactIn: too few received (min:1, got:0)", func() {
 		router.ExactInSwapRoute(
 			cross,
 			inputToken,
 			outputToken,
 			specifiedAmount,
 			routeQueryString,
+			queryRatios,
 			minAmountOut,
-			"0",
 			int64(9999999999),
 			"",
 		)
 	})
 
-	println("[EXPECTED] swap operation has been aborted")
+	println("[EXPECTED] swap aborted: zero liquidity pool causes slippage failure")
 }
 
 // Output:
@@ -192,10 +191,10 @@ func exactInSwapRouteByWithPanic(
 //
 // [SCENARIO] 4. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: ugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
 // [INFO] outputToken: gno.land/r/onbloc/bar
 // [INFO] specifiedAmount: 10000000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
-// [EXPECTED] swap operation has been aborted
+// [EXPECTED] swap aborted: zero liquidity pool causes slippage failure

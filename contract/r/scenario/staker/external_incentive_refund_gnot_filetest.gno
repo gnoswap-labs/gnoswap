@@ -149,9 +149,6 @@ func createExternalIncentiveWithGNOT() {
 	testing.SetRealm(adminRealm)
 
 	// Deposit already done in main()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 1_000_000_000}})
-
 	println("[INFO] approve WUGNOT and GNS for external incentive")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
@@ -173,7 +170,7 @@ func createExternalIncentiveWithGNOT() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-		"ugnot",
+		wugnotPath,
 		1_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
@@ -266,10 +263,10 @@ func ugnotBalanceOf(addr address) uint64 {
 // [STEP 5] End external incentive and verify GNOT refund
 // [INFO] skip time to after incentive end time
 // [INFO] end external incentive and check WUGNOT refund
-// [INFO] GNOT balance before ending: 99999000000000
+// [INFO] GNOT balance before ending: 100000000000000
 // [INFO] WUGNOT balance before ending: 0
 // [INFO] ending incentive with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
-// [INFO] GNOT balance after ending: 99999000000000
+// [INFO] GNOT balance after ending: 100000000000000
 // [INFO] WUGNOT balance after ending: 1000000000
 // [EXPECTED] GNOT change (should be 0): 0
 // [EXPECTED] WUGNOT refunded: 1000000000

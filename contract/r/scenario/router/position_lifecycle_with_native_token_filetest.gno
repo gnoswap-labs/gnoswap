@@ -125,8 +125,8 @@ func testMintPositionWithGnot() {
 	testing.SetOriginSend(chain.Coins{})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"ugnot",
-		gnsPath,      // token0Path (non-ugnot token)
+		wugnotPath,
+		gnsPath,      // token0Path
 		fee500,       // fee
 		int32(-6960), // tickLower
 		int32(6960),  // tickUpper
