@@ -927,7 +927,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-018] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-007] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
 		},
 		{
 			name:              "decrease liquidity is fail by deadline exceeded",
