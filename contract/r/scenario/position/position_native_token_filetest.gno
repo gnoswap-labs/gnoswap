@@ -31,7 +31,7 @@ import (
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	GNOT        string = "ugnot"
+	GNOT        string = "gno.land/r/gnoland/wugnot"
 	GNS_PATH    string = "gno.land/r/gnoswap/gns"
 	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 

@@ -69,7 +69,7 @@ func main() {
 
 	println("[SCENARIO] 5. ExactOutSwapRoute multi route (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000)")
 	exactOutSwapRouteBy(
-		"ugnot",
+		wugnotPath,
 		gnsPath,
 		"1001502",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000",
@@ -201,7 +201,7 @@ func exactOutSwapRouteBy(
 //
 // [SCENARIO] 5. ExactOutSwapRoute multi route (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000)
 // [INFO] ExactOutSwapRoute
-// [INFO] inputToken: ugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1001502
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000

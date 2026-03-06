@@ -66,7 +66,7 @@ func main() {
 
 	println("[SCENARIO] 4. ExactInSwapRoute")
 	exactInSwapRouteByWithPanic(
-		"ugnot",
+		wugnotPath,
 		barPath,
 		"10000000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500",
@@ -192,7 +192,7 @@ func exactInSwapRouteByWithPanic(
 //
 // [SCENARIO] 4. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: ugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
 // [INFO] outputToken: gno.land/r/onbloc/bar
 // [INFO] specifiedAmount: 10000000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500

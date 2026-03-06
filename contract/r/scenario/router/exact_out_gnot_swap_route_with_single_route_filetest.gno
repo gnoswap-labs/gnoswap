@@ -164,7 +164,7 @@ func exactOutSwapRouteBy(
 	_, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,
-		"ugnot",
+		wugnotPath,
 		specifiedAmount,
 		routeQueryString,
 		queryRatios,
