@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -9,7 +8,6 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoland/wugnot"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -156,13 +154,6 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 }
 
 func TestPriceCumulative_BusinessScenarios(t *testing.T) {
-	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
 	scenarios := []struct {
 		name        string
 		description string
@@ -1127,14 +1118,7 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 }
 
 func TestSwap_ZeroOutputAllowed(t *testing.T) {
-	// Pre-deposit wugnot at top level for runtime.AssertOriginCall() compliance
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDepositPrepare(t, adminAddr, 100_000_000_000_000)
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	InitialisePoolTest(t)
+	InitialisePoolTestGRC20(t)
 	testing.SetRealm(adminRealm)
 	mockInstanceSetPoolCreationFee(0)
 

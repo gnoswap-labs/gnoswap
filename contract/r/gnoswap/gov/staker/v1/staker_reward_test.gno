@@ -1,24 +1,17 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
 )
 
 // Test CollectReward function
 func TestStakerReward_CollectReward(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name             string
@@ -135,12 +128,7 @@ func TestStakerReward_CollectReward(t *testing.T) {
 
 // Test CollectRewardFromLaunchPad function
 func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name           string
@@ -224,12 +212,7 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 
 // Test SetAmountByProjectWallet function
 func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name          string
@@ -333,12 +316,7 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 
 // Test transferToken function
 func TestStakerReward_transferToken(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name         string
@@ -393,14 +371,14 @@ func TestStakerReward_transferToken(t *testing.T) {
 			},
 		},
 		{
-			name:        "WUGNOT token path should use native coin transfer",
-			tokenPath:   WUGNOT_PATH,
+			name:        "GRC20 bar token transfer",
+			tokenPath:   barPath,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100,
 			expectError: false,
 			setupBalance: func() {
-				// Setup WUGNOT balance
+				// bar balance is set up via setupStakerRewardStakerTokenBalance
 			},
 		},
 	}
@@ -428,12 +406,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 
 // Test comprehensive launchpad reward scenarios including exclusion from governance
 func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name                 string
@@ -534,12 +507,7 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 
 // Test comprehensive token transfer scenarios
 func TestStakerReward_TokenTransferScenarios(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name          string
@@ -620,14 +588,14 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			expectedError: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
 		},
 		{
-			name:        "success - WUGNOT native coin transfer",
-			tokenPath:   WUGNOT_PATH,
+			name:        "success - GRC20 bar token transfer",
+			tokenPath:   barPath,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
 			fromBalance: 500_000_000,
 			shouldFail:  false,
-			description: "WUGNOT should use native coin transfer mechanism",
+			description: "GRC20 bar token transfer",
 		},
 	}
 
@@ -658,12 +626,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 
 // Test reward calculation accuracy
 func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
-	// Perform wugnot.Deposit at top-level to satisfy AssertOriginCall frame check
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-	wugnot.Transfer(cross, govStakerAddr, int64(1_000_000_000))
 
 	tests := []struct {
 		name                     string
@@ -784,29 +747,17 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 
 // Helper functions for test setup
 func cleanupStakerRewardTest(t *testing.T) {
-	// Create new test govStaker instance for fresh state
 	setupStakerRewardStakerTokenBalance(t)
-	testing.SetOriginSend(chain.Coins{})
 }
 
 func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	amount := int64(1_000_000_000)
 
 	testing.SetRealm(adminRealm)
-	// Transfer GNS to gov staker
 	gns.Transfer(cross, govStakerAddr, amount)
 
-	// Transfer WUGNOT to gov staker
-	gnotAmount := amount * 10
-	newCoins := chain.Coins{{"ugnot", gnotAmount}}
-
-	testing.IssueCoins(adminRealm.Address(), newCoins)
-	testing.SetOriginSend(newCoins)
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
-
-	testing.SetOriginSend(newCoins)
+	// Transfer GRC20 token(bar) directly to govStaker instead of wugnot deposit
+	bar.Transfer(cross, govStakerAddr, amount*10)
 }
 
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {

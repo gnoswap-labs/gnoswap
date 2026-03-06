@@ -11,7 +11,6 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
@@ -143,10 +142,10 @@ func TestFinalizeSwap(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
+	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500"
+	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -177,8 +176,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - ugnot -> gns",
-			tokenPath0:       wugnotTokenPath,
+			name:             "success - bar -> gns",
+			tokenPath0:       barTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -188,10 +187,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       wugnotTokenPath,
+			inputToken:       barTokenPath,
 			outputToken:      gnsTokenPath,
 			amountIn:         "100000000",
-			routeArr:         wugnotGnsPoolPath,
+			routeArr:         barGnsPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "85000000",
 			expectedAmount0:  "100000000",
@@ -199,13 +198,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			expectPanic:      true,
 		},
 	}
-
-	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
-	testing.SetOriginCaller(positionOwner)
-	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-	ugnotDepositPrepare(t, positionOwner, 10000000000)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -225,19 +217,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
-
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
 
 			// Position Creation
 			pn.Mint(
@@ -260,14 +247,14 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
+			bar.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
+			bar.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
-			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
+			beforeBarBalance := bar.BalanceOf(tt.recipient)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -298,7 +285,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				)
 
 				testing.SkipHeights(1)
-				afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
+				afterBarBalance := bar.BalanceOf(tt.recipient)
 
 				drySwapAmountOutInt := safeParseInt64(drySwapAmountOut)
 				amountOutInt := safeParseInt64(amountOut)
@@ -312,17 +299,17 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				uassert.Equal(t, strconv.FormatInt(drySwapAmountOutInt, 10), strconv.FormatInt(amountOutInt, 10), "amountOut is not equal to drySwapAmountOut")
 				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
 				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
-				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
+				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeBarBalance-afterBarBalance), 10), "amountIn is not equal to expectedAmount0")
 			}(cross)
 		})
 	}
 }
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
+	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500"
+	const barGnsPoolPath = "gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -353,8 +340,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - ugnot -> gns",
-			tokenPath0:       wugnotTokenPath,
+			name:             "success - bar -> gns",
+			tokenPath0:       barTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -364,10 +351,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       wugnotTokenPath,
+			inputToken:       barTokenPath,
 			outputToken:      gnsTokenPath,
 			amountIn:         "50000000",
-			routeArr:         wugnotGnsPoolPath,
+			routeArr:         barGnsPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "20000000",
 			expectedAmount0:  "50000000",
@@ -376,19 +363,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		},
 	}
 
-	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
-	testing.SetOriginCaller(positionOwner)
-	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-	ugnotDepositPrepare(t, positionOwner, 10000000000)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	// Pre-deposit wugnot for alice (for IncreaseLiquidity)
-	testing.SetOriginCaller(alice)
-	testing.IssueCoins(alice, chain.Coins{{"ugnot", int64(100000000)}})
-	ugnotDepositPrepare(t, alice, 100000000)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
+	// Fund alice with bar tokens for IncreaseLiquidity
+	TokenFaucet(t, barPath, alice)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -408,19 +384,14 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
-
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
 
 			// Position Creation
 			positionId, _, _, _ := pn.Mint(
@@ -441,11 +412,11 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			)
 			testing.SkipHeights(1)
 
-			// Add Liquidity (wugnot already deposited at top level)
+			// Add Liquidity
 			testing.SetOriginCaller(tt.recipient)
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			wugnot.Approve(cross, positionAddr, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, positionAddr, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
 			pn.IncreaseLiquidity(
@@ -460,12 +431,12 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
+			bar.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
+			bar.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 
@@ -502,10 +473,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
+	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const gnsWugnotPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:10000"
+	const gnsBarPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:10000"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -536,8 +507,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> ugnot",
-			tokenPath0:       wugnotTokenPath,
+			name:             "success - gns -> bar",
+			tokenPath0:       barTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(10000),
 			recipient:        alice,
@@ -548,9 +519,9 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsTokenPath,
-			outputToken:      wugnotTokenPath,
+			outputToken:      barTokenPath,
 			amountIn:         "10000000",
-			routeArr:         gnsWugnotPoolPath,
+			routeArr:         gnsBarPoolPath,
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
@@ -558,13 +529,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			expectPanic:      true,
 		},
 	}
-
-	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
-	testing.SetOriginCaller(positionOwner)
-	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-	ugnotDepositPrepare(t, positionOwner, 10000000000)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -584,19 +548,14 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
-
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
 
 			// Position Creation
 			pn.Mint(
@@ -619,14 +578,13 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
+			bar.Transfer(cross, routerContract, 20000000)
 			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
+			bar.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
-			wugnot.BalanceOf(tt.recipient)
 
 			testing.SetRealm(testing.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			bar.Approve(cross, poolContract, maxApprove)
 
 			router := mockRouter()
 

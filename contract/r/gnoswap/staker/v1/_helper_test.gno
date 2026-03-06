@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"math"
 	"testing"
 
@@ -29,7 +27,6 @@ import (
 )
 
 const (
-	gnotDenom  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -356,62 +353,6 @@ func quxTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 	qux.Transfer(cross, to, amount)
-}
-
-// ----------------------------------------------------------------------------
-// ugnot
-
-func ugnotTransfer(t *testing.T, from, to address, amount int64) {
-	t.Helper()
-
-	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{gnotDenom, amount}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, amount}})
-}
-
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
-	t.Helper()
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	coins := banker_.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return coins.AmountOf(gnotDenom)
-}
-
-func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
-}
-
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.RemoveCoin(addr, denom, amount)
-}
-
-func ugnotFaucet(t *testing.T, to address, amount int64) {
-	t.Helper()
-	faucetAddress := adminAddr
-	testing.SetOriginCaller(faucetAddress)
-
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{gnotDenom, amount}}
-		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
-		testing.SetOriginSend(newCoins)
-	}
-	ugnotTransfer(t, faucetAddress, to, amount)
-}
-
-func ugnotDepositPrepare(t *testing.T, addr address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(addr))
-	wugnotAddr := chain.PackageAddress(wugnotPath)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
 }
 
 type gnsBalanceTracker struct {

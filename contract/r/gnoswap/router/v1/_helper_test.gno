@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -31,8 +30,6 @@ import (
 )
 
 const (
-	gnotDenom string = "ugnot"
-
 	gnsPath string = "gno.land/r/gnoswap/gns"
 	barPath string = "gno.land/r/onbloc/bar"
 	bazPath string = "gno.land/r/onbloc/baz"
@@ -99,8 +96,6 @@ var (
 	poolAddr     = chain.PackageAddress("gno.land/r/gnoswap/pool")
 	routerAddr   = chain.PackageAddress("gno.land/r/gnoswap/router")
 	positionAddr = chain.PackageAddress("gno.land/r/gnoswap/position")
-
-	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
@@ -284,67 +279,6 @@ func quxTransfer(t *testing.T, to address, amount int64) {
 	qux.Transfer(cross, to, amount)
 }
 
-// ----------------------------------------------------------------------------
-// ugnot
-
-func ugnotTransfer(t *testing.T, from, to address, amount int64) {
-	t.Helper()
-
-	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{gnotDenom, int64(amount)}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, int64(amount)}})
-}
-
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
-	t.Helper()
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	coins := banker_.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return coins.AmountOf(gnotDenom)
-}
-
-func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.IssueCoin(addr, denom, amount)
-	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
-}
-
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.RemoveCoin(addr, denom, amount)
-}
-
-func ugnotFaucet(t *testing.T, to address, amount int64) {
-	t.Helper()
-	faucetAddress := admin
-	testing.SetOriginCaller(faucetAddress)
-
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{gnotDenom, int64(amount)}}
-		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
-		testing.SetOriginSend(newCoins)
-	}
-	ugnotTransfer(t, faucetAddress, to, amount)
-}
-
-// ugnotDepositPrepare prepares state for wugnot deposit (banker + SetOriginSend).
-// Caller MUST call wugnot.Deposit(cross) and testing.SetOriginSend(chain.Coins{}) directly
-// after this function returns. This is required because wugnot.Deposit uses
-// runtime.AssertOriginCall() which only passes when called directly from the test function body.
-func ugnotDepositPrepare(t *testing.T, addr address, amount uint64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(addr))
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, int64(amount)}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", int64(amount)}})
-}
 
 func CreatePoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)

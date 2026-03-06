@@ -36,14 +36,6 @@ type DSLPositionInfo struct {
 }
 
 // NewPoolTestEnv initializes the base test environment.
-// IMPORTANT: Before calling this function, the caller must ensure
-// that adminAddr has sufficient wugnot balance. Call the following
-// at the top level of each TestXxx function (NOT inside t.Run or helpers):
-//
-//	ugnotFaucet(t, adminAddr, amount)
-//	ugnotDepositPrepare(t, adminAddr, amount)
-//	wugnot.Deposit(cross)
-//	testing.SetOriginSend(chain.Coins{})
 func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 	t.Helper()
 
