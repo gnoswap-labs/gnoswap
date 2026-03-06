@@ -755,8 +755,6 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, govStakerAddr, amount)
-
-	// Transfer GRC20 token(bar) directly to govStaker instead of wugnot deposit
 	bar.Transfer(cross, govStakerAddr, amount*10)
 }
 

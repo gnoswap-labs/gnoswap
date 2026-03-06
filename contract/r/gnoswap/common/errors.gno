@@ -12,7 +12,7 @@ var (
 	errInvalidInput        = errors.New("[GNOSWAP-COMMON-003] invalid input data")
 	errOverflow            = errors.New("[GNOSWAP-COMMON-004] overflow")
 	errIdenticalTicks      = errors.New("[GNOSWAP-COMMON-005] identical ticks")
-	errNotHandleNativeCoin = errors.New("[GNOSWAP-COMMON-008] handle native coin is not allowed")
+	errNotHandleNativeCoin = errors.New("[GNOSWAP-COMMON-006] handle native coin is not allowed")
 )
 
 // newErrorWithDetail creates an error message with additional context in format "<original_error> || <detail>".

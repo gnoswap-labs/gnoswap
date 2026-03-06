@@ -17,7 +17,6 @@ import (
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -151,8 +150,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
 	case barPath:
@@ -173,8 +170,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -195,8 +190,6 @@ func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -217,8 +210,6 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
 	case barPath:
@@ -271,12 +262,6 @@ func MintPosition(t *testing.T,
 	)
 }
 
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
-}
-
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
@@ -311,12 +296,6 @@ func quxApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
 	qux.Approve(cross, spender, amount)
-}
-
-func wugnotTransfer(t *testing.T, to address, amount int64) {
-	t.Helper()
-	testing.SetRealm(adminRealm)
-	wugnot.Transfer(cross, to, amount)
 }
 
 func gnsTransfer(t *testing.T, to address, amount int64) {

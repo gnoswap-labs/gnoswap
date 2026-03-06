@@ -4,7 +4,6 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
@@ -26,7 +25,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoland/wugnot" // initialize wugnot package
+	_ "gno.land/r/gnoswap/rbac"   // initialize rbac package
 )
 
 const (
@@ -67,8 +67,6 @@ var (
 	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
 	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
-	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
-
 	alice      = testutils.TestAddress("alice")
 	adminRealm = testing.NewUserRealm(adminAddr)
 
@@ -106,8 +104,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	func() {
 		testing.SetRealm(adminRealm)
 		switch tokenPath {
-		case wugnotPath:
-			wugnotTransfer(t, to, defaultAmount)
 		case gnsPath:
 			gnsTransfer(t, to, defaultAmount)
 		case barPath:
@@ -129,8 +125,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -151,8 +145,6 @@ func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -173,8 +165,6 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
 	case barPath:
@@ -317,12 +307,6 @@ func MintPositionAllGRC20(t *testing.T, caller address) {
 	}
 }
 
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
-}
-
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
@@ -357,12 +341,6 @@ func quxApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
 	qux.Approve(cross, spender, amount)
-}
-
-func wugnotTransfer(t *testing.T, to address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	wugnot.Transfer(cross, to, amount)
 }
 
 func gnsTransfer(t *testing.T, to address, amount int64) {

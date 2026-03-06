@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
@@ -112,8 +111,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
 	case barPath:
@@ -137,8 +134,6 @@ func TokenFaucet2(t *testing.T, tokenPath string, to address) {
 	defaultAmount := int64(10_000_000_000)
 
 	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
 	case barPath:
@@ -159,8 +154,6 @@ func TokenFaucet2(t *testing.T, tokenPath string, to address) {
 func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
 	case barPath:
@@ -193,12 +186,6 @@ func CreatePool(t *testing.T,
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
 		sr.SetPoolTier(cross, poolPath, TIER_1)
 	}
-}
-
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {
@@ -235,12 +222,6 @@ func quxApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
 	qux.Approve(cross, spender, amount)
-}
-
-func wugnotTransfer(t *testing.T, to address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(admin))
-	wugnot.Transfer(cross, to, amount)
 }
 
 func gnsTransfer(t *testing.T, to address, amount int64) {
