@@ -37,7 +37,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 	}{
 		{
 			name:           "mint and stake with GNOT as token0 - sufficient amount",
-			token0:         GNOT_DENOM,
+			token0:         wugnotPath,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -54,7 +54,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		{
 			name:           "mint and stake with GNOT as token1 - sufficient amount",
 			token0:         fooPath,
-			token1:         GNOT_DENOM,
+			token1:         wugnotPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
 			tickUpper:      887220,
@@ -69,7 +69,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with GNOT - insufficient wugnot balance",
-			token0:           GNOT_DENOM,
+			token0:           wugnotPath,
 			token1:           fooPath,
 			fee:              uint32(100),
 			tickLower:        -887220,
@@ -82,11 +82,11 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "insufficient wugnot balance",
+			expectedPanicMsg: "insufficient balance",
 		},
 		{
 			name:           "mint and stake with valid referrer",
-			token0:         GNOT_DENOM,
+			token0:         wugnotPath,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -102,7 +102,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with fee tier 100",
-			token0:         GNOT_DENOM,
+			token0:         wugnotPath,
 			token1:         fooPath,
 			fee:            fee100,
 			tickLower:      -887220,
@@ -118,7 +118,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with fee tier 500",
-			token0:         GNOT_DENOM,
+			token0:         wugnotPath,
 			token1:         fooPath,
 			fee:            uint32(500),
 			tickLower:      -887200,
@@ -134,7 +134,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 500 with invalid tick range",
-			token0:           GNOT_DENOM,
+			token0:           wugnotPath,
 			token1:           fooPath,
 			fee:              uint32(500),
 			tickLower:        -887221,
@@ -151,7 +151,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 10000",
-			token0:           GNOT_DENOM,
+			token0:           wugnotPath,
 			token1:           fooPath,
 			fee:              uint32(10000),
 			tickLower:        -880000,
@@ -168,7 +168,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 10000 with invalid tick range",
-			token0:           GNOT_DENOM,
+			token0:           wugnotPath,
 			token1:           fooPath,
 			fee:              uint32(10000),
 			tickLower:        -887222,
@@ -185,7 +185,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with invalid minimum amounts",
-			token0:           GNOT_DENOM,
+			token0:           wugnotPath,
 			token1:           fooPath,
 			fee:              uint32(100),
 			tickLower:        -887220,
@@ -202,7 +202,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with desired amounts equal to minimums",
-			token0:         GNOT_DENOM,
+			token0:         wugnotPath,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -240,26 +240,16 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 
 			pl.SetPoolCreationFee(cross, 0)
 
-			token0Path := tt.token0
-			token1Path := tt.token1
-
-			if token0Path == GNOT_DENOM {
-				token0Path = wugnotPath
-			}
-			if token1Path == GNOT_DENOM {
-				token1Path = wugnotPath
-			}
-
-			poolPath := pl.GetPoolPath(token0Path, token1Path, tt.fee)
+			poolPath := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
 			instance.setPoolTier(poolPath, 1, time.Now().Unix())
 
-			CreatePool(token0Path, token1Path, tt.fee, "79228162514264337593543950336", adminAddr)
+			CreatePool(tt.token0, tt.token1, tt.fee, "79228162514264337593543950336", adminAddr)
 
 			amount0DesiredInt64, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 			amount1DesiredInt64, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 
-			common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0DesiredInt64)
-			common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1DesiredInt64)
+			common.SafeGRC20Approve(cross, tt.token0, poolAddr, amount0DesiredInt64)
+			common.SafeGRC20Approve(cross, tt.token1, poolAddr, amount1DesiredInt64)
 
 			// Set deadline:time.Now().Unix() + 100000000
 			deadline := tt.deadline
@@ -507,7 +497,7 @@ func TestMintAndStakeWithoutNativeToken(t *testing.T) {
 			pl.SetPoolCreationFee(cross, 0)
 
 			// Verify no GNOT check is performed for non-GNOT pairs
-			hasGNOT := tt.token0 == GNOT_DENOM || tt.token1 == GNOT_DENOM
+			hasGNOT := tt.token0 == wugnotPath || tt.token1 == wugnotPath
 			uassert.False(t, hasGNOT)
 
 			poolPath := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
