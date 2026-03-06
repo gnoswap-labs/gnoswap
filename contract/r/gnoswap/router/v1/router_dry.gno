@@ -77,7 +77,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
-	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified, false)
+	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified)
 
 	switch swapType {
 	case ExactIn:

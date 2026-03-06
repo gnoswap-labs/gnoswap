@@ -90,61 +90,20 @@ func TestExecuteSwapOperation(t *testing.T) {
 	}
 }
 
-func TestHandleNativeTokenWrapping(t *testing.T) {
-	t.Run("Pass: non-GNOT token swap", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("token1", "token2", 100)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+func TestNormalizeNativeTokenPath(t *testing.T) {
+	t.Run("Pass: non-GNOT token returns unchanged", func(t *testing.T) {
+		result := normalizeNativeTokenPath("token1")
+		uassert.Equal(t, result, "token1")
 	})
 
-	t.Run("Pass: WUGNOT input token", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("gno.land/r/gnoland/wugnot", "token2", 100)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+	t.Run("Pass: WUGNOT returns unchanged", func(t *testing.T) {
+		result := normalizeNativeTokenPath("gno.land/r/gnoland/wugnot")
+		uassert.Equal(t, result, "gno.land/r/gnoland/wugnot")
 	})
 
-	t.Run("Pass: WUGNOT output token does not set withUnwrap", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("token1", "gno.land/r/gnoland/wugnot", 100)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		uassert.False(t, op.withUnwrap)
-	})
-
-	t.Run("Pass: GNOT output token sets withUnwrap", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("token1", "ugnot", 100)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		uassert.True(t, op.withUnwrap)
-	})
-
-	t.Run("Pass: GNOT input with zero specified amount", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("ugnot", "token2", 0)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-	})
-
-	t.Run("Pass: non-GNOT input ignores native token handling", func(t *testing.T) {
-		op := &baseSwapOperation{}
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-		err := op.handleNativeTokenWrapping("token1", "token2", 100)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+	t.Run("Pass: ugnot converts to WUGNOT path", func(t *testing.T) {
+		result := normalizeNativeTokenPath("ugnot")
+		uassert.Equal(t, result, common.WUGNOT_PATH)
 	})
 }
 
@@ -434,50 +393,6 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 	}
 }
 
-// Test SwapRouteParams.IsUnwrap
-func TestSwapRouteParams_IsUnwrap(t *testing.T) {
-	tests := []struct {
-		name        string
-		outputToken string
-		expected    bool
-	}{
-		{
-			name:        "output token is ugnot",
-			outputToken: "ugnot",
-			expected:    true,
-		},
-		{
-			name:        "output token is not ugnot - WUGNOT",
-			outputToken: "gno.land/r/gnoland/wugnot",
-			expected:    false,
-		},
-		{
-			name:        "output token is not ugnot - other token",
-			outputToken: "gno.land/r/demo/gns",
-			expected:    false,
-		},
-		{
-			name:        "output token is empty string",
-			outputToken: "",
-			expected:    false,
-		},
-		{
-			name:        "output token is GNOT in uppercase",
-			outputToken: "GNOT",
-			expected:    false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			params := &SwapRouteParams{
-				outputToken: tt.outputToken,
-			}
-			result := params.IsUnwrap()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
 
 // Test SwapRouteParams.SwapCount
 func TestSwapRouteParams_SwapCount(t *testing.T) {
@@ -648,70 +563,6 @@ func TestCreateSwapOperation(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.NotNil(t, op)
-			}
-		})
-	}
-}
-
-// Test extractSwapOperationData
-func TestExtractSwapOperationData(t *testing.T) {
-	tests := []struct {
-		name                        string
-		operation                   RouterOperation
-		expectError                 bool
-		errorMsg                    string
-		expectedBeforeWugnotBalance int64
-		expectedWrappedWugnot       int64
-	}{
-		{
-			name: "ExactInSwapOperation",
-			operation: &ExactInSwapOperation{
-				baseSwapOperation: baseSwapOperation{
-					userBeforeWugnotBalance: 1000,
-					userWrappedWugnot:       500,
-				},
-			},
-			expectError:                 false,
-			expectedBeforeWugnotBalance: 1000,
-			expectedWrappedWugnot:       500,
-		},
-		{
-			name: "ExactOutSwapOperation",
-			operation: &ExactOutSwapOperation{
-				baseSwapOperation: baseSwapOperation{
-					userBeforeWugnotBalance: 2000,
-					userWrappedWugnot:       1000,
-				},
-			},
-			expectError:                 false,
-			expectedBeforeWugnotBalance: 2000,
-			expectedWrappedWugnot:       1000,
-		},
-		{
-			name: "unsupported operation type",
-			operation: &mockOperation{
-				ValidateErr: nil,
-				ProcessErr:  nil,
-				Result:      &SwapResult{},
-			},
-			expectError: true,
-			errorMsg:    "unexpected operation type",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			beforeBalance, wrappedAmount, err := extractSwapOperationData(tt.operation)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-				if tt.errorMsg != "" {
-					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg), "error message should contain: "+tt.errorMsg)
-				}
-			} else {
-				uassert.NoError(t, err)
-				uassert.Equal(t, beforeBalance, tt.expectedBeforeWugnotBalance)
-				uassert.Equal(t, wrappedAmount, tt.expectedWrappedWugnot)
 			}
 		})
 	}
@@ -910,7 +761,6 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 		name                 string
 		route                string
 		amountSpecified      int64
-		withUnwrap           bool
 		sqrtPriceLimitX96    string
 		shouldParseCorrectly bool
 	}{
@@ -918,15 +768,6 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 			name:                 "valid single hop route",
 			route:                "tokenA:tokenB:500",
 			amountSpecified:      1000,
-			withUnwrap:           false,
-			sqrtPriceLimitX96:    "",
-			shouldParseCorrectly: true,
-		},
-		{
-			name:                 "single hop with unwrap",
-			route:                "tokenA:ugnot:500",
-			amountSpecified:      1000,
-			withUnwrap:           true,
 			sqrtPriceLimitX96:    "",
 			shouldParseCorrectly: true,
 		},
@@ -934,7 +775,6 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 			name:                 "single hop with price limit",
 			route:                "tokenA:tokenB:500",
 			amountSpecified:      1000,
-			withUnwrap:           false,
 			sqrtPriceLimitX96:    "79228162514264337593543950336",
 			shouldParseCorrectly: true,
 		},
@@ -957,7 +797,6 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 		route           string
 		numHops         int
 		amountSpecified int64
-		withUnwrap      bool
 		expectPanic     bool
 		panicMsg        string
 		needsRouter     bool
@@ -968,7 +807,6 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 			route:           "tokenA:tokenB:500*POOL*tokenB:tokenC:3000",
 			numHops:         2,
 			amountSpecified: 1000,
-			withUnwrap:      false,
 			expectPanic:     true,
 			panicMsg:        "invalid swap type",
 			needsRouter:     true,
@@ -980,11 +818,11 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 			if tt.expectPanic && tt.needsRouter {
 				uassert.PanicsContains(t, tt.panicMsg, func() {
 					router := mockRouter()
-					router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified, tt.withUnwrap)
+					router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 				})
 			} else {
 				router := mockRouter()
-				router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified, tt.withUnwrap)
+				router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified)
 			}
 		})
 	}
@@ -1044,57 +882,33 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 // Test baseSwapOperation fields initialization
 func TestBaseSwapOperation_Initialization(t *testing.T) {
 	tests := []struct {
-		name                    string
-		withUnwrap              bool
-		userBeforeWugnotBalance int64
-		userWrappedWugnot       int64
-		routes                  []string
-		quotes                  []string
-		amountSpecified         int64
+		name            string
+		routes          []string
+		quotes          []string
+		amountSpecified int64
 	}{
 		{
-			name:                    "default initialization",
-			withUnwrap:              false,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			routes:                  []string{},
-			quotes:                  []string{},
-			amountSpecified:         0,
+			name:            "default initialization",
+			routes:          []string{},
+			quotes:          []string{},
+			amountSpecified: 0,
 		},
 		{
-			name:                    "with price limit",
-			withUnwrap:              false,
-			userBeforeWugnotBalance: 0,
-			userWrappedWugnot:       0,
-			routes:                  []string{"route1"},
-			quotes:                  []string{"100"},
-			amountSpecified:         1000,
-		},
-		{
-			name:                    "with unwrap",
-			withUnwrap:              true,
-			userBeforeWugnotBalance: 1000,
-			userWrappedWugnot:       500,
-			routes:                  []string{"route1"},
-			quotes:                  []string{"100"},
-			amountSpecified:         1000,
+			name:            "with routes and amount",
+			routes:          []string{"route1"},
+			quotes:          []string{"100"},
+			amountSpecified: 1000,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			op := &baseSwapOperation{
-				withUnwrap:              tt.withUnwrap,
-				userBeforeWugnotBalance: tt.userBeforeWugnotBalance,
-				userWrappedWugnot:       tt.userWrappedWugnot,
-				routes:                  tt.routes,
-				quotes:                  tt.quotes,
-				amountSpecified:         tt.amountSpecified,
+				routes:          tt.routes,
+				quotes:          tt.quotes,
+				amountSpecified: tt.amountSpecified,
 			}
 
-			uassert.Equal(t, op.withUnwrap, tt.withUnwrap)
-			uassert.Equal(t, op.userBeforeWugnotBalance, tt.userBeforeWugnotBalance)
-			uassert.Equal(t, op.userWrappedWugnot, tt.userWrappedWugnot)
 			uassert.Equal(t, len(op.routes), len(tt.routes))
 			uassert.Equal(t, len(op.quotes), len(tt.quotes))
 			uassert.Equal(t, op.amountSpecified, tt.amountSpecified)
@@ -1170,7 +984,6 @@ func TestSwapResult_Structure(t *testing.T) {
 		routes          []string
 		quotes          []string
 		amountSpecified int64
-		withUnwrap      bool
 	}{
 		{
 			name:            "single route result",
@@ -1179,7 +992,6 @@ func TestSwapResult_Structure(t *testing.T) {
 			routes:          []string{"route1"},
 			quotes:          []string{"100"},
 			amountSpecified: 1000,
-			withUnwrap:      false,
 		},
 		{
 			name:            "multi-route result",
@@ -1188,16 +1000,6 @@ func TestSwapResult_Structure(t *testing.T) {
 			routes:          []string{"route1", "route2"},
 			quotes:          []string{"50", "50"},
 			amountSpecified: 1000,
-			withUnwrap:      false,
-		},
-		{
-			name:            "result with unwrap",
-			amountIn:        1000,
-			amountOut:       980,
-			routes:          []string{"route1"},
-			quotes:          []string{"100"},
-			amountSpecified: 1000,
-			withUnwrap:      true,
 		},
 	}
 
@@ -1209,7 +1011,6 @@ func TestSwapResult_Structure(t *testing.T) {
 				Routes:          tt.routes,
 				Quotes:          tt.quotes,
 				AmountSpecified: tt.amountSpecified,
-				WithUnwrap:      tt.withUnwrap,
 			}
 
 			uassert.True(t, result.AmountIn > 0)
@@ -1217,45 +1018,38 @@ func TestSwapResult_Structure(t *testing.T) {
 			uassert.Equal(t, len(result.Routes), len(tt.routes))
 			uassert.Equal(t, len(result.Quotes), len(tt.quotes))
 			uassert.True(t, result.AmountSpecified > 0)
-			uassert.Equal(t, result.WithUnwrap, tt.withUnwrap)
 		})
 	}
 }
 
-// Test handleNativeTokenWrapping with both input and output native
-func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
+// Test normalizeNativeTokenPath with various inputs
+func TestNormalizeNativeTokenPath_Various(t *testing.T) {
 	tests := []struct {
-		name            string
-		inputToken      string
-		outputToken     string
-		specifiedAmount int64
-		expectError     bool
-		description     string
+		name     string
+		input    string
+		expected string
 	}{
 		{
-			name:            "both input and output are ugnot (invalid)",
-			inputToken:      "ugnot",
-			outputToken:     "ugnot",
-			specifiedAmount: 1000,
-			expectError:     true,
-			description:     "Cannot swap ugnot to ugnot",
+			name:     "ugnot converts to WUGNOT",
+			input:    "ugnot",
+			expected: common.WUGNOT_PATH,
 		},
 		{
-			name:            "input ugnot, output wugnot",
-			inputToken:      "ugnot",
-			outputToken:     "gno.land/r/gnoland/wugnot",
-			specifiedAmount: 1000,
-			expectError:     false,
-			description:     "Valid: wrapping ugnot to wugnot",
+			name:     "WUGNOT stays unchanged",
+			input:    "gno.land/r/gnoland/wugnot",
+			expected: "gno.land/r/gnoland/wugnot",
+		},
+		{
+			name:     "other token stays unchanged",
+			input:    "gno.land/r/onbloc/bar",
+			expected: "gno.land/r/onbloc/bar",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// This test structure verifies the parameters are correct
-			uassert.NotEmpty(t, tt.inputToken)
-			uassert.NotEmpty(t, tt.outputToken)
-			uassert.True(t, tt.specifiedAmount > 0)
+			result := normalizeNativeTokenPath(tt.input)
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
@@ -1546,57 +1340,6 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 	}
 }
 
-// Test extractSwapOperationData with nil operation
-func TestExtractSwapOperationData_NilHandling(t *testing.T) {
-	tests := []struct {
-		name        string
-		operation   RouterOperation
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name: "valid ExactIn operation",
-			operation: &ExactInSwapOperation{
-				baseSwapOperation: baseSwapOperation{
-					userBeforeWugnotBalance: 1000,
-					userWrappedWugnot:       500,
-				},
-			},
-			expectError: false,
-		},
-		{
-			name: "valid ExactOut operation",
-			operation: &ExactOutSwapOperation{
-				baseSwapOperation: baseSwapOperation{
-					userBeforeWugnotBalance: 2000,
-					userWrappedWugnot:       1000,
-				},
-			},
-			expectError: false,
-		},
-		{
-			name:        "invalid operation type",
-			operation:   &mockOperation{},
-			expectError: true,
-			errorMsg:    "unexpected operation type",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := extractSwapOperationData(tt.operation)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-				if tt.errorMsg != "" {
-					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg), "error should contain: "+tt.errorMsg)
-				}
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
 
 // Test processRoutes remainder calculation accuracy
 func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
@@ -1662,13 +1405,6 @@ func TestSwapRouteParams_EmptyValues(t *testing.T) {
 			},
 			method: "SwapCount",
 		},
-		{
-			name: "empty output token",
-			params: SwapRouteParams{
-				outputToken: "",
-			},
-			method: "IsUnwrap",
-		},
 	}
 
 	for _, tt := range tests {
@@ -1681,9 +1417,6 @@ func TestSwapRouteParams_EmptyValues(t *testing.T) {
 				result := tt.params.SwapCount()
 				// Empty string results in 1 after split
 				uassert.Equal(t, result, int64(1))
-			case "IsUnwrap":
-				result := tt.params.IsUnwrap()
-				uassert.Equal(t, result, false)
 			}
 		})
 	}

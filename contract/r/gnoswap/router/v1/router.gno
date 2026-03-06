@@ -1,15 +1,11 @@
 package v1
 
 import (
-	"chain/runtime"
 	"errors"
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/common"
 )
 
 var one = u256.One()
@@ -30,9 +26,6 @@ const (
 	errQuoteSumExceedsMax   = "quote sum exceeds 100 at index(%d)"
 	errInvalidQuoteSum      = "quote sum(%d) must be 100"
 
-	// balance and overflow validation
-	errTooMuchWugnotSpent = "too much wugnot spent (wrapped: %d, spend: %d)"
-
 	// swap type validation
 	errExactInTooFewReceived = "ExactIn: too few received (min:%d, got:%d)"
 	errExactOutTooMuchSpent  = "ExactOut: too much spent (max:%d, used:%d)"
@@ -40,46 +33,6 @@ const (
 	// route parsing validation
 	errEmptyRoutes = "routes cannot be empty"
 )
-
-// GnotSwapHandler encapsulates methods for handling GNOT token swaps
-type GnotSwapHandler struct {
-	BeforeBalance int64
-	WrappedAmount int64
-	NewBalance    int64
-}
-
-// newGnotSwapHandler creates a new handler for GNOT swaps.
-func newGnotSwapHandler(beforeBalance, wrappedAmount int64) *GnotSwapHandler {
-	return &GnotSwapHandler{
-		BeforeBalance: beforeBalance,
-		WrappedAmount: wrappedAmount,
-	}
-}
-
-// UpdateNewBalance updates the current balance after swap operations.
-func (h *GnotSwapHandler) UpdateNewBalance() {
-	h.NewBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
-}
-
-// HandleInputSwap validates that the user did not spend more WUGNOT than intended.
-//
-// In the new flow (post wugnot migration):
-// 1. User already has WUGNOT and approved the router
-// 2. Pool callback transfers WUGNOT directly from user to pool
-// 3. We validate the user's balance decreased by at most WrappedAmount
-//
-// Returns:
-//   - error: if user spent more WUGNOT than the specified swap amount
-func (h *GnotSwapHandler) HandleInputSwap() error {
-	spend := h.BeforeBalance - h.NewBalance
-
-	if spend > h.WrappedAmount {
-		return ufmt.Errorf(errTooMuchWugnotSpent,
-			h.WrappedAmount, spend)
-	}
-
-	return nil
-}
 
 // SwapValidator provides validation methods for swap operations
 type SwapValidator struct{}
@@ -231,7 +184,6 @@ func (r *routerV1) finalizeSwap(
 	resultAmountIn, resultAmountOut int64,
 	swapType SwapType,
 	tokenAmountLimit int64,
-	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified int64,
 	swapCount int64,
 	isSetSqrtPriceLimitX96 bool,
@@ -246,17 +198,6 @@ func (r *routerV1) finalizeSwap(
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
-		}
-	}
-
-	// Handle GNOT token swaps
-	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)
-	handler.UpdateNewBalance()
-
-	// Handle input GNOT token swap
-	if common.IsGNOTNativePath(inputToken) {
-		if err := handler.HandleInputSwap(); err != nil {
-			panic(err)
 		}
 	}
 

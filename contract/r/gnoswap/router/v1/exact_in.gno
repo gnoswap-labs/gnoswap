@@ -52,15 +52,19 @@ func (r *routerV1) ExactInSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
-	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
+
+	normalizedInput := normalizeNativeTokenPath(inputToken)
+	normalizedOutput := normalizeNativeTokenPath(outputToken)
+
+	assertIsValidRoutePaths(routeArr, normalizedInput, normalizedOutput)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 
 	params := SwapRouteParams{
-		inputToken:        inputToken,
-		outputToken:       outputToken,
+		inputToken:        normalizedInput,
+		outputToken:       normalizedOutput,
 		routeArr:          routeArr,
 		quoteArr:          quoteArr,
 		deadline:          deadline,
@@ -112,7 +116,11 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	common.AssertIsNotHandleNativeCoin()
-	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
+
+	normalizedInput := normalizeNativeTokenPath(inputToken)
+	normalizedOutput := normalizeNativeTokenPath(outputToken)
+
+	assertIsValidSingleSwapRouteArrPath(routeArr, normalizedInput, normalizedOutput)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
@@ -120,8 +128,8 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	emission.MintAndDistributeGns(cross)
 
 	params := SwapRouteParams{
-		inputToken:        inputToken,
-		outputToken:       outputToken,
+		inputToken:        normalizedInput,
+		outputToken:       normalizedOutput,
 		routeArr:          routeArr,
 		quoteArr:          "100",
 		deadline:          deadline,
@@ -162,18 +170,12 @@ func (r *routerV1) exactInSwapRoute(
 		panic(err)
 	}
 
-	if params.IsUnwrap() {
-		err = transferWugnot(runtime.PreviousRealm().Address(), outputAmount)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
-	}
-
-	// handle referral registration
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
+
+	common.SafeGRC20Transfer(cross, params.outputToken, caller, outputAmount)
+
+	// handle referral registration
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 	if !success {
@@ -185,7 +187,7 @@ func (r *routerV1) exactInSwapRoute(
 
 	chain.Emit(
 		"ExactInSwap",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,
@@ -211,7 +213,6 @@ func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperatio
 		router: r,
 		params: pp,
 		baseSwapOperation: baseSwapOperation{
-			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
 			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
 		},
 	}
@@ -242,10 +243,6 @@ func (op *ExactInSwapOperation) Validate() error {
 
 // Process executes the exact-in swap operation.
 func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
-	if err := op.handleNativeTokenWrapping(); err != nil {
-		return nil, err
-	}
-
 	resultAmountIn, resultAmountOut, err := op.processRoutes(op.router, ExactIn)
 	if err != nil {
 		return nil, err
@@ -257,15 +254,5 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 		Routes:          op.routes,
 		Quotes:          op.quotes,
 		AmountSpecified: op.amountSpecified,
-		WithUnwrap:      op.withUnwrap,
 	}, nil
-}
-
-// handleNativeTokenWrapping handles the wrapping of native tokens if needed.
-func (op *ExactInSwapOperation) handleNativeTokenWrapping() error {
-	return op.baseSwapOperation.handleNativeTokenWrapping(
-		op.params.InputToken,
-		op.params.OutputToken,
-		op.amountSpecified,
-	)
 }

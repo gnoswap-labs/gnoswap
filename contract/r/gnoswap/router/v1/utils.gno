@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -169,17 +168,6 @@ func validateRoutePaths(routePathArrString, inputToken, outputToken string) erro
 //
 // Returns error with specific details if validation fails.
 func validateRoutePath(routePath, inputToken, outputToken string) error {
-	inputWrappedPath := inputToken
-	outputWrappedPath := outputToken
-
-	if common.IsGNOTNativePath(inputToken) {
-		inputWrappedPath = common.WUGNOT_PATH
-	}
-
-	if common.IsGNOTNativePath(outputToken) {
-		outputWrappedPath = common.WUGNOT_PATH
-	}
-
 	// Extract first and last tokens from the routePath
 	var (
 		firstToken, lastToken string
@@ -216,12 +204,12 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 	}
 
 	// Validate consistency
-	if firstToken != inputWrappedPath {
-		return makeErrorWithDetails(errInvalidRouteFirstToken, ufmt.Sprintf("firstToken: %s, inputToken: %s", firstToken, inputWrappedPath))
+	if firstToken != inputToken {
+		return makeErrorWithDetails(errInvalidRouteFirstToken, ufmt.Sprintf("firstToken: %s, inputToken: %s", firstToken, inputToken))
 	}
 
-	if lastToken != outputWrappedPath {
-		return makeErrorWithDetails(errInvalidRouteLastToken, ufmt.Sprintf("lastToken: %s, outputToken: %s", lastToken, outputWrappedPath))
+	if lastToken != outputToken {
+		return makeErrorWithDetails(errInvalidRouteLastToken, ufmt.Sprintf("lastToken: %s, outputToken: %s", lastToken, outputToken))
 	}
 
 	return nil

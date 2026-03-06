@@ -371,7 +371,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		func() {
 			testing.SetRealm(routerRealm)
 			router.ExactOutSwapRoute(
-				GNOT_DENOM, // inputToken
+				gnotDenom, // inputToken
 				quxPath,    // outputToken
 				"3",        // amountSpecified
 				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
@@ -431,7 +431,6 @@ func TestNewExactInSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op)
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountIn, tt.params.AmountIn)
-			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
 		})
 	}
 }
@@ -623,7 +622,6 @@ func TestNewExactOutSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op)
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountOut, tt.params.AmountOut)
-			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
 		})
 	}
 }
@@ -873,8 +871,8 @@ func TestExactInVsExactOut_AmountSpecified(t *testing.T) {
 	})
 }
 
-// Test handleNativeTokenWrapping for ExactIn
-func TestExactInSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
+// Test ExactIn validation with various token types
+func TestExactInSwapOperation_TokenTypes(t *testing.T) {
 	tests := []struct {
 		name        string
 		inputToken  string
@@ -921,8 +919,8 @@ func TestExactInSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
 	}
 }
 
-// Test handleNativeTokenWrapping for ExactOut
-func TestExactOutSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
+// Test ExactOut validation with various token types
+func TestExactOutSwapOperation_TokenTypes(t *testing.T) {
 	tests := []struct {
 		name        string
 		inputToken  string

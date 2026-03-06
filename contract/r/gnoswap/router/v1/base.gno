@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"errors"
 	"strings"
 
@@ -9,22 +8,18 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 )
 
 const (
 	SINGLE_HOP_ROUTE int = 1
-
-	INITIAL_WUGNOT_BALANCE int64 = 0
 )
 
 // swap can be done by multiple pools
 // to separate each pool, we use POOL_SEPARATOR
 const (
 	POOL_SEPARATOR = "*POOL*"
-	wugnotPath     = "gno.land/r/gnoland/wugnot"
 )
 
 type RouterOperation interface {
@@ -57,45 +52,18 @@ type BaseSwapParams struct {
 
 // common swap operation
 type baseSwapOperation struct {
-	sqrtPriceLimitX96       *u256.Uint
-	withUnwrap              bool
-	userBeforeWugnotBalance int64
-	userWrappedWugnot       int64
-	routes                  []string
-	quotes                  []string
-	amountSpecified         int64
+	sqrtPriceLimitX96 *u256.Uint
+	routes            []string
+	quotes            []string
+	amountSpecified   int64
 }
 
-// handleNativeTokenWrapping handles wrapping and unwrapping of native tokens.
-func (op *baseSwapOperation) handleNativeTokenWrapping(
-	inputToken string,
-	outputToken string,
-	specifiedAmount int64,
-) error {
-	isInputNativeToken := common.IsGNOTNativePath(inputToken)
-	isOutputNativeToken := common.IsGNOTNativePath(outputToken)
-
-	// no native token
-	if !isInputNativeToken && !isOutputNativeToken {
-		return nil
+// normalizeNativeTokenPath converts native GNOT paths to WUGNOT for uniform GRC20 handling.
+func normalizeNativeTokenPath(tokenPath string) string {
+	if common.IsGNOTNativePath(tokenPath) {
+		return common.WUGNOT_PATH
 	}
-
-	// save current user's WUGNOT amount
-	op.userBeforeWugnotBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
-
-	// Handle input token independently
-	if isInputNativeToken {
-		// User must have already deposited GNOT into WUGNOT and approved the router.
-		// The swap callback will transfer WUGNOT directly from user to pool.
-		op.userWrappedWugnot = specifiedAmount
-	}
-
-	// Handle output token independently
-	if isOutputNativeToken {
-		op.withUnwrap = true
-	}
-
-	return nil
+	return tokenPath
 }
 
 // processRoutes processes all swap routes and returns total amounts.
@@ -146,23 +114,22 @@ func (op *baseSwapOperation) processRoute(
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = r.handleSingleSwap(route, toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
+		amountIn, amountOut = r.handleSingleSwap(route, toSwap, op.sqrtPriceLimitX96)
 	default:
-		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
+		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap)
 	}
 
 	return amountIn, amountOut, nil
 }
 
 // handleSingleSwap executes a single-hop swap with the specified amount.
-func (r *routerV1) handleSingleSwap(route string, amountSpecified int64, withUnwrap bool, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
+func (r *routerV1) handleSingleSwap(route string, amountSpecified int64, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:           input,
 		tokenOut:          output,
 		fee:               fee,
 		amountSpecified:   amountSpecified,
-		withUnwrap:        withUnwrap,
 		sqrtPriceLimitX96: sqrtPriceLimitX96,
 	}
 
@@ -175,18 +142,17 @@ func (r *routerV1) handleMultiSwap(
 	route string,
 	numHops int,
 	amountSpecified int64,
-	withUnwrap bool,
 ) (int64, int64) {
 	recipient := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
+		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
 		return r.multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
+		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
 		return r.multiSwapNegative(*sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
@@ -217,11 +183,6 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	}
 
 	return calculateExactOutWithRouterFee(p.exactAmount, feeBps)
-}
-
-// IsUnwrap checks if the swap output is native token.
-func (p *SwapRouteParams) IsUnwrap() bool {
-	return p.outputToken == GNOT_DENOM
 }
 
 func (p *SwapRouteParams) SwapCount() int64 {
@@ -263,21 +224,6 @@ func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, 
 	}
 }
 
-// extractSwapOperationData extracts common data from swap operation.
-func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
-	var baseOp *baseSwapOperation
-	switch typedOp := op.(type) {
-	case *ExactInSwapOperation:
-		baseOp = &typedOp.baseSwapOperation
-	case *ExactOutSwapOperation:
-		baseOp = &typedOp.baseSwapOperation
-	default:
-		return 0, 0, ufmt.Errorf("unexpected operation type: %T", op)
-	}
-
-	return baseOp.userBeforeWugnotBalance, baseOp.userWrappedWugnot, nil
-}
-
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
 func (r *routerV1) commonSwapRoute(params SwapRouteParams) (int64, int64, error) {
 	op, err := createSwapOperation(r, params)
@@ -294,11 +240,6 @@ func (r *routerV1) commonSwapRoute(params SwapRouteParams) (int64, int64, error)
 		return 0, 0, errors.New(msg)
 	}
 
-	userBeforeWugnotBalance, userWrappedWugnot, err := extractSwapOperationData(op)
-	if err != nil {
-		return 0, 0, err
-	}
-
 	inputAmount, outputAmount := r.finalizeSwap(
 		params.inputToken,
 		params.outputToken,
@@ -306,8 +247,6 @@ func (r *routerV1) commonSwapRoute(params SwapRouteParams) (int64, int64, error)
 		result.AmountOut,
 		params.typ,
 		params.limitAmount,
-		userBeforeWugnotBalance,
-		userWrappedWugnot,
 		params.ExactAmount(),
 		params.SwapCount(),
 		params.IsSetSqrtPriceLimitX96(),
