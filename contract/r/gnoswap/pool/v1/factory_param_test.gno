@@ -39,26 +39,6 @@ func TestNewPoolParams(t *testing.T) {
 			}
 		},
 	)
-
-	t.Run(
-		"Success - native token wrapped ugnot token",
-		func(t *testing.T) {
-			initPoolTest(t)
-
-			params := newPoolParams(
-				GNOT_DENOM,
-				"token1",
-				500,
-				"1000000",
-				getMockInstance().GetFeeAmountTickSpacing(500),
-				0,
-			)
-			token0, _ := params.wrap()
-			if token0 != WUGNOT_PATH {
-				t.Errorf("Expected GNOT to be wrapped to WUGNOT")
-			}
-		},
-	)
 }
 
 func TestNewPoolParam(t *testing.T) {
@@ -75,8 +55,8 @@ func TestNewPoolParam(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      gnsPath,
-			token1Path:      wugnotPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -88,8 +68,8 @@ func TestNewPoolParam(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
-			uassert.Equal(t, params.token0Path, gnsPath, "Token0Path should match")
-			uassert.Equal(t, params.token1Path, wugnotPath, "Token1Path should match")
+			uassert.Equal(t, params.token0Path, barPath, "Token0Path should match")
+			uassert.Equal(t, params.token1Path, bazPath, "Token1Path should match")
 			uassert.Equal(t, params.fee, FeeTier3000, "Fee should match")
 			uassert.Equal(t, params.tickSpacing, params.TickSpacing(), "TickSpacing should match")
 			uassert.Equal(t, params.SqrtPriceX96().ToString(), u256.MustFromDecimal(tt.sqrtPriceX96Str).ToString(), "SqrtPriceX96 should match")
@@ -98,11 +78,6 @@ func TestNewPoolParam(t *testing.T) {
 }
 
 func TestIsInOrder(t *testing.T) {
-	const (
-		gnsPath    = "gno.land/r/gnoswap/gns"
-		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
-	)
-
 	testCases := []struct {
 		name            string
 		token0Path      string
@@ -116,8 +91,8 @@ func TestIsInOrder(t *testing.T) {
 	}{
 		{
 			name:            "success - normal token pair",
-			token0Path:      gnsPath,
-			token1Path:      wugnotPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -130,18 +105,13 @@ func TestIsInOrder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
 			poolPath := params.poolPath()
-			uassert.Equal(t, poolPath, "gno.land/r/gnoswap/gns:gno.land/r/gnoswap/v1/wugnot:3000", "Pool path should match")
+			uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", "Pool path should match")
 			uassert.Equal(t, params.isInOrder(), true, "Tokens order should match")
 		})
 	}
 }
 
 func TestUpdateWithWrapping(t *testing.T) {
-	const (
-		gnsPath    = "gno.land/r/gnoswap/gns"
-		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
-	)
-
 	tick := int32(-11242)
 	sqrtPriceX96FromTick := common.TickMathGetSqrtRatioAtTick(tick)
 
@@ -157,9 +127,9 @@ func TestUpdateWithWrapping(t *testing.T) {
 		expectedMsg     string
 	}{
 		{
-			name:            "success - update with wrapping",
-			token0Path:      wugnotPath,
-			token1Path:      gnsPath,
+			name:            "success - tokens in order",
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -168,8 +138,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "success - near MIN_SQRT_RATIO",
-			token0Path:      wugnotPath,
-			token1Path:      gnsPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128740", // MIN_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128740"),
@@ -178,8 +148,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "fail - below MIN_SQRT_RATIO",
-			token0Path:      wugnotPath,
-			token1Path:      gnsPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738",                       // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"), // Fixed to match the string
@@ -189,8 +159,8 @@ func TestUpdateWithWrapping(t *testing.T) {
 		},
 		{
 			name:            "fail - above MAX_SQRT_RATIO",
-			token0Path:      wugnotPath,
-			token1Path:      gnsPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("1461446703485210103287273052203988822378723970342"),
@@ -199,9 +169,9 @@ func TestUpdateWithWrapping(t *testing.T) {
 			expectedMsg:     "out of range for numeric value",
 		},
 		{
-			name:            "success - update with wrapping",
-			token0Path:      wugnotPath,
-			token1Path:      gnsPath,
+			name:            "success - price from tick",
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: sqrtPriceX96FromTick.ToString(),
 			sqrtPriceX96:    sqrtPriceX96FromTick,
@@ -209,9 +179,9 @@ func TestUpdateWithWrapping(t *testing.T) {
 			expectedPanic:   false,
 		},
 		{
-			name:            "fail - tokens swapped below MIN_SQRT_RATIO",
-			token0Path:      gnsPath,    // swapped: gns first
-			token1Path:      wugnotPath, // swapped: wugnot second
+			name:            "fail - tokens not in order, below MIN_SQRT_RATIO",
+			token0Path:      bazPath,  // not in order: baz > bar
+			token1Path:      barPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"),
@@ -262,51 +232,6 @@ func TestUpdateWithWrapping(t *testing.T) {
 	}
 }
 
-func TestWrap(t *testing.T) {
-	testCases := []struct {
-		name            string
-		token0Path      string
-		token1Path      string
-		fee             uint32
-		sqrtPriceX96Str string
-		sqrtPriceX96    *u256.Uint
-		tickSpacing     int32
-		expectedPanic   bool
-		expectedMsg     string
-	}{
-		{
-			name:            "success - native token wrapped ugnot token",
-			token0Path:      GNOT_DENOM,
-			token1Path:      gnsPath,
-			fee:             FeeTier3000,
-			sqrtPriceX96Str: MAX_PRICE_IMPACT,
-			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
-			expectedPanic:   false,
-		},
-	}
-
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
-			wrapped0, wrapped1 := params.wrap()
-
-			expected0 := params.token0Path
-			expected1 := params.token1Path
-
-			if params.token0Path == GNOT_DENOM {
-				expected0 = WUGNOT_PATH
-			}
-			if params.token1Path == GNOT_DENOM {
-				expected1 = WUGNOT_PATH
-			}
-
-			uassert.Equal(t, expected0, wrapped0, "Token0 should be wrapped if GNOT")
-			uassert.Equal(t, expected1, wrapped1, "Token1 should be wrapped if GNOT")
-		})
-	}
-}
-
 func TestGeneratePoolPath(t *testing.T) {
 	testCases := []struct {
 		name            string
@@ -321,8 +246,8 @@ func TestGeneratePoolPath(t *testing.T) {
 	}{
 		{
 			name:            "success - pool path generated correctly",
-			token0Path:      gnsPath,
-			token1Path:      wugnotPath,
+			token0Path:      barPath,
+			token1Path:      bazPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
@@ -503,14 +428,14 @@ func TestIsSameTokenPath(t *testing.T) {
 	}{
 		{
 			name:       "different tokens",
-			token0Path: gnsPath,
-			token1Path: wugnotPath,
+			token0Path: barPath,
+			token1Path: bazPath,
 			expected:   false,
 		},
 		{
 			name:       "same token path",
-			token0Path: gnsPath,
-			token1Path: gnsPath,
+			token0Path: barPath,
+			token1Path: barPath,
 			expected:   true,
 		},
 		{
@@ -521,7 +446,7 @@ func TestIsSameTokenPath(t *testing.T) {
 		},
 		{
 			name:       "one empty one valid",
-			token0Path: gnsPath,
+			token0Path: barPath,
 			token1Path: "",
 			expected:   false,
 		},
@@ -538,7 +463,7 @@ func TestIsSameTokenPath(t *testing.T) {
 
 // TestIsSupportedFee tests fee tier support validation
 func TestIsSupportedFee(t *testing.T) {
-	params := newPoolParams(gnsPath, wugnotPath, FeeTier3000, MAX_PRICE_IMPACT, 60, 0)
+	params := newPoolParams(barPath, bazPath, FeeTier3000, MAX_PRICE_IMPACT, 60, 0)
 
 	tests := []struct {
 		name     string
