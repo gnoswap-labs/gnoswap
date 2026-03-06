@@ -105,7 +105,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create ugnot:gns:3000 pool")
-	pl.CreatePool(cross, "ugnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -142,8 +142,8 @@ func mintAndStakeNative() {
 	testing.SetOriginSend(chain.Coins{})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
-		"ugnot",
-		"gno.land/r/gnoswap/gns",
+		wugnotPath,
+		gnsPath,
 		fee3000,
 		int32(-5040),
 		int32(5040),
