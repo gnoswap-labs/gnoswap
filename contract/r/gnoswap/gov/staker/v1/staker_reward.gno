@@ -15,8 +15,6 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
-
 // CollectReward collects accumulated rewards based on xGNS holdings.
 //
 // Claims all pending rewards from governance staking.
