@@ -602,77 +602,6 @@ func TestParseAmounts(t *testing.T) {
 	}
 }
 
-func TestProcessTokens(t *testing.T) {
-	tests := []struct {
-		name        string
-		token0      string
-		token1      string
-		expected0   string
-		expected1   string
-		expectPanic bool
-		expectMsg   string
-	}{
-		{
-			name:        "processTokens panics with invalid token path",
-			token0:      gnsPath,
-			token1:      "tokenB",
-			expectPanic: true,
-			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
-		},
-		{
-			name:      "processTokens normalizes native token0 to WUGNOT",
-			token0:    common.GNOT_DENOM,
-			token1:    gnsPath,
-			expected0: WUGNOT_PATH,
-			expected1: "gno.land/r/gnoswap/gns",
-		},
-		{
-			name:      "processTokens normalizes native token1 to WUGNOT",
-			token0:    gnsPath,
-			token1:    common.GNOT_DENOM,
-			expected0: "gno.land/r/gnoswap/gns",
-			expected1: WUGNOT_PATH,
-		},
-		{
-			name:        "processTokens panics when both tokens are native",
-			token0:      common.GNOT_DENOM,
-			token1:      common.GNOT_DENOM,
-			expectPanic: true,
-			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
-		},
-		{
-			name:        "processTokens panics with invalid token path (both invalid)",
-			token0:      "invalidToken",
-			token1:      "tokenB",
-			expectPanic: true,
-			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			MockRegister(t, tt.token0)
-			MockRegister(t, tt.token1)
-
-			// guard for unexpected panic
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-				}
-			}()
-
-			token0, token1 := processTokens(tt.token0, tt.token1)
-
-			uassert.Equal(t, tt.expected0, token0)
-			uassert.Equal(t, tt.expected1, token1)
-		})
-	}
-}
-
 func TestMint(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -1311,33 +1240,15 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Valid native token (ugnot) with wrapped token",
-			token0:      common.GNOT_DENOM,
-			token1:      gnsPath,
-			expectError: false,
-		},
-		{
-			name:        "Valid wrapped token with native",
-			token0:      gnsPath,
-			token1:      common.GNOT_DENOM,
-			expectError: false,
-		},
-		{
 			name:        "Invalid - identical tokens",
 			token0:      gnsPath,
 			token1:      gnsPath,
 			expectError: true,
 		},
 		{
-			name:        "Invalid - ugnot and wugnot conflict",
-			token0:      common.GNOT_DENOM,
-			token1:      WUGNOT_PATH,
-			expectError: true,
-		},
-		{
-			name:        "Invalid - wugnot and ugnot conflict (reversed)",
-			token0:      WUGNOT_PATH,
-			token1:      common.GNOT_DENOM,
+			name:        "Invalid - ugnot is not a registered token",
+			token0:      "ugnot",
+			token1:      common.WUGNOT_PATH,
 			expectError: true,
 		},
 		{
