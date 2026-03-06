@@ -755,6 +755,13 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 			shouldParseCorrectly: true,
 		},
 		{
+			name:                 "single hop with different token pair",
+			route:                "tokenA:tokenC:3000",
+			amountSpecified:      5000,
+			sqrtPriceLimitX96:    "",
+			shouldParseCorrectly: true,
+		},
+		{
 			name:                 "single hop with price limit",
 			route:                "tokenA:tokenB:500",
 			amountSpecified:      1000,
@@ -882,6 +889,12 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 			quotes:          []string{"100"},
 			amountSpecified: 1000,
 		},
+		{
+			name:            "with multiple routes",
+			routes:          []string{"route1", "route2"},
+			quotes:          []string{"60", "40"},
+			amountSpecified: 5000,
+		},
 	}
 
 	for _, tt := range tests {
@@ -983,6 +996,14 @@ func TestSwapResult_Structure(t *testing.T) {
 			routes:          []string{"route1", "route2"},
 			quotes:          []string{"50", "50"},
 			amountSpecified: 1000,
+		},
+		{
+			name:            "three-route result",
+			amountIn:        5000,
+			amountOut:       4900,
+			routes:          []string{"route1", "route2", "route3"},
+			quotes:          []string{"40", "30", "30"},
+			amountSpecified: 5000,
 		},
 	}
 

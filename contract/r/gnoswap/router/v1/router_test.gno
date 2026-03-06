@@ -23,8 +23,6 @@ import (
 )
 
 func TestFinalizeSwap(t *testing.T) {
-	t.Skip("finalize swap's behaviour seems change. need to check")
-
 	tests := []struct {
 		name             string
 		inputToken       string
@@ -35,7 +33,7 @@ func TestFinalizeSwap(t *testing.T) {
 		tokenAmountLimit int64
 		amountSpecified  int64
 		swapCount        int64
-		expectError      bool
+		expectPanic      bool
 		errorMessage     string
 	}{
 		{
@@ -48,7 +46,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit: 85,
 			amountSpecified:  100,
 			swapCount:        1,
-			expectError:      false,
+			expectPanic:      false,
 		},
 		{
 			name:             "Pass: ExactOut",
@@ -60,10 +58,10 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit: 120,
 			amountSpecified:  100,
 			swapCount:        1,
-			expectError:      false,
+			expectPanic:      false,
 		},
 		{
-			name:             "ExactOut: Slippage error",
+			name:             "ExactOut: exactOutAmount slippage error",
 			inputToken:       barPath,
 			outputToken:      bazPath,
 			resultAmountIn:   100,
@@ -72,11 +70,24 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit: 100,
 			amountSpecified:  100,
 			swapCount:        1,
-			expectError:      true,
-			errorMessage:     "[GNOSWAP-ROUTER-001] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
+			expectPanic:      true,
+			errorMessage:     "received more than requested in requested=100, actual=90",
 		},
 		{
-			name:             "ExactOut: Real world slippage error",
+			name:             "ExactIn: Slippage error - too few received",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   100,
+			resultAmountOut:  80,
+			swapType:         ExactIn,
+			tokenAmountLimit: 85,
+			amountSpecified:  100,
+			swapCount:        1,
+			expectPanic:      true,
+			errorMessage:     "ExactIn: too few received (min:85, got:80)",
+		},
+		{
+			name:             "ExactOut: Real world amounts pass",
 			inputToken:       barPath,
 			outputToken:      bazPath,
 			resultAmountIn:   843455035,
@@ -85,57 +96,74 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit: 843455036,
 			amountSpecified:  600901352,
 			swapCount:        1,
-			expectError:      false,
+			expectPanic:      false,
+		},
+		{
+			name:             "ExactOut: Slippage error - spent too much",
+			inputToken:       fooPath,
+			outputToken:      quxPath,
+			resultAmountIn:   150,
+			resultAmountOut:  100,
+			swapType:         ExactOut,
+			tokenAmountLimit: 140,
+			amountSpecified:  100,
+			swapCount:        1,
+			expectPanic:      true,
+			errorMessage:     "ExactOut: too much spent (max:140, used:150)",
+		},
+		{
+			name:             "ExactIn: Large amounts pass",
+			inputToken:       barPath,
+			outputToken:      bazPath,
+			resultAmountIn:   1000000000,
+			resultAmountOut:  999000000,
+			swapType:         ExactIn,
+			tokenAmountLimit: 998000000,
+			amountSpecified:  1000000000,
+			swapCount:        1,
+			expectPanic:      false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initRouterTest(t)
-			createMultiHopPools(t)
-
-			if tt.expectError {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("Error expected but not occurred")
-						return
-					}
-					errorStr, ok := r.(string)
-					if !ok {
-						t.Errorf("Unexpected error type: %v", r)
-						return
-					}
-					if tt.errorMessage != "" && !strings.Contains(errorStr, tt.errorMessage) {
-						t.Errorf("Expected error message not included. got: %v, want: %v", errorStr, tt.errorMessage)
-					}
-				}()
-			}
 
 			router := mockRouter()
+			// set swap fee to 0 to focus on slippage validation
+			router.SetSwapFee(0)
 
-			amountIn, amountOut := router.finalizeSwap(
-				tt.inputToken,
-				tt.outputToken,
-				tt.resultAmountIn,
-				tt.resultAmountOut,
-				tt.swapType,
-				tt.tokenAmountLimit,
-				tt.amountSpecified,
-				tt.swapCount,
-				false,
-			)
+			if tt.expectPanic {
+				uassert.PanicsContains(t, tt.errorMessage, func() {
+					router.finalizeSwap(
+						tt.inputToken,
+						tt.outputToken,
+						tt.resultAmountIn,
+						tt.resultAmountOut,
+						tt.swapType,
+						tt.tokenAmountLimit,
+						tt.amountSpecified,
+						tt.swapCount,
+						false,
+					)
+				})
+			} else {
+				amountIn, amountOut := router.finalizeSwap(
+					tt.inputToken,
+					tt.outputToken,
+					tt.resultAmountIn,
+					tt.resultAmountOut,
+					tt.swapType,
+					tt.tokenAmountLimit,
+					tt.amountSpecified,
+					tt.swapCount,
+					false,
+				)
 
-			if !tt.expectError {
-				uassert.True(t, amountIn > 0, "amountIn is not positive")
-
-				if amountOut == 0 {
-					t.Errorf("Invalid amountOut: %d", amountOut)
-				}
-
-				if amountOut > 0 {
-					t.Errorf("Invalid amountOut: %d (should be negative)", amountOut)
-				}
+				uassert.True(t, amountIn > 0, "amountIn should be positive")
+				uassert.True(t, amountOut > 0, "amountOut should be positive")
+				uassert.Equal(t, tt.resultAmountIn, amountIn)
+				uassert.Equal(t, tt.resultAmountOut, amountOut)
 			}
 		})
 	}
