@@ -2,7 +2,6 @@ package common
 
 import (
 	"chain"
-	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -25,11 +24,11 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 			description:      "No coins sent - should not panic",
 		},
 		{
-			name:             "invalid_gnot_sent",
-			sendCoins:        map[string]int64{GNOT_DENOM: 100},
+			name:             "invalid_single_coin_sent",
+			sendCoins:        map[string]int64{"test_denom": 100},
 			shouldPanic:      true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-006] handle native coin is not allowed",
-			description:      "GNOT sent - should panic with errNotHandleNativeCoin",
+			description:      "Native coin sent - should panic",
 		},
 		{
 			name:             "invalid_other_coin_sent",
@@ -40,24 +39,24 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 		},
 		{
 			name:             "invalid_multiple_coins_sent",
-			sendCoins:        map[string]int64{GNOT_DENOM: 100, "other_denom": 50},
+			sendCoins:        map[string]int64{"test_denom": 100, "other_denom": 50},
 			shouldPanic:      true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-006] handle native coin is not allowed",
 			description:      "Multiple coins sent - should panic",
 		},
 		{
-			name:             "invalid_gnot_with_large_amount",
-			sendCoins:        map[string]int64{GNOT_DENOM: math.MaxInt64},
+			name:             "invalid_large_amount",
+			sendCoins:        map[string]int64{"test_denom": 9223372036854775807},
 			shouldPanic:      true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-006] handle native coin is not allowed",
-			description:      "GNOT with max int64 amount - should panic",
+			description:      "Coin with max int64 amount - should panic",
 		},
 		{
-			name:             "invalid_gnot_with_small_amount",
-			sendCoins:        map[string]int64{GNOT_DENOM: 1},
+			name:             "invalid_small_amount",
+			sendCoins:        map[string]int64{"test_denom": 1},
 			shouldPanic:      true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-006] handle native coin is not allowed",
-			description:      "GNOT with minimal amount - should panic",
+			description:      "Coin with minimal amount - should panic",
 		},
 		{
 			name:             "valid_empty_coins_map",
@@ -67,25 +66,25 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 			description:      "Empty coins map - should not panic",
 		},
 		{
-			name:             "invalid_zero_amount_gnot",
-			sendCoins:        map[string]int64{GNOT_DENOM: 0},
+			name:             "valid_zero_amount",
+			sendCoins:        map[string]int64{"test_denom": 0},
 			shouldPanic:      false,
 			expectedPanicMsg: "",
-			description:      "GNOT with zero amount - should not panic (filtered out by getUserSendCoins)",
+			description:      "Coin with zero amount - should not panic (filtered out by getUserSendCoins)",
 		},
 		{
-			name:             "invalid_negative_amount_gnot",
-			sendCoins:        map[string]int64{GNOT_DENOM: -100},
+			name:             "valid_negative_amount",
+			sendCoins:        map[string]int64{"test_denom": -100},
 			shouldPanic:      false,
 			expectedPanicMsg: "",
-			description:      "GNOT with negative amount - should not panic (filtered out by getUserSendCoins)",
+			description:      "Coin with negative amount - should not panic (filtered out by getUserSendCoins)",
 		},
 		{
-			name:             "invalid_multiple_non_gnot_coins",
+			name:             "invalid_multiple_different_coins",
 			sendCoins:        map[string]int64{"atom": 50, "osmo": 30},
 			shouldPanic:      true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-006] handle native coin is not allowed",
-			description:      "Multiple non-GNOT coins sent - should panic",
+			description:      "Multiple different coins sent - should panic",
 		},
 	}
 

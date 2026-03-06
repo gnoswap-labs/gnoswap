@@ -7,54 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestCoins_IsGNOTNativePath tests the IsGNOTNativePath function
-func TestCoins_IsGNOTNativePath(t *testing.T) {
-	tests := []struct {
-		name           string
-		path           string
-		expectedResult bool
-		description    string
-	}{
-		{
-			name:           "native_gnot_path",
-			path:           GNOT_DENOM,
-			expectedResult: true,
-			description:    "Native GNOT path should return true",
-		},
-		{
-			name:           "wrapped_ugnot_path",
-			path:           WUGNOT_PATH,
-			expectedResult: false,
-			description:    "Wrapped ugnot path should return false",
-		},
-		{
-			name:           "other_path",
-			path:           "gno.land/r/demo/defi/foo20",
-			expectedResult: false,
-			description:    "Other path should return false",
-		},
-		{
-			name:           "empty_path",
-			path:           "",
-			expectedResult: false,
-			description:    "Empty path should return false",
-		},
-		{
-			name:           "exact_gnot_match",
-			path:           "ugnot",
-			expectedResult: true,
-			description:    "Exact match with GNOT_DENOM should return true",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := IsGNOTNativePath(tt.path)
-			uassert.Equal(t, result, tt.expectedResult, tt.description)
-		})
-	}
-}
-
 // TestCoins_ExistsUserSendCoins tests the ExistsUserSendCoins function
 func TestCoins_ExistsUserSendCoins(t *testing.T) {
 	tests := []struct {
@@ -76,10 +28,10 @@ func TestCoins_ExistsUserSendCoins(t *testing.T) {
 			description:    "Nil coins should return false",
 		},
 		{
-			name:           "single_gnot_coin",
-			sendCoins:      map[string]int64{GNOT_DENOM: 100},
+			name:           "single_coin",
+			sendCoins:      map[string]int64{"test_denom": 100},
 			expectedResult: true,
-			description:    "Single GNOT coin should return true",
+			description:    "Single coin should return true",
 		},
 		{
 			name:           "single_other_coin",
@@ -89,7 +41,7 @@ func TestCoins_ExistsUserSendCoins(t *testing.T) {
 		},
 		{
 			name:           "multiple_coins",
-			sendCoins:      map[string]int64{GNOT_DENOM: 100, "other_denom": 50},
+			sendCoins:      map[string]int64{"test_denom": 100, "other_denom": 50},
 			expectedResult: true,
 			description:    "Multiple coins should return true",
 		},
@@ -107,7 +59,7 @@ func TestCoins_ExistsUserSendCoins(t *testing.T) {
 		},
 		{
 			name:           "mixed_amounts",
-			sendCoins:      map[string]int64{GNOT_DENOM: 100, "other_denom": 0, "third_denom": -5},
+			sendCoins:      map[string]int64{"test_denom": 100, "other_denom": 0, "third_denom": -5},
 			expectedResult: true,
 			description:    "Mixed amounts with positive values should return true",
 		},
@@ -157,9 +109,9 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 100},
+				{"test_denom", 100},
 			},
-			expectedResult: map[string]int64{GNOT_DENOM: 100},
+			expectedResult: map[string]int64{"test_denom": 100},
 			description:    "Single positive coin should be included",
 		},
 		{
@@ -168,7 +120,7 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 0},
+				{"test_denom", 0},
 			},
 			expectedResult: map[string]int64{},
 			description:    "Single zero coin should be filtered out",
@@ -179,7 +131,7 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, -10},
+				{"test_denom", -10},
 			},
 			expectedResult: map[string]int64{},
 			description:    "Single negative coin should be filtered out",
@@ -190,10 +142,10 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 100},
+				{"test_denom", 100},
 				{"other_denom", 50},
 			},
-			expectedResult: map[string]int64{GNOT_DENOM: 100, "other_denom": 50},
+			expectedResult: map[string]int64{"test_denom": 100, "other_denom": 50},
 			description:    "Multiple different coins should be included",
 		},
 		{
@@ -202,11 +154,11 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 100},
-				{GNOT_DENOM, 50},
-				{GNOT_DENOM, 25},
+				{"test_denom", 100},
+				{"test_denom", 50},
+				{"test_denom", 25},
 			},
-			expectedResult: map[string]int64{GNOT_DENOM: 175},
+			expectedResult: map[string]int64{"test_denom": 175},
 			description:    "Duplicate denominations should be aggregated",
 		},
 		{
@@ -215,12 +167,12 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 100},
+				{"test_denom", 100},
 				{"zero_denom", 0},
 				{"negative_denom", -10},
 				{"other_denom", 50},
 			},
-			expectedResult: map[string]int64{GNOT_DENOM: 100, "other_denom": 50},
+			expectedResult: map[string]int64{"test_denom": 100, "other_denom": 50},
 			description:    "Only positive amounts should be included",
 		},
 		{
@@ -229,14 +181,14 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 				Denom  string
 				Amount int64
 			}{
-				{GNOT_DENOM, 100},
-				{GNOT_DENOM, 0},
-				{GNOT_DENOM, -10},
-				{GNOT_DENOM, 25},
+				{"test_denom", 100},
+				{"test_denom", 0},
+				{"test_denom", -10},
+				{"test_denom", 25},
 				{"other_denom", 50},
 				{"other_denom", 0},
 			},
-			expectedResult: map[string]int64{GNOT_DENOM: 125, "other_denom": 50},
+			expectedResult: map[string]int64{"test_denom": 125, "other_denom": 50},
 			description:    "Only positive amounts should be aggregated",
 		},
 	}
