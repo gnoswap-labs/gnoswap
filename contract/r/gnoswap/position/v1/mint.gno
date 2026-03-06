@@ -70,9 +70,12 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 }
 
 // processMintInput processes and validates user input for minting liquidity.
-// It handles token ordering, amount validation, and native token wrapping.
+// It handles token ordering and amount validation.
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
-	token0, token1 := processTokens(input.token0, input.token1)
+	token0, token1 := input.token0, input.token1
+	if err := validateTokenPath(token0, token1); err != nil {
+		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+	}
 
 	pair := TokenPair{
 		token0: token0,
@@ -102,25 +105,6 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		tickUpper:      tickUpper,
 		poolPath:       pl.GetPoolPath(pair.token0, pair.token1, input.fee),
 	}, nil
-}
-
-// processTokens validates token paths and handles native token path normalization.
-// Converts "ugnot" to WUGNOT_PATH for uniform GRC20 handling.
-// Panics if token paths are invalid.
-func processTokens(token0, token1 string) (string, string) {
-	err := validateTokenPath(token0, token1)
-	if err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
-	}
-
-	if isNative(token0) {
-		token0 = WUGNOT_PATH
-	}
-	if isNative(token1) {
-		token1 = WUGNOT_PATH
-	}
-
-	return token0, token1
 }
 
 // increaseLiquidity increases the liquidity of an existing position.
@@ -192,12 +176,7 @@ func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errInvalidTokenPath
 	}
-	if (token0 == common.GNOT_DENOM && token1 == WUGNOT_PATH) ||
-		(token0 == WUGNOT_PATH && token1 == common.GNOT_DENOM) {
-		return errInvalidTokenPath
-	}
-	if (!isNative(token0) && !isValidTokenPath(token0)) ||
-		(!isNative(token1) && !isValidTokenPath(token1)) {
+	if !isValidTokenPath(token0) || !isValidTokenPath(token1) {
 		return errInvalidTokenPath
 	}
 	return nil

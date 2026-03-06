@@ -64,7 +64,9 @@ func (p *positionV1) Reposition(
 		))
 	}
 
-	token0, token1 = processTokens(token0, token1)
+	if err := validateTokenPath(token0, token1); err != nil {
+		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+	}
 
 	poolKey := position.PoolKey()
 

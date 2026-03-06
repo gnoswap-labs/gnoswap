@@ -42,9 +42,6 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	assertIsPoolExists(s, targetPoolPath)
 
-	// normalize native token path before validation
-	rewardToken = normalizeNativeTokenPath(rewardToken)
-
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
