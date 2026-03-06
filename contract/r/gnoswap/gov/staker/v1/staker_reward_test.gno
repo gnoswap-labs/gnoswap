@@ -11,8 +11,6 @@ import (
 
 // Test CollectReward function
 func TestStakerReward_CollectReward(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name             string
 		caller           address
@@ -128,8 +126,6 @@ func TestStakerReward_CollectReward(t *testing.T) {
 
 // Test CollectRewardFromLaunchPad function
 func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name           string
 		caller         address
@@ -212,8 +208,6 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 
 // Test SetAmountByProjectWallet function
 func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name          string
 		caller        address
@@ -316,8 +310,6 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 
 // Test transferToken function
 func TestStakerReward_transferToken(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name         string
 		tokenPath    string
@@ -406,8 +398,6 @@ func TestStakerReward_transferToken(t *testing.T) {
 
 // Test comprehensive launchpad reward scenarios including exclusion from governance
 func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name                 string
 		caller               address
@@ -507,8 +497,6 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 
 // Test comprehensive token transfer scenarios
 func TestStakerReward_TokenTransferScenarios(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -626,8 +614,6 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 
 // Test reward calculation accuracy
 func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
-	setupStakerRewardStakerTokenBalance(t)
-
 	tests := []struct {
 		name                     string
 		userStake                int64
