@@ -2,10 +2,8 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"testing"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
@@ -27,12 +25,11 @@ import (
 
 	"gno.land/p/nt/uassert"
 
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoland/wugnot" // initialize wugnot package
+	_ "gno.land/r/gnoswap/rbac"   // initialize rbac package
 )
 
 const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -70,8 +67,6 @@ var (
 	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
 	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
-	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
-
 	alice      = testutils.TestAddress("alice")
 	adminRealm = testing.NewUserRealm(adminAddr)
 
@@ -101,53 +96,6 @@ const (
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 )
 
-// InitialisePoolTest sets up a basic pool environment for testing.
-// IMPORTANT: Before calling this function, the caller must ensure
-// that adminAddr has sufficient wugnot balance. Call the following
-// at the top level of each TestXxx function (NOT inside t.Run or helpers):
-//
-//	ugnotFaucet(t, adminAddr, amount)
-//	ugnotDepositPrepare(t, adminAddr, amount)
-//	wugnot.Deposit(cross)
-//	testing.SetOriginSend(chain.Coins{})
-func InitialisePoolTest(t *testing.T) {
-	t.Helper()
-
-	testing.SetOriginCaller(adminAddr)
-	func() {
-		testing.SetRealm(adminRealm)
-		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
-		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-		if !getMockInstance().ExistsPoolPath(poolPath) {
-			mockInstanceCreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-		}
-	}()
-
-	// 2. create position
-	testing.SetOriginCaller(alice)
-	func() {
-		testing.SetRealm(testing.NewUserRealm(alice))
-		TokenFaucet(t, wugnotPath, alice)
-		TokenFaucet(t, gnsPath, alice)
-		TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-		TokenApprove(t, gnsPath, alice, poolAddr, 1000)
-		MintPosition(t,
-			wugnotPath,
-			gnsPath,
-			fee3000,
-			int32(1020),
-			int32(5040),
-			"1000",
-			"1000",
-			"0",
-			"0",
-			max_timeout,
-			alice,
-			alice,
-		)
-	}()
-}
-
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	t.Helper()
 	testing.SetOriginCaller(adminAddr)
@@ -156,8 +104,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	func() {
 		testing.SetRealm(adminRealm)
 		switch tokenPath {
-		case wugnotPath:
-			wugnotTransfer(t, to, defaultAmount)
 		case gnsPath:
 			gnsTransfer(t, to, defaultAmount)
 		case barPath:
@@ -179,8 +125,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -201,8 +145,6 @@ func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -223,8 +165,6 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
 	case barPath:
@@ -270,13 +210,57 @@ func MintPosition(t *testing.T,
 	)
 }
 
-func MintPositionAll(t *testing.T, caller address) {
+// InitialisePoolTestGRC20 sets up a basic pool environment using GRC20 tokens (bar/baz)
+// instead of wugnot/gns, eliminating the need for wugnot deposit setup.
+func InitialisePoolTestGRC20(t *testing.T) {
+	t.Helper()
+
+	testing.SetOriginCaller(adminAddr)
+	func() {
+		testing.SetRealm(adminRealm)
+		// Approve GNS for pool creation fee payment
+		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
+		TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+		TokenApprove(t, bazPath, adminAddr, poolAddr, maxApprove)
+		poolPath := GetPoolPath(barPath, bazPath, fee3000)
+		if !getMockInstance().ExistsPoolPath(poolPath) {
+			mockInstanceCreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336")
+		}
+	}()
+
+	// 2. create position
+	testing.SetOriginCaller(alice)
+	func() {
+		testing.SetRealm(testing.NewUserRealm(alice))
+		TokenFaucet(t, barPath, alice)
+		TokenFaucet(t, bazPath, alice)
+		TokenApprove(t, barPath, alice, poolAddr, 1000)
+		TokenApprove(t, bazPath, alice, poolAddr, 1000)
+		MintPosition(t,
+			barPath,
+			bazPath,
+			fee3000,
+			int32(1020),
+			int32(5040),
+			"1000",
+			"1000",
+			"0",
+			"0",
+			max_timeout,
+			alice,
+			alice,
+		)
+	}()
+}
+
+// MintPositionAllGRC20 creates multiple positions across tick ranges using bar/baz tokens.
+func MintPositionAllGRC20(t *testing.T, caller address) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(caller))
-	TokenApprove(t, gnsPath, caller, poolAddr, maxApprove)
-	TokenApprove(t, gnsPath, caller, routerAddr, maxApprove)
-	TokenApprove(t, wugnotPath, caller, poolAddr, maxApprove)
-	TokenApprove(t, wugnotPath, caller, routerAddr, maxApprove)
+	TokenApprove(t, barPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, barPath, caller, routerAddr, maxApprove)
+	TokenApprove(t, bazPath, caller, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, caller, routerAddr, maxApprove)
 
 	params := []struct {
 		tickLower int32
@@ -284,149 +268,43 @@ func MintPositionAll(t *testing.T, caller address) {
 		liquidity uint64
 		zeroToOne bool
 	}{
-		{
-			tickLower: -300,
-			tickUpper: -240,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -240,
-			tickUpper: -180,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -180,
-			tickUpper: -120,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -120,
-			tickUpper: -60,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -60,
-			tickUpper: 0,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: 0,
-			tickUpper: 60,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 60,
-			tickUpper: 120,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 120,
-			tickUpper: 180,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 180,
-			tickUpper: 240,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 240,
-			tickUpper: 300,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: -360,
-			tickUpper: -300,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -420,
-			tickUpper: -360,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -480,
-			tickUpper: -420,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -540,
-			tickUpper: -480,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: -600,
-			tickUpper: -540,
-			liquidity: 10,
-			zeroToOne: true,
-		},
-		{
-			tickLower: 300,
-			tickUpper: 360,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 360,
-			tickUpper: 420,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 420,
-			tickUpper: 480,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 480,
-			tickUpper: 540,
-			liquidity: 10,
-			zeroToOne: false,
-		},
-		{
-			tickLower: 540,
-			tickUpper: 600,
-			liquidity: 10,
-			zeroToOne: false,
-		},
+		{-300, -240, 10, true},
+		{-240, -180, 10, true},
+		{-180, -120, 10, true},
+		{-120, -60, 10, true},
+		{-60, 0, 10, true},
+		{0, 60, 10, false},
+		{60, 120, 10, false},
+		{120, 180, 10, false},
+		{180, 240, 10, false},
+		{240, 300, 10, false},
+		{-360, -300, 10, true},
+		{-420, -360, 10, true},
+		{-480, -420, 10, true},
+		{-540, -480, 10, true},
+		{-600, -540, 10, true},
+		{300, 360, 10, false},
+		{360, 420, 10, false},
+		{420, 480, 10, false},
+		{480, 540, 10, false},
+		{540, 600, 10, false},
 	}
 
 	for _, p := range params {
 		MintPosition(t,
-			wugnotPath,
-			gnsPath,
+			barPath,
+			bazPath,
 			fee3000,
 			p.tickLower,
 			p.tickUpper,
-			"100000000", // liquidityAmount
-			"100000000", // unused
-			"0",         // unused
-			"0",         // unused
-			max_timeout, // unused
-			caller,      // mintTo (recipient)
-			caller)      // positionCaller
+			"100000000",
+			"100000000",
+			"0",
+			"0",
+			max_timeout,
+			caller,
+			caller)
 	}
-}
-
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
 }
 
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {
@@ -465,12 +343,6 @@ func quxApprove(t *testing.T, owner, spender address, amount int64) {
 	qux.Approve(cross, spender, amount)
 }
 
-func wugnotTransfer(t *testing.T, to address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	wugnot.Transfer(cross, to, amount)
-}
-
 func gnsTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -505,64 +377,6 @@ func quxTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	qux.Transfer(cross, to, amount)
-}
-
-// ----------------------------------------------------------------------------
-// ugnot
-
-func ugnotTransfer(t *testing.T, from, to address, amount int64) {
-	t.Helper()
-
-	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{ugnotDenom, amount}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{ugnotDenom, amount}})
-}
-
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
-	t.Helper()
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	coins := banker_.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return coins.AmountOf(ugnotDenom)
-}
-
-func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
-}
-
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.RemoveCoin(addr, denom, amount)
-}
-
-func ugnotFaucet(t *testing.T, to address, amount int64) {
-	t.Helper()
-	faucetAddress := adminAddr
-	testing.SetOriginCaller(faucetAddress)
-
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{ugnotDenom, int64(amount)}}
-		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
-		testing.SetOriginSend(newCoins)
-	}
-	ugnotTransfer(t, faucetAddress, to, amount)
-}
-
-func ugnotDepositPrepare(t *testing.T, addr address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(addr))
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{ugnotDenom, int64(amount)}})
-
-	testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
 }
 
 // resetObject resets the object state(clear or make it default values)
@@ -624,11 +438,6 @@ func TestBurnTokens(t *testing.T) {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	func(cur realm) {
 		testing.SetRealm(adminRealm)
-
-		// NOTE: wugnot.Deposit(cross) cannot be called here due to
-		// runtime.AssertOriginCall() frame count restrictions.
-		// The admin must already have sufficient wugnot pre-deposited
-		// at the top level of each TestXxx function.
 
 		if amount0Delta > 0 {
 			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)

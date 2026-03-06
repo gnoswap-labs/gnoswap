@@ -375,11 +375,6 @@ func swapPaidSwapCallback(
 ) error {
 	testing.SetRealm(adminRealm)
 
-	// NOTE: wugnot.Deposit(cross) cannot be called here due to
-	// runtime.AssertOriginCall() frame count restrictions.
-	// The admin must already have sufficient wugnot pre-deposited
-	// at the top level of each TestXxx function.
-
 	if amount0Delta > 0 {
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}

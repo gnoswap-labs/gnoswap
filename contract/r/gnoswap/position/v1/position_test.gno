@@ -1240,6 +1240,18 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "Valid different GRC20 tokens (bar/baz)",
+			token0:      barPath,
+			token1:      bazPath,
+			expectError: false,
+		},
+		{
+			name:        "Valid wugnot with GRC20 token",
+			token0:      common.WUGNOT_PATH,
+			token1:      gnsPath,
+			expectError: false,
+		},
+		{
 			name:        "Invalid - identical tokens",
 			token0:      gnsPath,
 			token1:      gnsPath,

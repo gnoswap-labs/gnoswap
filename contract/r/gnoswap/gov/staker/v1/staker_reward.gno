@@ -227,7 +227,6 @@ func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestam
 
 // transferToken transfers tokens from the staker contract to a recipient address.
 // transferToken handles token transfers for reward distribution.
-// Uses GRC20 transfer flow for all registered tokens, including WUGNOT.
 func transferToken(
 	tokenPath string,
 	from, to address,
@@ -260,7 +259,6 @@ func transferToken(
 		)
 	}
 
-	// Handle all token transfers (including WUGNOT) via GRC20 Transfer
 	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
 	return nil
