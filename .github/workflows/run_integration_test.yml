@@ -12,11 +12,11 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno
+      - name: Check out gno (pinned commit)
         uses: actions/checkout@v4
         with:
           repository: gnoswap-labs/gno
-          ref: master
+          ref: 6202073ea66fab853d5ff552665030b3ab2bf3a2
           path: ./gno
 
       - name: Set up Go
