@@ -415,19 +415,11 @@ func initSwapPaidSetFeeMintPosition(
 	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
-		if common.IsGNOTNativePath(token0Path) {
-			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount0Requested}})
-		} else {
-			common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
-		}
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
 	}
 
 	if amount1Requested > 0 {
-		if common.IsGNOTNativePath(token1Path) {
-			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount1Requested}})
-		} else {
-			common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
-		}
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))

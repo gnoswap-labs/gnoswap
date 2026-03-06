@@ -201,8 +201,7 @@ func exactOutSwapRouteBy(
 
 	testing.SetOriginSend(chain.Coins{})
 
-	if common.IsGNOTNativePath(inputToken) {
-		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
+	if inputToken == wugnotPath {		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)
 	} else {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
