@@ -432,7 +432,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			name:        "locked_pool_protection",
 			description: "Block transactions in locked pool",
 			setupCondition: func(t *testing.T) *pl.Pool {
-				InitialisePoolTestGRC20(t)
+				InitialisePoolTest(t)
 				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
 				slot0 := pool.Slot0()
 				slot0.SetUnlocked(false)
@@ -452,7 +452,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			name:        "zero_amount_swap_prevention",
 			description: "Prevent meaningless zero swap",
 			setupCondition: func(t *testing.T) *pl.Pool {
-				InitialisePoolTestGRC20(t)
+				InitialisePoolTest(t)
 				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
 				slot0 := pool.Slot0()
 				slot0.SetUnlocked(true)
@@ -514,8 +514,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "normal_trading_consistency",
 			description: "Prediction accuracy in normal trading",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, 1000)
 			},
@@ -531,8 +531,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "large_trade_impact_consistency",
 			description: "Prediction of price impact in large trades",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -548,8 +548,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "small_exact_input_zeroForOne",
 			description: "Small swap exact input token0 to token1",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, barPath, routerAddr)
 				TokenApprove(t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -565,8 +565,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "large_exact_input_approaching_limits",
 			description: "Large swap approaching liquidity limits",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, barPath, routerAddr)
 				TokenApprove(t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -582,8 +582,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "small_exact_output_oneForZero",
 			description: "Small exact output swap token1 to token0",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -599,8 +599,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			name:        "medium_exact_output_near_limit",
 			description: "Medium exact output approaching limits",
 			setupScenario: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, barPath, routerAddr)
 				TokenApprove(t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -805,8 +805,8 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			name:        "exact_input_token1_purchase",
 			description: "Purchase token1 with exact input",
 			setupLiquidity: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -822,8 +822,8 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			name:        "exact_output_token0_acquisition",
 			description: "Acquire token0 with exact output",
 			setupLiquidity: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -839,8 +839,8 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			name:        "zero_liquidity_graceful_handling",
 			description: "Graceful handling of zero liquidity",
 			setupLiquidity: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				// MintPositionAllGRC20 is not called (zero liquidity)
+				InitialisePoolTest(t)
+				// MintPositionAll is not called (zero liquidity)
 				TokenFaucet(t, barPath, routerAddr)
 				TokenApprove(t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -856,8 +856,8 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			name:        "sqrt_price_limit_over_tick_range_termination",
 			description: "Swap terminated when sqrtPriceLimitX96 is over tick range",
 			setupLiquidity: func(t *testing.T) {
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenApprove(t, bazPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -1408,8 +1408,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			description: "Reentrancy attack via callback should be blocked by pool lock",
 			setup: func(t *testing.T) {
 				initPoolTest(t)
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenFaucet(t, bazPath, routerAddr)
@@ -1473,8 +1473,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			setup: func(t *testing.T) {
 				resetObject(t)
 				burnTokens(t)
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenFaucet(t, barPath, routerAddr)
@@ -1544,8 +1544,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			setup: func(t *testing.T) {
 				resetObject(t)
 				burnTokens(t)
-				InitialisePoolTestGRC20(t)
-				MintPositionAllGRC20(t, adminAddr)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
 
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenFaucet(t, bazPath, routerAddr)
@@ -1713,8 +1713,8 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			// Common setup
 			resetObject(t)
 			burnTokens(t)
-			InitialisePoolTestGRC20(t)
-			MintPositionAllGRC20(t, adminAddr)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
 
 			TokenFaucet(t, barPath, routerAddr)
 			TokenFaucet(t, bazPath, routerAddr)
@@ -1792,8 +1792,8 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 func TestSwapCallback_CallbackUsage(t *testing.T) {
 	resetObject(t)
 	burnTokens(t)
-	InitialisePoolTestGRC20(t)
-	MintPositionAllGRC20(t, adminAddr)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
 
 	TokenFaucet(t, barPath, routerAddr)
 	TokenFaucet(t, bazPath, routerAddr)
@@ -1888,8 +1888,8 @@ func TestSwap_FlashSwapPattern(t *testing.T) {
 			// Setup
 			resetObject(t)
 			burnTokens(t)
-			InitialisePoolTestGRC20(t)
-			MintPositionAllGRC20(t, adminAddr)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
 
 			TokenFaucet(t, barPath, routerAddr)
 			TokenFaucet(t, bazPath, routerAddr)
@@ -1956,8 +1956,8 @@ func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
 	// Setup
 	resetObject(t)
 	burnTokens(t)
-	InitialisePoolTestGRC20(t)
-	MintPositionAllGRC20(t, adminAddr)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
 
 	TokenFaucet(t, barPath, routerAddr)
 	TokenFaucet(t, bazPath, routerAddr)

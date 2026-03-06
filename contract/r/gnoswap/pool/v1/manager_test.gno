@@ -59,9 +59,9 @@ func TestCreatePool(t *testing.T) {
 			sqrtPrice:  "4295128740",
 		},
 		{
-			name:       "success - wugnot <> gns pool",
-			token0Path: "gno.land/r/gnoland/wugnot",
-			token1Path: "gno.land/r/gnoswap/gns",
+			name:       "success - gns <> baz pool",
+			token0Path: gnsPath,
+			token1Path: bazPath,
 			fee:        3000,
 			sqrtPrice:  "79228162514264337593543950337",
 		},
@@ -75,22 +75,13 @@ func TestCreatePool(t *testing.T) {
 			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
-			name:        "fail - same wrapped tokens",
-			token0Path:  WUGNOT_PATH,
-			token1Path:  GNOT_DENOM,
+			name:        "fail - same tokens (foo)",
+			token0Path:  fooPath,
+			token1Path:  fooPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
-		},
-		{
-			name:        "fail - same wrapped tokens reversed",
-			token0Path:  GNOT_DENOM,
-			token1Path:  WUGNOT_PATH,
-			fee:         3000,
-			sqrtPrice:   "4295128740",
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-008] same token used in single pool || expected token0Path(gno.land/r/onbloc/foo) != token1Path(gno.land/r/onbloc/foo)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
@@ -218,18 +209,10 @@ func TestCreatePool(t *testing.T) {
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
 				pool := getMockInstance().mustGetPool(poolPath)
 
-				// check if GNOT was properly wrapped
 				expectedToken0 := tt.token0Path
 				expectedToken1 := tt.token1Path
 				if tt.inOrder {
 					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
-				}
-
-				if expectedToken0 == GNOT_DENOM {
-					expectedToken0 = WUGNOT_PATH
-				}
-				if expectedToken1 == GNOT_DENOM {
-					expectedToken1 = WUGNOT_PATH
 				}
 
 				if pool.Token0Path() != expectedToken0 || pool.Token1Path() != expectedToken1 {

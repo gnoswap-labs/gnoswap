@@ -36,8 +36,6 @@ const (
 	oblPath string = "gno.land/r/onbloc/obl"
 	quxPath string = "gno.land/r/onbloc/qux"
 
-	wugnotPath string = "gno.land/r/gnoland/wugnot"
-
 	fee100  uint32 = 100
 	fee500  uint32 = 500
 	fee3000 uint32 = 3000

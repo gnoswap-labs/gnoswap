@@ -25,8 +25,7 @@ import (
 
 	"gno.land/p/nt/uassert"
 
-	_ "gno.land/r/gnoland/wugnot" // initialize wugnot package
-	_ "gno.land/r/gnoswap/rbac"   // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 const (
@@ -210,9 +209,8 @@ func MintPosition(t *testing.T,
 	)
 }
 
-// InitialisePoolTestGRC20 sets up a basic pool environment using GRC20 tokens (bar/baz)
-// instead of wugnot/gns, eliminating the need for wugnot deposit setup.
-func InitialisePoolTestGRC20(t *testing.T) {
+// InitialisePoolTest sets up a basic pool environment using GRC20 tokens (bar/baz).
+func InitialisePoolTest(t *testing.T) {
 	t.Helper()
 
 	testing.SetOriginCaller(adminAddr)
@@ -253,8 +251,8 @@ func InitialisePoolTestGRC20(t *testing.T) {
 	}()
 }
 
-// MintPositionAllGRC20 creates multiple positions across tick ranges using bar/baz tokens.
-func MintPositionAllGRC20(t *testing.T, caller address) {
+// MintPositionAll creates multiple positions across tick ranges using bar/baz tokens.
+func MintPositionAll(t *testing.T, caller address) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(caller))
 	TokenApprove(t, barPath, caller, poolAddr, maxApprove)

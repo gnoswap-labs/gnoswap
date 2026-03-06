@@ -74,7 +74,7 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
 	token0, token1 := input.token0, input.token1
 	if err := validateTokenPath(token0, token1); err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+		return ProcessedMintInput{}, makeErrorWithDetails(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1))
 	}
 
 	pair := TokenPair{

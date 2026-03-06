@@ -1118,7 +1118,7 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 }
 
 func TestSwap_ZeroOutputAllowed(t *testing.T) {
-	InitialisePoolTestGRC20(t)
+	InitialisePoolTest(t)
 	testing.SetRealm(adminRealm)
 	mockInstanceSetPoolCreationFee(0)
 
