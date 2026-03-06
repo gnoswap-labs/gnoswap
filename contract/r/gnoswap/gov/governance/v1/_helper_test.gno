@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -36,7 +35,6 @@ var (
 
 	max_timeout int64 = 9999999999
 
-	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 // Realms to mock frames
@@ -61,17 +59,6 @@ var (
 )
 
 /* HELPER */
-func ugnotBalanceOf(addr address) uint64 {
-	testBanker := banker.NewBanker(banker.BankerTypeRealmIssue)
-
-	coins := testBanker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf("ugnot"))
-}
-
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
 }

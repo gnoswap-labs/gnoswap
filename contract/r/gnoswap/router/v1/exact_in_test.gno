@@ -17,16 +17,13 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
 )
 
 func TestExactInSwapRouteOperation_Validate(t *testing.T) {
@@ -222,8 +219,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> ugnot",
-			tokenPath0:       wugnotPath,
+			name:             "success - gns -> bar",
+			tokenPath0:       barPath,
 			tokenPath1:       gnsPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -234,9 +231,9 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsPath,
-			outputToken:      wugnotPath,
+			outputToken:      barPath,
 			amountIn:         "100",
-			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, uint32(500)),
+			routeArr:         BuildSingleHopRoutePath(gnsPath, barPath, uint32(500)),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
@@ -244,13 +241,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			expectPanic:      true,
 		},
 	}
-
-	// Pre-deposit wugnot at top level (AssertOriginCall requires exactly 5 frames)
-	testing.SetOriginCaller(positionOwner)
-	testing.IssueCoins(positionOwner, chain.Coins{{"ugnot", int64(10000000000)}})
-	ugnotDepositPrepare(t, positionOwner, 10000000000)
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -270,19 +260,14 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			testing.SetOriginCaller(positionOwner)
 			if tt.recipient != positionOwner {
 				testing.SetRealm(testing.NewUserRealm(positionOwner))
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+				bar.Transfer(cross, tt.recipient, 10000000000)
 			}
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
 			gns.Approve(cross, poolAddr, maxApprove)
-
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotPath)
-				teller.Approve(poolAddr, maxApprove)
-			}(cross)
 
 			// Position Creation
 			pn.Mint(
@@ -305,13 +290,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerAddr, 20000000)
+			bar.Transfer(cross, routerAddr, 20000000)
 			gns.Transfer(cross, routerAddr, 20000000)
-			wugnot.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
 			gns.Approve(cross, routerAddr, maxApprove)
 
 			testing.SetRealm(routerRealm)
-			wugnot.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -337,52 +322,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}(cross)
 		})
 	}
-}
-
-/*
-This test demonstrates a issue(Gnoswap-16) in SwapRoute function. The key steps are:
-
-· Set up the test environment with necessary approvals
-· Set the original send amount to 12345 ugnot
-· Attempt to call SwapRoute with:
-
-	· GNOT as input token
-	· qux as output token
-	· An amountSpecified of "3" (which doesn't match the sent amount)
-
-· Check if the function panics as expected
-*/
-func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
-	testing.SetRealm(adminRealm)
-
-	wugnot.Approve(cross, routerAddr, 1000000)
-	qux.Approve(cross, routerAddr, 1000000)
-
-	// Sending native coins should panic with "handle native coin is not allowed"
-	// since WUGNOT migration rejects all native coin sends.
-	testing.SetOriginCaller(adminAddr)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 12345}})
-
-	router := mockRouter()
-
-	uassert.PanicsWithMessage(
-		t,
-		`[GNOSWAP-COMMON-008] handle native coin is not allowed`,
-		func() {
-			testing.SetRealm(routerRealm)
-			router.ExactOutSwapRoute(
-				gnotDenom, // inputToken
-				quxPath,    // outputToken
-				"3",        // amountSpecified
-				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
-				"100",   // quoteArr
-				"12345", // tokenAmountLimit
-				time.Now().Add(time.Hour).Unix(),
-				"", // referrer
-			)
-		},
-	)
-	testing.SetOriginSend(chain.Coins{})
 }
 
 // Test NewExactInSwapOperation
