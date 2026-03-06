@@ -194,7 +194,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing, 0)
-			err := params.updateWithWrapping()
+			err := params.update()
 
 			if tt.expectedPanic {
 				uassert.NotNil(t, err, "Expected error but got none")

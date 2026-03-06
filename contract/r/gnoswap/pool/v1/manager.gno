@@ -79,7 +79,7 @@ func (i *poolV1) CreatePool(
 		slot0FeeProtocol,
 	)
 
-	err := poolInfo.updateWithWrapping()
+	err := poolInfo.update()
 	if err != nil {
 		panic(err)
 	}
