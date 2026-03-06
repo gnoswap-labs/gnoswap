@@ -80,11 +80,8 @@ type MintInput struct {
 }
 
 type TokenPair struct {
-	token0         string
-	token1         string
-	token0IsNative bool
-	token1IsNative bool
-	wrappedAmount  int64
+	token0 string
+	token1 string
 }
 
 type ProcessedMintInput struct {

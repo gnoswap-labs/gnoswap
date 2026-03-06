@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain"
-	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -21,7 +19,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/gnoland/wugnot"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -607,109 +604,50 @@ func TestParseAmounts(t *testing.T) {
 
 func TestProcessTokens(t *testing.T) {
 	tests := []struct {
-		name           string
-		token0         string
-		token1         string
-		amount0Desired string
-		amount1Desired string
-		caller         address
-		expected0      string
-		expected1      string
-		isNative0      bool
-		isNative1      bool
-		expectedWrap   int64
-		expectPanic    bool
-		expectMsg      string
+		name        string
+		token0      string
+		token1      string
+		expected0   string
+		expected1   string
+		expectPanic bool
+		expectMsg   string
 	}{
 		{
-			name:           "processTokens is failed by both tokens are valid and not native",
-			token0:         gnsPath,
-			token1:         "tokenB",
-			amount0Desired: "100",
-			amount1Desired: "200",
-			caller:         alice,
-			expected0:      "tokenA",
-			expected1:      "tokenB",
-			isNative0:      false,
-			isNative1:      false,
-			expectedWrap:   0,
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
+			name:        "processTokens panics with invalid token path",
+			token0:      gnsPath,
+			token1:      "tokenB",
+			expectPanic: true,
+			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
 		},
 		{
-			name:           "processTokens is failed by token0 is native",
-			token0:         common.GNOT_DENOM,
-			token1:         gnsPath,
-			amount0Desired: "1300",
-			amount1Desired: "200",
-			caller:         alice,
-			expected0:      WUGNOT_PATH,
-			expected1:      "gno.land/r/gnoswap/gns",
-			isNative0:      true,
-			isNative1:      false,
-			expectedWrap:   1300,
-			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
+			name:      "processTokens normalizes native token0 to WUGNOT",
+			token0:    common.GNOT_DENOM,
+			token1:    gnsPath,
+			expected0: WUGNOT_PATH,
+			expected1: "gno.land/r/gnoswap/gns",
 		},
 		{
-			name:           "processTokens is failed by token1 is native",
-			token0:         gnsPath,
-			token1:         common.GNOT_DENOM,
-			amount0Desired: "150",
-			amount1Desired: "1250",
-			caller:         testutils.TestAddress("user3"),
-			expected0:      "gno.land/r/gnoswap/gns",
-			expected1:      WUGNOT_PATH,
-			isNative0:      false,
-			isNative1:      true,
-			expectedWrap:   1250,
-			expectPanic:    false,
+			name:      "processTokens normalizes native token1 to WUGNOT",
+			token0:    gnsPath,
+			token1:    common.GNOT_DENOM,
+			expected0: "gno.land/r/gnoswap/gns",
+			expected1: WUGNOT_PATH,
 		},
 		{
-			name:           "processTokens is failed by both tokens are native",
-			token0:         common.GNOT_DENOM,
-			token1:         common.GNOT_DENOM,
-			amount0Desired: "1100",
-			amount1Desired: "1200",
-			caller:         testutils.TestAddress("user4"),
-			expected0:      WUGNOT_PATH,
-			expected1:      WUGNOT_PATH,
-			isNative0:      true,
-			isNative1:      true,
-			expectedWrap:   2300,
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
+			name:        "processTokens panics when both tokens are native",
+			token0:      common.GNOT_DENOM,
+			token1:      common.GNOT_DENOM,
+			expectPanic: true,
+			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
 		},
 		{
-			name:           "processTokens is failed by invalid token path",
-			token0:         "invalidToken",
-			token1:         "tokenB",
-			amount0Desired: "150",
-			amount1Desired: "200",
-			caller:         testutils.TestAddress("user5"),
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
+			name:        "processTokens panics with invalid token path (both invalid)",
+			token0:      "invalidToken",
+			token1:      "tokenB",
+			expectPanic: true,
+			expectMsg:   "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
 		},
 	}
-
-	// Pre-deposit wugnot at top level to satisfy runtime.AssertOriginCall()
-	// frame count requirement. wugnot.Deposit(cross) must be called directly
-	// from the test function body, not from helpers or t.Run callbacks.
-	//
-	// "token0 is native" test: alice needs 1300 wugnot
-	ugnotFaucet(t, alice, 1300)
-	ugnotDepositPrepare(t, alice, 1300)
-	testing.SetRealm(testing.NewUserRealm(alice))
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
-
-	// "token1 is native" test: user3 needs 1250 wugnot
-	user3 := testutils.TestAddress("user3")
-	ugnotFaucet(t, user3, 1250)
-	ugnotDepositPrepare(t, user3, 1250)
-	testing.SetRealm(testing.NewUserRealm(user3))
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(chain.Coins{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -727,34 +665,10 @@ func TestProcessTokens(t *testing.T) {
 				}
 			}()
 
-			if tt.token0 == common.GNOT_DENOM {
-				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
-				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
-			}
-			if tt.token1 == common.GNOT_DENOM {
-				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
-				TokenApprove(t, wugnotPath, tt.caller, positionAddr, amount)
-			}
+			token0, token1 := processTokens(tt.token0, tt.token1)
 
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
-			token0, token1, native0, native1, wrapped, err := mockInstance.processTokens(
-				tt.token0,
-				tt.token1,
-				tt.amount0Desired,
-				tt.amount1Desired,
-				tt.caller,
-			)
-
-			if tt.expectPanic {
-				uassert.ErrorIs(t, err, errors.New(tt.expectMsg))
-			} else {
-				uassert.Nil(t, err)
-				uassert.Equal(t, tt.expected0, token0)
-				uassert.Equal(t, tt.expected1, token1)
-				uassert.Equal(t, tt.isNative0, native0)
-				uassert.Equal(t, tt.isNative1, native1)
-				uassert.Equal(t, tt.expectedWrap, wrapped)
-			}
+			uassert.Equal(t, tt.expected0, token0)
+			uassert.Equal(t, tt.expected1, token1)
 		})
 	}
 }
