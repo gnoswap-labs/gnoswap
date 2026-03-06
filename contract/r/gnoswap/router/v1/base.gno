@@ -9,7 +9,6 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 )
 
 const (
@@ -56,14 +55,6 @@ type baseSwapOperation struct {
 	routes            []string
 	quotes            []string
 	amountSpecified   int64
-}
-
-// normalizeNativeTokenPath converts native GNOT paths to WUGNOT for uniform GRC20 handling.
-func normalizeNativeTokenPath(tokenPath string) string {
-	if common.IsGNOTNativePath(tokenPath) {
-		return common.WUGNOT_PATH
-	}
-	return tokenPath
 }
 
 // processRoutes processes all swap routes and returns total amounts.

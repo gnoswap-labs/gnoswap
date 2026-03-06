@@ -234,7 +234,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsPath,
-			outputToken:      "ugnot",
+			outputToken:      wugnotPath,
 			amountIn:         "100",
 			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, uint32(500)),
 			quoteArr:         "100",

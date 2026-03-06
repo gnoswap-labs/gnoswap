@@ -90,23 +90,6 @@ func TestExecuteSwapOperation(t *testing.T) {
 	}
 }
 
-func TestNormalizeNativeTokenPath(t *testing.T) {
-	t.Run("Pass: non-GNOT token returns unchanged", func(t *testing.T) {
-		result := normalizeNativeTokenPath("token1")
-		uassert.Equal(t, result, "token1")
-	})
-
-	t.Run("Pass: WUGNOT returns unchanged", func(t *testing.T) {
-		result := normalizeNativeTokenPath("gno.land/r/gnoland/wugnot")
-		uassert.Equal(t, result, "gno.land/r/gnoland/wugnot")
-	})
-
-	t.Run("Pass: ugnot converts to WUGNOT path", func(t *testing.T) {
-		result := normalizeNativeTokenPath("ugnot")
-		uassert.Equal(t, result, common.WUGNOT_PATH)
-	})
-}
-
 func TestProcessRoute(t *testing.T) {
 	op := &baseSwapOperation{}
 
@@ -1018,38 +1001,6 @@ func TestSwapResult_Structure(t *testing.T) {
 			uassert.Equal(t, len(result.Routes), len(tt.routes))
 			uassert.Equal(t, len(result.Quotes), len(tt.quotes))
 			uassert.True(t, result.AmountSpecified > 0)
-		})
-	}
-}
-
-// Test normalizeNativeTokenPath with various inputs
-func TestNormalizeNativeTokenPath_Various(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "ugnot converts to WUGNOT",
-			input:    "ugnot",
-			expected: common.WUGNOT_PATH,
-		},
-		{
-			name:     "WUGNOT stays unchanged",
-			input:    "gno.land/r/gnoland/wugnot",
-			expected: "gno.land/r/gnoland/wugnot",
-		},
-		{
-			name:     "other token stays unchanged",
-			input:    "gno.land/r/onbloc/bar",
-			expected: "gno.land/r/onbloc/bar",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := normalizeNativeTokenPath(tt.input)
-			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }

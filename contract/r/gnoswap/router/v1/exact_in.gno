@@ -53,18 +53,15 @@ func (r *routerV1) ExactInSwapRoute(
 
 	common.AssertIsNotHandleNativeCoin()
 
-	normalizedInput := normalizeNativeTokenPath(inputToken)
-	normalizedOutput := normalizeNativeTokenPath(outputToken)
-
-	assertIsValidRoutePaths(routeArr, normalizedInput, normalizedOutput)
+	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 
 	params := SwapRouteParams{
-		inputToken:        normalizedInput,
-		outputToken:       normalizedOutput,
+		inputToken:        inputToken,
+		outputToken:       outputToken,
 		routeArr:          routeArr,
 		quoteArr:          quoteArr,
 		deadline:          deadline,
@@ -117,10 +114,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 
 	common.AssertIsNotHandleNativeCoin()
 
-	normalizedInput := normalizeNativeTokenPath(inputToken)
-	normalizedOutput := normalizeNativeTokenPath(outputToken)
-
-	assertIsValidSingleSwapRouteArrPath(routeArr, normalizedInput, normalizedOutput)
+	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
@@ -128,8 +122,8 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	emission.MintAndDistributeGns(cross)
 
 	params := SwapRouteParams{
-		inputToken:        normalizedInput,
-		outputToken:       normalizedOutput,
+		inputToken:        inputToken,
+		outputToken:       outputToken,
 		routeArr:          routeArr,
 		quoteArr:          "100",
 		deadline:          deadline,
