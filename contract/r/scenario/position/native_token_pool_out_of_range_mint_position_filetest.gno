@@ -35,7 +35,6 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	gnotPath   = "gno.land/r/gnoland/wugnot"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )
@@ -56,15 +55,15 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint InRange Position (-6960 ~ 6960)")
-	mintPosition(gnotPath, gnsPath, 3000, -6960, 6960, "1000000000", "1000000000", 1000000000)
+	mintPosition(wugnotPath, gnsPath, 3000, -6960, 6960, "1000000000", "1000000000", 1000000000)
 	println()
 
 	println("[SCENARIO] 4. Mint OutOfRange Position (only token0, -10140 ~ -8100)")
-	mintPosition(gnotPath, gnsPath, 3000, -10140, -8100, "0", "50000000", 0)
+	mintPosition(wugnotPath, gnsPath, 3000, -10140, -8100, "0", "50000000", 0)
 	println()
 
 	println("[SCENARIO] 5. Mint OutOfRange Position (only token1, 8100 ~ 10140)")
-	mintPosition(gnotPath, gnsPath, 3000, 8100, 10140, "50000000", "0", 50000000)
+	mintPosition(wugnotPath, gnsPath, 3000, 8100, 10140, "50000000", "0", 50000000)
 	println()
 }
 
