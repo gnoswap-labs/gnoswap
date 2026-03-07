@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"

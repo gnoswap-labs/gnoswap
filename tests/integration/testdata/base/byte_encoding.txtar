@@ -1,4 +1,4 @@
-loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/nt/ufmt/v0
 
 ## start a new node
 gnoland start
@@ -93,7 +93,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func StringToBytes(cur realm) {

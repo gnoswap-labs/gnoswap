@@ -3,7 +3,7 @@ package fuzz
 import (
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // Mul Parameters

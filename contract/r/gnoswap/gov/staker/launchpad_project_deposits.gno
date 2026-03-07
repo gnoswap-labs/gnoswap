@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 // LaunchpadProjectDeposits manages deposit amounts for launchpad projects.

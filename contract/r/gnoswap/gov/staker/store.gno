@@ -4,8 +4,8 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // Storage key constants

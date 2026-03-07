@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var manager *prbac.RBAC

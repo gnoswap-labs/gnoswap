@@ -1,6 +1,6 @@
 package protocol_fee
 
-import "gno.land/p/nt/avl"
+import avl "gno.land/p/nt/avl/v0"
 
 type IProtocolFee interface {
 	IProtocolFeeManager

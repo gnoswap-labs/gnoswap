@@ -16,9 +16,9 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 

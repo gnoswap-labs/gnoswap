@@ -2,7 +2,7 @@ package position
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 type IPosition interface {

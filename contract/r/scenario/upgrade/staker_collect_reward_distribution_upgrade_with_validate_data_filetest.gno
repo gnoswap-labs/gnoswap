@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"

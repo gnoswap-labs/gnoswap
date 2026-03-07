@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 

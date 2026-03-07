@@ -5,8 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 

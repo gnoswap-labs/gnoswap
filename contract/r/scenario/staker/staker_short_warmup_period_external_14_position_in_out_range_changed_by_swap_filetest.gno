@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"

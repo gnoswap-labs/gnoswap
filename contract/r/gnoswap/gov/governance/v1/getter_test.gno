@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )

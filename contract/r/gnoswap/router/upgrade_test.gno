@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestRegisterInitializer tests the router upgrade system with table-driven approach

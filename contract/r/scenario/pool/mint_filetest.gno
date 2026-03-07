@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

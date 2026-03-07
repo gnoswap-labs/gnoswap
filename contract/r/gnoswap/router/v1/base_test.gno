@@ -15,7 +15,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 var errDummy = errors.New("dummy error")

@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/staker"
 )

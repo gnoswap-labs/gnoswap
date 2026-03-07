@@ -3,7 +3,7 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestProposalStatus_NewProposalStatusBy tests the creation of proposal status with components

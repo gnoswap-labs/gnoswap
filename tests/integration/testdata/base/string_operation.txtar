@@ -1,4 +1,4 @@
-loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/nt/ufmt/v0
 
 ## start a new node
 gnoland start
@@ -65,7 +65,7 @@ package basic
 import (
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func CreateString(cur realm) {

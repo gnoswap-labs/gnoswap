@@ -3,8 +3,8 @@ package int256
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func TestSign(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 )

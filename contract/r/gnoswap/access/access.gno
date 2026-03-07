@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var roleAddresses map[string]address

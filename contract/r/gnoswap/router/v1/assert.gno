@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 

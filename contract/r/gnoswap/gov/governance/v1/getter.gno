@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )

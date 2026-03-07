@@ -2,7 +2,7 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 // IPool interface defines all public methods that must be implemented by pool contract versions.

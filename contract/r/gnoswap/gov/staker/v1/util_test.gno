@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/uassert"
+	avl "gno.land/p/nt/avl/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/p/onbloc/json"
 )
 
