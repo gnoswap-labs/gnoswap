@@ -177,6 +177,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				baz.Approve(cross, poolAddr, 100000000000)
 				bar.Approve(cross, poolAddr, 100000000000)
+				gns.Approve(cross, poolAddr, 100000000000)
 
 				mockInstanceCreatePool(barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -204,7 +205,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(posRealm)
 				return mockInstanceHandleWithdrawalFee(2, barPath, "1000", bazPath, "1000", poolPath, adminAddr)
 			},
-			expected:    "900,900",
+			expected:    "990,990",
 			shouldPanic: false,
 		},
 	}
