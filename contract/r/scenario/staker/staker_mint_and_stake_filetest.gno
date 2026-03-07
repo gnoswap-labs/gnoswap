@@ -71,6 +71,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint and stake native token position")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintAndStakeNative()
 	println()
 
@@ -99,7 +105,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create ugnot:gns:3000 pool")
-	pl.CreatePool(cross, "ugnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	pl.CreatePool(cross, wugnotPath, gnsPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -120,29 +126,23 @@ func mintAndStakeNative() {
 
 	testing.SkipHeights(2)
 
-	println("[INFO] prepare 100000 ugnot")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
-
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
 
 	positionUgnotBalance := ugnotBalanceOf(positionAddr)
 	ufmt.Printf("[INFO] position contract ugnot balance before: %d\n", positionUgnotBalance)
 
-	println("[INFO] send ugnot to staker and set origin send")
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
+	println("[INFO] Deposit already done in main()")
+	wugnot.Approve(cross, stakerAddr, maxInt64)
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
-		"ugnot",
-		"gno.land/r/gnoswap/gns",
+		wugnotPath,
+		gnsPath,
 		fee3000,
 		int32(-5040),
 		int32(5040),
@@ -240,18 +240,17 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 3. Mint and stake native token position
 // [INFO] approve tokens for native mint and stake
-// [INFO] prepare 100000 ugnot
 // [INFO] admin ugnot balance before: 100000
 // [INFO] position contract ugnot balance before: 0
-// [INFO] send ugnot to staker and set origin send
-// [INFO] admin wugnot balance before mint and stake: 0
+// [INFO] Deposit already done in main()
+// [INFO] admin wugnot balance before mint and stake: 100000
 // [INFO] mint and stake native position
 // [EXPECTED] native mint and stake - LP token ID: 1
 // [EXPECTED] liquidity: 448942
 // [EXPECTED] amount0: 100000, amount1: 100000
 // [EXPECTED] pool path: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] admin wugnot balance after: 0
-// [EXPECTED] admin ugnot balance after (refund): 0
+// [EXPECTED] admin ugnot balance after (refund): 100000
 //
 // [SCENARIO] 4. Mint and stake GRC20 pair position
 // [INFO] approve tokens for GRC20 mint and stake

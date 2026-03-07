@@ -68,6 +68,12 @@ func main() {
 	println()
 
 	println("[STEP 2] Create pool")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 5_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	createPool()
 	println()
 
@@ -96,10 +102,7 @@ func initAndSetup() {
 func createPool() {
 	testing.SetRealm(adminRealm)
 
-	// Wrap some GNOT first to create WUGNOT pool
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 5_000_000_000}})
-	wugnot.Deposit(cross)
+	// Deposit already done in main()
 
 	wugnot.Approve(cross, poolAddr, maxInt64)
 	bar.Approve(cross, poolAddr, maxInt64)

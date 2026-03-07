@@ -140,7 +140,7 @@ func unstakePosition() {
 	positionId := uint64(1)
 
 	ufmt.Println("[INFO] Unstake Position")
-	staker.UnStakeToken(cross, positionId, false)
+	staker.UnStakeToken(cross, positionId)
 }
 
 // Output:

@@ -317,8 +317,7 @@ type ExternalIncentive struct {
 	distributedRewardAmount int64   // distributed reward amount, when un-staked and refunded
 	refundee                address // refundee address
 
-	refunded        bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
-	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
+	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
 
 // ExternalIncentive Getter/Setter methods
@@ -463,16 +462,6 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
-// IsRequestUnwrap returns the request unwrap status
-func (e *ExternalIncentive) IsRequestUnwrap() bool {
-	return e.isRequestUnwrap
-}
-
-// SetIsRequestUnwrap sets the request unwrap status
-func (e *ExternalIncentive) SetIsRequestUnwrap(isRequestUnwrap bool) {
-	e.isRequestUnwrap = isRequestUnwrap
-}
-
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
 	return &ExternalIncentive{
 		incentiveId:             e.incentiveId,
@@ -489,7 +478,6 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		refundee:                e.refundee,
 		refunded:                e.refunded,
 		distributedRewardAmount: e.distributedRewardAmount,
-		isRequestUnwrap:         e.isRequestUnwrap,
 	}
 }
 
@@ -505,7 +493,6 @@ func NewExternalIncentive(
 	depositGnsAmount int64,
 	createdHeight int64,
 	currentTime int64, // current time in unix time(seconds)
-	isRequestUnwrap bool, // whether original deposit was native GNOT
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
 	rewardPerSecond := rewardAmount / incentiveDuration
@@ -524,8 +511,7 @@ func NewExternalIncentive(
 		createdHeight:           createdHeight,
 		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
-		refunded:                false,
-		isRequestUnwrap:         isRequestUnwrap,
+		refunded: false,
 	}
 }
 

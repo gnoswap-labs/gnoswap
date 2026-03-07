@@ -248,11 +248,10 @@ func TestStakeToken(t *testing.T) {
 // TestUnStakeToken tests the UnStakeToken proxy function
 func TestUnStakeToken(t *testing.T) {
 	tests := []struct {
-		name         string
-		setup        func(t *testing.T)
-		positionId   uint64
-		unwrapResult bool
-		callerRealm  runtime.Realm
+		name        string
+		setup       func(t *testing.T)
+		positionId  uint64
+		callerRealm runtime.Realm
 	}{
 		{
 			name: "unstake token is success",
@@ -262,9 +261,8 @@ func TestUnStakeToken(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
 			},
-			positionId:   1,
-			unwrapResult: false,
-			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+			positionId:  1,
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
 		},
 	}
 
@@ -279,7 +277,7 @@ func TestUnStakeToken(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		UnStakeToken(cross, tt.positionId, tt.unwrapResult)
+		UnStakeToken(cross, tt.positionId)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
@@ -292,11 +290,10 @@ func TestUnStakeToken(t *testing.T) {
 // TestCollectReward tests the CollectReward proxy function
 func TestCollectReward(t *testing.T) {
 	tests := []struct {
-		name         string
-		setup        func(t *testing.T)
-		positionId   uint64
-		unwrapResult bool
-		callerRealm  runtime.Realm
+		name        string
+		setup       func(t *testing.T)
+		positionId  uint64
+		callerRealm runtime.Realm
 	}{
 		{
 			name: "collect reward is success",
@@ -306,9 +303,8 @@ func TestCollectReward(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/staker/v1")
 			},
-			positionId:   1,
-			unwrapResult: false,
-			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
+			positionId:  1,
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/staker"),
 		},
 	}
 
@@ -323,7 +319,7 @@ func TestCollectReward(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		CollectReward(cross, tt.positionId, tt.unwrapResult)
+		CollectReward(cross, tt.positionId)
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)

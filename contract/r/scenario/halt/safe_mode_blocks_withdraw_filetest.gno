@@ -215,7 +215,6 @@ func testDecreaseLiquidityBlocked() {
 			"0",
 			"0",
 			time.Now().Unix()+3600,
-			false,
 		)
 	})
 
@@ -228,7 +227,7 @@ func testCollectFeeBlocked() {
 	ufmt.Println("[INFO] Attempting CollectFee in Safe Mode (should abort)...")
 
 	uassert.AbortsContains(t, "halted: withdraw", func() {
-		position.CollectFee(cross, positionId, false)
+		position.CollectFee(cross, positionId)
 	})
 
 	ufmt.Println("[SUCCESS] CollectFee correctly blocked with 'halted: withdraw'")
@@ -277,7 +276,6 @@ func disableSafeModeAndVerify() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		false,
 	)
 
 	ufmt.Printf("[SUCCESS] DecreaseLiquidity works after Safe Mode disabled! Liquidity removed: %s\n", liquidity)

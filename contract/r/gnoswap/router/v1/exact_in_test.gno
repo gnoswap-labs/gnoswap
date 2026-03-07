@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"strings"
 	"testing"
 	"time"
@@ -18,16 +17,13 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
 )
 
 func TestExactInSwapRouteOperation_Validate(t *testing.T) {
@@ -223,8 +219,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> ugnot",
-			tokenPath0:       wugnotPath,
+			name:             "success - gns -> bar",
+			tokenPath0:       barPath,
 			tokenPath1:       gnsPath,
 			feeTier:          uint32(500),
 			recipient:        alice,
@@ -235,9 +231,9 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsPath,
-			outputToken:      "ugnot",
+			outputToken:      barPath,
 			amountIn:         "100",
-			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, uint32(500)),
+			routeArr:         BuildSingleHopRoutePath(gnsPath, barPath, uint32(500)),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
@@ -262,27 +258,16 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-			banker_.SendCoins(positionOwner, wugnotAddr, newCoins)
-			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+				testing.SetRealm(testing.NewUserRealm(positionOwner))
+				bar.Transfer(cross, tt.recipient, 10000000000)
 			}
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
 			gns.Approve(cross, poolAddr, maxApprove)
-
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotPath)
-				teller.Approve(poolAddr, maxApprove)
-			}(cross)
-
-			testing.SetOriginSend(chain.Coins{})
 
 			// Position Creation
 			pn.Mint(
@@ -305,13 +290,13 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 
 			// Swap
 			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerAddr, 20000000)
+			bar.Transfer(cross, routerAddr, 20000000)
 			gns.Transfer(cross, routerAddr, 20000000)
-			wugnot.Approve(cross, routerAddr, maxApprove)
+			bar.Approve(cross, routerAddr, maxApprove)
 			gns.Approve(cross, routerAddr, maxApprove)
 
 			testing.SetRealm(routerRealm)
-			wugnot.Approve(cross, poolAddr, maxApprove)
+			bar.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -337,53 +322,6 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}(cross)
 		})
 	}
-}
-
-/*
-This test demonstrates a issue(Gnoswap-16) in SwapRoute function. The key steps are:
-
-· Set up the test environment with necessary approvals
-· Set the original send amount to 12345 ugnot
-· Attempt to call SwapRoute with:
-
-	· GNOT as input token
-	· qux as output token
-	· An amountSpecified of "3" (which doesn't match the sent amount)
-
-· Check if the function panics as expected
-*/
-func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
-	testing.SetRealm(adminRealm)
-
-	wugnot.Approve(cross, routerAddr, 1000000)
-	qux.Approve(cross, routerAddr, 1000000)
-
-	testing.SetOriginCaller(adminAddr)
-	newCoins := chain.Coins{{"ugnot", 12345}}
-	testing.IssueCoins(adminAddr, newCoins)
-	testing.SetOriginSend(newCoins)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, routerAddr, newCoins)
-
-	router := mockRouter()
-
-	uassert.PanicsWithMessage(
-		t,
-		`[GNOSWAP-ROUTER-004] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
-		func() {
-			testing.SetRealm(routerRealm)
-			router.ExactOutSwapRoute(
-				GNOT_DENOM, // inputToken
-				quxPath,    // outputToken
-				"3",        // amountSpecified
-				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
-				"100",   // quoteArr
-				"12345", // tokenAmountLimit
-				time.Now().Add(time.Hour).Unix(),
-				"", // referrer
-			)
-		},
-	)
 }
 
 // Test NewExactInSwapOperation
@@ -432,7 +370,6 @@ func TestNewExactInSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op)
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountIn, tt.params.AmountIn)
-			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
 		})
 	}
 }
@@ -624,7 +561,6 @@ func TestNewExactOutSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op)
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountOut, tt.params.AmountOut)
-			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
 		})
 	}
 }
@@ -874,8 +810,8 @@ func TestExactInVsExactOut_AmountSpecified(t *testing.T) {
 	})
 }
 
-// Test handleNativeTokenWrapping for ExactIn
-func TestExactInSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
+// Test ExactIn validation with various token types
+func TestExactInSwapOperation_TokenTypes(t *testing.T) {
 	tests := []struct {
 		name        string
 		inputToken  string
@@ -922,8 +858,8 @@ func TestExactInSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
 	}
 }
 
-// Test handleNativeTokenWrapping for ExactOut
-func TestExactOutSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
+// Test ExactOut validation with various token types
+func TestExactOutSwapOperation_TokenTypes(t *testing.T) {
 	tests := []struct {
 		name        string
 		inputToken  string

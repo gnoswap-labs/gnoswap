@@ -70,25 +70,16 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 }
 
 // processMintInput processes and validates user input for minting liquidity.
-// It handles token ordering, amount validation, and native token wrapping.
+// It handles token ordering and amount validation.
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
-	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := p.processTokens(
-		input.token0,
-		input.token1,
-		input.amount0Desired,
-		input.amount1Desired,
-		input.caller,
-	)
-	if err != nil {
-		return ProcessedMintInput{}, err
+	token0, token1 := input.token0, input.token1
+	if err := validateTokenPath(token0, token1); err != nil {
+		return ProcessedMintInput{}, makeErrorWithDetails(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1))
 	}
 
 	pair := TokenPair{
-		token0:         token0,
-		token1:         token1,
-		token0IsNative: token0IsNative,
-		token1IsNative: token1IsNative,
-		wrappedAmount:  wrappedAmount,
+		token0: token0,
+		token1: token1,
 	}
 
 	// parse amounts
@@ -102,7 +93,6 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		amount0Desired, amount1Desired = amount1Desired, amount0Desired
 		amount0Min, amount1Min = amount1Min, amount0Min
 		tickLower, tickUpper = -tickUpper, -tickLower
-		pair.token0IsNative, pair.token1IsNative = pair.token1IsNative, pair.token0IsNative
 	}
 
 	return ProcessedMintInput{
@@ -115,47 +105,6 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		tickUpper:      tickUpper,
 		poolPath:       pl.GetPoolPath(pair.token0, pair.token1, input.fee),
 	}, nil
-}
-
-// processTokens validates token paths and handles native token wrapping.
-// Panics if validation fails or native token wrapping encounters issues.
-func (p *positionV1) processTokens(
-	token0 string,
-	token1 string,
-	amount0Desired string,
-	amount1Desired string,
-	caller address,
-) (string, string, bool, bool, int64, error) {
-	err := validateTokenPath(token0, token1)
-	if err != nil {
-		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
-	}
-
-	token0IsNative := false
-	token1IsNative := false
-	wrappedAmount := int64(0)
-
-	if isNative(token0) {
-		token0 = WUGNOT_PATH
-		token0IsNative = true
-
-		amount0DesiredInt := mustParseInt64(amount0Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount0DesiredInt, caller)
-		if err != nil {
-			return "", "", false, false, 0, err
-		}
-	} else if isNative(token1) {
-		token1 = WUGNOT_PATH
-		token1IsNative = true
-
-		amount1DesiredInt := mustParseInt64(amount1Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount1DesiredInt, caller)
-		if err != nil {
-			return "", "", false, false, 0, err
-		}
-	}
-
-	return token0, token1, token0IsNative, token1IsNative, wrappedAmount, nil
 }
 
 // increaseLiquidity increases the liquidity of an existing position.
@@ -227,12 +176,7 @@ func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errInvalidTokenPath
 	}
-	if (token0 == common.GNOT_DENOM && token1 == WUGNOT_PATH) ||
-		(token0 == WUGNOT_PATH && token1 == common.GNOT_DENOM) {
-		return errInvalidTokenPath
-	}
-	if (!isNative(token0) && !isValidTokenPath(token0)) ||
-		(!isNative(token1) && !isValidTokenPath(token1)) {
+	if !isValidTokenPath(token0) || !isValidTokenPath(token1) {
 		return errInvalidTokenPath
 	}
 	return nil

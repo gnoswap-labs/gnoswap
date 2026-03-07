@@ -244,7 +244,7 @@ func stakePositionAndVerifyEmission() {
 
 	println("[INFO] collect reward for staked position")
 	beforeAdminGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterAdminGns := gns.BalanceOf(adminUser)
 	reward := afterAdminGns - beforeAdminGns
 

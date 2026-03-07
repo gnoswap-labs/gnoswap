@@ -1,4 +1,4 @@
-// exact in swap route with multi route and liquidity zero
+// exact in multi-hop swap route (wugnot → gns → bar via two pools)
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -6,11 +6,8 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
-	"strconv"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -30,11 +27,10 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/onbloc/bar"
 )
 
 var (
-	t *testing.T
-
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
@@ -43,26 +39,36 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
+	barPath    = "gno.land/r/onbloc/bar"
 
 	maxInt64 int64 = 9223372036854775807
 )
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)")
 	createPool(wugnotPath, gnsPath, 500, 0)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 3. ExactInSwapRoute")
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500)")
+	createPool(barPath, gnsPath, 500, 0)
+	mintPosition(barPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
+	println()
+
+	println("[SCENARIO] 4. ExactInSwapRoute (wugnot → gns → bar, multi-hop)")
 	exactInSwapRoute(
-		"ugnot",
 		wugnotPath,
+		barPath,
 		"10000000",
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500",
 		"100",
 		"1",
 	)
@@ -74,10 +80,6 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
@@ -85,9 +87,11 @@ func initializeSetup() {
 
 	gns.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, poolAddr, maxInt64)
+	bar.Approve(cross, poolAddr, maxInt64)
 
 	gns.Approve(cross, routerAddr, maxInt64)
 	wugnot.Approve(cross, routerAddr, maxInt64)
+	bar.Approve(cross, routerAddr, maxInt64)
 }
 
 func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
@@ -108,11 +112,10 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		wugnotPath,
-		gnsPath,
+		token0Path,
+		token1Path,
 		fee,
 		minTick,
 		maxTick,
@@ -150,29 +153,30 @@ func exactInSwapRoute(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	specifiedAmountInt, _ := strconv.ParseInt(specifiedAmount, 10, 64)
+	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
+	beforeBARBalance := bar.BalanceOf(adminAddr)
 
-	sendBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	sendBanker.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", specifiedAmountInt}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", specifiedAmountInt}})
 	testing.SetRealm(adminRealm)
 
-	// current sqrtPriceX96 is 76228162514264337593543950336
-	uassert.AbortsContains(t, "[GNOSWAP-ROUTER-004] invalid input data || invalid EXACT_IN SwapOperation: quote sum(1) must be 100", func() {
-		router.ExactInSwapRoute(
-			cross,
-			inputToken,
-			outputToken,
-			specifiedAmount,
-			routeQueryString,
-			minAmountOut,
-			"0",
-			int64(9999999999),
-			"",
-		)
-	})
+	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
+		cross,
+		inputToken,
+		outputToken,
+		specifiedAmount,
+		routeQueryString,
+		queryRatios,
+		minAmountOut,
+		int64(9999999999),
+		"",
+	)
 
-	println("[EXPECTED] swap operation has been aborted")
+	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
+	afterBARBalance := bar.BalanceOf(adminAddr)
+
+	ufmt.Printf("[EXPECTED] inputTokenAmount(WUGNOT): %s\n", inputTokenAmount)
+	ufmt.Printf("[EXPECTED] outputTokenAmount(BAR): %s\n", outputTokenAmount)
+	ufmt.Printf("[EXPECTED] WUGNOT balance changed: %d\n", afterWUGNOTBalance-beforeWUGNOTBalance)
+	ufmt.Printf("[EXPECTED] BAR balance changed: %d\n", afterBARBalance-beforeBARBalance)
 }
 
 // Output:
@@ -180,7 +184,7 @@ func exactInSwapRoute(
 // [INFO] GNS Balance of admin: 100000000000000
 // [INFO] WUGNOT Balance of admin: 100000000000000
 //
-// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)
 // [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
@@ -188,12 +192,23 @@ func exactInSwapRoute(
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 3. ExactInSwapRoute
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500)
+// [EXPECTED] created gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [INFO] Minting position
+// [EXPECTED] positionId: 2
+// [EXPECTED] liquidity: 340264708
+// [EXPECTED] amount0: 100000000
+// [EXPECTED] amount1: 100000000
+//
+// [SCENARIO] 4. ExactInSwapRoute (wugnot → gns → bar, multi-hop)
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: ugnot
-// [INFO] outputToken: gno.land/r/gnoland/wugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
+// [INFO] outputToken: gno.land/r/onbloc/bar
 // [INFO] specifiedAmount: 10000000
-// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
-// [EXPECTED] swap operation has been aborted
+// [EXPECTED] inputTokenAmount(WUGNOT): 10000000
+// [EXPECTED] outputTokenAmount(BAR): -9421648
+// [EXPECTED] WUGNOT balance changed: -10000000
+// [EXPECTED] BAR balance changed: 9421648

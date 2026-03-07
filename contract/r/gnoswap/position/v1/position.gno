@@ -68,7 +68,7 @@ func (p *positionV1) Mint(
 	assertValidNumberString(amount1Min)
 
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
+	common.AssertIsNotHandleNativeCoin()
 	assertIsNotExpired(deadline)
 
 	success := referral.TryRegister(cross, caller, referrer)
@@ -101,21 +101,6 @@ func (p *positionV1) Mint(
 	// mint liquidity
 	params := newMintParams(processedInput, mintInput)
 	id, liquidity, amount0, amount1 := p.mint(params)
-
-	// refund leftover wrapped tokens
-	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount0) {
-		err = p.unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount0), caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
-	}
-
-	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount1) {
-		err = p.unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount1), caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
-	}
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
@@ -198,31 +183,11 @@ func (p *positionV1) IncreaseLiquidity(
 	position := p.mustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.PoolKey())
 
-	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
-
-	receivedCoins := common.ExistsUserSendCoins()
+	common.AssertIsNotHandleNativeCoin()
 
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
-	}
-
-	wrappedAmount := int64(0)
-
-	if receivedCoins {
-		inputWrappedAmount := int64(0)
-
-		if common.IsGNOTPath(token0) {
-			inputWrappedAmount = mustParseInt64(amount0DesiredStr)
-		} else if common.IsGNOTPath(token1) {
-			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
-		}
-
-		wrappedAmount, err = p.safeWrapNativeToken(inputWrappedAmount, caller)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
@@ -238,13 +203,6 @@ func (p *positionV1) IncreaseLiquidity(
 
 	_, liquidity, amount0, amount1, poolPath, err := p.increaseLiquidity(increaseLiquidityParams)
 	if err != nil {
-		panic(err)
-	}
-
-	if err := p.unwrapLeftoverWrappedToken(token0, wrappedAmount, safeConvertToInt64(amount0), caller); err != nil {
-		panic(err)
-	}
-	if err := p.unwrapLeftoverWrappedToken(token1, wrappedAmount, safeConvertToInt64(amount1), caller); err != nil {
 		panic(err)
 	}
 
@@ -276,21 +234,6 @@ func (p *positionV1) IncreaseLiquidity(
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
-// unwrapLeftoverWrappedToken unwraps leftover wrapped tokens to native tokens.
-func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller address) error {
-	unwrappable := isWrappedToken(token) && wrapped > amount
-	if !unwrappable {
-		return nil
-	}
-
-	err := p.unwrap(wrapped-amount, caller)
-	if err != nil {
-		return makeErrorWithDetails(errWrapUnwrap, err.Error())
-	}
-
-	return nil
-}
-
 // DecreaseLiquidity decreases liquidity of an existing position.
 //
 // Removes liquidity but keeps NFT ownership.
@@ -303,7 +246,6 @@ func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount in
 //   - amount0MinStr: Min token0 to receive (slippage)
 //   - amount1MinStr: Min token1 to receive (slippage)
 //   - deadline: Transaction expiration
-//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -319,7 +261,6 @@ func (p *positionV1) DecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
@@ -334,13 +275,12 @@ func (p *positionV1) DecreaseLiquidity(
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		positionId:   positionId,
-		liquidity:    liquidityStr,
-		amount0Min:   amount0Min,
-		amount1Min:   amount1Min,
-		deadline:     deadline,
-		unwrapResult: unwrapResult,
-		caller:       caller,
+		positionId: positionId,
+		liquidity:  liquidityStr,
+		amount0Min: amount0Min,
+		amount1Min: amount1Min,
+		deadline:   deadline,
+		caller:     caller,
 	}
 
 	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := p.decreaseLiquidity(decreaseLiquidityParams)
@@ -363,7 +303,6 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"unwrapResult", formatBool(unwrapResult),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
@@ -386,7 +325,6 @@ func (p *positionV1) DecreaseLiquidity(
 //
 // Parameters:
 //   - positionId: NFT token ID
-//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Returns:
 //   - positionId: Same NFT ID
@@ -399,10 +337,7 @@ func (p *positionV1) DecreaseLiquidity(
 // Requirements:
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
-func (p *positionV1) CollectFee(
-	positionId uint64,
-	unwrapResult bool,
-) (uint64, string, string, string, string, string) {
+func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -411,15 +346,11 @@ func (p *positionV1) CollectFee(
 
 	emission.MintAndDistributeGns(cross)
 
-	return p.collectFee(positionId, unwrapResult, caller)
+	return p.collectFee(positionId, caller)
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
-func (p *positionV1) collectFee(
-	positionId uint64,
-	unwrapResult bool,
-	caller address,
-) (uint64, string, string, string, string, string) {
+func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, string, string, string, string, string) {
 	// verify position
 	position := p.mustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.PoolKey())
@@ -477,17 +408,8 @@ func (p *positionV1) collectFee(
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	if isWrappedToken(token0) && unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
-	} else {
-		common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
-	}
-
-	if isWrappedToken(token1) && unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
-	} else {
-		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
-	}
+	common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
+	common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
@@ -510,7 +432,6 @@ func (p *positionV1) collectFee(
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
-		"unwrapResult", formatBool(unwrapResult),
 		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128().ToString(),
 		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128().ToString(),
 	)
@@ -548,10 +469,7 @@ func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int
 
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
-func (p *positionV1) SetPositionOperator(
-	id uint64,
-	operator address,
-) {
+func (p *positionV1) SetPositionOperator(id uint64, operator address) {
 	halt.AssertIsNotHaltedPosition()
 
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
@@ -589,10 +507,7 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 }
 
 // computePositionKey generates a unique base64-encoded key for a liquidity position.
-func computePositionKey(
-	tickLower int32,
-	tickUpper int32,
-) string {
+func computePositionKey(tickLower, tickUpper int32) string {
 	currentRealmPath := runtime.CurrentRealm().PkgPath()
 	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))

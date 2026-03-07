@@ -226,7 +226,7 @@ func stakeTokenPos01AndTestWarmUp() {
 	userOldGns := gns.BalanceOf(adminUser)
 	communityOldGns := gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewGns := gns.BalanceOf(adminUser)
 	communityNewGns := gns.BalanceOf(communityPoolAddr)
@@ -241,13 +241,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 50% warm-up")
 	testing.SkipHeights(216001)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -262,13 +262,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 70% warm-up")
 	testing.SkipHeights(432001)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -283,13 +283,13 @@ func stakeTokenPos01AndTestWarmUp() {
 
 	println("[INFO] progress to 100% warm-up")
 	testing.SkipHeights(1728000)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldGns = gns.BalanceOf(adminUser)
 	communityOldGns = gns.BalanceOf(communityPoolAddr)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewGns = gns.BalanceOf(adminUser)
 	communityNewGns = gns.BalanceOf(communityPoolAddr)
@@ -325,10 +325,10 @@ func collectRewardsAll() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] collect rewards for all positions")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
-	sr.CollectReward(cross, 3, false)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross, 4)
 }
 
 func testSingleBlockRewardDistribution() {
@@ -340,7 +340,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 01 (100% warm-up)
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	pos01Reward := afterGns - beforeGns
 
@@ -348,7 +348,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 02 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	pos02Reward := afterGns - beforeGns
 
@@ -356,7 +356,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 03 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	afterGns = gns.BalanceOf(adminUser)
 	pos03Reward := afterGns - beforeGns
 
@@ -364,7 +364,7 @@ func testSingleBlockRewardDistribution() {
 
 	// Position 04 (30% warm-up)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 4)
 	afterGns = gns.BalanceOf(adminUser)
 	pos04Reward := afterGns - beforeGns
 

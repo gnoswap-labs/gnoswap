@@ -455,10 +455,9 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //
 // Parameters:
 //   - positionId: LP position NFT token ID
-//   - unwrapResult: if true, unwraps WUGNOT to GNOT
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
-func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
+func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -564,14 +563,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		}
 
 		if toUser > 0 {
-			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
-				tErr := unwrapWithTransfer(deposit.Owner(), toUser)
-				if tErr != nil {
-					panic(tErr)
-				}
-			} else {
-				common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
-			}
+			common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
 		}
 
 		chain.Emit(
@@ -609,7 +601,6 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			"rewardToUser", formatAnyInt(toUser),
 			"rewardToFee", formatAnyInt(rewardAmount-toUser),
 			"rewardPenalty", formatAnyInt(externalPenalty),
-			"isRequestUnwrap", formatBool(unwrapResult),
 			"currentTime", formatAnyInt(currentTime),
 			"currentHeight", formatAnyInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
@@ -743,7 +734,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 // Requirements:
 //   - Caller must be the depositor
 //   - Position must be currently staked
-func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { // poolPath
+func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -755,7 +746,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	poolPath := deposit.TargetPoolPath()
 
 	// claim All Rewards
-	s.CollectReward(positionId, unwrapResult)
+	s.CollectReward(positionId)
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)
@@ -791,7 +782,6 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"isRequestUnwrap", formatBool(unwrapResult),
 		"from", stakerAddr.String(),
 		"to", deposit.Owner().String(),
 		"currentTick", formatAnyInt(currentTick),

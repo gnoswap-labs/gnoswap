@@ -195,7 +195,7 @@ func collectRewardTier2() {
 
 	println("[INFO] collect rewards while in tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardTier2 = afterGns - beforeGns
 
@@ -224,7 +224,7 @@ func changeToTier1AndCollect() {
 
 	println("[INFO] collect rewards while in tier 1")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardTier1 = afterGns - beforeGns
 
@@ -255,7 +255,7 @@ func removeFromTierAndCollect() {
 
 	println("[INFO] collect any remaining rewards")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardTier0 = afterGns - beforeGns
 
@@ -282,7 +282,7 @@ func addToTier3AndCollect() {
 
 	println("[INFO] collect rewards while in tier 3")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardTier3 = afterGns - beforeGns
 

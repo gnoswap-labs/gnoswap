@@ -229,8 +229,8 @@ func beforeActive() {
 
 	oldBar := bar.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	newBar := bar.BalanceOf(adminUser)
 
@@ -262,12 +262,12 @@ func after50Blocks() {
 	// both of position is in warm up 70%
 
 	oldBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newBar := bar.BalanceOf(adminUser)
 	diff1 := newBar - oldBar
 	ufmt.Printf("[EXPECTED] position 01 reward: %d BAR\n", diff1)
 
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	newBar2 := bar.BalanceOf(adminUser)
 	diff2 := newBar2 - newBar
 	ufmt.Printf("[EXPECTED] position 02 reward: %d BAR\n", diff2)
@@ -316,13 +316,13 @@ func makePosition1OutRange() {
 
 func rewardNowAfter1Block() {
 	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	testing.SkipHeights(1)
 
 	oldBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newBar := bar.BalanceOf(adminUser)
 	diff1 := newBar - oldBar
 
@@ -331,7 +331,7 @@ func rewardNowAfter1Block() {
 	}
 	ufmt.Printf("[EXPECTED] position 01 (out of range) reward: %d BAR\n", diff1)
 
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	newBar2 := bar.BalanceOf(adminUser)
 	diff2 := newBar2 - newBar
 	ufmt.Printf("[EXPECTED] position 02 (in range) reward: %d BAR\n", diff2)

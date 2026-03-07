@@ -214,7 +214,7 @@ func afterActive() {
 
 	// clear reward
 	testing.SetRealm(adminRealm)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	ufmt.Printf("[EXPECTED] incentives are now active, initial rewards cleared\n")
 }
 
@@ -225,7 +225,7 @@ func collectRewardSingleBlock() {
 	oldGns := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	// 1 block passed
 	// position warmup is 70%
 

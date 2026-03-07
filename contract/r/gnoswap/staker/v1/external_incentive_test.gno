@@ -70,7 +70,6 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 				0,
 				runtime.ChainHeight(),
 				currentTime,
-				true,
 			)
 
 			// add incentive
@@ -130,7 +129,6 @@ func TestEndExternalIncentive(t *testing.T) {
 		100_000_000, // depositGnsAmount
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 
 	// Add incentive to pool
@@ -451,7 +449,6 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 			100_000_000,
 			1000,
 			currentTime, // Same currentTime for all
-			false,
 		)
 
 		// Add to external incentives store
@@ -583,7 +580,6 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 			100_000_000,
 			1000,
 			ts,
-			false,
 		)
 
 		externalIncentives := instance.store.GetExternalIncentives()
@@ -719,7 +715,6 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 			100_000_000,
 			1000,
 			currentTime, // Same timestamp for all
-			false,
 		)
 
 		externalIncentives := instance.store.GetExternalIncentives()
@@ -892,7 +887,6 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 			100_000_000,
 			1000,
 			baseTime,
-			false,
 		)
 
 		// Add to external incentives store
@@ -976,7 +970,6 @@ func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	incentive2 := sr.NewExternalIncentive(
@@ -990,7 +983,6 @@ func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	// Simulate lazy sync with pool filtering (from calculatePositionReward line 133)
@@ -1050,7 +1042,6 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		100_000_000,
 		runtime.ChainHeight(),
 		startTime-100,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)
@@ -1174,7 +1165,6 @@ func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
 		100_000_000,
 		runtime.ChainHeight(),
 		startTime-100,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)
@@ -1249,7 +1239,6 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
 		100_000_000,
 		runtime.ChainHeight(),
 		startTime-100,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)
@@ -1316,7 +1305,6 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
 		100_000_000,
 		runtime.ChainHeight(),
 		startTime-100,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)

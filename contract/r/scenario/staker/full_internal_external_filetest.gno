@@ -88,6 +88,12 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize account and emission")
 	initAccount()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	initAccountPostDeposit()
 	println()
 
 	println("[SCENARIO] 2. Create wugnot:gns:3000 pool (tier 1)")
@@ -159,10 +165,11 @@ func initAccount() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(nil)
+	// Deposit is done in main()
+}
 
+func initAccountPostDeposit() {
+	testing.SetRealm(adminRealm)
 	wugnotBalance := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[EXPECTED] wugnot balance: %d\n", wugnotBalance)
 
@@ -320,7 +327,7 @@ func collectRewardsAllWarmUp() {
 
 	println("[INFO] collect rewards for 30% warm-up")
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 	}
 	testing.SkipHeights(1)
 
@@ -331,7 +338,7 @@ func collectRewardsAllWarmUp() {
 	testing.SkipHeights(blocksIn5Days)
 
 	for i := 1; i <= 6; i++ {
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 	}
 	testing.SkipHeights(1)
 }
@@ -362,7 +369,7 @@ func performSwaps() {
 
 	println("[INFO] check reward for position 01 after swap")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -413,7 +420,7 @@ func oneClickStakingPos07OutRange() {
 
 	println("[INFO] collect reward for position 07")
 	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
-	sr.CollectReward(cross, 7, false)
+	sr.CollectReward(cross, 7)
 	newAdminGnsBalance := gns.BalanceOf(adminAddr)
 
 	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
@@ -427,7 +434,7 @@ func unstakeToken01() {
 
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns
@@ -551,3 +558,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
+

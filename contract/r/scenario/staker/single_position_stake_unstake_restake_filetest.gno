@@ -183,7 +183,7 @@ func collectRewardsAfterFirstStake() {
 
 	println("[INFO] collect reward after first stake")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 
@@ -198,7 +198,7 @@ func unstakeOperation() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 01")
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", ownerAfterUnstake)
@@ -238,7 +238,7 @@ func collectRewardsAfterRestake() {
 
 	println("[INFO] collect reward after restake")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward := afterGns - beforeGns
 
@@ -255,7 +255,7 @@ func finalUnstakeOperation() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] final unstake operation")
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ownerAfterFinalUnstake := gnft.MustOwnerOf(positionIdFrom(1))
 	ufmt.Printf("[EXPECTED] position owner after final unstake: %s\n", ownerAfterFinalUnstake)

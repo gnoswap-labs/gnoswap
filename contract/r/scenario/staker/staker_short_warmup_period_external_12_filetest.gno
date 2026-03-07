@@ -249,7 +249,7 @@ func collectRewardsForBothTokens() {
 	oldBar := bar.BalanceOf(adminUser)
 	oldQux := qux.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	newBar := bar.BalanceOf(adminUser)
 	newQux := qux.BalanceOf(adminUser)

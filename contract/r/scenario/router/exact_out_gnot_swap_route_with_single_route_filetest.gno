@@ -6,7 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -48,6 +47,10 @@ var t *testing.T
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)")
@@ -83,14 +86,9 @@ func initializeSetup() {
 
 	testing.IssueCoins(chain.PackageAddress("gno.land/r/gnoland/wugnot"), chain.Coins{{"ugnot", 100000000000000}})
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
-	println("[INFO] WUGNOT Balance of admin:", banker_.GetCoins(adminAddr).AmountOf("ugnot"))
+	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
 
 	gns.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, poolAddr, maxInt64)
@@ -115,7 +113,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -160,14 +157,12 @@ func exactOutSwapRouteBy(
 	amountUint64, _ := strconv.ParseUint(amountInMax, 10, 64)
 	gns.Approve(cross, routerAddr, int64(amountUint64))
 
-	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	prevBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
+	prevBalance := wugnot.BalanceOf(adminAddr)
 
-	testing.SetOriginSend(chain.Coins{})
 	_, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,
-		"ugnot",
+		outputToken,
 		specifiedAmount,
 		routeQueryString,
 		queryRatios,
@@ -176,9 +171,9 @@ func exactOutSwapRouteBy(
 		"",
 	)
 
-	afterBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
+	afterBalance := wugnot.BalanceOf(adminAddr)
 
-	ufmt.Printf("[EXPECTED] ugnot balance of admin: %d\n", afterBalance-prevBalance)
+	ufmt.Printf("[EXPECTED] wugnot balance of admin: %d\n", afterBalance-prevBalance)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
 }
 
@@ -218,5 +213,5 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
-// [EXPECTED] ugnot balance of admin: 1001502
+// [EXPECTED] wugnot balance of admin: 1001502
 // [EXPECTED] outputTokenAmount: -1001502

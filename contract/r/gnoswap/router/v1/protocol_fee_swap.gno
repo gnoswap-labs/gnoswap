@@ -83,10 +83,6 @@ func (r *routerV1) handleSwapFee(
 
 	currentTokenPath := outputToken
 
-	if common.IsGNOTNativePath(outputToken) {
-		currentTokenPath = wugnotPath
-	}
-
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())

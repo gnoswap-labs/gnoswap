@@ -167,7 +167,7 @@ func exactInSingleSwapRouteByAdmin(
 
 func collectPositionFeeByAdmin(positionId int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	position.CollectFee(cross, uint64(positionId), false)
+	position.CollectFee(cross, uint64(positionId))
 }
 
 func collectProtocolFee(addr address) {

@@ -229,7 +229,7 @@ func collectRewardsAfterDuration() {
 
 	println("[INFO] collect reward for position 01")
 	oldBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newBar := bar.BalanceOf(adminUser)
 	reward := newBar - oldBar
 
@@ -286,8 +286,8 @@ func collectRewardsForAllPositions() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] clear previous rewards")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	println("[INFO] skip 10 blocks to accumulate rewards")
 	testing.SkipHeights(10)
@@ -301,7 +301,7 @@ func collectRewardsForAllPositions() {
 
 	println("[INFO] collect reward for position 01")
 	oldBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newBar := bar.BalanceOf(adminUser)
 	reward1 := newBar - oldBar
 
@@ -309,7 +309,7 @@ func collectRewardsForAllPositions() {
 
 	println("[INFO] collect reward for position 02")
 	oldBar = newBar
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	newBar = bar.BalanceOf(adminUser)
 	reward2 := newBar - oldBar
 

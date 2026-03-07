@@ -5,7 +5,6 @@
 package main
 
 import (
-	"chain"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -24,7 +23,6 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -196,7 +194,7 @@ func decreasePositionLiquidity() {
 	foo.Approve(cross, poolAddr, 100000000)
 
 	ufmt.Println("[INFO] Collecting fees before decrease")
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
 
@@ -208,7 +206,6 @@ func decreasePositionLiquidity() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
@@ -224,7 +221,7 @@ func checkFinalPositionState() {
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
 
-	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1)
 	ufmt.Printf("[EXPECTED] Final fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Final fee1 should be %s\n", fee1)
 }
@@ -232,22 +229,11 @@ func checkFinalPositionState() {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
-	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
+	if amount0Delta > 0 {
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
-	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
+	}
 
+	if amount1Delta > 0 {
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

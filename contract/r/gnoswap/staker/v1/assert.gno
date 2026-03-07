@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/common"
 )
 
 const (
@@ -216,10 +215,3 @@ func isMidnight(startTime time.Time) bool {
 	return hour == 0 && minute == 0 && second == 0
 }
 
-func assertIsValidUserCoinSend(tokenPath string, amount int64) {
-	if common.IsGNOTNativePath(tokenPath) {
-		common.AssertIsUserSendGNOTAmount(amount)
-	} else {
-		common.AssertIsNotHandleNativeCoin()
-	}
-}

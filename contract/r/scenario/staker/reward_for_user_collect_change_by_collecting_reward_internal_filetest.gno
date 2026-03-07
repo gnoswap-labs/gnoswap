@@ -160,7 +160,7 @@ func firstRewardCollection() {
 
 	println("[INFO] collect first reward")
 	beforeGns1 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns1 := gns.BalanceOf(adminUser)
 	firstReward := afterGns1 - beforeGns1
 
@@ -181,7 +181,7 @@ func secondRewardCollection() {
 
 	println("[INFO] collect second reward")
 	beforeGns2 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns2 := gns.BalanceOf(adminUser)
 	secondReward := afterGns2 - beforeGns2
 
@@ -202,7 +202,7 @@ func thirdRewardCollectionLonger() {
 
 	println("[INFO] collect third reward")
 	beforeGns3 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns3 := gns.BalanceOf(adminUser)
 	thirdReward := afterGns3 - beforeGns3
 
@@ -228,7 +228,7 @@ func compareRewardPatterns() {
 	for i := 0; i < 5; i++ {
 		testing.SkipHeights(2)
 		beforeGns := gns.BalanceOf(adminUser)
-		sr.CollectReward(cross, 1, false)
+		sr.CollectReward(cross, 1)
 		afterGns := gns.BalanceOf(adminUser)
 		rewardFromSmallCollection := afterGns - beforeGns
 		totalFromFrequentCollections += rewardFromSmallCollection
@@ -241,7 +241,7 @@ func compareRewardPatterns() {
 	println("[INFO] test pattern: single large collection")
 	testing.SkipHeights(10)
 	beforeGnsLarge := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGnsLarge := gns.BalanceOf(adminUser)
 	rewardFromLargeCollection := afterGnsLarge - beforeGnsLarge
 
@@ -274,19 +274,19 @@ func finalVerificationMultipleCollections() {
 	println("[INFO] perform 3 consecutive collections")
 
 	collection1Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection1After := gns.BalanceOf(adminUser)
 	reward1 := collection1After - collection1Before
 	ufmt.Printf("[EXPECTED] consecutive collection 1: %d\n", reward1)
 
 	collection2Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection2After := gns.BalanceOf(adminUser)
 	reward2 := collection2After - collection2Before
 	ufmt.Printf("[EXPECTED] consecutive collection 2: %d\n", reward2)
 
 	collection3Before := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection3After := gns.BalanceOf(adminUser)
 	reward3 := collection3After - collection3Before
 	ufmt.Printf("[EXPECTED] consecutive collection 3: %d\n", reward3)

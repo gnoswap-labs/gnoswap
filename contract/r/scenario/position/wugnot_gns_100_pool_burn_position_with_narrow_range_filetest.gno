@@ -39,13 +39,17 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	gnotPath   = "ugnot"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 	println()
 
@@ -54,7 +58,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint Position (-1 ~ 1)")
-	mintPosition(gnotPath, gnsPath, 100, -1, 1, "1000000000", "1000000000", 1000000000)
+	mintPosition(wugnotPath, gnsPath, 100, -1, 1, "1000000000", "1000000000", 1000000000)
 	println()
 
 	println("[SCENARIO] 4. Remove Position (-1 ~ 1)")
@@ -67,9 +71,6 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
@@ -100,12 +101,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-
-	if nativeCoinAmount > 0 {
-		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", nativeCoinAmount}})
-		testing.SetOriginSend(chain.Coins{{"ugnot", nativeCoinAmount}})
-	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
@@ -140,7 +135,6 @@ func removePosition(positionId uint64) {
 		"0",
 		"0",
 		9999999999,
-		true,
 	)
 
 	ufmt.Printf("[EXPECTED] positionId: %d\n", positionId)

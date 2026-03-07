@@ -23,11 +23,6 @@ const (
 )
 
 const (
-	GNOT_DENOM  string = "ugnot"
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
-)
-
-const (
 	MIN_SQRT_RATIO string = "4295128739"
 	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342"
 )
@@ -68,8 +63,9 @@ func (p *poolCreateConfig) Token0Path() string       { return p.token0Path }
 func (p *poolCreateConfig) Token1Path() string       { return p.token1Path }
 func (p *poolCreateConfig) Fee() uint32              { return p.fee }
 
-func (p *poolCreateConfig) updateWithWrapping() error {
-	token0Path, token1Path := p.wrap()
+func (p *poolCreateConfig) update() error {
+	token0Path := p.token0Path
+	token1Path := p.token1Path
 
 	// Always validate that the price is within valid range
 	if err := validateSqrtPriceX96(p.sqrtPriceX96); err != nil {
@@ -106,16 +102,6 @@ func (p *poolCreateConfig) isInOrder() bool {
 		return true
 	}
 	return false
-}
-
-func (p *poolCreateConfig) wrap() (string, string) {
-	if p.token0Path == GNOT_DENOM {
-		p.token0Path = WUGNOT_PATH
-	}
-	if p.token1Path == GNOT_DENOM {
-		p.token1Path = WUGNOT_PATH
-	}
-	return p.token0Path, p.token1Path
 }
 
 func (p *poolCreateConfig) poolPath() string {

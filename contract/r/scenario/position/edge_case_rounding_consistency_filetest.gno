@@ -206,7 +206,6 @@ func testRoundingOnBurn() {
 			partialLiq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		ufmt.Printf("[BURN] Burned liquidity: %s\n", partialLiq)
@@ -275,7 +274,6 @@ func testRoundingConsistency() {
 			pos.Liquidity().ToString(),
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		ufmt.Printf("[burn] Position %d: returned amount0=%s, amount1=%s\n", posId, amt0, amt1)

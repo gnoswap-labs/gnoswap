@@ -46,6 +46,10 @@ var t *testing.T
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 	println()
 
@@ -57,7 +61,7 @@ func main() {
 	println("[SCENARIO] 3. ExactInSwapRoute")
 	exactInSwapRouteBy(
 		gnsPath,
-		"ugnot",
+		wugnotPath,
 		"1000",
 		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 		"100",
@@ -71,10 +75,6 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
-
 	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
@@ -105,7 +105,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -151,7 +150,6 @@ func exactInSwapRouteBy(
 	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 
-	testing.SetOriginSend(chain.Coins{})
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
 		cross,
 		inputToken,
@@ -189,7 +187,7 @@ func exactInSwapRouteBy(
 // [SCENARIO] 3. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
 // [INFO] inputToken: gno.land/r/gnoswap/gns
-// [INFO] outputToken: ugnot
+// [INFO] outputToken: gno.land/r/gnoland/wugnot
 // [INFO] specifiedAmount: 1000
 // [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
@@ -197,4 +195,4 @@ func exactInSwapRouteBy(
 // [EXPECTED] inputTokenAmount(GNS): 1000
 // [EXPECTED] outputTokenAmount(GNOT): -2000
 // [EXPECTED] GNS balance changed: -1000
-// [EXPECTED] GNOT balance changed: 2000
+// [EXPECTED] GNOT balance changed: 0

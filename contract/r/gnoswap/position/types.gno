@@ -42,7 +42,6 @@ type IPositionManager interface {
 		amount0MinStr string,
 		amount1MinStr string,
 		deadline int64,
-		unwrapResult bool,
 	) (uint64, string, string, string, string, string, string)
 
 	Reposition(
@@ -58,7 +57,6 @@ type IPositionManager interface {
 
 	CollectFee(
 		positionId uint64,
-		unwrapResult bool,
 	) (uint64, string, string, string, string, string)
 
 	SetPositionOperator(

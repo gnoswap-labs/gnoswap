@@ -41,7 +41,6 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 		_, fee0, fee1, _, _, poolPath := position.CollectFee(
 			cross,
 			collectParams.positionId,
-			collectParams.unwrapResult,
 		)
 
 		// then - verify fees collected
@@ -82,7 +81,6 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 		position.CollectFee(
 			cross,
 			collectParams.positionId,
-			collectParams.unwrapResult,
 		)
 	})
 }
@@ -120,7 +118,6 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 		_, fee0, fee1, _, _, _ := position.CollectFee(
 			cross,
 			collectParams.positionId,
-			collectParams.unwrapResult,
 		)
 
 		// then - verify fees collected
@@ -167,7 +164,6 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 		_, fee0, fee1, _, _, _ := position.CollectFee(
 			cross,
 			collectParams.positionId,
-			collectParams.unwrapResult,
 		)
 
 		// Track successful collections

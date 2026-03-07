@@ -113,7 +113,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 		beforeBar := bar.BalanceOf(addr01)
 
 		// Should not panic
-		mockInstanceCollectReward(positionId, false)
+		mockInstanceCollectReward(positionId)
 
 		afterGns := gns.BalanceOf(addr01)
 		afterBar := bar.BalanceOf(addr01)
@@ -242,7 +242,7 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 	// CollectReward should not panic when incentive is nil
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	uassert.NotPanics(t, func() {
-		mockInstanceCollectReward(positionId, false)
+		mockInstanceCollectReward(positionId)
 	})
 }
 
@@ -333,7 +333,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	resolver := getMockInstance().getDepositResolver(positionId)
 	firstLastCollect := resolver.ExternalRewardLastCollectTime(incentiveId)
 
-	mockInstanceCollectReward(positionId, false)
+	mockInstanceCollectReward(positionId)
 
 	resolver = getMockInstance().getDepositResolver(positionId)
 	uassert.Equal(t, firstLastCollect, resolver.ExternalRewardLastCollectTime(incentiveId))
@@ -345,7 +345,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	incentives.set(incentiveId, incentive)
 
 	communityPoolBefore = TokenBalance(t, barPath, communityPoolAddr)
-	mockInstanceCollectReward(positionId, false)
+	mockInstanceCollectReward(positionId)
 
 	resolver = getMockInstance().getDepositResolver(positionId)
 	communityPoolAfter := TokenBalance(t, barPath, communityPoolAddr)
@@ -360,7 +360,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	lastCollectAfter := resolver.ExternalRewardLastCollectTime(incentiveId)
 
 	// Subsequent collect in the same second should not apply the penalty again.
-	mockInstanceCollectReward(positionId, false)
+	mockInstanceCollectReward(positionId)
 	resolver = getMockInstance().getDepositResolver(positionId)
 	uassert.Equal(t, communityPoolAfter, TokenBalance(t, barPath, communityPoolAddr))
 	uassert.Equal(t, collectedAfter, resolver.CollectedExternalReward(incentiveId))
@@ -432,7 +432,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(t *testing.T) {
 	depositResolver := getMockInstance().getDepositResolver(positionId)
 
 	// Collect reward - should process penalty even if net reward is 0
-	mockInstanceCollectReward(positionId, false)
+	mockInstanceCollectReward(positionId)
 
 	// Check balances after
 	userGnsAfter := gns.BalanceOf(addr01)
@@ -546,7 +546,7 @@ func TestUnStakeToken(t *testing.T) {
 
 	// Unstake the position
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	resultPoolPath := mockInstanceUnStakeToken(positionId, false)
+	resultPoolPath := mockInstanceUnStakeToken(positionId)
 	uassert.Equal(t, poolPath, resultPoolPath)
 
 	// Verify operator is reset to zero address
@@ -597,7 +597,6 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 		100_000_000,
 		1000,
 		currentTime-86400,
-		false,
 	)
 
 	poolResolver := NewPoolResolver(pool)

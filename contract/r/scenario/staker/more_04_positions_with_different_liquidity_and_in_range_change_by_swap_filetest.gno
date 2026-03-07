@@ -282,31 +282,31 @@ func stakeTokensPos02To05WithDifferentWarmUp() {
 	// Position 05: 0 (out of range)
 
 	beforeGns1 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns1 := gns.BalanceOf(adminUser)
 	reward1 := afterGns1 - beforeGns1
 	ufmt.Printf("[EXPECTED] position 01 reward (full range, 100%% warm-up): %d\n", reward1)
 
 	beforeGns2 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns2 := gns.BalanceOf(adminUser)
 	reward2 := afterGns2 - beforeGns2
 	ufmt.Printf("[EXPECTED] position 02 reward (wide range, 70%% warm-up): %d\n", reward2)
 
 	beforeGns3 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	afterGns3 := gns.BalanceOf(adminUser)
 	reward3 := afterGns3 - beforeGns3
 	ufmt.Printf("[EXPECTED] position 03 reward (narrow range, 50%% warm-up): %d\n", reward3)
 
 	beforeGns4 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 4)
 	afterGns4 := gns.BalanceOf(adminUser)
 	reward4 := afterGns4 - beforeGns4
 	ufmt.Printf("[EXPECTED] position 04 reward (out of range): %d\n", reward4)
 
 	beforeGns5 := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 5, false)
+	sr.CollectReward(cross, 5)
 	afterGns5 := gns.BalanceOf(adminUser)
 	reward5 := afterGns5 - beforeGns5
 	ufmt.Printf("[EXPECTED] position 05 reward (out of range): %d\n", reward5)
@@ -338,7 +338,7 @@ func testRewardDistributionForSingleBlock() {
 
 	// Position 01 test
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	pos01Reward := afterGns - beforeGns
 
@@ -348,7 +348,7 @@ func testRewardDistributionForSingleBlock() {
 
 	// Position 02 test
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	pos02Reward := afterGns - beforeGns
 
@@ -358,7 +358,7 @@ func testRewardDistributionForSingleBlock() {
 
 	// Position 03 test
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	afterGns = gns.BalanceOf(adminUser)
 	pos03Reward := afterGns - beforeGns
 
@@ -368,7 +368,7 @@ func testRewardDistributionForSingleBlock() {
 
 	// Position 04 test (out of range)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 4)
 	afterGns = gns.BalanceOf(adminUser)
 	pos04Reward := afterGns - beforeGns
 
@@ -376,7 +376,7 @@ func testRewardDistributionForSingleBlock() {
 
 	// Position 05 test (out of range)
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 5, false)
+	sr.CollectReward(cross, 5)
 	afterGns = gns.BalanceOf(adminUser)
 	pos05Reward := afterGns - beforeGns
 

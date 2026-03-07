@@ -81,6 +81,12 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Create external incentive with native coin (ugnot)")
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	createExternalIncentiveWithNativeCoin()
 	println()
 
@@ -157,21 +163,16 @@ func mintPosition01() {
 func createExternalIncentiveWithNativeCoin() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] approve wugnot for external incentive")
+	// Deposit already done in main()
+	println("[INFO] approve wugnot and gns for external incentive")
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
-
-	println("[INFO] prepare native coins for external incentive")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 1_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
 
 	println("[INFO] create external incentive with ugnot (native coin)")
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"ugnot",                     // rewardToken (native coin)
+		wugnotPath,                  // rewardToken (wugnot)
 		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -200,7 +201,7 @@ func collectExternalRewardWithUnwrap() {
 
 	println("[INFO] skip blocks to accumulate rewards")
 	testing.SkipHeights(900)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 
@@ -212,7 +213,7 @@ func collectExternalRewardWithUnwrap() {
 	ufmt.Printf("[INFO] wugnot balance before: %d\n", oldWugnotBal)
 
 	println("[INFO] collect reward with unwrap=true")
-	sr.CollectReward(cross, 1, true) // unwrap=true
+	sr.CollectReward(cross, 1) // unwrap=true (now transfers WUGNOT)
 
 	newUgnotBal := ugnotBalanceOf(adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
@@ -220,18 +221,18 @@ func collectExternalRewardWithUnwrap() {
 	ufmt.Printf("[EXPECTED] ugnot balance after: %d\n", newUgnotBal)
 	ufmt.Printf("[EXPECTED] wugnot balance after: %d\n", newWugnotBal)
 
-	ugnotIncrease := newUgnotBal - oldUgnotBal
-	wugnotChange := newWugnotBal - oldWugnotBal
+	ugnotChange := newUgnotBal - oldUgnotBal
+	wugnotIncrease := newWugnotBal - oldWugnotBal
 
-	ufmt.Printf("[EXPECTED] ugnot increase (unwrapped): %d\n", ugnotIncrease)
-	ufmt.Printf("[EXPECTED] wugnot change (should be 0): %d\n", wugnotChange)
+	ufmt.Printf("[EXPECTED] ugnot change (should be 0): %d\n", ugnotChange)
+	ufmt.Printf("[EXPECTED] wugnot increase (unwrap now transfers wugnot): %d\n", wugnotIncrease)
 
-	if ugnotIncrease <= 0 {
-		panic("should have received unwrapped ugnot")
+	if ugnotChange != 0 {
+		panic("ugnot balance should not change, unwrap now transfers wugnot")
 	}
 
-	if wugnotChange != 0 {
-		panic("wugnot balance should not change when unwrapping")
+	if wugnotIncrease <= 0 {
+		panic("should have received wugnot from unwrap")
 	}
 }
 
@@ -248,7 +249,7 @@ func collectExternalRewardWithoutUnwrap() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward with unwrap=false")
-	sr.CollectReward(cross, 1, false) // unwrap=false
+	sr.CollectReward(cross, 1) // unwrap=false
 
 	newUgnotBal := ugnotBalanceOf(adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
@@ -314,8 +315,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] amount0: 100000, amount1: 100000
 //
 // [SCENARIO] 4. Create external incentive with native coin (ugnot)
-// [INFO] approve wugnot for external incentive
-// [INFO] prepare native coins for external incentive
+// [INFO] approve wugnot and gns for external incentive
 // [INFO] create external incentive with ugnot (native coin)
 // [INFO] native coin external incentive created
 // [INFO] start time: 1234569600, end time: 1242345600
@@ -327,20 +327,20 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Collect external reward with unwrap
 // [INFO] skip blocks to accumulate rewards
 // [INFO] check balances before collecting with unwrap
-// [INFO] ugnot balance before: 99999000000000
+// [INFO] ugnot balance before: 100000000000000
 // [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=true
-// [EXPECTED] ugnot balance after: 99999000000191
-// [EXPECTED] wugnot balance after: 108288
-// [EXPECTED] ugnot increase (unwrapped): 191
-// [EXPECTED] wugnot change (should be 0): 0
+// [EXPECTED] ugnot balance after: 100000000000000
+// [EXPECTED] wugnot balance after: 108479
+// [EXPECTED] ugnot change (should be 0): 0
+// [EXPECTED] wugnot increase (unwrap now transfers wugnot): 191
 //
 // [SCENARIO] 7. Collect external reward without unwrap
 // [INFO] check balances before collecting without unwrap
-// [INFO] ugnot balance before: 99999000000191
-// [INFO] wugnot balance before: 108288
+// [INFO] ugnot balance before: 100000000000000
+// [INFO] wugnot balance before: 108479
 // [INFO] collect reward with unwrap=false
-// [EXPECTED] ugnot balance after: 99999000000191
-// [EXPECTED] wugnot balance after: 108480
+// [EXPECTED] ugnot balance after: 100000000000000
+// [EXPECTED] wugnot balance after: 108671
 // [EXPECTED] ugnot change (should be 0): 0
 // [EXPECTED] wugnot increase (wrapped): 192

@@ -207,7 +207,7 @@ func verifyRewards() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // Collect rewards
+	sr.CollectReward(cross, 1) // Collect rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -224,7 +224,7 @@ func collectBeforeRemoval() {
 
 	// Collect all pending rewards right before tier removal
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // Collect any remaining rewards
+	sr.CollectReward(cross, 1) // Collect any remaining rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -249,7 +249,7 @@ func verifyNoIncentives() {
 	testing.SkipHeights(50)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // Try to collect rewards
+	sr.CollectReward(cross, 1) // Try to collect rewards
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -265,7 +265,7 @@ func unstakeFromDetiredPool() {
 	testing.SetRealm(adminRealm)
 
 	// This is the critical test - unstaking should succeed even though the pool has no incentives
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ufmt.Printf("[EXPECTED] successfully unstaked position from de-tiered pool\n")
 	testing.SkipHeights(1)

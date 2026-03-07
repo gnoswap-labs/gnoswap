@@ -259,7 +259,7 @@ func stakeToken_2() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 tier 2 reward: %d GNS\n", diff)
@@ -271,7 +271,7 @@ func changePoolTier() {
 	testing.SetRealm(adminRealm)
 
 	sr.ChangePoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	ufmt.Printf("[EXPECTED] pool tier changed to 1\n")
 
 	println("[INFO] checking reward when position 02 is in tier 1")
@@ -279,7 +279,7 @@ func changePoolTier() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 tier 1 reward: %d GNS\n", diff)

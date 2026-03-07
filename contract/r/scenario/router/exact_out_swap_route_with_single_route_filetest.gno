@@ -6,8 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
-	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -48,6 +46,10 @@ var t *testing.T
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)")
@@ -67,7 +69,7 @@ func main() {
 
 	println("[SCENARIO] 5. ExactOutSwapRoute")
 	exactOutSwapRouteBy(
-		"ugnot",
+		wugnotPath,
 		gnsPath,
 		"1001502",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
@@ -82,9 +84,6 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -112,7 +111,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -153,12 +151,6 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] routeQueryString:", routeQueryString)
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] amountInMax:", amountInMax)
-
-	amountUint64, _ := strconv.ParseUint(amountInMax, 10, 64)
-	testing.SetOriginSend(chain.Coins{{"ugnot", int64(amountUint64)}})
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", int64(amountUint64)}})
 
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
@@ -206,7 +198,7 @@ func exactOutSwapRouteBy(
 //
 // [SCENARIO] 5. ExactOutSwapRoute
 // [INFO] ExactOutSwapRoute
-// [INFO] inputToken: ugnot
+// [INFO] inputToken: gno.land/r/gnoland/wugnot
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1001502
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500

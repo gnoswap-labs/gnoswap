@@ -11,6 +11,5 @@
 // - Tick Math: Price-tick conversion functions for concentrated liquidity positions
 // - Liquidity Math: Liquidity calculations based on token amounts and price ranges
 // - GRC20 Registry Helpers: Convenient wrappers for GRC20 token operations
-// - Coin Utilities: Native coin (GNOT) handling and validation
 // - Assertion Utilities: Input validation and authorization checks
 package common

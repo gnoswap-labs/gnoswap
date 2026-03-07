@@ -73,6 +73,10 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position and stake")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintPositionAndStake()
 	testing.SkipHeights(1)
 	println()
@@ -91,6 +95,10 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 5. Mint position and stake after halt")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintPositionAndStake()
 	testing.SkipHeights(1)
 	println()
@@ -131,8 +139,6 @@ func initPool() {
 
 func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
@@ -185,7 +191,7 @@ func collectRewards(positionIds ...uint64) {
 
 		for _, positionId := range positionIds {
 			beforeCollectedGns := gns.BalanceOf(adminAddr)
-			staker.CollectReward(cross, positionId, false)
+			staker.CollectReward(cross, positionId)
 			afterCollectedGns := gns.BalanceOf(adminAddr)
 
 			totalAdminRewards += (afterCollectedGns - beforeCollectedGns)

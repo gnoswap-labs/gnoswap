@@ -121,7 +121,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc88
 # stdout 'TOTAL TX COST:  [0-9]+ugnot'
 # stdout 'EVENTS:     \[{\"type\":\"Approval\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"owner\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"spender\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"}\]'
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "ugnot" -args gno.land/r/gnoswap/gns -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "1000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout "1000000"
 # stdout "-1014958"
 # stdout 'GAS USED:   8[0-9]{7}'

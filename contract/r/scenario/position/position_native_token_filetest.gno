@@ -6,7 +6,6 @@ package main
 
 import (
 	"chain"
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -32,7 +31,6 @@ import (
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	GNOT        string = "ugnot"
 	GNS_PATH    string = "gno.land/r/gnoswap/gns"
 	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 
@@ -52,6 +50,14 @@ func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with GNOT/GNS pair")
 	initPool()
 	println()
+
+	// pre deposit amount of mintPosition(50000000) + executeSwap(1234567)
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 51234567}})
+	testing.IssueCoins(positionAddr, chain.Coins{{"ugnot", 200000000}})
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 51234567}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 
 	ufmt.Println("[SCENARIO] 2. Mint position with native token")
 	mintPosition()
@@ -85,7 +91,7 @@ func initPool() {
 	ufmt.Println("[INFO] Creating GNOT/GNS pool")
 	pool.CreatePool(
 		cross,
-		GNOT,
+		WUGNOT_PATH,
 		GNS_PATH,
 		500,
 		common.TickMathGetSqrtRatioAtTick(1).ToString(),
@@ -99,19 +105,12 @@ func mintPosition() {
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
 
-	ufmt.Println("[INFO] Issue initial GNOT")
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 50000000}})
-	testing.IssueCoins(positionAddr, chain.Coins{{"ugnot", 200000000}})
-
-	ufmt.Println("[INFO] Send GNOT to position contract")
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", 50000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+	ufmt.Println("[INFO] WUGNOT pre-deposited in main()")
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		GNOT,
+		WUGNOT_PATH,
 		GNS_PATH,
 		500,
 		-8000,
@@ -125,8 +124,6 @@ func mintPosition() {
 		adminAddr,
 		"",
 	)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 0}})
-
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
@@ -143,10 +140,6 @@ func checkUnclaimedFeesBeforeSwap() {
 
 func executeSwap() {
 	testing.SetRealm(adminRealm)
-
-	ufmt.Println("[INFO] Wrapping GNOT for swap")
-	testing.SetOriginSend(chain.Coins{{"ugnot", 1234567}})
-	wugnot.Deposit(cross)
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
@@ -193,14 +186,13 @@ func decreaseLiquidityNoUnwrap() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 	ufmt.Printf("[EXPECTED] WUGNOT balance should increase\n")
-	ufmt.Printf("[EXPECTED] GNOT balance should remain same\n")
+	ufmt.Printf("[EXPECTED] WUGNOT balance should remain same\n")
 }
 
 func decreaseLiquidityWithUnwrap() {
@@ -214,35 +206,21 @@ func decreaseLiquidityWithUnwrap() {
 		"0",
 		"0",
 		9999999999,
-		true,
 	)
 
 	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 	ufmt.Printf("[EXPECTED] WUGNOT balance should decrease\n")
-	ufmt.Printf("[EXPECTED] GNOT balance should increase\n")
+	ufmt.Printf("[EXPECTED] WUGNOT balance should increase\n")
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
@@ -254,8 +232,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [INFO] Creating GNOT/GNS pool
 //
 // [SCENARIO] 2. Mint position with native token
-// [INFO] Issue initial GNOT
-// [INFO] Send GNOT to position contract
+// [INFO] WUGNOT pre-deposited in main()
 // [INFO] Minting position
 // [EXPECTED] Position ID should be 1
 // [EXPECTED] Amount0 should be 49984837
@@ -267,7 +244,6 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
 //
 // [SCENARIO] 4. Execute swap with native token
-// [INFO] Wrapping GNOT for swap
 // [INFO] Executing swap
 // [EXPECTED] Swap amount0 should be 1234567
 // [EXPECTED] Swap amount1 should be -1224110
@@ -282,7 +258,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Amount0 removed should be 5121878
 // [EXPECTED] Amount1 removed should be 4877588
 // [EXPECTED] WUGNOT balance should increase
-// [EXPECTED] GNOT balance should remain same
+// [EXPECTED] WUGNOT balance should remain same
 //
 // [SCENARIO] 7. Decrease liquidity with unwrapping
 // [INFO] Decreasing liquidity with unwrapping
@@ -290,4 +266,4 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Amount0 removed should be 5121878
 // [EXPECTED] Amount1 removed should be 4877588
 // [EXPECTED] WUGNOT balance should decrease
-// [EXPECTED] GNOT balance should increase
+// [EXPECTED] WUGNOT balance should increase

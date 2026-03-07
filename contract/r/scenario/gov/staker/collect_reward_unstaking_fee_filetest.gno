@@ -157,7 +157,7 @@ func stakePositionByAdmin(positionId int64) {
 
 func collectRewardsByAdmin(positionId int64) {
 	testing.SetRealm(adminRealm)
-	staker.CollectReward(cross, uint64(positionId), false)
+	staker.CollectReward(cross, uint64(positionId))
 	ufmt.Printf("[EXPECTED] Rewards collected successfully for position ID: %d\n", positionId)
 }
 

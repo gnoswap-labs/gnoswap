@@ -631,7 +631,6 @@ func TestCalcPositionReward(t *testing.T) {
 					0,
 					baseHeight,
 					baseTime-100,
-					false,
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
@@ -713,7 +712,6 @@ func TestCalcPositionReward(t *testing.T) {
 						0,
 						baseHeight,
 						baseTime-100,
-						false,
 					)
 					incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 					poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
@@ -867,7 +865,6 @@ func TestCalcPositionReward(t *testing.T) {
 					0,
 					baseHeight,
 					baseTime,
-					false,
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
@@ -929,7 +926,6 @@ func TestCalcPositionReward(t *testing.T) {
 					0,
 					baseHeight,
 					baseTime-2000,
-					false,
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
@@ -995,7 +991,6 @@ func TestCalcPositionReward(t *testing.T) {
 					0,
 					baseHeight,
 					baseTime-100,
-					false,
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
@@ -1501,7 +1496,6 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 			0,
 			baseHeight,
 			baseTime-100,
-			false,
 		)
 		incentive.SetRewardPerSecond(int64(1000 * (i + 1) / 1050))
 		poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
@@ -1654,7 +1648,6 @@ func TestCollectReward_LazyRemoval(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	// Incentive 2: ends at baseTime + 2000
@@ -1670,7 +1663,6 @@ func TestCollectReward_LazyRemoval(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	// Incentive 3: ends at baseTime + 3000
@@ -1686,7 +1678,6 @@ func TestCollectReward_LazyRemoval(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	// Manually add all 3 incentives to deposit (simulating lazy sync)
@@ -1808,7 +1799,6 @@ func TestCollectReward_LazyRemovalBeforeEnd(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	deposit.AddExternalIncentiveId(incentiveId)
@@ -1987,7 +1977,6 @@ func TestLazySync_NotStartedIncentive(t *testing.T) {
 		100_000_000,
 		1000,
 		baseTime,
-		false,
 	)
 
 	incentiveResolver := NewExternalIncentiveResolver(incentive)

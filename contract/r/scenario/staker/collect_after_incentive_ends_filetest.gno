@@ -212,7 +212,7 @@ func collectDuringIncentive() {
 	testing.SkipHeights(blocksToSkip)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -231,7 +231,7 @@ func collectAfterEnd() {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -243,7 +243,7 @@ func verifyIncentiveRemoved() {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore

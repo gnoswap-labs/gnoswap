@@ -9,7 +9,7 @@ import (
 var (
 	errNoPermission                  = errors.New("[GNOSWAP-STAKER-001] caller has no permission")
 	errPoolNotFound                  = errors.New("[GNOSWAP-STAKER-002] pool not found")
-	errWugnotMinimum                 = errors.New("[GNOSWAP-STAKER-003] cannot wrap less than minimum amount")
+	errNotAvailableUpdateCollectTime = errors.New("[GNOSWAP-STAKER-003] not available to update collect time")
 	errInvalidInput                  = errors.New("[GNOSWAP-STAKER-004] invalid input data")
 	errInvalidUnstakingFee           = errors.New("[GNOSWAP-STAKER-005] invalid unstaking fee")
 	errAlreadyStaked                 = errors.New("[GNOSWAP-STAKER-006] already staked position")
@@ -27,7 +27,6 @@ var (
 	errIncentiveAlreadyExists        = errors.New("[GNOSWAP-STAKER-018] incentive already exists")
 	errOverflow                      = errors.New("[GNOSWAP-STAKER-019] overflow")
 	errAddExistingToken              = errors.New("[GNOSWAP-STAKER-020] cannot add existing token")
-	errNotAvailableUpdateCollectTime = errors.New("[GNOSWAP-STAKER-021] not available to update collect time")
 )
 
 func makeErrorWithDetails(err error, details string) error {

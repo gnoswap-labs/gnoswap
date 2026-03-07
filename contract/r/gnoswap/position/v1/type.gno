@@ -56,13 +56,12 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	positionId   uint64     // positionId of the position to decrease liquidity
-	liquidity    string     // amount of liquidity to decrease
-	amount0Min   *u256.Uint // minimum amount of token0 to be minted
-	amount1Min   *u256.Uint // minimum amount of token1 to be minted
-	deadline     int64      // time by which the transaction must be included to effect the change
-	unwrapResult bool       // whether to unwrap the token if it's wrapped native token
-	caller       address    // address to call the function
+	positionId uint64     // positionId of the position to decrease liquidity
+	liquidity  string     // amount of liquidity to decrease
+	amount0Min *u256.Uint // minimum amount of token0 to be minted
+	amount1Min *u256.Uint // minimum amount of token1 to be minted
+	deadline   int64      // time by which the transaction must be included to effect the change
+	caller     address    // address to call the function
 }
 
 type MintInput struct {
@@ -81,11 +80,8 @@ type MintInput struct {
 }
 
 type TokenPair struct {
-	token0         string
-	token1         string
-	token0IsNative bool
-	token1IsNative bool
-	wrappedAmount  int64
+	token0 string
+	token1 string
 }
 
 type ProcessedMintInput struct {

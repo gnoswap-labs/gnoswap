@@ -114,7 +114,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing DecreaseLiquidity function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: DecreaseLiquidity not supported", func() {
-		position.DecreaseLiquidity(cross, 1, "1000", "0", "0", 9999999999, false)
+		position.DecreaseLiquidity(cross, 1, "1000", "0", "0", 9999999999)
 	})
 	ufmt.Println("[EXPECTED] DecreaseLiquidity panics correctly")
 
@@ -130,7 +130,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing CollectFee function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: CollectFee not supported", func() {
-		position.CollectFee(cross, 1, false)
+		position.CollectFee(cross, 1)
 	})
 	ufmt.Println("[EXPECTED] CollectFee panics correctly")
 }

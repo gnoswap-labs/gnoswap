@@ -1,13 +1,11 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
 )
 
@@ -365,14 +363,14 @@ func TestStakerReward_transferToken(t *testing.T) {
 			},
 		},
 		{
-			name:        "WUGNOT token path should use native coin transfer",
-			tokenPath:   WUGNOT_PATH,
+			name:        "GRC20 bar token transfer",
+			tokenPath:   barPath,
 			from:        govStakerAddr,
 			to:          testutils.TestAddress("to"),
 			amount:      100,
 			expectError: false,
 			setupBalance: func() {
-				// Setup WUGNOT balance
+				// bar balance is set up via setupStakerRewardStakerTokenBalance
 			},
 		},
 	}
@@ -578,14 +576,14 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			expectedError: "[GNOSWAP-GOV_STAKER-006] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
 		},
 		{
-			name:        "success - WUGNOT native coin transfer",
-			tokenPath:   WUGNOT_PATH,
+			name:        "success - GRC20 bar token transfer",
+			tokenPath:   barPath,
 			from:        admin,
 			to:          testutils.TestAddress("to"),
 			amount:      100_000_000,
 			fromBalance: 500_000_000,
 			shouldFail:  false,
-			description: "WUGNOT should use native coin transfer mechanism",
+			description: "GRC20 bar token transfer",
 		},
 	}
 
@@ -735,7 +733,6 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 
 // Helper functions for test setup
 func cleanupStakerRewardTest(t *testing.T) {
-	// Create new test govStaker instance for fresh state
 	setupStakerRewardStakerTokenBalance(t)
 }
 
@@ -743,20 +740,8 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 	amount := int64(1_000_000_000)
 
 	testing.SetRealm(adminRealm)
-	// Transfer GNS to gov staker
 	gns.Transfer(cross, govStakerAddr, amount)
-
-	// Transfer WUGNOT to gov staker
-	gnotAmount := amount * 10
-	newCoins := chain.Coins{{"ugnot", gnotAmount}}
-	testing.IssueCoins(adminRealm.Address(), newCoins)
-	testing.SetOriginSend(newCoins)
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
-	wugnot.Deposit(cross)
-
-	wugnot.Transfer(cross, govStakerAddr, amount)
+	bar.Transfer(cross, govStakerAddr, amount*10)
 }
 
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {

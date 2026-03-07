@@ -35,13 +35,17 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	gnotPath   = "ugnot"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	initializeSetup()
 	println()
 
@@ -50,15 +54,15 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Mint InRange Position (-6960 ~ 6960)")
-	mintPosition(gnotPath, gnsPath, 3000, -6960, 6960, "1000000000", "1000000000", 1000000000)
+	mintPosition(wugnotPath, gnsPath, 3000, -6960, 6960, "1000000000", "1000000000", 1000000000)
 	println()
 
 	println("[SCENARIO] 4. Mint OutOfRange Position (only token0, -10140 ~ -8100)")
-	mintPosition(gnotPath, gnsPath, 3000, -10140, -8100, "0", "50000000", 0)
+	mintPosition(wugnotPath, gnsPath, 3000, -10140, -8100, "0", "50000000", 0)
 	println()
 
 	println("[SCENARIO] 5. Mint OutOfRange Position (only token1, 8100 ~ 10140)")
-	mintPosition(gnotPath, gnsPath, 3000, 8100, 10140, "50000000", "0", 50000000)
+	mintPosition(wugnotPath, gnsPath, 3000, 8100, 10140, "50000000", "0", 50000000)
 	println()
 }
 
@@ -67,9 +71,6 @@ func initializeSetup() {
 	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	testing.SetRealm(adminRealm)
-	wugnot.Deposit(cross)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
@@ -100,14 +101,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-
-	if nativeCoinAmount > 0 {
-		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", nativeCoinAmount}})
-		testing.SetOriginSend(chain.Coins{{"ugnot", nativeCoinAmount}})
-	} else {
-		testing.SetOriginSend(chain.Coins{})
-	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,

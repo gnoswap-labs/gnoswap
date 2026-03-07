@@ -58,6 +58,5 @@ func runTestUnStakeToken(ft *fuzz.T, params *unStakeTokenParams) {
 	staker.UnStakeToken(
 		cross,
 		params.positionID,
-		false,
 	)
 }

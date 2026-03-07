@@ -114,7 +114,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing UnStakeToken function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: UnStakeToken not supported", func() {
-		staker.UnStakeToken(cross, 1, false)
+		staker.UnStakeToken(cross, 1)
 	})
 	ufmt.Println("[EXPECTED] UnStakeToken panics correctly")
 
@@ -122,7 +122,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing CollectReward function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: CollectReward not supported", func() {
-		staker.CollectReward(cross, 1, false)
+		staker.CollectReward(cross, 1)
 	})
 	ufmt.Println("[EXPECTED] CollectReward panics correctly")
 
