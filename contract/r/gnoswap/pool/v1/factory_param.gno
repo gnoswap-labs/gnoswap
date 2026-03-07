@@ -23,11 +23,6 @@ const (
 )
 
 const (
-	GNOT_DENOM  string = "ugnot"
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
-)
-
-const (
 	MIN_SQRT_RATIO string = "4295128739"
 	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342"
 )

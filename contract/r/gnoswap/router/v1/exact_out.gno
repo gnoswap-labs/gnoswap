@@ -141,7 +141,6 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 // exactOutSwapRoute executes the swap operation and handles token transfers and referral registration.
 //
 // Performs the actual swap operation using commonSwapRoute and handles:
-// - Token unwrapping for native tokens (WUGNOT -> UGNOT)
 // - Safe token transfers to the caller
 // - Referral registration and tracking
 // - Event emission for swap completion

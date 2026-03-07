@@ -9,7 +9,7 @@ import (
 var (
 	errNoPermission         = errors.New("[GNOSWAP-POSITION-001] caller has no permission")
 	errSlippage             = errors.New("[GNOSWAP-POSITION-002] slippage failed")
-	errInvalidAmount        = errors.New("[GNOSWAP-POSITION-003] invalid amount")
+	errInvalidTokenPath     = errors.New("[GNOSWAP-POSITION-003] invalid token address")
 	errInvalidInput         = errors.New("[GNOSWAP-POSITION-004] invalid input data")
 	errDataNotFound         = errors.New("[GNOSWAP-POSITION-005] requested data not found")
 	errExpired              = errors.New("[GNOSWAP-POSITION-006] transaction expired")
@@ -19,10 +19,8 @@ var (
 	errPositionExist        = errors.New("[GNOSWAP-POSITION-010] position with same positionId already exists")
 	errInvalidAddress       = errors.New("[GNOSWAP-POSITION-011] invalid address")
 	errPositionDoesNotExist = errors.New("[GNOSWAP-POSITION-012] position does not exist")
-	errInvalidTokenPath     = errors.New("[GNOSWAP-POSITION-013] invalid token address")
-	errInsufficientUGNOT    = errors.New("[GNOSWAP-POSITION-014] insufficient UGNOT provided")
-	errUnderflow            = errors.New("[GNOSWAP-POSITION-015] underflow")
-	errOverflow             = errors.New("[GNOSWAP-POSITION-016] overflow")
+	errUnderflow            = errors.New("[GNOSWAP-POSITION-013] underflow")
+	errOverflow             = errors.New("[GNOSWAP-POSITION-014] overflow")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.
