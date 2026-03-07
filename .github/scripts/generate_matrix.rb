@@ -68,7 +68,8 @@ class GnoModuleManager
 
         matrix[:include] << {
           name: name,
-          folder: module_dir
+          folder: module_dir,
+          pkg: module_path
         }
       end
     end
@@ -98,7 +99,8 @@ class GnoModuleManager
 
           matrix[:include] << {
             name: name,
-            folder: module_dir
+            folder: module_dir,
+            pkg: module_path
           }
         end
       end

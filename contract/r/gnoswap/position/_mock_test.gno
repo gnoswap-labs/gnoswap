@@ -88,7 +88,6 @@ func (m *MockPosition) DecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	res, ok := m.Response.Get("DecreaseLiquidity")
 	if !ok {
@@ -118,7 +117,6 @@ func (m *MockPosition) Reposition(
 
 func (m *MockPosition) CollectFee(
 	positionId uint64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
 	res, ok := m.Response.Get("CollectFee")
 	if !ok {

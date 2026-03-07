@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -231,7 +231,7 @@ func collectRewardBoth() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	newGns := gns.BalanceOf(adminUser)
 	diff := newGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 01 reward: %d GNS\n", diff)
@@ -243,7 +243,7 @@ func collectRewardBoth() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	newGns = gns.BalanceOf(adminUser)
 	diff = newGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 reward: %d GNS\n", diff)

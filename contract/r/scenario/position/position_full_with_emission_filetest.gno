@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -60,6 +60,14 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool and emission")
 	initPoolAndEmission()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 150000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	initPoolAndEmissionPostDeposit()
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position for Alice")
@@ -101,17 +109,22 @@ func initPoolAndEmission() {
 	ufmt.Println("[INFO] Distributing WUGNOT tokens")
 
 	mintedGnotCoin := chain.Coins{{"ugnot", 100000000000000}}
-	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	testing.IssueCoins(adminAddr, mintedGnotCoin)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", defaultTokenAmount * 3}})
-	wugnot.Deposit(cross)
+}
+
+func initPoolAndEmissionPostDeposit() {
+	testing.SetRealm(adminRealm)
+
+	defaultTokenAmount := int64(50000000)
+	distributedGnotCoin := chain.Coins{{"ugnot", defaultTokenAmount}}
 
 	wugnot.Transfer(cross, aliceAddr, defaultTokenAmount)
 
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, WUGNOT_ADDR, distributedGnotCoin)
 	banker_.SendCoins(adminAddr, aliceAddr, distributedGnotCoin)
 
@@ -209,7 +222,7 @@ func collectFeesAndRewards() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees and rewards")
-	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross, 1, false)
+	_, fee0, fee1, emission0, emission1, _ := position.CollectFee(cross, 1)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Collected fee1 should be %s\n", fee1)
@@ -231,22 +244,9 @@ func verifyFinalBalances() {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

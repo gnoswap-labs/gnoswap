@@ -3,7 +3,7 @@ package v3
 import (
 	"errors"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
 )
 

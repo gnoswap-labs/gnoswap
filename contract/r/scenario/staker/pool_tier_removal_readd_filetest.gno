@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -186,7 +186,7 @@ func firstTierPeriod() {
 
 	println("[INFO] collect rewards while in tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	firstTierRewards = afterGns - beforeGns
 
@@ -215,7 +215,7 @@ func removeFromTierVerifyNoNewRewards() {
 
 	println("[INFO] attempt to collect rewards - should get only historical rewards if any")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	removedPhaseRewards = afterGns - beforeGns
 
@@ -246,7 +246,7 @@ func reAddToTierVerifyNewRewards() {
 
 	println("[INFO] collect rewards while in tier 3")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondTierRewards = afterGns - beforeGns
 
@@ -277,7 +277,7 @@ func secondRemovalCycle() {
 
 	println("[INFO] attempt to collect rewards during second removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondRemovalRewards = afterGns - beforeGns
 
@@ -304,7 +304,7 @@ func finalReAdditionCycle() {
 
 	println("[INFO] collect rewards while in tier 1")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	thirdTierRewards = afterGns - beforeGns
 

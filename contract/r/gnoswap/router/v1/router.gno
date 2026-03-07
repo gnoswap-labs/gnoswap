@@ -1,14 +1,11 @@
 package v1
 
 import (
-	"chain/runtime"
+	"errors"
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/common"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var one = u256.One()
@@ -29,10 +26,6 @@ const (
 	errQuoteSumExceedsMax   = "quote sum exceeds 100 at index(%d)"
 	errInvalidQuoteSum      = "quote sum(%d) must be 100"
 
-	// balance and overflow validation
-	errOverflowInBalance  = "overflow in balance calculation: beforeBalance(%d) + wrappedAmount(%d)"
-	errTooMuchWugnotSpent = "too much wugnot spent (wrapped: %d, spend: %d)"
-
 	// swap type validation
 	errExactInTooFewReceived = "ExactIn: too few received (min:%d, got:%d)"
 	errExactOutTooMuchSpent  = "ExactOut: too much spent (max:%d, used:%d)"
@@ -40,58 +33,6 @@ const (
 	// route parsing validation
 	errEmptyRoutes = "routes cannot be empty"
 )
-
-// GnotSwapHandler encapsulates methods for handling GNOT token swaps
-type GnotSwapHandler struct {
-	BeforeBalance int64
-	WrappedAmount int64
-	NewBalance    int64
-}
-
-// newGnotSwapHandler creates a new handler for GNOT swaps.
-func newGnotSwapHandler(beforeBalance, wrappedAmount int64) *GnotSwapHandler {
-	return &GnotSwapHandler{
-		BeforeBalance: beforeBalance,
-		WrappedAmount: wrappedAmount,
-	}
-}
-
-// UpdateNewBalance updates the current balance after swap operations.
-func (h *GnotSwapHandler) UpdateNewBalance() {
-	h.NewBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
-}
-
-// HandleInputSwap manages unwrapping logic for GNOT input tokens.
-//
-// When user sends native GNOT for swap:
-// 1. GNOT was wrapped to WUGNOT at start
-// 2. Swap consumed some WUGNOT
-// 3. Remaining WUGNOT must be unwrapped back to GNOT
-//
-// Returns:
-//   - error: overflow/insufficient balance errors, or unwrap errors
-func (h *GnotSwapHandler) HandleInputSwap() error {
-	// Check for overflow when adding balances
-	if h.BeforeBalance > 0 && h.WrappedAmount > 0 {
-		if h.BeforeBalance > (1<<63-1)-h.WrappedAmount {
-			return ufmt.Errorf(errOverflowInBalance,
-				h.BeforeBalance, h.WrappedAmount)
-		}
-	}
-
-	totalBefore := h.BeforeBalance + h.WrappedAmount
-	spend := totalBefore - h.NewBalance
-
-	if spend > h.WrappedAmount {
-		return ufmt.Errorf(errTooMuchWugnotSpent,
-			h.WrappedAmount, spend)
-	}
-
-	toUnwrap := h.WrappedAmount - spend
-
-	caller := runtime.PreviousRealm().Address()
-	return unwrapWithTransferFrom(caller, caller, toUnwrap)
-}
 
 // SwapValidator provides validation methods for swap operations
 type SwapValidator struct{}
@@ -168,7 +109,7 @@ func NewRouteParser() *RouteParser {
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, ufmt.Errorf(errEmptyRoutes)
+		return nil, nil, errors.New(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')
@@ -243,7 +184,6 @@ func (r *routerV1) finalizeSwap(
 	resultAmountIn, resultAmountOut int64,
 	swapType SwapType,
 	tokenAmountLimit int64,
-	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified int64,
 	swapCount int64,
 	isSetSqrtPriceLimitX96 bool,
@@ -258,17 +198,6 @@ func (r *routerV1) finalizeSwap(
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
-		}
-	}
-
-	// Handle GNOT token swaps
-	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)
-	handler.UpdateNewBalance()
-
-	// Handle input GNOT token swap
-	if common.IsGNOTNativePath(inputToken) {
-		if err := handler.HandleInputSwap(); err != nil {
-			panic(err)
 		}
 	}
 

@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 
@@ -196,7 +196,7 @@ func drainIncentiveFunds() {
 	println("[INFO] collect rewards from all 50 positions - this should drain most of the incentive")
 	for i := 1; i <= 50; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
 		totalCollected += reward
@@ -217,7 +217,7 @@ func drainIncentiveFunds() {
 	round2Total := int64(0)
 	for i := 1; i <= 50; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
 		round2Total += reward
@@ -248,7 +248,7 @@ func demonstratePermanentRewardLoss() {
 		beforeBar := bar.BalanceOf(adminUser)
 
 		// This will update lastCollectTime even if external rewards fail
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 
 		afterBar := bar.BalanceOf(adminUser)
 		reward := afterBar - beforeBar
@@ -277,7 +277,7 @@ func verifyPermanentLoss() {
 	zeroCount := 0
 	for i := 1; i <= 10; i++ {
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, uint64(i), false)
+		sr.CollectReward(cross, uint64(i))
 		afterBar := bar.BalanceOf(adminUser)
 		immediateReward := afterBar - beforeBar
 

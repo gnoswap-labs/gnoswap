@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/fuzz"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // stakeTokenParams is the parameters for the ExactOutSwapRoute fuzz test.

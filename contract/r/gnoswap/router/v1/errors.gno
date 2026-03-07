@@ -3,7 +3,7 @@ package v1
 import (
 	"errors"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 	errInvalidSwapFee         = errors.New("[GNOSWAP-ROUTER-006] invalid swap fee")
 	errInvalidSwapType        = errors.New("[GNOSWAP-ROUTER-007] invalid swap type")
 	errInvalidPoolPath        = errors.New("[GNOSWAP-ROUTER-008] invalid pool path")
-	errWugnotMinimum          = errors.New("[GNOSWAP-ROUTER-009] cannot wrap less than minimum amount")
+	errUnAuthorizedCaller     = errors.New("[GNOSWAP-ROUTER-009] unauthorized caller")
 	errHopsOutOfRange         = errors.New("[GNOSWAP-ROUTER-010] number of hops must be 1~3")
 	errSameTokenSwap          = errors.New("[GNOSWAP-ROUTER-011] cannot swap same token")
 	errOverflow               = errors.New("[GNOSWAP-ROUTER-012] overflow")
@@ -23,7 +23,6 @@ var (
 	errInvalidRouteFirstToken = errors.New("[GNOSWAP-ROUTER-014] invalid route first token")
 	errInvalidRouteLastToken  = errors.New("[GNOSWAP-ROUTER-015] invalid route last token")
 	errInvalidSwapAmount      = errors.New("[GNOSWAP-ROUTER-016] invalid swap amount")
-	errUnAuthorizedCaller     = errors.New("[GNOSWAP-ROUTER-017] unauthorized caller")
 )
 
 // addDetailToError adds detail to an error message.

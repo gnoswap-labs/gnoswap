@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -233,7 +233,7 @@ func collectAfterEnd() {
 	testing.SetRealm(userRealm)
 
 	gnsBefore := gns.BalanceOf(userUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(userUser)
 
 	rewards := gnsAfter - gnsBefore
@@ -244,7 +244,7 @@ func verifyNoFurtherRewards() {
 	testing.SetRealm(userRealm)
 
 	gnsBefore := gns.BalanceOf(userUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(userUser)
 
 	rewards := gnsAfter - gnsBefore

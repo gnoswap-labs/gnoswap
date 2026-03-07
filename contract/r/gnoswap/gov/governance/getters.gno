@@ -1,6 +1,6 @@
 package governance
 
-import "gno.land/p/nt/ufmt"
+import ufmt "gno.land/p/nt/ufmt/v0"
 
 // ==================================
 // Store Data Getters

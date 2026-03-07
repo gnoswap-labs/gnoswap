@@ -75,14 +75,8 @@ Liquidity (L) represents the relationship between token amounts and price:
 
 ### Coin Utilities
 
-**GNOT Path Checks:**
-- **IsGNOTPath**: Checks if path is native or wrapped ugnot
-- **IsGNOTNativePath**: Checks for native GNOT path
-- **IsGNOTWrappedPath**: Checks for wrapped ugnot path
-
 **Coin Validation:**
 - **ExistsUserSendCoins**: Checks if user sent any coins
-- **AssertIsUserSendGNOTAmount**: Validates GNOT amount or panics
 - **AssertIsNotHandleNativeCoin**: Ensures no native coins in transaction
 
 ## Constants
@@ -92,9 +86,8 @@ Liquidity (L) represents the relationship between token amounts and price:
 - **minTick**: -887272 (minimum valid tick)
 - **maxTick**: 887272 (maximum valid tick)
 
-### GNOT Paths
+### Token Paths
 
-- **GNOT_DENOM**: "ugnot" (native denomination)
 - **WUGNOT_PATH**: "gno.land/r/gnoland/wugnot" (wrapped ugnot path)
 
 ### Fixed-Point Constants

@@ -1,20 +1,15 @@
 package v1
 
 import (
-	"chain"
-	"errors"
-	"math"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
@@ -607,144 +602,6 @@ func TestParseAmounts(t *testing.T) {
 	}
 }
 
-func TestProcessTokens(t *testing.T) {
-	tests := []struct {
-		name           string
-		token0         string
-		token1         string
-		amount0Desired string
-		amount1Desired string
-		caller         address
-		expected0      string
-		expected1      string
-		isNative0      bool
-		isNative1      bool
-		expectedWrap   int64
-		expectPanic    bool
-		expectMsg      string
-	}{
-		{
-			name:           "processTokens is failed by both tokens are valid and not native",
-			token0:         gnsPath,
-			token1:         "tokenB",
-			amount0Desired: "100",
-			amount1Desired: "200",
-			caller:         alice,
-			expected0:      "tokenA",
-			expected1:      "tokenB",
-			isNative0:      false,
-			isNative1:      false,
-			expectedWrap:   0,
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
-		},
-		{
-			name:           "processTokens is failed by token0 is native",
-			token0:         common.GNOT_DENOM,
-			token1:         gnsPath,
-			amount0Desired: "1300",
-			amount1Desired: "200",
-			caller:         alice,
-			expected0:      WUGNOT_PATH,
-			expected1:      "gno.land/r/gnoswap/gns",
-			isNative0:      true,
-			isNative1:      false,
-			expectedWrap:   1300,
-			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
-		},
-		{
-			name:           "processTokens is failed by token1 is native",
-			token0:         gnsPath,
-			token1:         common.GNOT_DENOM,
-			amount0Desired: "150",
-			amount1Desired: "1250",
-			caller:         testutils.TestAddress("user3"),
-			expected0:      "gno.land/r/gnoswap/gns",
-			expected1:      WUGNOT_PATH,
-			isNative0:      false,
-			isNative1:      true,
-			expectedWrap:   1250,
-			expectPanic:    false,
-		},
-		{
-			name:           "processTokens is failed by both tokens are native",
-			token0:         common.GNOT_DENOM,
-			token1:         common.GNOT_DENOM,
-			amount0Desired: "1100",
-			amount1Desired: "1200",
-			caller:         testutils.TestAddress("user4"),
-			expected0:      WUGNOT_PATH,
-			expected1:      WUGNOT_PATH,
-			isNative0:      true,
-			isNative1:      true,
-			expectedWrap:   2300,
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
-		},
-		{
-			name:           "processTokens is failed by invalid token path",
-			token0:         "invalidToken",
-			token1:         "tokenB",
-			amount0Desired: "150",
-			amount1Desired: "200",
-			caller:         testutils.TestAddress("user5"),
-			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			MockRegister(t, tt.token0)
-			MockRegister(t, tt.token1)
-
-			// guard for unexpected panic
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.expectPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-				}
-			}()
-
-			if tt.token0 == common.GNOT_DENOM {
-				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
-				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
-			}
-			if tt.token1 == common.GNOT_DENOM {
-				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
-				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
-			}
-
-			token0, token1, native0, native1, wrapped, err := mockInstance.processTokens(
-				tt.token0,
-				tt.token1,
-				tt.amount0Desired,
-				tt.amount1Desired,
-				tt.caller,
-			)
-
-			if tt.expectPanic {
-				uassert.ErrorIs(t, err, errors.New(tt.expectMsg))
-			} else {
-				uassert.Nil(t, err)
-				uassert.Equal(t, tt.expected0, token0)
-				uassert.Equal(t, tt.expected1, token1)
-				uassert.Equal(t, tt.isNative0, native0)
-				uassert.Equal(t, tt.isNative1, native1)
-				uassert.Equal(t, tt.expectedWrap, wrapped)
-			}
-		})
-	}
-}
-
 func TestMint(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -1023,7 +880,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		amount0Min        string
 		amount1Min        string
 		deadlineOffset    time.Duration
-		unwrapResult      bool
 		expectedHasAbort  bool
 		expectedErrorMsg  string
 		expectedLiquidity string
@@ -1036,7 +892,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "8000",
 			amount1Min:        "15000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "400000",
 			expectedFee0:      "0",
@@ -1048,7 +903,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "600000",
 			expectedFee0:      "0",
@@ -1061,7 +915,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-009] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
@@ -1071,11 +924,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "200000",
 			amount1Min:        "400000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-018] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-007] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
 		},
 		{
 			name:              "decrease liquidity is fail by deadline exceeded",
@@ -1083,7 +935,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    -time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  true,
 			expectedErrorMsg:  "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
@@ -1096,7 +947,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0Min:        "12000",
 			amount1Min:        "25000",
 			deadlineOffset:    time.Hour,
-			unwrapResult:      false,
 			expectedHasAbort:  false,
 			expectedLiquidity: "1270796",
 			expectedFee0:      "0",
@@ -1132,7 +982,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 						tc.amount0Min,
 						tc.amount1Min,
 						deadline,
-						tc.unwrapResult,
 					)
 				})
 			} else {
@@ -1142,7 +991,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 					tc.amount0Min,
 					tc.amount1Min,
 					deadline,
-					tc.unwrapResult,
 				)
 				uassert.Equal(t, tc.expectedLiquidity, liquidity)
 				uassert.Equal(t, tc.expectedFee0, fee0)
@@ -1160,7 +1008,6 @@ func TestCollectFees(t *testing.T) {
 		mintAmount1        string
 		increaseAmount0    string
 		increaseAmount1    string
-		unwrapResult       bool
 		liquidityToRemove  string
 		expectedFee0       string
 		expectedFee1       string
@@ -1177,7 +1024,6 @@ func TestCollectFees(t *testing.T) {
 			increaseAmount0:   "500000",
 			increaseAmount1:   "1000000",
 			liquidityToRemove: "50",
-			unwrapResult:      false,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
@@ -1189,7 +1035,6 @@ func TestCollectFees(t *testing.T) {
 			mintAmount0:       "1000000",
 			mintAmount1:       "2000000",
 			liquidityToRemove: "100",
-			unwrapResult:      true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
@@ -1239,16 +1084,15 @@ func TestCollectFees(t *testing.T) {
 					"0",
 					"0",
 					time.Now().Add(time.Hour).Unix(),
-					tt.unwrapResult,
 				)
 			}
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
+					mockInstanceCollectFee(1, adminAddr)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
+				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, adminAddr)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1345,7 +1189,6 @@ func TestReposition(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 
 			// Step 4: Attempt Reposition
@@ -1397,15 +1240,15 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Valid native token (ugnot) with wrapped token",
-			token0:      common.GNOT_DENOM,
-			token1:      gnsPath,
+			name:        "Valid different GRC20 tokens (bar/baz)",
+			token0:      barPath,
+			token1:      bazPath,
 			expectError: false,
 		},
 		{
-			name:        "Valid wrapped token with native",
-			token0:      gnsPath,
-			token1:      common.GNOT_DENOM,
+			name:        "Valid wugnot with GRC20 token",
+			token0:      common.WUGNOT_PATH,
+			token1:      gnsPath,
 			expectError: false,
 		},
 		{
@@ -1415,15 +1258,9 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "Invalid - ugnot and wugnot conflict",
-			token0:      common.GNOT_DENOM,
-			token1:      WUGNOT_PATH,
-			expectError: true,
-		},
-		{
-			name:        "Invalid - wugnot and ugnot conflict (reversed)",
-			token0:      WUGNOT_PATH,
-			token1:      common.GNOT_DENOM,
+			name:        "Invalid - ugnot is not a registered token",
+			token0:      "ugnot",
+			token1:      common.WUGNOT_PATH,
 			expectError: true,
 		},
 		{
@@ -1699,145 +1536,6 @@ func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
 	}
 }
 
-func TestUnwrapLeftoverWrappedToken(t *testing.T) {
-	tests := []struct {
-		name                 string
-		token                string
-		wrapped              int64
-		amount               int64
-		expectError          bool
-		shouldCall           bool // whether unwrap should be called
-		expectPanic          bool
-		expectedPanicMessage string
-	}{
-		{
-			name:        "Unwrap leftover - wrapped > amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000,
-			amount:      700,
-			expectError: false,
-			shouldCall:  true,
-		},
-		{
-			name:        "No unwrap - wrapped == amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000,
-			amount:      1000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "No unwrap - wrapped < amount",
-			token:       WUGNOT_PATH,
-			wrapped:     7000,
-			amount:      10000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "No unwrap - not wrapped token",
-			token:       gnsPath,
-			wrapped:     10000,
-			amount:      7000,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "Unwrap zero leftover",
-			token:       WUGNOT_PATH,
-			wrapped:     0,
-			amount:      0,
-			expectError: false,
-			shouldCall:  false,
-		},
-		{
-			name:        "Large leftover amount",
-			token:       WUGNOT_PATH,
-			wrapped:     1000000000,
-			amount:      500000000,
-			expectError: false,
-			shouldCall:  true,
-		},
-		{
-			name:        "Small leftover amount",
-			token:       WUGNOT_PATH,
-			wrapped:     100,
-			amount:      99,
-			shouldCall:  true,
-			expectError: false,
-			expectPanic: false,
-		},
-		{
-			name:        "No unwrap - non-native token with leftover",
-			token:       barPath,
-			wrapped:     1000,
-			amount:      500,
-			expectError: false,
-			shouldCall:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			testing.SetRealm(adminRealm)
-			wugnot.Approve(cross, positionAddr, math.MaxInt64)
-
-			if tt.wrapped > 0 {
-				amount := tt.wrapped
-				if tt.wrapped < 1000 {
-					amount = 1000
-				}
-
-				testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
-				wugnot.Deposit(cross)
-
-				testing.IssueCoins(address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"), chain.Coins{{"ugnot", amount}})
-			}
-
-			testing.SetOriginSend(chain.Coins{})
-			testing.SetRealm(adminRealm)
-
-			unwrapLeftoverWrappedTokenFn := func(cur realm) error {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
-				return mockInstance.unwrapLeftoverWrappedToken(tt.token, tt.wrapped, tt.amount, adminAddr)
-			}
-
-			if tt.expectPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					unwrapLeftoverWrappedTokenFn(cross)
-				})
-			} else {
-				err := unwrapLeftoverWrappedTokenFn(cross)
-				if err != nil {
-					t.Errorf("expected no error but got: %v", err)
-				}
-
-				if tt.expectError {
-					uassert.NotNil(t, err, "expected error but got nil")
-				} else {
-					if err != nil {
-						t.Errorf("expected no error but got: %v", err)
-					}
-				}
-
-				// Verify logic correctness
-				isWrapped := isWrappedToken(tt.token)
-				hasLeftover := tt.wrapped > tt.amount
-				shouldUnwrap := isWrapped && hasLeftover
-
-				uassert.Equal(t, tt.shouldCall, shouldUnwrap)
-			}
-		})
-	}
-}
-
-// Helper function to check if string contains substring
-func contains(str, substr string) bool {
-	return strings.Contains(str, substr)
-}
-
 // TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
 // is enforced on actually collected amounts, not on burned amounts.
 // This prevents cases where user receives less than expected due to pool constraints.
@@ -1911,7 +1609,6 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 						tc.amount0Min,
 						tc.amount1Min,
 						deadline,
-						false,
 					)
 				})
 			} else {
@@ -1921,7 +1618,6 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 					tc.amount0Min,
 					tc.amount1Min,
 					deadline,
-					false,
 				)
 
 				// Verify liquidity was decreased
@@ -1986,7 +1682,6 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 			"400000", // amount0Min - higher than what pool can provide
 			"1",      // amount1Min - low to isolate amount0 failure
 			deadline,
-			false,
 		)
 	})
 
@@ -2005,7 +1700,6 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 			"1",      // amount0Min - low
 			"400000", // amount1Min - higher than what pool can provide
 			deadline,
-			false,
 		)
 	})
 }
@@ -2066,7 +1760,6 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 
 			// Step 3: Attempt reposition with test deadline
@@ -2149,7 +1842,6 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
-				false,
 			)
 		})
 }

@@ -1,7 +1,7 @@
-loadpkg gno.land/p/nt/avl
-loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/nt/avl/v0
+loadpkg gno.land/p/nt/ufmt/v0
 loadpkg gno.land/p/onbloc/json
-loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/demo/tokens/grc20
 loadpkg gno.land/p/demo/tokens/grc721
 loadpkg gno.land/r/demo/defi/foo20
@@ -51,7 +51,7 @@ patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
-gnoland start 
+gnoland start
 
 # Transfer Bar tokens
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
@@ -177,7 +177,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/o
 # stdout 5000000
 
 # Unstake position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -args false -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 'OK!'
 # stdout 'GAS USED:   (5|6)[0-9]{7}'
 # stdout 'STORAGE DELTA:  (-)*(5|6)[0-9]{3} bytes'

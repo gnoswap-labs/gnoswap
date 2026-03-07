@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestProposalScheduleStatus_NewProposalScheduleStatus tests the instance creation

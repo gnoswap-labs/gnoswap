@@ -3,9 +3,9 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"

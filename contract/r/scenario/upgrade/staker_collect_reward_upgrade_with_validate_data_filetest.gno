@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -72,7 +72,7 @@ func main() {
 
 	println("[SCENARIO] 6. Wait 10 blocks for reward accumulation")
 	waitBlocks(10)
-	collectReward(positionId, false)
+	collectReward(positionId)
 	println()
 
 	println("[SCENARIO] 7. Check staking info before upgrade")
@@ -86,7 +86,7 @@ func main() {
 	println("[SCENARIO] 9. Collect reward with v2_invalid (should panic)")
 	withAbortsWithMessage(func() {
 		waitBlocks(10)
-		collectReward(positionId, false)
+		collectReward(positionId)
 	},
 		"[EXPECTED] Collect reward panics correctly with v2_invalid",
 	)
@@ -109,7 +109,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 13. Collect reward with v3_valid")
-	collectReward(positionId, false)
+	collectReward(positionId)
 	println()
 
 	println("[SCENARIO] 14. Check staking info after reward collection")
@@ -173,11 +173,11 @@ func stakePosition(positionId uint64) {
 	println("[EXPECTED] LP Token ID:", lpTokenId)
 }
 
-func collectReward(positionId uint64, unwrapResult bool) {
+func collectReward(positionId uint64) {
 	println("[INFO] Collect reward")
 	testing.SetRealm(adminRealm)
 
-	rewardToUser, rewardPenalty, _, _ := staker.CollectReward(cross, positionId, unwrapResult)
+	rewardToUser, rewardPenalty, _, _ := staker.CollectReward(cross, positionId)
 	rewardToUserInt, _ := strconv.ParseInt(rewardToUser, 10, 64)
 	rewardPenaltyInt, _ := strconv.ParseInt(rewardPenalty, 10, 64)
 

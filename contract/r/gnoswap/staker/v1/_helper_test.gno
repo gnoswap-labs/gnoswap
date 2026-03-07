@@ -1,12 +1,10 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"math"
 	"testing"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -19,7 +17,6 @@ import (
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -29,7 +26,6 @@ import (
 )
 
 const (
-	gnotDenom  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -154,8 +150,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 	defaultAmount := int64(5_000_000_000)
 
 	switch tokenPath {
-	case wugnotPath:
-		wugnotTransfer(t, to, defaultAmount)
 	case gnsPath:
 		gnsTransfer(t, to, defaultAmount)
 	case barPath:
@@ -176,8 +170,6 @@ func TokenFaucet(t *testing.T, tokenPath string, to address) {
 func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.BalanceOf(owner)
 	case gnsPath:
 		return gns.BalanceOf(owner)
 	case barPath:
@@ -198,8 +190,6 @@ func TokenBalance(t *testing.T, tokenPath string, owner address) int64 {
 func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int64 {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		return wugnot.Allowance(owner, spender)
 	case gnsPath:
 		return gns.Allowance(owner, spender)
 	case barPath:
@@ -220,8 +210,6 @@ func TokenAllowance(t *testing.T, tokenPath string, owner, spender address) int6
 func TokenApprove(t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
-	case wugnotPath:
-		wugnotApprove(t, owner, spender, amount)
 	case gnsPath:
 		gnsApprove(t, owner, spender, amount)
 	case barPath:
@@ -274,12 +262,6 @@ func MintPosition(t *testing.T,
 	)
 }
 
-func wugnotApprove(t *testing.T, owner, spender address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(owner))
-	wugnot.Approve(cross, spender, amount)
-}
-
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
 	testing.SetRealm(testing.NewUserRealm(owner))
@@ -316,12 +298,6 @@ func quxApprove(t *testing.T, owner, spender address, amount int64) {
 	qux.Approve(cross, spender, amount)
 }
 
-func wugnotTransfer(t *testing.T, to address, amount int64) {
-	t.Helper()
-	testing.SetRealm(adminRealm)
-	wugnot.Transfer(cross, to, amount)
-}
-
 func gnsTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
@@ -356,63 +332,6 @@ func quxTransfer(t *testing.T, to address, amount int64) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 	qux.Transfer(cross, to, amount)
-}
-
-// ----------------------------------------------------------------------------
-// ugnot
-
-func ugnotTransfer(t *testing.T, from, to address, amount int64) {
-	t.Helper()
-
-	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{gnotDenom, amount}})
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, amount}})
-}
-
-func ugnotBalanceOf(t *testing.T, addr address) int64 {
-	t.Helper()
-
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	coins := banker_.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return coins.AmountOf(gnotDenom)
-}
-
-func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	testing.IssueCoins(addr, chain.Coins{{denom, amount}})
-}
-
-func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
-	t.Helper()
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	banker_.RemoveCoin(addr, denom, amount)
-}
-
-func ugnotFaucet(t *testing.T, to address, amount int64) {
-	t.Helper()
-	faucetAddress := adminAddr
-	testing.SetOriginCaller(faucetAddress)
-
-	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{gnotDenom, amount}}
-		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
-		testing.SetOriginSend(newCoins)
-	}
-	ugnotTransfer(t, faucetAddress, to, amount)
-}
-
-func ugnotDeposit(t *testing.T, addr address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(addr))
-	wugnotAddr := chain.PackageAddress(wugnotPath)
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
-	wugnot.Deposit(cross)
 }
 
 type gnsBalanceTracker struct {
@@ -521,10 +440,10 @@ func mockInstanceStakeToken(positionId uint64, referrer string) {
 	}(cross)
 }
 
-func mockInstanceCollectReward(positionId uint64, unwrapResult bool) {
+func mockInstanceCollectReward(positionId uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		getMockInstance().CollectReward(positionId, unwrapResult)
+		getMockInstance().CollectReward(positionId)
 	}(cross)
 }
 
@@ -572,11 +491,11 @@ func mockInstanceSetWarmupPeriod(poolPath string, warmupPeriod int64) {
 	}(cross)
 }
 
-func mockInstanceUnStakeToken(positionId uint64, unwrapResult bool) string {
+func mockInstanceUnStakeToken(positionId uint64) string {
 	var poolPath string
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
-		poolPath = getMockInstance().UnStakeToken(positionId, unwrapResult)
+		poolPath = getMockInstance().UnStakeToken(positionId)
 	}(cross)
 	return poolPath
 }

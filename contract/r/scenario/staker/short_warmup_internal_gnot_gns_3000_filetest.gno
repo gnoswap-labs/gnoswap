@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 
@@ -63,6 +63,12 @@ var (
 func main() {
 	println("[SCENARIO] 1. Initialize and setup short warm-up periods")
 	initWithShortWarmUp()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	initWithShortWarmUpPostDeposit()
 	println()
 
 	println("[SCENARIO] 2. Create wugnot:gns:3000 pool")
@@ -110,10 +116,11 @@ func initWithShortWarmUp() {
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
-	wugnot.Deposit(cross)
-	testing.SetOriginSend(nil)
+	// Deposit is done in main()
+}
 
+func initWithShortWarmUpPostDeposit() {
+	testing.SetRealm(adminRealm)
 	wugnotBalance := wugnot.BalanceOf(adminAddr)
 	ufmt.Printf("[EXPECTED] wugnot balance: %d\n", wugnotBalance)
 
@@ -192,7 +199,7 @@ func collectReward01() {
 	ufmt.Printf("[INFO] community pool GNS balance before: %d\n", communityPoolBefore)
 
 	println("[INFO] collect reward for position 01")
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	gnsAfter := gns.BalanceOf(adminUser)
 	communityPoolAfter := gns.BalanceOf(communityPoolAddr)
@@ -262,3 +269,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] collect reward for position 01
 // [EXPECTED] user reward: 8026540
 // [EXPECTED] community pool reward: 93642972
+

@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -175,7 +175,6 @@ func testDecreaseLiquidityOnStakedPosition() {
 				"0",
 				"0",
 				maxTimeout,
-				false,
 			)
 		},
 	)
@@ -190,7 +189,7 @@ func testCollectFeeOnStakedPosition() {
 	println("[INFO] Alice attempting to collect fee on staked position")
 	println("[INFO] This should succeed because alice is set as operator when staking")
 
-	_, fee0, fee1, poolPath, _, _ := position.CollectFee(cross, positionId, false)
+	_, fee0, fee1, poolPath, _, _ := position.CollectFee(cross, positionId)
 
 	println("[EXPECTED] CollectFee succeeded for staked position via operator")
 	println("[EXPECTED] Fee0 collected:", fee0)

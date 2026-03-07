@@ -3,8 +3,8 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/testutils"
+	uassert "gno.land/p/nt/uassert/v0"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
 )

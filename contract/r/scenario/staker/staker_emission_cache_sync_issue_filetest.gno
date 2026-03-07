@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -165,13 +165,13 @@ func stakeAndCollectInitial() {
 
 	// Skip some blocks to accumulate rewards
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 
 	// Collect initial rewards
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	initialReward = afterGns - beforeGns
 
@@ -218,12 +218,12 @@ func waitWithoutInteraction() {
 func collectWithStaleRate() {
 	testing.SetRealm(adminRealm)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	testing.SkipHeights(1)
 
 	// Collect rewards - should now use correct cached rate after hook update
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	staleRateReward = afterGns - beforeGns
 
@@ -284,13 +284,13 @@ func collectWithCorrectRate() {
 
 	// Skip some blocks
 	testing.SkipHeights(100)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 
 	// Collect rewards - should still use correct rate after new user stakes
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	correctReward := afterGns - beforeGns
 

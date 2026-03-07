@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -301,7 +301,7 @@ func user1CollectRewards() {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -312,7 +312,7 @@ func user2CollectRewards() {
 	testing.SetRealm(user2Realm)
 
 	gnsBefore := gns.BalanceOf(user2User)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	gnsAfter := gns.BalanceOf(user2User)
 
 	rewards := gnsAfter - gnsBefore
@@ -323,7 +323,7 @@ func user3CollectRewards() {
 	testing.SetRealm(user3Realm)
 
 	gnsBefore := gns.BalanceOf(user3User)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	gnsAfter := gns.BalanceOf(user3User)
 
 	rewards := gnsAfter - gnsBefore
@@ -340,19 +340,19 @@ func skipToEnd() {
 func collectAllFinalRewards() {
 	testing.SetRealm(user1Realm)
 	gnsBefore1 := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter1 := gns.BalanceOf(user1User)
 	ufmt.Printf("[INFO] user1 final rewards: %d GNS\n", gnsAfter1-gnsBefore1)
 
 	testing.SetRealm(user2Realm)
 	gnsBefore2 := gns.BalanceOf(user2User)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	gnsAfter2 := gns.BalanceOf(user2User)
 	ufmt.Printf("[INFO] user2 final rewards: %d GNS\n", gnsAfter2-gnsBefore2)
 
 	testing.SetRealm(user3Realm)
 	gnsBefore3 := gns.BalanceOf(user3User)
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 	gnsAfter3 := gns.BalanceOf(user3User)
 	ufmt.Printf("[INFO] user3 final rewards: %d GNS\n", gnsAfter3-gnsBefore3)
 

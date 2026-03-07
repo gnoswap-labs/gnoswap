@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 
@@ -200,7 +200,7 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	ufmt.Printf("[INFO] devOps GNS before: %d\n", devOpsGnsBefore)
 	
 	println("[INFO] collect rewards during warmup period")
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	
 	println("[INFO] check balances after collection")
 	userGnsAfter := gns.BalanceOf(adminUser)

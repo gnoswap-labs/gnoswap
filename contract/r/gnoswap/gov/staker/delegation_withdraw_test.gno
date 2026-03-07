@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewDelegationWithdraw tests creating withdrawal with lockup period

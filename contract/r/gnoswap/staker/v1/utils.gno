@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // poolPathDivide splits a pool path into token addresses and fee tier.

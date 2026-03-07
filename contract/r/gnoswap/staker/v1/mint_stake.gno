@@ -1,12 +1,9 @@
 package v1
 
 import (
-	"chain"
-	"chain/banker"
 	"chain/runtime"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -29,11 +26,6 @@ import (
 //   - deadline: Transaction expiration timestamp
 //   - referrer: Optional referral address
 //
-// Native token support:
-//   - Accepts GNOT via std.OriginSend()
-//   - Auto-wraps to WUGNOT for liquidity
-//   - Minimum 1 GNOT required
-//
 // Returns:
 //   - positionId: New NFT token ID
 //   - liquidity: Amount of liquidity minted
@@ -55,26 +47,6 @@ func (s *stakerV1) MintAndStake(
 	halt.AssertIsNotHaltedStaker()
 
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-
-	// if one click native
-	if token0 == GNOT_DENOM || token1 == GNOT_DENOM {
-		// check sent ugnot
-		sent := banker.OriginSend()
-		ugnotSent := sent.AmountOf("ugnot")
-
-		// not enough ugnot sent
-		if ugnotSent < UGNOT_MIN_DEPOSIT_TO_WRAP {
-			panic(ufmt.Errorf(
-				"%v: too less ugnot sent(%d), minimum:%d",
-				errWugnotMinimum, ugnotSent, UGNOT_MIN_DEPOSIT_TO_WRAP,
-			))
-		}
-
-		// send it over to position to wrap
-		positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
-		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: GNOT_DENOM, Amount: ugnotSent}})
-	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,

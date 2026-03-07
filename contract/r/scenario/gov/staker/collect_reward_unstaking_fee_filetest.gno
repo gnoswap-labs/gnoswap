@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -157,7 +157,7 @@ func stakePositionByAdmin(positionId int64) {
 
 func collectRewardsByAdmin(positionId int64) {
 	testing.SetRealm(adminRealm)
-	staker.CollectReward(cross, uint64(positionId), false)
+	staker.CollectReward(cross, uint64(positionId))
 	ufmt.Printf("[EXPECTED] Rewards collected successfully for position ID: %d\n", positionId)
 }
 

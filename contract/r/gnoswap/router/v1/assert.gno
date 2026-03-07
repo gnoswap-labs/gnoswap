@@ -1,15 +1,13 @@
 package v1
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -22,20 +20,6 @@ func assertIsNotExpired(deadline int64) {
 			errExpired,
 			ufmt.Sprintf("transaction too old, now(%d) > deadline(%d)", now, deadline),
 		))
-	}
-}
-
-// assertIsValidUserCoinSend asserts that the user has sent the correct amount of native coin.
-func assertIsValidUserCoinSend(tokenPath string, amount string) {
-	if common.IsGNOTNativePath(tokenPath) {
-		amountInt64, err := strconv.ParseInt(amount, 10, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		common.AssertIsUserSendGNOTAmount(amountInt64)
-	} else {
-		common.AssertIsNotHandleNativeCoin()
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/gnft"
 
@@ -146,7 +146,7 @@ func collectReward() {
 	println("[INFO] collect reward for position 01")
 	beforeGns := gns.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAmount := afterGns - beforeGns

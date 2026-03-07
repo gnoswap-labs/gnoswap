@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoland/wugnot"
+	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -376,23 +375,10 @@ func swapPaidSwapCallback(
 ) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if amount0Delta > 0 {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
@@ -429,19 +415,11 @@ func initSwapPaidSetFeeMintPosition(
 	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
-		if common.IsGNOTNativePath(token0Path) {
-			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount0Requested}})
-		} else {
-			common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
-		}
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
 	}
 
 	if amount1Requested > 0 {
-		if common.IsGNOTNativePath(token1Path) {
-			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount1Requested}})
-		} else {
-			common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
-		}
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
 	}
 
 	sqrtPriceX96 := getMockInstance().GetSlot0SqrtPriceX96(GetPoolPath(token0Path, token1Path, feeTier))

@@ -85,11 +85,11 @@ func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr st
 	return t.instance.IncreaseLiquidity(positionId, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64, unwrapResult bool) (uint64, string, string, string, string, string, string) {
+func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
 	if !t.isActive("DecreaseLiquidity") {
 		panic("test implementation: DecreaseLiquidity not supported")
 	}
-	return t.instance.DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline, unwrapResult)
+	return t.instance.DecreaseLiquidity(positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
@@ -99,11 +99,11 @@ func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper 
 	return t.instance.Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
-func (t *TestPosition) CollectFee(positionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+func (t *TestPosition) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
 	if !t.isActive("CollectFee") {
 		panic("test implementation: CollectFee not supported")
 	}
-	return t.instance.CollectFee(positionId, unwrapResult)
+	return t.instance.CollectFee(positionId)
 }
 
 func (t *TestPosition) SetPositionOperator(positionId uint64, operator address) {

@@ -5,12 +5,11 @@
 package main
 
 import (
-	"chain"
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -26,7 +25,6 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -269,13 +267,13 @@ func checkSameRangeFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 1")
-	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1, false)
+	_, fee01, fee11, _, _, _ := position.CollectFee(cross, 1)
 
 	ufmt.Printf("[EXPECTED] Position 1 fee0 should be %s\n", fee01)
 	ufmt.Printf("[EXPECTED] Position 1 fee1 should be %s\n", fee11)
 
 	ufmt.Println("[INFO] Collecting fees from position 2")
-	_, fee02, fee12, _, _, _ := position.CollectFee(cross, 2, false)
+	_, fee02, fee12, _, _, _ := position.CollectFee(cross, 2)
 
 	ufmt.Printf("[EXPECTED] Position 2 fee0 should be %s\n", fee02)
 	ufmt.Printf("[EXPECTED] Position 2 fee1 should be %s\n", fee12)
@@ -287,13 +285,13 @@ func checkDifferentRangeFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees from position 3")
-	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3, false)
+	_, fee03, fee13, _, _, _ := position.CollectFee(cross, 3)
 
 	ufmt.Printf("[EXPECTED] Position 3 fee0 should be %s\n", fee03)
 	ufmt.Printf("[EXPECTED] Position 3 fee1 should be %s\n", fee13)
 
 	ufmt.Println("[INFO] Collecting fees from position 4")
-	_, fee04, fee14, _, _, _ := position.CollectFee(cross, 4, false)
+	_, fee04, fee14, _, _, _ := position.CollectFee(cross, 4)
 
 	ufmt.Printf("[EXPECTED] Position 4 fee0 should be %s\n", fee04)
 	ufmt.Printf("[EXPECTED] Position 4 fee1 should be %s\n", fee14)
@@ -313,22 +311,11 @@ func verifyFinalBalances() {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
-	if zeroForOne {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
+	if amount0Delta > 0 {
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
-	} else {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
+	}
 
+	if amount1Delta > 0 {
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

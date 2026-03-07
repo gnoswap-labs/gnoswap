@@ -3,7 +3,7 @@ package launchpad
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestProjectCondition_Getters(t *testing.T) {
