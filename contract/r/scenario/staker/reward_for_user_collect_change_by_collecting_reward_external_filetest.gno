@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 
@@ -190,7 +190,7 @@ func firstExternalRewardCollection() {
 
 	println("[INFO] collect first external reward")
 	beforeBar1 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar1 := bar.BalanceOf(adminUser)
 	firstExternalReward := afterBar1 - beforeBar1
 
@@ -211,7 +211,7 @@ func secondExternalRewardCollection() {
 
 	println("[INFO] collect second external reward")
 	beforeBar2 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar2 := bar.BalanceOf(adminUser)
 	secondExternalReward := afterBar2 - beforeBar2
 
@@ -232,7 +232,7 @@ func thirdExternalRewardCollectionLonger() {
 
 	println("[INFO] collect third external reward")
 	beforeBar3 := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar3 := bar.BalanceOf(adminUser)
 	thirdExternalReward := afterBar3 - beforeBar3
 
@@ -258,7 +258,7 @@ func compareExternalRewardPatterns() {
 	for i := 0; i < 5; i++ {
 		testing.SkipHeights(2)
 		beforeBar := bar.BalanceOf(adminUser)
-		sr.CollectReward(cross, 1, false)
+		sr.CollectReward(cross, 1)
 		afterBar := bar.BalanceOf(adminUser)
 		rewardFromSmallExternalCollection := afterBar - beforeBar
 		totalFromFrequentExternalCollections += rewardFromSmallExternalCollection
@@ -271,7 +271,7 @@ func compareExternalRewardPatterns() {
 	println("[INFO] test pattern: single large external collection")
 	testing.SkipHeights(10)
 	beforeBarLarge := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBarLarge := bar.BalanceOf(adminUser)
 	rewardFromLargeExternalCollection := afterBarLarge - beforeBarLarge
 
@@ -304,19 +304,19 @@ func finalVerificationMultipleExternalCollections() {
 	println("[INFO] perform 3 consecutive external collections")
 
 	collection1Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection1After := bar.BalanceOf(adminUser)
 	externalReward1 := collection1After - collection1Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 1: %d\n", externalReward1)
 
 	collection2Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection2After := bar.BalanceOf(adminUser)
 	externalReward2 := collection2After - collection2Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 2: %d\n", externalReward2)
 
 	collection3Before := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	collection3After := bar.BalanceOf(adminUser)
 	externalReward3 := collection3After - collection3Before
 	ufmt.Printf("[EXPECTED] consecutive external collection 3: %d\n", externalReward3)

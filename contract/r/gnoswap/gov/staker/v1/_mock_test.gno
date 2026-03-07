@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
 )

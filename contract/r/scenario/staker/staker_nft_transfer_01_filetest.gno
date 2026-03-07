@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -173,7 +173,7 @@ func collectReward() {
 	beforeGns := gns.BalanceOf(adminUser)
 
 	testing.SkipHeights(5) // Skip some blocks to accumulate rewards
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAmount := afterGns - beforeGns

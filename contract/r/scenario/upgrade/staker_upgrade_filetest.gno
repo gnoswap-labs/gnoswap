@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/staker"
@@ -114,7 +114,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing UnStakeToken function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: UnStakeToken not supported", func() {
-		staker.UnStakeToken(cross, 1, false)
+		staker.UnStakeToken(cross, 1)
 	})
 	ufmt.Println("[EXPECTED] UnStakeToken panics correctly")
 
@@ -122,7 +122,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing CollectReward function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: CollectReward not supported", func() {
-		staker.CollectReward(cross, 1, false)
+		staker.CollectReward(cross, 1)
 	})
 	ufmt.Println("[EXPECTED] CollectReward panics correctly")
 

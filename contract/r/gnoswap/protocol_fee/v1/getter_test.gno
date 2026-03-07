@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestGetDevOpsPct(t *testing.T) {

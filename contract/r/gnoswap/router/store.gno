@@ -2,7 +2,7 @@ package router
 
 import (
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 type StoreKey string

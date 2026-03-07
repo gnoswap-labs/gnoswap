@@ -3,8 +3,8 @@ package rbac
 import (
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 var (

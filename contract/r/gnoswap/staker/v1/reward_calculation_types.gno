@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.

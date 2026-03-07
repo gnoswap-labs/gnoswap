@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -173,7 +173,7 @@ func collectRewardWithTier2() {
 
 	println("[INFO] collect reward with tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	tier2Reward := afterGns - beforeGns
 
@@ -210,7 +210,7 @@ func collectRewardAfterTierRemoval() {
 
 	println("[INFO] collect reward after tier removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRemoval := afterGns - beforeGns
 
@@ -246,7 +246,7 @@ func verifyPoolRemovalEffects() {
 
 	println("[INFO] collect reward after tier restoration")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRestoration := afterGns - beforeGns
 

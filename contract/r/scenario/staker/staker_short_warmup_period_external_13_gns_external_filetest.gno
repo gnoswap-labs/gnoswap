@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 
@@ -247,7 +247,7 @@ func collectRewardsForBarAndGns() {
 	oldBar := bar.BalanceOf(adminUser)
 	oldGns := gns.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	newBar := bar.BalanceOf(adminUser)
 	newGns := gns.BalanceOf(adminUser)

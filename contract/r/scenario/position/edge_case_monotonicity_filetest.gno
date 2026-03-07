@@ -9,8 +9,8 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"

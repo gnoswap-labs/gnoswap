@@ -3,7 +3,7 @@ package rbac
 import (
 	"chain/runtime"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"

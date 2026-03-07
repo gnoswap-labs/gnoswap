@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -164,7 +164,7 @@ func stakeAndUnstakeInSameBlock() {
 	}
 
 	println("[INFO] immediately unstake position 01 (same block)")
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)

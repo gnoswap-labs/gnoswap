@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -35,7 +35,6 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 		100, // depositGnsAmount
 		100, // createdHeight
 		currentTime,
-		false, // isRequestUnwrap
 	)
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(creator, endedIncentive)
@@ -91,7 +90,6 @@ func TestExternalIncentiveResolver_IsActive(t *testing.T) {
 		0,
 		0,
 		currentTime,
-		false,
 	)
 
 	resolver := NewExternalIncentiveResolver(incentive)
@@ -157,7 +155,6 @@ func TestExternalIncentiveResolver_IsEnded(t *testing.T) {
 		0,
 		0,
 		currentTime,
-		false,
 	)
 
 	resolver := NewExternalIncentiveResolver(incentive)
@@ -255,7 +252,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, endedIncentive)
 			},
@@ -283,7 +279,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, activeIncentive)
 			},
@@ -318,7 +313,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, endedIncentive)
 
@@ -334,7 +328,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, activeIncentive)
 			},
@@ -364,7 +357,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 						100,
 						100,
 						currentTime,
-						false,
 					)
 					NewPoolResolver(pool).IncentivesResolver().create(creator, ended)
 				}
@@ -381,7 +373,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, active)
 			},
@@ -408,7 +399,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, futureIncentive)
 			},
@@ -438,7 +428,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, ended)
 
@@ -454,7 +443,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, future)
 
@@ -470,7 +458,6 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					100,
 					currentTime,
-					false,
 				)
 				NewPoolResolver(pool).IncentivesResolver().create(creator, active)
 			},

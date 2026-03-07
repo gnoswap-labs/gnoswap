@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -173,7 +173,7 @@ func firstPartialCollect() {
 
 	println("[INFO] first partial collect")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	firstCollectReward = afterGns - beforeGns
 
@@ -206,7 +206,7 @@ func secondCollectAfterRemoval() {
 
 	println("[INFO] collect remaining rewards from before tier removal")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	secondCollectReward = afterGns - beforeGns
 
@@ -227,7 +227,7 @@ func thirdCollectNoReward() {
 
 	println("[INFO] third collect attempt")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	thirdCollectReward = afterGns - beforeGns
 

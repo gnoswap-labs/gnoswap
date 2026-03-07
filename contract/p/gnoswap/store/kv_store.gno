@@ -3,7 +3,7 @@ package store
 import (
 	"chain/runtime"
 
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 // kvStore represents a domain-specific key-value storage

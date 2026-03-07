@@ -1,17 +1,15 @@
 package v1
 
 import (
-	"chain"
 	"strconv"
 	"strings"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	pl "gno.land/r/gnoswap/pool"
@@ -19,6 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 )
 
@@ -172,25 +171,23 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Success call by position contract",
 			action: func(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				TokenApprove(t, wugnotPath, adminAddr, poolAddr, 1000)
-				TokenApprove(t, gnsPath, adminAddr, poolAddr, 1000)
+				TokenApprove(t, barPath, adminAddr, poolAddr, 1000)
+				TokenApprove(t, bazPath, adminAddr, poolAddr, 1000)
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				gns.Approve(cross, poolAddr, 100000000000)
-				wugnot.Approve(cross, poolAddr, 100000000000)
+				baz.Approve(cross, poolAddr, 100000000000)
+				bar.Approve(cross, poolAddr, 100000000000)
 
-				mockInstanceCreatePool(wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceCreatePool(barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000}})
-				wugnot.Deposit(cross)
-				wugnot.Transfer(cross, poolAddr, 1000000000)
-				gns.Transfer(cross, poolAddr, 1000000000)
+				bar.Transfer(cross, poolAddr, 1000000000)
+				baz.Transfer(cross, poolAddr, 1000000000)
 
 				testing.SetRealm(posRealm)
 				mockInstanceMint(
-					wugnotPath,
-					gnsPath,
+					barPath,
+					bazPath,
 					fee3000,
 					int32(1020),
 					int32(5040),
@@ -200,12 +197,12 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			},
 			verify: func(t *testing.T) (string, string) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				TokenApprove(t, wugnotPath, adminAddr, poolAddr, 10000000000)
-				TokenApprove(t, gnsPath, adminAddr, poolAddr, 1000000000)
-				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
+				TokenApprove(t, barPath, adminAddr, poolAddr, 10000000000)
+				TokenApprove(t, bazPath, adminAddr, poolAddr, 1000000000)
+				poolPath := GetPoolPath(barPath, bazPath, fee3000)
 
 				testing.SetRealm(posRealm)
-				return mockInstanceHandleWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, adminAddr)
+				return mockInstanceHandleWithdrawalFee(2, barPath, "1000", bazPath, "1000", poolPath, adminAddr)
 			},
 			expected:    "900,900",
 			shouldPanic: false,

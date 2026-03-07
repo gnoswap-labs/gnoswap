@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"

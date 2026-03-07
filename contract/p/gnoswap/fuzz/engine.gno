@@ -9,7 +9,7 @@ package fuzz
 import (
 	"testing"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 const (

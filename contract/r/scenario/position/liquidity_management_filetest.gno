@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -388,7 +388,6 @@ func testDecreaseLiquiditySuccess() {
 		"0",
 		"0",
 		max_timeout,
-		false,
 	)
 
 	println("[INFO] Verifying position after decrease")

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -61,7 +61,6 @@ func TestIncentivesCreate(t *testing.T) {
 				100,
 				runtime.ChainHeight(),
 				currentTime,
-				false,
 			)
 
 			// Create incentive
@@ -136,7 +135,6 @@ func TestIncentivesUpdate(t *testing.T) {
 				100,
 				runtime.ChainHeight(),
 				currentTime,
-				false,
 			)
 
 			// Create incentive
@@ -290,7 +288,6 @@ func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
 		100,
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 	incentives.create(creator, incentive)
 
@@ -427,7 +424,6 @@ func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
 		100,
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 	incentives.create(creator, incentive)
 
@@ -471,7 +467,6 @@ func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
 		100,
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 	incentives.create(creator, incentive)
 
@@ -520,7 +515,6 @@ func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
 		100,
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 	incentives.create(creator, incentive)
 
@@ -569,7 +563,6 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 		100,
 		runtime.ChainHeight(),
 		currentTime,
-		false,
 	)
 	incentives.create(creator, incentive)
 

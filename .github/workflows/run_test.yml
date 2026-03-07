@@ -30,8 +30,33 @@ jobs:
           chmod +x .github/scripts/generate_matrix.rb
           echo "matrix=$(ruby .github/scripts/generate_matrix.rb contract tests/scenario)" >> $GITHUB_OUTPUT
 
+  setup-gno:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out gno (master)
+        run: |
+          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: gno/go.sum
+
+      - name: Build gno
+        run: |
+          cd gno
+          make install.gno
+
+      - name: Upload gno binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: gno-bin
+          path: ~/go/bin/gno
+          retention-days: 1
+
   test-gnoswap:
-    needs: generate-matrix
+    needs: [generate-matrix, setup-gno]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -41,22 +66,27 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno(master - before change std prefix)
-        uses: actions/checkout@v4
-        with:
-          repository: gnoswap-labs/gno
-          ref: master
-          path: ./gno
+      - name: Check out gno (master)
+        run: |
+          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
+
+      - name: Link contracts into gno/examples/gno.land (setup.py, same as Makefile)
+        run: python3 setup.py -w .
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+          cache-dependency-path: gno/go.sum
 
-      - name: Install gno
-        run: |
-          cd gno
-          make install.gno
+      - name: Download gno binary
+        uses: actions/download-artifact@v4
+        with:
+          name: gno-bin
+          path: ~/go/bin
+
+      - name: Make gno binary executable
+        run: chmod +x ~/go/bin/gno
 
       - name: Update fuzz test seed
         run: |
@@ -67,5 +97,5 @@ jobs:
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
-            -f "${{ matrix.folder }}" \
+            -p "${{ matrix.pkg }}" \
             -r "/home/runner/work/gnoswap/gnoswap/gno"

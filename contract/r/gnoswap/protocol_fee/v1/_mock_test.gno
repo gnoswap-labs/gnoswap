@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/protocol_fee"
 )
 

@@ -17,9 +17,9 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/rotree"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	rotree "gno.land/p/nt/avl/v0/rotree"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // versionManager is the concrete implementation of VersionManager interface.
@@ -195,9 +195,9 @@ func (vm *versionManager) GetCurrentImplementation() any {
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"
 //   - Invalid callers: "gno.land/r/gnoswap/other", "gno.land/r/attacker/malicious"
 func (vm *versionManager) isContainDomainPath(targetPackagePath string) bool {
-    // `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
-    // Therefore, there is no need for a separate trailing slash check,
-    // and the prefix is determined by directly appending `/` for version detection.
+	// `domainPath` is set via `runtime.CurrentRealm().PkgPath()` in each contract.
+	// Therefore, there is no need for a separate trailing slash check,
+	// and the prefix is determined by directly appending `/` for version detection.
 	prefix := vm.domainPath + "/"
 
 	return strings.HasPrefix(targetPackagePath, prefix)

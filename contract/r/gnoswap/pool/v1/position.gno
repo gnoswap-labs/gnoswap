@@ -8,7 +8,7 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"

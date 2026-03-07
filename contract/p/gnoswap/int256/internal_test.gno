@@ -4,8 +4,8 @@ import (
 	"math/bits"
 	"testing"
 
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func pack32to64(words []uint32) []uint64 {

@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"

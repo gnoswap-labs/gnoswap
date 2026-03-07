@@ -3,7 +3,7 @@ package rbac
 import (
 	"errors"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 var (

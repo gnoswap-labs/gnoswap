@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval

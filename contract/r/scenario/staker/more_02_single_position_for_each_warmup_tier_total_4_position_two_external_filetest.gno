@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 
@@ -266,7 +266,7 @@ func stakeTokenPos01ToWarmUp100() {
 	userOldBar := bar.BalanceOf(adminUser)
 	userOldBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewBar := bar.BalanceOf(adminUser)
 	userNewBaz := baz.BalanceOf(adminUser)
@@ -281,13 +281,13 @@ func stakeTokenPos01ToWarmUp100() {
 
 	println("[INFO] progress to 50% warm-up")
 	testing.SkipHeights(216001)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldBar = bar.BalanceOf(adminUser)
 	userOldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewBar = bar.BalanceOf(adminUser)
 	userNewBaz = baz.BalanceOf(adminUser)
@@ -302,13 +302,13 @@ func stakeTokenPos01ToWarmUp100() {
 
 	println("[INFO] progress to 70% warm-up")
 	testing.SkipHeights(432000)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldBar = bar.BalanceOf(adminUser)
 	userOldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewBar = bar.BalanceOf(adminUser)
 	userNewBaz = baz.BalanceOf(adminUser)
@@ -323,13 +323,13 @@ func stakeTokenPos01ToWarmUp100() {
 
 	println("[INFO] progress to 100% warm-up")
 	testing.SkipHeights(1296000)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	testing.SkipHeights(1)
 	userOldBar = bar.BalanceOf(adminUser)
 	userOldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	userNewBar = bar.BalanceOf(adminUser)
 	userNewBaz = baz.BalanceOf(adminUser)
@@ -362,10 +362,10 @@ func stakeTokensPos02To04WithDifferentWarmUp() {
 	testing.SkipHeights(1) // 30% warm-up
 
 	println("[INFO] collect rewards for all positions")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
-	sr.CollectReward(cross, 3, false)
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
+	sr.CollectReward(cross, 3)
+	sr.CollectReward(cross, 4)
 }
 
 func testSingleBlockRewardDistribution() {
@@ -385,7 +385,7 @@ func testSingleBlockRewardDistribution() {
 	oldBar := bar.BalanceOf(adminUser)
 	oldBaz := baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	newBar := bar.BalanceOf(adminUser)
 	newBaz := baz.BalanceOf(adminUser)
@@ -400,7 +400,7 @@ func testSingleBlockRewardDistribution() {
 	oldBar = bar.BalanceOf(adminUser)
 	oldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 
 	newBar = bar.BalanceOf(adminUser)
 	newBaz = baz.BalanceOf(adminUser)
@@ -415,7 +415,7 @@ func testSingleBlockRewardDistribution() {
 	oldBar = bar.BalanceOf(adminUser)
 	oldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 3, false)
+	sr.CollectReward(cross, 3)
 
 	newBar = bar.BalanceOf(adminUser)
 	newBaz = baz.BalanceOf(adminUser)
@@ -430,7 +430,7 @@ func testSingleBlockRewardDistribution() {
 	oldBar = bar.BalanceOf(adminUser)
 	oldBaz = baz.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 4, false)
+	sr.CollectReward(cross, 4)
 
 	newBar = bar.BalanceOf(adminUser)
 	newBaz = baz.BalanceOf(adminUser)

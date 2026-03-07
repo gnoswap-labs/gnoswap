@@ -6,7 +6,7 @@
 
 package fuzz
 
-import "gno.land/p/nt/ufmt"
+import ufmt "gno.land/p/nt/ufmt/v0"
 
 // SliceOfN creates a slice generator with min/max length constraints.
 // If minLen >= 0, generated slices have minimum length of minLen.

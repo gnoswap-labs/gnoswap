@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 
@@ -221,14 +221,14 @@ func collectExternalRewardsBothPositions() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] clear any accumulated rewards first")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	testing.SkipHeights(1)
 
 	println("[INFO] collect external reward for position 01")
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar := bar.BalanceOf(adminUser)
 	reward1 := afterBar - beforeBar
 
@@ -242,7 +242,7 @@ func collectExternalRewardsBothPositions() {
 
 	println("[INFO] collect external reward for position 02")
 	beforeBar = bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterBar = bar.BalanceOf(adminUser)
 	reward2 := afterBar - beforeBar
 
@@ -258,7 +258,7 @@ func unstakePosition02() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] unstake position 02")
-	sr.UnStakeToken(cross, 2, false)
+	sr.UnStakeToken(cross, 2)
 
 	owner := gnft.MustOwnerOf(positionIdFrom(2))
 	ufmt.Printf("[EXPECTED] position 02 owner after unstaking: %s\n", owner)
@@ -274,7 +274,7 @@ func collectExternalRewardsAfterUnstaking() {
 	println("[INFO] collect external reward for position 01 after position 02 unstaked")
 	beforeBar := bar.BalanceOf(adminUser)
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterBar := bar.BalanceOf(adminUser)
 	reward := afterBar - beforeBar
 

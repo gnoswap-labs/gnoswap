@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestTierDurationConsistency verifies tier duration consistency across multiple scenarios

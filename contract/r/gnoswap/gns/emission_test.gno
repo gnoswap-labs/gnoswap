@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // TestEmissionBoundaryConditions tests for emission at year boundaries

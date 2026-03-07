@@ -3,7 +3,6 @@
 package main
 
 import (
-	"chain"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -17,7 +16,6 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
@@ -175,23 +173,10 @@ func main() {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if amount0Delta > 0 {
-		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
-
 		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 

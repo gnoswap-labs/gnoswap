@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -28,7 +28,7 @@ func TestAddToken(t *testing.T) {
 			inputTokenPath: "gno.land/r/gnoswap/v1/token1",
 			expectedAllowedTokens: []string{
 				GNS_PATH,
-				GNOT_DENOM,
+				WUGNOT_PATH,
 				"gno.land/r/gnoswap/v1/token1",
 			},
 			expectedHasAbort: false,
@@ -42,7 +42,7 @@ func TestAddToken(t *testing.T) {
 			inputTokenPath: GNS_PATH,
 			expectedAllowedTokens: []string{
 				GNS_PATH,
-				GNOT_DENOM,
+				WUGNOT_PATH,
 			},
 			expectedHasAbort: true,
 			expectedAbortMsg: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
@@ -109,7 +109,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token success with custom token by admin",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        customTokenPath,
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH},
 			expectedHasAbort:      false,
 			expectedAbortMsg:      "",
 			expectedHasPanic:      false,
@@ -119,7 +119,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token failed by non admin",
 			caller:                testutils.TestAddress("non-admin"),
 			inputTokenPath:        customTokenPath,
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, customTokenPath},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH, customTokenPath},
 			expectedHasAbort:      true,
 			expectedAbortMsg:      "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
 		},
@@ -127,7 +127,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token failed by default token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        GNS_PATH,
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, customTokenPath},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH, customTokenPath},
 			expectedHasAbort:      true,
 			expectedAbortMsg:      "[GNOSWAP-STAKER-010] cannot delete default external token: cannot remove default token(gno.land/r/gnoswap/gns)",
 			expectedHasPanic:      false,
@@ -138,7 +138,7 @@ func TestRemoveToken(t *testing.T) {
 			name:                  "remove token failed by not existing token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        "not-existing-token",
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, customTokenPath},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH, customTokenPath},
 			expectedHasAbort:      false,
 			expectedAbortMsg:      "",
 			expectedHasPanic:      false,
@@ -200,7 +200,7 @@ func TestModifyTokenList(t *testing.T) {
 			inputTokenPath:        "gno.land/r/gnoswap/v1/token1",
 			inputValidator:        nil,
 			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, "gno.land/r/gnoswap/v1/token1"},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH, "gno.land/r/gnoswap/v1/token1"},
 			expectedHasError:      false,
 			expectedErrorMsg:      "",
 		},
@@ -212,7 +212,7 @@ func TestModifyTokenList(t *testing.T) {
 				return errors.New("validation failure")
 			},
 			inputExecutor:         addTokenExecutor,
-			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM},
+			expectedAllowedTokens: []string{GNS_PATH, WUGNOT_PATH},
 			expectedHasError:      true,
 			expectedErrorMsg:      "validation failure",
 		},
@@ -405,8 +405,8 @@ func TestAddTokenValidator(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name:          "invalid - GNOT is default",
-			tokenPath:     GNOT_DENOM,
+			name:          "invalid - WUGNOT is default",
+			tokenPath:     WUGNOT_PATH,
 			expectError:   true,
 			expectedError: "cannot add existing token",
 		},
@@ -453,8 +453,8 @@ func TestRemoveTokenValidator(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name:          "invalid - cannot remove GNOT",
-			tokenPath:     GNOT_DENOM,
+			name:          "invalid - cannot remove WUGNOT",
+			tokenPath:     WUGNOT_PATH,
 			expectError:   true,
 			expectedError: "cannot remove default token",
 		},

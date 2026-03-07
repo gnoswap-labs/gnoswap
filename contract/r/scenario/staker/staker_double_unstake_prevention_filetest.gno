@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -176,14 +176,14 @@ func firstUnstake() {
 
 	// Collect rewards before unstaking
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAmount := afterGns - beforeGns
 
 	ufmt.Printf("[INFO] collected rewards before unstaking: %d GNS\n", rewardAmount)
 
 	// First unstake - should succeed
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 
 	ufmt.Printf("[EXPECTED] first unstake succeeded\n")
 	testing.SkipHeights(1)
@@ -209,7 +209,7 @@ func secondUnstakeAttempt() {
 	var t *testing.T
 	uassert.AbortsContains(t, "[GNOSWAP-STAKER-013]", func() {
 		println("[EXPECTED] Try to unstake the same position again - should fail")
-		sr.UnStakeToken(cross, 1, false)
+		sr.UnStakeToken(cross, 1)
 	})
 }
 

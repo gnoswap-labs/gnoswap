@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -167,7 +167,7 @@ func exactInSingleSwapRouteByAdmin(
 
 func collectPositionFeeByAdmin(positionId int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	position.CollectFee(cross, uint64(positionId), false)
+	position.CollectFee(cross, uint64(positionId))
 }
 
 func collectProtocolFee(addr address) {

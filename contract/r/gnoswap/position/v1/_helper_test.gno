@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"
@@ -386,15 +386,6 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 	ugnotTransfer(t, faucetAddress, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr address, amount int64) {
-	t.Helper()
-	testing.SetRealm(testing.NewUserRealm(addr))
-	wugnotAddr := wugnotAddr
-	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, amount}})
-	wugnot.Deposit(cross)
-}
-
 func burnTokens(t *testing.T) {
 	t.Helper()
 
@@ -549,7 +540,6 @@ func mockInstanceDecreaseLiquidity(
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
-	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
 	return func(cur realm) (uint64, string, string, string, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
@@ -559,7 +549,6 @@ func mockInstanceDecreaseLiquidity(
 			amount0MinStr,
 			amount1MinStr,
 			deadline,
-			unwrapResult,
 		)
 	}(cross)
 }
@@ -599,13 +588,12 @@ func mockInstanceReposition(
 
 func mockInstanceCollectFee(
 	positionId uint64,
-	unwrapResult bool,
 	caller address,
 ) (uint64, string, string, string, string, string) {
 	testing.SetRealm(testing.NewUserRealm(caller))
 
 	return func(cur realm) (uint64, string, string, string, string, string) {
 		testing.SetRealm(testing.NewCodeRealm(posPath))
-		return mockInstance.CollectFee(positionId, unwrapResult)
+		return mockInstance.CollectFee(positionId)
 	}(cross)
 }

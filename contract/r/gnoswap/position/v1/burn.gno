@@ -3,7 +3,7 @@ package v1
 import (
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -12,13 +12,12 @@ import (
 )
 
 // decreaseLiquidity reduces position liquidity and collects fees.
-// If unwrapResult is true, unwraps WUGNOT to GNOT.
 // Returns positionId, liquidity, fee0, fee1, amount0, amount1, poolPath.
 func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
-	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.unwrapResult, params.caller)
+	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
 	if position.Liquidity().IsZero() {
@@ -125,17 +124,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	if isWrappedToken(pToken0) && params.unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))
-	} else {
-		common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
-	}
-
-	if isWrappedToken(pToken1) && params.unwrapResult {
-		p.unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount1))
-	} else {
-		common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
-	}
+	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
+	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 
 	// Check for underflow when subtracting collected amounts from tokens owed
 	newOwed0, underflow0 := u256.Zero().SubOverflow(position.TokensOwed0(), collectAmount0)

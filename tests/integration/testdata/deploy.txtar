@@ -8,10 +8,10 @@
 # The test directory configuration has been modified on the premise that it will be executed from the gno directory, not the gnoswap directory.
 # The paths in `deploy.mk` are configured based on the gnoswap directory, so the contents of the two files may differ.
 
-loadpkg gno.land/p/nt/avl
-loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/nt/avl/v0
+loadpkg gno.land/p/nt/ufmt/v0
 loadpkg gno.land/p/onbloc/json
-loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/demo/tokens/grc20
 loadpkg gno.land/p/demo/tokens/grc721
 loadpkg gno.land/r/demo/defi/foo20

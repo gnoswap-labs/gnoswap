@@ -418,7 +418,7 @@ func withdrawCollectFee() {
 	beforeBarBalance := bar.BalanceOf(aliceAddr)
 	beforeFooBalance := foo.BalanceOf(aliceAddr)
 
-	position.CollectFee(cross, uint64(1), false)
+	position.CollectFee(cross, uint64(1))
 
 	afterBarBalance := bar.BalanceOf(aliceAddr)
 	afterFooBalance := foo.BalanceOf(aliceAddr)
@@ -432,7 +432,7 @@ func withdrawCollectReward() {
 
 	beforeGnsBalance := gns.BalanceOf(aliceAddr)
 
-	sr.CollectReward(cross, uint64(1), false)
+	sr.CollectReward(cross, uint64(1))
 
 	afterGnsBalance := gns.BalanceOf(aliceAddr)
 
@@ -444,11 +444,11 @@ func unStakeTokenAndRemovePosition() {
 
 	positionId := uint64(1)
 
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 	ufmt.Printf("[EXPECTED] Unstaked position ID should be %d\n", positionId)
 
 	positionLiquidity := position.GetPositionLiquidityStr(positionId)
-	position.DecreaseLiquidity(cross, positionId, positionLiquidity, "0", "0", time.Now().Add(time.Hour).Unix(), false)
+	position.DecreaseLiquidity(cross, positionId, positionLiquidity, "0", "0", time.Now().Add(time.Hour).Unix())
 	isBurned := position.IsBurned(positionId)
 
 	ufmt.Printf("[EXPECTED] Decreased liquidity position ID should be %d\n", positionId)

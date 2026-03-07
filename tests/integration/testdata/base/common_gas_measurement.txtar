@@ -53,19 +53,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddD
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   7101677'
 
-### GNOT Path Functions ###
-# IsGNOTPath
-gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1316243'
-
-# IsGNOTNativePath
-gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTNativePath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1316255'
-
-# IsGNOTWrappedPath
-gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTWrappedPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1316265'
-
 # ExistsUserSendCoins
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func ExistsUserSendCoins -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   1589188'
@@ -141,18 +128,6 @@ func LiquidityMathAddDelta(cur realm) {
 	y := i256.MustFromDecimal("500000")
 
 	common.LiquidityMathAddDelta(x, y)
-}
-
-func IsGNOTPath(cur realm) {
-	common.IsGNOTPath("ugnot")
-}
-
-func IsGNOTNativePath(cur realm) {
-	common.IsGNOTNativePath("ugnot")
-}
-
-func IsGNOTWrappedPath(cur realm) {
-	common.IsGNOTWrappedPath("gno.land/r/gnoland/wugnot")
 }
 
 func ExistsUserSendCoins(cur realm) {

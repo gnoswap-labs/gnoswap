@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -132,7 +132,6 @@ func testRoundTripUltraTight() {
 		liquidity, // burn all liquidity
 		"0", "0",
 		9999999999,
-		false,
 	)
 
 	ufmt.Printf("[BURN] Liquidity burned: %s\n", burnedLiquidity)
@@ -229,7 +228,6 @@ func testRoundTripVariousAmounts() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		// Verify invariant
@@ -295,7 +293,6 @@ func testRoundTripPriceBoundaries() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		ufmt.Printf("[RESULT] Range: [%d,%d], In: (%s,%s), Out: (%s,%s)\n",
@@ -342,7 +339,6 @@ func testMultipleRoundTrips() {
 			liq,
 			"0", "0",
 			9999999999,
-			false,
 		)
 
 		currentBar := bar.BalanceOf(aliceAddr)

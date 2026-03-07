@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -41,30 +41,21 @@ func (s *stakerV1) CreateExternalIncentive(
 	access.AssertIsUser(prevRealm)
 
 	assertIsPoolExists(s, targetPoolPath)
+
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSend(rewardToken, rewardAmount)
+	common.AssertIsNotHandleNativeCoin()
 
 	en.MintAndDistributeGns(cross)
 
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 	// transfer reward token from user to staker
-	isRequestUnwrap := false
-	if rewardToken == GNOT_DENOM {
-		isRequestUnwrap = true
-		rewardToken = WUGNOT_PATH
-		err := wrapWithTransfer(stakerAddr, rewardAmount)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
-	}
+	common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 
 	depositGnsAmount := s.store.GetDepositGnsAmount()
 
@@ -91,7 +82,6 @@ func (s *stakerV1) CreateExternalIncentive(
 		depositGnsAmount,
 		currentHeight,
 		currentTime,
-		isRequestUnwrap,
 	)
 
 	externalIncentives := s.store.GetExternalIncentives()
@@ -197,17 +187,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// handle refund based on original token type
-	if incentiveResolver.IsRequestUnwrap() {
-		// unwrap to GNOT if originally deposited as native GNOT
-		transferErr := unwrapWithTransfer(incentiveResolver.Refundee(), refund)
-		if transferErr != nil {
-			panic(transferErr)
-		}
-	} else {
-		// keep as WUGNOT or other token if originally deposited as wrapped token
-		common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), incentiveResolver.Refundee(), refund)
-	}
+	// refund reward token to refundee
+	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), incentiveResolver.Refundee(), refund)
 
 	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, incentiveResolver.Refundee(), incentiveResolver.DepositGnsAmount())
@@ -230,7 +211,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		"refundToken", incentiveResolver.RewardToken(),
 		"refundAmount", formatAnyInt(refund),
 		"refundGnsAmount", formatAnyInt(incentiveResolver.DepositGnsAmount()),
-		"isRequestUnwrap", formatBool(incentiveResolver.IsRequestUnwrap()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }

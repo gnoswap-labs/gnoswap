@@ -3,7 +3,7 @@ package halt
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestGetters_IsHaltedPool(t *testing.T) {

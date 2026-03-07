@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -195,7 +195,7 @@ func collectRewardWhileInRange() {
 
 	println("[INFO] collect reward while position is in-range")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	inRangeReward := afterGns - beforeGns
 
@@ -274,7 +274,7 @@ func collectRewardWhileOutOfRange() {
 
 	println("[INFO] collect reward while position is out-of-range")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	outOfRangeReward := afterGns - beforeGns
 
@@ -338,7 +338,7 @@ func collectRewardAfterReturningInRange() {
 
 	println("[INFO] collect reward after position returned to in-range")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	backInRangeReward := afterGns - beforeGns
 

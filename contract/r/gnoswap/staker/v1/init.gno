@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -19,7 +19,7 @@ const (
 	defaultUnstakingFee = int64(100) // 1%
 )
 
-var defaultAllowedTokens = []string{GNS_PATH, GNOT_DENOM}
+var defaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}
 
 func init() {
 	registerStakerV1()

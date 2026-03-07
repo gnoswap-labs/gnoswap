@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -41,6 +41,16 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 100")
 	initPool()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
+	wugnot.Approve(cross, poolAddr, int64(100000000))
+	wugnot.Approve(cross, positionAddr, int64(100000000))
+
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (-12000~0)")
@@ -84,10 +94,7 @@ func mintInitialPositionWithNativeCoin() {
 
 	foo.Approve(cross, poolAddr, amount1DesiredInt)
 
-	// Set none native coin send
-	testing.SetOriginSend(chain.Coins{})
-
-	inputToken0Path := "ugnot"
+	inputToken0Path := wugnotPath
 	inputToken1Path := fooPath
 	minTick := int32(-12000)
 	maxTick := int32(0)
@@ -141,19 +148,7 @@ func increasePositionLiquidity(amount0DesiredInt, amount1DesiredInt int64) {
 		wugnot.Approve(cross, poolAddr, amount0DesiredInt)
 		wugnot.Approve(cross, positionAddr, amount0DesiredInt)
 
-		// Send coins to pool contract
-		sendCoins := chain.Coins{{"ugnot", amount0DesiredInt}}
-
-		currentBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-		currentBanker.SendCoins(adminAddr, positionAddr, sendCoins)
-
-		// Set origin send to the same coins as sent to the pool contract
-		testing.SetOriginSend(sendCoins)
-
 		ufmt.Printf("[INFO] Origin send ugnot amount: %d\n", amount0DesiredInt)
-	} else {
-		// Set none native coin send
-		testing.SetOriginSend(chain.Coins{})
 	}
 
 	amount0Desired := ufmt.Sprintf("%d", amount0DesiredInt)
@@ -209,7 +204,7 @@ func checkBalanceChanges(callback func()) {
 //
 // [SCENARIO] 2. Mint initial position (-12000~0)
 // [INFO] Minting initial position with native coin
-// [INFO] Input token0 path: ugnot
+// [INFO] Input token0 path: gno.land/r/gnoland/wugnot
 // [INFO] Input token1 path: gno.land/r/onbloc/foo
 // [INFO] Min tick: -12000
 // [INFO] Max tick: 0

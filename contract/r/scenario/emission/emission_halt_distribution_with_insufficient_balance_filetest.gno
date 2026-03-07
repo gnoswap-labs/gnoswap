@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoland/wugnot"
@@ -75,6 +75,10 @@ func main() {
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint position and stake")
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
 	mintPositionAndStake()
 	testing.SkipHeights(1)
 	println()
@@ -130,8 +134,6 @@ func initPool() {
 
 func mintPositionAndStake() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-	wugnot.Deposit(cross)
 
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
@@ -184,7 +186,7 @@ func collectRewards(positionId uint64) {
 		emission.MintAndDistributeGns(cross)
 		totalStakerBalanceChanges = totalStakerBalanceChanges + gns.BalanceOf(stakerAddr) - stakerBalanceBeforeMint
 
-		staker.CollectReward(cross, positionId, false)
+		staker.CollectReward(cross, positionId)
 		totalAdminRewards = gns.BalanceOf(adminAddr) - beforeGns
 	})
 
