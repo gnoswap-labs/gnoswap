@@ -41,13 +41,12 @@ var (
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
 
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
-
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(chain.Coins{})
+	initializeSetup()
 	println()
 
 	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)")
@@ -129,7 +128,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 // Output:
 // [SCENARIO] 1. Initialize Setup
 // [INFO] GNS Balance of admin: 100000000000000
-// [INFO] WUGNOT Balance of admin: 0
+// [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
 // [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)

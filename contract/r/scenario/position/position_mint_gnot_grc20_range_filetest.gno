@@ -260,9 +260,6 @@ func verifyFinalPositions() {
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if zeroForOne {
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {

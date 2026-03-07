@@ -31,7 +31,6 @@ import (
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	GNOT        string = "gno.land/r/gnoland/wugnot"
 	GNS_PATH    string = "gno.land/r/gnoswap/gns"
 	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 
@@ -92,7 +91,7 @@ func initPool() {
 	ufmt.Println("[INFO] Creating GNOT/GNS pool")
 	pool.CreatePool(
 		cross,
-		GNOT,
+		WUGNOT_PATH,
 		GNS_PATH,
 		500,
 		common.TickMathGetSqrtRatioAtTick(1).ToString(),
@@ -111,7 +110,7 @@ func mintPosition() {
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
-		GNOT,
+		WUGNOT_PATH,
 		GNS_PATH,
 		500,
 		-8000,
@@ -193,7 +192,7 @@ func decreaseLiquidityNoUnwrap() {
 	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 	ufmt.Printf("[EXPECTED] WUGNOT balance should increase\n")
-	ufmt.Printf("[EXPECTED] GNOT balance should remain same\n")
+	ufmt.Printf("[EXPECTED] WUGNOT balance should remain same\n")
 }
 
 func decreaseLiquidityWithUnwrap() {
@@ -213,14 +212,11 @@ func decreaseLiquidityWithUnwrap() {
 	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
 	ufmt.Printf("[EXPECTED] WUGNOT balance should decrease\n")
-	ufmt.Printf("[EXPECTED] GNOT balance should increase\n")
+	ufmt.Printf("[EXPECTED] WUGNOT balance should increase\n")
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
-
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
 
 	if zeroForOne {
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
@@ -262,7 +258,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Amount0 removed should be 5121878
 // [EXPECTED] Amount1 removed should be 4877588
 // [EXPECTED] WUGNOT balance should increase
-// [EXPECTED] GNOT balance should remain same
+// [EXPECTED] WUGNOT balance should remain same
 //
 // [SCENARIO] 7. Decrease liquidity with unwrapping
 // [INFO] Decreasing liquidity with unwrapping
@@ -270,4 +266,4 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Amount0 removed should be 5121878
 // [EXPECTED] Amount1 removed should be 4877588
 // [EXPECTED] WUGNOT balance should decrease
-// [EXPECTED] GNOT balance should increase
+// [EXPECTED] WUGNOT balance should increase

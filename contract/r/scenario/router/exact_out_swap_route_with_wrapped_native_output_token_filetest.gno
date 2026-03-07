@@ -48,11 +48,11 @@ var t *testing.T
 
 func main() {
 	println("[SCENARIO] 1. Initialize Setup")
-	initializeSetup()
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(chain.Coins{})
+	initializeSetup()
 	println()
 
 	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000) with unbalance position balance")
@@ -198,7 +198,8 @@ func exactOutSwapRouteBy(
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 
-	if inputToken == wugnotPath {		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
+	if inputToken == wugnotPath {
+		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)
 	} else {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
@@ -230,7 +231,7 @@ func exactOutSwapRouteBy(
 // Output:
 // [SCENARIO] 1. Initialize Setup
 // [INFO] GNS Balance of admin: 100000000000000
-// [INFO] WUGNOT Balance of admin: 0
+// [INFO] WUGNOT Balance of admin: 100000000000000
 //
 // [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000) with unbalance position balance
 // [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 0
