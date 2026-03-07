@@ -46,6 +46,9 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
 
+      - name: Link contracts into gno/examples/gno.land (setup.py, same as Makefile)
+        run: python3 setup.py -w .
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -65,5 +68,5 @@ jobs:
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \
-            -f "${{ matrix.folder }}" \
+            -p "${{ matrix.pkg }}" \
             -r "/home/runner/work/gnoswap/gnoswap/gno"
