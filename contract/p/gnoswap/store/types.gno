@@ -1,6 +1,6 @@
 package store
 
-import "gno.land/p/nt/avl"
+import avl "gno.land/p/nt/avl/v0"
 
 type Permission uint8
 

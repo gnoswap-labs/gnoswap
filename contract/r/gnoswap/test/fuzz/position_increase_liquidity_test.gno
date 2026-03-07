@@ -14,7 +14,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless tests IncreaseLiquidity with valid parameters

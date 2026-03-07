@@ -1,8 +1,8 @@
 package store
 
 import (
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // castToInt64 safely casts an any value to int64

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestNewEmissionState(t *testing.T) {

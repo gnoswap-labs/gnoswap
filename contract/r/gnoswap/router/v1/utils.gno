@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"

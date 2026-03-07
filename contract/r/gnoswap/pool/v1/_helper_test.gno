@@ -14,8 +14,8 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/testutils"
+	avl "gno.land/p/nt/avl/v0"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -23,7 +23,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )

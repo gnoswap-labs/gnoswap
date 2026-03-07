@@ -4,7 +4,7 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestCoins_ExistsUserSendCoins tests the ExistsUserSendCoins function

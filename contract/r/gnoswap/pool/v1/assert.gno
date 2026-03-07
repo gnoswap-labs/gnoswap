@@ -3,7 +3,7 @@ package v1
 import (
 	"chain/runtime"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/testutils"
+	avl "gno.land/p/nt/avl/v0"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"

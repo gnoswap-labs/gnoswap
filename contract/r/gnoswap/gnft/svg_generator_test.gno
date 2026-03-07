@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestSvgGenerator_genImageParamsString(t *testing.T) {

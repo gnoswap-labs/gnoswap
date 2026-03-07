@@ -3,7 +3,7 @@ package uint256
 import (
 	"testing"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func TestMulDiv(t *testing.T) {

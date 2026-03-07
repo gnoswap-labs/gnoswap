@@ -4,8 +4,8 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestSwapCallback tests the SwapCallback function with various scenarios

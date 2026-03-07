@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler

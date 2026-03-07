@@ -1,6 +1,6 @@
 package staker
 
-import "gno.land/p/nt/avl"
+import avl "gno.land/p/nt/avl/v0"
 
 func cloneWarmups(warmups []Warmup) []Warmup {
 	if warmups == nil {

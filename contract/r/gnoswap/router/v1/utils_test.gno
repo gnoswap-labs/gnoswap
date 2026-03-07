@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestGetDataForSinglePath(t *testing.T) {

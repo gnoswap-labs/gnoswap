@@ -5,8 +5,8 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 

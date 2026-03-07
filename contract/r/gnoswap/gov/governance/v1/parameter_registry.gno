@@ -3,8 +3,8 @@ package v1
 import (
 	"strings"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"

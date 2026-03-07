@@ -18,7 +18,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 
-	"gno.land/p/nt/testutils"
+	testutils "gno.land/p/nt/testutils/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"

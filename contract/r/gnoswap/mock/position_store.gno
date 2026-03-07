@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 	"gno.land/r/gnoswap/position"
 )
 

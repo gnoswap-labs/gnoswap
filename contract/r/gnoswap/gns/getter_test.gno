@@ -3,8 +3,8 @@ package gns
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // TestGetHalvingYearInfo verifies that GetHalvingYearInfo correctly calculates
