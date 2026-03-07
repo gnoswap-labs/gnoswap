@@ -41,12 +41,10 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno(master - before change std prefix)
-        uses: actions/checkout@v4
-        with:
-          repository: gnoswap-labs/gno
-          ref: master
-          path: ./gno
+      # Clone gno without checkout action cache so we always get latest master
+      - name: Check out gno (master)
+        run: |
+          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
 
       - name: Set up Go
         uses: actions/setup-go@v5
