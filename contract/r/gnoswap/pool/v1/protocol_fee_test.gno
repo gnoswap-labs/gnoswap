@@ -177,6 +177,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				baz.Approve(cross, poolAddr, 100000000000)
 				bar.Approve(cross, poolAddr, 100000000000)
+				gns.Approve(cross, poolAddr, 100000000000)
 
 				mockInstanceCreatePool(barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -204,7 +205,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(posRealm)
 				return mockInstanceHandleWithdrawalFee(2, barPath, "1000", bazPath, "1000", poolPath, adminAddr)
 			},
-			expected:    "900,900",
+			expected:    "990,990",
 			shouldPanic: false,
 		},
 	}
@@ -318,8 +319,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "normal case",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(100), // 1%
-			expectedFee:  u256.NewUint(100),
-			expectedRest: u256.NewUint(900),
+			expectedFee:  u256.NewUint(10),
+			expectedRest: u256.NewUint(990),
 		},
 		{
 			name:         "zero amount",
@@ -339,15 +340,15 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "max fee",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(MaxBpsValue),
-			expectedFee:  u256.NewUint(1000),
-			expectedRest: u256.NewUint(0),
+			expectedFee:  u256.NewUint(100),
+			expectedRest: u256.NewUint(900),
 		},
 		{
 			name:         "large amount",
 			amount:       u256.MustFromDecimal("1000000000000000000"),
 			fee:          u256.NewUint(100),
-			expectedFee:  u256.MustFromDecimal("100000000000000000"),
-			expectedRest: u256.MustFromDecimal("900000000000000000"),
+			expectedFee:  u256.MustFromDecimal("10000000000000000"),
+			expectedRest: u256.MustFromDecimal("990000000000000000"),
 		},
 	}
 
