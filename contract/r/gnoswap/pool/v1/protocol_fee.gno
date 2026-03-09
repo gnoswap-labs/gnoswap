@@ -148,7 +148,7 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 	if overflow {
 		panic(errOverflow)
 	}
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
+	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10_000))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
 	return feeAmount, afterAmount
 }
