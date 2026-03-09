@@ -1,10 +1,10 @@
-# Storage measurement: Position lifecycle (Mint → Swap → CollectFee)
+# Storage measurement: Position lifecycle (Mint → Swap → CollectFee → DecreaseLiquidity)
 #
 # Measures STORAGE DELTA for each step in a typical position lifecycle.
 # Use this to verify storage optimizations by checking that the STORAGE DELTA
 # values decrease after code changes.
 #
-# Run: go test -v -run TestTestdata/storage_position_lifecycle
+# Run: go test -v -run TestTestdata/position_storage_poisition_lifecycle
 
 loadpkg gno.land/p/nt/avl/v0
 loadpkg gno.land/p/nt/ufmt/v0
@@ -18,12 +18,8 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-loadpkg gno.land/r/onbloc/foo
-loadpkg gno.land/r/onbloc/bar
-
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
-loadpkg gno.land/p/gnoswap/int256
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
@@ -51,32 +47,28 @@ adduser test_admin
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 
 adduser user1
-patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $test1_user_addr
 
 ## start a new node
 gnoland start
 
 gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/swap_wrapper -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+# stdout 'OK!'
 
 ### Setup: fund accounts
 gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 
-### Setup: transfer test tokens
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test1_user_addr -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $test1_user_addr -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-### Setup: approve tokens to pool
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-### Setup: approve GNS for pool creation fee
+### Setup: deposit wugnot + approve tokens
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "500000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 ### ============================================================
-### STEP 1: CreatePool (BAR:FOO:3000, tick=0)
+### STEP 1: CreatePool (WUGNOT:GNS:3000, tick=0)
 ### ============================================================
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 'OK!'
 # stdout 'STORAGE DELTA:'
 
@@ -85,7 +77,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.
 ### This is the most expensive Mint — it creates new tick entries,
 ### position entry, and GNFT.
 ### ============================================================
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -887220 -args 887220 -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 3000 -args -887220 -args 887220 -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'STORAGE DELTA:'
 
@@ -93,10 +85,10 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.la
 ### STEP 3: Second Mint (position #2, narrow range, same pool)
 ### Should be cheaper: pool already exists, only new position/ticks.
 ### ============================================================
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args 10000000 -args 10000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 3000 -args -60 -args 60 -args 10000000 -args 10000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'STORAGE DELTA:'
 
@@ -104,19 +96,19 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.la
 ### STEP 4: Third Mint (position #3, same ticks as #2)
 ### Cheapest: reuses existing tick entries, only new position.
 ### ============================================================
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args 5000000 -args 5000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 3000 -args -60 -args 60 -args 5000000 -args 5000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'STORAGE DELTA:'
 
 ### ============================================================
 ### STEP 5: Swap (generates fees for CollectFee)
 ### ============================================================
-gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1xt9lk80qqng30ahnk9axg2f2m4xdlp375w2x90 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args $test1_user_addr -args false -args "30000000" -args "1461446703485210103287273052203988822378723970341" -args $test1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args $test1_user_addr -args false -args "30000000" -args "1461446703485210103287273052203988822378723970341" -args $test1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'OK!'
 # stdout 'STORAGE DELTA:'
 
