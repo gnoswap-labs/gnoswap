@@ -5,9 +5,10 @@ require 'fileutils'
 require 'open3'
 
 class TestRunner
-  def initialize(folder, root_dir = nil)
-    @folder = folder
-    @root_dir = root_dir || "/home/runner/work/gnoswap/gnoswap/gno"
+  # Same flow as Makefile test: run from gno/examples with package path (e.g. gno.land/r/gnoswap/access)
+  def initialize(pkg, root_dir = nil)
+    @pkg = pkg
+    @root_dir = (root_dir || "/home/runner/work/gnoswap/gnoswap/gno").to_s
   end
 
   def run_command(command)
@@ -23,23 +24,17 @@ class TestRunner
   end
 
   def run_unit_tests
-    puts "Running unit tests for #{@folder}"
+    puts "Running unit tests for #{@pkg}"
 
-    # With gnowork.toml, we can run tests directly from each directory
-    # No need to search for workspace root anymore
-    test_dir = File.expand_path(@folder)
-    
-    unless File.directory?(test_dir)
-      puts "Error: Directory #{test_dir} does not exist"
+    examples_dir = File.join(@root_dir, "examples")
+    unless File.directory?(examples_dir)
+      puts "Error: Examples directory #{examples_dir} does not exist (run setup.py -w . first)"
       exit 1
     end
 
-    # Change to the test directory
-    Dir.chdir(test_dir) do
+    Dir.chdir(examples_dir) do
       puts "Running tests in: #{Dir.pwd}"
-      
-      # Run gno test -v . to execute all tests in the current directory
-      run_command("gno test -v . -root-dir #{@root_dir}")
+      run_command("gno test -v ./#{@pkg}")
     end
   end
 
@@ -54,11 +49,11 @@ if __FILE__ == $0
   OptionParser.new do |opts|
     opts.banner = "Usage: run_tests.rb [options]"
 
-    opts.on("-f", "--folder FOLDER", "Test folder path") do |f|
-      options[:folder] = f
+    opts.on("-p", "--pkg PKG", "Package path (e.g. gno.land/r/gnoswap/access)") do |p|
+      options[:pkg] = p
     end
 
-    opts.on("-r", "--root-dir DIR", "Root directory") do |r|
+    opts.on("-r", "--root-dir DIR", "Gno repo root (default: .../gno)") do |r|
       options[:root_dir] = r
     end
 
@@ -68,11 +63,11 @@ if __FILE__ == $0
     end
   end.parse!
 
-  if options[:folder].nil?
-    puts "Error: Please provide a folder path with -f or --folder"
+  if options[:pkg].nil?
+    puts "Error: Please provide a package path with -p or --pkg"
     exit 1
   end
 
-  runner = TestRunner.new(options[:folder], options[:root_dir])
+  runner = TestRunner.new(options[:pkg], options[:root_dir])
   runner.run_all
 end

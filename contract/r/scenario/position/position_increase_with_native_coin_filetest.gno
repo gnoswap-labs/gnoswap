@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -41,6 +41,13 @@ var (
 func main() {
 	ufmt.Println("[SCENARIO] 1. Initialize pool with tick 100")
 	initPool()
+
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
+
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+
 	println()
 
 	ufmt.Println("[SCENARIO] 2. Mint initial position (-12000~12000)")
@@ -82,16 +89,7 @@ func mintInitialPositionWithNativeCoin() {
 	wugnot.Approve(cross, positionAddr, amount0Int)
 	foo.Approve(cross, poolAddr, amount1Int)
 
-	// Send coins to pool contract
-	sendCoins := chain.Coins{{"ugnot", amount0Int}}
-
-	currentBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	currentBanker.SendCoins(adminAddr, positionAddr, sendCoins)
-
-	// Set origin send to the same coins as sent to the pool contract
-	testing.SetOriginSend(sendCoins)
-
-	inputToken0Path := "ugnot"
+	inputToken0Path := wugnotPath
 	inputToken1Path := fooPath
 	minTick := int32(-12000)
 	maxTick := int32(12000)
@@ -144,15 +142,6 @@ func increasePositionLiquidity() {
 	foo.Approve(cross, poolAddr, amount1Int)
 
 	ufmt.Println("[INFO] Minting initial position with native coin")
-
-	// Send coins to pool contract
-	sendCoins := chain.Coins{{"ugnot", amount0Int}}
-
-	currentBanker := banker.NewBanker(banker.BankerTypeRealmSend)
-	currentBanker.SendCoins(adminAddr, positionAddr, sendCoins)
-
-	// Set origin send to the same coins as sent to the pool contract
-	testing.SetOriginSend(sendCoins)
 
 	amount0Desired := ufmt.Sprintf("%d", amount0Int)
 	amount1Desired := ufmt.Sprintf("%d", amount1Int)
@@ -207,7 +196,7 @@ func checkBalanceChanges(callback func()) {
 //
 // [SCENARIO] 2. Mint initial position (-12000~12000)
 // [INFO] Minting initial position with native coin
-// [INFO] Input token0 path: ugnot
+// [INFO] Input token0 path: gno.land/r/gnoland/wugnot
 // [INFO] Input token1 path: gno.land/r/onbloc/foo
 // [INFO] Min tick: -12000
 // [INFO] Max tick: 12000
@@ -219,8 +208,8 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Liquidity should be 109604855
 // [EXPECTED] Amount0 should be 48904002
 // [EXPECTED] Amount1 should be 50000000
-// [EXPECTED] GNOT balance changed: -48904002
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -48904002
 // [EXPECTED] FOO balance changed: -50000000
 //
 // [SCENARIO] 3. Increase position liquidity
@@ -234,6 +223,6 @@ func checkBalanceChanges(callback func()) {
 // [EXPECTED] Added liquidity should be 109604855
 // [EXPECTED] Amount0 added should be 48904002
 // [EXPECTED] Amount1 added should be 50000000
-// [EXPECTED] GNOT balance changed: -48904002
-// [EXPECTED] WUGNOT balance changed: 0
+// [EXPECTED] GNOT balance changed: 0
+// [EXPECTED] WUGNOT balance changed: -48904002
 // [EXPECTED] FOO balance changed: -50000000

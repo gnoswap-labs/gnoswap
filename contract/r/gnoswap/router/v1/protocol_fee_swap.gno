@@ -4,7 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -82,10 +82,6 @@ func (r *routerV1) handleSwapFee(
 	}
 
 	currentTokenPath := outputToken
-
-	if common.IsGNOTNativePath(outputToken) {
-		currentTokenPath = wugnotPath
-	}
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 

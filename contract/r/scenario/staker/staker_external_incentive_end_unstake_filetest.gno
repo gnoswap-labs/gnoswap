@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -227,7 +227,7 @@ func verifyExternalRewards() {
 	testing.SetRealm(adminRealm)
 
 	beforeBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false) // Collect rewards from external incentive
+	sr.CollectReward(cross, 1) // Collect rewards from external incentive
 	afterBar := bar.BalanceOf(adminUser)
 	diff := afterBar - beforeBar
 
@@ -253,7 +253,7 @@ func verifyNoIncentives() {
 	beforeBar := bar.BalanceOf(adminUser)
 	beforeGns := gns.BalanceOf(adminUser)
 
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 
 	afterBar := bar.BalanceOf(adminUser)
 	afterGns := gns.BalanceOf(adminUser)
@@ -275,10 +275,10 @@ func unstakeAfterIncentiveEnd() {
 	// 1. Pool has no tier (no internal incentives)
 	// 2. External incentive has ended (no external incentives)
 
-	sr.UnStakeToken(cross, 1, false)
+	sr.UnStakeToken(cross, 1)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 1 after incentive ended\n")
 
-	sr.UnStakeToken(cross, 2, false)
+	sr.UnStakeToken(cross, 2)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 2 after incentive ended\n")
 
 	testing.SkipHeights(1)

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -177,7 +177,7 @@ func collectRewardWithTier2() {
 
 	println("[INFO] collect reward with tier 2")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	tier2Reward := afterGns - beforeGns
 
@@ -215,7 +215,7 @@ func collectRewardWithTier3() {
 
 	println("[INFO] collect reward with tier 3")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	tier3Reward := afterGns - beforeGns
 
@@ -239,7 +239,7 @@ func compareTierRewards() {
 
 	println("[INFO] collect reward for comparison")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	currentTierReward := afterGns - beforeGns
 
@@ -276,7 +276,7 @@ func finalVerification() {
 
 	println("[INFO] collect final reward")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	finalReward := afterGns - beforeGns
 

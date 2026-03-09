@@ -3,7 +3,7 @@ package uint256
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestZeroOneReturnsFreshCopies verifies that Zero() and One() return fresh copies

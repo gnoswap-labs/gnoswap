@@ -4,9 +4,9 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	avl "gno.land/p/nt/avl/v0"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"

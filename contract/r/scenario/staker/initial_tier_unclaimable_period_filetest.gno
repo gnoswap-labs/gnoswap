@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -156,7 +156,7 @@ func testInitialTierInternalRewards() {
 
 	println("[INFO] collect reward immediately after first stake")
 	communityBalanceBefore := gns.BalanceOf(communityPoolAddr)
-	sr.CollectReward(cross, positionId, false)
+	sr.CollectReward(cross, positionId)
 	communityBalanceAfter := gns.BalanceOf(communityPoolAddr)
 	unclaimableRewardsSent := communityBalanceAfter - communityBalanceBefore
 
@@ -174,7 +174,7 @@ func testInitialTierInternalRewards() {
 	}
 
 	println("[INFO] unstake position for cleanup")
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 	testing.SkipHeights(5)
 }
 
@@ -272,7 +272,7 @@ func testInitialTierExternalRewards() {
 
 	println("[INFO] wait and unstake to end the incentive period")
 	testing.SkipHeights(5)
-	sr.UnStakeToken(cross, positionId, false)
+	sr.UnStakeToken(cross, positionId)
 
 	println("[RESULT] External incentive unclaimable period should be tracked")
 	println("[NOTE] External uses different tracking mechanism (unclaimablePeriods tree)")

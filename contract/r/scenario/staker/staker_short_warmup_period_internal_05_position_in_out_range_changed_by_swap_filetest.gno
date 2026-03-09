@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -189,8 +189,8 @@ func stakeToken_1_2() {
 	testing.SkipHeights(1)
 
 	// clear reward
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 
 	ufmt.Printf("[EXPECTED] both positions staked and initial rewards cleared\n")
 	testing.SkipHeights(1)
@@ -211,7 +211,7 @@ func stakeToken_1_2() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 01 (in-range) reward: %d GNS\n", diff)
@@ -223,7 +223,7 @@ func stakeToken_1_2() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	diff = afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 (in-range) reward: %d GNS\n", diff)
@@ -276,7 +276,7 @@ func checkRewardAfter1Block() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 	if diff != 0 {
@@ -288,7 +288,7 @@ func checkRewardAfter1Block() {
 	testing.SetRealm(adminRealm)
 
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	diff = afterGns - beforeGns
 	ufmt.Printf("[EXPECTED] position 02 (in-range) reward: %d GNS\n", diff)

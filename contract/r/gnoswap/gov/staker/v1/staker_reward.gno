@@ -2,22 +2,18 @@ package v1
 
 import (
 	"chain"
-	"chain/banker"
 	"chain/runtime"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 )
-
-const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 
 // CollectReward collects accumulated rewards based on xGNS holdings.
 //
@@ -229,7 +225,6 @@ func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestam
 
 // transferToken transfers tokens from the staker contract to a recipient address.
 // transferToken handles token transfers for reward distribution.
-// Supports both native GNOT (through wUGNOT unwrapping) and GRC20 tokens.
 func transferToken(
 	tokenPath string,
 	from, to address,
@@ -262,19 +257,6 @@ func transferToken(
 		)
 	}
 
-	// Handle native GNOT transfer through wUGNOT unwrapping
-	isGnoNativeCoin := tokenPath == WUGNOT_PATH
-	if isGnoNativeCoin {
-		wugnot.Withdraw(cross, amount)
-
-		sendCoin := chain.Coin{Denom: common.GNOT_DENOM, Amount: amount}
-		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(from, to, chain.Coins{sendCoin})
-
-		return nil
-	}
-
-	// Handle GRC20 token transfer
 	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
 	return nil

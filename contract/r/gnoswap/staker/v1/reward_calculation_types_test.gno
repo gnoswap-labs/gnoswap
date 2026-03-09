@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 func TestEncodeUint(t *testing.T) {

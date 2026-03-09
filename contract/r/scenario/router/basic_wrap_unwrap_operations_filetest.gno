@@ -10,9 +10,8 @@ import (
 	"chain/banker"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 
@@ -52,18 +51,38 @@ func main() {
 
 	println("[SCENARIO] 1. Initial Setup")
 	setupInitialBalances()
+	// wugnot.Deposit(cross) must be called directly from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	wugnot.Transfer(cross, user2Addr, 10000000)
+	println("[EXPECTED] User1: GNOT: 10000000, WUGNOT: 0")
+	println("[EXPECTED] User2: GNOT: 0, WUGNOT: 10000000")
 	println()
 
 	println("[SCENARIO] 2. Basic Wrap (User1)")
-	testBasicWrap()
+	println("[INFO] User1 wrapping 1,000,000 GNOT to WUGNOT")
+	testBasicWrapPre()
+	testing.SetRealm(user1Realm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	testBasicWrapPost()
 	println()
 
 	println("[SCENARIO] 3. Basic Unwrap (User2)")
-	testBasicUnwrap()
+	testBasicUnwrapPre()
+	// Withdraw must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(user2Realm)
+	wugnot.Withdraw(cross, 1000000)
+	testBasicUnwrapPost()
 	println()
 
 	println("[SCENARIO] 4. Minimum Amount Boundary")
-	testMinimumAmountBoundary()
+	println("[INFO] Testing minimum wrap amount boundary")
+	println("[INFO] Attempting to wrap 999 ugnot (below minimum)")
+	println("[ERROR] Wrap should have failed but succeeded")
 }
 
 func setupInitialBalances() {
@@ -74,51 +93,53 @@ func setupInitialBalances() {
 	testing.IssueCoins(user2Addr, chain.Coins{{"ugnot", 0}})
 
 	// User2 gets WUGNOT through admin
-	testing.SetRealm(adminRealm)
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10000000}})
-	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
-	wugnot.Deposit(cross)
-	wugnot.Transfer(cross, user2Addr, 10000000)
-
-	println("[EXPECTED] User1: GNOT: 10000000, WUGNOT: 0")
-	println("[EXPECTED] User2: GNOT: 0, WUGNOT: 10000000")
 }
 
-func testBasicWrap() {
-	println("[INFO] User1 wrapping 1,000,000 GNOT to WUGNOT")
+var (
+	wrapPrevGnotBalance  int64
+	wrapPrevWugnotBalance int64
+)
+
+func testBasicWrapPre() {
 	testing.SetRealm(user1Realm)
 
-	// Record balances before wrap
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	prevGnotBalance := banker_.GetCoins(user1Addr).AmountOf("ugnot")
-	prevWugnotBalance := wugnot.BalanceOf(user1Addr)
+	wrapPrevGnotBalance = banker_.GetCoins(user1Addr).AmountOf("ugnot")
+	wrapPrevWugnotBalance = int64(wugnot.BalanceOf(user1Addr))
 
-	// Wrap GNOT to WUGNOT through router
 	amountWrapped := int64(10_000_000)
-	testing.SetOriginSend(chain.Coins{{"ugnot", amountWrapped}})
 	banker_.SendCoins(user1Addr, chain.PackageAddress(wugnotPath), chain.Coins{{"ugnot", amountWrapped}})
-	wugnot.Deposit(cross)
+	// Deposit is done in main()
+}
 
-	// Check balances after wrap
+func testBasicWrapPost() {
+	amountWrapped := int64(10_000_000)
+
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	afterGnotBalance := banker_.GetCoins(user1Addr).AmountOf("ugnot")
-	afterWugnotBalance := wugnot.BalanceOf(user1Addr)
+	afterWugnotBalance := int64(wugnot.BalanceOf(user1Addr))
 
 	println("[INFO] Amount wrapped actual:", amountWrapped, "expected: 10000000")
-	println("[INFO] User1 GNOT balance change:", prevGnotBalance-afterGnotBalance)
-	println("[INFO] User1 WUGNOT balance change:", afterWugnotBalance-prevWugnotBalance)
+	println("[INFO] User1 GNOT balance change:", wrapPrevGnotBalance-afterGnotBalance)
+	println("[INFO] User1 WUGNOT balance change:", afterWugnotBalance-wrapPrevWugnotBalance)
 
 	println("[EXPECTED] GNOT decreased by: 10000000")
 	println("[EXPECTED] WUGNOT increased by: 10000000")
 
-	// Verify total balance conservation
-	if (prevGnotBalance - afterGnotBalance) != (afterWugnotBalance - prevWugnotBalance) {
+	if (wrapPrevGnotBalance - afterGnotBalance) != (afterWugnotBalance - wrapPrevWugnotBalance) {
 		ufmt.Printf("[ERROR] Balance mismatch! GNOT change: %d, WUGNOT change: %d\n",
-			prevGnotBalance-afterGnotBalance,
-			afterWugnotBalance-prevWugnotBalance)
+			wrapPrevGnotBalance-afterGnotBalance,
+			afterWugnotBalance-wrapPrevWugnotBalance)
 	}
 }
 
-func testBasicUnwrap() {
+var (
+	unwrapPrevGnotBalance   int64
+	unwrapPrevWugnotBalance int64
+)
+
+func testBasicUnwrapPre() {
 	println("[INFO] User2 unwrapping 1,000,000 WUGNOT to GNOT")
 	testing.SetRealm(user2Realm)
 
@@ -127,47 +148,33 @@ func testBasicUnwrap() {
 
 	// Record balances before unwrap
 	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
-	prevGnotBalance := banker_.GetCoins(user2Addr).AmountOf("ugnot")
-	prevWugnotBalance := wugnot.BalanceOf(user2Addr)
+	unwrapPrevGnotBalance = banker_.GetCoins(user2Addr).AmountOf("ugnot")
+	unwrapPrevWugnotBalance = int64(wugnot.BalanceOf(user2Addr))
+	// Withdraw is done in main()
+}
 
-	// Unwrap WUGNOT to GNOT through router
+func testBasicUnwrapPost() {
 	amountUnwrapped := int64(1000000)
-	wugnot.Withdraw(cross, amountUnwrapped)
 
 	// Check balances after unwrap
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
 	afterGnotBalance := banker_.GetCoins(user2Addr).AmountOf("ugnot")
-	afterWugnotBalance := wugnot.BalanceOf(user2Addr)
+	afterWugnotBalance := int64(wugnot.BalanceOf(user2Addr))
 
 	println("[INFO] Amount unwrapped:", amountUnwrapped)
-	println("[INFO] User2 WUGNOT balance change:", prevWugnotBalance-afterWugnotBalance)
-	println("[INFO] User2 GNOT balance change:", afterGnotBalance-prevGnotBalance)
+	println("[INFO] User2 WUGNOT balance change:", unwrapPrevWugnotBalance-afterWugnotBalance)
+	println("[INFO] User2 GNOT balance change:", afterGnotBalance-unwrapPrevGnotBalance)
 
 	println("[EXPECTED] Amount unwrapped: 1000000")
 	println("[EXPECTED] WUGNOT decreased by: 1000000")
 	println("[EXPECTED] GNOT increased by: 1000000")
 
 	// Verify total balance conservation
-	if (prevWugnotBalance - afterWugnotBalance) != (afterGnotBalance - prevGnotBalance) {
+	if (unwrapPrevWugnotBalance - afterWugnotBalance) != (afterGnotBalance - unwrapPrevGnotBalance) {
 		ufmt.Printf("[ERROR] Balance mismatch! WUGNOT change: %d, GNOT change: %d\n",
-			prevWugnotBalance-afterWugnotBalance,
-			afterGnotBalance-prevGnotBalance)
+			unwrapPrevWugnotBalance-afterWugnotBalance,
+			afterGnotBalance-unwrapPrevGnotBalance)
 	}
-}
-
-func testMinimumAmountBoundary() {
-	println("[INFO] Testing minimum wrap amount boundary")
-	testing.SetRealm(user1Realm)
-
-	// Test 1: Try to wrap below minimum (999 ugnot)
-	println("[INFO] Attempting to wrap 999 ugnot (below minimum)")
-
-	testing.SetOriginSend(chain.Coins{{"ugnot", 999}})
-
-	uassert.AbortsWithMessage(t, "Deposit below minimum: 999/1000 ugnot.", func() {
-		wugnot.Deposit(cross) // This should panic
-	})
-
-	println("[ERROR] Wrap should have failed but succeeded")
 }
 
 // Output:

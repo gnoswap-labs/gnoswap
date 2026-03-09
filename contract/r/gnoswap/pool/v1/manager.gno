@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -79,7 +79,7 @@ func (i *poolV1) CreatePool(
 		slot0FeeProtocol,
 	)
 
-	err := poolInfo.updateWithWrapping()
+	err := poolInfo.update()
 	if err != nil {
 		panic(err)
 	}

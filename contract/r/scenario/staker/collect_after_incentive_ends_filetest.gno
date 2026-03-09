@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -212,7 +212,7 @@ func collectDuringIncentive() {
 	testing.SkipHeights(blocksToSkip)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -231,7 +231,7 @@ func collectAfterEnd() {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore
@@ -243,7 +243,7 @@ func verifyIncentiveRemoved() {
 	testing.SetRealm(user1Realm)
 
 	gnsBefore := gns.BalanceOf(user1User)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	gnsAfter := gns.BalanceOf(user1User)
 
 	rewards := gnsAfter - gnsBefore

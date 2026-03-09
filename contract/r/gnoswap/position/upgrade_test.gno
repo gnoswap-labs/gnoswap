@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestRegisterInitializer tests the position upgrade system with table-driven approach
@@ -330,7 +330,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		amount0MinStr string
 		amount1MinStr string
 		deadline      int64
-		unwrapResult  bool
 		callerRealm   runtime.Realm
 	}{
 		{
@@ -346,7 +345,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount0MinStr: "900000",
 			amount1MinStr: "900000",
 			deadline:      9999999999,
-			unwrapResult:  false,
 			callerRealm:   testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -362,7 +360,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		DecreaseLiquidity(cross, tt.positionId, tt.liquidityStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline, tt.unwrapResult)
+		DecreaseLiquidity(cross, tt.positionId, tt.liquidityStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
@@ -431,11 +429,10 @@ func TestReposition(t *testing.T) {
 // TestCollectFee tests the CollectFee proxy function
 func TestCollectFee(t *testing.T) {
 	tests := []struct {
-		name         string
-		setup        func(t *testing.T)
-		positionId   uint64
-		unwrapResult bool
-		callerRealm  runtime.Realm
+		name        string
+		setup       func(t *testing.T)
+		positionId  uint64
+		callerRealm runtime.Realm
 	}{
 		{
 			name: "collect fee is success",
@@ -445,9 +442,8 @@ func TestCollectFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
-			positionId:   1,
-			unwrapResult: false,
-			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/position"),
+			positionId:  1,
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
 
@@ -462,7 +458,7 @@ func TestCollectFee(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		CollectFee(cross, tt.positionId, tt.unwrapResult)
+		CollectFee(cross, tt.positionId)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)

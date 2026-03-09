@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 
@@ -237,7 +237,7 @@ func stakeToken1AndCheckRewards() {
 
 	println("[INFO] collect reward for position 01 (tier 1, 100% allocation)")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
@@ -269,13 +269,13 @@ func stakeToken2AndVerifyRewards() {
 	testing.SkipHeights(1)
 
 	println("[INFO] clear previous rewards")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for position 01 (tier 1, 70% allocation)")
 	beforeGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterGns := gns.BalanceOf(adminUser)
 	reward1 := afterGns - beforeGns
 
@@ -286,7 +286,7 @@ func stakeToken2AndVerifyRewards() {
 
 	println("[INFO] collect reward for position 02 (tier 2, 30% allocation)")
 	beforeGns = gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 2)
 	afterGns = gns.BalanceOf(adminUser)
 	reward2 := afterGns - beforeGns
 

@@ -3,7 +3,7 @@ package v1
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 const (
@@ -53,10 +53,9 @@ func (s SwapType) String() string {
 // SingleSwapParams contains parameters for executing a single pool swap.
 // It represents the simplest form of swap that occurs within a single liquidity pool.
 type SingleSwapParams struct {
-	tokenIn    string // token to spend
-	tokenOut   string // token to receive
-	fee        uint32 // fee of the pool used to swap
-	withUnwrap bool   // whether to unwrap the token
+	tokenIn  string // token to spend
+	tokenOut string // token to receive
+	fee      uint32 // fee of the pool used to swap
 
 	// Amount specified for the swap:
 	//  - Positive: exact input amount (tokenIn)
@@ -88,8 +87,7 @@ func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
 // SwapParams contains parameters for executing a multi-hop swap operation.
 type SwapParams struct {
 	SingleSwapParams
-	recipient  address // address to receive the token
-	withUnwrap bool    // whether to unwrap the token
+	recipient address // address to receive the token
 }
 
 // TokenIn returns the input token address.
@@ -105,7 +103,7 @@ func (p SwapParams) Fee() uint32 { return p.fee }
 func (p SwapParams) Recipient() address { return p.recipient }
 
 // newSwapParams creates a new SwapParams instance with the provided parameters.
-func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified int64, withUnwrap bool) *SwapParams {
+func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified int64) *SwapParams {
 	return &SwapParams{
 		SingleSwapParams: SingleSwapParams{
 			tokenIn:         tokenIn,
@@ -113,8 +111,7 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amou
 			fee:             fee,
 			amountSpecified: amountSpecified,
 		},
-		withUnwrap: withUnwrap,
-		recipient:  recipient,
+		recipient: recipient,
 	}
 }
 
@@ -125,7 +122,6 @@ type SwapResult struct {
 	AmountIn        int64
 	AmountOut       int64
 	AmountSpecified int64
-	WithUnwrap      bool
 }
 
 // SwapParamsI defines the common interface for swap parameters.

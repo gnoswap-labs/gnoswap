@@ -99,14 +99,14 @@ func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr st
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string)
 }
 
-func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64, unwrapResult bool) (uint64, string, string, string, string, string, string) {
+func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string, string, string) {
 	result := t.ExecuteFn(
 		"DecreaseLiquidity",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6, r7 := t.instance.DecreaseLiquidity(args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(int64), args[5].(bool))
+			r1, r2, r3, r4, r5, r6, r7 := t.instance.DecreaseLiquidity(args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(int64))
 			return []any{r1, r2, r3, r4, r5, r6, r7}
 		},
-		positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline, unwrapResult,
+		positionId, liquidityStr, amount0MinStr, amount1MinStr, deadline,
 	).([]any)
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string), result[5].(string), result[6].(string)
 }
@@ -123,14 +123,14 @@ func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper 
 	return result[0].(uint64), result[1].(string), result[2].(int32), result[3].(int32), result[4].(string), result[5].(string)
 }
 
-func (t *TestPosition) CollectFee(positionId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+func (t *TestPosition) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
 	result := t.ExecuteFn(
 		"CollectFee",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6 := t.instance.CollectFee(args[0].(uint64), args[1].(bool))
+			r1, r2, r3, r4, r5, r6 := t.instance.CollectFee(args[0].(uint64))
 			return []any{r1, r2, r3, r4, r5, r6}
 		},
-		positionId, unwrapResult,
+		positionId,
 	).([]any)
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string), result[5].(string)
 }

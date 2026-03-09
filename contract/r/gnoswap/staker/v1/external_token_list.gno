@@ -4,12 +4,12 @@ import (
 	"chain"
 	"chain/runtime"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
 
-var defaultAllowed = []string{GNOT_DENOM, GNS_PATH}
+var defaultAllowed = []string{WUGNOT_PATH, GNS_PATH}
 
 // AddToken adds a new token path to the list of allowed tokens
 // Only the admin can add a new token.

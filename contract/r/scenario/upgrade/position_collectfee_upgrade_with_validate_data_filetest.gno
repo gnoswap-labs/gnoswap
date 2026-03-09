@@ -7,7 +7,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -156,7 +156,7 @@ func collectProtocolFee(token0Path, token1Path string, fee uint32, recipient add
 func collectFee(positionId uint64) {
 	testing.SetRealm(adminRealm)
 
-	positionId, protocolFee0, protocolFee1, poolPath, amount0, amount1 := position.CollectFee(cross, positionId, false)
+	positionId, protocolFee0, protocolFee1, poolPath, amount0, amount1 := position.CollectFee(cross, positionId)
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Collected protocol fee amount0:", protocolFee0)
 	println("[EXPECTED] Collected protocol fee amount1:", protocolFee1)

@@ -2,8 +2,8 @@ package pool
 
 import (
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // StoreKey defines the keys used for storing pool data in the KV store.

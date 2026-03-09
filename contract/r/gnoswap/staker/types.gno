@@ -2,7 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 type IStaker interface {
@@ -12,7 +12,7 @@ type IStaker interface {
 
 type IStakerManager interface {
 	StakeToken(positionId uint64, referrer string) string
-	UnStakeToken(positionId uint64, unwrapResult bool) string
+	UnStakeToken(positionId uint64) string
 	MintAndStake(
 		token0 string,
 		token1 string,
@@ -26,7 +26,7 @@ type IStakerManager interface {
 		deadline int64,
 		referrer string,
 	) (uint64, string, string, string, string)
-	CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64)
+	CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64)
 
 	SetPoolTier(poolPath string, tier uint64)
 	ChangePoolTier(poolPath string, tier uint64)

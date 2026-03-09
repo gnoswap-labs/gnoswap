@@ -37,7 +37,6 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 			decreaseParams.amount0Min,
 			decreaseParams.amount1Min,
 			decreaseParams.deadline,
-			decreaseParams.unwrapResult,
 		)
 
 		// then - verify liquidity decreased
@@ -77,7 +76,6 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 			decreaseParams.amount0Min,
 			decreaseParams.amount1Min,
 			decreaseParams.deadline,
-			decreaseParams.unwrapResult,
 		)
 	})
 }
@@ -104,7 +102,6 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 			decreaseParams.amount0Min,
 			decreaseParams.amount1Min,
 			decreaseParams.deadline,
-			decreaseParams.unwrapResult,
 		)
 
 		if liquidity == "0" && decreaseParams.liquidity != "0" {
@@ -139,7 +136,6 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 			decreaseParams.amount0Min,
 			decreaseParams.amount1Min,
 			decreaseParams.deadline,
-			decreaseParams.unwrapResult,
 		)
 	})
 }

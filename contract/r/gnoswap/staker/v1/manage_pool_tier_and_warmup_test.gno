@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
 )

@@ -1,4 +1,4 @@
-loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/nt/ufmt/v0
 
 ## start a new node
 gnoland start
@@ -198,7 +198,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // Test strings

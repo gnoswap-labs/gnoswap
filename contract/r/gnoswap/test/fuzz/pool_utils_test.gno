@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"

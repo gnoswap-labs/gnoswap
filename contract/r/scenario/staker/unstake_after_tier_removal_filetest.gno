@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -178,7 +178,7 @@ func attemptUnstake(positionId uint64) {
 	println("Attempting to unstake position from de-tiered pool...")
 
 	// This should now succeed after the fix
-	poolPath := sr.UnStakeToken(cross, positionId, false)
+	poolPath := sr.UnStakeToken(cross, positionId)
 
 	println("[INFO] poolPath: ", poolPath)
 

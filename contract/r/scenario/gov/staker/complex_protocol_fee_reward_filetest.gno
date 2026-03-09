@@ -9,8 +9,8 @@ import (
 	"chain/banker"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -72,7 +72,13 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Protocol fee deposit")
-	depositProtocolFee()
+	depositProtocolFeePre()
+	// Deposit must be called from main() due to AssertOriginCall frame limit
+	testing.SetRealm(adminRealm)
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000}})
+	wugnot.Deposit(cross)
+	testing.SetOriginSend(chain.Coins{})
+	depositProtocolFeePost()
 	println()
 
 	println("[SCENARIO] 5. Skip blocks and distribute emission/protocol fee")
@@ -118,7 +124,7 @@ func delegateDummyToDummy() {
 	ufmt.Printf("[INFO] delegated %d GNS from dummy to dummy\n", amount)
 }
 
-func depositProtocolFee() {
+func depositProtocolFeePre() {
 	// protocol fee deposit (bar, qux, wugnot)
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, protocolFeeAddr, 1000)
@@ -127,11 +133,12 @@ func depositProtocolFee() {
 	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-
 	banker_.SendCoins(adminAddr, wugnotAddr, coins)
+	// Deposit is done in main()
+}
 
-	testing.SetOriginSend(coins)
-	wugnot.Deposit(cross)
+func depositProtocolFeePost() {
+	testing.SetRealm(adminRealm)
 	wugnot.Transfer(cross, protocolFeeAddr, 10000)
 
 	testing.SetRealm(stakerRealm)
@@ -177,15 +184,13 @@ func collectRewardsByDummy() {
 
 	prevBarBalance := bar.BalanceOf(dummyAddr)
 	prevQuxBalance := qux.BalanceOf(dummyAddr)
-	prevGnotBalance := getUgnotBalance(dummyAddr)
 
 	staker.CollectReward(cross)
 
 	afterBarBalance := bar.BalanceOf(dummyAddr)
 	afterQuxBalance := qux.BalanceOf(dummyAddr)
-	afterGnotBalance := getUgnotBalance(dummyAddr)
 
-	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d), ugnot(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
+	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance)
 }
 
 func unDelegateAndCollectRewardByAdmin() {
@@ -194,26 +199,14 @@ func unDelegateAndCollectRewardByAdmin() {
 
 	prevBarBalance := bar.BalanceOf(adminAddr)
 	prevQuxBalance := qux.BalanceOf(adminAddr)
-	prevGnotBalance := getUgnotBalance(adminAddr)
 
 	staker.Undelegate(cross, adminAddr, int64(minAmount))
 	staker.CollectReward(cross)
 
 	afterBarBalance := bar.BalanceOf(adminAddr)
 	afterQuxBalance := qux.BalanceOf(adminAddr)
-	afterGnotBalance := getUgnotBalance(adminAddr)
 
-	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d), ugnot(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
-}
-
-func getUgnotBalance(addr address) int64 {
-	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
-	coins := banker_.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return int64(coins.AmountOf("ugnot"))
+	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance)
 }
 
 // Output:
@@ -233,13 +226,13 @@ func getUgnotBalance(addr address) int64 {
 // [INFO] skipped 10+1 blocks and distributed emission/protocol fee
 //
 // [SCENARIO] 6. Collect rewards
-// [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083), ugnot(8333)
+// [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083)
 //
 // [SCENARIO] 7. Additional protocol fee deposit
 // [INFO] protocol fee deposited: bar(2500), qux(4000), wugnot(0)
 //
 // [SCENARIO] 8. Collect rewards after additional protocol fee
-// [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333), ugnot(0)
+// [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333)
 //
 // [SCENARIO] 9. Admin undelegates dummy2 and collects reward
-// [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083), ugnot(1666)
+// [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083)

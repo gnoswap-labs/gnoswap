@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -41,7 +41,6 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Generate params for reposition
@@ -122,7 +121,6 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Generate params for reposition
@@ -193,7 +191,6 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		// Verify position is now empty
@@ -289,7 +286,6 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
 			"0",
 			"0",
 			deadline,
-			false,
 		)
 
 		repositionParams := NewRandomizedPositionRepositionParams(ft, tokenId)

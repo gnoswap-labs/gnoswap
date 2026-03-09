@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 type MockPoolStore struct {

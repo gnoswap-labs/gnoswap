@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -244,7 +244,7 @@ func stakePositionAndVerifyEmission() {
 
 	println("[INFO] collect reward for staked position")
 	beforeAdminGns := gns.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
+	sr.CollectReward(cross, 1)
 	afterAdminGns := gns.BalanceOf(adminUser)
 	reward := afterAdminGns - beforeAdminGns
 

@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -254,8 +254,8 @@ func collectRewardsForBothPositions() {
 
 	println("[INFO] collect rewards for both positions")
 	testing.SkipHeights(1)
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 	ufmt.Println("[INFO] rewards collected for both positions during external incentive period")
 }
 
@@ -295,8 +295,8 @@ func collectRewardsAfterExternalEnds() {
 	before := gns.BalanceOf(adminUser)
 	testing.SkipHeights(1)
 
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
+	sr.CollectReward(cross, 1)
+	sr.CollectReward(cross, 2)
 	after := gns.BalanceOf(adminUser)
 	diff := after - before
 

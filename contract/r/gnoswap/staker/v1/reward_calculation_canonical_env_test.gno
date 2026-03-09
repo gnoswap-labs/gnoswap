@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	sr "gno.land/r/gnoswap/staker"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -496,7 +496,6 @@ func newExternalIncentiveBy(
 		0,
 		currentHeight,
 		currentTimestamp,
-		false,
 	)
 
 	externalIncentive.SetRewardPerSecond(rewardPerSecond)

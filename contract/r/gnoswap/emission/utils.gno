@@ -4,7 +4,7 @@ import (
 	"math"
 	"strconv"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // formatUint converts various unsigned integer types to string representation.

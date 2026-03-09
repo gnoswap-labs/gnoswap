@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // b64Encode encodes a string to base64.

@@ -8,7 +8,7 @@ package main
 import (
 	"testing"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -146,7 +146,6 @@ func repositionToNewRange() {
 		"0",
 		"0",
 		9999999999,
-		false,
 	)
 	ufmt.Printf("[EXPECTED] Decreased amount0: %s\n", amount0Decreased)
 	ufmt.Printf("[EXPECTED] Decreased amount1: %s\n", amount1Decreased)

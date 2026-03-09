@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ownable"
-	"gno.land/p/nt/ufmt"
+	ownable "gno.land/p/nt/ownable/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"

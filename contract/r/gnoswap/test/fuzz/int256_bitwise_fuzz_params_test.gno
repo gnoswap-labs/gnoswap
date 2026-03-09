@@ -3,7 +3,7 @@ package fuzz
 import (
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // Left Shift (Lsh) Parameters

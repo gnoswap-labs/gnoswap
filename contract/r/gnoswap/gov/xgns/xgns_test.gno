@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ownable"
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	ownable "gno.land/p/nt/ownable/v0"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 

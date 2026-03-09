@@ -1,4 +1,4 @@
-loadpkg gno.land/p/nt/avl
+loadpkg gno.land/p/nt/avl/v0
 
 ## start a new node
 gnoland start
@@ -160,7 +160,7 @@ package datastructgas
 import (
 	"strconv"
 
-	"gno.land/p/nt/avl"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 // Structs for testing

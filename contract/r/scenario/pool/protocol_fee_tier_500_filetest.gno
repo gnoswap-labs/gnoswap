@@ -3,7 +3,6 @@
 package main
 
 import (
-	"chain"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -16,7 +15,6 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -168,21 +166,11 @@ func printSummary() {
 func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 	testing.SetRealm(adminRealm)
 
-	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
-
 	if amount0Delta > 0 {
-		if barPath == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
-			wugnot.Deposit(cross)
-		}
 		common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
 	}
+
 	if amount1Delta > 0 {
-		if fooPath == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
-			wugnot.Deposit(cross)
-		}
 		common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
 	}
 

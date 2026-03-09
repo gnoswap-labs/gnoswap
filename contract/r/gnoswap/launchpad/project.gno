@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // Project represents a launchpad project.

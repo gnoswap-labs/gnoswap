@@ -3,7 +3,7 @@ package emission
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestGetDistributableAmount(t *testing.T) {

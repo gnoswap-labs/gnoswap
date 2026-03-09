@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -46,6 +46,24 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			expectedStatus:  governance.StatusActive,
 		},
 		{
+			name:            "Status Rejected - voting ended with no votes",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         0,
+			voteNo:          0,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
+			name:            "Status Rejected - voting ended with quorum not reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         400,
+			voteNo:          0,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
 			name:            "Status Rejected - no votes win and voting finished",
 			currentTime:     baseTime.Add(time.Duration(350) * time.Second), // After voting ended (1300)
 			maxVotingWeight: 1000,
@@ -64,12 +82,30 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			expectedStatus:  governance.StatusRejected,
 		},
 		{
+			name:            "Status Rejected - tie but quorum not reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         200,
+			voteNo:          200,
+			expectedStatus:  governance.StatusRejected,
+		},
+		{
 			name:            "Status Passed - in execution delay",
 			currentTime:     baseTime.Add(time.Duration(350) * time.Second), // After voting (1300), before executable (1400)
 			maxVotingWeight: 1000,
 			executable:      true,
 			voteYes:         600, // 60% - passed quorum and majority
 			voteNo:          300,
+			expectedStatus:  governance.StatusPassed,
+		},
+		{
+			name:            "Status Passed - tie with quorum reached",
+			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
+			maxVotingWeight: 1000,
+			executable:      true,
+			voteYes:         500,
+			voteNo:          500,
 			expectedStatus:  governance.StatusPassed,
 		},
 		{
@@ -157,7 +193,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 		voteYes         int64
 		voteNo          int64
 		expectedTotal   int64
-		expectedDiff    int64
 	}{
 		{
 			name:            "Voting with majority yes",
@@ -166,7 +201,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         600,
 			voteNo:          300,
 			expectedTotal:   900,
-			expectedDiff:    300,
 		},
 		{
 			name:            "Voting with majority no",
@@ -175,7 +209,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         300,
 			voteNo:          600,
 			expectedTotal:   900,
-			expectedDiff:    300,
 		},
 		{
 			name:            "Equal votes",
@@ -184,7 +217,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			voteYes:         400,
 			voteNo:          400,
 			expectedTotal:   800,
-			expectedDiff:    0,
 		},
 	}
 
@@ -215,7 +247,6 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 
 			statusResolver := NewProposalStatusResolver(status)
 			uassert.Equal(t, statusResolver.TotalVoteWeight(), tc.expectedTotal)
-			uassert.Equal(t, statusResolver.voteStatusResolver.DiffVoteWeight(), tc.expectedDiff)
 		})
 	}
 }

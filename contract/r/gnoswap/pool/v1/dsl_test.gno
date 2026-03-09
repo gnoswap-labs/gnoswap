@@ -8,8 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
+	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -35,16 +35,12 @@ type DSLPositionInfo struct {
 	liquidity *u256.Uint
 }
 
-// NewPoolTestEnv initializes the base test environment
+// NewPoolTestEnv initializes the base test environment.
 func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 	t.Helper()
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr := address("g15h3ywez2g2xqqsksm9mfkau0xz2puma2qvwmqd") // pool contract address
-
-	// Initialize basic pool setup
-	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
-	ugnotDeposit(t, adminAddr, 100_000_000_000_000)
 
 	return &PoolTestEnv{
 		t:              t,

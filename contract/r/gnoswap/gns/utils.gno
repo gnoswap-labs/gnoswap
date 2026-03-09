@@ -4,7 +4,7 @@ import (
 	"math"
 	"strconv"
 
-	"gno.land/p/nt/ufmt"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // validBlockTime validates that block time is within acceptable range.

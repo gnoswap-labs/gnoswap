@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
+	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -195,7 +195,7 @@ func verifyTotalDelegation() {
 // [EXPECTED] snapshot cleanup succeeded
 // [INFO] after delegation amount: 0
 // [SCENARIO] 9. Verify proposal is still accessible after cleanup
-// [EXPECTED] proposal 1 status: passed
+// [EXPECTED] proposal 1 status: rejected
 // [EXPECTED] proposal is still accessible after cleanup
 //
 // [SCENARIO] 10. Verify total delegation preserved

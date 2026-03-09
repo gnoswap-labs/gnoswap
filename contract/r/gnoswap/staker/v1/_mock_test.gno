@@ -6,8 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
