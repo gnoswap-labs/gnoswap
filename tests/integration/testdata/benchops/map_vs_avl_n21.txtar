@@ -1,0 +1,359 @@
+## Map vs AVL Tree benchmark for KVStore conversion PoC
+## Compares gas and storage costs at small N (5, 10, 20) typical of KVStore usage.
+## Each scenario: initial populate, single-key update, read-then-update (dirty propagation).
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy benchmark realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/mapvsavl -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### Phase 1: Initial Population
+
+# Map: populate 5 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapPopulate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# AVL: populate 5 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlPopulate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# Map: populate 10 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapPopulate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# AVL: populate 10 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlPopulate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# Map: populate 20 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapPopulate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# AVL: populate 20 entries
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlPopulate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+### Phase 2: Single Key Update
+### (Maps and trees are already populated from Phase 1)
+
+# Map5: update 1 key out of 5
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapUpdate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL5: update 1 key out of 5
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlUpdate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# Map10: update 1 key out of 10
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL10: update 1 key out of 10
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# Map20: update 1 key out of 20
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapUpdate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL20: update 1 key out of 20
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlUpdate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+### Phase 3: Read N-1 keys then Update 1 key
+### (Simulates KVStore pattern: multiple reads + 1 write per operation)
+
+# Map5: read 4 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapReadThenUpdate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL5: read 4 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlReadThenUpdate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# Map10: read 9 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapReadThenUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL10: read 9 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlReadThenUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# Map20: read 19 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapReadThenUpdate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL20: read 19 keys, then update 1
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlReadThenUpdate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+### Phase 4: Read-Only (no write, check dirty marking)
+
+# Map20: read only (should still re-serialize entire map)
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapReadOnly20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL20: read only (should not re-serialize)
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlReadOnly20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+### Phase 5: Mixed-type values (simulates real KVStore with diverse value types)
+
+# Map: populate 20 entries with mixed types (int64, string, bool, struct)
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapPopulateMixed -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# AVL: populate 20 entries with mixed types
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlPopulateMixed -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+stdout 'STORAGE DELTA'
+
+# Map mixed: update 1 key
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func MapUpdateMixed -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+# AVL mixed: update 1 key
+gnokey maketx call -pkgpath gno.land/r/test/mapvsavl -func AvlUpdateMixed -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED'
+
+-- gnomod.toml --
+module = "gno.land/r/test/mapvsavl"
+gno = "0.9"
+
+-- main.gno --
+package mapvsavl
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+var (
+	// Homogeneous int->int maps
+	m5  map[string]int
+	m10 map[string]int
+	m20 map[string]int
+
+	// Homogeneous int->int avl trees
+	t5  *avl.Tree
+	t10 *avl.Tree
+	t20 *avl.Tree
+
+	// Mixed-type (simulating KVStore pattern)
+	mMixed map[string]any
+	tMixed *avl.Tree
+)
+
+// Helper: key generator
+func key(i int) string {
+	return "k" + strconv.Itoa(i)
+}
+
+// Phase 1: Initial Population
+
+func MapPopulate5(cur realm) {
+	m5 = make(map[string]int)
+	for i := 0; i < 5; i++ {
+		m5[key(i)] = i * 100
+	}
+}
+
+func AvlPopulate5(cur realm) {
+	t5 = avl.NewTree()
+	for i := 0; i < 5; i++ {
+		t5.Set(key(i), i*100)
+	}
+}
+
+func MapPopulate10(cur realm) {
+	m10 = make(map[string]int)
+	for i := 0; i < 10; i++ {
+		m10[key(i)] = i * 100
+	}
+}
+
+func AvlPopulate10(cur realm) {
+	t10 = avl.NewTree()
+	for i := 0; i < 10; i++ {
+		t10.Set(key(i), i*100)
+	}
+}
+
+func MapPopulate20(cur realm) {
+	m20 = make(map[string]int)
+	for i := 0; i < 20; i++ {
+		m20[key(i)] = i * 100
+	}
+}
+
+func AvlPopulate20(cur realm) {
+	t20 = avl.NewTree()
+	for i := 0; i < 20; i++ {
+		t20.Set(key(i), i*100)
+	}
+}
+
+// Phase 2: Single Key Update (only write 1 key)
+
+func MapUpdate5(cur realm) {
+	m5[key(2)] = 9999
+}
+
+func AvlUpdate5(cur realm) {
+	t5.Set(key(2), 9999)
+}
+
+func MapUpdate10(cur realm) {
+	m10[key(5)] = 9999
+}
+
+func AvlUpdate10(cur realm) {
+	t10.Set(key(5), 9999)
+}
+
+func MapUpdate20(cur realm) {
+	m20[key(10)] = 9999
+}
+
+func AvlUpdate20(cur realm) {
+	t20.Set(key(10), 9999)
+}
+
+// Phase 3: Read N-1 keys, then Update 1 key
+// (Simulates KVStore: check multiple values then write one)
+
+func MapReadThenUpdate5(cur realm) {
+	sum := 0
+	for i := 0; i < 4; i++ {
+		sum += m5[key(i)]
+	}
+	m5[key(4)] = sum
+}
+
+func AvlReadThenUpdate5(cur realm) {
+	sum := 0
+	for i := 0; i < 4; i++ {
+		v, _ := t5.Get(key(i))
+		sum += v.(int)
+	}
+	t5.Set(key(4), sum)
+}
+
+func MapReadThenUpdate10(cur realm) {
+	sum := 0
+	for i := 0; i < 9; i++ {
+		sum += m10[key(i)]
+	}
+	m10[key(9)] = sum
+}
+
+func AvlReadThenUpdate10(cur realm) {
+	sum := 0
+	for i := 0; i < 9; i++ {
+		v, _ := t10.Get(key(i))
+		sum += v.(int)
+	}
+	t10.Set(key(9), sum)
+}
+
+func MapReadThenUpdate20(cur realm) {
+	sum := 0
+	for i := 0; i < 19; i++ {
+		sum += m20[key(i)]
+	}
+	m20[key(19)] = sum
+}
+
+func AvlReadThenUpdate20(cur realm) {
+	sum := 0
+	for i := 0; i < 19; i++ {
+		v, _ := t20.Get(key(i))
+		sum += v.(int)
+	}
+	t20.Set(key(19), sum)
+}
+
+// Phase 4: Read-Only (no writes — check dirty marking behavior)
+
+func MapReadOnly20(cur realm) int {
+	sum := 0
+	for i := 0; i < 20; i++ {
+		sum += m20[key(i)]
+	}
+	return sum
+}
+
+func AvlReadOnly20(cur realm) int {
+	sum := 0
+	for i := 0; i < 20; i++ {
+		v, _ := t20.Get(key(i))
+		sum += v.(int)
+	}
+	return sum
+}
+
+// Phase 5: Mixed-type values (simulates real KVStore)
+
+type Config struct {
+	Name    string
+	Value   int64
+	Enabled bool
+}
+
+func MapPopulateMixed(cur realm) {
+	mMixed = make(map[string]any)
+	for i := 0; i < 8; i++ {
+		mMixed["int_"+key(i)] = int64(i * 100)
+	}
+	for i := 0; i < 6; i++ {
+		mMixed["str_"+key(i)] = "value_" + strconv.Itoa(i)
+	}
+	for i := 0; i < 3; i++ {
+		mMixed["bool_"+key(i)] = i%2 == 0
+	}
+	for i := 0; i < 3; i++ {
+		mMixed["cfg_"+key(i)] = Config{
+			Name:    "config_" + strconv.Itoa(i),
+			Value:   int64(i * 1000),
+			Enabled: true,
+		}
+	}
+}
+
+func AvlPopulateMixed(cur realm) {
+	tMixed = avl.NewTree()
+	for i := 0; i < 8; i++ {
+		tMixed.Set("int_"+key(i), int64(i*100))
+	}
+	for i := 0; i < 6; i++ {
+		tMixed.Set("str_"+key(i), "value_"+strconv.Itoa(i))
+	}
+	for i := 0; i < 3; i++ {
+		tMixed.Set("bool_"+key(i), i%2 == 0)
+	}
+	for i := 0; i < 3; i++ {
+		tMixed.Set("cfg_"+key(i), Config{
+			Name:    "config_" + strconv.Itoa(i),
+			Value:   int64(i * 1000),
+			Enabled: true,
+		})
+	}
+}
+
+func MapUpdateMixed(cur realm) {
+	mMixed["int_"+key(3)] = int64(7777)
+}
+
+func AvlUpdateMixed(cur realm) {
+	tMixed.Set("int_"+key(3), int64(7777))
+}
