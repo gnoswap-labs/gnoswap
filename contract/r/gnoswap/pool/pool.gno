@@ -415,47 +415,69 @@ func NewTickInfo() TickInfo {
 
 
 type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
+	liquidity u256.Uint // amount of liquidity owned by this position
 
 	// Fee growth per unit of liquidity as of the last update
 	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
+	feeGrowthInside0LastX128 u256.Uint
 
 	// Fee growth per unit of liquidity as of the last update
 	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
+	feeGrowthInside1LastX128 u256.Uint
 
 	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
+	tokensOwed0 u256.Uint
 
 	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
+	tokensOwed1 u256.Uint
 }
 
-func (p *PositionInfo) Liquidity() *u256.Uint                { return p.liquidity }
-func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return p.feeGrowthInside0LastX128 }
-func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return p.feeGrowthInside1LastX128 }
-func (p *PositionInfo) TokensOwed0() *u256.Uint              { return p.tokensOwed0 }
-func (p *PositionInfo) TokensOwed1() *u256.Uint              { return p.tokensOwed1 }
+// Accessor pattern: returns &p.field to enable in-place modification
+// without creating HeapItemValue objects in Gno VM.
+func (p *PositionInfo) Liquidity() *u256.Uint                { return &p.liquidity }
+func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return &p.feeGrowthInside0LastX128 }
+func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return &p.feeGrowthInside1LastX128 }
+func (p *PositionInfo) TokensOwed0() *u256.Uint              { return &p.tokensOwed0 }
+func (p *PositionInfo) TokensOwed1() *u256.Uint              { return &p.tokensOwed1 }
 
 func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = liquidity
+	if liquidity == nil {
+		p.liquidity = u256.Uint{}
+		return
+	}
+	p.liquidity = *liquidity
 }
 
 func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
-	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	if feeGrowthInside0LastX128 == nil {
+		p.feeGrowthInside0LastX128 = u256.Uint{}
+		return
+	}
+	p.feeGrowthInside0LastX128 = *feeGrowthInside0LastX128
 }
 
 func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
-	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	if feeGrowthInside1LastX128 == nil {
+		p.feeGrowthInside1LastX128 = u256.Uint{}
+		return
+	}
+	p.feeGrowthInside1LastX128 = *feeGrowthInside1LastX128
 }
 
 func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
-	p.tokensOwed0 = tokensOwed0
+	if tokensOwed0 == nil {
+		p.tokensOwed0 = u256.Uint{}
+		return
+	}
+	p.tokensOwed0 = *tokensOwed0
 }
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
-	p.tokensOwed1 = tokensOwed1
+	if tokensOwed1 == nil {
+		p.tokensOwed1 = u256.Uint{}
+		return
+	}
+	p.tokensOwed1 = *tokensOwed1
 }
 
 func NewPositionInfo(
@@ -465,11 +487,11 @@ func NewPositionInfo(
 	tokensOwed0 *u256.Uint,
 	tokensOwed1 *u256.Uint,
 ) PositionInfo {
-	return PositionInfo{
-		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-		tokensOwed0:              tokensOwed0,
-		tokensOwed1:              tokensOwed1,
-	}
+	pi := PositionInfo{}
+	pi.SetLiquidity(liquidity)
+	pi.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
+	pi.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
+	pi.SetTokensOwed0(tokensOwed0)
+	pi.SetTokensOwed1(tokensOwed1)
+	return pi
 }

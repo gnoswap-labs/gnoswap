@@ -300,7 +300,7 @@ func GetPosition(poolPath, key string) (PositionInfo, error) {
 		return PositionInfo{}, err
 	}
 
-	return clonePositionInfo(positionInfo), nil
+	return positionInfo, nil
 }
 
 // GetObservationState returns the observation state for a given pool path.
