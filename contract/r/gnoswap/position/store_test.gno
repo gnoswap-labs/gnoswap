@@ -487,3 +487,267 @@ func TestStoreUpdatePosition(t *testing.T) {
 	retrieved, _ = ps.GetPosition(1)
 	uassert.Equal(t, "gno.land/r/demo/pool2", retrieved.poolKey)
 }
+
+func makeCanonicalPosition() Position {
+	return Position{
+		poolKey:                  "gno.land/r/demo/pool1",
+		operator:                 "g1test",
+		tickLower:                -100,
+		tickUpper:                100,
+		liquidity:                *u256.MustFromDecimal("5000"),
+		feeGrowthInside0LastX128: *u256.MustFromDecimal("100"),
+		feeGrowthInside1LastX128: *u256.MustFromDecimal("200"),
+		tokensOwed0:              *u256.MustFromDecimal("50"),
+		tokensOwed1:              *u256.MustFromDecimal("60"),
+		token0Balance:            *u256.MustFromDecimal("1000"),
+		token1Balance:            *u256.MustFromDecimal("2000"),
+		burned:                   false,
+	}
+}
+
+func verifyCanonicalPosition(t *testing.T, pos Position) {
+	t.Helper()
+	uassert.Equal(t, "gno.land/r/demo/pool1", pos.poolKey)
+	uassert.Equal(t, int32(-100), pos.tickLower)
+	uassert.Equal(t, int32(100), pos.tickUpper)
+	uassert.Equal(t, "5000", pos.Liquidity().ToString())
+	uassert.Equal(t, "100", pos.FeeGrowthInside0LastX128().ToString())
+	uassert.Equal(t, "200", pos.FeeGrowthInside1LastX128().ToString())
+	uassert.Equal(t, "50", pos.TokensOwed0().ToString())
+	uassert.Equal(t, "60", pos.TokensOwed1().ToString())
+	uassert.Equal(t, "1000", pos.Token0Balance().ToString())
+	uassert.Equal(t, "2000", pos.Token1Balance().ToString())
+	uassert.False(t, pos.Burned())
+}
+
+// initStoreWithCanonicalPosition sets up a positionStore with a single
+// canonical position at the given ID.
+func initStoreWithCanonicalPosition(t *testing.T, positionId uint64) IPositionStore {
+	t.Helper()
+	resetTestState(t)
+	ps := NewPositionStore(kvStore)
+	err := ps.SetPositions(avl.NewTree())
+	uassert.NoError(t, err)
+	err = ps.SetPosition(positionId, makeCanonicalPosition())
+	uassert.NoError(t, err)
+	return ps
+}
+
+func TestPosition_ValueTypeImmutability(t *testing.T) {
+	const posID = uint64(1)
+
+	mutationTests := []struct {
+		name   string
+		mutate func(pos Position)
+	}{
+		{
+			"setter mutation does not affect store",
+			func(pos Position) {
+				pos.SetLiquidity(u256.MustFromDecimal("0"))
+				pos.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("99999"))
+				pos.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("88888"))
+				pos.SetTokensOwed0(u256.MustFromDecimal("77777"))
+				pos.SetTokensOwed1(u256.MustFromDecimal("66666"))
+				pos.SetToken0Balance(u256.MustFromDecimal("55555"))
+				pos.SetToken1Balance(u256.MustFromDecimal("44444"))
+				pos.SetBurned(true)
+				pos.SetPoolKey("modified/pool")
+				pos.SetTickLower(-999)
+				pos.SetTickUpper(999)
+				pos.SetOperator("g1attacker")
+			},
+		},
+		{
+			"accessor pointer arithmetic does not affect store",
+			func(pos Position) {
+				pos.Liquidity().Add(pos.Liquidity(), u256.MustFromDecimal("9000"))
+				pos.FeeGrowthInside0LastX128().Set(u256.MustFromDecimal("99999"))
+				pos.TokensOwed0().Set(u256.MustFromDecimal("99999"))
+				pos.Token0Balance().Set(u256.MustFromDecimal("99999"))
+			},
+		},
+	}
+
+	for _, tt := range mutationTests {
+		t.Run(tt.name, func(t *testing.T) {
+			ps := initStoreWithCanonicalPosition(t, posID)
+			retrieved, ok := ps.GetPosition(posID)
+			uassert.True(t, ok)
+			tt.mutate(retrieved)
+
+			stored, ok := ps.GetPosition(posID)
+			uassert.True(t, ok)
+			verifyCanonicalPosition(t, stored)
+		})
+	}
+
+	t.Run("two retrievals are independent copies", func(t *testing.T) {
+		ps := initStoreWithCanonicalPosition(t, posID)
+
+		copy1, _ := ps.GetPosition(posID)
+		copy2, _ := ps.GetPosition(posID)
+
+		copy1.SetLiquidity(u256.MustFromDecimal("0"))
+		copy1.SetPoolKey("modified")
+
+		uassert.Equal(t, "5000", copy2.Liquidity().ToString())
+		uassert.Equal(t, "gno.land/r/demo/pool1", copy2.poolKey)
+	})
+
+	t.Run("changes require explicit SetPosition", func(t *testing.T) {
+		ps := initStoreWithCanonicalPosition(t, posID)
+
+		modified, _ := ps.GetPosition(posID)
+		modified.SetLiquidity(u256.MustFromDecimal("9999"))
+
+		// without SetPosition → store unchanged
+		stored, _ := ps.GetPosition(posID)
+		uassert.Equal(t, "5000", stored.Liquidity().ToString())
+
+		// with SetPosition → store updated
+		err := ps.SetPosition(posID, modified)
+		uassert.NoError(t, err)
+		stored2, _ := ps.GetPosition(posID)
+		uassert.Equal(t, "9999", stored2.Liquidity().ToString())
+	})
+
+	t.Run("cross-position isolation", func(t *testing.T) {
+		resetTestState(t)
+		ps := NewPositionStore(kvStore)
+		err := ps.SetPositions(avl.NewTree())
+		uassert.NoError(t, err)
+
+		pos1 := makeCanonicalPosition()
+		pos2 := makeCanonicalPosition()
+		pos2.SetLiquidity(u256.MustFromDecimal("8000"))
+		pos2.SetPoolKey("gno.land/r/demo/pool2")
+
+		ps.SetPosition(1, pos1)
+		ps.SetPosition(2, pos2)
+
+		// mutate retrieved position 1
+		r1, _ := ps.GetPosition(1)
+		r1.SetLiquidity(u256.MustFromDecimal("0"))
+		r1.Token0Balance().Set(u256.MustFromDecimal("0"))
+
+		// both positions retain their original values
+		s1, _ := ps.GetPosition(1)
+		s2, _ := ps.GetPosition(2)
+		uassert.Equal(t, "5000", s1.Liquidity().ToString())
+		uassert.Equal(t, "1000", s1.Token0Balance().ToString())
+		uassert.Equal(t, "8000", s2.Liquidity().ToString())
+		uassert.Equal(t, "gno.land/r/demo/pool2", s2.poolKey)
+	})
+}
+
+func TestPosition_SetterDereferencesInput(t *testing.T) {
+	tests := []struct {
+		name     string
+		set      func(pos *Position, val *u256.Uint)
+		get      func(pos *Position) string
+		initial  string
+		mutated  string
+		expected string
+	}{
+		{
+			"Liquidity",
+			func(pos *Position, val *u256.Uint) { pos.SetLiquidity(val) },
+			func(pos *Position) string { return pos.Liquidity().ToString() },
+			"5000", "9999", "5000",
+		},
+		{
+			"FeeGrowthInside0LastX128",
+			func(pos *Position, val *u256.Uint) { pos.SetFeeGrowthInside0LastX128(val) },
+			func(pos *Position) string { return pos.FeeGrowthInside0LastX128().ToString() },
+			"100", "9999", "100",
+		},
+		{
+			"FeeGrowthInside1LastX128",
+			func(pos *Position, val *u256.Uint) { pos.SetFeeGrowthInside1LastX128(val) },
+			func(pos *Position) string { return pos.FeeGrowthInside1LastX128().ToString() },
+			"200", "9999", "200",
+		},
+		{
+			"TokensOwed0",
+			func(pos *Position, val *u256.Uint) { pos.SetTokensOwed0(val) },
+			func(pos *Position) string { return pos.TokensOwed0().ToString() },
+			"50", "9999", "50",
+		},
+		{
+			"TokensOwed1",
+			func(pos *Position, val *u256.Uint) { pos.SetTokensOwed1(val) },
+			func(pos *Position) string { return pos.TokensOwed1().ToString() },
+			"60", "9999", "60",
+		},
+		{
+			"Token0Balance",
+			func(pos *Position, val *u256.Uint) { pos.SetToken0Balance(val) },
+			func(pos *Position) string { return pos.Token0Balance().ToString() },
+			"1000", "9999", "1000",
+		},
+		{
+			"Token1Balance",
+			func(pos *Position, val *u256.Uint) { pos.SetToken1Balance(val) },
+			func(pos *Position) string { return pos.Token1Balance().ToString() },
+			"2000", "9999", "2000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pos := makeCanonicalPosition()
+			val := u256.MustFromDecimal(tt.initial)
+			tt.set(&pos, val)
+
+			// mutate the original pointer after setting
+			val.Set(u256.MustFromDecimal(tt.mutated))
+
+			// position must still hold the initial value
+			uassert.Equal(t, tt.expected, tt.get(&pos))
+		})
+	}
+}
+
+// TestPosition_ZeroInitialization verifies that a zero-value Position
+// has properly initialized value type fields.
+func TestPosition_ZeroInitialization(t *testing.T) {
+	pos := Position{}
+
+	uassert.Equal(t, "0", pos.Liquidity().ToString())
+	uassert.Equal(t, "0", pos.FeeGrowthInside0LastX128().ToString())
+	uassert.Equal(t, "0", pos.FeeGrowthInside1LastX128().ToString())
+	uassert.Equal(t, "0", pos.TokensOwed0().ToString())
+	uassert.Equal(t, "0", pos.TokensOwed1().ToString())
+	uassert.Equal(t, "0", pos.Token0Balance().ToString())
+	uassert.Equal(t, "0", pos.Token1Balance().ToString())
+	uassert.False(t, pos.Burned())
+	uassert.True(t, pos.IsClear())
+}
+
+// TestPosition_IsClearWithValueTypes verifies that IsClear works
+// correctly with value type fields.
+func TestPosition_IsClearWithValueTypes(t *testing.T) {
+	tests := []struct {
+		name      string
+		liquidity string
+		owed0     string
+		owed1     string
+		expected  bool
+	}{
+		{"all zero", "0", "0", "0", true},
+		{"has liquidity", "1000", "0", "0", false},
+		{"has owed0", "0", "100", "0", false},
+		{"has owed1", "0", "0", "100", false},
+		{"all non-zero", "1000", "100", "200", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pos := Position{}
+			pos.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
+			pos.SetTokensOwed0(u256.MustFromDecimal(tt.owed0))
+			pos.SetTokensOwed1(u256.MustFromDecimal(tt.owed1))
+			uassert.Equal(t, tt.expected, pos.IsClear())
+		})
+	}
+}
