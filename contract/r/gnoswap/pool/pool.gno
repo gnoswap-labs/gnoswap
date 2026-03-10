@@ -21,10 +21,10 @@ type Pool struct {
 	slot0                Slot0
 	balances             Balances // balances of the pool
 	protocolFees         ProtocolFees
-	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
-	feeGrowthGlobal0X128 *u256.Uint // uint256
-	feeGrowthGlobal1X128 *u256.Uint // uint256
-	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
+	maxLiquidityPerTick  u256.Uint // the maximum amount of liquidity that can be added per tick
+	feeGrowthGlobal0X128 u256.Uint // uint256
+	feeGrowthGlobal1X128 u256.Uint // uint256
+	liquidity            u256.Uint // total amount of active liquidity in the pool (within current tick range)
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
@@ -41,18 +41,18 @@ func (p *Pool) Balances() Balances                  { return p.balances }
 func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
 func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
-func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return p.maxLiquidityPerTick }
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return &p.maxLiquidityPerTick }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
 func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return p.slot0.sqrtPriceX96 }
 func (p *Pool) Slot0Tick() int32                    { return p.slot0.tick }
 func (p *Pool) Slot0FeeProtocol() uint8             { return p.slot0.feeProtocol }
 func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
-func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
-func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return &p.feeGrowthGlobal0X128 }
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return &p.feeGrowthGlobal1X128 }
 func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
-func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
+func (p *Pool) Liquidity() *u256.Uint               { return &p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
 func (p *Pool) Positions() *avl.Tree                { return p.positions }
@@ -88,7 +88,11 @@ func (p *Pool) SetTickSpacing(tickSpacing int32) {
 }
 
 func (p *Pool) SetMaxLiquidityPerTick(maxLiquidityPerTick *u256.Uint) {
-	p.maxLiquidityPerTick = maxLiquidityPerTick
+	if maxLiquidityPerTick == nil {
+		p.maxLiquidityPerTick = u256.Uint{}
+		return
+	}
+	p.maxLiquidityPerTick = *maxLiquidityPerTick
 }
 
 func (p *Pool) SetSlot0(slot0 Slot0) {
@@ -96,11 +100,19 @@ func (p *Pool) SetSlot0(slot0 Slot0) {
 }
 
 func (p *Pool) SetFeeGrowthGlobal0X128(feeGrowthGlobal0X128 *u256.Uint) {
-	p.feeGrowthGlobal0X128 = feeGrowthGlobal0X128
+	if feeGrowthGlobal0X128 == nil {
+		p.feeGrowthGlobal0X128 = u256.Uint{}
+		return
+	}
+	p.feeGrowthGlobal0X128 = *feeGrowthGlobal0X128
 }
 
 func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint) {
-	p.feeGrowthGlobal1X128 = feeGrowthGlobal1X128
+	if feeGrowthGlobal1X128 == nil {
+		p.feeGrowthGlobal1X128 = u256.Uint{}
+		return
+	}
+	p.feeGrowthGlobal1X128 = *feeGrowthGlobal1X128
 }
 
 func (p *Pool) SetProtocolFees(protocolFees ProtocolFees) {
@@ -116,7 +128,11 @@ func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint) {
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = liquidity
+	if liquidity == nil {
+		p.liquidity = u256.Uint{}
+		return
+	}
+	p.liquidity = *liquidity
 }
 
 func (p *Pool) SetTicks(ticks *avl.Tree) {
@@ -196,10 +212,10 @@ func (p *Pool) Clone() *Pool {
 		},
 		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
 		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
-		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
-		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
-		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
-		liquidity:            p.liquidity.Clone(),
+		maxLiquidityPerTick:  p.maxLiquidityPerTick,
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128,
+		liquidity:            p.liquidity,
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),
@@ -219,23 +235,21 @@ func NewPool(
 ) *Pool {
 	slot0 := newSlot0(sqrtPriceX96, tick, slot0FeeProtocol, true)
 
-	return &Pool{
-		token0Path:           token0Path,
-		token1Path:           token1Path,
-		balances:             newBalances(),
-		fee:                  fee,
-		tickSpacing:          tickSpacing,
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         newProtocolFees(),
-		liquidity:            u256.Zero(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
-		observationState:     NewObservationState(time.Now().Unix()),
+	pool := &Pool{
+		token0Path:  token0Path,
+		token1Path:  token1Path,
+		balances:    newBalances(),
+		fee:         fee,
+		tickSpacing: tickSpacing,
+		slot0:       slot0,
+		protocolFees:    newProtocolFees(),
+		ticks:           avl.NewTree(),
+		tickBitmaps:     avl.NewTree(),
+		positions:       avl.NewTree(),
+		observationState: NewObservationState(time.Now().Unix()),
 	}
+	pool.SetMaxLiquidityPerTick(maxLiquidityPerTick)
+	return pool
 }
 
 type Balances struct{ TokenPair }
