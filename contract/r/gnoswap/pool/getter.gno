@@ -280,7 +280,7 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 		return TickInfo{}, err
 	}
 
-	return cloneTickInfo(tickInfo), nil
+	return tickInfo, nil
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.

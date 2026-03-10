@@ -312,19 +312,19 @@ func newSlot0(
 // TickInfo stores information about a specific tick in the pool.
 // TIcks represent discrete price points that can be used as boundaries for positions.
 type TickInfo struct {
-	liquidityGross *u256.Uint // total position liquidity that references this tick
-	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
+	liquidityGross u256.Uint // total position liquidity that references this tick
+	liquidityNet   i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
 
 	// fee growth per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	feeGrowthOutside0X128 *u256.Uint
-	feeGrowthOutside1X128 *u256.Uint
+	feeGrowthOutside0X128 u256.Uint
+	feeGrowthOutside1X128 u256.Uint
 
 	tickCumulativeOutside int64 // cumulative tick value on the other side of the tick
 
 	// the seconds per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	secondsPerLiquidityOutsideX128 *u256.Uint
+	secondsPerLiquidityOutsideX128 u256.Uint
 
 	// the seconds spent on the other side of the tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
@@ -334,12 +334,14 @@ type TickInfo struct {
 }
 
 // TickInfo Getters methods
-func (t *TickInfo) LiquidityGross() *u256.Uint        { return t.liquidityGross }
-func (t *TickInfo) LiquidityNet() *i256.Int           { return t.liquidityNet }
-func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint { return t.feeGrowthOutside0X128 }
-func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint { return t.feeGrowthOutside1X128 }
+// Accessor pattern: returns &t.field to enable in-place modification
+// without creating HeapItemValue objects in Gno VM.
+func (t *TickInfo) LiquidityGross() *u256.Uint        { return &t.liquidityGross }
+func (t *TickInfo) LiquidityNet() *i256.Int           { return &t.liquidityNet }
+func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint { return &t.feeGrowthOutside0X128 }
+func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint { return &t.feeGrowthOutside1X128 }
 func (t *TickInfo) SecondsPerLiquidityOutsideX128() *u256.Uint {
-	return t.secondsPerLiquidityOutsideX128
+	return &t.secondsPerLiquidityOutsideX128
 }
 func (t *TickInfo) SecondsOutside() uint32       { return t.secondsOutside }
 func (t *TickInfo) Initialized() bool            { return t.initialized }
@@ -347,23 +349,43 @@ func (t *TickInfo) TickCumulativeOutside() int64 { return t.tickCumulativeOutsid
 
 // TickInfo Setters methods
 func (t *TickInfo) SetLiquidityGross(liquidityGross *u256.Uint) {
-	t.liquidityGross = liquidityGross
+	if liquidityGross == nil {
+		t.liquidityGross = u256.Uint{}
+		return
+	}
+	t.liquidityGross = *liquidityGross
 }
 
 func (t *TickInfo) SetLiquidityNet(liquidityNet *i256.Int) {
-	t.liquidityNet = liquidityNet
+	if liquidityNet == nil {
+		t.liquidityNet = i256.Int{}
+		return
+	}
+	t.liquidityNet = *liquidityNet
 }
 
 func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 *u256.Uint) {
-	t.feeGrowthOutside0X128 = feeGrowthOutside0X128
+	if feeGrowthOutside0X128 == nil {
+		t.feeGrowthOutside0X128 = u256.Uint{}
+		return
+	}
+	t.feeGrowthOutside0X128 = *feeGrowthOutside0X128
 }
 
 func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 *u256.Uint) {
-	t.feeGrowthOutside1X128 = feeGrowthOutside1X128
+	if feeGrowthOutside1X128 == nil {
+		t.feeGrowthOutside1X128 = u256.Uint{}
+		return
+	}
+	t.feeGrowthOutside1X128 = *feeGrowthOutside1X128
 }
 
 func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 *u256.Uint) {
-	t.secondsPerLiquidityOutsideX128 = secondsPerLiquidityOutsideX128
+	if secondsPerLiquidityOutsideX128 == nil {
+		t.secondsPerLiquidityOutsideX128 = u256.Uint{}
+		return
+	}
+	t.secondsPerLiquidityOutsideX128 = *secondsPerLiquidityOutsideX128
 }
 
 func (t *TickInfo) SetSecondsOutside(secondsOutside uint32) {
@@ -380,29 +402,17 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 
 func NewTickInfo() TickInfo {
 	return TickInfo{
-		liquidityGross:                 u256.Zero(),
-		liquidityNet:                   i256.Zero(),
-		feeGrowthOutside0X128:          u256.Zero(),
-		feeGrowthOutside1X128:          u256.Zero(),
-		secondsPerLiquidityOutsideX128: u256.Zero(),
+		liquidityGross:                 *u256.Zero(),
+		liquidityNet:                   *i256.Zero(),
+		feeGrowthOutside0X128:          *u256.Zero(),
+		feeGrowthOutside1X128:          *u256.Zero(),
+		secondsPerLiquidityOutsideX128: *u256.Zero(),
 		secondsOutside:                 0,
 		initialized:                    false,
 		tickCumulativeOutside:          0,
 	}
 }
 
-func cloneTickInfo(src TickInfo) TickInfo {
-	return TickInfo{
-		feeGrowthOutside0X128:          src.feeGrowthOutside0X128.Clone(),
-		feeGrowthOutside1X128:          src.feeGrowthOutside1X128.Clone(),
-		liquidityGross:                 src.liquidityGross.Clone(),
-		liquidityNet:                   src.liquidityNet.Clone(),
-		tickCumulativeOutside:          src.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: src.secondsPerLiquidityOutsideX128.Clone(),
-		secondsOutside:                 src.secondsOutside,
-		initialized:                    src.initialized,
-	}
-}
 
 type PositionInfo struct {
 	liquidity *u256.Uint // amount of liquidity owned by this position
