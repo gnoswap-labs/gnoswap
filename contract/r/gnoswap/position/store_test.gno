@@ -294,7 +294,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: *u256.Zero(),
 				}
 
 				err = ps.SetPosition(1, position)
@@ -321,7 +321,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: *u256.Zero(),
 				}
 
 				err = ps.SetPosition(1, position)
@@ -344,7 +344,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: *u256.Zero(),
 				}
 
 				err := ps.SetPosition(1, position)
@@ -366,7 +366,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: *u256.Zero(),
 				}
 
 				err = ps.SetPosition(1, position)
@@ -411,7 +411,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test1",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: *u256.Zero(),
 	}
 
 	position2 := Position{
@@ -419,7 +419,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test2",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: *u256.Zero(),
 	}
 
 	position3 := Position{
@@ -427,7 +427,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test3",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: *u256.Zero(),
 	}
 
 	err = ps.SetPosition(1, position1)
@@ -464,7 +464,7 @@ func TestStoreUpdatePosition(t *testing.T) {
 		operator:  "g1test",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: *u256.Zero(),
 	}
 
 	err = ps.SetPosition(1, position)
@@ -478,7 +478,7 @@ func TestStoreUpdatePosition(t *testing.T) {
 		operator:  "g1test",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: *u256.Zero(),
 	}
 
 	err = ps.SetPosition(1, updatedPosition)
