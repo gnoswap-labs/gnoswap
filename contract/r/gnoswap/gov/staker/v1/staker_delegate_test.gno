@@ -557,6 +557,49 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 	}
 }
 
+func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	user := testutils.TestAddress("alice")
+	validator1 := testutils.TestAddress("validator1")
+	validator2 := testutils.TestAddress("validator2")
+	validator3 := testutils.TestAddress("validator3")
+	amount := minimumAmount * 5
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		gs.Delegate(validator1, amount, "")
+	}(cross)
+
+	initialLocked := gs.store.GetTotalLockedAmount()
+	initialDelegated := gs.store.GetTotalDelegatedAmount()
+	uassert.Equal(t, initialLocked, amount)
+	uassert.Equal(t, initialDelegated, amount)
+
+	transitions := []struct {
+		from address
+		to   address
+	}{
+		{from: validator1, to: validator2},
+		{from: validator2, to: validator3},
+		{from: validator3, to: validator1},
+		{from: validator1, to: validator2},
+	}
+
+	for _, transition := range transitions {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Redelegate(transition.from, transition.to, amount)
+			uassert.Equal(t, result, amount)
+		}(cross)
+
+		uassert.Equal(t, gs.store.GetTotalLockedAmount(), initialLocked)
+		uassert.Equal(t, gs.store.GetTotalDelegatedAmount(), initialDelegated)
+	}
+}
+
 func TestStakerDelegate_XgnsBurnOccursOnCollect(t *testing.T) {
 	gs := createTestGovStaker()
 	cleanupStakerDelegateTest(t, gs)
