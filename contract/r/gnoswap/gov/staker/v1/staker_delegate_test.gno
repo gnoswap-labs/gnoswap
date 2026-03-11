@@ -565,7 +565,7 @@ func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(t *testing.T) {
 	validator1 := testutils.TestAddress("validator1")
 	validator2 := testutils.TestAddress("validator2")
 	validator3 := testutils.TestAddress("validator3")
-	amount := minimumAmount * 5
+	amount := int64(minimumAmount) * 5
 
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
