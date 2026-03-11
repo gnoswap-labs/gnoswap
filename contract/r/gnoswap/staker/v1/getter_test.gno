@@ -102,11 +102,10 @@ func setupBasicTestState(t *testing.T) *testState {
 	stakersTree.Set(state.owner.String(), depositTree)
 
 	// Setup pool tier
-	state.instance.store.GetPoolTierMemberships().Set(state.poolPath, uint64(1))
-	counts := state.instance.store.GetPoolTierCounts()
-	counts[1] = 1
-	state.instance.store.SetPoolTierCounts(counts)
-	state.instance.store.SetPoolTierRatio(sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20})
+	poolTierState := state.instance.store.GetPoolTierState()
+	poolTierState.Membership.Set(state.poolPath, uint64(1))
+	poolTierState.Counts[1] = 1
+	poolTierState.TierRatio = sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20}
 
 	// Setup total emission sent
 	state.instance.store.SetTotalEmissionSent(100000)
@@ -416,7 +415,7 @@ func TestGetterPoolsByTier(t *testing.T) {
 
 	// Add another pool to tier 1
 	pool2Path := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
-	state.instance.store.GetPoolTierMemberships().Set(pool2Path, uint64(1))
+	state.instance.store.GetPoolTierState().Membership.Set(pool2Path, uint64(1))
 
 	pools := state.instance.GetPoolsByTier(1)
 	uassert.Equal(t, 2, len(pools))

@@ -25,16 +25,9 @@ const (
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
-	StoreKeyPools                            StoreKey = "pools"
-	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
-	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
-	StoreKeyPoolTierCounts                   StoreKey = "poolTierCounts"
-	StoreKeyPoolTierLastRewardCacheTimestamp StoreKey = "poolTierLastRewardCacheTimestamp"
-	StoreKeyPoolTierLastRewardCacheHeight    StoreKey = "poolTierLastRewardCacheHeight"
-	StoreKeyPoolTierCurrentEmission          StoreKey = "poolTierCurrentEmission"
-	StoreKeyPoolTierGetEmission              StoreKey = "poolTierGetEmission"
-	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
-	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
+	StoreKeyPools          StoreKey = "pools"
+	StoreKeyPoolTierState  StoreKey = "poolTierState"
+	StoreKeyWarmupTemplate StoreKey = "warmupTemplate"
 	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
 	StoreKeyExternalIncentivesByCreationTime StoreKey = "externalIncentivesByCreationTime"
 )
@@ -301,188 +294,27 @@ func (s *stakerStore) SetPools(pools *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 
-// PoolTierMemberships
-func (s *stakerStore) HasPoolTierMembershipsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierMemberships.String())
+// PoolTierState (consolidated)
+func (s *stakerStore) HasPoolTierStateStoreKey() bool {
+	return s.kvStore.Has(StoreKeyPoolTierState.String())
 }
 
-func (s *stakerStore) GetPoolTierMemberships() *avl.Tree {
-	result, err := s.kvStore.Get(StoreKeyPoolTierMemberships.String())
+func (s *stakerStore) GetPoolTierState() *PoolTierState {
+	result, err := s.kvStore.Get(StoreKeyPoolTierState.String())
 	if err != nil {
 		panic(err)
 	}
 
-	memberships, ok := result.(*avl.Tree)
+	state, ok := result.(*PoolTierState)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *PoolTierState: %T", result))
 	}
 
-	return memberships
+	return state
 }
 
-func (s *stakerStore) SetPoolTierMemberships(memberships *avl.Tree) error {
-	return s.kvStore.Set(StoreKeyPoolTierMemberships.String(), memberships)
-}
-
-// PoolTierRatio
-func (s *stakerStore) HasPoolTierRatioStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierRatio.String())
-}
-
-func (s *stakerStore) GetPoolTierRatio() TierRatio {
-	result, err := s.kvStore.Get(StoreKeyPoolTierRatio.String())
-	if err != nil {
-		panic(err)
-	}
-
-	ratio, ok := result.(TierRatio)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to TierRatio: %T", result))
-	}
-
-	return ratio
-}
-
-func (s *stakerStore) SetPoolTierRatio(ratio TierRatio) error {
-	return s.kvStore.Set(StoreKeyPoolTierRatio.String(), ratio)
-}
-
-// PoolTierCounts
-func (s *stakerStore) HasPoolTierCountsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierCounts.String())
-}
-
-func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierCounts.String())
-	if err != nil {
-		panic(err)
-	}
-
-	counts, ok := result.([AllTierCount]uint64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to [AllTierCount]uint64: %T", result))
-	}
-
-	return counts
-}
-
-func (s *stakerStore) SetPoolTierCounts(counts [AllTierCount]uint64) error {
-	return s.kvStore.Set(StoreKeyPoolTierCounts.String(), counts)
-}
-
-// PoolTierLastRewardCacheTimestamp
-func (s *stakerStore) HasPoolTierLastRewardCacheTimestampStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierLastRewardCacheTimestamp.String())
-}
-
-func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierLastRewardCacheTimestamp.String())
-	if err != nil {
-		panic(err)
-	}
-
-	timestamp, ok := result.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
-	}
-
-	return timestamp
-}
-
-func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(timestamp int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierLastRewardCacheTimestamp.String(), timestamp)
-}
-
-// PoolTierLastRewardCacheHeight
-func (s *stakerStore) HasPoolTierLastRewardCacheHeightStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierLastRewardCacheHeight.String())
-}
-
-func (s *stakerStore) GetPoolTierLastRewardCacheHeight() int64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierLastRewardCacheHeight.String())
-	if err != nil {
-		panic(err)
-	}
-
-	height, ok := result.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
-	}
-
-	return height
-}
-
-func (s *stakerStore) SetPoolTierLastRewardCacheHeight(height int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierLastRewardCacheHeight.String(), height)
-}
-
-// PoolTierCurrentEmission
-func (s *stakerStore) HasPoolTierCurrentEmissionStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierCurrentEmission.String())
-}
-
-func (s *stakerStore) GetPoolTierCurrentEmission() int64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierCurrentEmission.String())
-	if err != nil {
-		panic(err)
-	}
-
-	emission, ok := result.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
-	}
-
-	return emission
-}
-
-func (s *stakerStore) SetPoolTierCurrentEmission(emission int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierCurrentEmission.String(), emission)
-}
-
-// PoolTierGetEmission
-func (s *stakerStore) HasPoolTierGetEmissionStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierGetEmission.String())
-}
-
-func (s *stakerStore) GetPoolTierGetEmission() func() int64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierGetEmission.String())
-	if err != nil {
-		panic(err)
-	}
-
-	fn, ok := result.(func() int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to func() int64: %T", result))
-	}
-
-	return fn
-}
-
-func (s *stakerStore) SetPoolTierGetEmission(fn func() int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierGetEmission.String(), fn)
-}
-
-// PoolTierGetHalvingBlocksInRange
-func (s *stakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierGetHalvingBlocksInRange.String())
-}
-
-func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64) {
-	result, err := s.kvStore.Get(StoreKeyPoolTierGetHalvingBlocksInRange.String())
-	if err != nil {
-		panic(err)
-	}
-
-	fn, ok := result.(func(start, end int64) ([]int64, []int64))
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to func(start, end int64) ([]int64, []int64): %T", result))
-	}
-
-	return fn
-}
-
-func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(fn func(start, end int64) ([]int64, []int64)) error {
-	return s.kvStore.Set(StoreKeyPoolTierGetHalvingBlocksInRange.String(), fn)
+func (s *stakerStore) SetPoolTierState(state *PoolTierState) error {
+	return s.kvStore.Set(StoreKeyPoolTierState.String(), state)
 }
 
 func (s *stakerStore) HasWarmupTemplateStoreKey() bool {
