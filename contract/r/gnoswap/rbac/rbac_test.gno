@@ -872,6 +872,18 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
 			shouldPanic:   true,
 			panicContains: "admin role is managed by owner",
 		},
+		{
+			name: "Update whitespace padded admin role via UpdateRoleAddress fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      " admin ",
+			newAddr:       testutils.TestAddress("new_admin_with_space"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "admin role is managed by owner",
+		},
 	}
 
 	for _, tt := range tests {
@@ -974,6 +986,17 @@ func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
 				initRbac()
 			},
 			roleName:      prbac.ROLE_ADMIN.String(),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "admin role is managed by owner",
+		},
+		{
+			name: "Remove whitespace padded admin role fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      " admin ",
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
 			panicContains: "admin role is managed by owner",
