@@ -106,7 +106,14 @@ func ChangeDistributionPct(
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
-		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		stakerPct := getDistributionPctByTarget(
+			LIQUIDITY_STAKER,
+			target01, pct01,
+			target02, pct02,
+			target03, pct03,
+			target04, pct04,
+		)
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, stakerPct)
 		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 
@@ -146,6 +153,30 @@ func changeDistributionPcts(
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
 	setDistributionBpsPct(target04, pct04)
+}
+
+func getDistributionPctByTarget(
+	target int,
+	target01 int, pct01 int64,
+	target02 int, pct02 int64,
+	target03 int, pct03 int64,
+	target04 int, pct04 int64,
+) int64 {
+	switch target {
+	case target01:
+		return pct01
+	case target02:
+		return pct02
+	case target03:
+		return pct03
+	case target04:
+		return pct04
+	default:
+		panic(makeErrorWithDetails(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("target(%d) not found in distribution update", target),
+		))
+	}
 }
 
 // distributeToTarget distributes tokens according to configured percentages.

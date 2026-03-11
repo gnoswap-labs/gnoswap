@@ -118,6 +118,100 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
 }
 
+func TestGetDistributionPctByTarget(t *testing.T) {
+	tests := []struct {
+		name        string
+		target      int
+		target01    int
+		pct01       int64
+		target02    int
+		pct02       int64
+		target03    int
+		pct03       int64
+		target04    int
+		pct04       int64
+		expected    int64
+		shouldPanic bool
+	}{
+		{
+			name:     "find LIQUIDITY_STAKER from target01",
+			target:   LIQUIDITY_STAKER,
+			target01: LIQUIDITY_STAKER, pct01: 7000,
+			target02: DEVOPS, pct02: 1000,
+			target03: COMMUNITY_POOL, pct03: 1000,
+			target04: GOV_STAKER, pct04: 1000,
+			expected: 7000,
+		},
+		{
+			name:     "find LIQUIDITY_STAKER from target02",
+			target:   LIQUIDITY_STAKER,
+			target01: DEVOPS, pct01: 3000,
+			target02: LIQUIDITY_STAKER, pct02: 6000,
+			target03: COMMUNITY_POOL, pct03: 1000,
+			target04: GOV_STAKER, pct04: 0,
+			expected: 6000,
+		},
+		{
+			name:     "find LIQUIDITY_STAKER from target03",
+			target:   LIQUIDITY_STAKER,
+			target01: DEVOPS, pct01: 2500,
+			target02: GOV_STAKER, pct02: 1500,
+			target03: LIQUIDITY_STAKER, pct03: 5000,
+			target04: COMMUNITY_POOL, pct04: 1000,
+			expected: 5000,
+		},
+		{
+			name:     "find LIQUIDITY_STAKER from target04",
+			target:   LIQUIDITY_STAKER,
+			target01: DEVOPS, pct01: 2000,
+			target02: COMMUNITY_POOL, pct02: 1000,
+			target03: GOV_STAKER, pct03: 1000,
+			target04: LIQUIDITY_STAKER, pct04: 6000,
+			expected: 6000,
+		},
+		{
+			name:        "panic when target is missing from update set",
+			target:      LIQUIDITY_STAKER,
+			target01:    DEVOPS,
+			pct01:       2500,
+			target02:    DEVOPS,
+			pct02:       2500,
+			target03:    COMMUNITY_POOL,
+			pct03:       2500,
+			target04:    GOV_STAKER,
+			pct04:       2500,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "not found in distribution update", func() {
+					getDistributionPctByTarget(
+						tt.target,
+						tt.target01, tt.pct01,
+						tt.target02, tt.pct02,
+						tt.target03, tt.pct03,
+						tt.target04, tt.pct04,
+					)
+				})
+				return
+			}
+
+			got := getDistributionPctByTarget(
+				tt.target,
+				tt.target01, tt.pct01,
+				tt.target02, tt.pct02,
+				tt.target03, tt.pct03,
+				tt.target04, tt.pct04,
+			)
+
+			uassert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
 func TestCalculateAmount(t *testing.T) {
 	tests := []struct {
 		name     string
