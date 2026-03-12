@@ -482,6 +482,16 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		panic(err)
 	}
 
+	currentLocked := gs.store.GetTotalLockedAmount()
+
+	newLocked := safeSubInt64(currentLocked, amount)
+	if newLocked < 0 {
+		newLocked = 0
+	}
+	if err := gs.store.SetTotalLockedAmount(newLocked); err != nil {
+		panic(err)
+	}
+
 	return amount, nil
 }
 

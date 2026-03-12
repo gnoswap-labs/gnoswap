@@ -65,8 +65,10 @@ func adminDelegateToDummy() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, govStakerAddr, minAmount)
 	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
+	totalLockedAmount := staker.GetTotalLockedAmount()
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)
+	ufmt.Printf("[EXPECTED] total locked amount after delegate: %d\n", totalLockedAmount)
 	println("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000")
 }
 
@@ -75,8 +77,10 @@ func adminRedelegateDummyToReDelegate() {
 	// redelegate from dummy to reDelegate
 	testing.SetRealm(adminRealm)
 	staker.Redelegate(cross, adminAddr, reDelegate, int64(minAmount))
+	totalLockedAmount := staker.GetTotalLockedAmount()
 	ufmt.Printf("[INFO] redelegated %d GNS from dummy to reDelegate\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: 0, reDelegate delegated amount: %d\n", minAmount)
+	ufmt.Printf("[EXPECTED] total locked amount after redelegate: %d\n", totalLockedAmount)
 }
 
 // Output:
@@ -88,8 +92,10 @@ func adminRedelegateDummyToReDelegate() {
 // [SCENARIO] 2. Admin delegates GNS to dummy
 // [INFO] delegated 1000000 GNS from admin to dummy
 // [EXPECTED] dummy delegated amount: 1000000
+// [EXPECTED] total locked amount after delegate: 1000000
 // [EXPECTED] admin GNS: 99999999000000, xGNS: 1000000
 //
 // [SCENARIO] 3. Admin redelegates from dummy to reDelegate
 // [INFO] redelegated 1000000 GNS from dummy to reDelegate
 // [EXPECTED] dummy delegated amount: 0, reDelegate delegated amount: 1000000
+// [EXPECTED] total locked amount after redelegate: 1000000
