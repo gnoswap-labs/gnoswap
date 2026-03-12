@@ -401,6 +401,7 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
+		cross,
 		token0, amount0,
 		token1, amount1,
 		caller,
