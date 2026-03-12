@@ -174,16 +174,6 @@ func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) boo
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
 }
 
-func subUint256(x, y *u256.Uint) *u256.Uint {
-	if x.Cmp(y) < 0 {
-		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
-		result := u256.Zero().Add(diff, x)
-		return result.Add(result, u256.One())
-	}
-
-	return u256.Zero().Sub(x, y)
-}
-
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
 //
 // This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
