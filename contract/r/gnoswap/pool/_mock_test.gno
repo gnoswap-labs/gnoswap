@@ -130,12 +130,10 @@ func (m *MockPool) SetWithdrawalFee(fee uint64) {
 }
 
 func (m *MockPool) HandleWithdrawalFee(
-	positionId uint64,
 	token0Path string,
 	amount0 string,
 	token1Path string,
 	amount1 string,
-	poolPath string,
 	positionCaller address,
 ) (string, string) {
 	res, ok := m.Response.Get("HandleWithdrawalFee")

@@ -151,7 +151,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("unauthorized")))
-				mockInstanceHandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
+			mockInstanceHandleWithdrawalFee("gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", adminAddr)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",
@@ -161,7 +161,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if pkgPath is not registered",
 			action: func(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceHandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
+			mockInstanceHandleWithdrawalFee("pkgPath", "1000", "pkgPath", "1000", adminAddr)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not position",
@@ -200,10 +200,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				TokenApprove(t, barPath, adminAddr, poolAddr, 10000000000)
 				TokenApprove(t, bazPath, adminAddr, poolAddr, 1000000000)
-				poolPath := GetPoolPath(barPath, bazPath, fee3000)
-
 				testing.SetRealm(posRealm)
-				return mockInstanceHandleWithdrawalFee(2, barPath, "1000", bazPath, "1000", poolPath, adminAddr)
+				return mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
 			},
 			expected:    "990,990",
 			shouldPanic: false,
@@ -229,6 +227,32 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleWithdrawalFee_ZeroFeeClearsAllowance(t *testing.T) {
+	initPoolTest(t)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetWithdrawalFee(0)
+	bar.Transfer(cross, poolAddr, 1000)
+	baz.Transfer(cross, poolAddr, 1000)
+
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+	bar.Approve(cross, positionAddr, 1000)
+	baz.Approve(cross, positionAddr, 1000)
+
+	barBalanceBefore := TokenBalance(t, barPath, adminAddr)
+	bazBalanceBefore := TokenBalance(t, bazPath, adminAddr)
+
+	testing.SetRealm(posRealm)
+	afterAmount0, afterAmount1 := mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
+
+	uassert.Equal(t, afterAmount0, "1000")
+	uassert.Equal(t, afterAmount1, "1000")
+	uassert.Equal(t, TokenBalance(t, barPath, adminAddr), barBalanceBefore+1000)
+	uassert.Equal(t, TokenBalance(t, bazPath, adminAddr), bazBalanceBefore+1000)
+	uassert.Equal(t, TokenAllowance(t, barPath, poolAddr, positionAddr), int64(0))
+	uassert.Equal(t, TokenAllowance(t, bazPath, poolAddr, positionAddr), int64(0))
 }
 
 func TestSetWithdrawalFee(t *testing.T) {

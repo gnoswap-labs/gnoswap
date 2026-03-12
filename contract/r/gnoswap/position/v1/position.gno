@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"strconv"
 
-	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -16,7 +15,6 @@ import (
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	pf "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/referral"
 )
 
@@ -402,26 +400,24 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 	position.SetTokensOwed1(tokensOwed1Updated)
 	p.mustUpdatePosition(positionId, *position)
 
-	withdrawalFeeBps := pl.GetWithdrawalFee()
-	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0Uint256, withdrawalFeeBps)
-	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1Uint256, withdrawalFeeBps)
+	amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
+		token0, amount0,
+		token1, amount1,
+		caller,
+	)
 
-	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
+	fee0, underflow := u256.Zero().SubOverflow(u256.MustFromDecimal(amount0), u256.MustFromDecimal(amount0WithoutFeeStr))
+	if underflow {
+		panic(newErrorWithDetail(errUnderflow, "amount0 - amount0WithoutFee underflow"))
+	}
 
-	common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
-	common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+	fee1, underflow := u256.Zero().SubOverflow(u256.MustFromDecimal(amount1), u256.MustFromDecimal(amount1WithoutFeeStr))
+	if underflow {
+		panic(newErrorWithDetail(errUnderflow, "amount1 - amount1WithoutFee underflow"))
+	}
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-
-	// handle withdrawal protocol fee
-	pf.AddToProtocolFee(cross, token0, fee0)
-	common.SafeGRC20TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
-
-	pf.AddToProtocolFee(cross, token1, fee1)
-	common.SafeGRC20TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
-
-	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
-	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
+	fee0Str := fee0.ToString()
+	fee1Str := fee1.ToString()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -442,29 +438,13 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		"prevRealm", previousRealm.PkgPath(),
 		"lpTokenId", formatUint(positionId),
 		"poolPath", position.PoolKey(),
-		"feeAmount0", formatInt(fee0),
-		"feeAmount1", formatInt(fee1),
+		"feeAmount0", fee0Str,
+		"feeAmount1", fee1Str,
 		"amount0WithoutFee", amount0WithoutFeeStr,
 		"amount1WithoutFee", amount1WithoutFeeStr,
 	)
 
 	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.PoolKey(), amount0, amount1
-}
-
-// calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
-func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int64) {
-	if fee == 0 {
-		return safeConvertToInt64(amount), 0
-	}
-
-	feeAmount, overflow := u256.Zero().MulOverflow(amount, u256.NewUint(fee))
-	if overflow {
-		panic(errOverflow)
-	}
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
-	amountWithoutFee := u256.Zero().Sub(amount, feeAmount)
-
-	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
 }
 
 // SetPositionOperator sets an operator for a position.

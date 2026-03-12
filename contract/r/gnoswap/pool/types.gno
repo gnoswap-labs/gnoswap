@@ -81,12 +81,10 @@ type IPoolPosition interface {
 	SetWithdrawalFee(fee uint64)
 
 	HandleWithdrawalFee(
-		positionId uint64,
 		token0Path string,
 		amount0 string,
 		token1Path string,
 		amount1 string,
-		poolPath string,
 		positionCaller address,
 	) (string, string)
 }

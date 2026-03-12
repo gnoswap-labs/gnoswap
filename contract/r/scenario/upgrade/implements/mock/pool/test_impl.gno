@@ -117,14 +117,14 @@ func (t *TestPool) SetWithdrawalFee(fee uint64) {
 	)
 }
 
-func (t *TestPool) HandleWithdrawalFee(positionId uint64, token0Path string, amount0 string, token1Path string, amount1 string, poolPath string, positionCaller address) (string, string) {
+func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string) {
 	result := t.ExecuteFn(
 		"HandleWithdrawalFee",
 		func(args ...any) any {
-			r1, r2 := t.instance.HandleWithdrawalFee(args[0].(uint64), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(address))
+			r1, r2 := t.instance.HandleWithdrawalFee(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(address))
 			return []any{r1, r2}
 		},
-		positionId, token0Path, amount0, token1Path, amount1, poolPath, positionCaller,
+		token0Path, amount0, token1Path, amount1, positionCaller,
 	).([]any)
 	return result[0].(string), result[1].(string)
 }

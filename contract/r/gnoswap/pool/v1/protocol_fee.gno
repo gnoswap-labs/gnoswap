@@ -19,26 +19,22 @@ const (
 	ZeroBps     = uint64(0)
 )
 
-// HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+// HandleWithdrawalFee settles collected fees from the pool and returns the amount after the fee.
 // Only position contract can call this function
 // Input:
-// - positionId: the id of the LP token
 // - token0Path: the path of the token0
 // - amount0: the amount of token0
 // - token1Path: the path of the token1
 // - amount1: the amount of token1
-// - poolPath: the path of the pool
 // - positionCaller: the original caller of the position contract
 // Output:
 // - the amount of token0 after the fee
 // - the amount of token1 after the fee
 func (i *poolV1) HandleWithdrawalFee(
-	positionId uint64,
 	token0Path string,
 	amount0 string, // uint256
 	token1Path string,
 	amount1 string, // uint256
-	poolPath string,
 	positionCaller address,
 ) (string, string) { // uint256 x2
 	halt.AssertIsNotHaltedPool()
@@ -51,38 +47,26 @@ func (i *poolV1) HandleWithdrawalFee(
 
 	common.MustRegistered(token0Path, token1Path)
 
-	fee := i.store.GetWithdrawalFeeBPS()
-	if fee == ZeroBps {
-		return amount0, amount1
-	}
-
-	feeU256 := u256.NewUint(fee)
-	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), feeU256)
-	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), feeU256)
+	fee := u256.NewUint(i.store.GetWithdrawalFeeBPS())
+	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
+	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
-	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(feeAmount0))
-	common.SafeGRC20TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0))
-	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(feeAmount1))
-	common.SafeGRC20TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1))
+	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
+	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
 
-	afterAmount0Str := afterAmount0.ToString()
-	afterAmount1Str := afterAmount1.ToString()
+	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(fee0))
+	common.SafeGRC20Transfer(cross, token0Path, protocolFeeAddr, safeConvertToInt64(fee0))
+	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(fee1))
+	common.SafeGRC20Transfer(cross, token1Path, protocolFeeAddr, safeConvertToInt64(fee1))
+	common.SafeGRC20Approve(cross, token0Path, caller, 0)
+	common.SafeGRC20Approve(cross, token1Path, caller, 0)
 
-	chain.Emit(
-		"WithdrawalFee",
-		"prevAddr", caller.String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"lpTokenId", formatUint(positionId),
-		"poolPath", poolPath,
-		"feeAmount0", feeAmount0.ToString(),
-		"feeAmount1", feeAmount1.ToString(),
-		"amount0WithoutFee", afterAmount0Str,
-		"amount1WithoutFee", afterAmount1Str,
-	)
+	amount0WithoutFeeStr := amount0WithoutFee.ToString()
+	amount1WithoutFeeStr := amount1WithoutFee.ToString()
 
-	return afterAmount0Str, afterAmount1Str
+	return amount0WithoutFeeStr, amount1WithoutFeeStr
 }
 
 // SetPoolCreationFee sets the poolCreationFee.

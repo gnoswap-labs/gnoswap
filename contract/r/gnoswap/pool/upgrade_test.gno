@@ -324,6 +324,8 @@ func TestBurn(t *testing.T) {
 		callerRealm     runtime.Realm
 		expectedAmount0 string
 		expectedAmount1 string
+		expectedFee0    string
+		expectedFee1    string
 	}{
 		{
 			name: "burn is success",
@@ -1304,6 +1306,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		callerRealm     runtime.Realm
 		expectedAmount0 string
 		expectedAmount1 string
+		expectedFee0    string
+		expectedFee1    string
 	}{
 		{
 			name: "handle withdrawal fee is success",
@@ -1340,7 +1344,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		amount0, amount1 := HandleWithdrawalFee(cross, tt.positionId, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.poolPath, tt.positionCaller)
+		amount0, amount1 := HandleWithdrawalFee(cross, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.positionCaller)
 
 		// Assert
 		if mockPool.Response.CallCount("HandleWithdrawalFee") != 1 {

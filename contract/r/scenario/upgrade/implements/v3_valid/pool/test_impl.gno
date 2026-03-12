@@ -54,8 +54,8 @@ func (t *TestPool) SetWithdrawalFee(fee uint64) {
 	t.instance.SetWithdrawalFee(fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(positionId uint64, token0Path string, amount0 string, token1Path string, amount1 string, poolPath string, positionCaller address) (string, string) {
-	return t.instance.HandleWithdrawalFee(positionId, token0Path, amount0, token1Path, amount1, poolPath, positionCaller)
+func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string) {
+	return t.instance.HandleWithdrawalFee(token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
 // IPoolSwap interface
