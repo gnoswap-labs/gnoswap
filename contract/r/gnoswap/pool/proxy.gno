@@ -148,6 +148,8 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 //   - positionCaller: caller address for the position
 //
 // Returns:
+//   - string: withdrawal fee amount of token0
+//   - string: withdrawal fee amount of token1
 //   - string: net amount of token0 after fees
 //   - string: net amount of token1 after fees
 func HandleWithdrawalFee(
@@ -157,7 +159,7 @@ func HandleWithdrawalFee(
 	token1Path string,
 	amount1 string,
 	positionCaller address,
-) (string, string) {
+) (string, string, string, string) {
 	return getImplementation().HandleWithdrawalFee(
 		token0Path,
 		amount0,

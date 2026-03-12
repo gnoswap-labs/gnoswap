@@ -143,7 +143,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 	tests := []struct {
 		name        string
 		action      func(t *testing.T)
-		verify      func(t *testing.T) (string, string)
+		verify      func(t *testing.T) (string, string, string, string)
 		expected    string
 		shouldPanic bool
 	}{
@@ -196,14 +196,14 @@ func TestHandleWithdrawalFee(t *testing.T) {
 					adminAddr,
 				)
 			},
-			verify: func(t *testing.T) (string, string) {
+			verify: func(t *testing.T) (string, string, string, string) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				TokenApprove(t, barPath, adminAddr, poolAddr, 10000000000)
 				TokenApprove(t, bazPath, adminAddr, poolAddr, 1000000000)
 				testing.SetRealm(posRealm)
 				return mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
 			},
-			expected:    "990,990",
+			expected:    "10,10,990,990",
 			shouldPanic: false,
 		},
 	}
@@ -219,17 +219,19 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			} else {
 				tc.action(t)
 				if tc.verify != nil {
-					gotAfterAmount0, gotAfterAmount1 := tc.verify(t)
+					gotFee0, gotFee1, gotAfterAmount0, gotAfterAmount1 := tc.verify(t)
 					expected := strings.Split(tc.expected, ",")
-					uassert.Equal(t, gotAfterAmount0, expected[0])
-					uassert.Equal(t, gotAfterAmount1, expected[1])
+					uassert.Equal(t, gotFee0, expected[0])
+					uassert.Equal(t, gotFee1, expected[1])
+					uassert.Equal(t, gotAfterAmount0, expected[2])
+					uassert.Equal(t, gotAfterAmount1, expected[3])
 				}
 			}
 		})
 	}
 }
 
-func TestHandleWithdrawalFee_ZeroFeeClearsAllowance(t *testing.T) {
+func TestHandleWithdrawalFee_ZeroFeeTransfersAll(t *testing.T) {
 	initPoolTest(t)
 
 	testing.SetRealm(adminRealm)
@@ -245,14 +247,14 @@ func TestHandleWithdrawalFee_ZeroFeeClearsAllowance(t *testing.T) {
 	bazBalanceBefore := TokenBalance(t, bazPath, adminAddr)
 
 	testing.SetRealm(posRealm)
-	afterAmount0, afterAmount1 := mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
+	fee0, fee1, afterAmount0, afterAmount1 := mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
 
+	uassert.Equal(t, fee0, "0")
+	uassert.Equal(t, fee1, "0")
 	uassert.Equal(t, afterAmount0, "1000")
 	uassert.Equal(t, afterAmount1, "1000")
 	uassert.Equal(t, TokenBalance(t, barPath, adminAddr), barBalanceBefore+1000)
 	uassert.Equal(t, TokenBalance(t, bazPath, adminAddr), bazBalanceBefore+1000)
-	uassert.Equal(t, TokenAllowance(t, barPath, poolAddr, positionAddr), int64(0))
-	uassert.Equal(t, TokenAllowance(t, bazPath, poolAddr, positionAddr), int64(0))
 }
 
 func TestSetWithdrawalFee(t *testing.T) {

@@ -28,6 +28,8 @@ const (
 // - amount1: the amount of token1
 // - positionCaller: the original caller of the position contract
 // Output:
+// - the fee amount of token0
+// - the fee amount of token1
 // - the amount of token0 after the fee
 // - the amount of token1 after the fee
 func (i *poolV1) HandleWithdrawalFee(
@@ -36,7 +38,7 @@ func (i *poolV1) HandleWithdrawalFee(
 	token1Path string,
 	amount1 string, // uint256
 	positionCaller address,
-) (string, string) { // uint256 x2
+) (string, string, string, string) { // uint256 x4
 	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -60,13 +62,11 @@ func (i *poolV1) HandleWithdrawalFee(
 	common.SafeGRC20Transfer(cross, token0Path, protocolFeeAddr, safeConvertToInt64(fee0))
 	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(fee1))
 	common.SafeGRC20Transfer(cross, token1Path, protocolFeeAddr, safeConvertToInt64(fee1))
-	common.SafeGRC20Approve(cross, token0Path, caller, 0)
-	common.SafeGRC20Approve(cross, token1Path, caller, 0)
 
 	amount0WithoutFeeStr := amount0WithoutFee.ToString()
 	amount1WithoutFeeStr := amount1WithoutFee.ToString()
 
-	return amount0WithoutFeeStr, amount1WithoutFeeStr
+	return fee0.ToString(), fee1.ToString(), amount0WithoutFeeStr, amount1WithoutFeeStr
 }
 
 // SetPoolCreationFee sets the poolCreationFee.

@@ -88,7 +88,7 @@ func (t *TestPool) SetWithdrawalFee(fee uint64) {
 	t.instance.SetWithdrawalFee(fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string) {
+func (t *TestPool) HandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
 	if !t.isActive("HandleWithdrawalFee") {
 		panic("test implementation: HandleWithdrawalFee not supported")
 	}

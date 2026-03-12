@@ -135,13 +135,13 @@ func (m *MockPool) HandleWithdrawalFee(
 	token1Path string,
 	amount1 string,
 	positionCaller address,
-) (string, string) {
+) (string, string, string, string) {
 	res, ok := m.Response.Get("HandleWithdrawalFee")
 	if !ok {
-		return "", ""
+		return "", "", "", ""
 	}
 
-	return res[0].(string), res[1].(string)
+	return res[0].(string), res[1].(string), res[2].(string), res[3].(string)
 }
 
 func (m *MockPool) Swap(

@@ -400,24 +400,11 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 	position.SetTokensOwed1(tokensOwed1Updated)
 	p.mustUpdatePosition(positionId, *position)
 
-	amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
+	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
 		token0, amount0,
 		token1, amount1,
 		caller,
 	)
-
-	fee0, underflow := u256.Zero().SubOverflow(u256.MustFromDecimal(amount0), u256.MustFromDecimal(amount0WithoutFeeStr))
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "amount0 - amount0WithoutFee underflow"))
-	}
-
-	fee1, underflow := u256.Zero().SubOverflow(u256.MustFromDecimal(amount1), u256.MustFromDecimal(amount1WithoutFeeStr))
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "amount1 - amount1WithoutFee underflow"))
-	}
-
-	fee0Str := fee0.ToString()
-	fee1Str := fee1.ToString()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

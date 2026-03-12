@@ -86,7 +86,7 @@ type IPoolPosition interface {
 		token1Path string,
 		amount1 string,
 		positionCaller address,
-	) (string, string)
+	) (string, string, string, string)
 }
 
 // IPoolSwap interface defines swap and protocol fee operations.
