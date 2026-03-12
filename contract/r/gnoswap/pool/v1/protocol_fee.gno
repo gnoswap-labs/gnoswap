@@ -53,20 +53,17 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
 	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
 
+	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(fee0))
+	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(fee1))
+
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
+	common.SafeGRC20Transfer(cross, token0Path, protocolFeeAddr, safeConvertToInt64(fee0))
+	common.SafeGRC20Transfer(cross, token1Path, protocolFeeAddr, safeConvertToInt64(fee1))
 	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
 
-	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(fee0))
-	common.SafeGRC20Transfer(cross, token0Path, protocolFeeAddr, safeConvertToInt64(fee0))
-	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(fee1))
-	common.SafeGRC20Transfer(cross, token1Path, protocolFeeAddr, safeConvertToInt64(fee1))
-
-	amount0WithoutFeeStr := amount0WithoutFee.ToString()
-	amount1WithoutFeeStr := amount1WithoutFee.ToString()
-
-	return fee0.ToString(), fee1.ToString(), amount0WithoutFeeStr, amount1WithoutFeeStr
+	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
