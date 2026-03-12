@@ -276,7 +276,10 @@ func validatePoolBalance(token0, token1, amount *u256.Uint, isToken0 bool) error
 	if token0 == nil || token1 == nil || amount == nil {
 		return ufmt.Errorf(
 			"%v. token0(%s) or token1(%s) or amount(%s) is nil",
-			errTransferFailed, token0.ToString(), token1.ToString(), amount.ToString(),
+			errTransferFailed,
+			formatUintOrNil(token0),
+			formatUintOrNil(token1),
+			formatUintOrNil(amount),
 		)
 	}
 
@@ -296,6 +299,14 @@ func validatePoolBalance(token0, token1, amount *u256.Uint, isToken0 bool) error
 		)
 	}
 	return nil
+}
+
+func formatUintOrNil(value *u256.Uint) string {
+	if value == nil {
+		return "<nil>"
+	}
+
+	return value.ToString()
 }
 
 // updatePoolBalance calculates the new balance after a transfer and validate.

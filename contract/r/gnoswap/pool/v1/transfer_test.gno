@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -17,6 +18,7 @@ func TestValidatePoolBalance(t *testing.T) {
 		amount        *u256.Uint
 		isToken0      bool
 		expectedError bool
+		expectedMsg   string
 	}{
 		{
 			name:          "successful token0 transfer",
@@ -57,6 +59,7 @@ func TestValidatePoolBalance(t *testing.T) {
 			amount:        u256.NewUint(500),
 			isToken0:      true,
 			expectedError: true,
+			expectedMsg:   "token0(<nil>) or token1(1000) or amount(500) is nil",
 		},
 		{
 			name:          "nil token1",
@@ -65,6 +68,7 @@ func TestValidatePoolBalance(t *testing.T) {
 			amount:        u256.NewUint(500),
 			isToken0:      false,
 			expectedError: true,
+			expectedMsg:   "token0(1000) or token1(<nil>) or amount(500) is nil",
 		},
 		{
 			name:          "nil amount",
@@ -73,15 +77,26 @@ func TestValidatePoolBalance(t *testing.T) {
 			amount:        nil,
 			isToken0:      true,
 			expectedError: true,
+			expectedMsg:   "token0(1000) or token1(1000) or amount(<nil>) is nil",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("validatePoolBalance panicked: %v", r)
+				}
+			}()
+
 			err := validatePoolBalance(tt.token0, tt.token1, tt.amount, tt.isToken0)
 			if tt.expectedError {
 				if err == nil {
 					t.Errorf("expected error but got none")
+					return
+				}
+				if tt.expectedMsg != "" && !strings.Contains(err.Error(), tt.expectedMsg) {
+					t.Errorf("expected error containing %q, got %q", tt.expectedMsg, err.Error())
 				}
 			} else {
 				if err != nil {
