@@ -298,6 +298,8 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 		return 0, err
 	}
 
+	currentHeight := runtime.ChainHeight()
+
 	emission.MintAndDistributeGns(cross)
 
 	accumTotalDistributeAmount := int64(0)
@@ -314,7 +316,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 		currentDepositCount := getTierCurrentDepositCount(tier)
 
 		if currentDepositCount > 0 {
-			claimableReward, err := lp.calculateTierClaimableRewards(tier)
+			claimableReward, err := lp.calculateTierClaimableRewards(tier, currentHeight, currentTime)
 			if err != nil {
 				return 0, err
 			}
@@ -354,8 +356,18 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 
 // calculateTierClaimableRewards calculates the total claimable rewards
 // for all active deposits in a specific tier.
-func (lp *launchpadV1) calculateTierClaimableRewards(tier *launchpad.ProjectTier) (int64, error) {
+func (lp *launchpadV1) calculateTierClaimableRewards(tier *launchpad.ProjectTier, currentHeight, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
+	if err != nil {
+		return 0, err
+	}
+
+	err = updateRewardPerDepositX128(
+		rewardManager,
+		getTierCurrentDepositAmount(tier),
+		currentHeight,
+		currentTime,
+	)
 	if err != nil {
 		return 0, err
 	}

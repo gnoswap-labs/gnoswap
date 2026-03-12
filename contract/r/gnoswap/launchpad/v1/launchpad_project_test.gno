@@ -989,7 +989,7 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
 		// Calculate claimable rewards
-		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
+		claimableRewards, err := lp.calculateTierClaimableRewards(tier, 1500, 1500)
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(50_000), claimableRewards)
 	})
@@ -1006,6 +1006,61 @@ func TestLaunchpadProject_TransferLeftFromProjectByAdminUnauthorized(t *testing.
 	uassert.AbortsContains(t, "is not admin", func() {
 		launchpad.TransferLeftFromProjectByAdmin(cross, "gno.land/r/onbloc/obl:123", testutils.TestAddress("recipient"))
 	})
+}
+
+func TestLaunchpadProject_TransferLeftFromProjectSyncsRewardManager(t *testing.T) {
+	initLaunchpadProjectTest(t)
+	lp := getTestImplementation()
+
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+	recipient := testutils.TestAddress("recipient")
+	projectID := "gno.land/r/onbloc/obl:123"
+	tierID := projectID + ":180"
+	totalDistributeAmount := int64(100_000)
+	depositAmount := int64(100_000)
+
+	tier := launchpad.NewProjectTier(projectID, 180, totalDistributeAmount, 1000, 2000)
+	tier.SetID(tierID)
+	tier.SetTotalDepositCount(1)
+	tier.SetTotalWithdrawCount(0)
+	tier.SetTotalDepositAmount(depositAmount)
+	tier.SetTotalCollectedAmount(0)
+
+	project := launchpad.NewProject(projectID, "gno.land/r/onbloc/obl", 0, recipient, 100, 1000)
+	project.SetID(projectID)
+
+	tiers := make(map[int64]*launchpad.ProjectTier)
+	tiers[projectTier180] = tier
+	project.SetTiers(tiers)
+
+	projects := lp.store.GetProjects()
+	projects.Set(projectID, project)
+	lp.store.SetProjects(projects)
+
+	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+	rm := newRewardManager(totalDistributeAmount, 1000, 2000, 0, 100, 1000)
+	rm.SetAccumulatedTime(1000)
+	rm.SetAccumulatedRewardPerDepositX128(u256.Zero())
+	rm.Rewards().Set("deposit1", newRewardState(u256.Zero(), depositAmount, 1000, 2000, 1100))
+
+	projectTierRewardManagers.Set(tierID, rm)
+	lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
+
+	adminRealm := testing.NewUserRealm(adminAddr)
+	testing.SetRealm(adminRealm)
+	obl.Transfer(cross, launchpadAddr, totalDistributeAmount)
+
+	beforeOblBalance := obl.BalanceOf(recipient)
+	refundedAmount, err := lp.transferLeftFromProject(project, recipient, 2001)
+	afterOblBalance := obl.BalanceOf(recipient)
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), refundedAmount)
+	uassert.Equal(t, int64(0), afterOblBalance-beforeOblBalance)
+	uassert.Equal(t, int64(2000), rm.AccumulatedTime())
+	uassert.Equal(t, totalDistributeAmount, calculateClaimableRewardsForActiveDeposits(rm))
 }
 
 // TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals tests that
