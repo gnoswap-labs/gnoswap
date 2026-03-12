@@ -324,6 +324,8 @@ func TestBurn(t *testing.T) {
 		callerRealm     runtime.Realm
 		expectedAmount0 string
 		expectedAmount1 string
+		expectedFee0    string
+		expectedFee1    string
 	}{
 		{
 			name: "burn is success",
@@ -1304,6 +1306,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		callerRealm     runtime.Realm
 		expectedAmount0 string
 		expectedAmount1 string
+		expectedFee0    string
+		expectedFee1    string
 	}{
 		{
 			name: "handle withdrawal fee is success",
@@ -1323,6 +1327,8 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
 			expectedAmount0: "990000",
 			expectedAmount1: "990000",
+			expectedFee0:    "10000",
+			expectedFee1:    "10000",
 		},
 	}
 
@@ -1335,12 +1341,12 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("HandleWithdrawalFee", tt.expectedAmount0, tt.expectedAmount1)
+		mockPool.Response.Set("HandleWithdrawalFee", tt.expectedFee0, tt.expectedFee1, tt.expectedAmount0, tt.expectedAmount1)
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		amount0, amount1 := HandleWithdrawalFee(cross, tt.positionId, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.poolPath, tt.positionCaller)
+		fee0, fee1, amount0, amount1 := HandleWithdrawalFee(cross, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.positionCaller)
 
 		// Assert
 		if mockPool.Response.CallCount("HandleWithdrawalFee") != 1 {
@@ -1351,6 +1357,12 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		}
 		if amount1 != tt.expectedAmount1 {
 			t.Errorf("HandleWithdrawalFee() amount1 = %v, want %v", amount1, tt.expectedAmount1)
+		}
+		if fee0 != tt.expectedFee0 {
+			t.Errorf("HandleWithdrawalFee() fee0 = %v, want %v", fee0, tt.expectedFee0)
+		}
+		if fee1 != tt.expectedFee1 {
+			t.Errorf("HandleWithdrawalFee() fee1 = %v, want %v", fee1, tt.expectedFee1)
 		}
 	}
 }
