@@ -142,9 +142,27 @@ func TestPositionIdFrom(t *testing.T) {
 			shouldPanic: false,
 		},
 		{
+			name:        "positionIdFrom preserves uint64 min",
+			input:       uint64(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
 			name:        "positionIdFrom is success by uint64",
 			input:       uint64(1),
 			expected:    "1",
+			shouldPanic: false,
+		},
+		{
+			name:        "positionIdFrom preserves uint64 1<<63",
+			input:       uint64(9223372036854775808),
+			expected:    "9223372036854775808",
+			shouldPanic: false,
+		},
+		{
+			name:        "positionIdFrom preserves uint64 max",
+			input:       uint64(18446744073709551615),
+			expected:    "18446744073709551615",
 			shouldPanic: false,
 		},
 		{
