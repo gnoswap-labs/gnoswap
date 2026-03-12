@@ -2095,3 +2095,61 @@ func TestRewardManager_addRewardState(t *testing.T) {
 		})
 	}
 }
+
+func TestRewardManager_CloneDeepCopy(t *testing.T) {
+	manager := newRewardManager(
+		1000,
+		900,
+		2000,
+		0,
+		100,
+		1000,
+	)
+	manager.SetTotalClaimedAmount(11)
+	manager.SetAccumulatedRewardPerDepositX128(u256.NewUintFromInt64(33))
+
+	rewards := avl.NewTree()
+	rewardState := newRewardState(
+		u256.NewUintFromInt64(5),
+		100,
+		1000,
+		2000,
+		1010,
+	)
+	rewards.Set("deposit-1", rewardState)
+	manager.SetRewards(rewards)
+
+	originalAccumulated := manager.AccumulatedRewardPerDepositX128().ToString()
+	originalRewardValue, _ := manager.Rewards().Get("deposit-1")
+	originalRewardState, ok := originalRewardValue.(*launchpad.RewardState)
+	uassert.True(t, ok)
+	originalClaimed := originalRewardState.ClaimedAmount()
+
+	cloned := manager.Clone()
+	uassert.NotNil(t, cloned)
+
+	cloned.SetTotalClaimedAmount(999)
+	cloned.SetAccumulatedRewardPerDepositX128(u256.NewUintFromInt64(777))
+
+	clonedRewardValue, _ := cloned.Rewards().Get("deposit-1")
+	clonedRewardState, ok := clonedRewardValue.(*launchpad.RewardState)
+	uassert.True(t, ok)
+	clonedRewardState.SetClaimedAmount(88)
+
+	cloned.Rewards().Set("deposit-2", newRewardState(
+		u256.NewUintFromInt64(9),
+		50,
+		1000,
+		2000,
+		1020,
+	))
+
+	uassert.Equal(t, int64(11), manager.TotalClaimedAmount())
+	uassert.Equal(t, originalAccumulated, manager.AccumulatedRewardPerDepositX128().ToString())
+	uassert.Equal(t, 1, manager.Rewards().Size())
+
+	originalRewardValue, _ = manager.Rewards().Get("deposit-1")
+	originalRewardState, ok = originalRewardValue.(*launchpad.RewardState)
+	uassert.True(t, ok)
+	uassert.Equal(t, originalClaimed, originalRewardState.ClaimedAmount())
+}

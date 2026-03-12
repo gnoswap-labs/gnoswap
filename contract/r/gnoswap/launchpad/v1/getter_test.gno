@@ -4,6 +4,8 @@ import (
 	"chain"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
+	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -940,6 +942,43 @@ func TestGetProjectTierRewardManager(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("returned reward manager is cloned", func(t *testing.T) {
+		setupTestEnvironment(t, testEnvConfig{})
+		lp := getTestImplementation()
+		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
+		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+
+		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+			name:            "Test Project",
+			rewardAmount:    1000000,
+			tier30Pct:       25,
+			tier90Pct:       50,
+			tier180Pct:      25,
+			recipientSuffix: "recipient",
+		})
+		projectTierID := projectID + ":" + formatInt(projectTier30)
+
+		storedManager, err := lp.getProjectTierRewardManager(projectTierID)
+		uassert.NoError(t, err)
+		originalClaimedAmount := storedManager.TotalClaimedAmount()
+		originalAccumulatedReward := storedManager.AccumulatedRewardPerDepositX128().ToString()
+		originalRewardsCount := storedManager.Rewards().Size()
+
+		manager, err := lp.GetProjectTierRewardManager(projectTierID)
+		uassert.NoError(t, err)
+		uassert.NotNil(t, manager)
+
+		manager.SetTotalClaimedAmount(777)
+		manager.SetAccumulatedRewardPerDepositX128(u256.NewUintFromInt64(123))
+		manager.SetRewards(avl.NewTree())
+
+		storedManager, err = lp.getProjectTierRewardManager(projectTierID)
+		uassert.NoError(t, err)
+		uassert.Equal(t, originalClaimedAmount, storedManager.TotalClaimedAmount())
+		uassert.Equal(t, originalAccumulatedReward, storedManager.AccumulatedRewardPerDepositX128().ToString())
+		uassert.Equal(t, originalRewardsCount, storedManager.Rewards().Size())
+	})
 }
 
 func TestGetProjectTierRewardTotalDistributeAmount(t *testing.T) {
