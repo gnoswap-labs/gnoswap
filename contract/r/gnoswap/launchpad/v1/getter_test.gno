@@ -474,6 +474,37 @@ func TestGetProjectTiersRatios(t *testing.T) {
 		uassert.Equal(t, tier90Pct, ratios[projectTier90])
 		uassert.Equal(t, tier180Pct, ratios[projectTier180])
 	})
+
+	t.Run("mutating returned tiers ratios does not change state", func(t *testing.T) {
+		setupTestEnvironment(t, testEnvConfig{})
+		lp := getTestImplementation()
+		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
+		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
+
+		tier30Pct := int64(25)
+		tier90Pct := int64(50)
+		tier180Pct := int64(25)
+
+		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+			name:            "Test Project",
+			rewardAmount:    1000000,
+			tier30Pct:       tier30Pct,
+			tier90Pct:       tier90Pct,
+			tier180Pct:      tier180Pct,
+			recipientSuffix: "recipient",
+		})
+
+		ratios, err := lp.GetProjectTiersRatios(projectID)
+		uassert.NoError(t, err)
+
+		ratios[projectTier30] = 99
+		ratios[999] = 1
+
+		latest, err := lp.GetProjectTiersRatios(projectID)
+		uassert.NoError(t, err)
+		uassert.Equal(t, tier30Pct, latest[projectTier30])
+		uassert.Equal(t, int64(0), latest[999])
+	})
 }
 
 func TestGetProjectTier(t *testing.T) {

@@ -116,7 +116,12 @@ func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
 
 // GetTiersRatios returns the tiers ratios map of the project.
 func (p *Project) TiersRatios() map[int64]int64 {
-	return p.tiersRatios
+	tiersRatios := make(map[int64]int64, len(p.tiersRatios))
+	for duration, ratio := range p.tiersRatios {
+		tiersRatios[duration] = ratio
+	}
+
+	return tiersRatios
 }
 
 // SetTiersRatios sets the tiers ratios map of the project.

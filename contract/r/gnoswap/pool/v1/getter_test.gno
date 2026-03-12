@@ -659,6 +659,14 @@ func TestGetFeeAmountTickSpacings(t *testing.T) {
 		mappings := getMockInstance().GetFeeAmountTickSpacings()
 		uassert.True(t, len(mappings) > 0)
 	})
+
+	t.Run("mutating returned map does not change state", func(t *testing.T) {
+		mappings := getMockInstance().GetFeeAmountTickSpacings()
+		mappings[500] = 999
+
+		latest := getMockInstance().GetFeeAmountTickSpacings()
+		uassert.Equal(t, int32(10), latest[500])
+	})
 }
 
 func TestGetFeeAmountTickSpacing(t *testing.T) {

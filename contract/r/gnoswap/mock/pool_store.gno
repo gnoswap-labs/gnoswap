@@ -38,7 +38,12 @@ func (s *MockPoolStore) HasFeeAmountTickSpacing() bool {
 // GetFeeAmountTickSpacing retrieves the mapping between fee amounts and tick spacing.
 // This mapping determines the tick spacing for each supported fee tier.
 func (s *MockPoolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
-	return s.feeAmountTickSpacing
+	copied := make(map[uint32]int32, len(s.feeAmountTickSpacing))
+	for fee, spacing := range s.feeAmountTickSpacing {
+		copied[fee] = spacing
+	}
+
+	return copied
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.

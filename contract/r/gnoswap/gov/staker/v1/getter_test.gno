@@ -1,9 +1,11 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
+	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -708,6 +710,39 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 			uassert.Equal(t, amount, tt.expectedAmount)
 		})
 	}
+}
+
+func TestGetter_GetClaimableRewardByRewardID_ReturnsCopy(t *testing.T) {
+	gs := createTestGovStaker()
+	rewardID := testutils.TestAddress("alice").String()
+
+	manager := gs.store.GetProtocolFeeRewardManager()
+	rewardState := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+	rewardState.SetAccumulatedRewards(map[string]int64{
+		GNS_PATH: 100,
+	})
+	rewardState.SetAccumulatedTimestamp(math.MaxInt64)
+	manager.SetRewardState(rewardID, rewardState)
+	uassert.NoError(t, gs.store.SetProtocolFeeRewardManager(manager))
+
+	var result map[string]int64
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+
+		_, rewards, err := gs.GetClaimableRewardByRewardID(rewardID)
+		uassert.NoError(t, err)
+		result = rewards
+	}(cross)
+
+	result[GNS_PATH] = 999
+
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+
+		_, latest, err := gs.GetClaimableRewardByRewardID(rewardID)
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(100), latest[GNS_PATH])
+	}(cross)
 }
 
 // TestGetter_HasDelegationSnapshotsKey tests HasDelegationSnapshotsKey

@@ -141,6 +141,18 @@ func TestGetTokenListWithAmount(t *testing.T) {
 	}
 }
 
+func TestGetTokenListWithAmount_ReturnedMapMutationDoesNotChangeState(t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
+
+	result := pf.GetTokenListWithAmount()
+	result["gno.land/r/foo"] = 9999
+	result["gno.land/r/bar"] = 2000
+
+	uassert.Equal(t, int64(1000), pf.GetAmountOfToken("gno.land/r/foo"))
+	uassert.Equal(t, int64(0), pf.GetAmountOfToken("gno.land/r/bar"))
+}
+
 func TestGetTokenList(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -401,4 +413,3 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 		})
 	}
 }
-

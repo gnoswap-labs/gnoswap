@@ -460,6 +460,31 @@ func TestStoreSetAndGetTokenListWithAmounts(t *testing.T) {
 	}
 }
 
+func TestStoreGetTokenListWithAmounts_ReturnsCopy(t *testing.T) {
+	resetTestState(t)
+
+	ps := NewProtocolFeeStore(kvStore)
+	err := ps.InitializeTokenListWithAmount()
+	uassert.NoError(t, err)
+
+	err = ps.SetTokenListWithAmounts(map[string]int64{
+		"gno.land/r/demo/token1": 100,
+		"gno.land/r/demo/token2": 200,
+	})
+	uassert.NoError(t, err)
+
+	retrieved := ps.GetTokenListWithAmounts()
+	retrieved["gno.land/r/demo/token1"] = 999
+	retrieved["gno.land/r/demo/token3"] = 300
+
+	amount, exists := ps.GetTokenListWithAmountItem("gno.land/r/demo/token1")
+	uassert.True(t, exists)
+	uassert.Equal(t, int64(100), amount)
+
+	_, exists = ps.GetTokenListWithAmountItem("gno.land/r/demo/token3")
+	uassert.False(t, exists)
+}
+
 func TestStoreSetAndGetTokenListWithAmountItem(t *testing.T) {
 	tests := []struct {
 		name      string

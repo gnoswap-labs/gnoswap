@@ -111,7 +111,12 @@ func (s *mockProtocolFeeStore) InitializeTokenListWithAmount() error {
 }
 
 func (s *mockProtocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
-	return s.tokenListWithAmounts
+	copied := make(map[string]int64, len(s.tokenListWithAmounts))
+	for tokenPath, amount := range s.tokenListWithAmounts {
+		copied[tokenPath] = amount
+	}
+
+	return copied
 }
 
 func (s *mockProtocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {

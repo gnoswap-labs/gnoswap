@@ -599,7 +599,13 @@ func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 		return nil
 	}
 
-	return res[0].(map[uint32]int32)
+	mappings := res[0].(map[uint32]int32)
+	copied := make(map[uint32]int32, len(mappings))
+	for fee, spacing := range mappings {
+		copied[fee] = spacing
+	}
+
+	return copied
 }
 
 // Position enumeration

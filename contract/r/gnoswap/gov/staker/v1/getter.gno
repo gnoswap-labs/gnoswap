@@ -275,7 +275,12 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map
 		return 0, make(map[string]int64), err
 	}
 
-	return emissionReward, protocolFeeRewards, nil
+	copiedRewards := make(map[string]int64, len(protocolFeeRewards))
+	for tokenPath, amount := range protocolFeeRewards {
+		copiedRewards[tokenPath] = amount
+	}
+
+	return emissionReward, copiedRewards, nil
 }
 
 // GetLaunchpadProjectDeposit returns the deposit amount for a launchpad project.
