@@ -510,3 +510,49 @@ func TestSafeConvertToInt64(t *testing.T) {
 		})
 	}
 }
+
+func legacySubUint256ForTest(x, y *u256.Uint) *u256.Uint {
+	if x.Cmp(y) < 0 {
+		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
+		result := u256.Zero().Add(diff, x)
+		return result.Add(result, u256.One())
+	}
+
+	return u256.Zero().Sub(x, y)
+}
+
+func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
+	tests := []struct {
+		name string
+		x    string
+		y    string
+	}{
+		{name: "zero_minus_zero", x: "0", y: "0"},
+		{name: "zero_minus_one", x: "0", y: "1"},
+		{name: "one_minus_zero", x: "1", y: "0"},
+		{name: "one_minus_max", x: "1", y: MAX_UINT256},
+		{name: "max_minus_zero", x: MAX_UINT256, y: "0"},
+		{name: "max_minus_max", x: MAX_UINT256, y: MAX_UINT256},
+		{name: "max_minus_one", x: MAX_UINT256, y: "1"},
+		{name: "max_minus_prev", x: MAX_UINT256, y: "115792089237316195423570985008687907853269984665640564039457584007913129639934"},
+		{name: "small_underflow", x: "50", y: "100"},
+		{name: "small_normal", x: "100", y: "50"},
+		{name: "int64_boundary_cross", x: "9223372036854775808", y: "9223372036854775807"},
+		{name: "large_underflow", x: "500000000000000000000", y: "1000000000000000000000"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			x := u256.MustFromDecimal(tc.x)
+			y := u256.MustFromDecimal(tc.y)
+
+			legacy := legacySubUint256ForTest(x, y)
+			direct := u256.Zero().Sub(x, y)
+
+			uassert.Equal(t, legacy.ToString(), direct.ToString(),
+				"legacy formula and direct u256.Sub differ for x=%s, y=%s",
+				tc.x, tc.y,
+			)
+		})
+	}
+}
