@@ -38,7 +38,7 @@ func (i *poolV1) HandleWithdrawalFee(
 	token1Path string,
 	amount1 string, // uint256
 	positionCaller address,
-) (string, string, string, string) { // uint256 x4
+) (string, string, string, string) {
 	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 
