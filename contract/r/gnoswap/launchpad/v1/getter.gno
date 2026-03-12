@@ -121,7 +121,13 @@ func (lp *launchpadV1) GetProjectTiersRatios(projectId string) (map[int64]int64,
 		return nil, err
 	}
 
-	return project.TiersRatios(), nil
+	tiersRatios := project.TiersRatios()
+	copied := make(map[int64]int64, len(tiersRatios))
+	for duration, ratio := range tiersRatios {
+		copied[duration] = ratio
+	}
+
+	return copied, nil
 }
 
 // GetProjectCreatedHeight returns the created height of a project by its ID.

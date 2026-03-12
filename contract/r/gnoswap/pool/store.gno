@@ -85,12 +85,7 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 		panic("feeAmountTickSpacing is nil")
 	}
 
-	copied := make(map[uint32]int32, len(feeAmountTickSpacing))
-	for fee, tickSpacing := range feeAmountTickSpacing {
-		copied[fee] = tickSpacing
-	}
-
-	return copied
+	return feeAmountTickSpacing
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.

@@ -273,12 +273,7 @@ func (s *protocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
 		panic(ufmt.Errorf("failed to cast result to map[string]int64: %T", result))
 	}
 
-	copied := make(map[string]int64, len(tokenListWithAmounts))
-	for tokenPath, amount := range tokenListWithAmounts {
-		copied[tokenPath] = amount
-	}
-
-	return copied
+	return tokenListWithAmounts
 }
 
 func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {

@@ -272,7 +272,13 @@ func (i *poolV1) GetPoolPaths(offset, count int) []string {
 
 // GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
 func (i *poolV1) GetFeeAmountTickSpacings() map[uint32]int32 {
-	return i.store.GetFeeAmountTickSpacing()
+	feeAmountTickSpacings := i.store.GetFeeAmountTickSpacing()
+	copied := make(map[uint32]int32, len(feeAmountTickSpacings))
+	for fee, tickSpacing := range feeAmountTickSpacings {
+		copied[fee] = tickSpacing
+	}
+
+	return copied
 }
 
 // GetPoolPositionCount returns the number of positions in a pool.

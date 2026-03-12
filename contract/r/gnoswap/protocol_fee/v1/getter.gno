@@ -12,7 +12,13 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 
 // GetTokenListWithAmount returns the token path and amount.
 func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
-	return pf.getProtocolFeeState().TokenListWithAmounts()
+	tokenListWithAmount := pf.getProtocolFeeState().TokenListWithAmounts()
+	copied := make(map[string]int64, len(tokenListWithAmount))
+	for tokenPath, amount := range tokenListWithAmount {
+		copied[tokenPath] = amount
+	}
+
+	return copied
 }
 
 // GetTokenList returns the list of token paths without amounts.
