@@ -324,8 +324,6 @@ func TestBurn(t *testing.T) {
 		callerRealm     runtime.Realm
 		expectedAmount0 string
 		expectedAmount1 string
-		expectedFee0    string
-		expectedFee1    string
 	}{
 		{
 			name: "burn is success",
@@ -1296,12 +1294,10 @@ func TestHandleWithdrawalFee(t *testing.T) {
 	tests := []struct {
 		name            string
 		setup           func(t *testing.T)
-		positionId      uint64
 		token0Path      string
 		amount0         string
 		token1Path      string
 		amount1         string
-		poolPath        string
 		positionCaller  address
 		callerRealm     runtime.Realm
 		expectedAmount0 string
@@ -1317,12 +1313,10 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
-			positionId:      1,
 			token0Path:      "gno.land/r/gnoswap/test_token/token0",
 			amount0:         "1000000",
 			token1Path:      "gno.land/r/gnoswap/test_token/token1",
 			amount1:         "1000000",
-			poolPath:        "mock_pool_path",
 			positionCaller:  "gno1...",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
 			expectedAmount0: "990000",
