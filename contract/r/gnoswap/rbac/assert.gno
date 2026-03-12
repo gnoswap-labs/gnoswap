@@ -60,7 +60,7 @@ func assertIsValidAddress(addr address) {
 }
 
 func assertNotAdminRole(roleName string) {
-	if roleName == prbac.ROLE_ADMIN.String() {
+	if strings.TrimSpace(roleName) == prbac.ROLE_ADMIN.String() {
 		panic(makeErrorWithDetails(
 			errAdminRoleUpdateForbidden,
 			ufmt.Sprintf("role name: %s", roleName),

@@ -317,6 +317,45 @@ func TestAssert_assertIsValidRoleName(t *testing.T) {
 	}
 }
 
+func TestAssert_assertNotAdminRole(t *testing.T) {
+	tests := []struct {
+		name        string
+		roleName    string
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "Admin role should panic",
+			roleName:    prbac.ROLE_ADMIN.String(),
+			shouldPanic: true,
+			expectedMsg: "admin role is managed by owner || role name: admin",
+		},
+		{
+			name:        "Whitespace padded admin role should panic",
+			roleName:    " admin ",
+			shouldPanic: true,
+			expectedMsg: "admin role is managed by owner || role name:  admin ",
+		},
+		{
+			name:        "Non-admin role should not panic",
+			roleName:    prbac.ROLE_POOL.String(),
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertNotAdminRole(tt.roleName)
+				})
+			} else {
+				assertNotAdminRole(tt.roleName)
+			}
+		})
+	}
+}
+
 func TestAssert_assertIsValidAddress(t *testing.T) {
 	tests := []struct {
 		name        string
