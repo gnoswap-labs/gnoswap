@@ -11,7 +11,10 @@ func GetPoolCount() int {
 
 // GetPoolPaths returns a paginated list of pool paths.
 func GetPoolPaths(offset, count int) []string {
-	return getImplementation().GetPoolPaths(offset, count)
+	poolPaths := getImplementation().GetPoolPaths(offset, count)
+	result := make([]string, len(poolPaths))
+	copy(result, poolPaths)
+	return result
 }
 
 // ExistsPoolPath checks if a pool exists at the given path.
@@ -41,7 +44,13 @@ func GetFee(poolPath string) uint32 {
 
 // GetFeeAmountTickSpacings returns all fee tier to tick spacing mappings.
 func GetFeeAmountTickSpacings() map[uint32]int32 {
-	return getImplementation().GetFeeAmountTickSpacings()
+	feeAmountTickSpacings := getImplementation().GetFeeAmountTickSpacings()
+	copied := make(map[uint32]int32, len(feeAmountTickSpacings))
+	for fee, tickSpacing := range feeAmountTickSpacings {
+		copied[fee] = tickSpacing
+	}
+
+	return copied
 }
 
 // GetFeeAmountTickSpacing returns the tick spacing for a given fee tier.
@@ -120,12 +129,20 @@ func GetPoolPositionCount(poolPath string) int {
 
 // GetPoolPositionKeys returns a paginated list of position keys in a pool.
 func GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return getImplementation().GetPoolPositionKeys(poolPath, offset, count)
+	positionKeys := getImplementation().GetPoolPositionKeys(poolPath, offset, count)
+	result := make([]string, len(positionKeys))
+	copy(result, positionKeys)
+	return result
 }
 
 // GetPositionLiquidity returns the liquidity of a position.
 func GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(poolPath, key)
+	liquidity := getImplementation().GetPositionLiquidity(poolPath, key)
+	if liquidity == nil {
+		return nil
+	}
+
+	return liquidity.Clone()
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
@@ -165,7 +182,12 @@ func GetSlot0FeeProtocol(poolPath string) uint8 {
 
 // GetSlot0SqrtPriceX96 returns the current sqrt price from slot0.
 func GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	return getImplementation().GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96 := getImplementation().GetSlot0SqrtPriceX96(poolPath)
+	if sqrtPriceX96 == nil {
+		return nil
+	}
+
+	return sqrtPriceX96.Clone()
 }
 
 // GetSlot0Tick returns the current tick from slot0.
@@ -212,7 +234,10 @@ func GetTickInitialized(poolPath string, tick int32) bool {
 
 // GetInitializedTicksInRange returns initialized ticks within the given range.
 func GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
-	return getImplementation().GetInitializedTicksInRange(poolPath, tickLower, tickUpper)
+	ticks := getImplementation().GetInitializedTicksInRange(poolPath, tickLower, tickUpper)
+	result := make([]int32, len(ticks))
+	copy(result, ticks)
+	return result
 }
 
 // GetTickLiquidityGross returns the total liquidity that references a tick.
@@ -258,7 +283,15 @@ func GetWithdrawalFee() uint64 {
 // GetTWAP returns the time-weighted average price for a pool.
 // Returns arithmetic mean tick and harmonic mean liquidity over the time period.
 func GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	return getImplementation().GetTWAP(poolPath, secondsAgo)
+	tick, harmonicMeanLiquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
+	if err != nil {
+		return 0, nil, err
+	}
+	if harmonicMeanLiquidity == nil {
+		return tick, nil, nil
+	}
+
+	return tick, harmonicMeanLiquidity.Clone(), nil
 }
 
 // Structure getters

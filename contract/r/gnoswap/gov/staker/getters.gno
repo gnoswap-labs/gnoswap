@@ -41,7 +41,10 @@ func GetDelegationCount() int {
 
 // GetDelegationIDs returns a paginated list of delegation IDs.
 func GetDelegationIDs(offset, count int) []int64 {
-	return getImplementation().GetDelegationIDs(offset, count)
+	delegationIDs := getImplementation().GetDelegationIDs(offset, count)
+	result := make([]int64, len(delegationIDs))
+	copy(result, delegationIDs)
+	return result
 }
 
 // ExistsDelegation checks if a delegation exists.
@@ -65,7 +68,10 @@ func GetDelegatorDelegateeCount(delegator address) int {
 
 // GetDelegatorDelegateeAddresses returns a paginated list of delegatee addresses for a specific delegator.
 func GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address {
-	return getImplementation().GetDelegatorDelegateeAddresses(delegator, offset, count)
+	addresses := getImplementation().GetDelegatorDelegateeAddresses(delegator, offset, count)
+	result := make([]address, len(addresses))
+	copy(result, addresses)
+	return result
 }
 
 // GetUserDelegationCount returns the number of delegations for a specific delegator-delegatee pair.
@@ -75,7 +81,10 @@ func GetUserDelegationCount(delegator address, delegatee address) int {
 
 // GetUserDelegationIDs returns a list of delegation IDs for a specific delegator-delegatee pair.
 func GetUserDelegationIDs(delegator address, delegatee address) []int64 {
-	return getImplementation().GetUserDelegationIDs(delegator, delegatee)
+	delegationIDs := getImplementation().GetUserDelegationIDs(delegator, delegatee)
+	result := make([]int64, len(delegationIDs))
+	copy(result, delegationIDs)
+	return result
 }
 
 // HasDelegationSnapshotsKey returns true if delegation history exists.
@@ -99,7 +108,17 @@ func GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (in
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
 func GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
-	return getImplementation().GetClaimableRewardByAddress(addr)
+	emissionReward, protocolFeeRewards, err := getImplementation().GetClaimableRewardByAddress(addr)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	copiedRewards := make(map[string]int64, len(protocolFeeRewards))
+	for tokenPath, amount := range protocolFeeRewards {
+		copiedRewards[tokenPath] = amount
+	}
+
+	return emissionReward, copiedRewards, nil
 }
 
 // GetClaimableRewardByLaunchpad returns claimable launchpad rewards for an address.
@@ -108,7 +127,17 @@ func GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) 
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
 func GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
-	return getImplementation().GetClaimableRewardByLaunchpad(addr)
+	emissionReward, protocolFeeRewards, err := getImplementation().GetClaimableRewardByLaunchpad(addr)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	copiedRewards := make(map[string]int64, len(protocolFeeRewards))
+	for tokenPath, amount := range protocolFeeRewards {
+		copiedRewards[tokenPath] = amount
+	}
+
+	return emissionReward, copiedRewards, nil
 }
 
 // GetClaimableRewardByRewardID returns claimable reward details by reward ID.
@@ -117,7 +146,17 @@ func GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
 func GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
-	return getImplementation().GetClaimableRewardByRewardID(rewardID)
+	emissionReward, protocolFeeRewards, err := getImplementation().GetClaimableRewardByRewardID(rewardID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	copiedRewards := make(map[string]int64, len(protocolFeeRewards))
+	for tokenPath, amount := range protocolFeeRewards {
+		copiedRewards[tokenPath] = amount
+	}
+
+	return emissionReward, copiedRewards, nil
 }
 
 // GetLaunchpadProjectDeposit returns the deposit amount for a launchpad project.
@@ -132,7 +171,21 @@ func GetDelegationWithdrawCount(delegationID int64) int {
 
 // GetDelegationWithdraws returns a paginated list of delegation withdraws for a specific delegation.
 func GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error) {
-	return getImplementation().GetDelegationWithdraws(delegationID, offset, count)
+	delegationWithdraws, err := getImplementation().GetDelegationWithdraws(delegationID, offset, count)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*DelegationWithdraw, 0, len(delegationWithdraws))
+	for _, delegationWithdraw := range delegationWithdraws {
+		if delegationWithdraw == nil {
+			result = append(result, nil)
+			continue
+		}
+		result = append(result, delegationWithdraw.Clone())
+	}
+
+	return result, nil
 }
 
 // GetCollectableWithdrawAmount returns the collectable withdraw amount for a specific delegation.

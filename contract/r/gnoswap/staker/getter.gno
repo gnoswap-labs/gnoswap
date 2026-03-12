@@ -108,7 +108,12 @@ func GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int
 
 // GetDepositLiquidity returns the liquidity amount of a staked position.
 func GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
-	return getImplementation().GetDepositLiquidity(lpTokenId)
+	liquidity := getImplementation().GetDepositLiquidity(lpTokenId)
+	if liquidity == nil {
+		return nil
+	}
+
+	return liquidity.Clone()
 }
 
 // GetDepositLiquidityAsString returns the liquidity amount of a staked position as string.
@@ -143,17 +148,26 @@ func GetDepositTickUpper(lpTokenId uint64) int32 {
 
 // GetDepositWarmUp returns the warmup records of a staked position.
 func GetDepositWarmUp(lpTokenId uint64) []Warmup {
-	return getImplementation().GetDepositWarmUp(lpTokenId)
+	warmups := getImplementation().GetDepositWarmUp(lpTokenId)
+	result := make([]Warmup, len(warmups))
+	copy(result, warmups)
+	return result
 }
 
 // GetDepositExternalIncentiveIdList returns external incentive IDs for a deposit.
 func GetDepositExternalIncentiveIdList(lpTokenId uint64) []string {
-	return getImplementation().GetDepositExternalIncentiveIdList(lpTokenId)
+	incentiveIDs := getImplementation().GetDepositExternalIncentiveIdList(lpTokenId)
+	result := make([]string, len(incentiveIDs))
+	copy(result, incentiveIDs)
+	return result
 }
 
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.
 func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
-	return getImplementation().GetExternalIncentiveByPoolPath(poolPath)
+	incentives := getImplementation().GetExternalIncentiveByPoolPath(poolPath)
+	result := make([]ExternalIncentive, len(incentives))
+	copy(result, incentives)
+	return result
 }
 
 // GetIncentiveEndTimestamp returns the end timestamp of an incentive.
@@ -168,7 +182,12 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) address {
 
 // GetIncentiveRewardAmount returns the total reward amount of an incentive.
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	return getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
+	rewardAmount := getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
+	if rewardAmount == nil {
+		return nil
+	}
+
+	return rewardAmount.Clone()
 }
 
 // GetIncentiveRewardAmountAsString returns the total reward amount of an incentive as string.
@@ -203,7 +222,10 @@ func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 
 // GetPoolIncentiveIdList returns all incentive IDs for a pool.
 func GetPoolIncentiveIdList(poolPath string) []string {
-	return getImplementation().GetPoolIncentiveIdList(poolPath)
+	incentiveIDs := getImplementation().GetPoolIncentiveIdList(poolPath)
+	result := make([]string, len(incentiveIDs))
+	copy(result, incentiveIDs)
+	return result
 }
 
 // GetPoolStakedLiquidity returns the current total staked liquidity of a pool.
@@ -213,7 +235,10 @@ func GetPoolStakedLiquidity(poolPath string) string {
 
 // GetPoolsByTier returns the pool list for a tier.
 func GetPoolsByTier(tier uint64) []string {
-	return getImplementation().GetPoolsByTier(tier)
+	pools := getImplementation().GetPoolsByTier(tier)
+	result := make([]string, len(pools))
+	copy(result, pools)
+	return result
 }
 
 // GetPoolReward returns the reward amount for a tier.
@@ -263,12 +288,18 @@ func GetTotalEmissionSent() int64 {
 
 // GetAllowedTokens returns the allowed external incentive tokens.
 func GetAllowedTokens() []string {
-	return getImplementation().GetAllowedTokens()
+	tokens := getImplementation().GetAllowedTokens()
+	result := make([]string, len(tokens))
+	copy(result, tokens)
+	return result
 }
 
 // GetWarmupTemplate returns the current warmup template.
 func GetWarmupTemplate() []Warmup {
-	return getImplementation().GetWarmupTemplate()
+	warmups := getImplementation().GetWarmupTemplate()
+	result := make([]Warmup, len(warmups))
+	copy(result, warmups)
+	return result
 }
 
 // GetTotalStakedUserCount returns the total number of staked users.
@@ -283,7 +314,10 @@ func GetTotalStakedUserPositionCount(user address) uint64 {
 
 // GetStakedPositionsByUser returns staked position IDs for a user with pagination.
 func GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	return getImplementation().GetStakedPositionsByUser(owner, offset, count)
+	positionIDs := getImplementation().GetStakedPositionsByUser(owner, offset, count)
+	result := make([]uint64, len(positionIDs))
+	copy(result, positionIDs)
+	return result
 }
 
 // GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
@@ -293,7 +327,10 @@ func GetPoolRewardCacheCount(poolPath string) uint64 {
 
 // GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
 func GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	return getImplementation().GetPoolRewardCacheIDs(poolPath, offset, count)
+	rewardCacheIDs := getImplementation().GetPoolRewardCacheIDs(poolPath, offset, count)
+	result := make([]int64, len(rewardCacheIDs))
+	copy(result, rewardCacheIDs)
+	return result
 }
 
 // GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
@@ -308,7 +345,10 @@ func GetPoolIncentiveCount(poolPath string) uint64 {
 
 // GetPoolIncentiveIDs returns a paginated list of incentive IDs for a pool.
 func GetPoolIncentiveIDs(poolPath string, offset, count int) []string {
-	return getImplementation().GetPoolIncentiveIDs(poolPath, offset, count)
+	incentiveIDs := getImplementation().GetPoolIncentiveIDs(poolPath, offset, count)
+	result := make([]string, len(incentiveIDs))
+	copy(result, incentiveIDs)
+	return result
 }
 
 // GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
@@ -318,12 +358,20 @@ func GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
 
 // GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
 func GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
+	accumulationIDs := getImplementation().GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
+	result := make([]uint64, len(accumulationIDs))
+	copy(result, accumulationIDs)
+	return result
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
 func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
+	accumulation := getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
+	if accumulation == nil {
+		return nil
+	}
+
+	return accumulation.Clone()
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
@@ -333,7 +381,10 @@ func GetPoolHistoricalTickCount(poolPath string) uint64 {
 
 // GetPoolHistoricalTickIDs returns a paginated list of historical tick values for a pool.
 func GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32 {
-	return getImplementation().GetPoolHistoricalTickIDs(poolPath, offset, count)
+	tickIDs := getImplementation().GetPoolHistoricalTickIDs(poolPath, offset, count)
+	result := make([]int32, len(tickIDs))
+	copy(result, tickIDs)
+	return result
 }
 
 // GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.

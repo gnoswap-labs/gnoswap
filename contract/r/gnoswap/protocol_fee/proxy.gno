@@ -5,7 +5,12 @@ package protocol_fee
 // Returns:
 //   - map[string]int64: amounts distributed per token
 func DistributeProtocolFee(cur realm) map[string]int64 {
-	return getImplementation().DistributeProtocolFee()
+	distributed := getImplementation().DistributeProtocolFee()
+	result := make(map[string]int64, len(distributed))
+	for tokenPath, amount := range distributed {
+		result[tokenPath] = amount
+	}
+	return result
 }
 
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
@@ -55,12 +60,20 @@ func GetGovStakerPct() int64 {
 
 // GetTokenListWithAmount returns the list of tokens with their amounts.
 func GetTokenListWithAmount() map[string]int64 {
-	return getImplementation().GetTokenListWithAmount()
+	tokenListWithAmount := getImplementation().GetTokenListWithAmount()
+	result := make(map[string]int64, len(tokenListWithAmount))
+	for tokenPath, amount := range tokenListWithAmount {
+		result[tokenPath] = amount
+	}
+	return result
 }
 
 // GetTokenList returns the list of token paths without amounts.
 func GetTokenList() []string {
-	return getImplementation().GetTokenList()
+	tokenList := getImplementation().GetTokenList()
+	result := make([]string, len(tokenList))
+	copy(result, tokenList)
+	return result
 }
 
 // GetAmountOfToken returns the amount of a specific token.
@@ -70,12 +83,22 @@ func GetAmountOfToken(tokenPath string) int64 {
 
 // GetAccuTransfersToGovStaker returns accumulated transfers to GovStaker.
 func GetAccuTransfersToGovStaker() map[string]int64 {
-	return getImplementation().GetAccuTransfersToGovStaker()
+	accuTransfers := getImplementation().GetAccuTransfersToGovStaker()
+	result := make(map[string]int64, len(accuTransfers))
+	for tokenPath, amount := range accuTransfers {
+		result[tokenPath] = amount
+	}
+	return result
 }
 
 // GetAccuTransfersToDevOps returns accumulated transfers to DevOps.
 func GetAccuTransfersToDevOps() map[string]int64 {
-	return getImplementation().GetAccuTransfersToDevOps()
+	accuTransfers := getImplementation().GetAccuTransfersToDevOps()
+	result := make(map[string]int64, len(accuTransfers))
+	for tokenPath, amount := range accuTransfers {
+		result[tokenPath] = amount
+	}
+	return result
 }
 
 // GetAccuTransferToGovStakerByTokenPath returns accumulated GovStaker transfer for a token.
