@@ -497,7 +497,7 @@ func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launc
 		return nil, errors.New("invalid reward manager type")
 	}
 
-	return manager, nil
+	return manager.Clone(), nil
 }
 
 // GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
