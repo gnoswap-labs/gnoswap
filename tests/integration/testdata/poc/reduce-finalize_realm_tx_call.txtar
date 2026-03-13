@@ -1,0 +1,483 @@
+# PoC: Contract-level optimizations to reduce finalize amplification
+#
+# Demonstrates three optimizations that reduce implicit_cross finalize count
+# WITHOUT any VM/core changes — only contract-level restructuring:
+#
+# 1. Key Consolidation: Store related data as a single composite struct
+#    instead of multiple individual keys (like getPoolTier: 8 keys → 1)
+#
+# 2. Cross-Realm Caching: Cache cross-realm call results that don't change
+#    within a transaction (like gns.getStartTimestamp: N calls → 1)
+#
+# 3. Batch Accessor: Return all fields via one Snapshot() call instead of
+#    calling individual getters (like Deposit field access: N getters → 1)
+#
+# Architecture (mirrors gnoswap staker):
+#   p/demo/pocstore  — Store type + Record type (like p/gnoswap/store)
+#   r/demo/extdep    — External realm dependency (like r/gnoswap/gns)
+#   r/demo/worker    — Impl realm accessing owner's data (like staker/v1)
+#   r/demo/owner     — Proxy realm that owns data (like r/gnoswap/staker)
+#
+# Run with finalize tracing:
+#   GNO_REALM_STATS_LOG=/tmp/contract_opt_poc.log \
+#     go test -v -run TestTestdata/poc_contract_level_optimizations -timeout 120s
+
+gnoland start
+
+## Deploy packages in dependency order
+gnokey maketx addpkg -pkgdir $WORK/pocstore -pkgpath gno.land/p/demo/pocstore -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/extdep -pkgpath gno.land/r/demo/extdep -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/worker -pkgpath gno.land/r/demo/worker -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/owner -pkgpath gno.land/r/demo/owner -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+### ============================================================
+### Test 1: Key Consolidation
+### Baseline: 6 individual store.Get + 6 store.Set → 12 implicit_cross finalize
+### Optimized: 1 store.Get + 1 store.Set → 2 implicit_cross finalize
+### Models: getPoolTier() (8 keys) + updatePoolTier() (8 keys) pattern
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func ScatteredKeys -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func ConsolidatedKey -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+### ============================================================
+### Test 2: Cross-Realm Value Caching
+### Baseline: 6 cross-realm calls to extdep → 6 explicit_cross finalize
+### Optimized: 1 call, reuse result locally → 1 explicit_cross finalize
+### Models: gns.getStartTimestamp() called 12~24 times per operation
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func RepeatedCrossCall -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func CachedCrossCall -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+### ============================================================
+### Test 3: Batch Accessor (Snapshot Pattern)
+### Baseline: 6 individual getter method calls on owner-realm Record
+###           → 6 implicit_cross finalize (each method borrows owner realm)
+### Optimized: 1 Snapshot() call returns value-type copy of all fields
+###           → 1 implicit_cross finalize, then local field access (free)
+### Models: deposit.Owner(), deposit.PoolPath(), deposit.TickLower(), etc.
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func ScatteredAccessors -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func BatchedAccessor -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+### ============================================================
+### Test 4: Combined — all three patterns together
+### Baseline: scattered keys + repeated cross-realm + scattered accessors
+### Optimized: consolidated key + cached cross-realm + snapshot accessor
+### Expected: significant reduction in total finalize count
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func CombinedBaseline -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+gnokey maketx call -pkgpath gno.land/r/demo/owner -func CombinedOptimized -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK'
+
+-- pocstore/gnomod.toml --
+module = "gno.land/p/demo/pocstore"
+gno = "0.9"
+
+-- pocstore/store.gno --
+package pocstore
+
+// Store is a simple KV store backed by a map.
+// Mimics p/gnoswap/store's KVStore.
+// When owned by realm A and accessed from realm B,
+// each Get/Set call triggers implicit_cross finalize.
+type Store struct {
+	data map[string]any
+}
+
+func NewStore() *Store {
+	return &Store{data: make(map[string]any)}
+}
+
+func (s *Store) Get(key string) any {
+	return s.data[key]
+}
+
+func (s *Store) Set(key string, val any) {
+	s.data[key] = val
+}
+
+// PoolTierData is a composite struct for consolidated storage.
+// Instead of storing 6+ individual keys, store one struct.
+type PoolTierData struct {
+	Membership int
+	Ratio      int
+	Count      int
+	Timestamp  int64
+	Height     int64
+	Emission   int
+}
+
+-- pocstore/record.gno --
+package pocstore
+
+// Record represents a domain object with multiple fields (like Deposit).
+// When owned by another realm, each method call triggers implicit_cross finalize.
+type Record struct {
+	owner     string
+	poolPath  string
+	tickLower int32
+	tickUpper int32
+	liquidity int64
+	stakeTime int64
+}
+
+func NewRecord(owner, poolPath string, tickLower, tickUpper int32, liquidity, stakeTime int64) *Record {
+	return &Record{owner, poolPath, tickLower, tickUpper, liquidity, stakeTime}
+}
+
+// --- Individual getters: each call = 1 implicit_cross finalize ---
+
+func (r *Record) Owner() string    { return r.owner }
+func (r *Record) PoolPath() string { return r.poolPath }
+func (r *Record) TickLower() int32 { return r.tickLower }
+func (r *Record) TickUpper() int32 { return r.tickUpper }
+func (r *Record) Liquidity() int64 { return r.liquidity }
+func (r *Record) StakeTime() int64 { return r.stakeTime }
+
+// RecordSnapshot is a plain value type — NOT realm-owned.
+// After Snapshot() returns, accessing fields is free (no realm crossing).
+type RecordSnapshot struct {
+	Owner     string
+	PoolPath  string
+	TickLower int32
+	TickUpper int32
+	Liquidity int64
+	StakeTime int64
+}
+
+// Snapshot returns all fields at once as a value type.
+// Only 1 method call on owner-realm data → 1 implicit_cross finalize.
+func (r *Record) Snapshot() RecordSnapshot {
+	return RecordSnapshot{
+		Owner:     r.owner,
+		PoolPath:  r.poolPath,
+		TickLower: r.tickLower,
+		TickUpper: r.tickUpper,
+		Liquidity: r.liquidity,
+		StakeTime: r.stakeTime,
+	}
+}
+
+-- extdep/gnomod.toml --
+module = "gno.land/r/demo/extdep"
+gno = "0.9"
+
+-- extdep/extdep.gno --
+package extdep
+
+// GetTimestamp returns a fixed timestamp value.
+// Mimics gns.GetStartTimestamp() — value doesn't change within a transaction.
+// Each cross-realm call to this function triggers explicit_cross finalize.
+func GetTimestamp(cur realm) int64 {
+	return 1234567890
+}
+
+-- worker/gnomod.toml --
+module = "gno.land/r/demo/worker"
+gno = "0.9"
+
+-- worker/worker.gno --
+package worker
+
+import (
+	"gno.land/p/demo/pocstore"
+	"gno.land/r/demo/extdep"
+)
+
+// =============================================================================
+// Optimization 1: Key Consolidation
+// =============================================================================
+
+// ScatteredKeyAccess reads 6 individual keys then writes 6 individual keys.
+// Each store.Get/Set accesses owner-realm data from worker realm context,
+// triggering implicit_cross finalize on each call.
+// Expected: 12 implicit_cross finalize from store access alone.
+func ScatteredKeyAccess(cur realm, s *pocstore.Store) string {
+	// Read phase: 6 store.Get calls → 6 implicit_cross finalize
+	_ = s.Get("membership")
+	_ = s.Get("ratio")
+	_ = s.Get("count")
+	_ = s.Get("timestamp")
+	_ = s.Get("height")
+	_ = s.Get("emission")
+
+	// Write phase: 6 store.Set calls → 6 implicit_cross finalize
+	s.Set("membership", 10)
+	s.Set("ratio", 20)
+	s.Set("count", 30)
+	s.Set("timestamp", int64(1000))
+	s.Set("height", int64(2000))
+	s.Set("emission", 40)
+
+	return "OK"
+}
+
+// ConsolidatedKeyAccess reads 1 composite key then writes 1 composite key.
+// Only 2 store operations total.
+// Expected: 2 implicit_cross finalize from store access.
+func ConsolidatedKeyAccess(cur realm, s *pocstore.Store) string {
+	// Read phase: 1 store.Get → 1 implicit_cross finalize
+	raw := s.Get("poolTier")
+	if raw != nil {
+		pt := raw.(*pocstore.PoolTierData)
+		// Field access on the returned struct — these are direct field reads,
+		// not method calls, so they should NOT trigger additional finalize.
+		_ = pt.Membership + pt.Ratio + pt.Count
+		_ = pt.Timestamp + pt.Height
+		_ = pt.Emission
+	}
+
+	// Write phase: 1 store.Set → 1 implicit_cross finalize
+	s.Set("poolTier", &pocstore.PoolTierData{
+		Membership: 10,
+		Ratio:      20,
+		Count:      30,
+		Timestamp:  1000,
+		Height:     2000,
+		Emission:   40,
+	})
+
+	return "OK"
+}
+
+// =============================================================================
+// Optimization 2: Cross-Realm Value Caching
+// =============================================================================
+
+// RepeatedExtCalls calls extdep.GetTimestamp 6 times independently.
+// Each is an explicit cross-realm call → triggers finalize per call.
+// Models: gns.getStartTimestamp() called 12~24 times in CollectReward.
+func RepeatedExtCalls(cur realm) string {
+	sum := extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	_ = sum
+	return "OK"
+}
+
+// CachedExtCalls calls extdep.GetTimestamp once and reuses the result.
+// Only 1 explicit cross-realm call → 1 finalize from extdep.
+// The cached value is used locally — no additional realm crossing.
+func CachedExtCalls(cur realm) string {
+	ts := extdep.GetTimestamp(cross) // 1 cross-realm call
+	sum := ts + ts + ts + ts + ts + ts // local arithmetic — free
+	_ = sum
+	return "OK"
+}
+
+// =============================================================================
+// Optimization 3: Batch Accessor (Snapshot Pattern)
+// =============================================================================
+
+// ScatteredFieldAccess calls 6 individual getter methods on an owner-realm Record.
+// Each method call borrows the owner realm → implicit_cross finalize on return.
+// Models: deposit.Owner(), deposit.PoolPath(), deposit.TickLower(), etc.
+func ScatteredFieldAccess(cur realm, r *pocstore.Record) string {
+	_ = r.Owner()
+	_ = r.PoolPath()
+	_ = r.TickLower()
+	_ = r.TickUpper()
+	_ = r.Liquidity()
+	_ = r.StakeTime()
+	return "OK"
+}
+
+// BatchedFieldAccess calls Snapshot() once to get all fields as a value type.
+// Only 1 method call on owner-realm data → 1 implicit_cross finalize.
+// Subsequent field access on the snapshot is local (no realm crossing).
+func BatchedFieldAccess(cur realm, r *pocstore.Record) string {
+	snap := r.Snapshot() // 1 method call → 1 implicit_cross finalize
+	_ = snap.Owner       // local struct field access — free
+	_ = snap.PoolPath
+	_ = snap.TickLower
+	_ = snap.TickUpper
+	_ = snap.Liquidity
+	_ = snap.StakeTime
+	return "OK"
+}
+
+// =============================================================================
+// Combined scenarios
+// =============================================================================
+
+// CombinedBaseline uses all scattered/repeated patterns together.
+// Expected: high finalize count (12 + 6 + 6 = 24 from patterns alone).
+func CombinedBaseline(cur realm, s *pocstore.Store, r *pocstore.Record) string {
+	// Scattered keys: 6 Get + 6 Set → 12 implicit_cross finalize
+	_ = s.Get("membership")
+	_ = s.Get("ratio")
+	_ = s.Get("count")
+	_ = s.Get("timestamp")
+	_ = s.Get("height")
+	_ = s.Get("emission")
+	s.Set("membership", 10)
+	s.Set("ratio", 20)
+	s.Set("count", 30)
+	s.Set("timestamp", int64(1000))
+	s.Set("height", int64(2000))
+	s.Set("emission", 40)
+
+	// Repeated cross-realm calls → 6 explicit_cross finalize
+	sum := extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	sum += extdep.GetTimestamp(cross)
+	_ = sum
+
+	// Scattered accessors → 6 implicit_cross finalize
+	_ = r.Owner()
+	_ = r.PoolPath()
+	_ = r.TickLower()
+	_ = r.TickUpper()
+	_ = r.Liquidity()
+	_ = r.StakeTime()
+
+	return "OK"
+}
+
+// CombinedOptimized uses all optimized patterns together.
+// Expected: low finalize count (2 + 1 + 1 = 4 from patterns alone).
+func CombinedOptimized(cur realm, s *pocstore.Store, r *pocstore.Record) string {
+	// Consolidated key: 1 Get + 1 Set → 2 implicit_cross finalize
+	raw := s.Get("poolTier")
+	if raw != nil {
+		pt := raw.(*pocstore.PoolTierData)
+		_ = pt.Membership + pt.Ratio + pt.Count
+	}
+	s.Set("poolTier", &pocstore.PoolTierData{
+		Membership: 10, Ratio: 20, Count: 30,
+		Timestamp: 1000, Height: 2000, Emission: 40,
+	})
+
+	// Cached cross-realm: 1 call → 1 explicit_cross finalize
+	ts := extdep.GetTimestamp(cross)
+	sum := ts + ts + ts + ts + ts + ts
+	_ = sum
+
+	// Batched accessor: 1 Snapshot → 1 implicit_cross finalize
+	snap := r.Snapshot()
+	_ = snap.Owner
+	_ = snap.PoolPath
+	_ = snap.TickLower
+	_ = snap.TickUpper
+	_ = snap.Liquidity
+	_ = snap.StakeTime
+
+	return "OK"
+}
+
+-- owner/gnomod.toml --
+module = "gno.land/r/demo/owner"
+gno = "0.9"
+
+-- owner/owner.gno --
+package owner
+
+import (
+	"gno.land/p/demo/pocstore"
+	"gno.land/r/demo/worker"
+)
+
+// Data owned by the owner (proxy) realm.
+// When worker (impl) realm accesses these, it's an implicit realm crossing.
+var (
+	kvStore = pocstore.NewStore()
+	record  = pocstore.NewRecord(
+		"g1owner_addr",
+		"gno.land/r/demo/pool:token0:token1:500",
+		-887220, 887220,
+		1000000, 1234567890,
+	)
+)
+
+func init() {
+	// Initialize scattered keys (current pattern)
+	kvStore.Set("membership", 1)
+	kvStore.Set("ratio", 2)
+	kvStore.Set("count", 3)
+	kvStore.Set("timestamp", int64(100))
+	kvStore.Set("height", int64(200))
+	kvStore.Set("emission", 4)
+
+	// Initialize consolidated key (optimized pattern)
+	kvStore.Set("poolTier", &pocstore.PoolTierData{
+		Membership: 1,
+		Ratio:      2,
+		Count:      3,
+		Timestamp:  100,
+		Height:     200,
+		Emission:   4,
+	})
+}
+
+// =============================================================================
+// Test 1: Key Consolidation
+// =============================================================================
+
+// ScatteredKeys: worker reads/writes 6 individual keys from owner's store.
+func ScatteredKeys(cur realm) string {
+	return worker.ScatteredKeyAccess(cross, kvStore)
+}
+
+// ConsolidatedKey: worker reads/writes 1 composite struct from owner's store.
+func ConsolidatedKey(cur realm) string {
+	return worker.ConsolidatedKeyAccess(cross, kvStore)
+}
+
+// =============================================================================
+// Test 2: Cross-Realm Value Caching
+// =============================================================================
+
+// RepeatedCrossCall: worker calls extdep.GetTimestamp 6 times.
+func RepeatedCrossCall(cur realm) string {
+	return worker.RepeatedExtCalls(cross)
+}
+
+// CachedCrossCall: worker calls extdep.GetTimestamp once, reuses result.
+func CachedCrossCall(cur realm) string {
+	return worker.CachedExtCalls(cross)
+}
+
+// =============================================================================
+// Test 3: Batch Accessor
+// =============================================================================
+
+// ScatteredAccessors: worker calls 6 individual getters on owner's Record.
+func ScatteredAccessors(cur realm) string {
+	return worker.ScatteredFieldAccess(cross, record)
+}
+
+// BatchedAccessor: worker calls 1 Snapshot() on owner's Record.
+func BatchedAccessor(cur realm) string {
+	return worker.BatchedFieldAccess(cross, record)
+}
+
+// =============================================================================
+// Test 4: Combined
+// =============================================================================
+
+// CombinedBaseline: all scattered/repeated patterns together.
+func CombinedBaseline(cur realm) string {
+	return worker.CombinedBaseline(cross, kvStore, record)
+}
+
+// CombinedOptimized: all optimized patterns together.
+func CombinedOptimized(cur realm) string {
+	return worker.CombinedOptimized(cross, kvStore, record)
+}

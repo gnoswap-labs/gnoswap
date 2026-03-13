@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	avl "gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/seqid/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -85,24 +86,11 @@ func (self *UintTree) Clone() *UintTree {
 	return cloned
 }
 
-// EncodeUint converts a uint64 number into a zero-padded 20-character string.
-//
-// Parameters:
-// - num (uint64): The number to encode.
-//
-// Returns:
-// - string: A zero-padded string representation of the number.
-//
-// Example:
-// Input: 12345
-// Output: "00000000000000012345"
+// EncodeUint encodes a uint64 as a compact cford32 string via seqid.
+// Output is 7 bytes for values < 2^34, 13 bytes otherwise.
+// Lexicographically ordered, suitable for AVL tree keys.
 func EncodeUint(num uint64) string {
-	// Convert the value to a decimal string.
-	s := strconv.FormatUint(num, 10)
-
-	// Zero-pad to a total length of 20 characters.
-	zerosNeeded := 20 - len(s)
-	return strings.Repeat("0", zerosNeeded) + s
+	return seqid.ID(num).String()
 }
 
 func EncodeInt64(num int64) string {
@@ -112,34 +100,17 @@ func EncodeInt64(num int64) string {
 	return EncodeUint(uint64(num))
 }
 
-// DecodeUint converts a zero-padded string back into a uint64 number.
-//
-// Parameters:
-// - s (string): The zero-padded string.
-//
-// Returns:
-// - uint64: The decoded number.
-//
-// Panics:
-// - If the string cannot be parsed into a uint64.
-//
-// Example:
-// Input: "00000000000000012345"
-// Output: 12345
+// DecodeUint decodes a cford32-encoded string back into a uint64.
 func DecodeUint(s string) uint64 {
-	num, err := strconv.ParseUint(s, 10, 64)
+	id, err := seqid.FromString(s)
 	if err != nil {
 		panic(err)
 	}
-	return num
+	return uint64(id)
 }
 
 func DecodeInt64(s string) int64 {
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return num
+	return int64(DecodeUint(s))
 }
 
 // EncodeInt takes an int32 and returns a zero-padded decimal string

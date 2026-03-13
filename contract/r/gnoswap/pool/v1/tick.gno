@@ -227,12 +227,7 @@ func tickCross(
 	thisTick.SetFeeGrowthOutside0X128(u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.FeeGrowthOutside0X128()))
 	thisTick.SetFeeGrowthOutside1X128(u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.FeeGrowthOutside1X128()))
 
-	// Handle oracle fields - use zero values if nil
-	tickSecondsPerLiquidity := thisTick.SecondsPerLiquidityOutsideX128()
-	if tickSecondsPerLiquidity == nil {
-		tickSecondsPerLiquidity = u256.Zero()
-	}
-	thisTick.SetSecondsPerLiquidityOutsideX128(u256.Zero().Sub(secondsPerLiquidityCumulativeX128, tickSecondsPerLiquidity))
+	thisTick.SetSecondsPerLiquidityOutsideX128(u256.Zero().Sub(secondsPerLiquidityCumulativeX128, thisTick.SecondsPerLiquidityOutsideX128()))
 	thisTick.SetTickCumulativeOutside(tickCumulative - thisTick.TickCumulativeOutside())
 	thisTick.SetSecondsOutside(uint32(blockTimestamp) - thisTick.SecondsOutside())
 

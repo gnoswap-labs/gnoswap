@@ -214,10 +214,10 @@ func (i *poolV1) Collect(
 	var amount0, amount1 *u256.Uint
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount0 = u256Min(amount0Req, position.TokensOwed0())
+	amount0 = u256Min(amount0Req, position.TokensOwed0()).Clone()
 
 	amount1Req := u256.MustFromDecimal(amount1Requested)
-	amount1 = u256Min(amount1Req, position.TokensOwed1())
+	amount1 = u256Min(amount1Req, position.TokensOwed1()).Clone()
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 

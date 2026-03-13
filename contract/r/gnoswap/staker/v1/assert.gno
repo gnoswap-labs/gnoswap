@@ -37,9 +37,10 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 	}
 }
 
-// assertIsDepositor ensures the caller is the owner of the deposit.
-func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
-	deposit := s.getDeposits().get(positionId)
+// assertIsDepositorWith ensures the caller is the owner of the deposit
+// using pre-loaded deposits to avoid redundant store access.
+func assertIsDepositorWith(deposits *Deposits, caller address, positionId uint64) {
+	deposit := deposits.get(positionId)
 	if deposit == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -214,4 +215,3 @@ func isMidnight(startTime time.Time) bool {
 
 	return hour == 0 && minute == 0 && second == 0
 }
-

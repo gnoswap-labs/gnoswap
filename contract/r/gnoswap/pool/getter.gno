@@ -280,7 +280,7 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 		return TickInfo{}, err
 	}
 
-	return cloneTickInfo(tickInfo), nil
+	return tickInfo, nil
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.
@@ -300,7 +300,7 @@ func GetPosition(poolPath, key string) (PositionInfo, error) {
 		return PositionInfo{}, err
 	}
 
-	return clonePositionInfo(positionInfo), nil
+	return positionInfo, nil
 }
 
 // GetObservationState returns the observation state for a given pool path.
