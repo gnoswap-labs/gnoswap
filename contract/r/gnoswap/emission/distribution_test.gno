@@ -980,15 +980,15 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 			},
 			{
 				name: "success - after clearing",
-				setup: func() {
-					resetObject(t)
-					setupTestEnv(t)
+			setup: func() {
+				resetObject(t)
+				setupTestEnv(t)
 				testing.SetRealm(adminRealm)
 				ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
 				distributeToTarget(10000)
 				testing.SetRealm(govStakerRealm)
 				ClearDistributedToGovStaker(cross)
-				},
+			},
 				want: 0,
 			},
 		}

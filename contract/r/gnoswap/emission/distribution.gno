@@ -124,12 +124,7 @@ func ChangeDistributionPct(
 }
 
 // changeDistributionPcts updates the distribution percentages for all targets.
-func changeDistributionPcts(
-	liquidityStakerPct int64,
-	devOpsPct int64,
-	communityPoolPct int64,
-	govStakerPct int64,
-) {
+func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct int64) {
 	setDistributionBpsPct(LIQUIDITY_STAKER, liquidityStakerPct)
 	setDistributionBpsPct(DEVOPS, devOpsPct)
 	setDistributionBpsPct(COMMUNITY_POOL, communityPoolPct)
