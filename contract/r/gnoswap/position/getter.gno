@@ -22,7 +22,7 @@ func GetPosition(positionId uint64) (Position, error) {
 		return Position{}, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return clonePosition(position), nil
+	return position, nil
 }
 
 // IsBurned returns whether a position has been burned.
@@ -65,12 +65,12 @@ func GetPositionToken1Balance(positionId uint64) *u256.Uint {
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
 func GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId).Clone()
+	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside for token1.
 func GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId).Clone()
+	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
@@ -85,7 +85,7 @@ func GetPositionFeeGrowthInsideLastX128(positionId uint64) (*u256.Uint, *u256.Ui
 
 // GetPositionLiquidity returns the liquidity amount of a position.
 func GetPositionLiquidity(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(positionId).Clone()
+	return getImplementation().GetPositionLiquidity(positionId)
 }
 
 // GetPositionOperator returns the operator address of a position.
@@ -120,12 +120,12 @@ func GetPositionTicks(positionId uint64) (int32, int32) {
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
 func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed0(positionId).Clone()
+	return getImplementation().GetPositionTokensOwed0(positionId)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
 func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed1(positionId).Clone()
+	return getImplementation().GetPositionTokensOwed1(positionId)
 }
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
@@ -140,8 +140,7 @@ func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
 func GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
-	unclaimedFee0, unclaimedFee1 := getImplementation().GetUnclaimedFee(positionId)
-	return unclaimedFee0.Clone(), unclaimedFee1.Clone()
+	return getImplementation().GetUnclaimedFee(positionId)
 }
 
 // GetPositionOwner returns the owner address of a position NFT.
