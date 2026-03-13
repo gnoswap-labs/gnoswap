@@ -38,7 +38,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	case int:
 		return grc721.TokenID(strconv.Itoa(positionId.(int)))
 	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
+		return grc721.TokenID(strconv.FormatUint(positionId.(uint64), 10))
 	case grc721.TokenID:
 		return positionId.(grc721.TokenID)
 	default:
