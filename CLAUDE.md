@@ -12,7 +12,7 @@
 - Import paths: `gno.land/p/...` or `gno.land/r/...` only. Never `github.com/...`.
 - Module config: `gnomod.toml`, not `go.mod`.
 - Tests: `_test.gno` (unit), `_filetest.gno` (VM filetests with `// Output:`).
-- Format: `gno fmt`.
+- Format: `gno fmt`. Note: If formatting with `gno fmt <path>` does not work, you should use `gofumpt -w -l <filepath>` instead.
 
 **Realm** (`r/`) = stateful smart contract, persists state on-chain.  
 **Package** (`p/`) = stateless library, no stored state, no realm imports.
@@ -70,17 +70,23 @@ Accessing an external realm's object via dot-selector or index-expression taints
 
 A `panic()` that crosses a realm boundary **aborts the machine** — caller cannot `recover()`. Use `revive(fn)` in tests to catch cross-realm aborts.
 
+However, `abort` and `revive` are only active in the test environment so there is no need to insert them into the actual code.
+
 ### 2.6 Access Control Pattern
 
 ```gno
+import "chain/runtime"
+
 // WRONG: intermediate contract can impersonate any user
-if std.OriginCaller() != admin { panic(...) }
+if runtime.OriginCaller() != admin { panic(...) }
 
 // CORRECT: checks immediate caller
-if std.PreviousRealm().Addr() != admin { panic(...) }
+if runtime.PreviousRealm().Address() != admin { panic(...) }
 ```
 
 `OriginCaller` = tx signer. `PreviousRealm` = direct caller. Never confuse them.
+
+> **Note**: `std` package is deprecated. Use `chain/runtime` for realm/caller functions, `chain/banker` for coin operations, `chain` for types (`Coin`, `Coins`), and the builtin `address` type instead of `std.Address`.
 
 ### 2.7 `init()` and Deployer
 
@@ -175,7 +181,7 @@ User → Proxy (permanent) → Implementation v1 → Storage (KV, shared across 
 
 ### 3.3 RBAC / Access
 
-- `r/rbac/` = authoritative role map, 2-step ownership via `std.PreviousRealm()`.
+- `r/rbac/` = authoritative role map, 2-step ownership via `runtime.PreviousRealm()`.
 - `r/access/` = synchronized mirror queried by all other realms.
 - Role registration must include the role's address at time of registration.
 - Admin controls: fees, halt, emissions, token list, upgrades, swap whitelist — treat admin key as protocol-level secret.
@@ -350,8 +356,11 @@ Both checks required in SwapCallback: `access.AssertIsPool(caller)` + `assertIsR
 ## 6. Token Handling
 
 - Always use `SafeGRC20Transfer` / `SafeGRC20TransferFrom`. Panic on failure — do not silently continue.
-- `std.OriginSend` carries native GNOT. Pools are GRC-20 only.
-- WUGNOT unwrap/wrap lives at the **frontend layer**. Do not re-introduce into contracts.
+- Pools are GRC-20 only.
+- **WUGNOT `Deposit`/`Withdraw` cannot be called cross-realm.** `runtime.AssertOriginCall()` enforces origin-only calls (gnolang/gno PR #5111). Contracts must not call `wugnot.Deposit(cross)` or `wugnot.Withdraw(cross, ...)` — these panic at runtime.
+  - **Deposit flow**: user calls `wugnot.Deposit()` directly (origin call), then `wugnot.Approve()` for the contract, then the contract uses `wugnot.TransferFrom(cross, ...)`.
+  - **Withdraw flow**: contract sends WUGNOT to user via `wugnot.Transfer(cross, user, amt)`. User calls `wugnot.Withdraw()` directly in a separate tx.
+  - `wugnot.Transfer()`, `TransferFrom()`, `Approve()` remain callable cross-realm.
 - Unexpected GNOT in a non-native path: **revert**.
 - Transfer cap: `int64` max (`2^63 - 1`). Use `safeConvertToInt64` at all boundaries. Handle panic explicitly.
 
@@ -438,7 +447,7 @@ After every operation, assert:
 ## 9. Security Review Checklist
 
 ### Access Control
-- [ ] `std.PreviousRealm()` used (not `OriginCaller`) for immediate-caller checks
+- [ ] `runtime.PreviousRealm()` used (not `OriginCaller`) for immediate-caller checks
 - [ ] Every new public function has a role/permission assertion
 - [ ] `SwapCallback` verifies both: `AssertIsPool(caller)` and `assertIsRouterV1()`
 - [ ] No arbitrary/variable functions accepted as arguments for cross-calling
@@ -621,5 +630,5 @@ GnoSwap charges a router fee on output tokens. In exact-out swaps, the user rece
 | Interrealm spec | [gno-interrealm.md](https://github.com/gnolang/gno/blob/2fa449af83d9f35b30eb228a47815699513788b7/docs/resources/gno-interrealm.md) |
 
 ---
-
+현
 *Update this file when you find a pattern that confused you or a gap that caused a bug. Future agents benefit directly.*
