@@ -478,7 +478,6 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 	}
 }
 
-
 // TestDistributeToTarget_SafeMath tests safe math in distributeToTarget function
 func TestDistributeToTarget_SafeMath(t *testing.T) {
 	tests := []struct {

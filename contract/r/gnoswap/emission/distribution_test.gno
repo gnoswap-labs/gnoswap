@@ -17,16 +17,16 @@ func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
 	tests := []struct {
-		name                string
-		shouldPanic         bool
-		panicMsg            string
-		setup               func()
-		callerRealm         runtime.Realm
-		liquidityStakerPct  int64
-		devOpsPct           int64
-		communityPoolPct    int64
-		govStakerPct        int64
-		verify              func()
+		name               string
+		shouldPanic        bool
+		panicMsg           string
+		setup              func()
+		callerRealm        runtime.Realm
+		liquidityStakerPct int64
+		devOpsPct          int64
+		communityPoolPct   int64
+		govStakerPct       int64
+		verify             func()
 	}{
 		{
 			name:               "panic if caller is not admin",
@@ -109,8 +109,6 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(3000), GetDistributionBpsPct(COMMUNITY_POOL))
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
 }
-
-
 
 func TestCalculateAmount(t *testing.T) {
 	tests := []struct {
@@ -313,8 +311,6 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 		})
 	}
 }
-
-
 
 func setupTestEnv(t *testing.T) {
 	distributionBpsPct = make(map[int]int64)
@@ -980,15 +976,15 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 			},
 			{
 				name: "success - after clearing",
-			setup: func() {
-				resetObject(t)
-				setupTestEnv(t)
-				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
-				distributeToTarget(10000)
-				testing.SetRealm(govStakerRealm)
-				ClearDistributedToGovStaker(cross)
-			},
+				setup: func() {
+					resetObject(t)
+					setupTestEnv(t)
+					testing.SetRealm(adminRealm)
+					ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
+					distributeToTarget(10000)
+					testing.SetRealm(govStakerRealm)
+					ClearDistributedToGovStaker(cross)
+				},
 				want: 0,
 			},
 		}
@@ -1037,140 +1033,138 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 	})
 }
 
-
-
 // TestMapBasedDistribution_EdgeCases tests edge cases specific to map-based distribution
 func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 	t.Run("distribution scenarios", func(t *testing.T) {
 		tests := []struct {
-			name                       string
-			description                string
-			pctStaker                  int64
-			pctDevOps                  int64
-			pctCommunity               int64
-			pctGovStaker               int64
-			amountToDistribute         int64
-			expectedTotalSent          int64
-			expectedDistributedStaker  int64
-			expectedDistributedDevOps  int64
-			expectedDistributedComm    int64
-			expectedDistributedGov     int64
-			usePartialMap              bool
-			useEmptyMap                bool
+			name                      string
+			description               string
+			pctStaker                 int64
+			pctDevOps                 int64
+			pctCommunity              int64
+			pctGovStaker              int64
+			amountToDistribute        int64
+			expectedTotalSent         int64
+			expectedDistributedStaker int64
+			expectedDistributedDevOps int64
+			expectedDistributedComm   int64
+			expectedDistributedGov    int64
+			usePartialMap             bool
+			useEmptyMap               bool
 		}{
 			{
-				name:                       "single target 100% distribution",
-				description:                "all tokens go to LIQUIDITY_STAKER",
-				pctStaker:                  10000,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          1000,
-				expectedDistributedStaker:  1000,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "single target 100% distribution",
+				description:               "all tokens go to LIQUIDITY_STAKER",
+				pctStaker:                 10000,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         1000,
+				expectedDistributedStaker: 1000,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "all targets 0% distribution",
-				description:                "no tokens distributed when all percentages are 0",
-				pctStaker:                  0,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          0,
-				expectedDistributedStaker:  0,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "all targets 0% distribution",
+				description:               "no tokens distributed when all percentages are 0",
+				pctStaker:                 0,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         0,
+				expectedDistributedStaker: 0,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "equal 25% distribution to all targets",
-				description:                "tokens split evenly among 4 targets",
-				pctStaker:                  2500,
-				pctDevOps:                  2500,
-				pctCommunity:               2500,
-				pctGovStaker:               2500,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  2500,
-				expectedDistributedDevOps:  2500,
-				expectedDistributedComm:    2500,
-				expectedDistributedGov:     2500,
+				name:                      "equal 25% distribution to all targets",
+				description:               "tokens split evenly among 4 targets",
+				pctStaker:                 2500,
+				pctDevOps:                 2500,
+				pctCommunity:              2500,
+				pctGovStaker:              2500,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 2500,
+				expectedDistributedDevOps: 2500,
+				expectedDistributedComm:   2500,
+				expectedDistributedGov:    2500,
 			},
 			{
-				name:                       "uneven percentages with remainder",
-				description:                "33.33% each for 3 targets causes truncation",
-				pctStaker:                  3333,
-				pctDevOps:                  3333,
-				pctCommunity:               3334,
-				pctGovStaker:               0,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  3333,
-				expectedDistributedDevOps:  3333,
-				expectedDistributedComm:    3334,
-				expectedDistributedGov:     0,
+				name:                      "uneven percentages with remainder",
+				description:               "33.33% each for 3 targets causes truncation",
+				pctStaker:                 3333,
+				pctDevOps:                 3333,
+				pctCommunity:              3334,
+				pctGovStaker:              0,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 3333,
+				expectedDistributedDevOps: 3333,
+				expectedDistributedComm:   3334,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "standard default percentages",
-				description:                "75% staker, 20% devops, 5% community",
-				pctStaker:                  7500,
-				pctDevOps:                  2000,
-				pctCommunity:               500,
-				pctGovStaker:               0,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  7500,
-				expectedDistributedDevOps:  2000,
-				expectedDistributedComm:    500,
-				expectedDistributedGov:     0,
+				name:                      "standard default percentages",
+				description:               "75% staker, 20% devops, 5% community",
+				pctStaker:                 7500,
+				pctDevOps:                 2000,
+				pctCommunity:              500,
+				pctGovStaker:              0,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 7500,
+				expectedDistributedDevOps: 2000,
+				expectedDistributedComm:   500,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "partial map with only staker",
-				description:                "map contains only LIQUIDITY_STAKER entry",
-				pctStaker:                  10000,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          1000,
-				expectedDistributedStaker:  1000,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
-				usePartialMap:              true,
+				name:                      "partial map with only staker",
+				description:               "map contains only LIQUIDITY_STAKER entry",
+				pctStaker:                 10000,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         1000,
+				expectedDistributedStaker: 1000,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
+				usePartialMap:             true,
 			},
 			{
-				name:                       "empty map returns zero",
-				description:                "no distribution when map is empty",
-				pctStaker:                  0,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          0,
-				expectedDistributedStaker:  0,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
-				useEmptyMap:                true,
+				name:                      "empty map returns zero",
+				description:               "no distribution when map is empty",
+				pctStaker:                 0,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         0,
+				expectedDistributedStaker: 0,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
+				useEmptyMap:               true,
 			},
 			{
-				name:                       "small amount with truncation",
-				description:                "10 tokens with default percentages causes truncation",
-				pctStaker:                  7500,
-				pctDevOps:                  2000,
-				pctCommunity:               500,
-				pctGovStaker:               0,
-				amountToDistribute:         10,
-				expectedTotalSent:          9, // 7 + 2 + 0 + 0 = 9
-				expectedDistributedStaker:  7,
-				expectedDistributedDevOps:  2,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "small amount with truncation",
+				description:               "10 tokens with default percentages causes truncation",
+				pctStaker:                 7500,
+				pctDevOps:                 2000,
+				pctCommunity:              500,
+				pctGovStaker:              0,
+				amountToDistribute:        10,
+				expectedTotalSent:         9, // 7 + 2 + 0 + 0 = 9
+				expectedDistributedStaker: 7,
+				expectedDistributedDevOps: 2,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 		}
 
@@ -1204,11 +1198,11 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("map state management", func(t *testing.T) {
 		tests := []struct {
-			name           string
-			description    string
-			setupFunc      func() map[int]int64
-			testFunc       func(t *testing.T)
-			cleanupFunc    func(savedMap map[int]int64)
+			name        string
+			description string
+			setupFunc   func() map[int]int64
+			testFunc    func(t *testing.T)
+			cleanupFunc func(savedMap map[int]int64)
 		}{
 			{
 				name:        "nil map access should panic",
@@ -1275,15 +1269,15 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("map operations", func(t *testing.T) {
 		tests := []struct {
-			name              string
-			description       string
-			operations        []struct {
+			name        string
+			description string
+			operations  []struct {
 				action   string // "set", "overwrite", "check_len"
 				target   int
 				value    int64
 				expected int64
 			}
-			expectedFinalLen  int
+			expectedFinalLen int
 		}{
 			{
 				name:        "overwrite existing key preserves map length",
@@ -1382,12 +1376,12 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("read-write access pattern", func(t *testing.T) {
 		tests := []struct {
-			name            string
-			description     string
-			target          int
-			initialValue    int64
-			readCount       int
-			newValue        int64
+			name         string
+			description  string
+			target       int
+			initialValue int64
+			readCount    int
+			newValue     int64
 		}{
 			{
 				name:         "multiple reads then write for LIQUIDITY_STAKER",
