@@ -600,16 +600,16 @@ GnoSwap charges a router fee on output tokens. In exact-out swaps, the user rece
 |------|----------|
 | AMM math | `contract/p/gnoswap/gnsmath/` |
 | 256-bit arithmetic | `contract/p/gnoswap/uint256/`, `int256/` |
-| Pool swap loop | `contract/r/gnoswap/v1/pool/swap.gno` |
-| Pool state / Slot0 | `contract/r/gnoswap/v1/pool/pool.gno` |
-| Position lifecycle | `contract/r/gnoswap/v1/position/` |
-| Router paths | `contract/r/gnoswap/v1/router/` |
-| Reward calculation | `contract/r/gnoswap/v1/staker/reward_calculation*.gno` |
-| External incentives | `contract/r/gnoswap/v1/staker/external_incentive.gno` |
-| Governance | `contract/r/gnoswap/v1/gov/` |
-| Launchpad | `contract/r/gnoswap/v1/launchpad/` |
-| Protocol fee | `contract/r/gnoswap/v1/protocol_fee/` |
-| Community pool | `contract/r/gnoswap/v1/community_pool/` |
+| Pool swap loop | `contract/r/gnoswap/pool/v1/swap.gno` |
+| Pool state / Slot0 | `contract/r/gnoswap/pool/v1/pool.gno` |
+| Position lifecycle | `contract/r/gnoswap/position/v1/` |
+| Router paths | `contract/r/gnoswap/router/v1/` |
+| Reward calculation | `contract/r/gnoswap/staker/v1/reward_calculation*.gno` |
+| External incentives | `contract/r/gnoswap/staker/v1/external_incentive.gno` |
+| Governance | `contract/r/gnoswap/gov/` |
+| Launchpad | `contract/r/gnoswap/launchpad/v1/` |
+| Protocol fee | `contract/r/gnoswap/protocol_fee/v1/` |
+| Community pool | `contract/r/gnoswap/community_pool/` |
 | Emission | `contract/r/gnoswap/emission/` |
 | GNS token | `contract/r/gnoswap/gns/` |
 | Referral | `contract/r/gnoswap/referral/` |
