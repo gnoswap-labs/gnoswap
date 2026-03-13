@@ -1,6 +1,6 @@
 # Governance Module (`v1/gov/`)
 
-Governance: proposals, voting, execution. **Not fully audited.**
+Governance: proposals, voting, execution.
 
 ## Rules
 

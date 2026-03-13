@@ -136,6 +136,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | emission | [`docs/emission.md`](docs/emission.md) | Always check `bool` return from `MintAndDistributeGns`. |
 | protocol_fee | [`docs/protocol_fee.md`](docs/protocol_fee.md) | Every fee transfer must call `AddToProtocolFee`. |
 | gov | [`docs/gov.md`](docs/gov.md) | Spend amount strictly positive. Snapshot at proposal creation. |
+| launchpad | [`docs/launchpad.md`](docs/launchpad.md) | Vesting overflow check. Claimable must match balance. |
 | KV store | [`docs/kv_store.md`](docs/kv_store.md) | `RemoveAuthorizedCaller` for `None`. Implementation gets no `Write`. |
 
 ## AMM Core (Uniswap V3 Fork)
