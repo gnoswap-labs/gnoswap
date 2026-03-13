@@ -539,6 +539,29 @@ func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 		{name: "small_normal", x: "100", y: "50"},
 		{name: "int64_boundary_cross", x: "9223372036854775808", y: "9223372036854775807"},
 		{name: "large_underflow", x: "500000000000000000000", y: "1000000000000000000000"},
+
+		// additional boundary and domain cases
+		{name: "zero_minus_two", x: "0", y: "2"},
+		{name: "underflow_by_one", x: "100", y: "101"},
+		{name: "underflow_by_one_at_uint128_boundary",
+			x: "340282366920938463463374607431768211455", // 2^128 - 1
+			y: "340282366920938463463374607431768211456", // 2^128
+		},
+		{name: "normal_sub_at_q128",
+			x: "680564733841876926926749214863536422912", // 2 * 2^128
+			y: "340282366920938463463374607431768211456", // 2^128
+		},
+		{name: "zero_minus_max", x: "0", y: MAX_UINT256},
+		{name: "one_minus_max_minus_one",
+			x: "1",
+			y: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+		},
+		{name: "equal_mid_range", x: "12345678901234567890", y: "12345678901234567890"},
+		{name: "fee_growth_typical_underflow",
+			// realistic fee growth accumulator: global < position snapshot means new epoch
+			x: "1000000000000000000000000000000000000", // ~1e36 (small accumulator)
+			y: "999999999999999999999999999999999999999",
+		},
 	}
 
 	for _, tc := range tests {
@@ -553,6 +576,72 @@ func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 				"legacy formula and direct u256.Sub differ for x=%s, y=%s",
 				tc.x, tc.y,
 			)
+		})
+	}
+}
+
+// TestSubUint256DoubleUnderflow verifies that chained Sub calls each underflow (wrap around)
+// correctly — mirroring the two consecutive subtractions in GetUnclaimedFee:
+//
+//	step1 = Sub(global, lower)   // may underflow
+//	step2 = Sub(step1, upper)    // may underflow again
+//
+// Each case checks the intermediate and final results against both the expected
+// value and the legacy formula.
+func TestSubUint256DoubleUnderflow(t *testing.T) {
+	tests := []struct {
+		name          string
+		a             string // first operand
+		b             string // subtracted in step 1  (a < b  → underflow)
+		c             string // subtracted in step 2  (step1 < c → underflow again)
+		expectedStep1 string // result after first wrap
+		expectedStep2 string // result after second wrap
+	}{
+		{
+			// step1: 5 - 10 = 2^256 - 5  = MAX - 4
+			// step2: (MAX-4) - (MAX-2) = -2 mod 2^256 = MAX - 1
+			name:          "small_values_double_wrap",
+			a:             "5",
+			b:             "10",
+			c:             "115792089237316195423570985008687907853269984665640564039457584007913129639933", // MAX-2
+			expectedStep1: "115792089237316195423570985008687907853269984665640564039457584007913129639931", // MAX-4
+			expectedStep2: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+		},
+		{
+			// step1: 1 - 3 = 2^256 - 2  = MAX - 1
+			// step2: (MAX-1) - MAX = -1 mod 2^256 = MAX
+			name:          "near_max_double_wrap",
+			a:             "1",
+			b:             "3",
+			c:             MAX_UINT256,
+			expectedStep1: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+			expectedStep2: MAX_UINT256,                                                                      // MAX
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			a := u256.MustFromDecimal(tc.a)
+			b := u256.MustFromDecimal(tc.b)
+			c := u256.MustFromDecimal(tc.c)
+
+			// step 1: first underflow
+			step1 := u256.Zero().Sub(a, b)
+			legacyStep1 := legacySubUint256ForTest(u256.MustFromDecimal(tc.a), u256.MustFromDecimal(tc.b))
+
+			uassert.Equal(t, tc.expectedStep1, step1.ToString(),
+				"step1 wrap incorrect: %s - %s", tc.a, tc.b)
+			uassert.Equal(t, legacyStep1.ToString(), step1.ToString(),
+				"step1 differs from legacy: %s - %s", tc.a, tc.b)
+
+			// step 2: second underflow on the already-wrapped result
+			step2 := u256.Zero().Sub(step1, c)
+			legacyStep2 := legacySubUint256ForTest(u256.MustFromDecimal(tc.expectedStep1), u256.MustFromDecimal(tc.c))
+
+			uassert.Equal(t, tc.expectedStep2, step2.ToString(),
+				"step2 wrap incorrect: step1(%s) - %s", tc.expectedStep1, tc.c)
+			uassert.Equal(t, legacyStep2.ToString(), step2.ToString(),
+				"step2 differs from legacy: step1(%s) - %s", tc.expectedStep1, tc.c)
 		})
 	}
 }
