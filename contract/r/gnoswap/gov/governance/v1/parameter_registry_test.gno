@@ -295,7 +295,7 @@ func TestValidateExecutions(t *testing.T) {
 		{
 			name:          "Success - emission ChangeDistributionPct",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*1,2500,2,2500,3,2500,4,2500",
+			executions:    "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*2500,2500,2500,2500",
 			expectedError: false,
 		},
 		// gov/governance
