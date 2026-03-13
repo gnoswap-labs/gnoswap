@@ -618,7 +618,7 @@ GnoSwap charges a router fee on output tokens. In exact-out swaps, the user rece
 | KV store / permissions | `contract/p/gnoswap/store/kv_store.gno` |
 | Upgrade mechanism | `contract/p/gnoswap/version_manager/`, `*/upgrade.gno` |
 | Emergency pause | `contract/r/gnoswap/halt/` |
-| Interrealm spec | `docs/resources/gno-interrealm.md` (gno core repo) |
+| Interrealm spec | [gno-interrealm.md](https://github.com/gnolang/gno/blob/2fa449af83d9f35b30eb228a47815699513788b7/docs/resources/gno-interrealm.md) |
 
 ---
 
