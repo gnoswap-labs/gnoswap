@@ -64,10 +64,10 @@ func changeEmissionDistribution() {
 	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	en.ChangeDistributionPct(
 		cross,
-		int(1), 7000,
-		int(2), 2000,
-		int(3), 500,
-		int(4), 500,
+		7000, // liquidityStakerPct
+		2000, // devOpsPct
+		500, // communityPoolPct
+		500, // govStakerPct
 	)
 	println("[INFO] emission distribution ratio changed: staker 70%, devops 20%, community 5%, govstaker 5%")
 }

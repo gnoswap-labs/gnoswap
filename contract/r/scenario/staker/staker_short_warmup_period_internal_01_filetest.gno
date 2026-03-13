@@ -111,10 +111,10 @@ func initAndSetup() {
 	println("[INFO] set community pool distribution to 0% (give it to devOps)")
 	emission.ChangeDistributionPct(
 		cross,
-		1, 7500,
-		2, 2500,
-		3, 0,
-		4, 0,
+		7500, // liquidityStakerPct
+		2500, // devOpsPct
+		0, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	println("[INFO] register gns change callback")

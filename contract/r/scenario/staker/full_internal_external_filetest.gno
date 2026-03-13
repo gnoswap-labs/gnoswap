@@ -155,10 +155,10 @@ func initAccount() {
 	println("[INFO] change distribution percentage")
 	emission.ChangeDistributionPct(
 		cross,
-		1, 7500, // staker
-		2, 2500, // devOps
-		3, 0, // community pool
-		4, 0, // xGNS
+		7500, // liquidityStakerPct
+		2500, // devOpsPct
+		0, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	println("[INFO] issue coins and prepare wugnot")
