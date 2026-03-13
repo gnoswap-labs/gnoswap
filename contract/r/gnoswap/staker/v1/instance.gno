@@ -23,55 +23,44 @@ func (s *stakerV1) updatePools(pools *Pools) {
 }
 
 func (s *stakerV1) getPoolTier() *PoolTier {
+	state := s.store.GetPoolTierState() // store.Get ×1 (was 8)
+
+	// Explicit copy of array and struct to avoid cross-realm taint.
+	// Fields of `*PoolTierState` belong to the proxy realm; direct mutation
+	// of tainted objects (e.g., counts[tier]++) is not allowed by Gno VM.
+	var counts [AllTierCount]uint64
+	for i := range state.Counts {
+		counts[i] = state.Counts[i]
+	}
+	tierRatio := sr.TierRatio{
+		Tier1: state.TierRatio.Tier1,
+		Tier2: state.TierRatio.Tier2,
+		Tier3: state.TierRatio.Tier3,
+	}
+
 	return NewPoolTierBy(
-		s.store.GetPoolTierMemberships(),
-		s.store.GetPoolTierRatio(),
-		s.store.GetPoolTierCounts(),
-		s.store.GetPoolTierLastRewardCacheTimestamp(),
-		s.store.GetPoolTierLastRewardCacheHeight(),
-		s.store.GetPoolTierCurrentEmission(),
-		s.store.GetPoolTierGetEmission(),
-		s.store.GetPoolTierGetHalvingBlocksInRange(),
+		state.Membership,
+		tierRatio,
+		counts,
+		state.LastRewardCacheTimestamp,
+		state.LastRewardCacheHeight,
+		state.CurrentEmission,
+		state.GetEmission,
+		state.GetHalvingBlocksInRange,
 	)
 }
 
 func (s *stakerV1) updatePoolTier(poolTier *PoolTier) {
-	err := s.store.SetPoolTierMemberships(poolTier.membership)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierRatio(poolTier.tierRatio)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierCounts(poolTier.counts)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierLastRewardCacheTimestamp(poolTier.lastRewardCacheTimestamp)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierLastRewardCacheHeight(poolTier.lastRewardCacheHeight)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierCurrentEmission(poolTier.currentEmission)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierGetEmission(poolTier.getEmission)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierGetHalvingBlocksInRange(poolTier.getHalvingBlocksInRange)
+	err := s.store.SetPoolTierState(&sr.PoolTierState{
+		Membership:              poolTier.membership,
+		TierRatio:               poolTier.tierRatio,
+		Counts:                  poolTier.counts,
+		LastRewardCacheTimestamp: poolTier.lastRewardCacheTimestamp,
+		LastRewardCacheHeight:   poolTier.lastRewardCacheHeight,
+		CurrentEmission:         poolTier.currentEmission,
+		GetEmission:             poolTier.getEmission,
+		GetHalvingBlocksInRange: poolTier.getHalvingBlocksInRange,
+	})
 	if err != nil {
 		panic(err)
 	}
