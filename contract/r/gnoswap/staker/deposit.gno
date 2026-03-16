@@ -7,6 +7,13 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 )
 
+// ExternalIncentiveState holds the collected reward and last collect time
+// for a single external incentive within a deposit.
+type ExternalIncentiveState struct {
+	CollectedReward int64
+	LastCollectTime int64
+}
+
 type Deposit struct {
 	warmups                        []Warmup   // warmup information
 	liquidity                      *u256.Uint // liquidity
@@ -15,9 +22,7 @@ type Deposit struct {
 	stakeTime                      int64      // staked time
 	internalRewardLastCollectTime  int64      // last collect time for internal reward
 	collectedInternalReward        int64      // collected internal reward
-	collectedExternalRewards       *avl.Tree  // collected external reward by incentive id (incentiveID -> int64)
-	externalRewardLastCollectTimes *avl.Tree  // last collect time for external rewards by incentive id (incentiveID -> int64)
-	externalIncentiveIds           *avl.Tree  // external incentive ids for this deposit (incentiveID -> bool)
+	externalIncentives             *avl.Tree  // incentiveID → *ExternalIncentiveState
 	lastExternalIncentiveUpdatedAt int64      // last time when external incentive ids were synced
 	tickLower                      int32      // tick lower
 	tickUpper                      int32      // tick upper
@@ -71,72 +76,59 @@ func (d *Deposit) SetCollectedInternalReward(collectedInternalReward int64) {
 	d.collectedInternalReward = collectedInternalReward
 }
 
-func (d *Deposit) CollectedExternalRewards() *avl.Tree {
-	return d.collectedExternalRewards
+// getOrCreateIncentiveState returns the state for the given incentive ID,
+// creating a new entry if one does not exist.
+func (d *Deposit) getOrCreateIncentiveState(incentiveID string) *ExternalIncentiveState {
+	if d.externalIncentives == nil {
+		d.externalIncentives = avl.NewTree()
+	}
+	v, ok := d.externalIncentives.Get(incentiveID)
+	if !ok {
+		state := &ExternalIncentiveState{}
+		d.externalIncentives.Set(incentiveID, state)
+		return state
+	}
+	return v.(*ExternalIncentiveState)
 }
 
-func (d *Deposit) SetCollectedExternalRewards(collectedExternalRewards *avl.Tree) {
-	d.collectedExternalRewards = collectedExternalRewards
+// getIncentiveState returns the state for the given incentive ID, or nil if not found.
+func (d *Deposit) getIncentiveState(incentiveID string) *ExternalIncentiveState {
+	if d.externalIncentives == nil {
+		return nil
+	}
+	v, ok := d.externalIncentives.Get(incentiveID)
+	if !ok {
+		return nil
+	}
+	return v.(*ExternalIncentiveState)
 }
 
 // GetCollectedExternalReward returns the collected external reward for the given incentive ID.
 // Returns 0 if the incentive ID does not exist.
 func (d *Deposit) GetCollectedExternalReward(incentiveID string) (int64, bool) {
-	if d.collectedExternalRewards == nil {
+	state := d.getIncentiveState(incentiveID)
+	if state == nil {
 		return 0, false
 	}
-
-	value, exists := d.collectedExternalRewards.Get(incentiveID)
-	if !exists {
-		return 0, false
-	}
-
-	v, ok := value.(int64)
-	if !ok {
-		panic("failed to cast value to int64")
-	}
-	return v, true
+	return state.CollectedReward, true
 }
 
 func (d *Deposit) SetCollectedExternalReward(incentiveID string, reward int64) {
-	if d.collectedExternalRewards == nil {
-		d.collectedExternalRewards = avl.NewTree()
-	}
-	d.collectedExternalRewards.Set(incentiveID, reward)
-}
-
-func (d *Deposit) ExternalRewardLastCollectTimes() *avl.Tree {
-	return d.externalRewardLastCollectTimes
-}
-
-func (d *Deposit) SetExternalRewardLastCollectTimes(externalRewardLastCollectTimes *avl.Tree) {
-	d.externalRewardLastCollectTimes = externalRewardLastCollectTimes
+	d.getOrCreateIncentiveState(incentiveID).CollectedReward = reward
 }
 
 // GetExternalRewardLastCollectTime returns the last collect time for the given incentive ID.
 // Returns 0 if the incentive ID does not exist.
 func (d *Deposit) GetExternalRewardLastCollectTime(incentiveID string) (int64, bool) {
-	if d.externalRewardLastCollectTimes == nil {
+	state := d.getIncentiveState(incentiveID)
+	if state == nil {
 		return 0, false
 	}
-
-	value, exists := d.externalRewardLastCollectTimes.Get(incentiveID)
-	if !exists {
-		return 0, false
-	}
-
-	v, ok := value.(int64)
-	if !ok {
-		panic("failed to cast value to int64")
-	}
-	return v, true
+	return state.LastCollectTime, true
 }
 
 func (d *Deposit) SetExternalRewardLastCollectTime(incentiveID string, currentTime int64) {
-	if d.externalRewardLastCollectTimes == nil {
-		d.externalRewardLastCollectTimes = avl.NewTree()
-	}
-	d.externalRewardLastCollectTimes.Set(incentiveID, currentTime)
+	d.getOrCreateIncentiveState(incentiveID).LastCollectTime = currentTime
 }
 
 func (d *Deposit) TickLower() int32 {
@@ -155,46 +147,35 @@ func (d *Deposit) SetTickUpper(tickUpper int32) {
 	d.tickUpper = tickUpper
 }
 
-func (d *Deposit) ExternalIncentiveIds() *avl.Tree {
-	return d.externalIncentiveIds
-}
-
-func (d *Deposit) SetExternalIncentiveIds(externalIncentiveIds *avl.Tree) {
-	d.externalIncentiveIds = externalIncentiveIds
-}
-
 // AddExternalIncentiveId adds an external incentive id to the deposit.
 func (d *Deposit) AddExternalIncentiveId(incentiveId string) {
-	if d.externalIncentiveIds == nil {
-		d.externalIncentiveIds = avl.NewTree()
-	}
-	d.externalIncentiveIds.Set(incentiveId, true)
+	d.getOrCreateIncentiveState(incentiveId)
 }
 
 // HasExternalIncentiveId checks if the deposit has the given external incentive id.
 func (d *Deposit) HasExternalIncentiveId(incentiveId string) bool {
-	if d.externalIncentiveIds == nil {
+	if d.externalIncentives == nil {
 		return false
 	}
-	return d.externalIncentiveIds.Has(incentiveId)
+	return d.externalIncentives.Has(incentiveId)
 }
 
 // RemoveExternalIncentiveId removes an external incentive id from the deposit.
 func (d *Deposit) RemoveExternalIncentiveId(incentiveId string) {
-	if d.externalIncentiveIds == nil {
+	if d.externalIncentives == nil {
 		return
 	}
-	d.externalIncentiveIds.Remove(incentiveId)
+	d.externalIncentives.Remove(incentiveId)
 }
 
 // GetExternalIncentiveIdList returns a list of external incentive ids for the deposit.
 func (d *Deposit) GetExternalIncentiveIdList() []string {
-	if d.externalIncentiveIds == nil {
+	if d.externalIncentives == nil {
 		return []string{}
 	}
 
-	ids := make([]string, 0, d.externalIncentiveIds.Size())
-	d.externalIncentiveIds.Iterate("", "", func(key string, _ any) bool {
+	ids := make([]string, 0, d.externalIncentives.Size())
+	d.externalIncentives.Iterate("", "", func(key string, _ any) bool {
 		ids = append(ids, key)
 		return false
 	})
@@ -203,13 +184,12 @@ func (d *Deposit) GetExternalIncentiveIdList() []string {
 
 // IterateExternalIncentiveIds iterates over external incentive IDs without allocating a slice.
 // The callback function receives each incentive ID and should return false to continue iteration,
-// or true to stop early. This method is more memory-efficient than GetExternalIncentiveIdList
-// for cases where you only need to process IDs sequentially.
+// or true to stop early.
 func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) {
-	if d.externalIncentiveIds == nil {
+	if d.externalIncentives == nil {
 		return
 	}
-	d.externalIncentiveIds.Iterate("", "", func(key string, _ any) bool {
+	d.externalIncentives.Iterate("", "", func(key string, _ any) bool {
 		return fn(key)
 	})
 }
@@ -244,9 +224,7 @@ func (d *Deposit) Clone() *Deposit {
 		stakeTime:                      d.stakeTime,
 		internalRewardLastCollectTime:  d.internalRewardLastCollectTime,
 		collectedInternalReward:        d.collectedInternalReward,
-		collectedExternalRewards:       cloneAvlTree(d.collectedExternalRewards),
-		externalRewardLastCollectTimes: cloneAvlTree(d.externalRewardLastCollectTimes),
-		externalIncentiveIds:           cloneAvlTree(d.externalIncentiveIds),
+		externalIncentives:             cloneExternalIncentives(d.externalIncentives),
 		lastExternalIncentiveUpdatedAt: d.lastExternalIncentiveUpdatedAt,
 		tickLower:                      d.tickLower,
 		tickUpper:                      d.tickUpper,
@@ -270,10 +248,8 @@ func NewDeposit(
 		tickLower:                      tickLower,
 		tickUpper:                      tickUpper,
 		internalRewardLastCollectTime:  currentTime,
-		externalRewardLastCollectTimes: avl.NewTree(),
 		collectedInternalReward:        0,
-		collectedExternalRewards:       avl.NewTree(),
-		externalIncentiveIds:           avl.NewTree(),
+		externalIncentives:             avl.NewTree(),
 		lastExternalIncentiveUpdatedAt: 0,
 	}
 }

@@ -12,14 +12,17 @@ func cloneWarmups(warmups []Warmup) []Warmup {
 	return copied
 }
 
-func cloneAvlTree(tree *avl.Tree) *avl.Tree {
+func cloneExternalIncentives(tree *avl.Tree) *avl.Tree {
 	if tree == nil {
 		return nil
 	}
-
 	cloned := avl.NewTree()
 	tree.Iterate("", "", func(key string, value any) bool {
-		cloned.Set(key, value)
+		state := value.(*ExternalIncentiveState)
+		cloned.Set(key, &ExternalIncentiveState{
+			CollectedReward: state.CollectedReward,
+			LastCollectTime: state.LastCollectTime,
+		})
 		return false
 	})
 	return cloned

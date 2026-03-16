@@ -535,8 +535,8 @@ func TestUnStakeToken(t *testing.T) {
 	uassert.NotNil(t, deposit)
 
 	// Verify external incentive tracking exists
-	externalRewards := deposit.CollectedExternalRewards()
-	uassert.True(t, externalRewards.Size() >= 0, "should have external reward tracking")
+	externalIncentiveIds := deposit.GetExternalIncentiveIdList()
+	uassert.True(t, len(externalIncentiveIds) >= 0, "should have external reward tracking")
 
 	// Store initial tick state for comparison
 	lowerTick := poolResolver.TickResolver(tickLower)

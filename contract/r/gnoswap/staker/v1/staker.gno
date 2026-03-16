@@ -590,12 +590,6 @@ func (s *stakerV1) collectRewardInternal(
 			panic(err)
 		}
 
-		// If incentive ended and user already collected after end, remove from index
-		// This ensures deposit's incentive list shrinks over time as incentives complete
-		if depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
-			deposit.RemoveExternalIncentiveId(incentiveId)
-		}
-
 		// update
 		externalIncentives.set(incentiveId, incentive)
 
