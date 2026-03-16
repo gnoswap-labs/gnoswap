@@ -110,7 +110,7 @@ func NewDelegationWithdraw(
 	createdHeight,
 	createdAt,
 	unDelegationLockupPeriod int64,
-) *staker.DelegationWithdraw {
+) staker.DelegationWithdraw {
 	return staker.NewDelegationWithdraw(
 		delegationID,
 		unDelegateAmount,
@@ -136,7 +136,7 @@ func NewDelegationWithdrawWithoutLockup(
 	unDelegateAmount,
 	createdHeight,
 	createdAt int64,
-) *staker.DelegationWithdraw {
+) staker.DelegationWithdraw {
 	return staker.NewDelegationWithdrawWithoutLockup(
 		delegationID,
 		unDelegateAmount,
