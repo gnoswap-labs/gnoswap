@@ -16,13 +16,13 @@ type ExternalIncentiveState struct {
 
 type Deposit struct {
 	warmups                        []Warmup   // warmup information
-	liquidity                      *u256.Uint // liquidity
+	liquidity                      u256.Uint  // liquidity
 	targetPoolPath                 string     // staked position's pool path
 	owner                          address    // owner address
 	stakeTime                      int64      // staked time
 	internalRewardLastCollectTime  int64      // last collect time for internal reward
 	collectedInternalReward        int64      // collected internal reward
-	externalIncentives             *avl.Tree  // incentiveID → *ExternalIncentiveState
+	externalIncentives             avl.Tree   // incentiveID → ExternalIncentiveState
 	lastExternalIncentiveUpdatedAt int64      // last time when external incentive ids were synced
 	tickLower                      int32      // tick lower
 	tickUpper                      int32      // tick upper
@@ -45,11 +45,11 @@ func (d *Deposit) SetTargetPoolPath(targetPoolPath string) {
 }
 
 func (d *Deposit) Liquidity() *u256.Uint {
-	return d.liquidity
+	return &d.liquidity
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
-	d.liquidity = liquidity
+	d.liquidity = *liquidity
 }
 
 func (d *Deposit) StakeTime() int64 {
@@ -78,57 +78,53 @@ func (d *Deposit) SetCollectedInternalReward(collectedInternalReward int64) {
 
 // getOrCreateIncentiveState returns the state for the given incentive ID,
 // creating a new entry if one does not exist.
-func (d *Deposit) getOrCreateIncentiveState(incentiveID string) *ExternalIncentiveState {
-	if d.externalIncentives == nil {
-		d.externalIncentives = avl.NewTree()
-	}
+func (d *Deposit) getOrCreateIncentiveState(incentiveID string) ExternalIncentiveState {
 	v, ok := d.externalIncentives.Get(incentiveID)
 	if !ok {
-		state := &ExternalIncentiveState{}
-		d.externalIncentives.Set(incentiveID, state)
-		return state
+		return ExternalIncentiveState{}
 	}
-	return v.(*ExternalIncentiveState)
+	return v.(ExternalIncentiveState)
 }
 
-// getIncentiveState returns the state for the given incentive ID, or nil if not found.
-func (d *Deposit) getIncentiveState(incentiveID string) *ExternalIncentiveState {
-	if d.externalIncentives == nil {
-		return nil
-	}
+// getIncentiveState returns the state for the given incentive ID.
+func (d *Deposit) getIncentiveState(incentiveID string) (ExternalIncentiveState, bool) {
 	v, ok := d.externalIncentives.Get(incentiveID)
 	if !ok {
-		return nil
+		return ExternalIncentiveState{}, false
 	}
-	return v.(*ExternalIncentiveState)
+	return v.(ExternalIncentiveState), true
 }
 
 // GetCollectedExternalReward returns the collected external reward for the given incentive ID.
 // Returns 0 if the incentive ID does not exist.
 func (d *Deposit) GetCollectedExternalReward(incentiveID string) (int64, bool) {
-	state := d.getIncentiveState(incentiveID)
-	if state == nil {
+	state, ok := d.getIncentiveState(incentiveID)
+	if !ok {
 		return 0, false
 	}
 	return state.CollectedReward, true
 }
 
 func (d *Deposit) SetCollectedExternalReward(incentiveID string, reward int64) {
-	d.getOrCreateIncentiveState(incentiveID).CollectedReward = reward
+	state := d.getOrCreateIncentiveState(incentiveID)
+	state.CollectedReward = reward
+	d.externalIncentives.Set(incentiveID, state)
 }
 
 // GetExternalRewardLastCollectTime returns the last collect time for the given incentive ID.
 // Returns 0 if the incentive ID does not exist.
 func (d *Deposit) GetExternalRewardLastCollectTime(incentiveID string) (int64, bool) {
-	state := d.getIncentiveState(incentiveID)
-	if state == nil {
+	state, ok := d.getIncentiveState(incentiveID)
+	if !ok {
 		return 0, false
 	}
 	return state.LastCollectTime, true
 }
 
 func (d *Deposit) SetExternalRewardLastCollectTime(incentiveID string, currentTime int64) {
-	d.getOrCreateIncentiveState(incentiveID).LastCollectTime = currentTime
+	state := d.getOrCreateIncentiveState(incentiveID)
+	state.LastCollectTime = currentTime
+	d.externalIncentives.Set(incentiveID, state)
 }
 
 func (d *Deposit) TickLower() int32 {
@@ -149,31 +145,24 @@ func (d *Deposit) SetTickUpper(tickUpper int32) {
 
 // AddExternalIncentiveId adds an external incentive id to the deposit.
 func (d *Deposit) AddExternalIncentiveId(incentiveId string) {
-	d.getOrCreateIncentiveState(incentiveId)
+	if d.externalIncentives.Has(incentiveId) {
+		return
+	}
+	d.externalIncentives.Set(incentiveId, ExternalIncentiveState{})
 }
 
 // HasExternalIncentiveId checks if the deposit has the given external incentive id.
 func (d *Deposit) HasExternalIncentiveId(incentiveId string) bool {
-	if d.externalIncentives == nil {
-		return false
-	}
 	return d.externalIncentives.Has(incentiveId)
 }
 
 // RemoveExternalIncentiveId removes an external incentive id from the deposit.
 func (d *Deposit) RemoveExternalIncentiveId(incentiveId string) {
-	if d.externalIncentives == nil {
-		return
-	}
 	d.externalIncentives.Remove(incentiveId)
 }
 
 // GetExternalIncentiveIdList returns a list of external incentive ids for the deposit.
 func (d *Deposit) GetExternalIncentiveIdList() []string {
-	if d.externalIncentives == nil {
-		return []string{}
-	}
-
 	ids := make([]string, 0, d.externalIncentives.Size())
 	d.externalIncentives.Iterate("", "", func(key string, _ any) bool {
 		ids = append(ids, key)
@@ -186,9 +175,6 @@ func (d *Deposit) GetExternalIncentiveIdList() []string {
 // The callback function receives each incentive ID and should return false to continue iteration,
 // or true to stop early.
 func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) {
-	if d.externalIncentives == nil {
-		return
-	}
 	d.externalIncentives.Iterate("", "", func(key string, _ any) bool {
 		return fn(key)
 	})
@@ -218,13 +204,13 @@ func (d *Deposit) Clone() *Deposit {
 
 	return &Deposit{
 		warmups:                        cloneWarmups(d.warmups),
-		liquidity:                      d.liquidity.Clone(),
+		liquidity:                      d.liquidity,
 		targetPoolPath:                 d.targetPoolPath,
 		owner:                          d.owner,
 		stakeTime:                      d.stakeTime,
 		internalRewardLastCollectTime:  d.internalRewardLastCollectTime,
 		collectedInternalReward:        d.collectedInternalReward,
-		externalIncentives:             cloneExternalIncentives(d.externalIncentives),
+		externalIncentives:             cloneExternalIncentives(&d.externalIncentives),
 		lastExternalIncentiveUpdatedAt: d.lastExternalIncentiveUpdatedAt,
 		tickLower:                      d.tickLower,
 		tickUpper:                      d.tickUpper,
@@ -242,14 +228,13 @@ func NewDeposit(
 	return &Deposit{
 		owner:                          owner,
 		targetPoolPath:                 targetPoolPath,
-		liquidity:                      liquidity,
+		liquidity:                      *liquidity,
 		warmups:                        warmups,
 		stakeTime:                      currentTime,
 		tickLower:                      tickLower,
 		tickUpper:                      tickUpper,
 		internalRewardLastCollectTime:  currentTime,
 		collectedInternalReward:        0,
-		externalIncentives:             avl.NewTree(),
 		lastExternalIncentiveUpdatedAt: 0,
 	}
 }
