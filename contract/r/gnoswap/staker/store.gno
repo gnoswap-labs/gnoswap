@@ -25,9 +25,9 @@ const (
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
-	StoreKeyPools          StoreKey = "pools"
-	StoreKeyPoolTierState  StoreKey = "poolTierState"
-	StoreKeyWarmupTemplate StoreKey = "warmupTemplate"
+	StoreKeyPools                            StoreKey = "pools"
+	StoreKeyPoolTierState                    StoreKey = "poolTierState"
+	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
 	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
 	StoreKeyExternalIncentivesByCreationTime StoreKey = "externalIncentivesByCreationTime"
 )
