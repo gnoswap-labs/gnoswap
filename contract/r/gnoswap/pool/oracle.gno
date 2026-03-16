@@ -45,19 +45,19 @@ func (os *ObservationState) Clone() *ObservationState {
 }
 
 type Observation struct {
-	blockTimestamp                    int64      // timestamp of the observation
-	tickCumulative                    int64      // cumulative tick up to this timestamp
-	liquidityCumulative               *u256.Uint // cumulative liquidity up to this timestamp
-	secondsPerLiquidityCumulativeX128 *u256.Uint // cumulative seconds per liquidity
-	initialized                       bool       // whether this observation has been initialized
+	blockTimestamp                    int64     // timestamp of the observation
+	tickCumulative                    int64     // cumulative tick up to this timestamp
+	liquidityCumulative               u256.Uint // cumulative liquidity up to this timestamp
+	secondsPerLiquidityCumulativeX128 u256.Uint // cumulative seconds per liquidity
+	initialized                       bool      // whether this observation has been initialized
 }
 
 // Observation Getters methods
 func (o *Observation) BlockTimestamp() int64           { return o.blockTimestamp }
 func (o *Observation) TickCumulative() int64           { return o.tickCumulative }
-func (o *Observation) LiquidityCumulative() *u256.Uint { return o.liquidityCumulative }
+func (o *Observation) LiquidityCumulative() *u256.Uint { return &o.liquidityCumulative }
 func (o *Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint {
-	return o.secondsPerLiquidityCumulativeX128
+	return &o.secondsPerLiquidityCumulativeX128
 }
 func (o *Observation) Initialized() bool { return o.initialized }
 
@@ -71,11 +71,11 @@ func (o *Observation) SetTickCumulative(tickCumulative int64) {
 }
 
 func (o *Observation) SetLiquidityCumulative(liquidityCumulative *u256.Uint) {
-	o.liquidityCumulative = liquidityCumulative
+	o.liquidityCumulative = *liquidityCumulative
 }
 
 func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 *u256.Uint) {
-	o.secondsPerLiquidityCumulativeX128 = secondsPerLiquidityCumulativeX128
+	o.secondsPerLiquidityCumulativeX128 = *secondsPerLiquidityCumulativeX128
 }
 
 func (o *Observation) SetInitialized(initialized bool) {
@@ -86,8 +86,8 @@ func (o *Observation) Clone() *Observation {
 	return &Observation{
 		blockTimestamp:                    o.blockTimestamp,
 		tickCumulative:                    o.tickCumulative,
-		liquidityCumulative:               o.liquidityCumulative.Clone(),
-		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128.Clone(),
+		liquidityCumulative:               o.liquidityCumulative,
+		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128,
 		initialized:                       o.initialized,
 	}
 }
@@ -122,8 +122,8 @@ func NewObservation(
 	return &Observation{
 		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    tickCumulative,
-		liquidityCumulative:               liquidityCumulative,
-		secondsPerLiquidityCumulativeX128: secondsPerLiquidityCumulativeX128,
+		liquidityCumulative:               *liquidityCumulative,
+		secondsPerLiquidityCumulativeX128: *secondsPerLiquidityCumulativeX128,
 		initialized:                       initialized,
 	}
 }
