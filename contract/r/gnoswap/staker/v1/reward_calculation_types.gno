@@ -44,13 +44,13 @@ func DecodeInt64(s string) int64 {
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockTimestamp -> any
+	tree avl.Tree // blockTimestamp -> any
 }
 
 // NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
 	return &UintTree{
-		tree: avl.NewTree(),
+		tree: avl.Tree{},
 	}
 }
 
