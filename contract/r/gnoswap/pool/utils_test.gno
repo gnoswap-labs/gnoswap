@@ -12,20 +12,20 @@ func TestEncodeTickKey(t *testing.T) {
 		tick int32
 		want string
 	}{
-		{"zero tick", 0, "0000887272"},
-		{"positive tick", 100, "0000887372"},
-		{"negative tick", -100, "0000887172"},
-		{"max tick", MAX_TICK, "0001774544"},
-		{"min tick", -MAX_TICK, "0000000000"},
-		{"large positive", 500000, "0001387272"},
-		{"large negative", -500000, "0000387272"},
+		{"zero tick", 0, "000v2f8"},
+		{"positive tick", 100, "000v2jc"},
+		{"negative tick", -100, "000v2c4"},
+		{"max tick", MAX_TICK, "001p4yg"},
+		{"min tick", -MAX_TICK, "0000000"},
+		{"large positive", 500000, "001aar8"},
+		{"large negative", -500000, "000bt68"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := EncodeTickKey(tt.tick)
 			uassert.Equal(t, tt.want, got)
-			uassert.Equal(t, 10, len(got))
+			uassert.Equal(t, 7, len(got))
 		})
 	}
 }
@@ -36,13 +36,13 @@ func TestDecodeTickKey(t *testing.T) {
 		encoded string
 		want    int32
 	}{
-		{"zero tick", "0000887272", 0},
-		{"positive tick", "0000887372", 100},
-		{"negative tick", "0000887172", -100},
-		{"max tick", "0001774544", MAX_TICK},
-		{"min tick", "0000000000", -MAX_TICK},
-		{"large positive", "0001387272", 500000},
-		{"large negative", "0000387272", -500000},
+		{"zero tick", "000v2f8", 0},
+		{"positive tick", "000v2jc", 100},
+		{"negative tick", "000v2c4", -100},
+		{"max tick", "001p4yg", MAX_TICK},
+		{"min tick", "0000000", -MAX_TICK},
+		{"large positive", "001aar8", 500000},
+		{"large negative", "000bt68", -500000},
 	}
 
 	for _, tt := range tests {

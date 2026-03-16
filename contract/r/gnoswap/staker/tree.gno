@@ -1,9 +1,6 @@
 package staker
 
 import (
-	"strconv"
-	"strings"
-
 	avl "gno.land/p/nt/avl/v0"
 	"gno.land/p/nt/seqid/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -113,32 +110,25 @@ func DecodeInt64(s string) int64 {
 	return int64(DecodeUint(s))
 }
 
-// EncodeInt takes an int32 and returns a zero-padded decimal string
-// with up to 10 digits for the absolute value.
-// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
+// encodedTickOffset must match pool.ENCODED_TICK_OFFSET (= pool.MAX_TICK).
+const encodedTickOffset int32 = 887272
+
+// EncodeInt encodes an int32 tick value as a compact seqid (cford32) string.
+// Applies a constant offset to map negative ticks into positive space,
+// producing 7-byte lexicographically ordered keys.
 func EncodeInt(num int32) string {
-	// Convert the absolute value to a decimal string.
-	absValue := int64(num)
-	isNegative := false
-	if num < 0 {
-		isNegative = true
-		absValue = -absValue // Safely negate into int64 to avoid overflow.
+	adjusted := num + encodedTickOffset
+	if adjusted < 0 {
+		panic(ufmt.Sprintf("negative adjusted tick: %d (input: %d)", adjusted, num))
 	}
+	return seqid.ID(uint64(adjusted)).String()
+}
 
-	s := strconv.FormatInt(absValue, 10)
-
-	// Zero-pad to a total of 10 digits for the absolute value.
-	// (The '-' sign will be added later if needed.)
-	zerosNeeded := 10 - len(s)
-	if zerosNeeded < 0 {
-		zerosNeeded = 0
+// DecodeInt decodes a seqid-encoded string back into an int32 tick value.
+func DecodeInt(s string) int32 {
+	id, err := seqid.FromString(s)
+	if err != nil {
+		panic("invalid encoded int: " + s)
 	}
-
-	padded := strings.Repeat("0", zerosNeeded) + s
-
-	// If the original number was negative, prepend '-'.
-	if isNegative {
-		return "-" + padded
-	}
-	return padded
+	return int32(uint64(id)) - encodedTickOffset
 }

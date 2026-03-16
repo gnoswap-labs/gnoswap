@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -574,13 +573,8 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false
 		}
 
-		// Convert string key back to int32
-		tickId, err := strconv.Atoi(key)
-		if err != nil {
-			return false // skip invalid keys
-		}
-
-		return fn(int32(tickId), tick)
+		tickId := DecodeInt(key)
+		return fn(tickId, tick)
 	})
 }
 
