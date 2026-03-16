@@ -117,17 +117,17 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1q6d4
 
 ### Create 3 External Incentives ###
 # Incentive 1: BAR token reward
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/onbloc/bar" -args 1000000000 -args 1773180800 -args 1780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/onbloc/bar" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'OK!'
 stdout 'STORAGE DELTA:'
 
 # Incentive 2: FOO token reward
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/onbloc/foo" -args 1000000000 -args 1773180800 -args 1780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/onbloc/foo" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'OK!'
 stdout 'STORAGE DELTA:'
 
 # Incentive 3: WUGNOT token reward
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/gnoland/wugnot" -args 1000000000 -args 1773180800 -args 1780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args "gno.land/r/gnoland/wugnot" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'OK!'
 stdout 'STORAGE DELTA:'
 
