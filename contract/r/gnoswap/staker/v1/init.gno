@@ -137,7 +137,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 
 	if !stakerStore.HasPoolTierStateStoreKey() {
 		state := &sr.PoolTierState{
-			Membership:              initializedPoolTier.membership,
+			Membership:              *initializedPoolTier.membership,
 			TierRatio:               initializedPoolTier.tierRatio,
 			Counts:                  initializedPoolTier.counts,
 			LastRewardCacheTimestamp: initializedPoolTier.lastRewardCacheTimestamp,

@@ -8,7 +8,7 @@ import (
 // PoolTierState consolidates all PoolTier-related state into a single object.
 // Stored as a single KV store entry to reduce store access from 8 Get/Set to 1.
 type PoolTierState struct {
-	Membership              *avl.Tree                                 // poolPath -> tier(1,2,3)
+	Membership              avl.Tree                                  // poolPath -> tier(1,2,3)
 	TierRatio               TierRatio                                 // per-tier reward ratio
 	Counts                  [AllTierCount]uint64                      // per-tier pool counts
 	LastRewardCacheTimestamp int64

@@ -39,7 +39,7 @@ func (s *stakerV1) getPoolTier() *PoolTier {
 	}
 
 	return NewPoolTierBy(
-		state.Membership,
+		&state.Membership,
 		tierRatio,
 		counts,
 		state.LastRewardCacheTimestamp,
@@ -52,7 +52,7 @@ func (s *stakerV1) getPoolTier() *PoolTier {
 
 func (s *stakerV1) updatePoolTier(poolTier *PoolTier) {
 	err := s.store.SetPoolTierState(&sr.PoolTierState{
-		Membership:              poolTier.membership,
+		Membership:              *poolTier.membership,
 		TierRatio:               poolTier.tierRatio,
 		Counts:                  poolTier.counts,
 		LastRewardCacheTimestamp: poolTier.lastRewardCacheTimestamp,

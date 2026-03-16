@@ -747,7 +747,7 @@ func TestStoreSetAndGetPoolTierState(t *testing.T) {
 			name: "set and get pool tier state successfully",
 			setupFn: func(ss IStakerStore) {
 				state := &PoolTierState{
-					Membership:              avl.NewTree(),
+					Membership:              *avl.NewTree(),
 					TierRatio:               TierRatio{100, 200, 300},
 					Counts:                  [AllTierCount]uint64{10, 20, 30, 0},
 					LastRewardCacheTimestamp: 1234567890,
@@ -790,7 +790,7 @@ func TestStoreSetAndGetPoolTierState(t *testing.T) {
 			name: "set pool tier state with function closures",
 			setupFn: func(ss IStakerStore) {
 				state := &PoolTierState{
-					Membership:  avl.NewTree(),
+					Membership:  *avl.NewTree(),
 					TierRatio:   TierRatio{100, 200, 300},
 					GetEmission: func() int64 { return 1000 },
 					GetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
@@ -816,7 +816,7 @@ func TestStoreSetAndGetPoolTierState(t *testing.T) {
 			name: "update pool tier state preserves existing fields",
 			setupFn: func(ss IStakerStore) {
 				state := &PoolTierState{
-					Membership:              avl.NewTree(),
+					Membership:              *avl.NewTree(),
 					TierRatio:               TierRatio{100, 200, 300},
 					Counts:                  [AllTierCount]uint64{5, 10, 15, 0},
 					LastRewardCacheTimestamp: 1000,

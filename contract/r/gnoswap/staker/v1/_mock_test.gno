@@ -260,7 +260,7 @@ func newMockStakerStore() *MockStakerStore {
 		unstakingFee:                0,
 		pools: avl.NewTree(),
 		poolTierState: &sr.PoolTierState{
-			Membership:              avl.NewTree(),
+			Membership:              *avl.NewTree(),
 			TierRatio:               sr.TierRatio{},
 			Counts:                  [sr.AllTierCount]uint64{},
 			LastRewardCacheTimestamp: 0,
