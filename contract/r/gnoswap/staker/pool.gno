@@ -55,20 +55,20 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity UintTree // uint64 timestamp -> *u256.Uint(Q128)
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
 
-	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
+	rewardCache UintTree // uint64 timestamp -> int64 gnsReward
 
 	incentives Incentives
 
 	ticks Ticks // int32 tickId -> Tick tick
 
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
+	globalRewardRatioAccumulation UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
 
-	historicalTick *UintTree // uint64 timestamp -> int32 tickId
+	historicalTick UintTree // uint64 timestamp -> int32 tickId
 }
 
 // Pool Getter/Setter methods
@@ -85,12 +85,16 @@ func (p *Pool) SetPoolPath(poolPath string) {
 
 // StakedLiquidity returns the staked liquidity tree
 func (p *Pool) StakedLiquidity() *UintTree {
-	return p.stakedLiquidity
+	return &p.stakedLiquidity
 }
 
 // SetStakedLiquidity sets the staked liquidity tree
 func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
-	p.stakedLiquidity = stakedLiquidity
+	if stakedLiquidity == nil {
+		p.stakedLiquidity = UintTree{}
+		return
+	}
+	p.stakedLiquidity = *stakedLiquidity
 }
 
 // LastUnclaimableTime returns the last unclaimable time
@@ -115,12 +119,16 @@ func (p *Pool) SetUnclaimableAcc(unclaimableAcc int64) {
 
 // RewardCache returns the reward cache tree
 func (p *Pool) RewardCache() *UintTree {
-	return p.rewardCache
+	return &p.rewardCache
 }
 
 // SetRewardCache sets the reward cache tree
 func (p *Pool) SetRewardCache(rewardCache *UintTree) {
-	p.rewardCache = rewardCache
+	if rewardCache == nil {
+		p.rewardCache = UintTree{}
+		return
+	}
+	p.rewardCache = *rewardCache
 }
 
 // Incentives returns the incentives
@@ -145,22 +153,30 @@ func (p *Pool) SetTicks(ticks Ticks) {
 
 // GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree
 func (p *Pool) GlobalRewardRatioAccumulation() *UintTree {
-	return p.globalRewardRatioAccumulation
+	return &p.globalRewardRatioAccumulation
 }
 
 // SetGlobalRewardRatioAccumulation sets the global reward ratio accumulation tree
 func (p *Pool) SetGlobalRewardRatioAccumulation(globalRewardRatioAccumulation *UintTree) {
-	p.globalRewardRatioAccumulation = globalRewardRatioAccumulation
+	if globalRewardRatioAccumulation == nil {
+		p.globalRewardRatioAccumulation = UintTree{}
+		return
+	}
+	p.globalRewardRatioAccumulation = *globalRewardRatioAccumulation
 }
 
 // HistoricalTick returns the historical tick tree
 func (p *Pool) HistoricalTick() *UintTree {
-	return p.historicalTick
+	return &p.historicalTick
 }
 
 // SetHistoricalTick sets the historical tick tree
 func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
-	p.historicalTick = historicalTick
+	if historicalTick == nil {
+		p.historicalTick = UintTree{}
+		return
+	}
+	p.historicalTick = *historicalTick
 }
 
 // Clone returns a deep copy of the pool.
@@ -171,14 +187,14 @@ func (p *Pool) Clone() *Pool {
 
 	return &Pool{
 		poolPath:                      p.poolPath,
-		stakedLiquidity:               nil,
+		stakedLiquidity:               UintTree{},
 		lastUnclaimableTime:           p.lastUnclaimableTime,
 		unclaimableAcc:                p.unclaimableAcc,
-		rewardCache:                   nil,
+		rewardCache:                   UintTree{},
 		incentives:                    Incentives{},
 		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: nil,
-		historicalTick:                nil,
+		globalRewardRatioAccumulation: UintTree{},
+		historicalTick:                UintTree{},
 	}
 }
 
@@ -186,18 +202,18 @@ func (p *Pool) Clone() *Pool {
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
-		stakedLiquidity: NewUintTree(),
+		stakedLiquidity: *NewUintTree(),
 		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
 		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
 		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
 		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
-		rewardCache:                   NewUintTree(),
+		rewardCache:                   *NewUintTree(),
 		incentives:                    *NewIncentives(poolPath),
 		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: NewUintTree(),
-		historicalTick:                NewUintTree(),
+		globalRewardRatioAccumulation: *NewUintTree(),
+		historicalTick:                *NewUintTree(),
 	}
 
 	pool.GlobalRewardRatioAccumulation().Set(currentTime, u256.Zero())
@@ -519,19 +535,19 @@ func NewExternalIncentive(
 
 // Tick mapping for each pool
 type Ticks struct {
-	tree *avl.Tree // int32 tickId -> tick
+	tree avl.Tree // int32 tickId -> tick
 }
 
 // Ticks Getter/Setter methods
 
 // Tree returns the ticks tree
 func (t *Ticks) Tree() *avl.Tree {
-	return t.tree
+	return &t.tree
 }
 
 // SetTree sets the ticks tree
 func (t *Ticks) SetTree(tree *avl.Tree) {
-	t.tree = tree
+	t.tree = *tree
 }
 
 func (t *Ticks) Get(tickId int32) *Tick {
@@ -583,7 +599,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 
 // Clone returns a deep copy of ticks.
 func (t Ticks) Clone() Ticks {
-	cloned := avl.NewTree()
+	cloned := avl.Tree{}
 	t.tree.Iterate("", "", func(key string, value any) bool {
 		tick, ok := value.(*Tick)
 		if !ok {
@@ -597,7 +613,7 @@ func (t Ticks) Clone() Ticks {
 
 func NewTicks() Ticks {
 	return Ticks{
-		tree: avl.NewTree(),
+		tree: *avl.NewTree(),
 	}
 }
 
