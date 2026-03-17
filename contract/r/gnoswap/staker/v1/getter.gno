@@ -62,11 +62,11 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
-	ictv, ok := incentive.(*sr.ExternalIncentive)
+	v, ok := incentive.(sr.ExternalIncentive)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
+		panic(ufmt.Sprintf("failed to cast incentive to ExternalIncentive: %T", incentive))
 	}
-	return ictv
+	return &v
 }
 
 // GetIncentive returns the incentive for the given pool and ID.
@@ -445,12 +445,12 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	incentives := make([]sr.ExternalIncentive, 0)
 
 	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+		v, ok := value.(sr.ExternalIncentive)
 		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
+			panic("failed to cast value to ExternalIncentive")
 		}
-		if incentive.TargetPoolPath() == poolPath {
-			incentives = append(incentives, *incentive)
+		if v.TargetPoolPath() == poolPath {
+			incentives = append(incentives, v)
 		}
 		return false
 	})

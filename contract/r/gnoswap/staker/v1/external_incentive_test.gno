@@ -2350,6 +2350,8 @@ func TestEndExternalIncentive_AfterCollectPastEnd(t *testing.T) {
 	depositResolver.addCollectedExternalReward(incentiveId, collected)
 	depositResolver.updateExternalRewardLastCollectTime(incentiveId, endTime+100) // past endTime
 	incentiveResolver.addDistributedRewardAmount(collected)
+	// Re-save to pool tree since value-type storage holds independent copies
+	poolResolver.IncentivesResolver().update(creator, incentive)
 
 	// No RemoveExternalIncentiveId call — entry stays in deposit
 	lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)

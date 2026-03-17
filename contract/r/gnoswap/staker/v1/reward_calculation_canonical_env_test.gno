@@ -405,12 +405,12 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	// Add active incentive IDs to deposit
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+		v, ok := value.(sr.ExternalIncentive)
 		if !ok {
 			return false
 		}
 
-		incentiveResolver := NewExternalIncentiveResolver(incentive)
+		incentiveResolver := NewExternalIncentiveResolver(&v)
 
 		// Only add active or upcoming incentives (skip ended/refunded)
 		if !incentiveResolver.Refunded() && incentiveResolver.EndTimestamp() >= currentTimestamp {

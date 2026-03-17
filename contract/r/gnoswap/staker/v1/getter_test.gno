@@ -72,7 +72,7 @@ func setupBasicTestState(t *testing.T) *testState {
 		state.fixedTimestamp,      // currentTime
 	)
 	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
-	state.instance.store.GetExternalIncentives().Set(state.incentiveId, state.incentive)
+	state.instance.store.GetExternalIncentives().Set(state.incentiveId, *state.incentive)
 
 	// Direct store access for complex state: Deposit
 	warmups := []sr.Warmup{
@@ -183,6 +183,8 @@ func TestGetterIncentiveRewardAmounts(t *testing.T) {
 
 	// Set distributed amount to create derived relationship
 	state.incentive.SetDistributedRewardAmount(3_000_000)
+	// Re-save to pool tree since value-type storage holds independent copies
+	state.pool.Incentives().SetIncentive(state.incentiveId, state.incentive)
 
 	totalReward := state.instance.GetIncentiveTotalRewardAmount(state.poolPath, state.incentiveId)
 	distributedReward := state.instance.GetIncentiveDistributedRewardAmount(state.poolPath, state.incentiveId)

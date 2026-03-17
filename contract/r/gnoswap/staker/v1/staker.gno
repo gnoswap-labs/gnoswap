@@ -130,16 +130,16 @@ func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
 		))
 	}
 
-	incentive, ok := incentiveI.(*sr.ExternalIncentive)
+	v, ok := incentiveI.(sr.ExternalIncentive)
 	if !ok {
-		panic("failed to cast value to *ExternalIncentive")
+		panic("failed to cast value to ExternalIncentive")
 	}
-	return incentive
+	return &v
 }
 
 // set stores an external incentive.
 func (self *ExternalIncentives) set(incentiveId string, incentive *sr.ExternalIncentive) {
-	self.tree.Set(incentiveId, incentive)
+	self.tree.Set(incentiveId, *incentive)
 }
 
 // remove deletes an external incentive by ID.
@@ -590,8 +590,12 @@ func (s *stakerV1) collectRewardInternal(
 			panic(err)
 		}
 
-		// update
+		// update both the global incentive tree and the per-pool incentive tree
+		// to keep them in sync (value-type storage means they hold independent copies)
 		externalIncentives.set(incentiveId, incentive)
+		if pool, ok := pools.Get(deposit.TargetPoolPath()); ok {
+			NewPoolResolver(pool).IncentivesResolver().update(incentive.Refundee(), incentive)
+		}
 
 		if externalPenalty > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)

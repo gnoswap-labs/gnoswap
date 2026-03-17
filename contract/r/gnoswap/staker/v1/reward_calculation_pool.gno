@@ -133,12 +133,12 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasIncentive := false
 	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+		v, ok := value.(sr.ExternalIncentive)
 		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
+			panic("failed to cast value to ExternalIncentive")
 		}
 
-		resolver := NewExternalIncentiveResolver(incentive)
+		resolver := NewExternalIncentiveResolver(&v)
 		if !resolver.IsEnded(currentTime) {
 			hasIncentive = true
 			return true

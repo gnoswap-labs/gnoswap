@@ -92,7 +92,7 @@ func (s *stakerV1) CreateExternalIncentive(
 		))
 	}
 	// store external incentive information for each incentiveId
-	externalIncentives.Set(incentiveId, incentive)
+	externalIncentives.Set(incentiveId, *incentive)
 
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)

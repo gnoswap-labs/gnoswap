@@ -269,20 +269,23 @@ func (i *Incentives) Incentive(incentiveId string) (*ExternalIncentive, bool) {
 	if !exists {
 		return nil, false
 	}
-	incentive, ok := value.(*ExternalIncentive)
-	return incentive, ok
+	v, ok := value.(ExternalIncentive)
+	if !ok {
+		return nil, false
+	}
+	return &v, true
 }
 
 // SetIncentive sets an incentive by ID
 func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncentive) {
-	i.incentives.Set(incentiveId, incentive)
+	i.incentives.Set(incentiveId, *incentive)
 }
 
 // IterateIncentives iterates over all incentives
 func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *ExternalIncentive) bool) {
 	i.incentives.Iterate("", "", func(key string, value interface{}) bool {
-		if incentive, ok := value.(*ExternalIncentive); ok {
-			return fn(key, incentive)
+		if v, ok := value.(ExternalIncentive); ok {
+			return fn(key, &v)
 		}
 		return false
 	})

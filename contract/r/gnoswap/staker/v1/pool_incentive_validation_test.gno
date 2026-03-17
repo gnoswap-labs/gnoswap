@@ -56,12 +56,12 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 	// Verify that there are actually no active incentives in the active tree
 	activeCount := 0
 	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+		v, ok := value.(sr.ExternalIncentive)
 		if !ok {
 			return false
 		}
 		// Check if incentive is active at current time
-		if incentive.StartTimestamp() <= currentTime && incentive.EndTimestamp() >= currentTime {
+		if v.StartTimestamp() <= currentTime && v.EndTimestamp() >= currentTime {
 			activeCount++
 		}
 		return false

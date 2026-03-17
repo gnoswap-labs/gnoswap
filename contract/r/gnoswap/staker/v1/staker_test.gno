@@ -314,7 +314,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	incentives.tree.Iterate("", "", func(key string, value any) bool {
 		if incentive == nil {
 			incentiveId = key
-			incentive = value.(*sr.ExternalIncentive)
+			v := value.(sr.ExternalIncentive)
+			incentive = &v
 		}
 		return false
 	})
