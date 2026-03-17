@@ -38,20 +38,20 @@ func (p *Pool) Token0Path() string                  { return p.token0Path }
 func (p *Pool) Token1Path() string                  { return p.token1Path }
 func (p *Pool) Fee() uint32                         { return p.fee }
 func (p *Pool) Balances() Balances                  { return p.balances }
-func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
-func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
+func (p *Pool) BalanceToken0() *u256.Uint           { return &p.balances.token0 }
+func (p *Pool) BalanceToken1() *u256.Uint           { return &p.balances.token1 }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
 func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return &p.maxLiquidityPerTick }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
-func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return p.slot0.sqrtPriceX96 }
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return &p.slot0.sqrtPriceX96 }
 func (p *Pool) Slot0Tick() int32                    { return p.slot0.tick }
 func (p *Pool) Slot0FeeProtocol() uint8             { return p.slot0.feeProtocol }
 func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
 func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return &p.feeGrowthGlobal0X128 }
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return &p.feeGrowthGlobal1X128 }
 func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
+func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return &p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return &p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return &p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
@@ -76,11 +76,19 @@ func (p *Pool) SetBalances(balances Balances) {
 }
 
 func (p *Pool) SetBalanceToken0(token0 *u256.Uint) {
-	p.balances.token0 = token0
+	if token0 == nil {
+		p.balances.token0 = u256.Uint{}
+		return
+	}
+	p.balances.token0 = *token0
 }
 
 func (p *Pool) SetBalanceToken1(token1 *u256.Uint) {
-	p.balances.token1 = token1
+	if token1 == nil {
+		p.balances.token1 = u256.Uint{}
+		return
+	}
+	p.balances.token1 = *token1
 }
 
 func (p *Pool) SetTickSpacing(tickSpacing int32) {
@@ -120,11 +128,19 @@ func (p *Pool) SetProtocolFees(protocolFees ProtocolFees) {
 }
 
 func (p *Pool) SetProtocolFeesToken0(token0 *u256.Uint) {
-	p.protocolFees.token0 = token0
+	if token0 == nil {
+		p.protocolFees.token0 = u256.Uint{}
+		return
+	}
+	p.protocolFees.token0 = *token0
 }
 
 func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint) {
-	p.protocolFees.token1 = token1
+	if token1 == nil {
+		p.protocolFees.token1 = u256.Uint{}
+		return
+	}
+	p.protocolFees.token1 = *token1
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
@@ -205,7 +221,7 @@ func (p *Pool) Clone() *Pool {
 		fee:         p.fee,
 		tickSpacing: p.tickSpacing,
 		slot0: Slot0{
-			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
+			sqrtPriceX96: p.slot0.sqrtPriceX96,
 			tick:         p.slot0.tick,
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
@@ -269,45 +285,64 @@ func newProtocolFees() ProtocolFees {
 }
 
 type TokenPair struct {
-	token0, token1 *u256.Uint
+	token0, token1 u256.Uint
 }
 
 func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
-	return TokenPair{
-		token0: token0,
-		token1: token1,
+	var t0, t1 u256.Uint
+	if token0 != nil {
+		t0 = *token0
 	}
+	if token1 != nil {
+		t1 = *token1
+	}
+	return TokenPair{token0: t0, token1: t1}
 }
 
-func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
-func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
+func (t *TokenPair) Token0() *u256.Uint { return &t.token0 }
+func (t *TokenPair) Token1() *u256.Uint { return &t.token1 }
 
-func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
-func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
+func (t *TokenPair) SetToken0(token0 *u256.Uint) {
+	if token0 == nil {
+		t.token0 = u256.Uint{}
+		return
+	}
+	t.token0 = *token0
+}
+func (t *TokenPair) SetToken1(token1 *u256.Uint) {
+	if token1 == nil {
+		t.token1 = u256.Uint{}
+		return
+	}
+	t.token1 = *token1
+}
 
 func (t *TokenPair) Clone() TokenPair {
-	return NewTokenPair(
-		t.token0.Clone(),
-		t.token1.Clone(),
-	)
+	return TokenPair{token0: t.token0, token1: t.token1}
 }
 
 type Slot0 struct {
-	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
-	tick         int32      // current tick of the pool, i.e according to the last tick transition that was run
-	feeProtocol  uint8      // protocol fee for both tokens of the pool
-	unlocked     bool       // whether the pool is currently locked to reentrancy
+	sqrtPriceX96 u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
+	tick         int32     // current tick of the pool, i.e according to the last tick transition that was run
+	feeProtocol  uint8     // protocol fee for both tokens of the pool
+	unlocked     bool      // whether the pool is currently locked to reentrancy
 }
 
-func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96 }
+func (s *Slot0) SqrtPriceX96() *u256.Uint { return &s.sqrtPriceX96 }
 func (s *Slot0) Tick() int32              { return s.tick }
 func (s *Slot0) FeeProtocol() uint8       { return s.feeProtocol }
 func (s *Slot0) Unlocked() bool           { return s.unlocked }
 
-func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96 }
-func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
-func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
-func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }
+func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
+	if sqrtPriceX96 == nil {
+		s.sqrtPriceX96 = u256.Uint{}
+		return
+	}
+	s.sqrtPriceX96 = *sqrtPriceX96
+}
+func (s *Slot0) SetTick(tick int32)           { s.tick = tick }
+func (s *Slot0) SetFeeProtocol(feeProtocol uint8) { s.feeProtocol = feeProtocol }
+func (s *Slot0) SetUnlocked(unlocked bool)    { s.unlocked = unlocked }
 
 func newSlot0(
 	sqrtPriceX96 *u256.Uint,
@@ -316,7 +351,7 @@ func newSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96: sqrtPriceX96.Clone(),
+		sqrtPriceX96: *sqrtPriceX96,
 		tick:         tick,
 		feeProtocol:  feeProtocol,
 		unlocked:     unlocked,
