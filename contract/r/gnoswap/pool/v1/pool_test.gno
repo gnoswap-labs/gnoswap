@@ -487,13 +487,8 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
 			observationState.SetCardinalityNext(1)
-			obs := &pl.Observation{}
-			obs.SetBlockTimestamp(100)
-			obs.SetTickCumulative(5000000000)
-			obs.SetLiquidityCumulative(u256.MustFromDecimal("3000000"))
-			obs.SetSecondsPerLiquidityCumulativeX128(u256.Zero())
-			obs.SetInitialized(true)
-			observationState.SetObservations(map[uint16]*pl.Observation{0: obs})
+			obs := pl.NewObservation(100, 5000000000, u256.MustFromDecimal("3000000"), u256.Zero(), true)
+			observationState.SetObservations(map[uint16]pl.Observation{0: obs})
 			pool.SetObservationState(observationState)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
@@ -502,7 +497,8 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			beforeLiquidityCumulative := new(u256.Uint).Set(lastObs.LiquidityCumulative())
 
 			observationState = pool.ObservationState()
-			lastObs, err := lastObservation(observationState)
+			var err error
+			lastObs, err = lastObservation(observationState)
 
 			uassert.NoError(t, err, "Last observation should succeed")
 			currentTime := lastObs.BlockTimestamp() + tt.timeElapsed
@@ -832,9 +828,9 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 				mockInstanceSetFeeProtocol(uint8(test.feeSettings["fee0"]), uint8(test.feeSettings["fee1"]))
 			}
 
-			// Check state before collection
-			beforeFees0 := pool.ProtocolFeesToken0()
-			beforeFees1 := pool.ProtocolFeesToken1()
+			// Check state before collection (clone to avoid aliasing with internal field)
+			beforeFees0 := pool.ProtocolFeesToken0().Clone()
+			beforeFees1 := pool.ProtocolFeesToken1().Clone()
 
 			// When: Collect
 			amount0, amount1 := mockInstanceCollectProtocol(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
