@@ -25,11 +25,11 @@ type Pool struct {
 	feeGrowthGlobal0X128 u256.Uint // uint256
 	feeGrowthGlobal1X128 u256.Uint // uint256
 	liquidity            u256.Uint // total amount of active liquidity in the pool (within current tick range)
-	ticks                *avl.Tree  // tick(int32) -> TickInfo
-	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
-	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+	ticks                avl.Tree  // tick(int32) -> TickInfo
+	tickBitmaps          avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
+	positions            avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
-	observationState *ObservationState // oracle state with historical observations
+	observationState ObservationState // oracle state with historical observations
 }
 
 // Pool Getters methods
@@ -53,10 +53,10 @@ func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return &p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return &p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return &p.liquidity }
-func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
-func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
-func (p *Pool) Positions() *avl.Tree                { return p.positions }
-func (p *Pool) ObservationState() *ObservationState { return p.observationState }
+func (p *Pool) Ticks() *avl.Tree                    { return &p.ticks }
+func (p *Pool) TickBitmaps() *avl.Tree              { return &p.tickBitmaps }
+func (p *Pool) Positions() *avl.Tree                { return &p.positions }
+func (p *Pool) ObservationState() *ObservationState { return &p.observationState }
 
 // Pool Setters methods
 func (p *Pool) SetToken0Path(token0Path string) {
@@ -152,19 +152,35 @@ func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
 }
 
 func (p *Pool) SetTicks(ticks *avl.Tree) {
-	p.ticks = ticks
+	if ticks == nil {
+		p.ticks = avl.Tree{}
+		return
+	}
+	p.ticks = *ticks
 }
 
 func (p *Pool) SetTickBitmaps(tickBitmaps *avl.Tree) {
-	p.tickBitmaps = tickBitmaps
+	if tickBitmaps == nil {
+		p.tickBitmaps = avl.Tree{}
+		return
+	}
+	p.tickBitmaps = *tickBitmaps
 }
 
 func (p *Pool) SetPositions(positions *avl.Tree) {
-	p.positions = positions
+	if positions == nil {
+		p.positions = avl.Tree{}
+		return
+	}
+	p.positions = *positions
 }
 
 func (p *Pool) SetObservationState(observationState *ObservationState) {
-	p.observationState = observationState
+	if observationState == nil {
+		p.observationState = ObservationState{}
+		return
+	}
+	p.observationState = *observationState
 }
 
 func (p *Pool) HasTick(tick int32) bool {
@@ -232,10 +248,10 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128,
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128,
 		liquidity:            p.liquidity,
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
-		observationState:     NewObservationState(time.Now().Unix()),
+		ticks:                avl.Tree{},
+		tickBitmaps:          avl.Tree{},
+		positions:            avl.Tree{},
+		observationState:     *NewObservationState(time.Now().Unix()),
 	}
 }
 
@@ -259,10 +275,10 @@ func NewPool(
 		tickSpacing: tickSpacing,
 		slot0:       slot0,
 		protocolFees:    newProtocolFees(),
-		ticks:           avl.NewTree(),
-		tickBitmaps:     avl.NewTree(),
-		positions:       avl.NewTree(),
-		observationState: NewObservationState(time.Now().Unix()),
+		ticks:           avl.Tree{},
+		tickBitmaps:     avl.Tree{},
+		positions:       avl.Tree{},
+		observationState: *NewObservationState(time.Now().Unix()),
 	}
 	pool.SetMaxLiquidityPerTick(maxLiquidityPerTick)
 	return pool

@@ -20,7 +20,7 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	if p.ObservationState() == nil {
+	if p.ObservationState().Observations() == nil {
 		return 0, nil, errors.New("observation state not initialized")
 	}
 
@@ -70,7 +70,7 @@ func writeObservationByPool(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	if p.ObservationState() == nil {
+	if p.ObservationState().Observations() == nil {
 		p.SetObservationState(pl.NewObservationState(currentTime))
 	}
 
@@ -85,7 +85,7 @@ func writeObservationByPool(
 func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinalityNext uint16) error {
 	observationState := p.ObservationState()
 
-	if observationState == nil {
+	if observationState.Observations() == nil {
 		return errors.New("observation state not initialized")
 	}
 

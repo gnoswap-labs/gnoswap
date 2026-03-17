@@ -15,9 +15,9 @@ func makeTestPool() *Pool {
 		token1Path:  "gno.land/r/onbloc/foo",
 		fee:         500,
 		tickSpacing: 10,
-		ticks:       avl.NewTree(),
-		tickBitmaps: avl.NewTree(),
-		positions:   avl.NewTree(),
+		ticks:       *avl.NewTree(),
+		tickBitmaps: *avl.NewTree(),
+		positions:   *avl.NewTree(),
 	}
 }
 
