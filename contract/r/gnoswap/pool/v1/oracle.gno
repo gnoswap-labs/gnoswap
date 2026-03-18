@@ -311,9 +311,25 @@ func observeSingle(
 	observationTimeDelta := atOrAfter.BlockTimestamp() - beforeOrAt.BlockTimestamp()
 	targetDelta := target - beforeOrAt.BlockTimestamp()
 
-	// tickCumulative += (tickCumulativeAfter - tickCumulativeBefore) / observationTimeDelta * targetDelta
-	tickCumulative := beforeOrAt.TickCumulative() +
-		((atOrAfter.TickCumulative()-beforeOrAt.TickCumulative())/observationTimeDelta)*targetDelta
+	// Interpolate tickCumulative with mul-first ordering to avoid integer division truncation.
+	// Uses u256.MulDiv (512-bit intermediate) for overflow safety, with sign handled separately.
+	tickCumDelta := atOrAfter.TickCumulative() - beforeOrAt.TickCumulative()
+	absDelta := tickCumDelta
+	if absDelta < 0 {
+		absDelta = -absDelta
+	}
+
+	interpolated := u256.MulDiv(
+		u256.NewUint(uint64(absDelta)),
+		u256.NewUint(uint64(targetDelta)),
+		u256.NewUint(uint64(observationTimeDelta)),
+	).Int64()
+
+	if tickCumDelta < 0 {
+		interpolated = -interpolated
+	}
+
+	tickCumulative := beforeOrAt.TickCumulative() + interpolated
 
 	// for secondsPerLiquidity, need to interpolate carefully
 	secondsPerLiquidityDelta := u256.Zero().Sub(

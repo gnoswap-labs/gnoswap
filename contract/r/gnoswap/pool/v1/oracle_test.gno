@@ -461,6 +461,160 @@ func TestGetTWAP_ErrorCases(t *testing.T) {
 	}
 }
 
+func TestObserveSingle_TickInterpolationPrecision(t *testing.T) {
+	tests := []struct {
+		name string
+		// observation setup
+		tickCumulativeBefore int64
+		tickCumulativeAfter  int64
+		timeBefore           int64 // relative offset from base
+		timeAfter            int64 // relative offset from base
+		targetOffset         int64 // target time offset from base
+		// expected: (delta * targetDelta) / observationTimeDelta (Uniswap V3 reference)
+		expected int64
+	}{
+		{
+			// tickCumDelta=107, obsTimeDelta=10, targetDelta=7
+			// (107*7)/10 = 749/10 = 74
+			name:                 "non-divisible positive delta",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  107,
+			timeBefore:           0,
+			timeAfter:            10,
+			targetOffset:         7,
+			expected:             74,
+		},
+		{
+			// tickCumDelta=999, obsTimeDelta=100, targetDelta=99
+			// (999*99)/100 = 98901/100 = 989
+			name:                 "large remainder amplified by targetDelta",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  999,
+			timeBefore:           0,
+			timeAfter:            100,
+			targetOffset:         99,
+			expected:             989,
+		},
+		{
+			// tickCumDelta=-107, obsTimeDelta=10, targetDelta=7
+			// |(-107)*7|/10 = 749/10 = 74, sign=-1 → -74
+			name:                 "negative tick cumulative delta",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  -107,
+			timeBefore:           0,
+			timeAfter:            10,
+			targetOffset:         7,
+			expected:             -74,
+		},
+		{
+			// Exactly divisible: no precision difference regardless of ordering
+			// tickCumDelta=887272*13=11534536, obsTimeDelta=13, targetDelta=9
+			// (11534536*9)/13 = 7985448
+			name:                 "exactly divisible - no rounding",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  887272 * 13,
+			timeBefore:           0,
+			timeAfter:            13,
+			targetOffset:         9,
+			expected:             7985448,
+		},
+		{
+			// Realistic scenario: tick ~= -200000 (ETH/USDC-like), 15-minute gap
+			// tickCumDelta=-179999863, obsTimeDelta=900, targetDelta=600
+			// (-179999863 * 600) / 900 = -119999908 (truncated toward zero)
+			name:                 "realistic ETH/USDC-like scenario",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  -179999863,
+			timeBefore:           0,
+			timeAfter:            900,
+			targetOffset:         600,
+			expected:             -119999908,
+		},
+		{
+			// Small targetDelta: (9999*1)/100 = 99
+			name:                 "small targetDelta",
+			tickCumulativeBefore: 0,
+			tickCumulativeAfter:  9999,
+			timeBefore:           0,
+			timeAfter:            100,
+			targetOffset:         1,
+			expected:             99,
+		},
+	}
+
+	baseTime := time.Now().Unix() - 10000
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tBefore := baseTime + tt.timeBefore
+			tAfter := baseTime + tt.timeAfter
+
+			os := pl.NewObservationState(tBefore)
+			os.Observations()[0] = pl.NewObservation(
+				tBefore, tt.tickCumulativeBefore,
+				u256.Zero(), u256.Zero(), true,
+			)
+			os.SetCardinality(2)
+			os.SetCardinalityNext(2)
+			os.SetIndex(1)
+			os.Observations()[1] = pl.NewObservation(
+				tAfter, tt.tickCumulativeAfter,
+				u256.Zero(), u256.Zero(), true,
+			)
+
+			secondsAgo := uint32(tAfter - (baseTime + tt.targetOffset))
+			liquidity := u256.MustFromDecimal("1000000")
+
+			tickCumulative, _, err := observeSingle(
+				os, tAfter, secondsAgo, 0, 1, liquidity, 2,
+			)
+			uassert.NoError(t, err, "observeSingle should not error")
+			uassert.Equal(t, tt.expected, tickCumulative,
+				"tickCumulative interpolation should match mul-first (Uniswap V3) result")
+		})
+	}
+}
+
+// TestObserveSingle_InterpolationConsistency verifies that tickCumulative
+// and secondsPerLiquidity now both use MulDiv (mul-first) ordering,
+// producing consistent interpolation results.
+func TestObserveSingle_InterpolationConsistency(t *testing.T) {
+	baseTime := time.Now().Unix() - 10000
+
+	tBefore := baseTime
+	tAfter := baseTime + 100
+	target := baseTime + 73 // 73/100 of the way through
+
+	os := pl.NewObservationState(tBefore)
+	os.Observations()[0] = pl.NewObservation(
+		tBefore, 0, u256.Zero(), u256.Zero(), true,
+	)
+	os.SetCardinality(2)
+	os.SetCardinalityNext(2)
+	os.SetIndex(1)
+
+	// Same delta value (10007) for both tick and secondsPerLiquidity
+	os.Observations()[1] = pl.NewObservation(
+		tAfter, 10007, u256.Zero(), u256.MustFromDecimal("10007"), true,
+	)
+
+	secondsAgo := uint32(tAfter - target)
+	liquidity := u256.MustFromDecimal("1000000")
+
+	tickCumulative, secondsPerLiq, err := observeSingle(
+		os, tAfter, secondsAgo, 0, 1, liquidity, 2,
+	)
+	uassert.NoError(t, err, "observeSingle should not error")
+
+	// Both should produce (10007*73)/100 = 730511/100 = 7305
+	uassert.Equal(t, int64(7305), tickCumulative,
+		"tickCumulative should use MulDiv (mul-first)")
+
+	expectedSecPerLiq := u256.MustFromDecimal("7305")
+	uassert.Equal(t, expectedSecPerLiq.ToString(), secondsPerLiq.ToString(),
+		"secondsPerLiquidity should use MulDiv (mul-first)")
+}
+
 // newObservationStateWithDelta seeds a 2-slot observation state so that the
 // tick cumulative delta over secondsAgo is tickDelta.
 func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.ObservationState {
