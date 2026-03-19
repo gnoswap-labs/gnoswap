@@ -22,20 +22,6 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return token0Path + ":" + token1Path + ":" + strconv.FormatUint(uint64(fee), 10)
 }
 
-func ParsePoolPath(poolPath string) (string, string, uint32) {
-	parts := strings.Split(poolPath, ":")
-	if len(parts) != 3 {
-		panic(ufmt.Sprintf("invalid pool path: %s", poolPath))
-	}
-
-	fee, err := strconv.ParseUint(parts[2], 10, 32)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid fee: %s", parts[2]))
-	}
-
-	return parts[0], parts[1], uint32(fee)
-}
-
 // EncodeTickKey encodes a tick to a string key for the tick tree.
 func EncodeTickKey(tick int32) string {
 	adjustTick := tick + ENCODED_TICK_OFFSET

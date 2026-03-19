@@ -1,13 +1,5 @@
 package governance
 
-import (
-	"errors"
-)
-
-var (
-	errProposalNotExecutable = errors.New("proposal not executable")
-)
-
 // ProposalActionStatus tracks the execution and cancellation status of a proposal.
 // This structure manages the action-related state including who performed actions and when.
 type ProposalActionStatus struct {
