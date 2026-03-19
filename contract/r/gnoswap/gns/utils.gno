@@ -7,16 +7,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// validBlockTime validates that block time is within acceptable range.
-// Returns error if block time is <= 0 or >= 1e9.
-func validBlockTime(blockTime int64) error {
-	if blockTime <= 0 || blockTime >= 1e9 {
-		return errInvalidAvgBlockTimeInMs
-	}
-
-	return nil
-}
-
 // validYear validates that year is within halving period range (1-12).
 // Returns error if year is outside the valid range.
 func validYear(year int64) error {
@@ -47,21 +37,6 @@ func i64Min(x, y int64) int64 {
 		return x
 	}
 	return y
-}
-
-// formatUint formats unsigned integer types to string.
-// Supports uint8, uint32, and uint64. Panics for unsupported types.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
 }
 
 // formatInt formats signed integer types to string.
