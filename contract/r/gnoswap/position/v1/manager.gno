@@ -1,7 +1,6 @@
 package v1
 
 import (
-	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -15,28 +14,6 @@ func (p *positionV1) incrementNextId() error {
 	return p.store.SetPositionNextID(p.getNextId() + 1)
 }
 
-// createNewPosition creates a new position with the given position data.
-func (p *positionV1) createNewPosition(id uint64, pos position.Position) uint64 {
-	if p.ExistPosition(id) {
-		panic(newErrorWithDetail(
-			errPositionExist,
-			ufmt.Sprintf("positionId(%d)", id),
-		))
-	}
-
-	err := p.setPosition(id, pos)
-	if err != nil {
-		panic(err)
-	}
-
-	err = p.incrementNextId()
-	if err != nil {
-		panic(err)
-	}
-
-	return id
-}
-
 // setPosition sets a position for a given position ID.
 // Returns false if position is newly created, true if position already existed and was updated.
 func (p *positionV1) setPosition(id uint64, pos position.Position) error {
@@ -46,14 +23,6 @@ func (p *positionV1) setPosition(id uint64, pos position.Position) error {
 // mustUpdatePosition updates a position for a given position ID.
 func (p *positionV1) mustUpdatePosition(id uint64, pos position.Position) {
 	err := p.setPosition(id, pos)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// removePosition removes a position for a given position ID
-func (p *positionV1) removePosition(id uint64) {
-	err := p.store.RemovePosition(id)
 	if err != nil {
 		panic(err)
 	}
