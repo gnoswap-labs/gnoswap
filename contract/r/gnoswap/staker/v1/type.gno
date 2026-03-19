@@ -22,32 +22,11 @@ func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
 	return currentTimestamp >= self.StartTimestamp()
 }
 
-func (self *ExternalIncentiveResolver) RewardSpent(currentTimestamp int64) int64 {
-	// Check timestamps for state validation
-	if currentTimestamp < self.StartTimestamp() {
-		return 0
-	}
-
-	if currentTimestamp > self.EndTimestamp() {
-		return self.RewardAmount()
-	}
-
-	timeDuration := safeSubInt64(currentTimestamp, self.StartTimestamp())
-	rewardSpent := safeMulInt64(timeDuration, self.RewardPerSecond())
-	return rewardSpent
-}
-
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
 // This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) {
 	distributedRewardAmount := safeAddInt64(self.DistributedRewardAmount(), amount)
 	self.SetDistributedRewardAmount(distributedRewardAmount)
-}
-
-func (self *ExternalIncentiveResolver) Clone() *ExternalIncentiveResolver {
-	return &ExternalIncentiveResolver{
-		ExternalIncentive: self.ExternalIncentive.Clone(),
-	}
 }
 
 // NewExternalIncentive creates a new external incentive
