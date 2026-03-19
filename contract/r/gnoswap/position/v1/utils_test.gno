@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -113,98 +112,36 @@ func TestAssertValidNumberString(t *testing.T) {
 func TestPositionIdFrom(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       any
+		input       uint64
 		expected    string
-		shouldPanic bool
 	}{
-		{
-			name:        "positionIdFrom is failed by nil",
-			input:       nil,
-			expected:    "[GNOSWAP-POSITION-004] invalid input data || positionId is nil",
-			shouldPanic: true,
-		},
-		{
-			name:        "positionIdFrom is failed by unsupported type",
-			input:       float64(1),
-			expected:    "[GNOSWAP-POSITION-004] invalid input data || unsupported positionId type",
-			shouldPanic: true,
-		},
-		{
-			name:        "positionIdFrom is success by string",
-			input:       "1",
-			expected:    "1",
-			shouldPanic: false,
-		},
-		{
-			name:        "positionIdFrom is success by int",
-			input:       int(1),
-			expected:    "1",
-			shouldPanic: false,
-		},
 		{
 			name:        "positionIdFrom preserves uint64 min",
 			input:       uint64(0),
 			expected:    "0",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom is success by uint64",
 			input:       uint64(1),
 			expected:    "1",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom preserves uint64 1<<63",
 			input:       uint64(9223372036854775808),
 			expected:    "9223372036854775808",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom preserves uint64 max",
 			input:       uint64(18446744073709551615),
 			expected:    "18446744073709551615",
-			shouldPanic: false,
-		},
-		{
-			name:        "positionIdFrom is success by grc721.TokenID",
-			input:       grc721.TokenID("1"),
-			expected:    "1",
-			shouldPanic: false,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
-			if !tc.shouldPanic {
-				got := positionIdFrom(tc.input)
-				uassert.Equal(t, tc.expected, string(got))
-			} else {
-				positionIdFrom(tc.input)
-			}
+			got := positionIdFrom(tc.input)
+			uassert.Equal(t, tc.expected, string(got))
 		})
 	}
 }
