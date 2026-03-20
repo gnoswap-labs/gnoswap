@@ -30,11 +30,10 @@ var (
 
 	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
-	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = testing.NewUserRealm(dummyAddr)
-
-	reDelegate = testutils.TestAddress("reDelegate")
-	minAmount  = int64(1_000_000)
+	dummyAddr       = testutils.TestAddress("dummy")
+	reDelegateAddr  = testutils.TestAddress("reDelegate")
+	thirdDelegatee  = testutils.TestAddress("thirdDelegatee")
+	minAmount       = int64(1_000_000)
 )
 
 func main() {
@@ -47,7 +46,15 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Admin redelegates from dummy to reDelegate")
-	adminRedelegateDummyToReDelegate()
+	adminRedelegate(dummyAddr, reDelegateAddr)
+	println()
+
+	println("[SCENARIO] 4. Admin redelegates from reDelegate to thirdDelegatee")
+	adminRedelegate(reDelegateAddr, thirdDelegatee)
+	println()
+
+	println("[SCENARIO] 5. Admin redelegates from thirdDelegatee back to dummy")
+	adminRedelegate(thirdDelegatee, dummyAddr)
 	println()
 }
 
@@ -65,18 +72,20 @@ func adminDelegateToDummy() {
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross, govStakerAddr, minAmount)
 	staker.Delegate(cross, dummyAddr, int64(minAmount), "")
+	totalLockedAmount := staker.GetTotalLockedAmount()
 	ufmt.Printf("[INFO] delegated %d GNS from admin to dummy\n", minAmount)
 	ufmt.Printf("[EXPECTED] dummy delegated amount: %d\n", minAmount)
+	ufmt.Printf("[EXPECTED] total locked amount after delegate: %d\n", totalLockedAmount)
 	println("[EXPECTED] admin GNS: 99999999000000, xGNS: 1000000")
 }
 
-// Admin redelegates from dummy to reDelegate
-func adminRedelegateDummyToReDelegate() {
-	// redelegate from dummy to reDelegate
+// Admin redelegates from one delegatee to another.
+func adminRedelegate(from, to address) {
 	testing.SetRealm(adminRealm)
-	staker.Redelegate(cross, adminAddr, reDelegate, int64(minAmount))
-	ufmt.Printf("[INFO] redelegated %d GNS from dummy to reDelegate\n", minAmount)
-	ufmt.Printf("[EXPECTED] dummy delegated amount: 0, reDelegate delegated amount: %d\n", minAmount)
+	staker.Redelegate(cross, from, to, int64(minAmount))
+	totalLockedAmount := staker.GetTotalLockedAmount()
+	ufmt.Printf("[INFO] redelegated %d GNS from %s to %s\n", minAmount, from.String(), to.String())
+	ufmt.Printf("[EXPECTED] total locked amount after redelegate from %s to %s: %d\n", from.String(), to.String(), totalLockedAmount)
 }
 
 // Output:
@@ -88,8 +97,17 @@ func adminRedelegateDummyToReDelegate() {
 // [SCENARIO] 2. Admin delegates GNS to dummy
 // [INFO] delegated 1000000 GNS from admin to dummy
 // [EXPECTED] dummy delegated amount: 1000000
+// [EXPECTED] total locked amount after delegate: 1000000
 // [EXPECTED] admin GNS: 99999999000000, xGNS: 1000000
 //
 // [SCENARIO] 3. Admin redelegates from dummy to reDelegate
-// [INFO] redelegated 1000000 GNS from dummy to reDelegate
-// [EXPECTED] dummy delegated amount: 0, reDelegate delegated amount: 1000000
+// [INFO] redelegated 1000000 GNS from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 to g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt
+// [EXPECTED] total locked amount after redelegate from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8 to g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt: 1000000
+//
+// [SCENARIO] 4. Admin redelegates from reDelegate to thirdDelegatee
+// [INFO] redelegated 1000000 GNS from g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt to g1w35xjunyg3jkcet8v96x2e2lta047h6llvhxz3
+// [EXPECTED] total locked amount after redelegate from g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt to g1w35xjunyg3jkcet8v96x2e2lta047h6llvhxz3: 1000000
+//
+// [SCENARIO] 5. Admin redelegates from thirdDelegatee back to dummy
+// [INFO] redelegated 1000000 GNS from g1w35xjunyg3jkcet8v96x2e2lta047h6llvhxz3 to g1v36k6mteta047h6lta047h6lta047h6lz7gmv8
+// [EXPECTED] total locked amount after redelegate from g1w35xjunyg3jkcet8v96x2e2lta047h6llvhxz3 to g1v36k6mteta047h6lta047h6lta047h6lz7gmv8: 1000000
