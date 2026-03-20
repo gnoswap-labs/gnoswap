@@ -18,13 +18,10 @@ const (
 
 // ErrorMessages for DrySwapRoute operations
 const (
-	ErrOverflowResultAmountIn      = "overflow in resultAmountIn"
-	ErrOverflowResultAmountOut     = "overflow in resultAmountOut"
-	ErrUnknownSwapType             = "unknown swapType(%s)"
-	ErrInvalidPositiveAmount       = "invalid amount(%s), must be positive"
-	ErrInvalidZeroAmountLimit      = "invalid amountLimit(%s), should not be zero"
-	ErrInvalidQuoteRange           = "quote(%d) must be %d~%d"
-	ErrOverflowCalculateSwapAmount = "overflow in calculateSwapAmount"
+	ErrUnknownSwapType        = "unknown swapType(%s)"
+	ErrInvalidPositiveAmount  = "invalid amount(%s), must be positive"
+	ErrInvalidZeroAmountLimit = "invalid amountLimit(%s), should not be zero"
+	ErrInvalidQuoteRange      = "quote(%d) must be %d~%d"
 )
 
 // SwapProcessor handles the execution of swap operations

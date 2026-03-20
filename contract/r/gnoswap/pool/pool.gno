@@ -447,19 +447,3 @@ func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
 	p.tokensOwed1 = tokensOwed1
 }
-
-func NewPositionInfo(
-	liquidity *u256.Uint,
-	feeGrowthInside0LastX128 *u256.Uint,
-	feeGrowthInside1LastX128 *u256.Uint,
-	tokensOwed0 *u256.Uint,
-	tokensOwed1 *u256.Uint,
-) PositionInfo {
-	return PositionInfo{
-		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-		tokensOwed0:              tokensOwed0,
-		tokensOwed1:              tokensOwed1,
-	}
-}
