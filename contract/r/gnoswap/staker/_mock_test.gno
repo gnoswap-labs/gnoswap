@@ -69,8 +69,12 @@ func (m *MockStaker) MintAndStake(
 }
 
 func (m *MockStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	m.Response.Get("CollectReward")
-	return "pool", "100", make(map[string]int64), make(map[string]int64)
+	res, ok := m.Response.Get("CollectReward")
+	if !ok {
+		return "pool", "100", make(map[string]int64), make(map[string]int64)
+	}
+
+	return res[0].(string), res[1].(string), res[2].(map[string]int64), res[3].(map[string]int64)
 }
 
 func (m *MockStaker) SetPoolTier(poolPath string, tier uint64) {

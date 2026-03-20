@@ -167,10 +167,10 @@ func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.
 func (lp *launchpadV1) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*uint256.Uint, error) {
 	projectTier, err := lp.GetProjectTier(projectId, tier)
 	if err != nil {
-		return uint256.NewUint(0), err
+		return nil, err
 	}
 
-	return projectTier.DistributeAmountPerSecondX128().Clone(), nil
+	return projectTier.DistributeAmountPerSecondX128(), nil
 }
 
 // GetProjectTierTotalDistributeAmount returns the total distribute amount of a project tier.
@@ -321,7 +321,7 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 		return nil, errors.New("invalid deposit type")
 	}
 
-	return deposit.Clone(), nil
+	return deposit, nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
@@ -505,10 +505,10 @@ func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launc
 func (lp *launchpadV1) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*uint256.Uint, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
-		return uint256.NewUint(0), err
+		return nil, err
 	}
 
-	return manager.DistributeAmountPerSecondX128().Clone(), nil
+	return manager.DistributeAmountPerSecondX128(), nil
 }
 
 // GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
@@ -516,10 +516,10 @@ func (lp *launchpadV1) GetProjectTierRewardDistributeAmountPerSecondX128(project
 func (lp *launchpadV1) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
-		return uint256.NewUint(0), err
+		return nil, err
 	}
 
-	return manager.AccumulatedRewardPerDepositX128().Clone(), nil
+	return manager.AccumulatedRewardPerDepositX128(), nil
 }
 
 // GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.

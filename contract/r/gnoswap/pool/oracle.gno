@@ -35,15 +35,6 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 	os.observations = observations
 }
 
-func (os *ObservationState) Clone() *ObservationState {
-	return &ObservationState{
-		observations:    make(map[uint16]*Observation),
-		index:           os.index,
-		cardinality:     os.cardinality,
-		cardinalityNext: os.cardinalityNext,
-	}
-}
-
 type Observation struct {
 	blockTimestamp                    int64      // timestamp of the observation
 	tickCumulative                    int64      // cumulative tick up to this timestamp
