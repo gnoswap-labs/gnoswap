@@ -166,7 +166,8 @@ func GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return votingInfo.Clone(), nil
+	copied := *votingInfo
+	return &copied, nil
 }
 
 // GetVoteWeight returns the voting weight of an address for a proposal.
@@ -196,7 +197,8 @@ func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInf
 		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
 	}
 
-	return proposalData.CommunityPoolSpend().Clone(), nil
+	copied := *proposalData.CommunityPoolSpend()
+	return &copied, nil
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.

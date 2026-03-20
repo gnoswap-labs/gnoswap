@@ -480,7 +480,6 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
-
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentive(
 	incentiveId string,
@@ -511,7 +510,7 @@ func NewExternalIncentive(
 		createdHeight:           createdHeight,
 		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
-		refunded: false,
+		refunded:                false,
 	}
 }
 

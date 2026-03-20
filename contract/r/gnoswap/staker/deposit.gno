@@ -15,17 +15,17 @@ type ExternalIncentiveState struct {
 }
 
 type Deposit struct {
-	warmups                        []Warmup   // warmup information
-	liquidity                      u256.Uint  // liquidity
-	targetPoolPath                 string     // staked position's pool path
-	owner                          address    // owner address
-	stakeTime                      int64      // staked time
-	internalRewardLastCollectTime  int64      // last collect time for internal reward
-	collectedInternalReward        int64      // collected internal reward
-	externalIncentives             avl.Tree   // incentiveID → ExternalIncentiveState
-	lastExternalIncentiveUpdatedAt int64      // last time when external incentive ids were synced
-	tickLower                      int32      // tick lower
-	tickUpper                      int32      // tick upper
+	warmups                        []Warmup  // warmup information
+	liquidity                      u256.Uint // liquidity
+	targetPoolPath                 string    // staked position's pool path
+	owner                          address   // owner address
+	stakeTime                      int64     // staked time
+	internalRewardLastCollectTime  int64     // last collect time for internal reward
+	collectedInternalReward        int64     // collected internal reward
+	externalIncentives             avl.Tree  // incentiveID → ExternalIncentiveState
+	lastExternalIncentiveUpdatedAt int64     // last time when external incentive ids were synced
+	tickLower                      int32     // tick lower
+	tickUpper                      int32     // tick upper
 }
 
 func (d *Deposit) Owner() address {

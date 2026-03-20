@@ -55,8 +55,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		assertRaw func(t *testing.T)
 	}{
 		{
-			name: "GetPoolPaths",
-			setup: func(m *MockPool) { m.Response.Set("GetPoolPaths", []string{"foo", "bar"}) },
+			name:   "GetPoolPaths",
+			setup:  func(m *MockPool) { m.Response.Set("GetPoolPaths", []string{"foo", "bar"}) },
 			getter: func() any { return GetPoolPaths(0, 10) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -70,8 +70,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetFeeAmountTickSpacings",
-			setup: func(m *MockPool) { m.Response.Set("GetFeeAmountTickSpacings", map[uint32]int32{500: 10}) },
+			name:   "GetFeeAmountTickSpacings",
+			setup:  func(m *MockPool) { m.Response.Set("GetFeeAmountTickSpacings", map[uint32]int32{500: 10}) },
 			getter: func() any { return GetFeeAmountTickSpacings() },
 			mutate: func(result any) {
 				values := result.(map[uint32]int32)
@@ -87,7 +87,9 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetFeeGrowthGlobalX128",
-			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000")) },
+			setup: func(m *MockPool) {
+				m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000"))
+			},
 			getter: func() any {
 				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
@@ -104,8 +106,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPositionLiquidity",
-			setup: func(m *MockPool) { m.Response.Set("GetPositionLiquidity", u256.MustFromDecimal("1000")) },
+			name:   "GetPositionLiquidity",
+			setup:  func(m *MockPool) { m.Response.Set("GetPositionLiquidity", u256.MustFromDecimal("1000")) },
 			getter: func() any { return GetPositionLiquidity("foo:bar:500", "pos") },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
 			assertRaw: func(t *testing.T) {
@@ -115,7 +117,9 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetTickFeeGrowthOutsideX128",
-			setup: func(m *MockPool) { m.Response.Set("GetTickFeeGrowthOutsideX128", u256.MustFromDecimal("1100"), u256.MustFromDecimal("2200")) },
+			setup: func(m *MockPool) {
+				m.Response.Set("GetTickFeeGrowthOutsideX128", u256.MustFromDecimal("1100"), u256.MustFromDecimal("2200"))
+			},
 			getter: func() any {
 				fee0, fee1 := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
 				return []any{fee0, fee1}
@@ -132,8 +136,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetSlot0SqrtPriceX96",
-			setup: func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
+			name:   "GetSlot0SqrtPriceX96",
+			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
 			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
 			assertRaw: func(t *testing.T) {
@@ -142,7 +146,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPool",
+			name:  "GetPool",
 			setup: func(m *MockPool) { m.Response.Set("GetPool", newPoolFixture(), nil) },
 			getter: func() any {
 				pool, err := GetPool("foo", "bar", 500)
@@ -191,8 +195,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPoolPositionKeys",
-			setup: func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
+			name:   "GetPoolPositionKeys",
+			setup:  func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
 			getter: func() any { return GetPoolPositionKeys("foo:bar:500", 0, 10) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -206,7 +210,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetTickInfo",
+			name:  "GetTickInfo",
 			setup: func(m *MockPool) { m.Response.Set("GetTickInfo", newTickInfoFixture(), nil) },
 			getter: func() any {
 				tickInfo, err := GetTickInfo("foo:bar:500", 10)
@@ -237,7 +241,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetTickBitmaps",
+			name:  "GetTickBitmaps",
 			setup: func(m *MockPool) { m.Response.Set("GetTickBitmaps", u256.MustFromDecimal("1234"), nil) },
 			getter: func() any {
 				bitmap, err := GetTickBitmaps("foo:bar:500", 0)
@@ -251,7 +255,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetPosition",
+			name:  "GetPosition",
 			setup: func(m *MockPool) { m.Response.Set("GetPosition", newPositionInfoFixture(), nil) },
 			getter: func() any {
 				positionInfo, err := GetPosition("foo:bar:500", "pos")
@@ -276,8 +280,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetInitializedTicksInRange",
-			setup: func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
+			name:   "GetInitializedTicksInRange",
+			setup:  func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
 			getter: func() any { return GetInitializedTicksInRange("foo:bar:500", -20, 20) },
 			mutate: func(result any) {
 				values := result.([]int32)
@@ -291,7 +295,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetTWAP",
+			name:  "GetTWAP",
 			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
 			getter: func() any {
 				_, liquidity, err := GetTWAP("foo:bar:500", 10)

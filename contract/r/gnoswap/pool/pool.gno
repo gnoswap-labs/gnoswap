@@ -268,16 +268,16 @@ func NewPool(
 	slot0 := newSlot0(sqrtPriceX96, tick, slot0FeeProtocol, true)
 
 	pool := &Pool{
-		token0Path:  token0Path,
-		token1Path:  token1Path,
-		balances:    newBalances(),
-		fee:         fee,
-		tickSpacing: tickSpacing,
-		slot0:       slot0,
-		protocolFees:    newProtocolFees(),
-		ticks:           avl.Tree{},
-		tickBitmaps:     avl.Tree{},
-		positions:       avl.Tree{},
+		token0Path:       token0Path,
+		token1Path:       token1Path,
+		balances:         newBalances(),
+		fee:              fee,
+		tickSpacing:      tickSpacing,
+		slot0:            slot0,
+		protocolFees:     newProtocolFees(),
+		ticks:            avl.Tree{},
+		tickBitmaps:      avl.Tree{},
+		positions:        avl.Tree{},
 		observationState: *NewObservationState(time.Now().Unix()),
 	}
 	pool.SetMaxLiquidityPerTick(maxLiquidityPerTick)
@@ -325,6 +325,7 @@ func (t *TokenPair) SetToken0(token0 *u256.Uint) {
 	}
 	t.token0 = *token0
 }
+
 func (t *TokenPair) SetToken1(token1 *u256.Uint) {
 	if token1 == nil {
 		t.token1 = u256.Uint{}
@@ -356,9 +357,9 @@ func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
 	}
 	s.sqrtPriceX96 = *sqrtPriceX96
 }
-func (s *Slot0) SetTick(tick int32)           { s.tick = tick }
+func (s *Slot0) SetTick(tick int32)               { s.tick = tick }
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8) { s.feeProtocol = feeProtocol }
-func (s *Slot0) SetUnlocked(unlocked bool)    { s.unlocked = unlocked }
+func (s *Slot0) SetUnlocked(unlocked bool)        { s.unlocked = unlocked }
 
 func newSlot0(
 	sqrtPriceX96 *u256.Uint,
@@ -477,7 +478,6 @@ func NewTickInfo() TickInfo {
 		tickCumulativeOutside:          0,
 	}
 }
-
 
 type PositionInfo struct {
 	liquidity u256.Uint // amount of liquidity owned by this position
