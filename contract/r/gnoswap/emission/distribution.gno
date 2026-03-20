@@ -65,39 +65,38 @@ func init() {
 // application of new ratios to past emissions.
 //
 // Parameters:
-//   - target01-04: Target identifiers (1=LIQUIDITY_STAKER, 2=DEVOPS, 3=COMMUNITY_POOL, 4=GOV_STAKER)
-//   - pct01-04: Percentage in basis points (100 = 1%, 10000 = 100%)
+//   - liquidityStakerPct: Percentage for liquidity stakers in basis points (100 = 1%, 10000 = 100%)
+//   - devOpsPct: Percentage for devops in basis points
+//   - communityPoolPct: Percentage for community pool in basis points
+//   - govStakerPct: Percentage for governance stakers in basis points
 //
 // Requirements:
-//   - All four targets must be specified (use current values if unchanged)
 //   - Percentages must sum to exactly 10000 (100%)
 //   - Each percentage must be 0-10000
-//   - Targets must be unique (no duplicates)
 //
 // Example:
 //
 //	ChangeDistributionPct(
-//	  1, 7000,  // 70% to liquidity stakers
-//	  2, 2000,  // 20% to devops
-//	  3, 1000,  // 10% to community pool
-//	  4, 0      // 0% to governance stakers
+//	  7000,  // 70% to liquidity stakers
+//	  2000,  // 20% to devops
+//	  1000,  // 10% to community pool
+//	  0,     // 0% to governance stakers
 //	)
 //
 // Only callable by admin or governance.
 func ChangeDistributionPct(
 	cur realm,
-	target01 int, pct01 int64,
-	target02 int, pct02 int64,
-	target03 int, pct03 int64,
-	target04 int, pct04 int64,
+	liquidityStakerPct int64,
+	devOpsPct int64,
+	communityPoolPct int64,
+	govStakerPct int64,
 ) {
 	halt.AssertIsNotHaltedEmission()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertValidDistributionTargets(target01, target02, target03, target04)
-	assertValidDistributionPct(pct01, pct02, pct03, pct04)
+	assertValidDistributionPct(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
 
 	// Distribute accumulated emissions with current ratios before changing ratios.
 	// This prevents retroactive application of new ratios to emissions that occurred
@@ -106,46 +105,30 @@ func ChangeDistributionPct(
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
-		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, liquidityStakerPct)
 		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 
-	changeDistributionPcts(
-		target01, pct01,
-		target02, pct02,
-		target03, pct03,
-		target04, pct04,
-	)
+	changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"target01", targetToStr(target01),
-		"pct01", formatInt(pct01),
-		"target02", targetToStr(target02),
-		"pct02", formatInt(pct02),
-		"target03", targetToStr(target03),
-		"pct03", formatInt(pct03),
-		"target04", targetToStr(target04),
-		"pct04", formatInt(pct04),
+		"liquidityStakerPct", formatInt(liquidityStakerPct),
+		"devOpsPct", formatInt(devOpsPct),
+		"communityPoolPct", formatInt(communityPoolPct),
+		"govStakerPct", formatInt(govStakerPct),
 	)
 }
 
-// changeDistributionPcts updates the distribution percentages in the AVL tree.
-func changeDistributionPcts(
-	target01 int, pct01 int64,
-	target02 int, pct02 int64,
-	target03 int, pct03 int64,
-	target04 int, pct04 int64,
-) {
-	// First, cache the percentage of the staker just before it changes Callback if needed
-	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
-	setDistributionBpsPct(target01, pct01)
-	setDistributionBpsPct(target02, pct02)
-	setDistributionBpsPct(target03, pct03)
-	setDistributionBpsPct(target04, pct04)
+// changeDistributionPcts updates the distribution percentages for all targets.
+func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct int64) {
+	setDistributionBpsPct(LIQUIDITY_STAKER, liquidityStakerPct)
+	setDistributionBpsPct(DEVOPS, devOpsPct)
+	setDistributionBpsPct(COMMUNITY_POOL, communityPoolPct)
+	setDistributionBpsPct(GOV_STAKER, govStakerPct)
 }
 
 // distributeToTarget distributes tokens according to configured percentages.
