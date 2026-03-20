@@ -283,6 +283,11 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
 				x.ToString(), y.ToString(), z.ToString()))
 		}
+		if z.Gt(maxUint128) {
+			panic(ufmt.Sprintf(
+				"liquidity_math: result exceeds uint128 range (z: %s)",
+				z.ToString()))
+		}
 		return z
 	}
 
@@ -291,6 +296,11 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		panic(ufmt.Sprintf(
 			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
 			x.ToString(), y.ToString(), z.ToString()))
+	}
+	if z.Gt(maxUint128) {
+		panic(ufmt.Sprintf(
+			"liquidity_math: result exceeds uint128 range (z: %s)",
+			z.ToString()))
 	}
 	return z
 }

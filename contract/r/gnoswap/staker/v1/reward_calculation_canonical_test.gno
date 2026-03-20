@@ -59,13 +59,15 @@ func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 	gnousdc := test_gnousdc
 	canonical.CreatePool(gnousdc, 1, 150)
 
+	// use uint128 max instead of q128(=2^128) to stay within uint128 range
+	uint128Max := u256.MustFromDecimal("340282366920938463463374607431768211455")
 	canonical.StakeToken(
 		0,
 		gnousdc,
 		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
-		q128,
+		uint128Max,
 	)
 
 	canonical.NextBlock()
