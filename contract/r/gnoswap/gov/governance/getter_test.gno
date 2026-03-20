@@ -92,10 +92,12 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			getter: func(t *testing.T) any { return GetVotingInfoAddresses(1, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]address)
+				values[0] = address("g1test")
 				values = append(values, adminAddr)
 			},
 			assertRaw: func(t *testing.T, m *MockGovernance) {
 				values := m.Response.data["GetVotingInfoAddresses"][0].([]address)
+				uassert.Equal(t, adminAddr, values[0])
 				uassert.Equal(t, 1, len(values))
 			},
 		},
