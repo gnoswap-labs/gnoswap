@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -315,6 +316,66 @@ func TestBurn_CalculateFees(t *testing.T) {
 				uassert.Equal(t, tt.expectedTokensOwed0.ToString(), tokensOwed0.ToString(), "tokensOwed0 mismatch")
 				uassert.Equal(t, tt.expectedTokensOwed1.ToString(), tokensOwed1.ToString(), "tokensOwed1 mismatch")
 			}
+		})
+	}
+}
+
+func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
+	tests := []struct {
+		name             string
+		tokensOwed0      *u256.Uint
+		tokensOwed1      *u256.Uint
+		expectedPanicMsg string
+	}{
+		{
+			name:             "overflow on tokensOwed0 + burnedAmount0",
+			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed1:      u256.Zero(),
+			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed0(",
+		},
+		{
+			name:             "overflow on tokensOwed1 + burnedAmount1",
+			tokensOwed0:      u256.Zero(),
+			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed1(",
+		},
+		{
+			name:             "overflow on both tokensOwed0 and tokensOwed1",
+			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed0(",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(
+				barPath, fooPath, fee500,
+				-10000, 10000,
+				"1000000", "1000000",
+				"0", "0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr, adminAddr, "",
+			)
+
+			pos := mockInstance.mustGetPosition(1)
+			pos.SetTokensOwed0(u256.Zero().Set(tc.tokensOwed0))
+			pos.SetTokensOwed1(u256.Zero().Set(tc.tokensOwed1))
+			mockInstance.mustUpdatePosition(1, *pos)
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			uassert.AbortsContains(t, tc.expectedPanicMsg, func() {
+				mockInstanceDecreaseLiquidity(
+					1,
+					"100",
+					"0", "0",
+					time.Now().Add(time.Hour).Unix(),
+				)
+			})
 		})
 	}
 }

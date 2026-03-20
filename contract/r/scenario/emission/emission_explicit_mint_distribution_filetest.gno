@@ -43,10 +43,10 @@ func testExplicitMintDistribution() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 7000,
-		emission.DEVOPS, 2500,
-		emission.COMMUNITY_POOL, 500,
-		emission.GOV_STAKER, 0,
+		7000, // liquidityStakerPct
+		2500, // devOpsPct
+		500, // communityPoolPct
+		0, // govStakerPct
 	)
 	println("[INFO] distribution ratio set to 70/25/5/0 (Staker/DevOps/Pool/GovStaker)")
 	println()
@@ -92,10 +92,10 @@ func testExplicitMintDistribution() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 0,
-		emission.DEVOPS, 5000,
-		emission.COMMUNITY_POOL, 0,
-		emission.GOV_STAKER, 5000,
+		0, // liquidityStakerPct
+		5000, // devOpsPct
+		0, // communityPoolPct
+		5000, // govStakerPct
 	)
 	println("[INFO] distribution ratio changed to 0/50/0/50")
 	println()
@@ -139,10 +139,10 @@ func testExplicitMintDistribution() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 3000,
-		emission.DEVOPS, 3000,
-		emission.COMMUNITY_POOL, 3000,
-		emission.GOV_STAKER, 1000,
+		3000, // liquidityStakerPct
+		3000, // devOpsPct
+		3000, // communityPoolPct
+		1000, // govStakerPct
 	)
 	println("[INFO] distribution ratio changed to 30/30/30/10")
 	println()

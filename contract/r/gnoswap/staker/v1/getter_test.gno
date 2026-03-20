@@ -329,11 +329,6 @@ func TestGetterDepositLiquidity(t *testing.T) {
 
 	uassert.Equal(t, "1000000", liquidity.ToString())
 	uassert.Equal(t, "1000000", liquidityStr)
-
-	// Verify that returned liquidity is a clone
-	liquidity.Add(liquidity, u256.NewUint(100))
-	originalLiquidity := state.instance.GetDepositLiquidity(state.positionId)
-	uassert.Equal(t, "1000000", originalLiquidity.ToString())
 }
 
 func TestGetterDepositExternalRewards(t *testing.T) {

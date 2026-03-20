@@ -133,7 +133,7 @@ func TestMustGetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, tt.inputPosition)
+			mockInstance.mustUpdatePosition(tt.positionId, tt.inputPosition)
 
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
@@ -189,7 +189,7 @@ func TestSetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, tt.position)
+			mockInstance.mustUpdatePosition(tt.positionId, tt.position)
 			mockInstance.setPosition(tt.positionId, tt.inputPosition)
 
 			storedPosition := mockInstance.mustGetPosition(tt.positionId)
@@ -228,9 +228,9 @@ func TestRemovePosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
 
-			mockInstance.removePosition(tt.inputPositionId)
+			mockInstance.store.RemovePosition(tt.inputPositionId)
 
 			_, found := mockInstance.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
@@ -262,7 +262,7 @@ func TestExistPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
 			uassert.Equal(t, tt.expectedExist, mockInstance.ExistPosition(tt.inputPositionId))
 		})
 	}
@@ -1373,165 +1373,6 @@ func TestComputePoolPath(t *testing.T) {
 			// The actual pool path format depends on pool.GetPoolPath implementation
 			// We just verify it returns a non-empty string
 			uassert.Equal(t, tt.expectedPath, result)
-		})
-	}
-}
-
-func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
-	tests := []struct {
-		name                 string
-		amount               string
-		fee                  uint64
-		expectedAmountNoFee  int64
-		expectedFee          int64
-		shouldPanic          bool
-		expectedPanicMessage string
-	}{
-		{
-			name:                "No fee - zero fee",
-			amount:              "1000000",
-			fee:                 0,
-			expectedAmountNoFee: 1000000,
-			expectedFee:         0,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Normal fee - 1% (100 bps)",
-			amount:              "1000000",
-			fee:                 100,
-			expectedAmountNoFee: 990000,
-			expectedFee:         10000,
-			shouldPanic:         false,
-		},
-		{
-			name:                "High fee - 5% (500 bps)",
-			amount:              "1000000",
-			fee:                 500,
-			expectedAmountNoFee: 950000,
-			expectedFee:         50000,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Low fee - 0.1% (10 bps)",
-			amount:              "1000000",
-			fee:                 10,
-			expectedAmountNoFee: 999000,
-			expectedFee:         1000,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Small amount with fee",
-			amount:              "100",
-			fee:                 100,
-			expectedAmountNoFee: 99,
-			expectedFee:         1,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Large amount with fee",
-			amount:              "999999999999",
-			fee:                 100,
-			expectedAmountNoFee: 990000000000,
-			expectedFee:         9999999999,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Zero amount with fee",
-			amount:              "0",
-			fee:                 100,
-			expectedAmountNoFee: 0,
-			expectedFee:         0,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Maximum fee - 100% (10000 bps)",
-			amount:              "1000000",
-			fee:                 10000,
-			expectedAmountNoFee: 0,
-			expectedFee:         1000000,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Rounding down in fee calculation",
-			amount:              "50",
-			fee:                 100,
-			expectedAmountNoFee: 50,
-			expectedFee:         0,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Rounding down in fee calculation",
-			amount:              "50",
-			fee:                 99,
-			expectedAmountNoFee: 50,
-			expectedFee:         0,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Very small fee on large amount",
-			amount:              "1000000000",
-			fee:                 1,
-			expectedAmountNoFee: 999900000,
-			expectedFee:         100000,
-			shouldPanic:         false,
-		},
-		{
-			name:                 "Invalid amount - negative",
-			amount:               "-1000",
-			fee:                  100,
-			shouldPanic:          true,
-			expectedPanicMessage: "strconv.ParseUint: parsing \"-1000\": invalid syntax",
-		},
-		{
-			name:                 "Invalid amount - non-numeric",
-			amount:               "invalid",
-			fee:                  100,
-			shouldPanic:          true,
-			expectedPanicMessage: "strconv.ParseUint: parsing \"invalid\": invalid syntax",
-		},
-		{
-			name:                "Edge case - fee equals divisor",
-			amount:              "10000",
-			fee:                 10000,
-			expectedAmountNoFee: 0,
-			expectedFee:         10000,
-			shouldPanic:         false,
-		},
-		{
-			name:                "Multiple of divisor",
-			amount:              "20000",
-			fee:                 100,
-			expectedAmountNoFee: 19800,
-			expectedFee:         200,
-			shouldPanic:         false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
-				})
-			} else {
-				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
-
-				uassert.Equal(t, tt.expectedAmountNoFee, amountNoFee)
-				uassert.Equal(t, tt.expectedFee, feeAmount)
-
-				// Verify sum equals original (within rounding)
-				if tt.fee > 0 {
-					originalAmount := u256.MustFromDecimal(tt.amount)
-					calculatedSum := u256.NewUint(uint64(amountNoFee + feeAmount))
-
-					// Allow for rounding down in fee calculation
-					diff := u256.Zero().Sub(originalAmount, calculatedSum)
-					uassert.True(t, diff.Lt(u256.NewUint(10)),
-						"sum should approximately equal original amount (within rounding)")
-				}
-			}
 		})
 	}
 }

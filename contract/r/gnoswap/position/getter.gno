@@ -12,7 +12,7 @@ func GetPositionCount() int {
 
 // GetPositionIDs returns a paginated list of position IDs.
 func GetPositionIDs(offset, count int) []uint64 {
-	return getImplementation().GetPositionIDs(offset, count)
+	return cloneUint64Slice(getImplementation().GetPositionIDs(offset, count))
 }
 
 // GetPosition returns the position data for a given position ID.

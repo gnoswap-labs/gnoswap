@@ -79,7 +79,7 @@ func delegateGnsToAdmin() {
 
 func proposeChangeEmissionDistributionPct() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
+	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*7000,1500,1000,500")
 
 	ufmt.Printf("[INFO] Change Emission Distribution Percentages Proposal ID: %d\n", proposalID)
 	return proposalID

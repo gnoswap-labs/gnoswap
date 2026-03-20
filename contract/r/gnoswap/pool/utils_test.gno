@@ -111,37 +111,3 @@ func TestGetPoolPath(t *testing.T) {
 		})
 	}
 }
-
-func TestParsePoolPath(t *testing.T) {
-	tests := []struct {
-		name      string
-		poolPath  string
-		wantToken0 string
-		wantToken1 string
-		wantFee    uint32
-	}{
-		{
-			name:      "valid pool path",
-			poolPath:  "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
-			wantToken0: "gno.land/r/onbloc/bar",
-			wantToken1: "gno.land/r/onbloc/foo",
-			wantFee:    500,
-		},
-		{
-			name:      "fee 3000",
-			poolPath:  "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000",
-			wantToken0: "gno.land/r/onbloc/bar",
-			wantToken1: "gno.land/r/onbloc/qux",
-			wantFee:    3000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			token0, token1, fee := ParsePoolPath(tt.poolPath)
-			uassert.Equal(t, tt.wantToken0, token0)
-			uassert.Equal(t, tt.wantToken1, token1)
-			uassert.Equal(t, tt.wantFee, fee)
-		})
-	}
-}

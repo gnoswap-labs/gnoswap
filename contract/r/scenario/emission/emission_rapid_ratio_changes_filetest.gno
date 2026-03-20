@@ -43,10 +43,10 @@ func testSingleBlockPrecision() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 2500,
-		emission.DEVOPS, 2500,
-		emission.COMMUNITY_POOL, 2500,
-		emission.GOV_STAKER, 2500,
+		2500, // liquidityStakerPct
+		2500, // devOpsPct
+		2500, // communityPoolPct
+		2500, // govStakerPct
 	)
 	println("[INFO] distribution ratio set to 25/25/25/25 (all recipients)")
 	println()
@@ -78,12 +78,12 @@ func testSingleBlockPrecision() {
 	testing.SetRealm(adminRealm)
 	getBalanceChanges(func() {
 		emission.ChangeDistributionPct(
-			cross,
-			emission.LIQUIDITY_STAKER, 4000,
-			emission.DEVOPS, 3000,
-			emission.COMMUNITY_POOL, 2000,
-			emission.GOV_STAKER, 1000,
-		)
+		cross,
+		4000, // liquidityStakerPct
+		3000, // devOpsPct
+		2000, // communityPoolPct
+		1000, // govStakerPct
+	)
 	})
 
 	period1Staker := emission.GetDistributedToStaker()
@@ -119,12 +119,12 @@ func testSingleBlockPrecision() {
 	testing.SetRealm(adminRealm)
 	getBalanceChanges(func() {
 		emission.ChangeDistributionPct(
-			cross,
-			emission.LIQUIDITY_STAKER, 7000,
-			emission.DEVOPS, 1500,
-			emission.COMMUNITY_POOL, 1000,
-			emission.GOV_STAKER, 500,
-		)
+		cross,
+		7000, // liquidityStakerPct
+		1500, // devOpsPct
+		1000, // communityPoolPct
+		500, // govStakerPct
+	)
 	})
 
 	totalStaker := emission.GetDistributedToStaker()

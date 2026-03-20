@@ -139,8 +139,8 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *u256.Uint
 
 	if currentTick >= tickUpper {
-		tickUpperFeeGrowthAbove0 = subUint256(feeGrowthGlobal0X128, tickUpperFeeGrowthOutside0X128)
-		tickUpperFeeGrowthAbove1 = subUint256(feeGrowthGlobal1X128, tickUpperFeeGrowthOutside1X128)
+		tickUpperFeeGrowthAbove0 = u256.Zero().Sub(feeGrowthGlobal0X128, tickUpperFeeGrowthOutside0X128)
+		tickUpperFeeGrowthAbove1 = u256.Zero().Sub(feeGrowthGlobal1X128, tickUpperFeeGrowthOutside1X128)
 	} else {
 		tickUpperFeeGrowthAbove0 = tickUpperFeeGrowthOutside0X128
 		tickUpperFeeGrowthAbove1 = tickUpperFeeGrowthOutside1X128
@@ -150,24 +150,24 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 		tickLowerFeeGrowthBelow0 = tickLowerFeeGrowthOutside0X128
 		tickLowerFeeGrowthBelow1 = tickLowerFeeGrowthOutside1X128
 	} else {
-		tickLowerFeeGrowthBelow0 = subUint256(feeGrowthGlobal0X128, tickLowerFeeGrowthOutside0X128)
-		tickLowerFeeGrowthBelow1 = subUint256(feeGrowthGlobal1X128, tickLowerFeeGrowthOutside1X128)
+		tickLowerFeeGrowthBelow0 = u256.Zero().Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthOutside0X128)
+		tickLowerFeeGrowthBelow1 = u256.Zero().Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthOutside1X128)
 	}
 
-	feeGrowthInside0X128 := subUint256(feeGrowthGlobal0X128, tickLowerFeeGrowthBelow0)
-	feeGrowthInside0X128 = subUint256(feeGrowthInside0X128, tickUpperFeeGrowthAbove0)
+	feeGrowthInside0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthBelow0)
+	feeGrowthInside0X128 = u256.Zero().Sub(feeGrowthInside0X128, tickUpperFeeGrowthAbove0)
 
-	feeGrowthInside1X128 := subUint256(feeGrowthGlobal1X128, tickLowerFeeGrowthBelow1)
-	feeGrowthInside1X128 = subUint256(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
+	feeGrowthInside1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthBelow1)
+	feeGrowthInside1X128 = u256.Zero().Sub(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
 
-	diffGrowthInside0X128 := subUint256(feeGrowthInside0X128, feeGrowthInside0LastX128)
+	diffGrowthInside0X128 := u256.Zero().Sub(feeGrowthInside0X128, feeGrowthInside0LastX128)
 	unclaimedFee0X128, overflow := u256.Zero().MulOverflow(liquidity, diffGrowthInside0X128)
 	if overflow {
 		panic(errOverflow)
 	}
 	unclaimedFee0 := u256.Zero().Div(unclaimedFee0X128, q128)
 
-	diffGrowthInside1X128 := subUint256(feeGrowthInside1X128, feeGrowthInside1LastX128)
+	diffGrowthInside1X128 := u256.Zero().Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	unclaimedFee1X128, overflow := u256.Zero().MulOverflow(liquidity, diffGrowthInside1X128)
 	if overflow {
 		panic(errOverflow)
