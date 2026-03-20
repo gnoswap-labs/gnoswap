@@ -15,13 +15,6 @@ func (s *stakerV1) getPools() *Pools {
 	}
 }
 
-func (s *stakerV1) updatePools(pools *Pools) {
-	err := s.store.SetPools(pools.tree)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (s *stakerV1) getPoolTier() *PoolTier {
 	return NewPoolTierBy(
 		s.store.GetPoolTierMemberships(),
@@ -83,36 +76,15 @@ func (s *stakerV1) getDeposits() *Deposits {
 	}
 }
 
-func (s *stakerV1) updateDeposits(deposits *Deposits) {
-	err := s.store.SetDeposits(deposits.tree)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (s *stakerV1) getStakers() *Stakers {
 	return &Stakers{
 		tree: s.store.GetStakers(),
 	}
 }
 
-func (s *stakerV1) updateStakers(stakers *Stakers) {
-	err := s.store.SetStakers(stakers.tree)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (s *stakerV1) getExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
 		tree: s.store.GetExternalIncentives(),
-	}
-}
-
-func (s *stakerV1) updateExternalIncentives(externalIncentives *ExternalIncentives) {
-	err := s.store.SetExternalIncentives(externalIncentives.tree)
-	if err != nil {
-		panic(err)
 	}
 }
 

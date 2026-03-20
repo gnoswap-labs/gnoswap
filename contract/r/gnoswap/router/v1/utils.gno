@@ -13,11 +13,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var (
-	errRouterHalted = "router contract operations are currently disabled"
-	errTxExpired    = "transaction too old, now(%d) > deadline(%d)"
-)
-
 // calculateSwapAmountByQuote calculates swap amount based on quote percentage.
 func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
 	quoteInt, err := strconv.ParseInt(quote, 10, 64)
@@ -366,30 +361,6 @@ func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 	}
 
 	return tokenA + ":" + tokenB + ":" + formatUint(fee)
-}
-
-// BuildMultiHopPath creates a multi-hop route path string by connecting multiple single hops.
-// Format: "tokenA:tokenB:fee1*POOL*tokenB:tokenC:fee2*POOL*tokenC:tokenD:fee3"
-//
-// Parameters:
-// - hops: slice of single-hop path strings
-//
-// Returns:
-// - string: formatted multi-hop route path
-//
-// Example:
-//   - hops := []string{"tokenA:tokenB:500", "tokenB:tokenC:3000"}
-//     returns "tokenA:tokenB:500*POOL*tokenB:tokenC:3000"
-func BuildMultiHopRoutePath(hops ...string) string {
-	if len(hops) < 1 {
-		panic("multi-hop path requires at least 2 hops")
-	}
-
-	if len(hops) > 3 {
-		panic("multi-hop path supports maximum 3 hops")
-	}
-
-	return strings.Join(hops, POOL_SEPARATOR)
 }
 
 // safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow

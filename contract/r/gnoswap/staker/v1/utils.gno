@@ -27,22 +27,6 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
-// max returns the larger of two int64 values.
-func max(x, y int64) int64 {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-// min returns the smaller of two uint64 values.
-func min(x, y uint64) uint64 {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 // contains checks if a string exists in a slice.
 func contains(slice []string, item string) bool {
 	// We can use strings.EqualFold here, but this function should be case-sensitive.

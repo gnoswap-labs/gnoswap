@@ -207,7 +207,7 @@ func TestIsOperator(t *testing.T) {
 			// given
 			position := newDummyPosition(tc.positionId)
 			position.SetOperator(alice)
-			mockInstance.createNewPosition(tc.positionId, position)
+			mockInstance.mustUpdatePosition(tc.positionId, position)
 
 			// when
 			got := mockInstance.isOperator(tc.positionId, tc.addr)
