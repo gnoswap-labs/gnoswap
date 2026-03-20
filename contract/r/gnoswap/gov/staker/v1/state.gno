@@ -352,26 +352,22 @@ func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, cu
 // Returns:
 //   - int64: amount of emission rewards claimed
 //   - error: nil on success, error if claiming fails
-func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
+func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, *staker.EmissionRewardManager, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
 	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
 	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
 	amount, err := resolvedManager.claimRewards(address, currentTimestamp)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
-	if err := g.store.SetEmissionRewardManager(emissionRewardManager); err != nil {
-		return 0, err
-	}
-
-	return amount, nil
+	return amount, emissionRewardManager, nil
 }
 
 // removeLaunchpadProjectDeposit removes a launchpad project deposit record.
@@ -450,7 +446,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 // Returns:
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
+func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, *staker.ProtocolFeeRewardManager, error) {
 	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := g.getDistributedProtocolFees()
@@ -459,19 +455,15 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimes
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
 	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rewards, err := resolvedManager.claimRewards(address, currentTimestamp)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if err := g.store.SetProtocolFeeRewardManager(protocolFeeRewardManager); err != nil {
-		return nil, err
-	}
-
-	return rewards, nil
+	return rewards, protocolFeeRewardManager, nil
 }
 
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.

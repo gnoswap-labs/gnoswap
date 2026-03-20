@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 )
@@ -48,14 +49,20 @@ func (gs *govStakerV1) CollectReward() {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewards(caller.String(), currentTimestamp)
+	emissionReward, protocolFeeRewards, emissionMgr, pfMgr, err := gs.claimRewards(caller.String(), currentTimestamp)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := gs.store.SetEmissionRewardManager(emissionMgr); err != nil {
+		panic(err)
+	}
+	if err := gs.store.SetProtocolFeeRewardManager(pfMgr); err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
 
-	// Transfer emission rewards (GNS tokens) if any
 	if emissionReward > 0 {
 		gns.Transfer(cross, caller, emissionReward)
 
@@ -69,7 +76,6 @@ func (gs *govStakerV1) CollectReward() {
 		)
 	}
 
-	// Transfer protocol fee rewards for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
 			err := transferToken(tokenPath, from, caller, amount)
@@ -115,14 +121,20 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 		))
 	}
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(to.String(), currentTimestamp)
+	emissionReward, protocolFeeRewards, emissionMgr, pfMgr, err := gs.claimRewardsFromLaunchpad(to.String(), currentTimestamp)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := gs.store.SetEmissionRewardManager(emissionMgr); err != nil {
+		panic(err)
+	}
+	if err := gs.store.SetProtocolFeeRewardManager(pfMgr); err != nil {
 		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
 
-	// Transfer emission rewards (GNS tokens) to project wallet if any
 	if emissionReward > 0 {
 		gns.Transfer(cross, to, emissionReward)
 
@@ -136,7 +148,6 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 		)
 	}
 
-	// Transfer protocol fee rewards to project wallet for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
 			err := transferToken(tokenPath, from, to, amount)
@@ -201,23 +212,23 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 
 // claimRewards claims both emission and protocol fee rewards.
 // Coordinates claiming process for both reward types.
-func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
-	emissionReward, err := gs.claimRewardsEmissionReward(rewardID, currentTimestamp)
+func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, *staker.EmissionRewardManager, *staker.ProtocolFeeRewardManager, error) {
+	emissionReward, emissionMgr, err := gs.claimRewardsEmissionReward(rewardID, currentTimestamp)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil, nil, nil, err
 	}
 
-	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
+	protocolFeeRewards, pfMgr, err := gs.claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil, nil, nil, err
 	}
 
-	return emissionReward, protocolFeeRewards, nil
+	return emissionReward, protocolFeeRewards, emissionMgr, pfMgr, nil
 }
 
 // claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
 // Uses special reward ID format for launchpad integration.
-func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
+func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, *staker.EmissionRewardManager, *staker.ProtocolFeeRewardManager, error) {
 	launchpadRewardID := gs.makeLaunchpadRewardID(address)
 
 	return gs.claimRewards(launchpadRewardID, currentTimestamp)

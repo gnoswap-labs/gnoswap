@@ -37,7 +37,10 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 		panic(err)
 	}
 
-	// Transfer reward token to depositor
+	if err := lp.commitRewardCollectionState(deposit, rewardAmount); err != nil {
+		panic(err)
+	}
+
 	if rewardAmount > 0 {
 		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
@@ -88,16 +91,28 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 		return "", 0, err
 	}
 
-	// Update total collected amount for the tier
-	if rewardAmount > 0 {
-		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
-		project.SetTier(deposit.Tier(), projectTier)
+	return project.TokenPath(), rewardAmount, nil
+}
 
-		projects := lp.store.GetProjects()
-		if err := lp.store.SetProjects(projects); err != nil {
-			return "", 0, err
-		}
+func (lp *launchpadV1) commitRewardCollectionState(deposit *launchpad.Deposit, rewardAmount int64) error {
+	if rewardAmount <= 0 {
+		return nil
 	}
 
-	return project.TokenPath(), rewardAmount, nil
+	project, err := lp.getProject(deposit.ProjectID())
+	if err != nil {
+		return err
+	}
+
+	projectTier, err := getProjectTier(project, deposit.Tier())
+	if err != nil {
+		return err
+	}
+
+	projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+	project.SetTier(deposit.Tier(), projectTier)
+
+	projects := lp.store.GetProjects()
+	projects.Set(deposit.ProjectID(), project)
+	return lp.store.SetProjects(projects)
 }

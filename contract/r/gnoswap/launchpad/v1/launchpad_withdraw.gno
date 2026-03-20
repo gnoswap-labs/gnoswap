@@ -45,7 +45,17 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 		panic(err)
 	}
 
-	// Transfer reward token to depositor
+	if err := lp.commitRewardCollectionState(deposit, rewardAmount); err != nil {
+		panic(err)
+	}
+
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	unStakeGovernance(recipient, withdrawalAmount)
+
 	if rewardAmount > 0 {
 		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
 
@@ -57,13 +67,6 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 			"amount", formatInt(rewardAmount),
 		)
 	}
-
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	unStakeGovernance(recipient, withdrawalAmount)
 
 	// Transfer the original GNS deposit back to the depositor
 	common.SafeGRC20Transfer(cross, GNS_PATH, deposit.Depositor(), withdrawalAmount)
@@ -140,6 +143,12 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(deposits); err != nil {
+		return "", 0, err
+	}
+
+	projects := lp.store.GetProjects()
+	projects.Set(deposit.ProjectID(), project)
+	if err := lp.store.SetProjects(projects); err != nil {
 		return "", 0, err
 	}
 

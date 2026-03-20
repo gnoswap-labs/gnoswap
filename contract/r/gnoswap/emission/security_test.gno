@@ -679,7 +679,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 		},
 		{
 			name:                         "panic on transfer gns amount",
-			description:                  "change state before transfer",
+			description:                  "transfer panics before state update (CEI)",
 			target:                       LIQUIDITY_STAKER,
 			targetName:                   "LIQUIDITY_STAKER",
 			amount:                       math.MaxInt64,
@@ -731,7 +731,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			}
 
 			if !tt.setupBalance {
-				uassert.AbortsContains(t, "overflow", func() {
+				uassert.AbortsContains(t, "insufficient balance", func() {
 					transferToTargetFunc(cross)
 				})
 			} else {

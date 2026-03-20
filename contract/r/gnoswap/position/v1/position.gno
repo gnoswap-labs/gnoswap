@@ -398,6 +398,7 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
 	position.SetTokensOwed1(tokensOwed1Updated)
+
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
