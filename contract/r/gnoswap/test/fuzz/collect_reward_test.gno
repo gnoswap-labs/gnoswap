@@ -20,7 +20,13 @@ func TestFuzzCollectReward_InternalIncentive_Stateless(t *testing.T) {
 		emissionStartTimestamp := setupEmissionStartTimestamp(ft)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		emission.ChangeDistributionPct(cross, 1, 6500, 2, 0, 3, 0, 4, 3500)
+		emission.ChangeDistributionPct(
+			cross,
+			6500, // liquidityStakerPct
+			0,    // devOpsPct
+			0,    // communityPoolPct
+			3500, // govStakerPct
+		)
 
 		_, _, positionID := setupInternalIncentivePoolAndPositionByRange(ft, 1, 3)
 		setupStakePosition(ft, positionID)

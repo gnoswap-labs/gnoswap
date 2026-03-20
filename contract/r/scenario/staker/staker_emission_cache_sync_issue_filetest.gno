@@ -98,10 +98,10 @@ func initSystem() {
 	// Set initial distribution: 75% to staker
 	emission.ChangeDistributionPct(
 		cross,
-		1, 7500, // LIQUIDITY_STAKER: 75%
-		2, 2000, // DEVOPS: 20%
-		3, 500, // COMMUNITY_POOL: 5%
-		4, 0, // GOV_STAKER: 0%
+		7500, // liquidityStakerPct
+		2000, // devOpsPct
+		500, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	// Remove unstaking fee for clearer reward calculations
@@ -192,10 +192,10 @@ func changeDistribution() {
 	// Change distribution to 50% for stakers
 	emission.ChangeDistributionPct(
 		cross,
-		1, 5000, // LIQUIDITY_STAKER: 50% (reduced from 75%)
-		2, 3000, // DEVOPS: 30%
-		3, 2000, // COMMUNITY_POOL: 20%
-		4, 0, // GOV_STAKER: 0%
+		5000, // liquidityStakerPct
+		3000, // devOpsPct
+		2000, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	// Check emission rate after change

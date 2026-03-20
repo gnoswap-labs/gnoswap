@@ -141,34 +141,30 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 // HandleWithdrawalFee processes withdrawal fees for a position.
 //
 // Parameters:
-//   - positionId: ID of the position
 //   - token0Path: path of the first token
 //   - amount0: amount of token0 to withdraw
 //   - token1Path: path of the second token
 //   - amount1: amount of token1 to withdraw
-//   - poolPath: pool identifier
 //   - positionCaller: caller address for the position
 //
 // Returns:
+//   - string: withdrawal fee amount of token0
+//   - string: withdrawal fee amount of token1
 //   - string: net amount of token0 after fees
 //   - string: net amount of token1 after fees
 func HandleWithdrawalFee(
 	cur realm,
-	positionId uint64,
 	token0Path string,
 	amount0 string,
 	token1Path string,
 	amount1 string,
-	poolPath string,
 	positionCaller address,
-) (string, string) {
+) (string, string, string, string) {
 	return getImplementation().HandleWithdrawalFee(
-		positionId,
 		token0Path,
 		amount0,
 		token1Path,
 		amount1,
-		poolPath,
 		positionCaller,
 	)
 }
