@@ -13,10 +13,6 @@ import (
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
-func mustGetPositionAddress() address {
-	return access.MustGetAddress(prabc.ROLE_POSITION.String())
-}
-
 func mustGetStakerAddress() address {
 	return access.MustGetAddress(prabc.ROLE_STAKER.String())
 }
@@ -155,19 +151,6 @@ func formatInt(v any) string {
 	default:
 		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
-}
-
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
-
-func mustParseInt64(v string) int64 {
-	amountInt, err := strconv.ParseInt(v, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt
 }
 
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {

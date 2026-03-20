@@ -5,7 +5,6 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
@@ -188,7 +187,8 @@ func TestAssertExistsPosition(t *testing.T) {
 
 			if tt.setupPosition {
 				position := newDummyPosition(tt.positionId)
-				mockInstance.createNewPosition(tt.positionId, position)
+				mockInstance.mustUpdatePosition(tt.positionId, position)
+				mockInstance.incrementNextId()
 
 				mockInstance.nftAccessor.Mint(adminAddr, positionIdFrom(tt.positionId))
 			}
@@ -267,7 +267,8 @@ func TestAssertIsOwnerForToken(t *testing.T) {
 				testing.SetRealm(posRealm)
 				mockInstance.nftAccessor.Mint(tt.setupOwner, positionIdFrom(tt.positionId))
 				position := newDummyPosition(tt.positionId)
-				mockInstance.createNewPosition(tt.positionId, position)
+				mockInstance.mustUpdatePosition(tt.positionId, position)
+				mockInstance.incrementNextId()
 			}
 
 			if tt.shouldPanic {
@@ -374,7 +375,8 @@ func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
 
 					position.SetOperator(tt.setupOperator)
 				}
-				mockInstance.createNewPosition(tt.positionId, position)
+				mockInstance.mustUpdatePosition(tt.positionId, position)
+				mockInstance.incrementNextId()
 			}
 
 			if tt.shouldPanic {
@@ -463,119 +465,6 @@ func TestAssertEqualsAddress(t *testing.T) {
 				})
 			} else {
 				assertEqualsAddress(tt.prevAddr, tt.otherAddr)
-				uassert.Equal(t, true, true)
-			}
-		})
-	}
-}
-
-func TestAssertSlippageIsNotExceeded(t *testing.T) {
-	tests := []struct {
-		name                 string
-		amount0              *u256.Uint
-		amount1              *u256.Uint
-		amount0Min           *u256.Uint
-		amount1Min           *u256.Uint
-		expectedPanicMessage string
-		shouldPanic          bool
-	}{
-		{
-			name:        "No slippage - exact amounts",
-			amount0:     u256.NewUint(1000),
-			amount1:     u256.NewUint(2000),
-			amount0Min:  u256.NewUint(1000),
-			amount1Min:  u256.NewUint(2000),
-			shouldPanic: false,
-		},
-		{
-			name:        "Acceptable slippage - amounts greater than minimum",
-			amount0:     u256.NewUint(1100),
-			amount1:     u256.NewUint(2200),
-			amount0Min:  u256.NewUint(1000),
-			amount1Min:  u256.NewUint(2000),
-			shouldPanic: false,
-		},
-		{
-			name:                 "Slippage exceeded on amount0",
-			amount0:              u256.NewUint(900),
-			amount1:              u256.NewUint(2000),
-			amount0Min:           u256.NewUint(1000),
-			amount1Min:           u256.NewUint(2000),
-			expectedPanicMessage: "[GNOSWAP-POSITION-002] slippage failed || amount0(900) >= amount0Min(1000) && amount1(2000) >= amount1Min(2000)",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Slippage exceeded on amount1",
-			amount0:              u256.NewUint(1000),
-			amount1:              u256.NewUint(1900),
-			amount0Min:           u256.NewUint(1000),
-			amount1Min:           u256.NewUint(2000),
-			expectedPanicMessage: "[GNOSWAP-POSITION-002] slippage failed || amount0(1000) >= amount0Min(1000) && amount1(1900) >= amount1Min(2000)",
-			shouldPanic:          true,
-		},
-		{
-			name:                 "Slippage exceeded on both amounts",
-			amount0:              u256.NewUint(900),
-			amount1:              u256.NewUint(1900),
-			amount0Min:           u256.NewUint(1000),
-			amount1Min:           u256.NewUint(2000),
-			expectedPanicMessage: "[GNOSWAP-POSITION-002] slippage failed || amount0(900) >= amount0Min(1000) && amount1(1900) >= amount1Min(2000)",
-			shouldPanic:          true,
-		},
-		{
-			name:        "Zero minimum amounts",
-			amount0:     u256.NewUint(100),
-			amount1:     u256.NewUint(200),
-			amount0Min:  u256.Zero(),
-			amount1Min:  u256.Zero(),
-			shouldPanic: false,
-		},
-		{
-			name:                 "Zero actual amounts with non-zero minimums",
-			amount0:              u256.Zero(),
-			amount1:              u256.Zero(),
-			amount0Min:           u256.NewUint(100),
-			amount1Min:           u256.NewUint(200),
-			expectedPanicMessage: "[GNOSWAP-POSITION-002] slippage failed || amount0(0) >= amount0Min(100) && amount1(0) >= amount1Min(200)",
-			shouldPanic:          true,
-		},
-		{
-			name:        "Large numbers",
-			amount0:     u256.MustFromDecimal("1000000000000000000000"),
-			amount1:     u256.MustFromDecimal("2000000000000000000000"),
-			amount0Min:  u256.MustFromDecimal("999999999999999999999"),
-			amount1Min:  u256.MustFromDecimal("1999999999999999999999"),
-			shouldPanic: false,
-		},
-		{
-			name:        "Valid input - amount0 exactly at minimum, amount1 above",
-			amount0:     u256.NewUint(1000),
-			amount1:     u256.NewUint(2001),
-			amount0Min:  u256.NewUint(1000),
-			amount1Min:  u256.NewUint(2000),
-			shouldPanic: false,
-		},
-		{
-			name:                 "Invalid input - amount0 above minimum, amount1 just below",
-			amount0:              u256.NewUint(1001),
-			amount1:              u256.NewUint(1999),
-			amount0Min:           u256.NewUint(1000),
-			amount1Min:           u256.NewUint(2000),
-			expectedPanicMessage: "[GNOSWAP-POSITION-002] slippage failed || amount0(1001) >= amount0Min(1000) && amount1(1999) >= amount1Min(2000)",
-			shouldPanic:          true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					assertSlippageIsNotExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
-				})
-			} else {
-				assertSlippageIsNotExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
 				uassert.Equal(t, true, true)
 			}
 		})
