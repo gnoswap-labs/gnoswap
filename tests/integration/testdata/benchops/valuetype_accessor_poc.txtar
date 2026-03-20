@@ -1,0 +1,466 @@
+## PoC: value type + accessor pattern vs pointer pattern
+##
+## Verification goals:
+## 1. Returning &t.field for a value type field works correctly in Gno VM
+## 2. Modifications through accessors are properly reflected in the stored struct
+## 3. Values persist correctly across transaction boundaries (reload from store)
+## 4. Value type pattern produces fewer HeapItemValue objects than pointer pattern (realm stats comparison)
+
+gnoland start
+
+## =================================================================
+## Part 1: Pointer pattern (baseline) — expects HeapItemValue creation
+## =================================================================
+
+gnokey maketx addpkg -pkgdir $WORK/ptr_realm -pkgpath gno.land/r/test/ptr_pattern -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+# TX1: Write values using pointer pattern
+gnokey maketx call -pkgpath gno.land/r/test/ptr_pattern -func SetValues -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX2: Read values after reload — persistence verification
+gnokey maketx call -pkgpath gno.land/r/test/ptr_pattern -func CheckValues -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX3: Arithmetic through pointer, then verify
+gnokey maketx call -pkgpath gno.land/r/test/ptr_pattern -func Accumulate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX4: Verify accumulated result persists
+gnokey maketx call -pkgpath gno.land/r/test/ptr_pattern -func CheckAccumulated -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+## =================================================================
+## Part 2: Value type + accessor pattern — expects NO HeapItemValue
+## =================================================================
+
+gnokey maketx addpkg -pkgdir $WORK/val_realm -pkgpath gno.land/r/test/val_pattern -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+# TX1: Write values using value type accessor pattern
+gnokey maketx call -pkgpath gno.land/r/test/val_pattern -func SetValues -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX2: Read values after reload — persistence verification
+gnokey maketx call -pkgpath gno.land/r/test/val_pattern -func CheckValues -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX3: Arithmetic through accessor, then verify
+gnokey maketx call -pkgpath gno.land/r/test/val_pattern -func Accumulate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX4: Verify accumulated result persists
+gnokey maketx call -pkgpath gno.land/r/test/val_pattern -func CheckAccumulated -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+## =================================================================
+## Part 3: Multi-field scenario — struct with multiple value type fields
+## =================================================================
+
+gnokey maketx addpkg -pkgdir $WORK/multi_realm -pkgpath gno.land/r/test/multi_field -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+# TX1: Set multiple value type fields via accessors simultaneously
+gnokey maketx call -pkgpath gno.land/r/test/multi_field -func SetMultipleFields -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX2: Persistence verification — all fields must be correct
+gnokey maketx call -pkgpath gno.land/r/test/multi_field -func CheckMultipleFields -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX3: Modifying one field must not affect other fields
+gnokey maketx call -pkgpath gno.land/r/test/multi_field -func ModifyOneField -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+# TX4: Verify field independence persists
+gnokey maketx call -pkgpath gno.land/r/test/multi_field -func CheckIndependence -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 test1
+stdout 'OK!'
+
+
+-- ptr_realm/gnomod.toml --
+module = "gno.land/r/test/ptr_pattern"
+gno = "0.9"
+
+-- ptr_realm/uint256.gno --
+package ptr_pattern
+
+// Uint256 is a minimal [4]uint64 big-integer type (little-endian).
+type Uint256 [4]uint64
+
+func NewUint256(v uint64) *Uint256 {
+	return &Uint256{v, 0, 0, 0}
+}
+
+func (z *Uint256) SetUint64(v uint64) *Uint256 {
+	z[0] = v
+	z[1] = 0
+	z[2] = 0
+	z[3] = 0
+	return z
+}
+
+func (z *Uint256) Add(x, y *Uint256) *Uint256 {
+	var carry uint64
+	z[0], carry = addCarry(x[0], y[0], 0)
+	z[1], carry = addCarry(x[1], y[1], carry)
+	z[2], carry = addCarry(x[2], y[2], carry)
+	z[3], _ = addCarry(x[3], y[3], carry)
+	return z
+}
+
+func addCarry(a, b, c uint64) (uint64, uint64) {
+	sum := a + b + c
+	carry := uint64(0)
+	if sum < a || (c > 0 && sum == a) {
+		carry = 1
+	}
+	return sum, carry
+}
+
+func (z *Uint256) Uint64() uint64 { return z[0] }
+
+func (z *Uint256) Clone() *Uint256 {
+	c := *z
+	return &c
+}
+
+-- ptr_realm/realm.gno --
+package ptr_pattern
+
+// PtrInfo uses pointer fields — each *Uint256 creates a HeapItemValue.
+type PtrInfo struct {
+	amount   *Uint256
+	balance  *Uint256
+}
+
+var stored PtrInfo
+
+func SetValues(cur realm) string {
+	stored.amount = NewUint256(100)
+	stored.balance = NewUint256(200)
+
+	// Verify within same tx
+	if stored.amount.Uint64() != 100 {
+		panic("amount mismatch")
+	}
+	if stored.balance.Uint64() != 200 {
+		panic("balance mismatch")
+	}
+	return "OK!"
+}
+
+func CheckValues(cur realm) string {
+	// Verify persistence after reload
+	if stored.amount.Uint64() != 100 {
+		panic("amount not persisted")
+	}
+	if stored.balance.Uint64() != 200 {
+		panic("balance not persisted")
+	}
+	return "OK!"
+}
+
+func Accumulate(cur realm) string {
+	// Modify through pointer
+	tmp := NewUint256(50)
+	stored.amount.Add(stored.amount, tmp) // 100 + 50 = 150
+
+	if stored.amount.Uint64() != 150 {
+		panic("accumulate failed")
+	}
+	return "OK!"
+}
+
+func CheckAccumulated(cur realm) string {
+	if stored.amount.Uint64() != 150 {
+		panic("accumulated value not persisted")
+	}
+	if stored.balance.Uint64() != 200 {
+		panic("balance should be unchanged")
+	}
+	return "OK!"
+}
+
+-- val_realm/gnomod.toml --
+module = "gno.land/r/test/val_pattern"
+gno = "0.9"
+
+-- val_realm/uint256.gno --
+package val_pattern
+
+// Uint256 is a minimal [4]uint64 big-integer type (little-endian).
+type Uint256 [4]uint64
+
+func NewUint256(v uint64) *Uint256 {
+	return &Uint256{v, 0, 0, 0}
+}
+
+func (z *Uint256) SetUint64(v uint64) *Uint256 {
+	z[0] = v
+	z[1] = 0
+	z[2] = 0
+	z[3] = 0
+	return z
+}
+
+func (z *Uint256) Add(x, y *Uint256) *Uint256 {
+	var carry uint64
+	z[0], carry = addCarry(x[0], y[0], 0)
+	z[1], carry = addCarry(x[1], y[1], carry)
+	z[2], carry = addCarry(x[2], y[2], carry)
+	z[3], _ = addCarry(x[3], y[3], carry)
+	return z
+}
+
+func addCarry(a, b, c uint64) (uint64, uint64) {
+	sum := a + b + c
+	carry := uint64(0)
+	if sum < a || (c > 0 && sum == a) {
+		carry = 1
+	}
+	return sum, carry
+}
+
+func (z *Uint256) Uint64() uint64 { return z[0] }
+
+func (z *Uint256) Clone() *Uint256 {
+	c := *z
+	return &c
+}
+
+-- val_realm/realm.gno --
+package val_pattern
+
+// ValInfo uses value type fields — no HeapItemValue should be created.
+// Accessor methods return &t.field for method chaining compatibility.
+type ValInfo struct {
+	amount  Uint256 // value type, NOT pointer
+	balance Uint256 // value type, NOT pointer
+}
+
+// Accessor returns pointer to the value field (not a new HeapItemValue)
+func (v *ValInfo) Amount() *Uint256  { return &v.amount }
+func (v *ValInfo) Balance() *Uint256 { return &v.balance }
+
+var stored ValInfo
+
+func SetValues(cur realm) string {
+	// Set via accessor — &t.field should modify the field in-place
+	stored.Amount().SetUint64(100)
+	stored.Balance().SetUint64(200)
+
+	// Verify within same tx
+	if stored.Amount().Uint64() != 100 {
+		panic("amount mismatch")
+	}
+	if stored.Balance().Uint64() != 200 {
+		panic("balance mismatch")
+	}
+	return "OK!"
+}
+
+func CheckValues(cur realm) string {
+	// Verify persistence after reload — critical test
+	if stored.Amount().Uint64() != 100 {
+		panic("amount not persisted")
+	}
+	if stored.Balance().Uint64() != 200 {
+		panic("balance not persisted")
+	}
+	return "OK!"
+}
+
+func Accumulate(cur realm) string {
+	// Modify through accessor pointer — should modify stored.amount in-place
+	tmp := NewUint256(50)
+	stored.Amount().Add(stored.Amount(), tmp) // 100 + 50 = 150
+
+	if stored.Amount().Uint64() != 150 {
+		panic("accumulate failed")
+	}
+	return "OK!"
+}
+
+func CheckAccumulated(cur realm) string {
+	if stored.Amount().Uint64() != 150 {
+		panic("accumulated value not persisted")
+	}
+	if stored.Balance().Uint64() != 200 {
+		panic("balance should be unchanged")
+	}
+	return "OK!"
+}
+
+-- multi_realm/gnomod.toml --
+module = "gno.land/r/test/multi_field"
+gno = "0.9"
+
+-- multi_realm/uint256.gno --
+package multi_field
+
+// Uint256 is a minimal [4]uint64 big-integer type (little-endian).
+type Uint256 [4]uint64
+
+func NewUint256(v uint64) *Uint256 {
+	return &Uint256{v, 0, 0, 0}
+}
+
+func (z *Uint256) SetUint64(v uint64) *Uint256 {
+	z[0] = v
+	z[1] = 0
+	z[2] = 0
+	z[3] = 0
+	return z
+}
+
+func (z *Uint256) Add(x, y *Uint256) *Uint256 {
+	var carry uint64
+	z[0], carry = addCarry(x[0], y[0], 0)
+	z[1], carry = addCarry(x[1], y[1], carry)
+	z[2], carry = addCarry(x[2], y[2], carry)
+	z[3], _ = addCarry(x[3], y[3], carry)
+	return z
+}
+
+func addCarry(a, b, c uint64) (uint64, uint64) {
+	sum := a + b + c
+	carry := uint64(0)
+	if sum < a || (c > 0 && sum == a) {
+		carry = 1
+	}
+	return sum, carry
+}
+
+func (z *Uint256) Uint64() uint64 { return z[0] }
+
+-- multi_realm/realm.gno --
+package multi_field
+
+// TickInfoLike mirrors the real TickInfo structure with 5 value type fields.
+// This tests that multiple value type fields in one struct all work correctly.
+type TickInfoLike struct {
+	liquidityGross                 Uint256 // was *u256.Uint
+	liquidityNet                   Uint256 // was *i256.Int (using Uint256 for simplicity)
+	feeGrowthOutside0X128          Uint256 // was *u256.Uint
+	feeGrowthOutside1X128          Uint256 // was *u256.Uint
+	secondsPerLiquidityOutsideX128 Uint256 // was *u256.Uint
+	tickCumulativeOutside          int64
+	secondsOutside                 uint32
+	initialized                    bool
+}
+
+// Accessors — return &t.field for method chaining
+func (t *TickInfoLike) LiquidityGross() *Uint256                 { return &t.liquidityGross }
+func (t *TickInfoLike) LiquidityNet() *Uint256                   { return &t.liquidityNet }
+func (t *TickInfoLike) FeeGrowthOutside0X128() *Uint256          { return &t.feeGrowthOutside0X128 }
+func (t *TickInfoLike) FeeGrowthOutside1X128() *Uint256          { return &t.feeGrowthOutside1X128 }
+func (t *TickInfoLike) SecondsPerLiquidityOutsideX128() *Uint256 { return &t.secondsPerLiquidityOutsideX128 }
+
+var stored TickInfoLike
+
+func SetMultipleFields(cur realm) string {
+	stored.LiquidityGross().SetUint64(1000)
+	stored.LiquidityNet().SetUint64(500)
+	stored.FeeGrowthOutside0X128().SetUint64(100)
+	stored.FeeGrowthOutside1X128().SetUint64(200)
+	stored.SecondsPerLiquidityOutsideX128().SetUint64(300)
+	stored.tickCumulativeOutside = 42
+	stored.secondsOutside = 7
+	stored.initialized = true
+
+	// Verify all fields
+	if stored.LiquidityGross().Uint64() != 1000 {
+		panic("liquidityGross mismatch")
+	}
+	if stored.LiquidityNet().Uint64() != 500 {
+		panic("liquidityNet mismatch")
+	}
+	if stored.FeeGrowthOutside0X128().Uint64() != 100 {
+		panic("feeGrowthOutside0 mismatch")
+	}
+	if stored.FeeGrowthOutside1X128().Uint64() != 200 {
+		panic("feeGrowthOutside1 mismatch")
+	}
+	if stored.SecondsPerLiquidityOutsideX128().Uint64() != 300 {
+		panic("secondsPerLiquidity mismatch")
+	}
+	if stored.tickCumulativeOutside != 42 {
+		panic("tickCumulative mismatch")
+	}
+	return "OK!"
+}
+
+func CheckMultipleFields(cur realm) string {
+	// Verify ALL fields persisted across transaction boundary
+	if stored.LiquidityGross().Uint64() != 1000 {
+		panic("liquidityGross not persisted")
+	}
+	if stored.LiquidityNet().Uint64() != 500 {
+		panic("liquidityNet not persisted")
+	}
+	if stored.FeeGrowthOutside0X128().Uint64() != 100 {
+		panic("feeGrowthOutside0 not persisted")
+	}
+	if stored.FeeGrowthOutside1X128().Uint64() != 200 {
+		panic("feeGrowthOutside1 not persisted")
+	}
+	if stored.SecondsPerLiquidityOutsideX128().Uint64() != 300 {
+		panic("secondsPerLiquidity not persisted")
+	}
+	if stored.tickCumulativeOutside != 42 {
+		panic("tickCumulative not persisted")
+	}
+	if stored.secondsOutside != 7 {
+		panic("secondsOutside not persisted")
+	}
+	if !stored.initialized {
+		panic("initialized not persisted")
+	}
+	return "OK!"
+}
+
+func ModifyOneField(cur realm) string {
+	// Only modify liquidityGross, leave everything else untouched
+	tmp := NewUint256(500)
+	stored.LiquidityGross().Add(stored.LiquidityGross(), tmp) // 1000 + 500 = 1500
+
+	if stored.LiquidityGross().Uint64() != 1500 {
+		panic("modify one field failed")
+	}
+	// Other fields should be unchanged
+	if stored.LiquidityNet().Uint64() != 500 {
+		panic("liquidityNet should be unchanged")
+	}
+	if stored.FeeGrowthOutside0X128().Uint64() != 100 {
+		panic("feeGrowthOutside0 should be unchanged")
+	}
+	return "OK!"
+}
+
+func CheckIndependence(cur realm) string {
+	// Verify modified field persisted
+	if stored.LiquidityGross().Uint64() != 1500 {
+		panic("modified liquidityGross not persisted")
+	}
+	// Verify unmodified fields still correct
+	if stored.LiquidityNet().Uint64() != 500 {
+		panic("liquidityNet changed unexpectedly")
+	}
+	if stored.FeeGrowthOutside0X128().Uint64() != 100 {
+		panic("feeGrowthOutside0 changed unexpectedly")
+	}
+	if stored.FeeGrowthOutside1X128().Uint64() != 200 {
+		panic("feeGrowthOutside1 changed unexpectedly")
+	}
+	if stored.SecondsPerLiquidityOutsideX128().Uint64() != 300 {
+		panic("secondsPerLiquidity changed unexpectedly")
+	}
+	if stored.tickCumulativeOutside != 42 {
+		panic("tickCumulative changed unexpectedly")
+	}
+	if stored.secondsOutside != 7 {
+		panic("secondsOutside changed unexpectedly")
+	}
+	if !stored.initialized {
+		panic("initialized changed unexpectedly")
+	}
+	return "OK!"
+}
