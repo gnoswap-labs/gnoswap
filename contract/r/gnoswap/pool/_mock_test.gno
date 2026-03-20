@@ -226,7 +226,9 @@ func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, er
 	if !ok {
 		return nil, errors.New("not found")
 	}
-
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*Pool), nil
+	}
 	return res[0].(*Pool), res[1].(error)
 }
 
@@ -569,6 +571,10 @@ func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 		return 0, nil, errors.New("not found")
 	}
 
+	if len(res) < 3 || res[2] == nil {
+		return res[0].(int32), res[1].(*u256.Uint), nil
+	}
+
 	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
@@ -635,7 +641,9 @@ func (m *MockPool) GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 	if !ok {
 		return TickInfo{}, errors.New("not found")
 	}
-
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(TickInfo), nil
+	}
 	return res[0].(TickInfo), res[1].(error)
 }
 
@@ -644,7 +652,9 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, e
 	if !ok {
 		return nil, errors.New("not found")
 	}
-
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*u256.Uint), nil
+	}
 	return res[0].(*u256.Uint), res[1].(error)
 }
 
@@ -653,7 +663,9 @@ func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
 	if !ok {
 		return PositionInfo{}, errors.New("not found")
 	}
-
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(PositionInfo), nil
+	}
 	return res[0].(PositionInfo), res[1].(error)
 }
 
@@ -661,6 +673,10 @@ func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, erro
 	res, ok := m.Response.Get("GetObservationState")
 	if !ok {
 		return nil, errors.New("not found")
+	}
+
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(*ObservationState), nil
 	}
 
 	return res[0].(*ObservationState), res[1].(error)

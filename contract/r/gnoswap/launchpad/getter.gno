@@ -11,7 +11,7 @@ func GetProjectCount() int {
 
 // GetProjectIDs returns a paginated list of project IDs.
 func GetProjectIDs(offset, count int) []string {
-	return getImplementation().GetProjectIDs(offset, count)
+	return cloneStringSlice(getImplementation().GetProjectIDs(offset, count))
 }
 
 // GetProject retrieves a project by its ID.
@@ -62,7 +62,11 @@ func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition,
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.
 func GetProjectTiersRatios(projectId string) (map[int64]int64, error) {
-	return getImplementation().GetProjectTiersRatios(projectId)
+	tiersRatios, err := getImplementation().GetProjectTiersRatios(projectId)
+	if err != nil {
+		return nil, err
+	}
+	return cloneInt64Map(tiersRatios), nil
 }
 
 // GetProjectCreatedHeight returns the created height of a project by its ID.
@@ -90,7 +94,14 @@ func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
 func GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
-	return getImplementation().GetProjectTierDistributeAmountPerSecondX128(projectId, tier)
+	amount, err := getImplementation().GetProjectTierDistributeAmountPerSecondX128(projectId, tier)
+	if err != nil {
+		return nil, err
+	}
+	if amount == nil {
+		return nil, nil
+	}
+	return amount.Clone(), nil
 }
 
 // GetProjectTierTotalDistributeAmount returns the total distribute amount of a project tier.
@@ -150,13 +161,20 @@ func GetProjectTierDepositCount(projectId string, tier int64) int {
 
 // GetProjectTierDepositIDs returns a paginated list of deposit IDs for a project tier.
 func GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string {
-	return getImplementation().GetProjectTierDepositIDs(projectId, tier, offset, count)
+	return cloneStringSlice(getImplementation().GetProjectTierDepositIDs(projectId, tier, offset, count))
 }
 
 // GetDeposit retrieves a deposit by its ID.
 // Returns a cloned deposit to prevent external modification.
 func GetDeposit(depositId string) (*Deposit, error) {
-	return getImplementation().GetDeposit(depositId)
+	deposit, err := getImplementation().GetDeposit(depositId)
+	if err != nil {
+		return nil, err
+	}
+	if deposit == nil {
+		return nil, nil
+	}
+	return deposit.Clone(), nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
@@ -212,17 +230,38 @@ func GetProjectTierRewardManagerCount() int {
 // GetProjectTierRewardManager retrieves a reward manager by project tier ID.
 // Returns a cloned reward manager to prevent external modification.
 func GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {
-	return getImplementation().GetProjectTierRewardManager(projectTierId)
+	rewardManager, err := getImplementation().GetProjectTierRewardManager(projectTierId)
+	if err != nil {
+		return nil, err
+	}
+	if rewardManager == nil {
+		return nil, nil
+	}
+	return rewardManager.Clone(), nil
 }
 
 // GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
 func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
-	return getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
+	amount, err := getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
+	if err != nil {
+		return nil, err
+	}
+	if amount == nil {
+		return nil, nil
+	}
+	return amount.Clone(), nil
 }
 
 // GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
 func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
-	return getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
+	amount, err := getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
+	if err != nil {
+		return nil, err
+	}
+	if amount == nil {
+		return nil, nil
+	}
+	return amount.Clone(), nil
 }
 
 // GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.

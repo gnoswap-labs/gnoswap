@@ -49,6 +49,20 @@ func TestGetDistributableAmount_OutsideWindow(t *testing.T) {
 	uassert.Equal(t, 0, len(distributedAfter))
 }
 
+func TestGetDistributableAmountIsolation(t *testing.T) {
+	resetObject(t)
+
+	distributionStartTimestamp = 1000
+	distributed, _ := GetDistributableAmount(10000, 1000)
+	distributed[LIQUIDITY_STAKER] = 1
+	distributed[999] = 2
+
+	reFetched, _ := GetDistributableAmount(10000, 1000)
+	uassert.Equal(t, int64(7500), reFetched[LIQUIDITY_STAKER])
+	_, exists := reFetched[999]
+	uassert.Equal(t, false, exists)
+}
+
 func TestGetLeftGNSAmount(t *testing.T) {
 	resetObject(t)
 

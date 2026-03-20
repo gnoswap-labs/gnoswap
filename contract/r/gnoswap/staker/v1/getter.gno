@@ -265,7 +265,7 @@ func (s *stakerV1) GetDepositTickUpper(lpTokenId uint64) int32 {
 func (s *stakerV1) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
 	deposit := s.getDeposit(lpTokenId)
 
-	return deposit.Liquidity().Clone()
+	return deposit.Liquidity()
 }
 
 // GetDepositLiquidityAsString returns the liquidity of a deposit as string.
@@ -381,18 +381,12 @@ func (s *stakerV1) GetTotalEmissionSent() int64 {
 
 // GetAllowedTokens returns the allowed external incentive token list.
 func (s *stakerV1) GetAllowedTokens() []string {
-	tokens := s.store.GetAllowedTokens()
-	result := make([]string, len(tokens))
-	copy(result, tokens)
-	return result
+	return s.store.GetAllowedTokens()
 }
 
 // GetWarmupTemplate returns the current warmup template.
 func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
-	warmups := s.store.GetWarmupTemplate()
-	result := make([]sr.Warmup, len(warmups))
-	copy(result, warmups)
-	return result
+	return s.store.GetWarmupTemplate()
 }
 
 // GetTotalStakedUserCount returns the total number of users with staked positions.
@@ -547,7 +541,7 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timesta
 		panic("failed to cast global reward ratio accumulation to *u256.Uint")
 	}
 
-	return accumulation.Clone()
+	return accumulation
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
