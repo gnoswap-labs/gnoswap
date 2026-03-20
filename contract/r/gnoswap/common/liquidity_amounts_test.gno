@@ -666,6 +666,49 @@ func TestLiquidityAmounts_LiquidityMathAddDelta(t *testing.T) {
 			},
 			wantPanic: "liquidity_math: overflow",
 		},
+		{
+			name: "exceeds uint128 on addition",
+			fn: func() {
+				x := u256.MustFromDecimal("340282366920938463463374607431768211455") // uint128 max
+				y := i256.MustFromDecimal("1")
+				LiquidityMathAddDelta(x, y)
+			},
+			wantPanic: "liquidity_math: result exceeds uint128 range",
+		},
+		{
+			name: "exceeds uint128 on subtraction with large inputs",
+			fn: func() {
+				// x is above uint128 max, y is negative but result still above uint128
+				x := u256.MustFromDecimal("680564733841876926926749214863536422912") // 2 * uint128 max + 2
+				y := i256.MustFromDecimal("-1")
+				LiquidityMathAddDelta(x, y)
+			},
+			wantPanic: "liquidity_math: result exceeds uint128 range",
+		},
+		{
+			name: "at uint128 max boundary is valid",
+			fn: func() {
+				x := u256.MustFromDecimal("340282366920938463463374607431768211450")
+				y := i256.MustFromDecimal("5")
+				result := LiquidityMathAddDelta(x, y)
+				expected := u256.MustFromDecimal("340282366920938463463374607431768211455") // uint128 max
+				if !result.Eq(expected) {
+					t.Errorf("expected %s, got %s", expected.ToString(), result.ToString())
+				}
+			},
+		},
+		{
+			name: "subtraction within uint128 range is valid",
+			fn: func() {
+				x := u256.MustFromDecimal("340282366920938463463374607431768211455") // uint128 max
+				y := i256.MustFromDecimal("-100")
+				result := LiquidityMathAddDelta(x, y)
+				expected := u256.MustFromDecimal("340282366920938463463374607431768211355")
+				if !result.Eq(expected) {
+					t.Errorf("expected %s, got %s", expected.ToString(), result.ToString())
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
