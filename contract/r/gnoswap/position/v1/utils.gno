@@ -18,28 +18,10 @@ func mustGetStakerAddress() address {
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
-// NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
-// if positionId is nil or not supported, it will panic
-// if positionId is not found, it will panic
-// input: positionId any
+// input: positionId uint64
 // output: grc721.TokenID
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic(newErrorWithDetail(errInvalidInput, "positionId is nil"))
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.FormatUint(positionId.(uint64), 10))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic(newErrorWithDetail(errInvalidInput, "unsupported positionId type"))
-	}
+func positionIdFrom(positionId uint64) grc721.TokenID {
+	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
 // exists checks whether positionId exists
