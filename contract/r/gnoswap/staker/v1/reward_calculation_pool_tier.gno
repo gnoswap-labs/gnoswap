@@ -262,6 +262,7 @@ func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, p
 	if len(halvingTimestamps) == 0 {
 		self.applyCacheToAllPools(pools, currentTimestamp, self.currentEmission)
 		self.lastRewardCacheTimestamp = currentTimestamp
+		self.lastRewardCacheHeight = currentHeight
 		return
 	}
 

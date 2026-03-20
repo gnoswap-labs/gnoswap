@@ -56,22 +56,66 @@ func TestNewPoolTier(t *testing.T) {
 }
 
 func TestCacheReward(t *testing.T) {
-	currentHeight := int64(250)
-	currentTime := int64(250000)
-	// Simulate emission updates
 	pools := NewPools()
-	poolTier := NewPoolTier(pools, currentHeight, currentTime, "testPool", func() int64 { return 1000 }, func(startHeight int64, endHeight int64) ([]int64, []int64) {
-		return []int64{100, 150, 200}, []int64{1000, 500, 250}
-	})
+	poolPath := test_gnousdc
+	pool := sr.NewPool(poolPath, 100)
+	pools.set(poolPath, pool)
 
-	// Cache rewards
-	poolTier.cacheReward(currentHeight, currentTime, pools)
+	poolResolver := NewPoolResolver(pool)
+	pool.RewardCache().Set(100, int64(1000))
 
-	// Verify rewards
-	reward := poolTier.CurrentReward(1)
-	if reward == 0 {
-		t.Errorf("Expected reward for tier 1 at height 250, got 0")
-	}
+	poolTier := NewPoolTierBy(
+		avl.NewTree(),
+		TierRatioFromCounts(1, 0, 0),
+		[AllTierCount]uint64{0, 1, 0, 0},
+		100,
+		90,
+		1000,
+		func() int64 { return 1000 },
+		func(startTimestamp, endTimestamp int64) ([]int64, []int64) {
+			return []int64{150}, []int64{500}
+		},
+	)
+	poolTier.membership.Set(poolPath, uint64(1))
+
+	poolTier.cacheReward(200, 200, pools)
+
+	uassert.Equal(t, int64(1000), poolResolver.CurrentReward(149))
+	uassert.Equal(t, int64(500), poolResolver.CurrentReward(150))
+	uassert.Equal(t, int64(500), poolResolver.CurrentReward(199))
+	uassert.Equal(t, int64(500), poolResolver.CurrentReward(200))
+	uassert.Equal(t, int64(200), poolTier.lastRewardCacheTimestamp)
+	uassert.Equal(t, int64(200), poolTier.lastRewardCacheHeight)
+	uassert.Equal(t, int64(500), poolTier.currentEmission)
+}
+
+func TestCacheRewardUpdatesHeightWithoutHalving(t *testing.T) {
+	pools := NewPools()
+	poolPath := test_gnousdc
+	pool := sr.NewPool(poolPath, 100)
+	pools.set(poolPath, pool)
+
+	pool.RewardCache().Set(100, int64(1000))
+
+	poolTier := NewPoolTierBy(
+		avl.NewTree(),
+		TierRatioFromCounts(1, 0, 0),
+		[AllTierCount]uint64{0, 1, 0, 0},
+		100,
+		90,
+		1000,
+		func() int64 { return 1000 },
+		func(startTimestamp, endTimestamp int64) ([]int64, []int64) {
+			return nil, nil
+		},
+	)
+	poolTier.membership.Set(poolPath, uint64(1))
+
+	poolTier.cacheReward(200, 200, pools)
+
+	uassert.Equal(t, int64(200), poolTier.lastRewardCacheTimestamp)
+	uassert.Equal(t, int64(200), poolTier.lastRewardCacheHeight)
+	uassert.Equal(t, int64(1000), poolTier.currentEmission)
 }
 
 var test_gnousdc = pl.GetPoolPath("gno.land/r/gnoland/wugnot", "gno.land/r/gnoswap/gns", 3000)
