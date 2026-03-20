@@ -36,13 +36,13 @@ func newTickInfoFixture() TickInfo {
 }
 
 func newPositionInfoFixture() PositionInfo {
-	return NewPositionInfo(
-		u256.MustFromDecimal("1000"),
-		u256.MustFromDecimal("2000"),
-		u256.MustFromDecimal("3000"),
-		u256.MustFromDecimal("4000"),
-		u256.MustFromDecimal("5000"),
-	)
+	positionInfo := PositionInfo{}
+	positionInfo.SetLiquidity(u256.MustFromDecimal("1000"))
+	positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2000"))
+	positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3000"))
+	positionInfo.SetTokensOwed0(u256.MustFromDecimal("4000"))
+	positionInfo.SetTokensOwed1(u256.MustFromDecimal("5000"))
+	return positionInfo
 }
 
 func TestMutablePoolGetterIsolation(t *testing.T) {
