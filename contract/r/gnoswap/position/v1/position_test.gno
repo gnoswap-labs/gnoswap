@@ -133,7 +133,7 @@ func TestMustGetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, tt.inputPosition)
+			mockInstance.mustUpdatePosition(tt.positionId, tt.inputPosition)
 
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
@@ -189,7 +189,7 @@ func TestSetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, tt.position)
+			mockInstance.mustUpdatePosition(tt.positionId, tt.position)
 			mockInstance.setPosition(tt.positionId, tt.inputPosition)
 
 			storedPosition := mockInstance.mustGetPosition(tt.positionId)
@@ -228,9 +228,9 @@ func TestRemovePosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
 
-			mockInstance.removePosition(tt.inputPositionId)
+			mockInstance.store.RemovePosition(tt.inputPositionId)
 
 			_, found := mockInstance.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
@@ -262,7 +262,7 @@ func TestExistPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			mockInstance.mustUpdatePosition(tt.positionId, newDummyPosition(tt.positionId))
 			uassert.Equal(t, tt.expectedExist, mockInstance.ExistPosition(tt.inputPositionId))
 		})
 	}

@@ -8,16 +8,14 @@ import (
 )
 
 const (
-	Q96_RESOLUTION  = 96
-	Q128_RESOLUTION = 128
-	MAX_UINT128     = "340282366920938463463374607431768211455" // 2^128 - 1
-	Q96             = "79228162514264337593543950336"           // 2^96
+	Q96_RESOLUTION = 96
+	MAX_UINT128    = "340282366920938463463374607431768211455" // 2^128 - 1
+	Q96            = "79228162514264337593543950336"           // 2^96
 )
 
 var (
 	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
 	q96Uint    = u256.MustFromDecimal(Q96)
-	q128Mask   = u256.MustFromDecimal(MAX_UINT128)
 	// only used for return value
 	zeroI256 = i256.Zero()
 )
