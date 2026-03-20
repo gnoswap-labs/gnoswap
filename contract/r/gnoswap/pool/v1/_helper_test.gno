@@ -595,11 +595,11 @@ func mockInstanceSwap(token0Path string, token1Path string, fee uint32, recipien
 	}(cross)
 }
 
-func mockInstanceHandleWithdrawalFee(positionId uint64, token0Path string, amount0 string, token1Path string, amount1 string, poolPath string, positionCaller address) (string, string) {
-	return func(cur realm) (string, string) {
+func mockInstanceHandleWithdrawalFee(token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
+	return func(cur realm) (string, string, string, string) {
 		const currentPoolPath = "gno.land/r/gnoswap/pool"
 		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
-		return getMockInstance().HandleWithdrawalFee(positionId, token0Path, amount0, token1Path, amount1, poolPath, positionCaller)
+		return getMockInstance().HandleWithdrawalFee(token0Path, amount0, token1Path, amount1, positionCaller)
 	}(cross)
 }
 

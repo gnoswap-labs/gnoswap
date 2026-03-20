@@ -65,17 +65,6 @@ func assertIsNotStaked(s *stakerV1, positionId uint64) {
 	}
 }
 
-// assertIsPositionOwner ensures the caller owns the position NFT.
-func assertIsPositionOwner(s *stakerV1, positionId uint64, caller address) {
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
-	if owner != caller {
-		panic(makeErrorWithDetails(
-			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not owner(%s)", caller.String(), owner.String()),
-		))
-	}
-}
-
 // assertIsPoolExists ensures the pool exists.
 func assertIsPoolExists(s *stakerV1, poolPath string) {
 	if !s.poolAccessor.ExistsPoolPath(poolPath) {
@@ -214,4 +203,3 @@ func isMidnight(startTime time.Time) bool {
 
 	return hour == 0 && minute == 0 && second == 0
 }
-

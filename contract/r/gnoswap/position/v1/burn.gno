@@ -59,8 +59,20 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)
-	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), burnedAmount1)
+	tokensOwed0, overflow0 := u256.Zero().AddOverflow(position.TokensOwed0(), burnedAmount0)
+	if overflow0 {
+		panic(newErrorWithDetail(
+			errOverflow,
+			ufmt.Sprintf("tokensOwed0(%s) + burnedAmount0(%s) exceeds uint256 max", position.TokensOwed0().ToString(), burnedAmount0.ToString()),
+		))
+	}
+	tokensOwed1, overflow1 := u256.Zero().AddOverflow(position.TokensOwed1(), burnedAmount1)
+	if overflow1 {
+		panic(newErrorWithDetail(
+			errOverflow,
+			ufmt.Sprintf("tokensOwed1(%s) + burnedAmount1(%s) exceeds uint256 max", position.TokensOwed1().ToString(), burnedAmount1.ToString()),
+		))
+	}
 
 	newLiquidity, underflow := u256.Zero().SubOverflow(position.Liquidity(), liquidityToRemove)
 	if underflow {

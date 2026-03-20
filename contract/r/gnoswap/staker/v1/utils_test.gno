@@ -4,7 +4,6 @@ import (
 	"math"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -54,96 +53,34 @@ func TestPoolPathDivide(t *testing.T) {
 func TestTid(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       any
+		input       uint64
 		expected    string
-		shouldPanic bool
 	}{
-		{
-			name:        "Panic - nil",
-			input:       nil,
-			expected:    "[GNOSWAP-STAKER-013] requested data not found || positionId is nil",
-			shouldPanic: true,
-		},
-		{
-			name:        "Panic - unsupported type",
-			input:       float64(1),
-			expected:    "[GNOSWAP-STAKER-004] invalid input data || unsupported positionId type(unknown)",
-			shouldPanic: true,
-		},
-		{
-			name:        "Success - string",
-			input:       "1",
-			expected:    "1",
-			shouldPanic: false,
-		},
-		{
-			name:        "Success - int",
-			input:       int(1),
-			expected:    "1",
-			shouldPanic: false,
-		},
 		{
 			name:        "Success - uint64 min",
 			input:       uint64(0),
 			expected:    "0",
-			shouldPanic: false,
 		},
 		{
 			name:        "Success - uint64",
 			input:       uint64(1),
 			expected:    "1",
-			shouldPanic: false,
 		},
 		{
 			name:        "Success - uint64 1<<63",
 			input:       uint64(9223372036854775808),
 			expected:    "9223372036854775808",
-			shouldPanic: false,
 		},
 		{
 			name:        "Success - uint64 max",
 			input:       uint64(math.MaxUint64),
 			expected:    "18446744073709551615",
-			shouldPanic: false,
-		},
-		{
-			name:        "Success - grc721.TokenID",
-			input:       grc721.TokenID("1"),
-			expected:    "1",
-			shouldPanic: false,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
-			if !tc.shouldPanic {
-				got := positionIdFrom(tc.input)
-				uassert.Equal(t, tc.expected, string(got))
-			} else {
-				positionIdFrom(tc.input)
-			}
+			got := positionIdFrom(tc.input)
+			uassert.Equal(t, tc.expected, string(got))
 		})
 	}
 }

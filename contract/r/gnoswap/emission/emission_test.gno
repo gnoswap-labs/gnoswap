@@ -261,12 +261,7 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				SetDistributionStartTime(cross, now+100)
 				testing.SkipHeights(200)
 				// Set distribution percentages that will create remainder
-				changeDistributionPcts(
-					LIQUIDITY_STAKER, 3333,
-					DEVOPS, 3333,
-					COMMUNITY_POOL, 3333,
-					GOV_STAKER, 1,
-				)
+				changeDistributionPcts(3333, 3333, 3333, 1)
 			},
 			verify: func(t *testing.T) {
 				testing.SkipHeights(1)

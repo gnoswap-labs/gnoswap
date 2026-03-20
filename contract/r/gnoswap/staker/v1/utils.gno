@@ -22,46 +22,9 @@ func poolPathDivide(poolPath string) (string, string, string) {
 	return pToken0, pToken1, fee
 }
 
-// positionIdFrom converts various types to grc721.TokenID.
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic(makeErrorWithDetails(
-			errDataNotFound,
-			"positionId is nil",
-		))
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.FormatUint(positionId.(uint64), 10))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic(makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("unsupported positionId type(%T)", positionId),
-		))
-	}
-}
-
-// max returns the larger of two int64 values.
-func max(x, y int64) int64 {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-// min returns the smaller of two uint64 values.
-func min(x, y uint64) uint64 {
-	if x < y {
-		return x
-	}
-	return y
+// positionIdFrom converts a uint64 position ID to grc721.TokenID.
+func positionIdFrom(positionId uint64) grc721.TokenID {
+	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
 // contains checks if a string exists in a slice.

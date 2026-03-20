@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -113,98 +112,36 @@ func TestAssertValidNumberString(t *testing.T) {
 func TestPositionIdFrom(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       any
+		input       uint64
 		expected    string
-		shouldPanic bool
 	}{
-		{
-			name:        "positionIdFrom is failed by nil",
-			input:       nil,
-			expected:    "[GNOSWAP-POSITION-004] invalid input data || positionId is nil",
-			shouldPanic: true,
-		},
-		{
-			name:        "positionIdFrom is failed by unsupported type",
-			input:       float64(1),
-			expected:    "[GNOSWAP-POSITION-004] invalid input data || unsupported positionId type",
-			shouldPanic: true,
-		},
-		{
-			name:        "positionIdFrom is success by string",
-			input:       "1",
-			expected:    "1",
-			shouldPanic: false,
-		},
-		{
-			name:        "positionIdFrom is success by int",
-			input:       int(1),
-			expected:    "1",
-			shouldPanic: false,
-		},
 		{
 			name:        "positionIdFrom preserves uint64 min",
 			input:       uint64(0),
 			expected:    "0",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom is success by uint64",
 			input:       uint64(1),
 			expected:    "1",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom preserves uint64 1<<63",
 			input:       uint64(9223372036854775808),
 			expected:    "9223372036854775808",
-			shouldPanic: false,
 		},
 		{
 			name:        "positionIdFrom preserves uint64 max",
 			input:       uint64(18446744073709551615),
 			expected:    "18446744073709551615",
-			shouldPanic: false,
-		},
-		{
-			name:        "positionIdFrom is success by grc721.TokenID",
-			input:       grc721.TokenID("1"),
-			expected:    "1",
-			shouldPanic: false,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			defer func() {
-				r := recover()
-				if r == nil {
-					if tc.shouldPanic {
-						t.Errorf(">>> %s: expected panic but got none", tc.name)
-						return
-					}
-				} else {
-					switch r.(type) {
-					case string:
-						if r.(string) != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-						}
-					case error:
-						if r.(error).Error() != tc.expected {
-							t.Errorf(">>> %s: got panic %v, want %v", tc.name, r.(error).Error(), tc.expected)
-						}
-					default:
-						t.Errorf(">>> %s: got panic %v, want %v", tc.name, r, tc.expected)
-					}
-				}
-			}()
-
-			if !tc.shouldPanic {
-				got := positionIdFrom(tc.input)
-				uassert.Equal(t, tc.expected, string(got))
-			} else {
-				positionIdFrom(tc.input)
-			}
+			got := positionIdFrom(tc.input)
+			uassert.Equal(t, tc.expected, string(got))
 		})
 	}
 }
@@ -270,7 +207,7 @@ func TestIsOperator(t *testing.T) {
 			// given
 			position := newDummyPosition(tc.positionId)
 			position.SetOperator(alice)
-			mockInstance.createNewPosition(tc.positionId, position)
+			mockInstance.mustUpdatePosition(tc.positionId, position)
 
 			// when
 			got := mockInstance.isOperator(tc.positionId, tc.addr)
@@ -511,106 +448,137 @@ func TestSafeConvertToInt64(t *testing.T) {
 	}
 }
 
-func TestSubUint256(t *testing.T) {
+func legacySubUint256ForTest(x, y *u256.Uint) *u256.Uint {
+	if x.Cmp(y) < 0 {
+		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
+		result := u256.Zero().Add(diff, x)
+		return result.Add(result, u256.One())
+	}
+
+	return u256.Zero().Sub(x, y)
+}
+
+func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 	tests := []struct {
-		name     string
-		x        *u256.Uint
-		y        *u256.Uint
-		expected *u256.Uint
+		name string
+		x    string
+		y    string
 	}{
-		{
-			name:     "Normal case: x > y",
-			x:        u256.NewUint(100),
-			y:        u256.NewUint(50),
-			expected: u256.NewUint(50),
+		{name: "zero_minus_zero", x: "0", y: "0"},
+		{name: "zero_minus_one", x: "0", y: "1"},
+		{name: "one_minus_zero", x: "1", y: "0"},
+		{name: "one_minus_max", x: "1", y: MAX_UINT256},
+		{name: "max_minus_zero", x: MAX_UINT256, y: "0"},
+		{name: "max_minus_max", x: MAX_UINT256, y: MAX_UINT256},
+		{name: "max_minus_one", x: MAX_UINT256, y: "1"},
+		{name: "max_minus_prev", x: MAX_UINT256, y: "115792089237316195423570985008687907853269984665640564039457584007913129639934"},
+		{name: "small_underflow", x: "50", y: "100"},
+		{name: "small_normal", x: "100", y: "50"},
+		{name: "int64_boundary_cross", x: "9223372036854775808", y: "9223372036854775807"},
+		{name: "large_underflow", x: "500000000000000000000", y: "1000000000000000000000"},
+
+		// additional boundary and domain cases
+		{name: "zero_minus_two", x: "0", y: "2"},
+		{name: "underflow_by_one", x: "100", y: "101"},
+		{name: "underflow_by_one_at_uint128_boundary",
+			x: "340282366920938463463374607431768211455", // 2^128 - 1
+			y: "340282366920938463463374607431768211456", // 2^128
 		},
-		{
-			name:     "Equality case: x == y",
-			x:        u256.NewUint(100),
-			y:        u256.NewUint(100),
-			expected: u256.NewUint(0),
+		{name: "normal_sub_at_q128",
+			x: "680564733841876926926749214863536422912", // 2 * 2^128
+			y: "340282366920938463463374607431768211456", // 2^128
 		},
-		{
-			name: "Underflow case: x < y",
-			x:    u256.NewUint(50),
-			y:    u256.NewUint(100),
-			expected: func() *u256.Uint {
-				// 2^256 - 1 - 100 + 50 = 2^256 - 51
-				max := u256.MustFromDecimal(MAX_UINT256)
-				diff := u256.Zero().Sub(max, u256.NewUint(100))
-				result := u256.Zero().Add(diff, u256.NewUint(50))
-				return u256.Zero().Add(result, u256.One())
-			}(),
+		{name: "zero_minus_max", x: "0", y: MAX_UINT256},
+		{name: "one_minus_max_minus_one",
+			x: "1",
+			y: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
 		},
-		{
-			name:     "y = 0",
-			x:        u256.NewUint(100),
-			y:        u256.NewUint(0),
-			expected: u256.NewUint(100),
-		},
-		{
-			name: "x = 0, y > 0",
-			x:    u256.NewUint(0),
-			y:    u256.NewUint(100),
-			expected: func() *u256.Uint {
-				// 2^256 - 1 - 100 + 0 = 2^256 - 101 + 1
-				max := u256.MustFromDecimal(MAX_UINT256)
-				diff := u256.Zero().Sub(max, u256.NewUint(100))
-				result := u256.Zero().Add(diff, u256.One())
-				return result
-			}(),
-		},
-		{
-			name:     "Large numbers: normal subtraction",
-			x:        u256.MustFromDecimal("1000000000000000000000"),
-			y:        u256.MustFromDecimal("500000000000000000000"),
-			expected: u256.MustFromDecimal("500000000000000000000"),
-		},
-		{
-			name: "Large numbers: underflow",
-			x:    u256.MustFromDecimal("500000000000000000000"),
-			y:    u256.MustFromDecimal("1000000000000000000000"),
-			expected: func() *u256.Uint {
-				// 2^256 - 1 - 1000000000000000000000 + 500000000000000000000 + 1
-				max := u256.MustFromDecimal(MAX_UINT256)
-				diff := u256.Zero().Sub(max, u256.MustFromDecimal("1000000000000000000000"))
-				result := u256.Zero().Add(diff, u256.MustFromDecimal("500000000000000000000"))
-				return u256.Zero().Add(result, u256.One())
-			}(),
-		},
-		{
-			name: "Underflow: 0 - 1 (most basic off-by-one check)",
-			x:    u256.NewUint(0),
-			y:    u256.NewUint(1),
-			expected: func() *u256.Uint {
-				// 0 - 1 = -1 mod 2^256 = 2^256 - 1
-				return u256.Zero().Sub(u256.NewUint(0), u256.NewUint(1))
-			}(),
-		},
-		{
-			name: "Underflow: direct comparison with u256.Sub",
-			x:    u256.NewUint(50),
-			y:    u256.NewUint(100),
-			expected: func() *u256.Uint {
-				return u256.Zero().Sub(u256.NewUint(50), u256.NewUint(100))
-			}(),
-		},
-		{
-			name: "Verify off-by-one: 10 - 11",
-			x:    u256.NewUint(10),
-			y:    u256.NewUint(11),
-			expected: func() *u256.Uint {
-				return u256.Zero().Sub(u256.NewUint(10), u256.NewUint(11))
-			}(),
+		{name: "equal_mid_range", x: "12345678901234567890", y: "12345678901234567890"},
+		{name: "fee_growth_typical_underflow",
+			// realistic fee growth accumulator: global < position snapshot means new epoch
+			x: "1000000000000000000000000000000000000", // ~1e36 (small accumulator)
+			y: "999999999999999999999999999999999999999",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := subUint256(tt.x, tt.y)
-			uassert.Equal(t, tt.expected.ToString(), result.ToString(),
-				"subUint256(%s, %s) should equal %s",
-				tt.x.ToString(), tt.y.ToString(), tt.expected.ToString())
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			x := u256.MustFromDecimal(tc.x)
+			y := u256.MustFromDecimal(tc.y)
+
+			legacy := legacySubUint256ForTest(x, y)
+			direct := u256.Zero().Sub(x, y)
+
+			uassert.Equal(t, legacy.ToString(), direct.ToString(),
+				"legacy formula and direct u256.Sub differ for x=%s, y=%s",
+				tc.x, tc.y,
+			)
+		})
+	}
+}
+
+// TestSubUint256DoubleUnderflow verifies that chained Sub calls each underflow (wrap around)
+// correctly — mirroring the two consecutive subtractions in GetUnclaimedFee:
+//
+//	step1 = Sub(global, lower)   // may underflow
+//	step2 = Sub(step1, upper)    // may underflow again
+//
+// Each case checks the intermediate and final results against both the expected
+// value and the legacy formula.
+func TestSubUint256DoubleUnderflow(t *testing.T) {
+	tests := []struct {
+		name          string
+		a             string // first operand
+		b             string // subtracted in step 1  (a < b  → underflow)
+		c             string // subtracted in step 2  (step1 < c → underflow again)
+		expectedStep1 string // result after first wrap
+		expectedStep2 string // result after second wrap
+	}{
+		{
+			// step1: 5 - 10 = 2^256 - 5  = MAX - 4
+			// step2: (MAX-4) - (MAX-2) = -2 mod 2^256 = MAX - 1
+			name:          "small_values_double_wrap",
+			a:             "5",
+			b:             "10",
+			c:             "115792089237316195423570985008687907853269984665640564039457584007913129639933", // MAX-2
+			expectedStep1: "115792089237316195423570985008687907853269984665640564039457584007913129639931", // MAX-4
+			expectedStep2: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+		},
+		{
+			// step1: 1 - 3 = 2^256 - 2  = MAX - 1
+			// step2: (MAX-1) - MAX = -1 mod 2^256 = MAX
+			name:          "near_max_double_wrap",
+			a:             "1",
+			b:             "3",
+			c:             MAX_UINT256,
+			expectedStep1: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+			expectedStep2: MAX_UINT256,                                                                      // MAX
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			a := u256.MustFromDecimal(tc.a)
+			b := u256.MustFromDecimal(tc.b)
+			c := u256.MustFromDecimal(tc.c)
+
+			// step 1: first underflow
+			step1 := u256.Zero().Sub(a, b)
+			legacyStep1 := legacySubUint256ForTest(u256.MustFromDecimal(tc.a), u256.MustFromDecimal(tc.b))
+
+			uassert.Equal(t, tc.expectedStep1, step1.ToString(),
+				"step1 wrap incorrect: %s - %s", tc.a, tc.b)
+			uassert.Equal(t, legacyStep1.ToString(), step1.ToString(),
+				"step1 differs from legacy: %s - %s", tc.a, tc.b)
+
+			// step 2: second underflow on the already-wrapped result
+			step2 := u256.Zero().Sub(step1, c)
+			legacyStep2 := legacySubUint256ForTest(u256.MustFromDecimal(tc.expectedStep1), u256.MustFromDecimal(tc.c))
+
+			uassert.Equal(t, tc.expectedStep2, step2.ToString(),
+				"step2 wrap incorrect: step1(%s) - %s", tc.expectedStep1, tc.c)
+			uassert.Equal(t, legacyStep2.ToString(), step2.ToString(),
+				"step2 differs from legacy: step1(%s) - %s", tc.expectedStep1, tc.c)
 		})
 	}
 }
