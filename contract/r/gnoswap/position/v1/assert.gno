@@ -97,17 +97,6 @@ func assertEqualsAddress(prevAddr, otherAddr address) {
 	}
 }
 
-// assertSlippageIsNotExceeded panics if slippage tolerance is exceeded.
-func assertSlippageIsNotExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) {
-	if !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min)) {
-		panic(newErrorWithDetail(
-			errSlippage,
-			ufmt.Sprintf("amount0(%s) >= amount0Min(%s) && amount1(%s) >= amount1Min(%s)",
-				amount0.ToString(), amount0Min.ToString(), amount1.ToString(), amount1Min.ToString()),
-		))
-	}
-}
-
 // assertValidOperatorAddress validates operator address.
 // Empty address is allowed (for operator removal), but non-empty addresses must be valid.
 func assertValidOperatorAddress(operator address) {

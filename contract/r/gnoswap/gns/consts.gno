@@ -1,8 +1,6 @@
 package gns
 
 const (
-	DAY_PER_YEAR    = 365
-	SECONDS_PER_DAY = 86400
 	SECONDS_IN_YEAR = 31536000
 
 	HALVING_START_YEAR = int64(1)
