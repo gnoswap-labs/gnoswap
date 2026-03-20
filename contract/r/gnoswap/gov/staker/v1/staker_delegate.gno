@@ -71,8 +71,12 @@ func (gs *govStakerV1) Delegate(
 		panic(err)
 	}
 
-	gs.increaseTotalDelegatedAmount(amount)
-	gs.increaseTotalLockedAmount(amount)
+	if err := gs.increaseTotalDelegatedAmount(amount); err != nil {
+		panic(err)
+	}
+	if err := gs.increaseTotalLockedAmount(amount); err != nil {
+		panic(err)
+	}
 
 	gns.TransferFrom(cross, from, currentRealm.Address(), amount)
 	xgns.Mint(cross, from, amount)
@@ -143,7 +147,9 @@ func (gs *govStakerV1) Undelegate(
 		panic(err)
 	}
 
-	gs.decreaseTotalDelegatedAmount(unDelegationAmount)
+	if err := gs.decreaseTotalDelegatedAmount(unDelegationAmount); err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Undelegate",
@@ -264,7 +270,9 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	xgns.Burn(cross, caller, collectedAmount)
 	gns.Transfer(cross, caller, collectedAmount)
 
-	gs.decreaseTotalLockedAmount(collectedAmount)
+	if err := gs.decreaseTotalLockedAmount(collectedAmount); err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"CollectUndelegatedGns",
@@ -449,15 +457,17 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	return amount, nil
 }
 
-func (gs *govStakerV1) increaseTotalDelegatedAmount(amount int64) {
+func (gs *govStakerV1) increaseTotalDelegatedAmount(amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
-func (gs *govStakerV1) decreaseTotalDelegatedAmount(amount int64) {
+func (gs *govStakerV1) decreaseTotalDelegatedAmount(amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := safeSubInt64(currentDelegated, amount)
@@ -465,19 +475,23 @@ func (gs *govStakerV1) decreaseTotalDelegatedAmount(amount int64) {
 		newDelegated = 0
 	}
 	if err := gs.store.SetTotalDelegatedAmount(newDelegated); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
-func (gs *govStakerV1) increaseTotalLockedAmount(amount int64) {
+func (gs *govStakerV1) increaseTotalLockedAmount(amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
 	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
-func (gs *govStakerV1) decreaseTotalLockedAmount(amount int64) {
+func (gs *govStakerV1) decreaseTotalLockedAmount(amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
 	newLocked := safeSubInt64(currentLocked, amount)
@@ -485,8 +499,10 @@ func (gs *govStakerV1) decreaseTotalLockedAmount(amount int64) {
 		newLocked = 0
 	}
 	if err := gs.store.SetTotalLockedAmount(newLocked); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 // collectDelegations processes collection of undelegated tokens.
