@@ -267,12 +267,12 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 		return 0
 	}
 
-	xgns.Burn(cross, caller, collectedAmount)
-	gns.Transfer(cross, caller, collectedAmount)
-
 	if err := gs.decreaseTotalLockedAmount(collectedAmount); err != nil {
 		panic(err)
 	}
+
+	xgns.Burn(cross, caller, collectedAmount)
+	gns.Transfer(cross, caller, collectedAmount)
 
 	chain.Emit(
 		"CollectUndelegatedGns",
