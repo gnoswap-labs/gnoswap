@@ -128,36 +128,6 @@ func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
 	uassert.True(t, amountPerSeconds > 0)
 }
 
-func TestValidBlockTime(t *testing.T) {
-	const maxBlockTime int64 = 1_000_000_000 // 1e9
-
-	tests := []struct {
-		name        string
-		blockTime   int64
-		shouldError bool
-	}{
-		// Lower boundary
-		{"blockTime = -1 (invalid)", -1, true},
-		{"blockTime = 0 (invalid)", 0, true},
-		{"blockTime = 1 (valid, min boundary)", 1, false},
-
-		// Upper boundary
-		{"blockTime = maxBlockTime-1 (valid, max boundary)", maxBlockTime - 1, false},
-		{"blockTime = maxBlockTime (invalid)", maxBlockTime, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validBlockTime(tt.blockTime)
-			if tt.shouldError {
-				uassert.ErrorIs(t, errInvalidAvgBlockTimeInMs, err)
-			} else {
-				uassert.NoError(t, err)
-			}
-		})
-	}
-}
-
 // TestGetHalvingYearInfoValidation tests various scenarios for GetHalvingYearInfo
 // to ensure proper validation and handling of edge cases
 func TestGetHalvingYearInfoValidation(t *testing.T) {

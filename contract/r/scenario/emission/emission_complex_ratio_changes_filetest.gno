@@ -49,10 +49,10 @@ func testComplexRatioChanges() {
 	println("[SCENARIO] 2. Set Period 1 ratio (40/30/20/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 4000, // 40%
-		emission.DEVOPS, 3000, // 30%
-		emission.COMMUNITY_POOL, 2000, // 20%
-		emission.GOV_STAKER, 1000, // 10%
+		4000, // liquidityStakerPct
+		3000, // devOpsPct
+		2000, // communityPoolPct
+		1000, // govStakerPct
 	)
 	println("[INFO] period 1 ratio: Staker 40%, DevOps 30%, Community 20%, Gov 10%")
 	println()
@@ -76,10 +76,10 @@ func testComplexRatioChanges() {
 	println("[SCENARIO] 4. Change to Period 2 ratio (50/25/15/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 5000, // 50%
-		emission.DEVOPS, 2500, // 25%
-		emission.COMMUNITY_POOL, 1500, // 15%
-		emission.GOV_STAKER, 1000, // 10%
+		5000, // liquidityStakerPct
+		2500, // devOpsPct
+		1500, // communityPoolPct
+		1000, // govStakerPct
 	)
 
 	println("[INFO] Period 1 distributed: Staker=12328766784000, DevOps=9246575088000, Community=6164383392000, Gov=3082191696000")
@@ -122,10 +122,10 @@ func testComplexRatioChanges() {
 	println("[SCENARIO] 6. Change to Period 3 ratio (60/20/10/10)")
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 6000, // 60%
-		emission.DEVOPS, 2000, // 20%
-		emission.COMMUNITY_POOL, 1000, // 10%
-		emission.GOV_STAKER, 1000, // 10%
+		6000, // liquidityStakerPct
+		2000, // devOpsPct
+		1000, // communityPoolPct
+		1000, // govStakerPct
 	)
 
 	// Get all recipients for total (Period 1 + Period 2)

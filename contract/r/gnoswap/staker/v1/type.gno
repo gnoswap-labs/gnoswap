@@ -29,12 +29,6 @@ func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) 
 	self.SetDistributedRewardAmount(distributedRewardAmount)
 }
 
-func (self *ExternalIncentiveResolver) Clone() *ExternalIncentiveResolver {
-	return &ExternalIncentiveResolver{
-		ExternalIncentive: self.ExternalIncentive.Clone(),
-	}
-}
-
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentiveResolver(
 	externalIncentive *sr.ExternalIncentive,

@@ -7,21 +7,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// formatUint converts various unsigned integer types to string representation.
-// Panics if the type is not supported.
-func formatUint(v any) string {
-	switch v := v.(type) {
-	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
-	case uint64:
-		return strconv.FormatUint(v, 10)
-	default:
-		panic(ufmt.Sprintf("invalid type: %T", v))
-	}
-}
-
 // formatInt converts various signed integer types to string representation.
 // Panics if the type is not supported.
 func formatInt(v any) string {
