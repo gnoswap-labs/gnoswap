@@ -84,7 +84,8 @@ func MintAndStake(
 //   - map[string]int64: internal rewards
 //   - map[string]int64: external rewards
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	return getImplementation().CollectReward(positionId)
+	poolPath, stakingDetails, internalRewards, externalRewards := getImplementation().CollectReward(positionId)
+	return poolPath, stakingDetails, cloneStringInt64Map(internalRewards), cloneStringInt64Map(externalRewards)
 }
 
 // SetPoolTier sets the reward tier for a pool.

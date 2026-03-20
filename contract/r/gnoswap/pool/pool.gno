@@ -378,6 +378,19 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 	t.tickCumulativeOutside = tickCumulativeOutside
 }
 
+func (t *TickInfo) Clone() TickInfo {
+	return TickInfo{
+		feeGrowthOutside0X128:          t.feeGrowthOutside0X128.Clone(),
+		feeGrowthOutside1X128:          t.feeGrowthOutside1X128.Clone(),
+		liquidityGross:                 t.liquidityGross.Clone(),
+		liquidityNet:                   t.liquidityNet.Clone(),
+		tickCumulativeOutside:          t.tickCumulativeOutside,
+		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128.Clone(),
+		secondsOutside:                 t.secondsOutside,
+		initialized:                    t.initialized,
+	}
+}
+
 func NewTickInfo() TickInfo {
 	return TickInfo{
 		liquidityGross:                 u256.Zero(),
@@ -388,19 +401,6 @@ func NewTickInfo() TickInfo {
 		secondsOutside:                 0,
 		initialized:                    false,
 		tickCumulativeOutside:          0,
-	}
-}
-
-func cloneTickInfo(src TickInfo) TickInfo {
-	return TickInfo{
-		feeGrowthOutside0X128:          src.feeGrowthOutside0X128.Clone(),
-		feeGrowthOutside1X128:          src.feeGrowthOutside1X128.Clone(),
-		liquidityGross:                 src.liquidityGross.Clone(),
-		liquidityNet:                   src.liquidityNet.Clone(),
-		tickCumulativeOutside:          src.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: src.secondsPerLiquidityOutsideX128.Clone(),
-		secondsOutside:                 src.secondsOutside,
-		initialized:                    src.initialized,
 	}
 }
 
@@ -446,20 +446,4 @@ func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
 	p.tokensOwed1 = tokensOwed1
-}
-
-func NewPositionInfo(
-	liquidity *u256.Uint,
-	feeGrowthInside0LastX128 *u256.Uint,
-	feeGrowthInside1LastX128 *u256.Uint,
-	tokensOwed0 *u256.Uint,
-	tokensOwed1 *u256.Uint,
-) PositionInfo {
-	return PositionInfo{
-		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-		tokensOwed0:              tokensOwed0,
-		tokensOwed1:              tokensOwed1,
-	}
 }

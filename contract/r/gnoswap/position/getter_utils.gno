@@ -16,3 +16,13 @@ func clonePosition(position Position) Position {
 		burned:                   position.burned,
 	}
 }
+
+func cloneUint64Slice(src []uint64) []uint64 {
+	if src == nil {
+		return nil
+	}
+
+	dst := make([]uint64, len(src))
+	copy(dst, src)
+	return dst
+}

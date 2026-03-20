@@ -46,7 +46,7 @@ func GetProposalCount() int {
 
 // GetProposalIDs returns a paginated list of proposal IDs.
 func GetProposalIDs(offset, count int) []int64 {
-	return getImplementation().GetProposalIDs(offset, count)
+	return cloneInt64Slice(getImplementation().GetProposalIDs(offset, count))
 }
 
 // ExistsProposal checks if a proposal exists.
@@ -151,7 +151,7 @@ func GetVotingInfoCount(proposalID int64) int {
 
 // GetVotingInfoAddresses returns a paginated list of voter addresses for a proposal.
 func GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
-	return getImplementation().GetVotingInfoAddresses(proposalID, offset, count)
+	return cloneAddressSlice(getImplementation().GetVotingInfoAddresses(proposalID, offset, count))
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
@@ -226,7 +226,7 @@ func GetUserProposalCount(user address) int {
 
 // GetUserProposalIDs returns a paginated list of proposal IDs created by a user.
 func GetUserProposalIDs(user address, offset, count int) []int64 {
-	return getImplementation().GetUserProposalIDs(user, offset, count)
+	return cloneInt64Slice(getImplementation().GetUserProposalIDs(user, offset, count))
 }
 
 // ==================================

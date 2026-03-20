@@ -13,37 +13,15 @@ import (
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
-func mustGetPositionAddress() address {
-	return access.MustGetAddress(prabc.ROLE_POSITION.String())
-}
-
 func mustGetStakerAddress() address {
 	return access.MustGetAddress(prabc.ROLE_STAKER.String())
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
-// NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
-// if positionId is nil or not supported, it will panic
-// if positionId is not found, it will panic
-// input: positionId any
+// input: positionId uint64
 // output: grc721.TokenID
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic(newErrorWithDetail(errInvalidInput, "positionId is nil"))
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.FormatUint(positionId.(uint64), 10))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic(newErrorWithDetail(errInvalidInput, "unsupported positionId type"))
-	}
+func positionIdFrom(positionId uint64) grc721.TokenID {
+	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
 // exists checks whether positionId exists
@@ -157,31 +135,8 @@ func formatInt(v any) string {
 	}
 }
 
-func formatBool(v bool) string {
-	return strconv.FormatBool(v)
-}
-
-func mustParseInt64(v string) int64 {
-	amountInt, err := strconv.ParseInt(v, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return amountInt
-}
-
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
-}
-
-func subUint256(x, y *u256.Uint) *u256.Uint {
-	if x.Cmp(y) < 0 {
-		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
-		result := u256.Zero().Add(diff, x)
-		return result.Add(result, u256.One())
-	}
-
-	return u256.Zero().Sub(x, y)
 }
 
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.

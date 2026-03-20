@@ -17,49 +17,49 @@ func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
 	tests := []struct {
-		name        string
-		shouldPanic bool
-		panicMsg    string
-		setup       func()
-		callerRealm runtime.Realm
-		targets     []int
-		pcts        []int64
-		verify      func()
+		name               string
+		shouldPanic        bool
+		panicMsg           string
+		setup              func()
+		callerRealm        runtime.Realm
+		liquidityStakerPct int64
+		devOpsPct          int64
+		communityPoolPct   int64
+		govStakerPct       int64
+		verify             func()
 	}{
 		{
-			name:        "panic if caller is not admin",
-			shouldPanic: true,
-			panicMsg:    `unauthorized: caller g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq is not admin or governance`,
-			targets:     []int{1, 2, 3, 4},
-			pcts:        []int64{1000, 2000, 3000, 4000},
+			name:               "panic if caller is not admin",
+			shouldPanic:        true,
+			panicMsg:           `unauthorized: caller g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq is not admin or governance`,
+			liquidityStakerPct: 1000,
+			devOpsPct:          2000,
+			communityPoolPct:   3000,
+			govStakerPct:       4000,
 		},
 		{
-			name:        "panic if target is invalid",
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(9)",
-			callerRealm: adminRealm,
-			targets:     []int{1, 2, 3, 9},
-			pcts:        []int64{1000, 2000, 3000, 4000},
+			name:               "panic if sum of percentages is not 100%",
+			shouldPanic:        true,
+			panicMsg:           "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 10001",
+			callerRealm:        adminRealm,
+			liquidityStakerPct: 1000,
+			devOpsPct:          2000,
+			communityPoolPct:   3000,
+			govStakerPct:       4001,
 		},
 		{
-			name:        "panic if sum of percentages is not 100%",
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 10001",
-			callerRealm: adminRealm,
-			targets:     []int{1, 2, 3, 4},
-			pcts:        []int64{1000, 2000, 3000, 4001},
-		},
-		{
-			name:        "success if admin",
-			shouldPanic: false,
-			callerRealm: adminRealm,
-			targets:     []int{1, 2, 3, 4},
-			pcts:        []int64{1000, 2000, 3000, 4000},
+			name:               "success if admin",
+			shouldPanic:        false,
+			callerRealm:        adminRealm,
+			liquidityStakerPct: 1000,
+			devOpsPct:          2000,
+			communityPoolPct:   3000,
+			govStakerPct:       4000,
 			verify: func() {
-				uassert.Equal(t, int64(1000), GetDistributionBpsPct(int(1)))
-				uassert.Equal(t, int64(2000), GetDistributionBpsPct(int(2)))
-				uassert.Equal(t, int64(3000), GetDistributionBpsPct(int(3)))
-				uassert.Equal(t, int64(4000), GetDistributionBpsPct(int(4)))
+				uassert.Equal(t, int64(1000), GetDistributionBpsPct(LIQUIDITY_STAKER))
+				uassert.Equal(t, int64(2000), GetDistributionBpsPct(DEVOPS))
+				uassert.Equal(t, int64(3000), GetDistributionBpsPct(COMMUNITY_POOL))
+				uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
 			},
 		},
 	}
@@ -74,27 +74,24 @@ func TestChangeDistributionPct(t *testing.T) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
-			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
-			pct01, pct02, pct03, pct04 := sliceToFourInt64(t, tt.pcts)
-
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					ChangeDistributionPct(
 						cross,
-						target01, pct01,
-						target02, pct02,
-						target03, pct03,
-						target04, pct04,
+						tt.liquidityStakerPct,
+						tt.devOpsPct,
+						tt.communityPoolPct,
+						tt.govStakerPct,
 					)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
 					ChangeDistributionPct(
 						cross,
-						target01, pct01,
-						target02, pct02,
-						target03, pct03,
-						target04, pct04,
+						tt.liquidityStakerPct,
+						tt.devOpsPct,
+						tt.communityPoolPct,
+						tt.govStakerPct,
 					)
 				})
 				tt.verify()
@@ -106,16 +103,11 @@ func TestChangeDistributionPct(t *testing.T) {
 func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
 
-	changeDistributionPcts(
-		1, 1000,
-		2, 2000,
-		3, 3000,
-		4, 4000,
-	)
-	uassert.Equal(t, int64(1000), GetDistributionBpsPct(1))
-	uassert.Equal(t, int64(2000), GetDistributionBpsPct(2))
-	uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
-	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
+	changeDistributionPcts(1000, 2000, 3000, 4000)
+	uassert.Equal(t, int64(1000), GetDistributionBpsPct(LIQUIDITY_STAKER))
+	uassert.Equal(t, int64(2000), GetDistributionBpsPct(DEVOPS))
+	uassert.Equal(t, int64(3000), GetDistributionBpsPct(COMMUNITY_POOL))
+	uassert.Equal(t, int64(4000), GetDistributionBpsPct(GOV_STAKER))
 }
 
 func TestCalculateAmount(t *testing.T) {
@@ -318,24 +310,6 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 			}
 		})
 	}
-}
-
-func sliceToFourInt(t *testing.T, slice []int) (int, int, int, int) {
-	t.Helper()
-
-	return slice[0], slice[1], slice[2], slice[3]
-}
-
-func sliceToFourInt64(t *testing.T, slice []int64) (int64, int64, int64, int64) {
-	t.Helper()
-
-	return slice[0], slice[1], slice[2], slice[3]
-}
-
-func sliceToFourUint64(t *testing.T, slice []uint64) (uint64, uint64, uint64, uint64) {
-	t.Helper()
-
-	return slice[0], slice[1], slice[2], slice[3]
 }
 
 func setupTestEnv(t *testing.T) {
@@ -557,10 +531,10 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
 			ChangeDistributionPct(
 				cross,
-				LIQUIDITY_STAKER, 10000, // 100%
-				DEVOPS, 10000, // 100%
-				COMMUNITY_POOL, 10000, // 100%
-				GOV_STAKER, 10000, // 100%
+				10000, // 100% to liquidityStaker
+				10000, // 100% to devOps
+				10000, // 100% to communityPool
+				10000, // 100% to govStaker
 			)
 		})
 	})
@@ -641,7 +615,6 @@ func TestCalculateAmount_Panic(t *testing.T) {
 	})
 }
 
-// TestDuplicateTargetsFix verifies that the duplicate target vulnerability has been fixed
 func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 	currentEmissionAmount := int64(0)
 
@@ -784,13 +757,7 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 			name: "success - get modified percentage",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(
-					cross,
-					LIQUIDITY_STAKER, 5000,
-					DEVOPS, 3000,
-					COMMUNITY_POOL, 1000,
-					GOV_STAKER, 1000,
-				)
+				ChangeDistributionPct(cross, 5000, 3000, 1000, 1000)
 			},
 			target: LIQUIDITY_STAKER,
 			want:   5000,
@@ -799,13 +766,7 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 			name: "success - get 100% allocation",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(
-					cross,
-					LIQUIDITY_STAKER, 10000,
-					DEVOPS, 0,
-					COMMUNITY_POOL, 0,
-					GOV_STAKER, 0,
-				)
+				ChangeDistributionPct(cross, 10000, 0, 0, 0)
 			},
 			target: LIQUIDITY_STAKER,
 			want:   10000,
@@ -814,13 +775,7 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 			name: "success - get 0% allocation",
 			setup: func() {
 				testing.SetRealm(adminRealm)
-				ChangeDistributionPct(
-					cross,
-					LIQUIDITY_STAKER, 10000,
-					DEVOPS, 0,
-					COMMUNITY_POOL, 0,
-					GOV_STAKER, 0,
-				)
+				ChangeDistributionPct(cross, 10000, 0, 0, 0)
 			},
 			target: DEVOPS,
 			want:   0,
@@ -1025,13 +980,7 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 					testing.SetRealm(adminRealm)
-					ChangeDistributionPct(
-						cross,
-						LIQUIDITY_STAKER, 5000,
-						DEVOPS, 2000,
-						COMMUNITY_POOL, 1000,
-						GOV_STAKER, 2000,
-					)
+					ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
 					distributeToTarget(10000)
 					testing.SetRealm(govStakerRealm)
 					ClearDistributedToGovStaker(cross)
@@ -1084,404 +1033,138 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 	})
 }
 
-func TestDuplicateTargetsFix(t *testing.T) {
-	t.Run("ChangeDistributionPctByAdmin", func(t *testing.T) {
-		tests := []struct {
-			name        string
-			callerRealm runtime.Realm
-			targets     [4]int
-			percentages [4]int64
-			expectedErr string
-			shouldPanic bool
-		}{
-			{
-				name:        "duplicate LIQUIDITY_STAKER",
-				callerRealm: adminRealm,
-				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
-				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "all same target DEVOPS",
-				callerRealm: adminRealm,
-				targets:     [4]int{DEVOPS, DEVOPS, DEVOPS, DEVOPS},
-				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "two pairs of duplicates",
-				callerRealm: adminRealm,
-				targets:     [4]int{LIQUIDITY_STAKER, GOV_STAKER, LIQUIDITY_STAKER, GOV_STAKER},
-				percentages: [4]int64{3000, 2000, 3000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "duplicate COMMUNITY_POOL",
-				callerRealm: adminRealm,
-				targets:     [4]int{COMMUNITY_POOL, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
-				percentages: [4]int64{5000, 2500, 2500, 0},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "valid distribution without duplicates",
-				callerRealm: adminRealm,
-				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
-				percentages: [4]int64{4000, 3000, 2000, 1000},
-				shouldPanic: false,
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				resetObject(t)
-				testing.SetRealm(tt.callerRealm)
-
-				if tt.shouldPanic {
-					uassert.AbortsWithMessage(t, tt.expectedErr, func() {
-						ChangeDistributionPct(
-							cross,
-							tt.targets[0], tt.percentages[0],
-							tt.targets[1], tt.percentages[1],
-							tt.targets[2], tt.percentages[2],
-							tt.targets[3], tt.percentages[3],
-						)
-					})
-				} else {
-					// Should not panic for valid distribution
-					ChangeDistributionPct(
-						cross,
-						tt.targets[0], tt.percentages[0],
-						tt.targets[1], tt.percentages[1],
-						tt.targets[2], tt.percentages[2],
-						tt.targets[3], tt.percentages[3],
-					)
-
-					// Verify the distribution was set correctly
-					uassert.Equal(t, tt.percentages[0], GetDistributionBpsPct(tt.targets[0]))
-					uassert.Equal(t, tt.percentages[1], GetDistributionBpsPct(tt.targets[1]))
-					uassert.Equal(t, tt.percentages[2], GetDistributionBpsPct(tt.targets[2]))
-					uassert.Equal(t, tt.percentages[3], GetDistributionBpsPct(tt.targets[3]))
-				}
-			})
-		}
-	})
-
-	t.Run("ChangeDistributionPct", func(t *testing.T) {
-		tests := []struct {
-			name        string
-			callerRealm runtime.Realm
-			targets     [4]int
-			percentages [4]int64
-			expectedErr string
-			shouldPanic bool
-		}{
-			{
-				name:        "duplicate GOV_STAKER",
-				callerRealm: govRealm,
-				targets:     [4]int{GOV_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
-				percentages: [4]int64{5000, 2000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "duplicate LIQUIDITY_STAKER in governance",
-				callerRealm: govRealm,
-				targets:     [4]int{LIQUIDITY_STAKER, LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL},
-				percentages: [4]int64{3000, 3000, 2000, 2000},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "all same target COMMUNITY_POOL",
-				callerRealm: govRealm,
-				targets:     [4]int{COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL, COMMUNITY_POOL},
-				percentages: [4]int64{2500, 2500, 2500, 2500},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				shouldPanic: true,
-			},
-			{
-				name:        "valid governance distribution",
-				callerRealm: govRealm,
-				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER},
-				percentages: [4]int64{5000, 2000, 2000, 1000},
-				shouldPanic: false,
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				resetObject(t)
-				testing.SetRealm(tt.callerRealm)
-
-				if tt.shouldPanic {
-					uassert.AbortsWithMessage(t, tt.expectedErr, func() {
-						ChangeDistributionPct(
-							cross,
-							tt.targets[0], tt.percentages[0],
-							tt.targets[1], tt.percentages[1],
-							tt.targets[2], tt.percentages[2],
-							tt.targets[3], tt.percentages[3],
-						)
-					})
-				} else {
-					// Should not panic for valid distribution
-					ChangeDistributionPct(
-						cross,
-						tt.targets[0], tt.percentages[0],
-						tt.targets[1], tt.percentages[1],
-						tt.targets[2], tt.percentages[2],
-						tt.targets[3], tt.percentages[3],
-					)
-
-					// Verify the distribution was set correctly
-					uassert.Equal(t, tt.percentages[0], GetDistributionBpsPct(tt.targets[0]))
-					uassert.Equal(t, tt.percentages[1], GetDistributionBpsPct(tt.targets[1]))
-					uassert.Equal(t, tt.percentages[2], GetDistributionBpsPct(tt.targets[2]))
-					uassert.Equal(t, tt.percentages[3], GetDistributionBpsPct(tt.targets[3]))
-				}
-			})
-		}
-	})
-
-	t.Run("edge cases", func(t *testing.T) {
-		tests := []struct {
-			name        string
-			setupFunc   func()
-			callerRealm runtime.Realm
-			isAdmin     bool
-			targets     [4]int
-			percentages [4]int64
-			expectedErr string
-			description string
-		}{
-			{
-				name: "duplicate prevents distribution changes",
-				setupFunc: func() {
-					// Set initial distribution
-					testing.SetRealm(adminRealm)
-					ChangeDistributionPct(
-						cross,
-						LIQUIDITY_STAKER, 2500,
-						DEVOPS, 2500,
-						COMMUNITY_POOL, 2500,
-						GOV_STAKER, 2500,
-					)
-				},
-				callerRealm: adminRealm,
-				isAdmin:     true,
-				targets:     [4]int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, LIQUIDITY_STAKER},
-				percentages: [4]int64{4000, 3000, 2000, 1000},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				description: "distribution should remain unchanged after failed duplicate attempt",
-			},
-			{
-				name: "governance manipulation prevented",
-				setupFunc: func() {
-					// Set initial state with GOV_STAKER at 0%
-					testing.SetRealm(govRealm)
-					ChangeDistributionPct(
-						cross,
-						LIQUIDITY_STAKER, 7000,
-						DEVOPS, 2000,
-						COMMUNITY_POOL, 1000,
-						GOV_STAKER, 0,
-					)
-				},
-				callerRealm: govRealm,
-				isAdmin:     false,
-				targets:     [4]int{GOV_STAKER, LIQUIDITY_STAKER, DEVOPS, GOV_STAKER},
-				percentages: [4]int64{3000, 5000, 1500, 500},
-				expectedErr: "[GNOSWAP-EMISSION-003] duplicate emission target",
-				description: "GOV_STAKER should remain at 0% after failed manipulation attempt",
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				resetObject(t)
-
-				// Execute setup function if provided
-				if tt.setupFunc != nil {
-					tt.setupFunc()
-				}
-
-				// Store initial distribution for verification
-				initialDist := map[int]int64{
-					LIQUIDITY_STAKER: GetDistributionBpsPct(LIQUIDITY_STAKER),
-					DEVOPS:           GetDistributionBpsPct(DEVOPS),
-					COMMUNITY_POOL:   GetDistributionBpsPct(COMMUNITY_POOL),
-					GOV_STAKER:       GetDistributionBpsPct(GOV_STAKER),
-				}
-
-				testing.SetRealm(tt.callerRealm)
-
-				// Attempt the change with duplicates
-				uassert.AbortsWithMessage(t, tt.expectedErr, func() {
-					if tt.isAdmin {
-						ChangeDistributionPct(
-							cross,
-							tt.targets[0], tt.percentages[0],
-							tt.targets[1], tt.percentages[1],
-							tt.targets[2], tt.percentages[2],
-							tt.targets[3], tt.percentages[3],
-						)
-					} else {
-						ChangeDistributionPct(
-							cross,
-							tt.targets[0], tt.percentages[0],
-							tt.targets[1], tt.percentages[1],
-							tt.targets[2], tt.percentages[2],
-							tt.targets[3], tt.percentages[3],
-						)
-					}
-				})
-
-				// Verify distribution unchanged after failed attempt
-				uassert.Equal(t, initialDist[LIQUIDITY_STAKER], GetDistributionBpsPct(LIQUIDITY_STAKER), tt.description+" - LIQUIDITY_STAKER")
-				uassert.Equal(t, initialDist[DEVOPS], GetDistributionBpsPct(DEVOPS), tt.description+" - DEVOPS")
-				uassert.Equal(t, initialDist[COMMUNITY_POOL], GetDistributionBpsPct(COMMUNITY_POOL), tt.description+" - COMMUNITY_POOL")
-				uassert.Equal(t, initialDist[GOV_STAKER], GetDistributionBpsPct(GOV_STAKER), tt.description+" - GOV_STAKER")
-			})
-		}
-	})
-}
-
 // TestMapBasedDistribution_EdgeCases tests edge cases specific to map-based distribution
 func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 	t.Run("distribution scenarios", func(t *testing.T) {
 		tests := []struct {
-			name                       string
-			description                string
-			pctStaker                  int64
-			pctDevOps                  int64
-			pctCommunity               int64
-			pctGovStaker               int64
-			amountToDistribute         int64
-			expectedTotalSent          int64
-			expectedDistributedStaker  int64
-			expectedDistributedDevOps  int64
-			expectedDistributedComm    int64
-			expectedDistributedGov     int64
-			usePartialMap              bool
-			useEmptyMap                bool
+			name                      string
+			description               string
+			pctStaker                 int64
+			pctDevOps                 int64
+			pctCommunity              int64
+			pctGovStaker              int64
+			amountToDistribute        int64
+			expectedTotalSent         int64
+			expectedDistributedStaker int64
+			expectedDistributedDevOps int64
+			expectedDistributedComm   int64
+			expectedDistributedGov    int64
+			usePartialMap             bool
+			useEmptyMap               bool
 		}{
 			{
-				name:                       "single target 100% distribution",
-				description:                "all tokens go to LIQUIDITY_STAKER",
-				pctStaker:                  10000,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          1000,
-				expectedDistributedStaker:  1000,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "single target 100% distribution",
+				description:               "all tokens go to LIQUIDITY_STAKER",
+				pctStaker:                 10000,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         1000,
+				expectedDistributedStaker: 1000,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "all targets 0% distribution",
-				description:                "no tokens distributed when all percentages are 0",
-				pctStaker:                  0,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          0,
-				expectedDistributedStaker:  0,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "all targets 0% distribution",
+				description:               "no tokens distributed when all percentages are 0",
+				pctStaker:                 0,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         0,
+				expectedDistributedStaker: 0,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "equal 25% distribution to all targets",
-				description:                "tokens split evenly among 4 targets",
-				pctStaker:                  2500,
-				pctDevOps:                  2500,
-				pctCommunity:               2500,
-				pctGovStaker:               2500,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  2500,
-				expectedDistributedDevOps:  2500,
-				expectedDistributedComm:    2500,
-				expectedDistributedGov:     2500,
+				name:                      "equal 25% distribution to all targets",
+				description:               "tokens split evenly among 4 targets",
+				pctStaker:                 2500,
+				pctDevOps:                 2500,
+				pctCommunity:              2500,
+				pctGovStaker:              2500,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 2500,
+				expectedDistributedDevOps: 2500,
+				expectedDistributedComm:   2500,
+				expectedDistributedGov:    2500,
 			},
 			{
-				name:                       "uneven percentages with remainder",
-				description:                "33.33% each for 3 targets causes truncation",
-				pctStaker:                  3333,
-				pctDevOps:                  3333,
-				pctCommunity:               3334,
-				pctGovStaker:               0,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  3333,
-				expectedDistributedDevOps:  3333,
-				expectedDistributedComm:    3334,
-				expectedDistributedGov:     0,
+				name:                      "uneven percentages with remainder",
+				description:               "33.33% each for 3 targets causes truncation",
+				pctStaker:                 3333,
+				pctDevOps:                 3333,
+				pctCommunity:              3334,
+				pctGovStaker:              0,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 3333,
+				expectedDistributedDevOps: 3333,
+				expectedDistributedComm:   3334,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "standard default percentages",
-				description:                "75% staker, 20% devops, 5% community",
-				pctStaker:                  7500,
-				pctDevOps:                  2000,
-				pctCommunity:               500,
-				pctGovStaker:               0,
-				amountToDistribute:         10000,
-				expectedTotalSent:          10000,
-				expectedDistributedStaker:  7500,
-				expectedDistributedDevOps:  2000,
-				expectedDistributedComm:    500,
-				expectedDistributedGov:     0,
+				name:                      "standard default percentages",
+				description:               "75% staker, 20% devops, 5% community",
+				pctStaker:                 7500,
+				pctDevOps:                 2000,
+				pctCommunity:              500,
+				pctGovStaker:              0,
+				amountToDistribute:        10000,
+				expectedTotalSent:         10000,
+				expectedDistributedStaker: 7500,
+				expectedDistributedDevOps: 2000,
+				expectedDistributedComm:   500,
+				expectedDistributedGov:    0,
 			},
 			{
-				name:                       "partial map with only staker",
-				description:                "map contains only LIQUIDITY_STAKER entry",
-				pctStaker:                  10000,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          1000,
-				expectedDistributedStaker:  1000,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
-				usePartialMap:              true,
+				name:                      "partial map with only staker",
+				description:               "map contains only LIQUIDITY_STAKER entry",
+				pctStaker:                 10000,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         1000,
+				expectedDistributedStaker: 1000,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
+				usePartialMap:             true,
 			},
 			{
-				name:                       "empty map returns zero",
-				description:                "no distribution when map is empty",
-				pctStaker:                  0,
-				pctDevOps:                  0,
-				pctCommunity:               0,
-				pctGovStaker:               0,
-				amountToDistribute:         1000,
-				expectedTotalSent:          0,
-				expectedDistributedStaker:  0,
-				expectedDistributedDevOps:  0,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
-				useEmptyMap:                true,
+				name:                      "empty map returns zero",
+				description:               "no distribution when map is empty",
+				pctStaker:                 0,
+				pctDevOps:                 0,
+				pctCommunity:              0,
+				pctGovStaker:              0,
+				amountToDistribute:        1000,
+				expectedTotalSent:         0,
+				expectedDistributedStaker: 0,
+				expectedDistributedDevOps: 0,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
+				useEmptyMap:               true,
 			},
 			{
-				name:                       "small amount with truncation",
-				description:                "10 tokens with default percentages causes truncation",
-				pctStaker:                  7500,
-				pctDevOps:                  2000,
-				pctCommunity:               500,
-				pctGovStaker:               0,
-				amountToDistribute:         10,
-				expectedTotalSent:          9, // 7 + 2 + 0 + 0 = 9
-				expectedDistributedStaker:  7,
-				expectedDistributedDevOps:  2,
-				expectedDistributedComm:    0,
-				expectedDistributedGov:     0,
+				name:                      "small amount with truncation",
+				description:               "10 tokens with default percentages causes truncation",
+				pctStaker:                 7500,
+				pctDevOps:                 2000,
+				pctCommunity:              500,
+				pctGovStaker:              0,
+				amountToDistribute:        10,
+				expectedTotalSent:         9, // 7 + 2 + 0 + 0 = 9
+				expectedDistributedStaker: 7,
+				expectedDistributedDevOps: 2,
+				expectedDistributedComm:   0,
+				expectedDistributedGov:    0,
 			},
 		}
 
@@ -1515,11 +1198,11 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("map state management", func(t *testing.T) {
 		tests := []struct {
-			name           string
-			description    string
-			setupFunc      func() map[int]int64
-			testFunc       func(t *testing.T)
-			cleanupFunc    func(savedMap map[int]int64)
+			name        string
+			description string
+			setupFunc   func() map[int]int64
+			testFunc    func(t *testing.T)
+			cleanupFunc func(savedMap map[int]int64)
 		}{
 			{
 				name:        "nil map access should panic",
@@ -1586,15 +1269,15 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("map operations", func(t *testing.T) {
 		tests := []struct {
-			name              string
-			description       string
-			operations        []struct {
+			name        string
+			description string
+			operations  []struct {
 				action   string // "set", "overwrite", "check_len"
 				target   int
 				value    int64
 				expected int64
 			}
-			expectedFinalLen  int
+			expectedFinalLen int
 		}{
 			{
 				name:        "overwrite existing key preserves map length",
@@ -1693,12 +1376,12 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 	t.Run("read-write access pattern", func(t *testing.T) {
 		tests := []struct {
-			name            string
-			description     string
-			target          int
-			initialValue    int64
-			readCount       int
-			newValue        int64
+			name         string
+			description  string
+			target       int
+			initialValue int64
+			readCount    int
+			newValue     int64
 		}{
 			{
 				name:         "multiple reads then write for LIQUIDITY_STAKER",

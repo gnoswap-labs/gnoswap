@@ -272,39 +272,25 @@ func CreateParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    EMISSION_PATH,
 			function:   "ChangeDistributionPct",
-			paramCount: 8,
+			paramCount: 4,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt),   // target01
-				numberValidator(kindInt64), // pct01
-				numberValidator(kindInt),   // target02
-				numberValidator(kindInt64), // pct02
-				numberValidator(kindInt),   // target03
-				numberValidator(kindInt64), // pct03
-				numberValidator(kindInt),   // target04
-				numberValidator(kindInt64), // pct04
+				numberValidator(kindInt64), // liquidityStakerPct
+				numberValidator(kindInt64), // devOpsPct
+				numberValidator(kindInt64), // communityPoolPct
+				numberValidator(kindInt64), // govStakerPct
 			},
 			handlerFunc: func(params []string) error {
-				// Parse distribution targets and percentages
-				target01 := parseNumber(params[0], kindInt).(int)  // target01
-				pct01 := parseNumber(params[1], kindInt64).(int64) // pct01
-				target02 := parseNumber(params[2], kindInt).(int)  // target02
-				pct02 := parseNumber(params[3], kindInt64).(int64) // pct02
-				target03 := parseNumber(params[4], kindInt).(int)  // target03
-				pct03 := parseNumber(params[5], kindInt64).(int64) // pct03
-				target04 := parseNumber(params[6], kindInt).(int)  // target04
-				pct04 := parseNumber(params[7], kindInt64).(int64) // pct04
+				liquidityStakerPct := parseNumber(params[0], kindInt64).(int64)
+				devOpsPct := parseNumber(params[1], kindInt64).(int64)
+				communityPoolPct := parseNumber(params[2], kindInt64).(int64)
+				govStakerPct := parseNumber(params[3], kindInt64).(int64)
 
-				// Update emission distribution percentages
 				en.ChangeDistributionPct(
 					cross,
-					target01, // target01
-					pct01,    // pct01
-					target02, // target02
-					pct02,    // pct02
-					target03, // target03
-					pct03,    // pct03
-					target04, // target04
-					pct04,    // pct04
+					liquidityStakerPct,
+					devOpsPct,
+					communityPoolPct,
+					govStakerPct,
 				)
 
 				return nil
