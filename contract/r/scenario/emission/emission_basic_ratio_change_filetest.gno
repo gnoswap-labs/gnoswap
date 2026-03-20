@@ -41,10 +41,10 @@ func testNoRetroactiveApplication() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 5000,
-		emission.DEVOPS, 5000,
-		emission.COMMUNITY_POOL, 0,
-		emission.GOV_STAKER, 0,
+		5000, // liquidityStakerPct
+		5000, // devOpsPct
+		0, // communityPoolPct
+		0, // govStakerPct
 	)
 	println("[INFO] distribution ratio set to 50/50 (Staker/DevOps)")
 	println()
@@ -76,10 +76,10 @@ func testNoRetroactiveApplication() {
 	testing.SetRealm(adminRealm)
 	emission.ChangeDistributionPct(
 		cross,
-		emission.LIQUIDITY_STAKER, 8000,
-		emission.DEVOPS, 2000,
-		emission.COMMUNITY_POOL, 0,
-		emission.GOV_STAKER, 0,
+		8000, // liquidityStakerPct
+		2000, // devOpsPct
+		0, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	println("[INFO] distributed: Staker=15410958480000, DevOps=15410958480000, Community=0, Gov=0")
