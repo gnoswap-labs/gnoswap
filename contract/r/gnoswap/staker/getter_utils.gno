@@ -55,9 +55,7 @@ func cloneExternalIncentives(src []ExternalIncentive) []ExternalIncentive {
 		return nil
 	}
 	copied := make([]ExternalIncentive, len(src))
-	for i := range src {
-		copied[i] = *src[i].Clone()
-	}
+	copy(copied, src)
 	return copied
 }
 
@@ -71,7 +69,7 @@ func cloneWarmups(warmups []Warmup) []Warmup {
 	return copied
 }
 
-func cloneExternalIncentives(tree *avl.Tree) avl.Tree {
+func cloneExternalIncentiveTree(tree *avl.Tree) avl.Tree {
 	var cloned avl.Tree
 	tree.Iterate("", "", func(key string, value any) bool {
 		state := value.(ExternalIncentiveState)

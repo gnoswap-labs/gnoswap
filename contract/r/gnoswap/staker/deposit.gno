@@ -210,7 +210,7 @@ func (d *Deposit) Clone() *Deposit {
 		stakeTime:                      d.stakeTime,
 		internalRewardLastCollectTime:  d.internalRewardLastCollectTime,
 		collectedInternalReward:        d.collectedInternalReward,
-		externalIncentives:             cloneExternalIncentives(&d.externalIncentives),
+		externalIncentives:             cloneExternalIncentiveTree(&d.externalIncentives),
 		lastExternalIncentiveUpdatedAt: d.lastExternalIncentiveUpdatedAt,
 		tickLower:                      d.tickLower,
 		tickUpper:                      d.tickUpper,

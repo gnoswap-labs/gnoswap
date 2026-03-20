@@ -465,19 +465,6 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 	t.tickCumulativeOutside = tickCumulativeOutside
 }
 
-func (t *TickInfo) Clone() TickInfo {
-	return TickInfo{
-		feeGrowthOutside0X128:          t.feeGrowthOutside0X128.Clone(),
-		feeGrowthOutside1X128:          t.feeGrowthOutside1X128.Clone(),
-		liquidityGross:                 t.liquidityGross.Clone(),
-		liquidityNet:                   t.liquidityNet.Clone(),
-		tickCumulativeOutside:          t.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128.Clone(),
-		secondsOutside:                 t.secondsOutside,
-		initialized:                    t.initialized,
-	}
-}
-
 func NewTickInfo() TickInfo {
 	return TickInfo{
 		liquidityGross:                 *u256.Zero(),

@@ -19,7 +19,8 @@ func GetIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 	if incentive == nil {
 		return nil
 	}
-	return incentive.Clone()
+	copied := *incentive
+	return &copied
 }
 
 // GetDeposit returns a copy of the deposit for the given position ID.

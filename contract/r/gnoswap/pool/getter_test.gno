@@ -322,7 +322,11 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			assertGot: func(t *testing.T, result any) {
 				state := result.(*ObservationState)
-				uassert.Equal(t, 0, len(state.Observations()))
+				uassert.Equal(t, 2, len(state.Observations()))
+				obs := state.Observations()[7]
+				uassert.Equal(t, int64(123), obs.BlockTimestamp())
+				uassert.Equal(t, int64(77), obs.TickCumulative())
+				uassert.Equal(t, true, obs.Initialized())
 			},
 			mutate: func(result any) {
 				state := result.(*ObservationState)
@@ -336,11 +340,12 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				uassert.Equal(t, uint16(3), state.Index())
 				uassert.Equal(t, uint16(4), state.Cardinality())
 				uassert.Equal(t, uint16(5), state.CardinalityNext())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-				uassert.Equal(t, int64(77), state.Observations()[7].TickCumulative())
-				uassert.Equal(t, "1000", state.Observations()[7].LiquidityCumulative().ToString())
-				uassert.Equal(t, "2000", state.Observations()[7].SecondsPerLiquidityCumulativeX128().ToString())
-				uassert.Equal(t, true, state.Observations()[7].Initialized())
+				obs := state.Observations()[7]
+				uassert.Equal(t, int64(123), obs.BlockTimestamp())
+				uassert.Equal(t, int64(77), obs.TickCumulative())
+				uassert.Equal(t, "1000", obs.LiquidityCumulative().ToString())
+				uassert.Equal(t, "2000", obs.SecondsPerLiquidityCumulativeX128().ToString())
+				uassert.Equal(t, true, obs.Initialized())
 				_, ok := state.Observations()[8]
 				uassert.Equal(t, false, ok)
 			},

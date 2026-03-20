@@ -480,24 +480,6 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
-func (e *ExternalIncentive) Clone() *ExternalIncentive {
-	return &ExternalIncentive{
-		incentiveId:             e.incentiveId,
-		startTimestamp:          e.startTimestamp,
-		endTimestamp:            e.endTimestamp,
-		createdHeight:           e.createdHeight,
-		createdTimestamp:        e.createdTimestamp,
-		depositGnsAmount:        e.depositGnsAmount,
-		targetPoolPath:          e.targetPoolPath,
-		rewardToken:             e.rewardToken,
-		totalRewardAmount:       e.totalRewardAmount,
-		rewardAmount:            e.rewardAmount,
-		rewardPerSecond:         e.rewardPerSecond,
-		refundee:                e.refundee,
-		refunded:                e.refunded,
-		distributedRewardAmount: e.distributedRewardAmount,
-	}
-}
 
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentive(
