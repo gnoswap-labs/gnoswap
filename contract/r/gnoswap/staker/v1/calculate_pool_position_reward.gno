@@ -17,12 +17,27 @@ type Reward struct {
 
 // calculate total position rewards and penalties
 func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
+	return s.calcPositionRewardWith(
+		currentHeight, currentTimestamp, positionId,
+		s.getDeposits(), s.getPools(), s.getPoolTier(),
+	)
+}
+
+// calcPositionRewardWith calculates position rewards using pre-loaded store data
+// to avoid redundant store access.
+func (s *stakerV1) calcPositionRewardWith(
+	currentHeight, currentTimestamp int64,
+	positionId uint64,
+	deposits *Deposits,
+	pools *Pools,
+	poolTier *PoolTier,
+) Reward {
 	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
-		Deposits:      s.getDeposits(),
-		Pools:         s.getPools(),
-		PoolTier:      s.getPoolTier(),
+		Deposits:      deposits,
+		Pools:         pools,
+		PoolTier:      poolTier,
 		PositionId:    positionId,
 	})
 
@@ -157,9 +172,9 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	return rewards
 }
 
-// calculates internal unclaimable reward for the pool
-func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
-	pool, ok := s.getPools().Get(poolPath)
+// processUnClaimableRewardWith calculates unclaimable reward using pre-loaded pools.
+func processUnClaimableRewardWith(pools *Pools, poolPath string, endTimestamp int64) int64 {
+	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return 0
 	}
@@ -169,9 +184,12 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 
 // update deposit's incentive list with new incentives created since last update
 func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
-	currentIncentiveIds := make([]string, 0)
+	return getExternalIncentiveIdsByWith(s.getExternalIncentivesByCreationTime(), poolPath, startTime, endTime)
+}
 
-	incentivesByTime := s.getExternalIncentivesByCreationTime()
+// getExternalIncentiveIdsByWith retrieves incentive IDs using pre-loaded incentivesByCreationTime.
+func getExternalIncentiveIdsByWith(incentivesByTime *sr.UintTree, poolPath string, startTime, endTime int64) []string {
+	currentIncentiveIds := make([]string, 0)
 
 	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
 		// Value is a slice of incentive IDs (handles timestamp collisions)

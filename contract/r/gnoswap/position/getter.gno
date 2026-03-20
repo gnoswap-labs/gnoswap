@@ -22,7 +22,7 @@ func GetPosition(positionId uint64) (Position, error) {
 		return Position{}, ufmt.Errorf("position %d not found", positionId)
 	}
 
-	return clonePosition(position), nil
+	return position, nil
 }
 
 // IsBurned returns whether a position has been burned.
@@ -140,11 +140,21 @@ func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
 func GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
-	unclaimedFee0, unclaimedFee1 := getImplementation().GetUnclaimedFee(positionId)
-	return unclaimedFee0.Clone(), unclaimedFee1.Clone()
+	fee0, fee1 := getImplementation().GetUnclaimedFee(positionId)
+	return fee0.Clone(), fee1.Clone()
 }
 
 // GetPositionOwner returns the owner address of a position NFT.
 func GetPositionOwner(positionId uint64) address {
 	return getImplementation().GetPositionOwner(positionId)
+}
+
+func cloneUint64Slice(src []uint64) []uint64 {
+	if src == nil {
+		return nil
+	}
+
+	dst := make([]uint64, len(src))
+	copy(dst, src)
+	return dst
 }

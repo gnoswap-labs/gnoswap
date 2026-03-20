@@ -89,7 +89,6 @@ func (p *Proposal) Metadata() *ProposalMetadata {
 	return p.metadata
 }
 
-
 // IsTextType checks if this is a text proposal.
 func (p *Proposal) IsTextType() bool {
 	return p.Type() == Text
@@ -152,12 +151,18 @@ func (p *Proposal) Clone() *Proposal {
 		return nil
 	}
 
+	var metadata *ProposalMetadata
+	if p.metadata != nil {
+		copied := *p.metadata
+		metadata = &copied
+	}
+
 	return &Proposal{
 		id:            p.id,
 		proposer:      p.proposer,
 		configVersion: p.configVersion,
 		status:        p.status.Clone(),
-		metadata:      p.metadata.Clone(),
+		metadata:      metadata,
 		data:          p.data.Clone(),
 		snapshotTime:  p.snapshotTime,
 		createdAt:     p.createdAt,

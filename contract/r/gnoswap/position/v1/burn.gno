@@ -97,8 +97,6 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	position.SetToken0Balance(newToken0Balance)
 	position.SetToken1Balance(newToken1Balance)
 
-	p.mustUpdatePosition(params.positionId, *position)
-
 	collect0, collect1 := pl.Collect(
 		cross,
 		pToken0,

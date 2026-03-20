@@ -130,16 +130,16 @@ func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
 		))
 	}
 
-	incentive, ok := incentiveI.(*sr.ExternalIncentive)
+	v, ok := incentiveI.(sr.ExternalIncentive)
 	if !ok {
-		panic("failed to cast value to *ExternalIncentive")
+		panic("failed to cast value to ExternalIncentive")
 	}
-	return incentive
+	return &v
 }
 
 // set stores an external incentive.
 func (self *ExternalIncentives) set(incentiveId string, incentive *sr.ExternalIncentive) {
-	self.tree.Set(incentiveId, incentive)
+	self.tree.Set(incentiveId, *incentive)
 }
 
 // remove deletes an external incentive by ID.
@@ -253,14 +253,34 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	halt.AssertIsNotHaltedStaker()
 
-	assertIsNotStaked(s, positionId)
+	// Batch load emission-independent store data
+	deposits := s.getDeposits()
+	pools := s.getPools()
+	stakers := s.getStakers()
+
+	externalIncentivesByCreationTime := s.getExternalIncentivesByCreationTime()
+	externalIncentives := s.getExternalIncentives()
+
+	// Check not already staked (using pre-loaded deposits)
+	if deposits.Has(positionId) {
+		panic(makeErrorWithDetails(
+			errAlreadyStaked,
+			ufmt.Sprintf("positionId(%d) already staked", positionId),
+		))
+	}
 
 	en.MintAndDistributeGns(cross)
 
+	// Batch load emission-dependent store data
+	poolTier := s.getPoolTier()
+
+	// Cache cross-realm values
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
+	blockHeight := runtime.ChainHeight()
+
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 
 	actualReferrer := referrer
 	if !referral.TryRegister(cross, caller, referrer) {
@@ -277,7 +297,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	// check pool path from positionId
 	poolPath := pn.GetPositionPoolKey(positionId)
-	pools := s.getPools()
 
 	pool, ok := pools.Get(poolPath)
 	if !ok {
@@ -287,7 +306,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		))
 	}
 
-	err := s.poolHasIncentives(pool)
+	err := poolHasIncentivesWithTier(pool, poolTier)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -310,10 +329,10 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	)
 
 	// when staking, add new created incentives to deposit
-	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, 0, currentTime)
+	currentIncentiveIds := getExternalIncentiveIdsByWith(externalIncentivesByCreationTime, poolPath, 0, currentTime)
 
 	for _, incentiveId := range currentIncentiveIds {
-		incentive := s.getExternalIncentives().get(incentiveId)
+		incentive := externalIncentives.get(incentiveId)
 		// If incentive is ended, not available to collect reward
 		if currentTime > incentive.EndTimestamp() {
 			continue
@@ -325,10 +344,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	// set last external incentive ids updated at
 	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
 
-	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
-
-	s.getStakers().addDeposit(caller, positionId, deposit)
+	stakers.addDeposit(caller, positionId, deposit)
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
@@ -339,8 +356,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
 	pn.SetPositionOperator(cross, positionId, caller)
 
-	poolTier := s.getPoolTier()
-	poolTier.cacheReward(runtime.ChainHeight(), currentTime, pools)
+	poolTier.cacheReward(blockHeight, currentTime, pools)
 	s.updatePoolTier(poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
@@ -360,7 +376,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	// Ticks are negated if the token1 < token0.
 	poolResolver.TickResolver(tickUpper).modifyDepositUpper(currentTime, signedLiquidity)
 	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
-	s.getPools().set(poolPath, pool)
+	pools.set(poolPath, pool)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
@@ -462,19 +478,44 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
-	assertIsDepositor(s, caller, positionId)
 
-	deposit := s.getDeposits().get(positionId)
-	depositResolver := NewDepositResolver(deposit)
+	// Batch load emission-independent store data
+	deposits := s.getDeposits()
+	pools := s.getPools()
+	externalIncentives := s.getExternalIncentives()
+
+	assertIsDepositorWith(deposits, caller, positionId)
 
 	en.MintAndDistributeGns(cross)
 
+	// Batch load emission-dependent store data
+	poolTier := s.getPoolTier()
+
+	// Cache cross-realm values
 	currentTime := time.Now().Unix()
 	blockHeight := runtime.ChainHeight()
+
+	return s.collectRewardInternal(positionId, currentTime, blockHeight, deposits, pools, poolTier, externalIncentives)
+}
+
+// collectRewardInternal is the core reward collection logic using pre-loaded store data.
+// It does NOT call halt checks or MintAndDistributeGns — callers must handle those.
+func (s *stakerV1) collectRewardInternal(
+	positionId uint64,
+	currentTime int64,
+	blockHeight int64,
+	deposits *Deposits,
+	pools *Pools,
+	poolTier *PoolTier,
+	externalIncentives *ExternalIncentives,
+) (string, string, map[string]int64, map[string]int64) {
 	previousRealm := runtime.PreviousRealm()
 
+	deposit := deposits.get(positionId)
+	depositResolver := NewDepositResolver(deposit)
+
 	// get all internal and external rewards
-	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
+	reward := s.calcPositionRewardWith(blockHeight, currentTime, positionId, deposits, pools, poolTier)
 
 	// transfer external rewards to user
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
@@ -486,7 +527,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			continue
 		}
 
-		incentive := s.getExternalIncentives().get(incentiveId)
+		incentive := externalIncentives.get(incentiveId)
 		if incentive == nil {
 			// Incentive could be missing; skip to keep collection working.
 			chain.Emit(
@@ -549,14 +590,12 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			panic(err)
 		}
 
-		// If incentive ended and user already collected after end, remove from index
-		// This ensures deposit's incentive list shrinks over time as incentives complete
-		if depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
-			deposit.RemoveExternalIncentiveId(incentiveId)
+		// update both the global incentive tree and the per-pool incentive tree
+		// to keep them in sync (value-type storage means they hold independent copies)
+		externalIncentives.set(incentiveId, incentive)
+		if pool, ok := pools.Get(deposit.TargetPoolPath()); ok {
+			NewPoolResolver(pool).IncentivesResolver().update(incentive.Refundee(), incentive)
 		}
-
-		// update
-		s.getExternalIncentives().set(incentiveId, incentive)
 
 		if externalPenalty > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
@@ -578,7 +617,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"currentHeight", formatAnyInt(blockHeight),
 		)
 
-		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
+		pool, _ := pools.Get(deposit.TargetPoolPath())
 		poolResolver := NewPoolResolver(pool)
 		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
@@ -644,7 +683,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 
 	// Unclaimable must be processed after regular rewards so that accumulated
 	// unclaimable amounts are reset in the same collect window.
-	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
+	unClaimableInternal := processUnClaimableRewardWith(pools, depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
@@ -660,7 +699,6 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		panic(err)
 	}
 
-	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
 	if toUser > 0 {
@@ -679,7 +717,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	rewardPenalty := formatAnyInt(reward.InternalPenalty)
 
 	poolPath := depositResolver.TargetPoolPath()
-	pool, _ := s.getPools().Get(poolPath)
+	pool, _ := pools.Get(poolPath)
 	poolResolver := NewPoolResolver(pool)
 
 	// Get accumulator values for reward calculation tracking
@@ -734,21 +772,37 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 // Requirements:
 //   - Caller must be the depositor
 //   - Position must be currently staked
-func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
-	caller := runtime.PreviousRealm().Address()
+func (s *stakerV1) UnStakeToken(positionId uint64) string {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
-	assertIsDepositor(s, caller, positionId)
 
-	deposit := s.getDeposits().get(positionId)
+	caller := runtime.PreviousRealm().Address()
 
-	// unStaked status
+	// Batch load emission-independent store data
+	deposits := s.getDeposits()
+	pools := s.getPools()
+
+	externalIncentives := s.getExternalIncentives()
+	stakers := s.getStakers()
+
+	assertIsDepositorWith(deposits, caller, positionId)
+
+	deposit := deposits.get(positionId)
 	poolPath := deposit.TargetPoolPath()
 
-	// claim All Rewards
-	s.CollectReward(positionId)
+	en.MintAndDistributeGns(cross)
 
-	if err := s.applyUnStake(positionId); err != nil {
+	// Batch load emission-dependent store data
+	poolTier := s.getPoolTier()
+
+	// Cache cross-realm values
+	currentTime := time.Now().Unix()
+	blockHeight := runtime.ChainHeight()
+
+	// claim All Rewards
+	s.collectRewardInternal(positionId, currentTime, blockHeight, deposits, pools, poolTier, externalIncentives)
+
+	if err := s.applyUnStakeWith(positionId, currentTime, deposits, pools, stakers); err != nil {
 		panic(err)
 	}
 
@@ -764,8 +818,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	// Get pool and accumulator values for reward calculation tracking
-	currentTime := time.Now().Unix()
-	pool, _ := s.getPools().Get(poolPath)
+	pool, _ := pools.Get(poolPath)
 	poolResolver := NewPoolResolver(pool)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
@@ -792,10 +845,11 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	return poolPath
 }
 
-func (s *stakerV1) applyUnStake(positionId uint64) error {
-	deposit := s.getDeposits().get(positionId)
+// applyUnStakeWith performs unstake using pre-loaded store data to avoid redundant store access.
+func (s *stakerV1) applyUnStakeWith(positionId uint64, currentTime int64, deposits *Deposits, pools *Pools, stakers *Stakers) error {
+	deposit := deposits.get(positionId)
 	depositResolver := NewDepositResolver(deposit)
-	pool, ok := s.getPools().Get(depositResolver.TargetPoolPath())
+	pool, ok := pools.Get(depositResolver.TargetPoolPath())
 	poolResolver := NewPoolResolver(pool)
 	if !ok {
 		return ufmt.Errorf(
@@ -804,7 +858,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		)
 	}
 
-	currentTime := time.Now().Unix()
 	currentTick := s.poolAccessor.GetSlot0Tick(depositResolver.TargetPoolPath())
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(depositResolver.Liquidity()))
 	if pn.IsInRange(positionId) {
@@ -816,8 +869,8 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
-	s.getDeposits().remove(positionId)
-	s.getStakers().removeDeposit(deposit.Owner(), positionId)
+	deposits.remove(positionId)
+	stakers.removeDeposit(deposit.Owner(), positionId)
 
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	caller := runtime.PreviousRealm().Address()
@@ -841,11 +894,11 @@ func hasTokenOwnership(owner, caller address) error {
 	return nil
 }
 
-// poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
+// poolHasIncentivesWithTier checks incentives using a pre-loaded poolTier to avoid redundant store access.
 // External incentive eligibility (active or within short future window) is handled inside IsExternallyIncentivizedPool.
-func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
+func poolHasIncentivesWithTier(pool *sr.Pool, poolTier *PoolTier) error {
 	poolPath := pool.PoolPath()
-	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
+	hasInternal := poolTier.IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
 
 	if !hasInternal && !hasExternal {

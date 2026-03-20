@@ -5,22 +5,22 @@ import u256 "gno.land/p/gnoswap/uint256"
 // Position represents a liquidity position in a pool.
 // Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
-	operator  address    // address that is approved for spending this token
-	poolKey   string     // poolPath of the pool which this has lp token
-	tickLower int32      // the lower tick of the position, bounds are included
-	tickUpper int32      // the upper tick of the position
-	liquidity *u256.Uint // liquidity of the position
+	operator  address   // address that is approved for spending this token
+	poolKey   string    // poolPath of the pool which this has lp token
+	tickLower int32     // the lower tick of the position, bounds are included
+	tickUpper int32     // the upper tick of the position
+	liquidity u256.Uint // liquidity of the position
 
 	// fee growth of the aggregate position as of the last action on the individual position
-	feeGrowthInside0LastX128 *u256.Uint
-	feeGrowthInside1LastX128 *u256.Uint
+	feeGrowthInside0LastX128 u256.Uint
+	feeGrowthInside1LastX128 u256.Uint
 
 	// how many uncollected tokens are owed to the position, as of the last computation
-	tokensOwed0 *u256.Uint
-	tokensOwed1 *u256.Uint
+	tokensOwed0 u256.Uint
+	tokensOwed1 u256.Uint
 
-	token0Balance *u256.Uint // token0 balance of the position
-	token1Balance *u256.Uint // token1 balance of the position
+	token0Balance u256.Uint // token0 balance of the position
+	token1Balance u256.Uint // token1 balance of the position
 
 	burned bool // whether the position has been burned (we don't burn the NFT, just mark as burned)
 }
@@ -33,12 +33,14 @@ func (p *Position) SetPoolKey(poolKey string) {
 	p.poolKey = poolKey
 }
 
+// Liquidity returns a pointer to the liquidity field for in-place access.
 func (p *Position) Liquidity() *u256.Uint {
-	return p.liquidity
+	return &p.liquidity
 }
 
+// SetLiquidity copies the value into the liquidity field.
 func (p *Position) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = liquidity
+	p.liquidity = *liquidity
 }
 
 func (p *Position) TickLower() int32 {
@@ -57,52 +59,64 @@ func (p *Position) SetTickUpper(tickUpper int32) {
 	p.tickUpper = tickUpper
 }
 
+// TokensOwed0 returns a pointer to the tokensOwed0 field for in-place access.
 func (p *Position) TokensOwed0() *u256.Uint {
-	return p.tokensOwed0
+	return &p.tokensOwed0
 }
 
+// SetTokensOwed0 copies the value into the tokensOwed0 field.
 func (p *Position) SetTokensOwed0(tokensOwed0 *u256.Uint) {
-	p.tokensOwed0 = tokensOwed0
+	p.tokensOwed0 = *tokensOwed0
 }
 
+// TokensOwed1 returns a pointer to the tokensOwed1 field for in-place access.
 func (p *Position) TokensOwed1() *u256.Uint {
-	return p.tokensOwed1
+	return &p.tokensOwed1
 }
 
+// SetTokensOwed1 copies the value into the tokensOwed1 field.
 func (p *Position) SetTokensOwed1(tokensOwed1 *u256.Uint) {
-	p.tokensOwed1 = tokensOwed1
+	p.tokensOwed1 = *tokensOwed1
 }
 
+// Token0Balance returns a pointer to the token0Balance field for in-place access.
 func (p *Position) Token0Balance() *u256.Uint {
-	return p.token0Balance
+	return &p.token0Balance
 }
 
+// SetToken0Balance copies the value into the token0Balance field.
 func (p *Position) SetToken0Balance(token0Balance *u256.Uint) {
-	p.token0Balance = token0Balance
+	p.token0Balance = *token0Balance
 }
 
+// Token1Balance returns a pointer to the token1Balance field for in-place access.
 func (p *Position) Token1Balance() *u256.Uint {
-	return p.token1Balance
+	return &p.token1Balance
 }
 
+// SetToken1Balance copies the value into the token1Balance field.
 func (p *Position) SetToken1Balance(token1Balance *u256.Uint) {
-	p.token1Balance = token1Balance
+	p.token1Balance = *token1Balance
 }
 
+// FeeGrowthInside0LastX128 returns a pointer to the field for in-place access.
 func (p *Position) FeeGrowthInside0LastX128() *u256.Uint {
-	return p.feeGrowthInside0LastX128
+	return &p.feeGrowthInside0LastX128
 }
 
+// SetFeeGrowthInside0LastX128 copies the value into the field.
 func (p *Position) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
-	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	p.feeGrowthInside0LastX128 = *feeGrowthInside0LastX128
 }
 
+// FeeGrowthInside1LastX128 returns a pointer to the field for in-place access.
 func (p *Position) FeeGrowthInside1LastX128() *u256.Uint {
-	return p.feeGrowthInside1LastX128
+	return &p.feeGrowthInside1LastX128
 }
 
+// SetFeeGrowthInside1LastX128 copies the value into the field.
 func (p *Position) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
-	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	p.feeGrowthInside1LastX128 = *feeGrowthInside1LastX128
 }
 
 func (p *Position) Burned() bool {
@@ -121,9 +135,9 @@ func (p *Position) SetOperator(operator address) {
 	p.operator = operator
 }
 
-// isClear reports whether the position is empty
+// IsClear reports whether the position is empty
 func (p *Position) IsClear() bool {
-	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
+	return p.Liquidity().IsZero() && p.TokensOwed0().IsZero() && p.TokensOwed1().IsZero()
 }
 
 func NewPosition(
@@ -141,13 +155,13 @@ func NewPosition(
 		poolKey:                  poolKey,
 		tickLower:                tickLower,
 		tickUpper:                tickUpper,
-		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-		tokensOwed0:              tokensOwed0,
-		tokensOwed1:              tokensOwed1,
-		token0Balance:            token0Balance,
-		token1Balance:            token1Balance,
+		liquidity:                *liquidity,
+		feeGrowthInside0LastX128: *feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: *feeGrowthInside1LastX128,
+		tokensOwed0:              *tokensOwed0,
+		tokensOwed1:              *tokensOwed1,
+		token0Balance:            *token0Balance,
+		token1Balance:            *token1Balance,
 		burned:                   burned,
 		operator:                 operator,
 	}

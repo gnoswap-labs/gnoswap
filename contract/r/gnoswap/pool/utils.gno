@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gno.land/p/nt/seqid/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -23,27 +24,22 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 // EncodeTickKey encodes a tick to a string key for the tick tree.
+// Uses seqid (cford32) encoding for compact, lexicographically ordered keys (7 bytes).
 func EncodeTickKey(tick int32) string {
 	adjustTick := tick + ENCODED_TICK_OFFSET
 	if adjustTick < 0 {
 		panic(ufmt.Sprintf("tick(%d) + ENCODED_TICK_OFFSET(%d) < 0", tick, ENCODED_TICK_OFFSET))
 	}
 
-	// Convert the value to a decimal string.
-	s := strconv.FormatInt(int64(adjustTick), 10)
-
-	// Zero-pad to a total length of 10 characters.
-	zerosNeeded := 10 - len(s)
-
-	return strings.Repeat("0", zerosNeeded) + s
+	return seqid.ID(uint64(adjustTick)).String()
 }
 
 // DecodeTickKey decodes a string key to a tick.
 func DecodeTickKey(s string) int32 {
-	adjustTick, err := strconv.ParseInt(s, 10, 32)
+	id, err := seqid.FromString(s)
 	if err != nil {
 		panic(ufmt.Sprintf("invalid tick key: %s", s))
 	}
 
-	return int32(adjustTick) - ENCODED_TICK_OFFSET
+	return int32(uint64(id)) - ENCODED_TICK_OFFSET
 }

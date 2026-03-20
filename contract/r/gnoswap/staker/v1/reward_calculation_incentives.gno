@@ -33,11 +33,11 @@ func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) 
 	if !ok {
 		return nil, false
 	}
-	v, ok := value.(*sr.ExternalIncentive)
+	v, ok := value.(sr.ExternalIncentive)
 	if !ok {
-		panic("failed to cast value to *sr.ExternalIncentive")
+		panic("failed to cast value to sr.ExternalIncentive")
 	}
-	return v, true
+	return &v, true
 }
 
 // Create a new external incentive
@@ -46,7 +46,7 @@ func (self *IncentivesResolver) create(
 	creator address,
 	incentive *sr.ExternalIncentive,
 ) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.IncentiveTrees().Set(incentive.IncentiveId(), *incentive)
 }
 
 // update updates an existing incentive with new information
@@ -54,7 +54,7 @@ func (self *IncentivesResolver) update(
 	creator address,
 	incentive *sr.ExternalIncentive,
 ) {
-	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
+	self.IncentiveTrees().Set(incentive.IncentiveId(), *incentive)
 }
 
 // starts incentive unclaimable period for this pool

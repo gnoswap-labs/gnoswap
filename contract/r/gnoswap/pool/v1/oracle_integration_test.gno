@@ -204,8 +204,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 
 		uassert.NoError(t, err, "Should not error when target equals observation")
 		uassert.Equal(t, currentTime, beforeOrAt2.BlockTimestamp(), "Should return exact observation")
-		if afterOrAt2 != nil {
-			t.Fatalf("afterOrAt should be nil when target equals newest observation")
+		if afterOrAt2.Initialized() {
+			t.Fatalf("afterOrAt should be zero value when target equals newest observation")
 		}
 
 		// Test target > observation timestamp

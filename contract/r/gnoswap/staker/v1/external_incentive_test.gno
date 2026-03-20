@@ -2283,3 +2283,305 @@ func TestRemoveIncentiveIdByCreationTime(t *testing.T) {
 		})
 	}
 }
+
+// TestEndExternalIncentive_AfterCollectPastEnd tests that EndExternalIncentive
+// calculates correct refund when a deposit has already collected rewards past
+// the incentive's end time.
+//
+// With the unified tree, the incentive entry stays in the deposit even after
+// collection past endTimestamp (no removal). EndExternalIncentive should skip
+// this deposit because lastCollectTime > endTimestamp, and the already-distributed
+// rewards are accounted for via DistributedRewardAmount.
+func TestEndExternalIncentive_AfterCollectPastEnd(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/end_after_collect"
+	creator := testutils.TestAddress("creator")
+	user := testutils.TestAddress("user1")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10 // 10 days ago
+	endTime := currentTime - 86400      // ended 1 day ago
+	totalRewardAmount := int64(1_000_000_000)
+
+	// Setup pool
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	// Create incentive
+	incentiveId := "end-after-collect-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	warmups := []sr.Warmup{
+		{Index: 0, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 30},
+		{Index: 1, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 50},
+		{Index: 2, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 70},
+		{Index: 3, TimeDuration: math.MaxInt64, NextWarmupTime: math.MaxInt64, WarmupRatio: 100},
+	}
+
+	// Create deposit and register
+	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
+	deposit.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(1, deposit)
+
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
+	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+
+	depositResolver := NewDepositResolver(deposit)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// Simulate: user collected reward AFTER incentive ended
+	collected := int64(500_000)
+	depositResolver.addCollectedExternalReward(incentiveId, collected)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, endTime+100) // past endTime
+	incentiveResolver.addDistributedRewardAmount(collected)
+	// Re-save to pool tree since value-type storage holds independent copies
+	poolResolver.IncentivesResolver().update(creator, incentive)
+
+	// No RemoveExternalIncentiveId call — entry stays in deposit
+	lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+	uassert.True(t, lastCollectTime > incentiveResolver.EndTimestamp(),
+		"lastCollectTime should be past endTimestamp")
+
+	// Verify entry still exists (unified tree retains data)
+	uassert.True(t, deposit.HasExternalIncentiveId(incentiveId),
+		"incentive ID should still be in deposit (no removal in unified tree)")
+
+	_, exists := deposit.GetExternalRewardLastCollectTime(incentiveId)
+	uassert.True(t, exists,
+		"lastCollectTime should be accessible since entry was not removed")
+
+	// Now call EndExternalIncentive — should skip this deposit
+	// because lastCollectTime (endTime+100) > endTimestamp (endTime)
+	incentiveResolverForEnd, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolverForEnd, creator, currentTime)
+	uassert.NoError(t, err)
+
+	// Refund should be: totalRewardAmount - totalReward(0, since deposit was skipped) - distributed(500_000)
+	// The deposit was skipped because lastCollectTime > endTimestamp
+	expectedMaxRefund := totalRewardAmount - collected
+	uassert.True(t, refund <= expectedMaxRefund,
+		ufmt.Sprintf("refund(%d) should be <= totalRewardAmount - distributed(%d) = %d",
+			refund, collected, expectedMaxRefund))
+	uassert.True(t, refund >= 0,
+		ufmt.Sprintf("refund should be non-negative, got %d", refund))
+}
+
+// TestEndExternalIncentive_NeverCollectedDeposit tests that EndExternalIncentive
+// correctly accounts for deposits that were staked but never called CollectReward.
+//
+// These deposits have the incentive ID in their index but no lastCollectTime entry,
+// so ExternalRewardLastCollectTime falls back to StakeTime.
+// Their uncollected rewards must be included in the refund calculation.
+func TestEndExternalIncentive_NeverCollectedDeposit(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/never_collected"
+	creator := testutils.TestAddress("creator")
+	userActive := testutils.TestAddress("active_user")
+	userPassive := testutils.TestAddress("passive_user")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime - 86400
+	totalRewardAmount := int64(1_000_000_000)
+
+	// Setup pool
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	// Create incentive
+	incentiveId := "never-collected-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	warmups := []sr.Warmup{
+		{Index: 0, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 30},
+		{Index: 1, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 50},
+		{Index: 2, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 70},
+		{Index: 3, TimeDuration: math.MaxInt64, NextWarmupTime: math.MaxInt64, WarmupRatio: 100},
+	}
+
+	// Deposit A: active user who collected
+	depositA := sr.NewDeposit(userActive, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
+	depositA.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(1, depositA)
+
+	// Deposit B: passive user who NEVER collected
+	depositB := sr.NewDeposit(userPassive, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, warmups)
+	depositB.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(2, depositB)
+
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
+	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
+	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
+
+	// User A collected, update lastCollectTime
+	depositResolverA := NewDepositResolver(depositA)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	collectedA := int64(300_000)
+	depositResolverA.addCollectedExternalReward(incentiveId, collectedA)
+	depositResolverA.updateExternalRewardLastCollectTime(incentiveId, endTime-1000)
+	incentiveResolver.addDistributedRewardAmount(collectedA)
+
+	// User B: no collection at all — no lastCollectTime entry
+	// ExternalRewardLastCollectTime will fallback to StakeTime
+	depositResolverB := NewDepositResolver(depositB)
+	fallbackTime := depositResolverB.ExternalRewardLastCollectTime(incentiveId)
+	uassert.Equal(t, depositB.StakeTime(), fallbackTime,
+		"never-collected deposit should fallback to StakeTime")
+
+	// Calculate refund — both deposits should be included
+	incentiveResolverForEnd, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolverForEnd, creator, currentTime)
+	uassert.NoError(t, err)
+
+	// refund = totalRewardAmount - totalReward(A+B uncollected) - distributed(A collected)
+	// totalReward should include BOTH deposits' uncollected rewards
+	// If passive deposit were incorrectly skipped, refund would be too high
+	uassert.True(t, refund >= 0,
+		ufmt.Sprintf("refund should be non-negative, got %d", refund))
+	uassert.True(t, refund < totalRewardAmount-collectedA,
+		ufmt.Sprintf("refund(%d) must be less than total-distributed(%d) because passive deposit's rewards should be counted",
+			refund, totalRewardAmount-collectedA))
+}
+
+// TestEndExternalIncentive_MixedCollectionStates tests refund calculation when
+// deposits are in different states:
+//   - Deposit A: collected past end time (incentive ID removed from index)
+//   - Deposit B: collected before end time (incentive ID still in index)
+//   - Deposit C: never collected (no lastCollectTime entry)
+func TestEndExternalIncentive_MixedCollectionStates(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/mixed_states"
+	creator := testutils.TestAddress("creator")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime - 86400
+	totalRewardAmount := int64(1_000_000_000)
+
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentiveId := "mixed-states-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	warmups := []sr.Warmup{
+		{Index: 0, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 30},
+		{Index: 1, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 50},
+		{Index: 2, TimeDuration: 0, NextWarmupTime: startTime, WarmupRatio: 70},
+		{Index: 3, TimeDuration: math.MaxInt64, NextWarmupTime: math.MaxInt64, WarmupRatio: 100},
+	}
+
+	// Deposit A: collected past end time
+	depositA := sr.NewDeposit(testutils.TestAddress("userA"), poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
+	depositA.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(1, depositA)
+
+	// Deposit B: collected before end time
+	depositB := sr.NewDeposit(testutils.TestAddress("userB"), poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, warmups)
+	depositB.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(2, depositB)
+
+	// Deposit C: never collected
+	depositC := sr.NewDeposit(testutils.TestAddress("userC"), poolPath, u256.NewUint(1000), startTime+300, -10000, 10000, warmups)
+	depositC.AddExternalIncentiveId(incentiveId)
+	s.getDeposits().set(3, depositC)
+
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
+	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
+	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+300, 0)
+	poolResolver.HistoricalTick().Set(startTime+300, int32(0))
+
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// A: collected past end → entry stays (no removal in unified tree)
+	resolverA := NewDepositResolver(depositA)
+	collectedA := int64(400_000)
+	resolverA.addCollectedExternalReward(incentiveId, collectedA)
+	resolverA.updateExternalRewardLastCollectTime(incentiveId, endTime+500)
+	incentiveResolver.addDistributedRewardAmount(collectedA)
+	// No RemoveExternalIncentiveId call — unified tree retains entry
+
+	// B: collected before end → still in index
+	resolverB := NewDepositResolver(depositB)
+	collectedB := int64(200_000)
+	resolverB.addCollectedExternalReward(incentiveId, collectedB)
+	resolverB.updateExternalRewardLastCollectTime(incentiveId, endTime-2000)
+	incentiveResolver.addDistributedRewardAmount(collectedB)
+
+	// C: never collected → no lastCollectTime, will fallback to StakeTime
+
+	// Verify pre-conditions
+	uassert.True(t, depositA.HasExternalIncentiveId(incentiveId), "A should still have ID (no removal in unified tree)")
+	uassert.True(t, depositB.HasExternalIncentiveId(incentiveId), "B should still have ID")
+	uassert.True(t, depositC.HasExternalIncentiveId(incentiveId), "C should still have ID")
+
+	totalDistributed := collectedA + collectedB
+	uassert.Equal(t, totalDistributed, incentiveResolver.DistributedRewardAmount())
+
+	// Calculate refund
+	incentiveResolverForEnd, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolverForEnd, creator, currentTime)
+	uassert.NoError(t, err)
+
+	// Deposit A: skipped (lastCollectTime > endTime) — accounted in DistributedRewardAmount
+	// Deposit B: included in totalReward (still has uncollected rewards from endTime-2000 to endTime)
+	// Deposit C: included in totalReward (uncollected rewards from StakeTime to endTime)
+	// refund = totalRewardAmount - totalReward(B+C) - distributed(A+B)
+	uassert.True(t, refund >= 0,
+		ufmt.Sprintf("refund should be non-negative, got %d", refund))
+	uassert.True(t, refund < totalRewardAmount-totalDistributed,
+		ufmt.Sprintf("refund(%d) should be less than total-distributed(%d) because B and C have uncollected rewards",
+			refund, totalRewardAmount-totalDistributed))
+}

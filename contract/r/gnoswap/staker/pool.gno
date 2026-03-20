@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -56,20 +55,20 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity UintTree // uint64 timestamp -> *u256.Uint(Q128)
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
 
-	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
+	rewardCache UintTree // uint64 timestamp -> int64 gnsReward
 
-	incentives *Incentives
+	incentives Incentives
 
 	ticks Ticks // int32 tickId -> Tick tick
 
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
+	globalRewardRatioAccumulation UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
 
-	historicalTick *UintTree // uint64 timestamp -> int32 tickId
+	historicalTick UintTree // uint64 timestamp -> int32 tickId
 }
 
 // Pool Getter/Setter methods
@@ -86,12 +85,16 @@ func (p *Pool) SetPoolPath(poolPath string) {
 
 // StakedLiquidity returns the staked liquidity tree
 func (p *Pool) StakedLiquidity() *UintTree {
-	return p.stakedLiquidity
+	return &p.stakedLiquidity
 }
 
 // SetStakedLiquidity sets the staked liquidity tree
 func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
-	p.stakedLiquidity = stakedLiquidity
+	if stakedLiquidity == nil {
+		p.stakedLiquidity = UintTree{}
+		return
+	}
+	p.stakedLiquidity = *stakedLiquidity
 }
 
 // LastUnclaimableTime returns the last unclaimable time
@@ -116,22 +119,26 @@ func (p *Pool) SetUnclaimableAcc(unclaimableAcc int64) {
 
 // RewardCache returns the reward cache tree
 func (p *Pool) RewardCache() *UintTree {
-	return p.rewardCache
+	return &p.rewardCache
 }
 
 // SetRewardCache sets the reward cache tree
 func (p *Pool) SetRewardCache(rewardCache *UintTree) {
-	p.rewardCache = rewardCache
+	if rewardCache == nil {
+		p.rewardCache = UintTree{}
+		return
+	}
+	p.rewardCache = *rewardCache
 }
 
 // Incentives returns the incentives
 func (p *Pool) Incentives() *Incentives {
-	return p.incentives
+	return &p.incentives
 }
 
 // SetIncentives sets the incentives
 func (p *Pool) SetIncentives(incentives *Incentives) {
-	p.incentives = incentives
+	p.incentives = *incentives
 }
 
 // Ticks returns the ticks
@@ -146,22 +153,30 @@ func (p *Pool) SetTicks(ticks Ticks) {
 
 // GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree
 func (p *Pool) GlobalRewardRatioAccumulation() *UintTree {
-	return p.globalRewardRatioAccumulation
+	return &p.globalRewardRatioAccumulation
 }
 
 // SetGlobalRewardRatioAccumulation sets the global reward ratio accumulation tree
 func (p *Pool) SetGlobalRewardRatioAccumulation(globalRewardRatioAccumulation *UintTree) {
-	p.globalRewardRatioAccumulation = globalRewardRatioAccumulation
+	if globalRewardRatioAccumulation == nil {
+		p.globalRewardRatioAccumulation = UintTree{}
+		return
+	}
+	p.globalRewardRatioAccumulation = *globalRewardRatioAccumulation
 }
 
 // HistoricalTick returns the historical tick tree
 func (p *Pool) HistoricalTick() *UintTree {
-	return p.historicalTick
+	return &p.historicalTick
 }
 
 // SetHistoricalTick sets the historical tick tree
 func (p *Pool) SetHistoricalTick(historicalTick *UintTree) {
-	p.historicalTick = historicalTick
+	if historicalTick == nil {
+		p.historicalTick = UintTree{}
+		return
+	}
+	p.historicalTick = *historicalTick
 }
 
 // Clone returns a deep copy of the pool.
@@ -172,14 +187,14 @@ func (p *Pool) Clone() *Pool {
 
 	return &Pool{
 		poolPath:                      p.poolPath,
-		stakedLiquidity:               nil,
+		stakedLiquidity:               UintTree{},
 		lastUnclaimableTime:           p.lastUnclaimableTime,
 		unclaimableAcc:                p.unclaimableAcc,
-		rewardCache:                   nil,
-		incentives:                    nil,
+		rewardCache:                   UintTree{},
+		incentives:                    Incentives{},
 		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: nil,
-		historicalTick:                nil,
+		globalRewardRatioAccumulation: UintTree{},
+		historicalTick:                UintTree{},
 	}
 }
 
@@ -187,18 +202,18 @@ func (p *Pool) Clone() *Pool {
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
-		stakedLiquidity: NewUintTree(),
+		stakedLiquidity: *NewUintTree(),
 		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
 		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
 		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
 		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
-		rewardCache:                   NewUintTree(),
-		incentives:                    NewIncentives(poolPath),
+		rewardCache:                   *NewUintTree(),
+		incentives:                    *NewIncentives(poolPath),
 		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: NewUintTree(),
-		historicalTick:                NewUintTree(),
+		globalRewardRatioAccumulation: *NewUintTree(),
+		historicalTick:                *NewUintTree(),
 	}
 
 	pool.GlobalRewardRatioAccumulation().Set(currentTime, u256.Zero())
@@ -225,23 +240,23 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
 type Incentives struct {
-	incentives *avl.Tree // (incentiveId) => ExternalIncentive
+	incentives avl.Tree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
-	unclaimablePeriods *UintTree // blockTimestamp -> any
+	unclaimablePeriods UintTree // blockTimestamp -> any
 }
 
 // Incentives Getter/Setter methods
 
-// Incentives returns the incentives tree
+// IncentiveTrees returns the incentives tree
 func (i *Incentives) IncentiveTrees() *avl.Tree {
-	return i.incentives
+	return &i.incentives
 }
 
 // SetIncentives sets the incentives tree
 func (i *Incentives) SetIncentives(incentives *avl.Tree) {
-	i.incentives = incentives
+	i.incentives = *incentives
 }
 
 // TargetPoolPath returns the target pool path
@@ -256,12 +271,12 @@ func (i *Incentives) SetTargetPoolPath(targetPoolPath string) {
 
 // UnclaimablePeriods returns the unclaimable periods tree
 func (i *Incentives) UnclaimablePeriods() *UintTree {
-	return i.unclaimablePeriods
+	return &i.unclaimablePeriods
 }
 
 // SetUnclaimablePeriods sets the unclaimable periods tree
 func (i *Incentives) SetUnclaimablePeriods(unclaimablePeriods *UintTree) {
-	i.unclaimablePeriods = unclaimablePeriods
+	i.unclaimablePeriods = *unclaimablePeriods
 }
 
 // Incentive returns an incentive by ID
@@ -270,20 +285,23 @@ func (i *Incentives) Incentive(incentiveId string) (*ExternalIncentive, bool) {
 	if !exists {
 		return nil, false
 	}
-	incentive, ok := value.(*ExternalIncentive)
-	return incentive, ok
+	v, ok := value.(ExternalIncentive)
+	if !ok {
+		return nil, false
+	}
+	return &v, true
 }
 
 // SetIncentive sets an incentive by ID
 func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncentive) {
-	i.incentives.Set(incentiveId, incentive)
+	i.incentives.Set(incentiveId, *incentive)
 }
 
 // IterateIncentives iterates over all incentives
 func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *ExternalIncentive) bool) {
 	i.incentives.Iterate("", "", func(key string, value interface{}) bool {
-		if incentive, ok := value.(*ExternalIncentive); ok {
-			return fn(key, incentive)
+		if v, ok := value.(ExternalIncentive); ok {
+			return fn(key, &v)
 		}
 		return false
 	})
@@ -292,8 +310,8 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
-		unclaimablePeriods: NewUintTree(),
-		incentives:         avl.NewTree(),
+		unclaimablePeriods: *NewUintTree(),
+		incentives:         *avl.NewTree(),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
@@ -462,25 +480,6 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
-func (e *ExternalIncentive) Clone() *ExternalIncentive {
-	return &ExternalIncentive{
-		incentiveId:             e.incentiveId,
-		startTimestamp:          e.startTimestamp,
-		endTimestamp:            e.endTimestamp,
-		createdHeight:           e.createdHeight,
-		createdTimestamp:        e.createdTimestamp,
-		depositGnsAmount:        e.depositGnsAmount,
-		targetPoolPath:          e.targetPoolPath,
-		rewardToken:             e.rewardToken,
-		totalRewardAmount:       e.totalRewardAmount,
-		rewardAmount:            e.rewardAmount,
-		rewardPerSecond:         e.rewardPerSecond,
-		refundee:                e.refundee,
-		refunded:                e.refunded,
-		distributedRewardAmount: e.distributedRewardAmount,
-	}
-}
-
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentive(
 	incentiveId string,
@@ -511,25 +510,25 @@ func NewExternalIncentive(
 		createdHeight:           createdHeight,
 		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
-		refunded: false,
+		refunded:                false,
 	}
 }
 
 // Tick mapping for each pool
 type Ticks struct {
-	tree *avl.Tree // int32 tickId -> tick
+	tree avl.Tree // int32 tickId -> tick
 }
 
 // Ticks Getter/Setter methods
 
 // Tree returns the ticks tree
 func (t *Ticks) Tree() *avl.Tree {
-	return t.tree
+	return &t.tree
 }
 
 // SetTree sets the ticks tree
 func (t *Ticks) SetTree(tree *avl.Tree) {
-	t.tree = tree
+	t.tree = *tree
 }
 
 func (t *Ticks) Get(tickId int32) *Tick {
@@ -537,9 +536,9 @@ func (t *Ticks) Get(tickId int32) *Tick {
 	if !ok {
 		tick := &Tick{
 			id:                   tickId,
-			stakedLiquidityGross: u256.Zero(),
-			stakedLiquidityDelta: i256.Zero(),
-			outsideAccumulation:  NewUintTree(),
+			stakedLiquidityGross: *u256.Zero(),
+			stakedLiquidityDelta: *i256.Zero(),
+			outsideAccumulation:  *NewUintTree(),
 		}
 		t.tree.Set(EncodeInt(tickId), tick)
 		return tick
@@ -574,19 +573,14 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false
 		}
 
-		// Convert string key back to int32
-		tickId, err := strconv.Atoi(key)
-		if err != nil {
-			return false // skip invalid keys
-		}
-
-		return fn(int32(tickId), tick)
+		tickId := DecodeInt(key)
+		return fn(tickId, tick)
 	})
 }
 
 // Clone returns a deep copy of ticks.
 func (t Ticks) Clone() Ticks {
-	cloned := avl.NewTree()
+	cloned := avl.Tree{}
 	t.tree.Iterate("", "", func(key string, value any) bool {
 		tick, ok := value.(*Tick)
 		if !ok {
@@ -600,7 +594,7 @@ func (t Ticks) Clone() Ticks {
 
 func NewTicks() Ticks {
 	return Ticks{
-		tree: avl.NewTree(),
+		tree: *avl.NewTree(),
 	}
 }
 
@@ -615,14 +609,14 @@ type Tick struct {
 	id int32
 
 	// conceptually equal with Pool.liquidityGross but only for the staked positions
-	stakedLiquidityGross *u256.Uint
+	stakedLiquidityGross u256.Uint
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
-	stakedLiquidityDelta *i256.Int
+	stakedLiquidityDelta i256.Int
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation UintTree // timestamp -> *u256.Uint
 }
 
 // Tick Getter/Setter methods
@@ -639,32 +633,32 @@ func (t *Tick) SetId(id int32) {
 
 // StakedLiquidityGross returns the staked liquidity gross
 func (t *Tick) StakedLiquidityGross() *u256.Uint {
-	return t.stakedLiquidityGross
+	return &t.stakedLiquidityGross
 }
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = *stakedLiquidityGross
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
 func (t *Tick) StakedLiquidityDelta() *i256.Int {
-	return t.stakedLiquidityDelta
+	return &t.stakedLiquidityDelta
 }
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = *stakedLiquidityDelta
 }
 
 // OutsideAccumulation returns the outside accumulation tree
 func (t *Tick) OutsideAccumulation() *UintTree {
-	return t.outsideAccumulation
+	return &t.outsideAccumulation
 }
 
 // SetOutsideAccumulation sets the outside accumulation tree
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
-	t.outsideAccumulation = outsideAccumulation
+	t.outsideAccumulation = *outsideAccumulation
 }
 
 // Clone returns a deep copy of the tick.
@@ -675,18 +669,18 @@ func (t *Tick) Clone() *Tick {
 
 	return &Tick{
 		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
-		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
-		outsideAccumulation:  t.outsideAccumulation.Clone(),
+		stakedLiquidityGross: t.stakedLiquidityGross,
+		stakedLiquidityDelta: t.stakedLiquidityDelta,
+		outsideAccumulation:  *t.outsideAccumulation.Clone(),
 	}
 }
 
 func NewTick(tickId int32) *Tick {
 	return &Tick{
 		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
-		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTree(),
+		stakedLiquidityGross: *u256.Zero(),
+		stakedLiquidityDelta: *i256.Zero(),
+		outsideAccumulation:  *NewUintTree(),
 	}
 }
 

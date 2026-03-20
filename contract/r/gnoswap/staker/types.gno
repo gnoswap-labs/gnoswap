@@ -5,6 +5,19 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 )
 
+// PoolTierState consolidates all PoolTier-related state into a single object.
+// Stored as a single KV store entry to reduce store access from 8 Get/Set to 1.
+type PoolTierState struct {
+	Membership              avl.Tree                                  // poolPath -> tier(1,2,3)
+	TierRatio               TierRatio                                 // per-tier reward ratio
+	Counts                  [AllTierCount]uint64                      // per-tier pool counts
+	LastRewardCacheTimestamp int64
+	LastRewardCacheHeight   int64
+	CurrentEmission         int64
+	GetEmission             func() int64                              // emission query closure
+	GetHalvingBlocksInRange func(start, end int64) ([]int64, []int64) // halving query closure
+}
+
 type IStaker interface {
 	IStakerManager
 	IStakerGetter
@@ -175,45 +188,10 @@ type IStakerStore interface {
 	GetPools() *avl.Tree
 	SetPools(pools *avl.Tree) error
 
-	// PoolTierMemberships
-	HasPoolTierMembershipsStoreKey() bool
-	GetPoolTierMemberships() *avl.Tree
-	SetPoolTierMemberships(memberships *avl.Tree) error
-
-	// PoolTierRatio
-	HasPoolTierRatioStoreKey() bool
-	GetPoolTierRatio() TierRatio
-	SetPoolTierRatio(ratio TierRatio) error
-
-	// PoolTierCounts
-	HasPoolTierCountsStoreKey() bool
-	GetPoolTierCounts() [AllTierCount]uint64
-	SetPoolTierCounts(counts [AllTierCount]uint64) error
-
-	// PoolTierLastRewardCacheTimestamp
-	HasPoolTierLastRewardCacheTimestampStoreKey() bool
-	GetPoolTierLastRewardCacheTimestamp() int64
-	SetPoolTierLastRewardCacheTimestamp(timestamp int64) error
-
-	// PoolTierLastRewardCacheHeight
-	HasPoolTierLastRewardCacheHeightStoreKey() bool
-	GetPoolTierLastRewardCacheHeight() int64
-	SetPoolTierLastRewardCacheHeight(height int64) error
-
-	// PoolTierCurrentEmission
-	HasPoolTierCurrentEmissionStoreKey() bool
-	GetPoolTierCurrentEmission() int64
-	SetPoolTierCurrentEmission(emission int64) error
-
-	// PoolTierGetEmission
-	HasPoolTierGetEmissionStoreKey() bool
-	GetPoolTierGetEmission() func() int64
-	SetPoolTierGetEmission(fn func() int64) error
-
-	// PoolTierGetHalvingBlocksInRange
-	HasPoolTierGetHalvingBlocksInRangeStoreKey() bool
-	GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64)
-	SetPoolTierGetHalvingBlocksInRange(fn func(start, end int64) ([]int64, []int64)) error
+	// PoolTierState (consolidated from 8 individual keys)
+	HasPoolTierStateStoreKey() bool
+	GetPoolTierState() *PoolTierState
+	SetPoolTierState(state *PoolTierState) error
 
 	HasWarmupTemplateStoreKey() bool
 	GetWarmupTemplate() []Warmup

@@ -135,65 +135,22 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
-	if !stakerStore.HasPoolTierMembershipsStoreKey() {
-		err := stakerStore.SetPoolTierMemberships(initializedPoolTier.membership)
-		if err != nil {
-			return err
+	if !stakerStore.HasPoolTierStateStoreKey() {
+		state := &sr.PoolTierState{
+			Membership:              *initializedPoolTier.membership,
+			TierRatio:               initializedPoolTier.tierRatio,
+			Counts:                  initializedPoolTier.counts,
+			LastRewardCacheTimestamp: initializedPoolTier.lastRewardCacheTimestamp,
+			LastRewardCacheHeight:   initializedPoolTier.lastRewardCacheHeight,
+			CurrentEmission:         initializedPoolTier.currentEmission,
+			GetEmission: func() int64 {
+				return emissionAccessor.GetStakerEmissionAmountPerSecond()
+			},
+			GetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
+				return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
+			},
 		}
-	}
-
-	if !stakerStore.HasPoolTierRatioStoreKey() {
-		err := stakerStore.SetPoolTierRatio(initializedPoolTier.tierRatio)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierCountsStoreKey() {
-		err := stakerStore.SetPoolTierCounts(initializedPoolTier.counts)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierLastRewardCacheTimestampStoreKey() {
-		err := stakerStore.SetPoolTierLastRewardCacheTimestamp(initializedPoolTier.lastRewardCacheTimestamp)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierLastRewardCacheHeightStoreKey() {
-		err := stakerStore.SetPoolTierLastRewardCacheHeight(initializedPoolTier.lastRewardCacheHeight)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierCurrentEmissionStoreKey() {
-		err := stakerStore.SetPoolTierCurrentEmission(initializedPoolTier.currentEmission)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierGetEmissionStoreKey() {
-		getEmissionFn := func() int64 {
-			return emissionAccessor.GetStakerEmissionAmountPerSecond()
-		}
-
-		err := stakerStore.SetPoolTierGetEmission(getEmissionFn)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasPoolTierGetHalvingBlocksInRangeStoreKey() {
-		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64) {
-			return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
-		}
-
-		err := stakerStore.SetPoolTierGetHalvingBlocksInRange(getHalvingBlocksInRangeFn)
+		err := stakerStore.SetPoolTierState(state)
 		if err != nil {
 			return err
 		}

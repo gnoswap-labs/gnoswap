@@ -115,23 +115,28 @@ func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 func (s *stakerV1) setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	s.emissionAccessor.MintAndDistributeGns()
 
-	pool := s.getPools().GetPoolOrNil(poolPath)
+	pools := s.getPools()
+	pool := pools.GetPoolOrNil(poolPath)
 	if pool == nil {
 		pool = sr.NewPool(poolPath, currentTime)
-		s.getPools().set(poolPath, pool)
+		pools.set(poolPath, pool)
 	}
+
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
+
 	s.updatePoolTier(poolTier)
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
 func (s *stakerV1) changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
 	s.emissionAccessor.MintAndDistributeGns()
+
+	pools := s.getPools()
 	poolTier := s.getPoolTier()
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
 	s.updatePoolTier(poolTier)
 
 	return previousTier, tier
@@ -141,8 +146,10 @@ func (s *stakerV1) changePoolTier(poolPath string, tier uint64, currentTime int6
 func (s *stakerV1) removePoolTier(poolPath string, currentTime int64) {
 	s.emissionAccessor.MintAndDistributeGns()
 
+	pools := s.getPools()
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+
 	s.updatePoolTier(poolTier)
 }
 

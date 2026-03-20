@@ -127,8 +127,8 @@ func NewDelegationWithdraw(
 	createdHeight,
 	createdAt,
 	unDelegationLockupPeriod int64,
-) *DelegationWithdraw {
-	return &DelegationWithdraw{
+) DelegationWithdraw {
+	return DelegationWithdraw{
 		delegationID:      delegationID,
 		unDelegateAmount:  unDelegateAmount,
 		unDelegatedHeight: createdHeight,
@@ -155,8 +155,8 @@ func NewDelegationWithdrawWithoutLockup(
 	unDelegateAmount,
 	createdHeight,
 	createdAt int64,
-) *DelegationWithdraw {
-	return &DelegationWithdraw{
+) DelegationWithdraw {
+	return DelegationWithdraw{
 		delegationID:      delegationID,
 		unDelegateAmount:  unDelegateAmount,
 		unDelegatedHeight: createdHeight,
@@ -168,20 +168,3 @@ func NewDelegationWithdrawWithoutLockup(
 	}
 }
 
-// Clone creates a deep copy of the delegation withdraw.
-func (d *DelegationWithdraw) Clone() *DelegationWithdraw {
-	if d == nil {
-		return nil
-	}
-
-	return &DelegationWithdraw{
-		delegationID:      d.delegationID,
-		unDelegateAmount:  d.unDelegateAmount,
-		unDelegatedHeight: d.unDelegatedHeight,
-		unDelegatedAt:     d.unDelegatedAt,
-		collectedAmount:   d.collectedAmount,
-		collectableTime:   d.collectableTime,
-		collectedAt:       d.collectedAt,
-		collected:         d.collected,
-	}
-}

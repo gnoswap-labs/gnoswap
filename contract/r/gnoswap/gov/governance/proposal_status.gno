@@ -92,9 +92,24 @@ func (s *ProposalStatus) Clone() *ProposalStatus {
 		return nil
 	}
 
+	var schedule *ProposalScheduleStatus
+	if s.schedule != nil {
+		copied := *s.schedule
+		schedule = &copied
+	}
+	var actionStatus *ProposalActionStatus
+	if s.actionStatus != nil {
+		copied := *s.actionStatus
+		actionStatus = &copied
+	}
+	var voteStatus *ProposalVoteStatus
+	if s.voteStatus != nil {
+		copied := *s.voteStatus
+		voteStatus = &copied
+	}
 	return &ProposalStatus{
-		schedule:     s.schedule.Clone(),
-		actionStatus: s.actionStatus.Clone(),
-		voteStatus:   s.voteStatus.Clone(),
+		schedule:     schedule,
+		actionStatus: actionStatus,
+		voteStatus:   voteStatus,
 	}
 }

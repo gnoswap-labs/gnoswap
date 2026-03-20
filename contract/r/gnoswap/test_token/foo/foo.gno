@@ -51,12 +51,12 @@ func TransferFrom(cur realm, from, to address, amount int64) {
 }
 
 func Mint(cur realm, to address, amount int64) {
-	owner.AssertOwnedByPrevious()
+	owner.AssertOwned()
 	checkErr(privateLedger.Mint(to, amount))
 }
 
 func Burn(cur realm, from address, amount int64) {
-	owner.AssertOwnedByPrevious()
+	owner.AssertOwned()
 	checkErr(privateLedger.Burn(from, amount))
 }
 

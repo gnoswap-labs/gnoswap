@@ -12,9 +12,9 @@ func TestEncodeUint(t *testing.T) {
 		input    uint64
 		expected string
 	}{
-		{"minimum value", 0, "00000000000000000000"},
-		{"normal value", 12345, "00000000000000012345"},
-		{"maximum value", 18446744073709551615, "18446744073709551615"},
+		{"minimum value", 0, "0000000"},
+		{"normal value", 12345, "0000c1s"},
+		{"maximum value", 18446744073709551615, "zzzzzzzzzzzzz"},
 	}
 
 	for _, tt := range tests {
@@ -34,9 +34,9 @@ func TestEncodeInt64(t *testing.T) {
 			input    int64
 			expected string
 		}{
-			{"zero", 0, "00000000000000000000"},
-			{"normal value", 12345, "00000000000000012345"},
-			{"large value", 9223372036854775807, "09223372036854775807"}, // int64 max
+			{"zero", 0, "0000000"},
+			{"normal value", 12345, "0000c1s"},
+			{"large value", 9223372036854775807, "qzzzzzzzzzzzz"}, // int64 max
 		}
 
 		for _, tt := range tests {
@@ -72,9 +72,9 @@ func TestDecodeUint(t *testing.T) {
 			input    string
 			expected uint64
 		}{
-			{"minimum", "00000000000000000000", 0},
-			{"normal", "00000000000000012345", 12345},
-			{"maximum", "18446744073709551615", 18446744073709551615},
+			{"minimum", "0000000", 0},
+			{"normal", "0000c1s", 12345},
+			{"maximum", "zzzzzzzzzzzzz", 18446744073709551615},
 		}
 
 		for _, tt := range tests {
@@ -89,10 +89,10 @@ func TestDecodeUint(t *testing.T) {
 
 	t.Run("invalid inputs should panic", func(t *testing.T) {
 		invalidInputs := []string{
-			"invalid",
-			"18446744073709551616", // overflow
+			"!!!",                  // non-cford32 characters
+			"18446744073709551616", // non-cford32 digit
 			"",                     // empty
-			"abc123",               // mixed
+			"abc123!",              // mixed with invalid char
 		}
 
 		for _, input := range invalidInputs {

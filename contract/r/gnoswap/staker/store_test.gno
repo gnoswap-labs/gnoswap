@@ -735,7 +735,7 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
+func TestStoreSetAndGetPoolTierState(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFn      func(IStakerStore)
@@ -744,420 +744,68 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 		panicMessage string
 	}{
 		{
-			name: "set and get pool tier memberships successfully",
+			name: "set and get pool tier state successfully",
 			setupFn: func(ss IStakerStore) {
-				memberships := avl.NewTree()
-				ss.SetPoolTierMemberships(memberships)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierMembershipsStoreKey(), "should have pool tier memberships after setting")
-				retrieved := ss.GetPoolTierMemberships()
-				uassert.NotEqual(t, nil, retrieved)
-			},
-		},
-		{
-			name: "should not have pool tier memberships initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierMembershipsStoreKey(), "should not have pool tier memberships initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier memberships",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierMemberships()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier memberships",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierRatio(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier ratio successfully",
-			setupFn: func(ss IStakerStore) {
-				ratio := TierRatio{100, 200, 300}
-				ss.SetPoolTierRatio(ratio)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierRatioStoreKey(), "should have pool tier ratio after setting")
-				retrieved := ss.GetPoolTierRatio()
-				uassert.Equal(t, uint64(100), retrieved.Tier1)
-				uassert.Equal(t, uint64(200), retrieved.Tier2)
-				uassert.Equal(t, uint64(300), retrieved.Tier3)
-			},
-		},
-		{
-			name: "should not have pool tier ratio initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierRatioStoreKey(), "should not have pool tier ratio initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier ratio",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierRatio()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier ratio",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier counts successfully",
-			setupFn: func(ss IStakerStore) {
-				counts := [AllTierCount]uint64{10, 20, 30}
-				ss.SetPoolTierCounts(counts)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierCountsStoreKey(), "should have pool tier counts after setting")
-				retrieved := ss.GetPoolTierCounts()
-				uassert.Equal(t, uint64(10), retrieved[0])
-				uassert.Equal(t, uint64(20), retrieved[1])
-				uassert.Equal(t, uint64(30), retrieved[2])
-			},
-		},
-		{
-			name: "should not have pool tier counts initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierCountsStoreKey(), "should not have pool tier counts initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier counts",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierCounts()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier counts",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier last reward cache timestamp successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierLastRewardCacheTimestamp(1234567890)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierLastRewardCacheTimestampStoreKey(), "should have pool tier last reward cache timestamp after setting")
-				retrieved := ss.GetPoolTierLastRewardCacheTimestamp()
-				uassert.Equal(t, int64(1234567890), retrieved)
-			},
-		},
-		{
-			name: "should not have pool tier last reward cache timestamp initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierLastRewardCacheTimestampStoreKey(), "should not have pool tier last reward cache timestamp initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier last reward cache timestamp",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierLastRewardCacheTimestamp()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier last reward cache timestamp",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierLastRewardCacheHeight(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier last reward cache height successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierLastRewardCacheHeight(1000)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierLastRewardCacheHeightStoreKey(), "should have pool tier last reward cache height after setting")
-				retrieved := ss.GetPoolTierLastRewardCacheHeight()
-				uassert.Equal(t, int64(1000), retrieved)
-			},
-		},
-		{
-			name: "should not have pool tier last reward cache height initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierLastRewardCacheHeightStoreKey(), "should not have pool tier last reward cache height initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier last reward cache height",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierLastRewardCacheHeight()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier last reward cache height",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier current emission successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierCurrentEmission(50000)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierCurrentEmissionStoreKey(), "should have pool tier current emission after setting")
-				retrieved := ss.GetPoolTierCurrentEmission()
-				uassert.Equal(t, int64(50000), retrieved)
-			},
-		},
-		{
-			name: "should not have pool tier current emission initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierCurrentEmissionStoreKey(), "should not have pool tier current emission initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier current emission",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierCurrentEmission()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier current emission",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierGetEmission(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier get emission successfully",
-			setupFn: func(ss IStakerStore) {
-				emissionFunc := func() int64 { return 1000 }
-				ss.SetPoolTierGetEmission(emissionFunc)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierGetEmissionStoreKey(), "should have pool tier get emission after setting")
-				retrieved := ss.GetPoolTierGetEmission()
-				uassert.NotEqual(t, nil, retrieved)
-				uassert.Equal(t, int64(1000), retrieved())
-			},
-		},
-		{
-			name: "should not have pool tier get emission initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierGetEmissionStoreKey(), "should not have pool tier get emission initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier get emission",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierGetEmission()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier get emission",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier get halving blocks in range successfully",
-			setupFn: func(ss IStakerStore) {
-				halvingFunc := func(start, end int64) ([]int64, []int64) {
-					return []int64{100, 200}, []int64{10, 20}
+				state := &PoolTierState{
+					Membership:              *avl.NewTree(),
+					TierRatio:               TierRatio{100, 200, 300},
+					Counts:                  [AllTierCount]uint64{10, 20, 30, 0},
+					LastRewardCacheTimestamp: 1234567890,
+					LastRewardCacheHeight:   1000,
+					CurrentEmission:         50000,
 				}
-				ss.SetPoolTierGetHalvingBlocksInRange(halvingFunc)
+				ss.SetPoolTierState(state)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierGetHalvingBlocksInRangeStoreKey(), "should have pool tier get halving blocks in range after setting")
-				retrieved := ss.GetPoolTierGetHalvingBlocksInRange()
+				uassert.True(t, ss.HasPoolTierStateStoreKey(), "should have pool tier state after setting")
+				retrieved := ss.GetPoolTierState()
 				uassert.NotEqual(t, nil, retrieved)
+				uassert.NotEqual(t, nil, retrieved.Membership)
+				uassert.Equal(t, uint64(100), retrieved.TierRatio.Tier1)
+				uassert.Equal(t, uint64(200), retrieved.TierRatio.Tier2)
+				uassert.Equal(t, uint64(300), retrieved.TierRatio.Tier3)
+				uassert.Equal(t, uint64(10), retrieved.Counts[0])
+				uassert.Equal(t, uint64(20), retrieved.Counts[1])
+				uassert.Equal(t, uint64(30), retrieved.Counts[2])
+				uassert.Equal(t, int64(1234567890), retrieved.LastRewardCacheTimestamp)
+				uassert.Equal(t, int64(1000), retrieved.LastRewardCacheHeight)
+				uassert.Equal(t, int64(50000), retrieved.CurrentEmission)
+			},
+		},
+		{
+			name: "should not have pool tier state initially",
+			testFn: func(t *testing.T, ss IStakerStore) {
+				uassert.False(t, ss.HasPoolTierStateStoreKey(), "should not have pool tier state initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized pool tier state",
+			testFn: func(t *testing.T, ss IStakerStore) {
+				ss.GetPoolTierState()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized pool tier state",
+		},
+		{
+			name: "set pool tier state with function closures",
+			setupFn: func(ss IStakerStore) {
+				state := &PoolTierState{
+					Membership:  *avl.NewTree(),
+					TierRatio:   TierRatio{100, 200, 300},
+					GetEmission: func() int64 { return 1000 },
+					GetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
+						return []int64{100, 200}, []int64{10, 20}
+					},
+				}
+				ss.SetPoolTierState(state)
+			},
+			testFn: func(t *testing.T, ss IStakerStore) {
+				retrieved := ss.GetPoolTierState()
+				uassert.NotEqual(t, nil, retrieved.GetEmission)
+				uassert.Equal(t, int64(1000), retrieved.GetEmission())
 
-				blocks, heights := retrieved(0, 1000)
+				uassert.NotEqual(t, nil, retrieved.GetHalvingBlocksInRange)
+				blocks, heights := retrieved.GetHalvingBlocksInRange(0, 1000)
 				uassert.Equal(t, 2, len(blocks))
 				uassert.Equal(t, 2, len(heights))
 				uassert.Equal(t, int64(100), blocks[0])
@@ -1165,18 +813,33 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(t *testing.T) {
 			},
 		},
 		{
-			name: "should not have pool tier get halving blocks in range initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierGetHalvingBlocksInRangeStoreKey(), "should not have pool tier get halving blocks in range initially")
+			name: "update pool tier state preserves existing fields",
+			setupFn: func(ss IStakerStore) {
+				state := &PoolTierState{
+					Membership:              *avl.NewTree(),
+					TierRatio:               TierRatio{100, 200, 300},
+					Counts:                  [AllTierCount]uint64{5, 10, 15, 0},
+					LastRewardCacheTimestamp: 1000,
+					LastRewardCacheHeight:   500,
+					CurrentEmission:         50000,
+				}
+				ss.SetPoolTierState(state)
+
+				// update only some fields
+				retrieved := ss.GetPoolTierState()
+				retrieved.CurrentEmission = 75000
+				retrieved.LastRewardCacheTimestamp = 2000
+				ss.SetPoolTierState(retrieved)
 			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier get halving blocks in range",
 			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierGetHalvingBlocksInRange()
+				retrieved := ss.GetPoolTierState()
+				uassert.Equal(t, int64(75000), retrieved.CurrentEmission)
+				uassert.Equal(t, int64(2000), retrieved.LastRewardCacheTimestamp)
+				// unchanged fields
+				uassert.Equal(t, uint64(100), retrieved.TierRatio.Tier1)
+				uassert.Equal(t, int64(500), retrieved.LastRewardCacheHeight)
+				uassert.Equal(t, uint64(5), retrieved.Counts[0])
 			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier get halving blocks in range",
 		},
 	}
 

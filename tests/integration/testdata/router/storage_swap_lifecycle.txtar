@@ -1,0 +1,124 @@
+# Storage measurement: Router ExactInSwapRoute lifecycle
+#
+# Measures STORAGE DELTA for the most frequent user function: ExactInSwapRoute.
+# Compares 1st swap (initial state change), reverse swap, and 2nd swap (steady-state).
+
+loadpkg gno.land/p/nt/avl/v0
+loadpkg gno.land/p/nt/ufmt/v0
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable/v0
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/referral
+
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
+
+loadpkg gno.land/r/gnoswap/protocol_fee
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+
+loadpkg gno.land/r/gnoswap/pool
+loadpkg gno.land/r/gnoswap/position
+loadpkg gno.land/r/gnoswap/router
+
+loadpkg gno.land/r/gnoswap/pool/v1
+loadpkg gno.land/r/gnoswap/position/v1
+loadpkg gno.land/r/gnoswap/router/v1
+
+adduser gnoswap
+patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
+
+adduser test_admin
+patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
+
+adduser user1
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+
+## start a new node
+gnoland start
+
+### ============================================================
+### SETUP: Fund accounts + transfer tokens
+### ============================================================
+gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+
+### Transfer GNS tokens
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ============================================================
+### SETUP: CreatePool (WUGNOT:GNS:3000, tick=0)
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK!'
+
+### ============================================================
+### SETUP: Mint position (provide liquidity for swaps)
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+
+### ============================================================
+### SETUP: Approve tokens to router
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ============================================================
+### MEASUREMENT 1: ExactInSwapRoute — 1st swap (GNS → WUGNOT)
+### First swap on this pool; includes initial state change costs.
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 1000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:'
+stdout 'STORAGE DELTA:'
+
+### ============================================================
+### MEASUREMENT 2: ExactInSwapRoute — reverse swap (WUGNOT → GNS)
+### Tests reverse direction cost.
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "1000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:'
+stdout 'STORAGE DELTA:'
+
+### ============================================================
+### MEASUREMENT 3: ExactInSwapRoute — 2nd swap same direction (GNS → WUGNOT)
+### Steady-state cost: no first-time state creation, just updates.
+### This is the most representative cost for repeated user operations.
+### ============================================================
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 1000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:'
+stdout 'STORAGE DELTA:'
