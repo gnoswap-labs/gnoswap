@@ -1,0 +1,476 @@
+## Store Read Cost Measurement
+## Measures gas cost of reading from persistent storage
+## Two axes: (1) number of reads per tx, (2) size of stored data
+## No storage writes — pure read cost isolation
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/storeread -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== SETUP: populate various data sizes ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func Setup1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func Setup2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -max-deposit 2000000000ugnot -memo "" test1
+
+### ========== AXIS 1: READ COUNT (same small value) ========== ###
+
+# Read 1 int from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadInt1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 10 ints from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadInt10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 100 ints from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadInt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 struct from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStruct1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 10 structs from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStruct10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 100 structs from avl.Tree
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStruct100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 2: DATA SIZE (single read) ========== ###
+
+# Read small value (int)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read medium value (struct, 5 ptr fields)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadMedium -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read large value (struct, 10 ptr fields)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read nested value (struct with inner *avl.Tree of 10 entries)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read deep nested value (struct with inner *avl.Tree of 100 entries)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadDeepNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 2b: DATA SIZE — value type vs pointer ========== ###
+
+# Read struct with 5× [4]uint64 (value)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadValue5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read struct with 5× *BigInt (pointer)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadPtr5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read struct with 10× [4]uint64 (value)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadValue10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read struct with 10× *BigInt (pointer)
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadPtr10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== TREE SIZE: same read, different tree cardinality ========== ###
+
+# Read 1 int from tree of 10
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadFromTree10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 int from tree of 100
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadFromTree100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 int from tree of 1000
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadFromTree1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 struct from tree of 10
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStructFromTree10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 struct from tree of 100
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStructFromTree100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read 1 struct from tree of 1000
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func ReadStructFromTree1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== REPEATED READ: same key multiple times ========== ###
+
+# Read same int 1 time
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func RepeatRead1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read same int 10 times
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func RepeatRead10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Read same int 100 times
+gnokey maketx call -pkgpath gno.land/r/test/storeread -func RepeatRead100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/storeread"
+gno = "0.9"
+-- main.gno --
+package storeread
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+type SmallStruct struct {
+	A int
+	B string
+}
+
+type MediumStruct struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+	Label string
+}
+
+type LargeStruct struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+	F5 *BigInt
+	F6 *BigInt
+	F7 *BigInt
+	F8 *BigInt
+	F9 *BigInt
+	Label string
+}
+
+type NestedStruct struct {
+	Name  string
+	Inner *avl.Tree // key -> *BigInt
+}
+
+type Value5 struct {
+	F0 [4]uint64
+	F1 [4]uint64
+	F2 [4]uint64
+	F3 [4]uint64
+	F4 [4]uint64
+}
+
+type Ptr5 struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+}
+
+type Value10 struct {
+	F0 [4]uint64
+	F1 [4]uint64
+	F2 [4]uint64
+	F3 [4]uint64
+	F4 [4]uint64
+	F5 [4]uint64
+	F6 [4]uint64
+	F7 [4]uint64
+	F8 [4]uint64
+	F9 [4]uint64
+}
+
+type Ptr10 struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+	F5 *BigInt
+	F6 *BigInt
+	F7 *BigInt
+	F8 *BigInt
+	F9 *BigInt
+}
+
+// ============================================================
+// Storage trees of varying sizes
+// ============================================================
+
+var (
+	intTree     *avl.Tree
+	structTree  *avl.Tree
+	sizeData    *avl.Tree // key: "small","medium","large","nested","deepnested","value5","ptr5","value10","ptr10"
+	tree10      *avl.Tree
+	tree100     *avl.Tree
+	tree1000    *avl.Tree
+	stTree10    *avl.Tree
+	stTree100   *avl.Tree
+	stTree1000  *avl.Tree
+	sink        any
+)
+
+func Setup1(cur realm) {
+	// int tree with 100 entries
+	intTree = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		intTree.Set("int_"+strconv.Itoa(i), i*100)
+	}
+
+	// struct tree with 100 entries
+	structTree = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		structTree.Set("st_"+strconv.Itoa(i), &MediumStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i*10)),
+			F2: NewBigInt(uint64(i*100)), F3: NewBigInt(uint64(i*1000)),
+			F4: NewBigInt(uint64(i*10000)), Label: "entry_" + strconv.Itoa(i),
+		})
+	}
+
+	// Various sized data
+	sizeData = avl.NewTree()
+	sizeData.Set("small", 42)
+	sizeData.Set("medium", &MediumStruct{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), Label: "medium",
+	})
+	sizeData.Set("large", &LargeStruct{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), F5: NewBigInt(600),
+		F6: NewBigInt(700), F7: NewBigInt(800), F8: NewBigInt(900),
+		F9: NewBigInt(1000), Label: "large",
+	})
+
+	nested10 := avl.NewTree()
+	for i := 0; i < 10; i++ {
+		nested10.Set("k_"+strconv.Itoa(i), NewBigInt(uint64(i)))
+	}
+	sizeData.Set("nested", &NestedStruct{Name: "nested10", Inner: nested10})
+
+	nested100 := avl.NewTree()
+	for i := 0; i < 100; i++ {
+		nested100.Set("k_"+strconv.Itoa(i), NewBigInt(uint64(i)))
+	}
+	sizeData.Set("deepnested", &NestedStruct{Name: "nested100", Inner: nested100})
+
+	sizeData.Set("value5", &Value5{
+		F0: [4]uint64{100, 0, 0, 0}, F1: [4]uint64{200, 0, 0, 0},
+		F2: [4]uint64{300, 0, 0, 0}, F3: [4]uint64{400, 0, 0, 0},
+		F4: [4]uint64{500, 0, 0, 0},
+	})
+	sizeData.Set("ptr5", &Ptr5{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500),
+	})
+	sizeData.Set("value10", &Value10{
+		F0: [4]uint64{100, 0, 0, 0}, F1: [4]uint64{200, 0, 0, 0},
+		F2: [4]uint64{300, 0, 0, 0}, F3: [4]uint64{400, 0, 0, 0},
+		F4: [4]uint64{500, 0, 0, 0}, F5: [4]uint64{600, 0, 0, 0},
+		F6: [4]uint64{700, 0, 0, 0}, F7: [4]uint64{800, 0, 0, 0},
+		F8: [4]uint64{900, 0, 0, 0}, F9: [4]uint64{1000, 0, 0, 0},
+	})
+	sizeData.Set("ptr10", &Ptr10{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), F5: NewBigInt(600),
+		F6: NewBigInt(700), F7: NewBigInt(800), F8: NewBigInt(900),
+		F9: NewBigInt(1000),
+	})
+
+	// Trees of different cardinalities (int values)
+	tree10 = avl.NewTree()
+	for i := 0; i < 10; i++ {
+		tree10.Set("k_"+strconv.Itoa(i), i)
+	}
+	tree100 = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree100.Set("k_"+strconv.Itoa(i), i)
+	}
+	tree1000 = avl.NewTree()
+	for i := 0; i < 1000; i++ {
+		tree1000.Set("k_"+strconv.Itoa(i), i)
+	}
+}
+
+func Setup2(cur realm) {
+	// Trees of different cardinalities (struct values)
+	stTree10 = avl.NewTree()
+	for i := 0; i < 10; i++ {
+		stTree10.Set("k_"+strconv.Itoa(i), &MediumStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+	stTree100 = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		stTree100.Set("k_"+strconv.Itoa(i), &MediumStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+	stTree1000 = avl.NewTree()
+	for i := 0; i < 1000; i++ {
+		stTree1000.Set("k_"+strconv.Itoa(i), &MediumStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+}
+
+// ============================================================
+// AXIS 1: Read count (same small value)
+// ============================================================
+
+func ReadInt1(cur realm) {
+	v, _ := intTree.Get("int_0")
+	sink = v
+}
+
+func ReadInt10(cur realm) {
+	for i := 0; i < 10; i++ {
+		v, _ := intTree.Get("int_" + strconv.Itoa(i))
+		sink = v
+	}
+}
+
+func ReadInt100(cur realm) {
+	for i := 0; i < 100; i++ {
+		v, _ := intTree.Get("int_" + strconv.Itoa(i))
+		sink = v
+	}
+}
+
+func ReadStruct1(cur realm) {
+	v, _ := structTree.Get("st_0")
+	sink = v
+}
+
+func ReadStruct10(cur realm) {
+	for i := 0; i < 10; i++ {
+		v, _ := structTree.Get("st_" + strconv.Itoa(i))
+		sink = v
+	}
+}
+
+func ReadStruct100(cur realm) {
+	for i := 0; i < 100; i++ {
+		v, _ := structTree.Get("st_" + strconv.Itoa(i))
+		sink = v
+	}
+}
+
+// ============================================================
+// AXIS 2: Data size (single read)
+// ============================================================
+
+func ReadSmall(cur realm) {
+	v, _ := sizeData.Get("small")
+	sink = v
+}
+
+func ReadMedium(cur realm) {
+	v, _ := sizeData.Get("medium")
+	sink = v
+}
+
+func ReadLarge(cur realm) {
+	v, _ := sizeData.Get("large")
+	sink = v
+}
+
+func ReadNested(cur realm) {
+	v, _ := sizeData.Get("nested")
+	n := v.(*NestedStruct)
+	// Access inner tree to force deserialization
+	n.Inner.Get("k_0")
+	sink = n
+}
+
+func ReadDeepNested(cur realm) {
+	v, _ := sizeData.Get("deepnested")
+	n := v.(*NestedStruct)
+	n.Inner.Get("k_0")
+	sink = n
+}
+
+// ============================================================
+// AXIS 2b: value type vs pointer (read cost)
+// ============================================================
+
+func ReadValue5(cur realm) {
+	v, _ := sizeData.Get("value5")
+	sink = v
+}
+
+func ReadPtr5(cur realm) {
+	v, _ := sizeData.Get("ptr5")
+	sink = v
+}
+
+func ReadValue10(cur realm) {
+	v, _ := sizeData.Get("value10")
+	sink = v
+}
+
+func ReadPtr10(cur realm) {
+	v, _ := sizeData.Get("ptr10")
+	sink = v
+}
+
+// ============================================================
+// TREE SIZE: same read, different tree cardinality
+// ============================================================
+
+func ReadFromTree10(cur realm) {
+	v, _ := tree10.Get("k_5")
+	sink = v
+}
+
+func ReadFromTree100(cur realm) {
+	v, _ := tree100.Get("k_50")
+	sink = v
+}
+
+func ReadFromTree1000(cur realm) {
+	v, _ := tree1000.Get("k_500")
+	sink = v
+}
+
+func ReadStructFromTree10(cur realm) {
+	v, _ := stTree10.Get("k_5")
+	sink = v
+}
+
+func ReadStructFromTree100(cur realm) {
+	v, _ := stTree100.Get("k_50")
+	sink = v
+}
+
+func ReadStructFromTree1000(cur realm) {
+	v, _ := stTree1000.Get("k_500")
+	sink = v
+}
+
+// ============================================================
+// REPEATED READ: same key multiple times
+// ============================================================
+
+func RepeatRead1(cur realm) {
+	v, _ := intTree.Get("int_0")
+	sink = v
+}
+
+func RepeatRead10(cur realm) {
+	for i := 0; i < 10; i++ {
+		v, _ := intTree.Get("int_0")
+		sink = v
+	}
+}
+
+func RepeatRead100(cur realm) {
+	for i := 0; i < 100; i++ {
+		v, _ := intTree.Get("int_0")
+		sink = v
+	}
+}

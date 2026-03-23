@@ -1,0 +1,519 @@
+## Store Write Cost Measurement
+## Measures gas/storage cost of writing to persistent storage
+## Two axes: (1) number of writes per tx, (2) size of written data
+## Compares: create new vs update existing, value vs pointer, varying tree size
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/storewrite -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== SETUP ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func Setup -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 1: WRITE COUNT (create new entries) ========== ###
+
+# Create 1 int entry
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateInt1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create 10 int entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateInt10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create 100 int entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateInt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create 1 struct entry
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateStruct1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create 10 struct entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateStruct10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create 100 struct entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func CreateStruct100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 2: UPDATE COUNT (existing entries) ========== ###
+
+# Update 1 int entry
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInt1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 10 int entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInt10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 100 int entries
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 1 struct (mutate field)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateStruct1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 10 structs (mutate field)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateStruct10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 100 structs (mutate field)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateStruct100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 3: DATA SIZE (single write) ========== ###
+
+# Write int (small)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteSizeInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write struct 5 ptr fields (medium)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteSizePtr5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write struct 10 ptr fields (large)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteSizePtr10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write struct 5× [4]uint64 (value, medium)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteSizeVal5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write struct 10× [4]uint64 (value, large)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteSizeVal10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 4: TREE SIZE effect on single write ========== ###
+
+# Write 1 entry to tree of 10
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteToTree10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write 1 entry to tree of 100
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteToTree100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write 1 entry to tree of 1000
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func WriteToTree1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 1 existing entry in tree of 10
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInTree10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 1 existing entry in tree of 100
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInTree100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update 1 existing entry in tree of 1000
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func UpdateInTree1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 5: CREATE vs UPDATE vs REPLACE ========== ###
+
+# Create new struct (tree.Set new key)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func OpCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update struct field (mutate existing pointer target)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func OpMutate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Replace struct (tree.Set same key, new value)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func OpReplace -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete entry (tree.Remove)
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func OpDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AXIS 6: MIXED READ+WRITE per tx ========== ###
+
+# 1 read + 1 write
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func MixedRW1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# 10 reads + 1 write
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func MixedR10W1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# 1 read + 10 writes
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func MixedR1W10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# 10 reads + 10 writes
+gnokey maketx call -pkgpath gno.land/r/test/storewrite -func MixedR10W10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/storewrite"
+gno = "0.9"
+-- main.gno --
+package storewrite
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+type MedStruct struct {
+	F0    *BigInt
+	F1    *BigInt
+	F2    *BigInt
+	F3    *BigInt
+	F4    *BigInt
+	Label string
+}
+
+type Val5 struct {
+	F0 [4]uint64
+	F1 [4]uint64
+	F2 [4]uint64
+	F3 [4]uint64
+	F4 [4]uint64
+}
+
+type Val10 struct {
+	F0 [4]uint64
+	F1 [4]uint64
+	F2 [4]uint64
+	F3 [4]uint64
+	F4 [4]uint64
+	F5 [4]uint64
+	F6 [4]uint64
+	F7 [4]uint64
+	F8 [4]uint64
+	F9 [4]uint64
+}
+
+type Ptr10 struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+	F5 *BigInt
+	F6 *BigInt
+	F7 *BigInt
+	F8 *BigInt
+	F9 *BigInt
+}
+
+var (
+	mainTree  *avl.Tree  // primary tree for count/size tests
+	tree10    *avl.Tree
+	tree100   *avl.Tree
+	tree1000  *avl.Tree
+	opTree    *avl.Tree  // for create/mutate/replace/delete
+	mixTree   *avl.Tree  // for mixed r/w
+	counter   int
+	sink      any
+)
+
+func Setup(cur realm) {
+	// Main tree with 100 int and 100 struct entries
+	mainTree = avl.NewTree()
+	for i := 0; i < 200; i++ {
+		mainTree.Set("int_"+strconv.Itoa(i), i*100)
+	}
+	for i := 0; i < 200; i++ {
+		mainTree.Set("st_"+strconv.Itoa(i), &MedStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i*10)),
+			F2: NewBigInt(uint64(i*100)), F3: NewBigInt(uint64(i*1000)),
+			F4: NewBigInt(uint64(i*10000)), Label: "s" + strconv.Itoa(i),
+		})
+	}
+
+	// Varying tree sizes
+	tree10 = avl.NewTree()
+	for i := 0; i < 10; i++ {
+		tree10.Set("k_"+strconv.Itoa(i), &MedStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+	tree100 = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree100.Set("k_"+strconv.Itoa(i), &MedStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+	tree1000 = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree1000.Set("k_"+strconv.Itoa(i), &MedStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: strconv.Itoa(i),
+		})
+	}
+
+	// Op tree for create/mutate/replace/delete tests
+	opTree = avl.NewTree()
+	for i := 0; i < 50; i++ {
+		opTree.Set("op_"+strconv.Itoa(i), &MedStruct{
+			F0: NewBigInt(uint64(i)), F1: NewBigInt(uint64(i)),
+			F2: NewBigInt(uint64(i)), F3: NewBigInt(uint64(i)),
+			F4: NewBigInt(uint64(i)), Label: "op" + strconv.Itoa(i),
+		})
+	}
+
+	// Mixed r/w tree
+	mixTree = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		mixTree.Set("mix_"+strconv.Itoa(i), i*100)
+	}
+
+	counter = 0
+}
+
+// ============================================================
+// AXIS 1: Write count (create new)
+// ============================================================
+
+func CreateInt1(cur realm) {
+	mainTree.Set("new_int_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func CreateInt10(cur realm) {
+	for i := 0; i < 10; i++ {
+		mainTree.Set("new_int_"+strconv.Itoa(counter), 42+i)
+		counter++
+	}
+}
+
+func CreateInt100(cur realm) {
+	for i := 0; i < 100; i++ {
+		mainTree.Set("new_int_"+strconv.Itoa(counter), 42+i)
+		counter++
+	}
+}
+
+func CreateStruct1(cur realm) {
+	mainTree.Set("new_st_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), Label: "new",
+	})
+	counter++
+}
+
+func CreateStruct10(cur realm) {
+	for i := 0; i < 10; i++ {
+		mainTree.Set("new_st_"+strconv.Itoa(counter), &MedStruct{
+			F0: NewBigInt(uint64(100+i)), F1: NewBigInt(uint64(200+i)),
+			F2: NewBigInt(uint64(300+i)), F3: NewBigInt(uint64(400+i)),
+			F4: NewBigInt(uint64(500+i)), Label: "new" + strconv.Itoa(i),
+		})
+		counter++
+	}
+}
+
+func CreateStruct100(cur realm) {
+	for i := 0; i < 100; i++ {
+		mainTree.Set("new_st_"+strconv.Itoa(counter), &MedStruct{
+			F0: NewBigInt(uint64(100+i)), F1: NewBigInt(uint64(200+i)),
+			F2: NewBigInt(uint64(300+i)), F3: NewBigInt(uint64(400+i)),
+			F4: NewBigInt(uint64(500+i)), Label: "new" + strconv.Itoa(i),
+		})
+		counter++
+	}
+}
+
+// ============================================================
+// AXIS 2: Update count (existing entries)
+// ============================================================
+
+func UpdateInt1(cur realm) {
+	mainTree.Set("int_0", 99999)
+}
+
+func UpdateInt10(cur realm) {
+	for i := 0; i < 10; i++ {
+		mainTree.Set("int_"+strconv.Itoa(i), 99999+i)
+	}
+}
+
+func UpdateInt100(cur realm) {
+	for i := 0; i < 100; i++ {
+		mainTree.Set("int_"+strconv.Itoa(i), 99999+i)
+	}
+}
+
+func UpdateStruct1(cur realm) {
+	if v, ok := mainTree.Get("st_0"); ok {
+		s := v.(*MedStruct)
+		s.F0 = NewBigInt(99999)
+	}
+}
+
+func UpdateStruct10(cur realm) {
+	for i := 0; i < 10; i++ {
+		if v, ok := mainTree.Get("st_" + strconv.Itoa(i)); ok {
+			s := v.(*MedStruct)
+			s.F0 = NewBigInt(uint64(99999 + i))
+		}
+	}
+}
+
+func UpdateStruct100(cur realm) {
+	for i := 0; i < 100; i++ {
+		if v, ok := mainTree.Get("st_" + strconv.Itoa(i)); ok {
+			s := v.(*MedStruct)
+			s.F0 = NewBigInt(uint64(99999 + i))
+		}
+	}
+}
+
+// ============================================================
+// AXIS 3: Data size (single create)
+// ============================================================
+
+func WriteSizeInt(cur realm) {
+	mainTree.Set("sz_int_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func WriteSizePtr5(cur realm) {
+	mainTree.Set("sz_p5_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), Label: "p5",
+	})
+	counter++
+}
+
+func WriteSizePtr10(cur realm) {
+	mainTree.Set("sz_p10_"+strconv.Itoa(counter), &Ptr10{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), F5: NewBigInt(600),
+		F6: NewBigInt(700), F7: NewBigInt(800), F8: NewBigInt(900),
+		F9: NewBigInt(1000),
+	})
+	counter++
+}
+
+func WriteSizeVal5(cur realm) {
+	mainTree.Set("sz_v5_"+strconv.Itoa(counter), &Val5{
+		F0: [4]uint64{100, 0, 0, 0}, F1: [4]uint64{200, 0, 0, 0},
+		F2: [4]uint64{300, 0, 0, 0}, F3: [4]uint64{400, 0, 0, 0},
+		F4: [4]uint64{500, 0, 0, 0},
+	})
+	counter++
+}
+
+func WriteSizeVal10(cur realm) {
+	mainTree.Set("sz_v10_"+strconv.Itoa(counter), &Val10{
+		F0: [4]uint64{100, 0, 0, 0}, F1: [4]uint64{200, 0, 0, 0},
+		F2: [4]uint64{300, 0, 0, 0}, F3: [4]uint64{400, 0, 0, 0},
+		F4: [4]uint64{500, 0, 0, 0}, F5: [4]uint64{600, 0, 0, 0},
+		F6: [4]uint64{700, 0, 0, 0}, F7: [4]uint64{800, 0, 0, 0},
+		F8: [4]uint64{900, 0, 0, 0}, F9: [4]uint64{1000, 0, 0, 0},
+	})
+	counter++
+}
+
+// ============================================================
+// AXIS 4: Tree size effect on single write
+// ============================================================
+
+func WriteToTree10(cur realm) {
+	tree10.Set("new_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(999), F1: NewBigInt(999), F2: NewBigInt(999),
+		F3: NewBigInt(999), F4: NewBigInt(999), Label: "new",
+	})
+	counter++
+}
+
+func WriteToTree100(cur realm) {
+	tree100.Set("new_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(999), F1: NewBigInt(999), F2: NewBigInt(999),
+		F3: NewBigInt(999), F4: NewBigInt(999), Label: "new",
+	})
+	counter++
+}
+
+func WriteToTree1000(cur realm) {
+	tree1000.Set("new_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(999), F1: NewBigInt(999), F2: NewBigInt(999),
+		F3: NewBigInt(999), F4: NewBigInt(999), Label: "new",
+	})
+	counter++
+}
+
+func UpdateInTree10(cur realm) {
+	if v, ok := tree10.Get("k_5"); ok {
+		s := v.(*MedStruct)
+		s.F0 = NewBigInt(88888)
+	}
+}
+
+func UpdateInTree100(cur realm) {
+	if v, ok := tree100.Get("k_50"); ok {
+		s := v.(*MedStruct)
+		s.F0 = NewBigInt(88888)
+	}
+}
+
+func UpdateInTree1000(cur realm) {
+	if v, ok := tree1000.Get("k_50"); ok {
+		s := v.(*MedStruct)
+		s.F0 = NewBigInt(88888)
+	}
+}
+
+// ============================================================
+// AXIS 5: Create vs Mutate vs Replace vs Delete
+// ============================================================
+
+func OpCreate(cur realm) {
+	opTree.Set("op_new_"+strconv.Itoa(counter), &MedStruct{
+		F0: NewBigInt(111), F1: NewBigInt(222), F2: NewBigInt(333),
+		F3: NewBigInt(444), F4: NewBigInt(555), Label: "created",
+	})
+	counter++
+}
+
+func OpMutate(cur realm) {
+	if v, ok := opTree.Get("op_0"); ok {
+		s := v.(*MedStruct)
+		s.F0 = NewBigInt(77777)
+		s.F1 = NewBigInt(88888)
+		s.Label = "mutated"
+	}
+}
+
+func OpReplace(cur realm) {
+	opTree.Set("op_1", &MedStruct{
+		F0: NewBigInt(11111), F1: NewBigInt(22222), F2: NewBigInt(33333),
+		F3: NewBigInt(44444), F4: NewBigInt(55555), Label: "replaced",
+	})
+}
+
+func OpDelete(cur realm) {
+	opTree.Remove("op_2")
+}
+
+// ============================================================
+// AXIS 6: Mixed read + write
+// ============================================================
+
+func MixedRW1(cur realm) {
+	v, _ := mixTree.Get("mix_0")
+	sink = v
+	mixTree.Set("mix_rw_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func MixedR10W1(cur realm) {
+	for i := 0; i < 10; i++ {
+		v, _ := mixTree.Get("mix_" + strconv.Itoa(i))
+		sink = v
+	}
+	mixTree.Set("mix_rw_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func MixedR1W10(cur realm) {
+	v, _ := mixTree.Get("mix_0")
+	sink = v
+	for i := 0; i < 10; i++ {
+		mixTree.Set("mix_rw_"+strconv.Itoa(counter), 42+i)
+		counter++
+	}
+}
+
+func MixedR10W10(cur realm) {
+	for i := 0; i < 10; i++ {
+		v, _ := mixTree.Get("mix_" + strconv.Itoa(i))
+		sink = v
+	}
+	for i := 0; i < 10; i++ {
+		mixTree.Set("mix_rw_"+strconv.Itoa(counter), 42+i)
+		counter++
+	}
+}
