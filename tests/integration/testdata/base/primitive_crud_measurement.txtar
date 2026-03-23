@@ -1,7 +1,7 @@
-## Primitive Type CRUD Storage Measurement
-## N = number of existing pkg-level vars already written (realm state size)
-## Measures: Create / Update (grow & shrink) / Delete for int, uint64, string, bool, []byte
-## Scale factor: N = 1, 100, 1,000
+## Primitive Type Field-by-Field Storage Observation
+## Sets each package-level variable one at a time via setter
+## Observes exact storage delta/gas for each individual change
+## No background populate — minimal realm state
 
 loadpkg gno.land/p/nt/avl/v0
 
@@ -10,164 +10,97 @@ gnoland start
 # Deploy realm
 gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/primcrud -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
 
-### ========== N=1 (minimal realm state) ========== ###
+### ========== BASELINE ========== ###
 
-# Populate 1 background variable
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Populate -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Noop
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create int (N=1)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== INT ========== ###
 
-# Update int grow (N=1): 42 -> max int64
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# int: Set 0 -> 42
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func IntSet42 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update int shrink (N=1): max int64 -> 1
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# int: Set 42 -> 100
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func IntSet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete int (N=1): 1 -> 0
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# int: Set 100 -> max int64
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func IntSetMax -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create string (N=1): "" -> 10 chars
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# int: Set max int64 -> -1
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func IntSetNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update string grow (N=1): 10 -> 1000 chars
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# int: Set -1 -> 0 (reset)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func IntSetZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update string shrink (N=1): 1000 -> 10 chars
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== UINT64 ========== ###
 
-# Delete string (N=1): 10 chars -> ""
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# uint64: Set 0 -> 100
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Uint64Set100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create bool (N=1)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# uint64: Set 100 -> max uint64
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Uint64SetMax -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete bool (N=1)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# uint64: Set max -> 0 (reset)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Uint64SetZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create uint64 (N=1)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== BOOL ========== ###
 
-# Update uint64 grow (N=1): 100 -> max uint64
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateUint64Grow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# bool: Set false -> true
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BoolSetTrue -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete uint64 (N=1)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# bool: Set true -> false
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BoolSetFalse -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create bytes (N=1): nil -> 10 bytes
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== STRING ========== ###
 
-# Update bytes grow (N=1): 10 -> 100 bytes
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateBytesGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set "" -> "hello" (5 chars)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSetShort -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete bytes (N=1): -> nil
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set "hello" -> "hello world!!" (13 chars, grow)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSetMedium -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-### ========== N=100 (medium realm state) ========== ###
+# string: Set 13 chars -> 100 chars (grow)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Populate to 100 background variables
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Populate -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set 100 chars -> 1000 chars (grow large)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create int (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set 1000 chars -> 5 chars (shrink)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringShrinkToShort -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update int grow (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set 5 chars -> same length different content
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSameLen -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update int shrink (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# string: Set -> "" (delete)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func StringSetEmpty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete int (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== []byte ========== ###
 
-# Create string (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# []byte: Set nil -> 10 bytes
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BytesSet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update string grow (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# []byte: Set 10 -> 100 bytes (grow)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BytesSet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update string shrink (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# []byte: Set 100 -> 1000 bytes (grow large)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BytesSet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete string (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# []byte: Set 1000 -> 10 bytes (shrink)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BytesShrinkTo10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Create bool (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# []byte: Set 10 bytes -> nil (delete)
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func BytesSetNil -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete bool (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### ========== MULTIPLE VARS IN ONE TX ========== ###
 
-# Create uint64 (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Set int + string + bool in one tx
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func SetMultiple3 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Update uint64 grow (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateUint64Grow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Set all 5 vars in one tx
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func SetAll5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Delete uint64 (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create bytes (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update bytes grow (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateBytesGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete bytes (N=100)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-### ========== N=1,000 (large realm state) ========== ###
-
-# Populate to 1,000 background variables
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func Populate -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create int (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update int grow (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update int shrink (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateIntShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete int (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create string (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update string grow (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update string shrink (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateStringShrink -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete string (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create bool (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete bool (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create uint64 (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update uint64 grow (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateUint64Grow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete uint64 (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Create bytes (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func CreateBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Update bytes grow (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func UpdateBytesGrow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-
-# Delete bytes (N=1,000)
-gnokey maketx call -pkgpath gno.land/r/test/primcrud -func DeleteBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Reset all 5 vars to zero in one tx
+gnokey maketx call -pkgpath gno.land/r/test/primcrud -func ResetAll5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 -- gnomod.toml --
 module = "gno.land/r/test/primcrud"
@@ -176,15 +109,9 @@ gno = "0.9"
 package primcrud
 
 import (
-	"strconv"
-
-	"gno.land/p/nt/avl/v0"
+	"strings"
 )
 
-// background state: avl.Tree to simulate N existing entries in realm storage
-var bgState *avl.Tree
-
-// target variables for CRUD measurement
 var (
 	storedInt    int
 	storedUint64 uint64
@@ -193,89 +120,93 @@ var (
 	storedBytes  []byte
 )
 
-func Populate(cur realm, n int) {
-	bgState = avl.NewTree()
-	for i := 0; i < n; i++ {
-		bgState.Set("bg_"+strconv.Itoa(i), i)
-	}
+func Empty(cur realm) {}
+
+// ============================================================
+// INT
+// ============================================================
+
+func IntSet42(cur realm)   { storedInt = 42 }
+func IntSet100(cur realm)  { storedInt = 100 }
+func IntSetMax(cur realm)  { storedInt = 9223372036854775807 }
+func IntSetNeg(cur realm)  { storedInt = -1 }
+func IntSetZero(cur realm) { storedInt = 0 }
+
+// ============================================================
+// UINT64
+// ============================================================
+
+func Uint64Set100(cur realm)  { storedUint64 = 100 }
+func Uint64SetMax(cur realm)  { storedUint64 = 18446744073709551615 }
+func Uint64SetZero(cur realm) { storedUint64 = 0 }
+
+// ============================================================
+// BOOL
+// ============================================================
+
+func BoolSetTrue(cur realm)  { storedBool = true }
+func BoolSetFalse(cur realm) { storedBool = false }
+
+// ============================================================
+// STRING
+// ============================================================
+
+func StringSetShort(cur realm)  { storedString = "hello" }
+func StringSetMedium(cur realm) { storedString = "hello world!!" }
+func StringSet100(cur realm)    { storedString = strings.Repeat("a", 100) }
+func StringSet1000(cur realm)   { storedString = strings.Repeat("b", 1000) }
+func StringShrinkToShort(cur realm) { storedString = "short" }
+func StringSameLen(cur realm)       { storedString = "world" }
+func StringSetEmpty(cur realm)      { storedString = "" }
+
+// ============================================================
+// []byte
+// ============================================================
+
+func BytesSet10(cur realm) {
+	storedBytes = make([]byte, 10)
+	for i := range storedBytes { storedBytes[i] = byte(i) }
 }
 
-// ============ INT ============
+func BytesSet100(cur realm) {
+	storedBytes = make([]byte, 100)
+	for i := range storedBytes { storedBytes[i] = byte(i % 256) }
+}
 
-func CreateInt(cur realm) {
+func BytesSet1000(cur realm) {
+	storedBytes = make([]byte, 1000)
+	for i := range storedBytes { storedBytes[i] = byte(i % 256) }
+}
+
+func BytesShrinkTo10(cur realm) {
+	storedBytes = make([]byte, 10)
+	for i := range storedBytes { storedBytes[i] = byte(i + 100) }
+}
+
+func BytesSetNil(cur realm) { storedBytes = nil }
+
+// ============================================================
+// MULTIPLE VARS
+// ============================================================
+
+func SetMultiple3(cur realm) {
 	storedInt = 42
-}
-
-func UpdateIntGrow(cur realm) {
-	storedInt = 9223372036854775807
-}
-
-func UpdateIntShrink(cur realm) {
-	storedInt = 1
-}
-
-func DeleteInt(cur realm) {
-	storedInt = 0
-}
-
-// ============ UINT64 ============
-
-func CreateUint64(cur realm) {
-	storedUint64 = 100
-}
-
-func UpdateUint64Grow(cur realm) {
-	storedUint64 = 18446744073709551615
-}
-
-func DeleteUint64(cur realm) {
-	storedUint64 = 0
-}
-
-// ============ BOOL ============
-
-func CreateBool(cur realm) {
+	storedString = "hello"
 	storedBool = true
 }
 
-func DeleteBool(cur realm) {
+func SetAll5(cur realm) {
+	storedInt = 12345
+	storedUint64 = 67890
+	storedBool = true
+	storedString = "all five vars set"
+	storedBytes = []byte{1, 2, 3, 4, 5}
+}
+
+func ResetAll5(cur realm) {
+	storedInt = 0
+	storedUint64 = 0
 	storedBool = false
-}
-
-// ============ STRING ============
-
-func CreateString(cur realm) {
-	storedString = "HelloWorld"
-}
-
-func UpdateStringGrow(cur realm) {
-	storedString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-}
-
-func UpdateStringShrink(cur realm) {
-	storedString = "HelloWorld"
-}
-
-func DeleteString(cur realm) {
 	storedString = ""
-}
-
-// ============ BYTES ============
-
-func CreateBytes(cur realm) {
-	storedBytes = make([]byte, 10)
-	for i := 0; i < 10; i++ {
-		storedBytes[i] = byte(i)
-	}
-}
-
-func UpdateBytesGrow(cur realm) {
-	storedBytes = make([]byte, 100)
-	for i := 0; i < 100; i++ {
-		storedBytes[i] = byte(i % 256)
-	}
-}
-
-func DeleteBytes(cur realm) {
 	storedBytes = nil
 }
