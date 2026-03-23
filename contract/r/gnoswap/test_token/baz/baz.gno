@@ -12,7 +12,7 @@ import (
 
 var (
 	token, privateLedger = grc20.NewToken("Baz", "BAZ", 6)
-	owner                = ownable.NewWithAddress("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
+	owner                = ownable.NewWithAddressByPrevious("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
 )
 
 func init() {
@@ -51,12 +51,12 @@ func TransferFrom(cur realm, from, to address, amount int64) {
 }
 
 func Mint(cur realm, to address, amount int64) {
-	owner.AssertOwnedByPrevious()
+	owner.AssertOwned()
 	checkErr(privateLedger.Mint(to, amount))
 }
 
 func Burn(cur realm, from address, amount int64) {
-	owner.AssertOwnedByPrevious()
+	owner.AssertOwned()
 	checkErr(privateLedger.Burn(from, amount))
 }
 
