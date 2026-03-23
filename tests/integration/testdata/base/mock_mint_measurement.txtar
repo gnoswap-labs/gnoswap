@@ -1,0 +1,518 @@
+## Mint Scenario Storage Measurement
+## Simulates the storage write pattern of a pool.Mint() call
+## Measures individual and combined effects of:
+##   - Tick bitmap flip (u256 in avl.Tree)
+##   - Observation append (map entry with pointer struct)
+##   - Pool re-persist after internal tree modifications
+##   - Full Mint scenario (tick×2 + bitmap×2 + position + observation + pool save)
+## Scale factor: N = 1, 100
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/mintsim -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== TICK BITMAP: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PopulateBitmaps -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Bitmap: Create new word (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func BitmapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Bitmap: Flip bit in existing word (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func BitmapFlip -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Bitmap: Flip bit back / clear (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func BitmapClear -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== OBSERVATION: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupObservation -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Observation: Append new entry (N=1, cardinality=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func ObservationAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Observation: Overwrite existing (circular, N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func ObservationOverwrite -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== OBSERVATION: cardinality=10 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupObservation -args 10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Observation: Append (cardinality=10)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func ObservationAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== OBSERVATION: cardinality=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupObservation -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Observation: Append (cardinality=100)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func ObservationAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POOL RE-PERSIST: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupPool -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Save without changes (baseline, N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveNoChange -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Modify 1 scalar field then save (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveOneField -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Add 1 tick to internal tree then save (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveAddTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Add 1 position to internal tree then save (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveAddPosition -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Add tick + position + update liquidity then save (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveMintLike -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POOL RE-PERSIST: N=100 (pool has 100 ticks + 100 positions) ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupPool -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Save without changes (baseline, N=100)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveNoChange -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Add 1 tick (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveAddTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Add 1 position (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveAddPosition -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Mint-like (2 ticks + 2 bitmaps + 1 position + liquidity update) (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func PoolSaveMintLike -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== FULL MINT SIMULATION: varying pool sizes ========== ###
+
+# Reset with empty pool
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupPool -args 0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# First Mint on empty pool (worst case: new ticks + new position + new observation)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SimulateFirstMint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Second Mint same range (best case: existing ticks, existing position, update only)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SimulateAddLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Third Mint new range (new ticks, new position, existing pool state)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SimulateNewRangeMint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Setup pool with 100 existing positions
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SetupPool -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Mint on busy pool (N=100 existing)
+gnokey maketx call -pkgpath gno.land/r/test/mintsim -func SimulateFirstMint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/mintsim"
+gno = "0.9"
+-- main.gno --
+package mintsim
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+// ============================================================
+// BigInt simulates *u256.Uint
+// ============================================================
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+func NewBigIntFull(a, b, c, d uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{a, b, c, d}}
+}
+
+// ============================================================
+// Structs mirroring pool internals
+// ============================================================
+
+type TickInfo struct {
+	LiquidityGross                 *BigInt
+	LiquidityNet                   *BigInt
+	FeeGrowthOutside0X128          *BigInt
+	FeeGrowthOutside1X128          *BigInt
+	TickCumulativeOutside          int64
+	SecondsPerLiquidityOutsideX128 *BigInt
+	SecondsOutside                 uint32
+	Initialized                    bool
+}
+
+type PositionInfo struct {
+	Liquidity                *BigInt
+	FeeGrowthInside0LastX128 *BigInt
+	FeeGrowthInside1LastX128 *BigInt
+	TokensOwed0              *BigInt
+	TokensOwed1              *BigInt
+}
+
+type Observation struct {
+	BlockTimestamp                    int64
+	TickCumulative                    int64
+	LiquidityCumulative               *BigInt
+	SecondsPerLiquidityCumulativeX128 *BigInt
+	Initialized                       bool
+}
+
+type Pool struct {
+	Token0Path           string
+	Token1Path           string
+	Fee                  uint32
+	TickSpacing          int32
+	SqrtPriceX96         *BigInt
+	Tick                 int32
+	FeeProtocol          uint8
+	Unlocked             bool
+	Balance0             *BigInt
+	Balance1             *BigInt
+	ProtocolFee0         *BigInt
+	ProtocolFee1         *BigInt
+	MaxLiquidityPerTick  *BigInt
+	FeeGrowthGlobal0X128 *BigInt
+	FeeGrowthGlobal1X128 *BigInt
+	Liquidity            *BigInt
+	Ticks                *avl.Tree
+	TickBitmaps          *avl.Tree
+	Positions            *avl.Tree
+}
+
+// ============================================================
+// Storage
+// ============================================================
+var (
+	bitmapTree *avl.Tree
+	obsMap     map[uint16]*Observation
+	obsIndex   uint16
+	obsCard    uint16
+
+	pools   *avl.Tree
+	counter int
+)
+
+func init() {
+	bitmapTree = avl.NewTree()
+	obsMap = make(map[uint16]*Observation)
+	pools = avl.NewTree()
+}
+
+// ============================================================
+// BITMAP CRUD
+// ============================================================
+
+func PopulateBitmaps(cur realm, n int) {
+	bitmapTree = avl.NewTree()
+	for i := 0; i < n; i++ {
+		bitmapTree.Set("word_"+strconv.Itoa(i), NewBigInt(0))
+	}
+}
+
+func BitmapCreate(cur realm) {
+	bitmapTree.Set("word_new", NewBigInt(0))
+}
+
+func BitmapFlip(cur realm) {
+	if v, ok := bitmapTree.Get("word_0"); ok {
+		bm := v.(*BigInt)
+		bm.arr[0] = bm.arr[0] ^ (1 << 42)
+	}
+}
+
+func BitmapClear(cur realm) {
+	if v, ok := bitmapTree.Get("word_0"); ok {
+		bm := v.(*BigInt)
+		bm.arr[0] = bm.arr[0] ^ (1 << 42)
+	}
+}
+
+// ============================================================
+// OBSERVATION CRUD
+// ============================================================
+
+func SetupObservation(cur realm, cardinality int) {
+	obsMap = make(map[uint16]*Observation)
+	obsCard = uint16(cardinality)
+	obsIndex = 0
+	for i := 0; i < cardinality; i++ {
+		obsMap[uint16(i)] = &Observation{
+			BlockTimestamp:                    int64(1000 + i),
+			TickCumulative:                    int64(i * 100),
+			LiquidityCumulative:               NewBigInt(uint64(i * 1000)),
+			SecondsPerLiquidityCumulativeX128: NewBigInt(uint64(i * 500)),
+			Initialized:                       true,
+		}
+	}
+}
+
+func ObservationAppend(cur realm) {
+	idx := (obsIndex + 1) % obsCard
+	obsMap[idx] = &Observation{
+		BlockTimestamp:                    int64(9999 + int(idx)),
+		TickCumulative:                    int64(idx) * 200,
+		LiquidityCumulative:               NewBigInt(uint64(idx) * 2000),
+		SecondsPerLiquidityCumulativeX128: NewBigInt(uint64(idx) * 1000),
+		Initialized:                       true,
+	}
+	obsIndex = idx
+}
+
+func ObservationOverwrite(cur realm) {
+	obsMap[obsIndex] = &Observation{
+		BlockTimestamp:                    77777,
+		TickCumulative:                    88888,
+		LiquidityCumulative:               NewBigIntFull(11111, 22222, 0, 0),
+		SecondsPerLiquidityCumulativeX128: NewBigIntFull(33333, 44444, 0, 0),
+		Initialized:                       true,
+	}
+}
+
+// ============================================================
+// POOL RE-PERSIST
+// ============================================================
+
+func newPool(nTicks, nPositions int) *Pool {
+	p := &Pool{
+		Token0Path:           "gno.land/r/demo/token0",
+		Token1Path:           "gno.land/r/demo/token1",
+		Fee:                  3000,
+		TickSpacing:          60,
+		SqrtPriceX96:         NewBigIntFull(0, 1, 0, 0),
+		Tick:                 0,
+		FeeProtocol:          0,
+		Unlocked:             true,
+		Balance0:             NewBigInt(1000000),
+		Balance1:             NewBigInt(1000000),
+		ProtocolFee0:         NewBigInt(0),
+		ProtocolFee1:         NewBigInt(0),
+		MaxLiquidityPerTick:  NewBigIntFull(0, 0, 1, 0),
+		FeeGrowthGlobal0X128: NewBigInt(0),
+		FeeGrowthGlobal1X128: NewBigInt(0),
+		Liquidity:            NewBigInt(5000000),
+		Ticks:                avl.NewTree(),
+		TickBitmaps:          avl.NewTree(),
+		Positions:            avl.NewTree(),
+	}
+	for i := 0; i < nTicks; i++ {
+		p.Ticks.Set("tick_"+strconv.Itoa(i), &TickInfo{
+			LiquidityGross:                 NewBigInt(uint64(100000 + i)),
+			LiquidityNet:                   NewBigInt(uint64(50000 + i)),
+			FeeGrowthOutside0X128:          NewBigInt(0),
+			FeeGrowthOutside1X128:          NewBigInt(0),
+			TickCumulativeOutside:          int64(i),
+			SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside:                 0,
+			Initialized:                    true,
+		})
+	}
+	for i := 0; i < nPositions; i++ {
+		p.Positions.Set("pos_"+strconv.Itoa(i), &PositionInfo{
+			Liquidity:                NewBigInt(uint64(1000000 + i)),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+		})
+	}
+	// Add bitmap words for ticks
+	for i := 0; i < (nTicks/256)+1; i++ {
+		p.TickBitmaps.Set("bm_"+strconv.Itoa(i), NewBigInt(uint64(1<<uint(i%64))))
+	}
+	return p
+}
+
+func SetupPool(cur realm, n int) {
+	pools = avl.NewTree()
+	pools.Set("pool_0", newPool(n, n))
+	counter = 0
+}
+
+func PoolSaveNoChange(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		_ = p
+		pools.Set("pool_0", p)
+	}
+}
+
+func PoolSaveOneField(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		p.Liquidity = NewBigInt(9999999)
+		pools.Set("pool_0", p)
+	}
+}
+
+func PoolSaveAddTick(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		p.Ticks.Set("tick_new_"+strconv.Itoa(counter), &TickInfo{
+			LiquidityGross:                 NewBigInt(500000),
+			LiquidityNet:                   NewBigInt(250000),
+			FeeGrowthOutside0X128:          NewBigInt(0),
+			FeeGrowthOutside1X128:          NewBigInt(0),
+			TickCumulativeOutside:          0,
+			SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside:                 0,
+			Initialized:                    true,
+		})
+		pools.Set("pool_0", p)
+		counter++
+	}
+}
+
+func PoolSaveAddPosition(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		p.Positions.Set("pos_new_"+strconv.Itoa(counter), &PositionInfo{
+			Liquidity:                NewBigInt(1000000),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+		})
+		pools.Set("pool_0", p)
+		counter++
+	}
+}
+
+func PoolSaveMintLike(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		// 2 new ticks
+		p.Ticks.Set("tick_lower_"+strconv.Itoa(counter), &TickInfo{
+			LiquidityGross: NewBigInt(500000), LiquidityNet: NewBigInt(500000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		p.Ticks.Set("tick_upper_"+strconv.Itoa(counter), &TickInfo{
+			LiquidityGross: NewBigInt(500000), LiquidityNet: NewBigInt(500000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		// 2 bitmap flips
+		p.TickBitmaps.Set("bm_lower_"+strconv.Itoa(counter), NewBigInt(1<<10))
+		p.TickBitmaps.Set("bm_upper_"+strconv.Itoa(counter), NewBigInt(1<<20))
+		// 1 new position
+		p.Positions.Set("pos_mint_"+strconv.Itoa(counter), &PositionInfo{
+			Liquidity:                NewBigInt(9999999),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+		})
+		// Update pool liquidity
+		p.Liquidity = NewBigInt(15000000)
+		pools.Set("pool_0", p)
+		counter++
+	}
+}
+
+// ============================================================
+// FULL MINT SIMULATION
+// ============================================================
+
+func SimulateFirstMint(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		// New ticks (first-time initialization)
+		p.Ticks.Set("tick_-100", &TickInfo{
+			LiquidityGross: NewBigInt(1000000), LiquidityNet: NewBigInt(1000000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		p.Ticks.Set("tick_+100", &TickInfo{
+			LiquidityGross: NewBigInt(1000000), LiquidityNet: NewBigInt(1000000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		// Bitmap flips
+		p.TickBitmaps.Set("bm_word_neg", NewBigInt(1<<50))
+		p.TickBitmaps.Set("bm_word_pos", NewBigInt(1<<50))
+		// New position
+		p.Positions.Set("pos_first", &PositionInfo{
+			Liquidity:                NewBigInt(1000000),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+		})
+		// Update pool state
+		p.Liquidity = NewBigInt(1000000)
+		p.FeeGrowthGlobal0X128 = NewBigInt(0)
+		p.FeeGrowthGlobal1X128 = NewBigInt(0)
+		pools.Set("pool_0", p)
+	}
+}
+
+func SimulateAddLiquidity(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		// Update existing ticks (no new creation)
+		if tv, tok := p.Ticks.Get("tick_-100"); tok {
+			t := tv.(*TickInfo)
+			t.LiquidityGross = NewBigInt(2000000)
+			t.LiquidityNet = NewBigInt(2000000)
+		}
+		if tv, tok := p.Ticks.Get("tick_+100"); tok {
+			t := tv.(*TickInfo)
+			t.LiquidityGross = NewBigInt(2000000)
+			t.LiquidityNet = NewBigInt(2000000)
+		}
+		// Update existing position
+		if pv, pok := p.Positions.Get("pos_first"); pok {
+			pos := pv.(*PositionInfo)
+			pos.Liquidity = NewBigInt(2000000)
+			pos.FeeGrowthInside0LastX128 = NewBigInt(0)
+			pos.FeeGrowthInside1LastX128 = NewBigInt(0)
+		}
+		// No bitmap flip (ticks already initialized)
+		// Update pool liquidity
+		p.Liquidity = NewBigInt(2000000)
+		pools.Set("pool_0", p)
+	}
+}
+
+func SimulateNewRangeMint(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		p := v.(*Pool)
+		// New ticks for different range
+		p.Ticks.Set("tick_-500", &TickInfo{
+			LiquidityGross: NewBigInt(500000), LiquidityNet: NewBigInt(500000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		p.Ticks.Set("tick_+500", &TickInfo{
+			LiquidityGross: NewBigInt(500000), LiquidityNet: NewBigInt(500000),
+			FeeGrowthOutside0X128: NewBigInt(0), FeeGrowthOutside1X128: NewBigInt(0),
+			TickCumulativeOutside: 0, SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside: 0, Initialized: true,
+		})
+		// New bitmap entries
+		p.TickBitmaps.Set("bm_word_neg2", NewBigInt(1<<30))
+		p.TickBitmaps.Set("bm_word_pos2", NewBigInt(1<<30))
+		// New position
+		p.Positions.Set("pos_second", &PositionInfo{
+			Liquidity:                NewBigInt(500000),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+		})
+		p.Liquidity = NewBigInt(2500000)
+		pools.Set("pool_0", p)
+	}
+}

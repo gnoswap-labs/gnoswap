@@ -1,0 +1,529 @@
+## Staker Contract Storage Pattern Measurement
+## Measures storage costs specific to staker data structures:
+##   1. Deposit with nested avl.Trees (varying external incentive count)
+##   2. UintTree monotonic growth (timestamp-keyed snapshots)
+##   3. Tick with nested outsideAccumulation tree
+##   4. Pool-like re-persist with multiple UintTrees
+##   5. CollectReward simulation (multi-tree update)
+## Scale factor: N = 1, 100
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/stakersim -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== DEPOSIT: varying incentive count, N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func PopulateBg -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Deposit: Create with 0 external incentives (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func DepositCreate0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Deposit: Create with 1 external incentive (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func DepositCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Deposit: Create with 5 external incentives (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func DepositCreate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Deposit: Create with 20 external incentives (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func DepositCreate20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== DEPOSIT: CollectReward simulation ========== ###
+
+# CollectReward: 0 incentives (internal only)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func CollectReward0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# CollectReward: 1 incentive (update 3 trees × 1 entry)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func CollectReward1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# CollectReward: 5 incentives (update 3 trees × 5 entries)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func CollectReward5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# CollectReward: 20 incentives (update 3 trees × 20 entries)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func CollectReward20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== UINT TREE: monotonic timestamp append ========== ###
+
+# UintTree: Create first entry (empty tree)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeAppendFirst -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# UintTree: Append after 10 entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeGrowTo10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# UintTree: Append 1 entry (size=10)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeAppendAt10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# UintTree: Grow to 100 entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeGrowTo100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# UintTree: Append 1 entry (size=100)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeAppendAt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# UintTree: Update existing entry (size=100)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func UintTreeUpdateAt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== TICK WITH NESTED ACCUMULATION ========== ###
+
+# Tick+Accumulation: Create with 0 accumulation entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func TickCreate0Acc -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick+Accumulation: Create with 10 accumulation entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func TickCreate10Acc -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick+Accumulation: Create with 50 accumulation entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func TickCreate50Acc -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick+Accumulation: Append 1 accumulation to tick with 50 entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func TickAppendAccAt50 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick+Accumulation: Update liquidity on tick with 50 entries
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func TickUpdateLiqAt50 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== STAKER POOL RE-PERSIST: varying UintTree sizes ========== ###
+
+# StakerPool: Create with empty UintTrees
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func StakerPoolCreate0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# StakerPool: Create with 10 entries per UintTree (4 trees × 10 = 40 total)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func StakerPoolCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# StakerPool: Create with 50 entries per UintTree (4 trees × 50 = 200 total)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func StakerPoolCreate50 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# StakerPool: Save after appending 1 entry to each of 4 UintTrees (size=50)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func StakerPoolAppend4Trees -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# StakerPool: Save after adding 1 tick with accumulation (size=50)
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func StakerPoolAddTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== STAKE SIMULATION: full Stake-like write pattern ========== ###
+
+# Simulate Stake: empty pool, first position
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func SimulateStakeFirst -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Simulate Stake: pool with 100 existing deposits, 5 incentives
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func SetupBusyPool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/stakersim -func SimulateStakeBusy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/stakersim"
+gno = "0.9"
+-- main.gno --
+package stakersim
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+// ============================================================
+// Types mirroring staker contract
+// ============================================================
+
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+type Warmup struct {
+	Index          int
+	TimeDuration   int64
+	NextWarmupTime int64
+	WarmupRatio    uint64
+}
+
+type Deposit struct {
+	Warmups                        []Warmup
+	Liquidity                      *BigInt
+	TargetPoolPath                 string
+	Owner                          string
+	StakeTime                      int64
+	InternalRewardLastCollectTime  int64
+	CollectedInternalReward        int64
+	CollectedExternalRewards       *avl.Tree // incentiveId -> int64
+	ExternalRewardLastCollectTimes *avl.Tree // incentiveId -> int64
+	ExternalIncentiveIds           *avl.Tree // incentiveId -> bool
+	LastExternalIncentiveUpdatedAt int64
+	TickLower                      int32
+	TickUpper                      int32
+}
+
+type UintTree struct {
+	Tree *avl.Tree // EncodeInt64(timestamp) -> value
+}
+
+func NewUintTree() *UintTree {
+	return &UintTree{Tree: avl.NewTree()}
+}
+
+func (t *UintTree) Set(ts int64, val interface{}) {
+	t.Tree.Set(encodeInt64(ts), val)
+}
+
+func (t *UintTree) Get(ts int64) (interface{}, bool) {
+	return t.Tree.Get(encodeInt64(ts))
+}
+
+type StakerTick struct {
+	Id                   int32
+	StakedLiquidityGross *BigInt
+	StakedLiquidityDelta *BigInt
+	OutsideAccumulation  *UintTree
+}
+
+type StakerPool struct {
+	PoolPath                      string
+	StakedLiquidity               *UintTree // timestamp -> *BigInt
+	RewardCache                   *UintTree // timestamp -> int64
+	GlobalRewardRatioAccumulation *UintTree // timestamp -> *BigInt
+	HistoricalTick                *UintTree // timestamp -> int32
+	Ticks                         *avl.Tree // tickId -> *StakerTick
+	IncentiveIds                  *avl.Tree // incentiveId -> bool
+}
+
+func encodeInt64(v int64) string {
+	s := strconv.FormatInt(v+1000000000000, 10)
+	for len(s) < 20 {
+		s = "0" + s
+	}
+	return s
+}
+
+// ============================================================
+// Storage
+// ============================================================
+
+var (
+	deposits   *avl.Tree // positionId -> *Deposit
+	pools      *avl.Tree // poolPath -> *StakerPool
+	uintTree   *UintTree
+	tickTree   *avl.Tree
+	counter    int
+)
+
+func init() {
+	deposits = avl.NewTree()
+	pools = avl.NewTree()
+	uintTree = NewUintTree()
+	tickTree = avl.NewTree()
+}
+
+func PopulateBg(cur realm, n int) {
+	deposits = avl.NewTree()
+	pools = avl.NewTree()
+	uintTree = NewUintTree()
+	tickTree = avl.NewTree()
+	for i := 0; i < n; i++ {
+		deposits.Set("bg_"+strconv.Itoa(i), i)
+	}
+	counter = 0
+}
+
+func defaultWarmups() []Warmup {
+	return []Warmup{
+		{Index: 0, TimeDuration: 0, NextWarmupTime: 1000, WarmupRatio: 30},
+		{Index: 1, TimeDuration: 86400, NextWarmupTime: 87400, WarmupRatio: 50},
+		{Index: 2, TimeDuration: 604800, NextWarmupTime: 605800, WarmupRatio: 70},
+		{Index: 3, TimeDuration: 2592000, NextWarmupTime: 2593000, WarmupRatio: 100},
+	}
+}
+
+// ============================================================
+// DEPOSIT CREATE: varying incentive count
+// ============================================================
+
+func newDeposit(numIncentives int) *Deposit {
+	d := &Deposit{
+		Warmups:                        defaultWarmups(),
+		Liquidity:                      NewBigInt(1000000),
+		TargetPoolPath:                 "gno.land/r/gnoswap/pool:token0:token1:3000",
+		Owner:                          "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+		StakeTime:                      1000,
+		InternalRewardLastCollectTime:  1000,
+		CollectedInternalReward:        0,
+		CollectedExternalRewards:       avl.NewTree(),
+		ExternalRewardLastCollectTimes: avl.NewTree(),
+		ExternalIncentiveIds:           avl.NewTree(),
+		LastExternalIncentiveUpdatedAt: 1000,
+		TickLower:                      -887272,
+		TickUpper:                      887272,
+	}
+	for i := 0; i < numIncentives; i++ {
+		iid := "incentive_" + strconv.Itoa(i)
+		d.CollectedExternalRewards.Set(iid, int64(0))
+		d.ExternalRewardLastCollectTimes.Set(iid, int64(1000))
+		d.ExternalIncentiveIds.Set(iid, true)
+	}
+	return d
+}
+
+func DepositCreate0(cur realm) {
+	deposits.Set("dep_0inc_"+strconv.Itoa(counter), newDeposit(0))
+	counter++
+}
+
+func DepositCreate1(cur realm) {
+	deposits.Set("dep_1inc_"+strconv.Itoa(counter), newDeposit(1))
+	counter++
+}
+
+func DepositCreate5(cur realm) {
+	deposits.Set("dep_5inc_"+strconv.Itoa(counter), newDeposit(5))
+	counter++
+}
+
+func DepositCreate20(cur realm) {
+	deposits.Set("dep_20inc_"+strconv.Itoa(counter), newDeposit(20))
+	counter++
+}
+
+// ============================================================
+// COLLECT REWARD: multi-tree update
+// ============================================================
+
+func CollectReward0(cur realm) {
+	if v, ok := deposits.Get("dep_0inc_0"); ok {
+		d := v.(*Deposit)
+		d.CollectedInternalReward += 50000
+		d.InternalRewardLastCollectTime = 2000
+	}
+}
+
+func CollectReward1(cur realm) {
+	if v, ok := deposits.Get("dep_1inc_0"); ok {
+		d := v.(*Deposit)
+		d.CollectedInternalReward += 50000
+		d.InternalRewardLastCollectTime = 2000
+		d.CollectedExternalRewards.Set("incentive_0", int64(10000))
+		d.ExternalRewardLastCollectTimes.Set("incentive_0", int64(2000))
+	}
+}
+
+func CollectReward5(cur realm) {
+	if v, ok := deposits.Get("dep_5inc_0"); ok {
+		d := v.(*Deposit)
+		d.CollectedInternalReward += 50000
+		d.InternalRewardLastCollectTime = 2000
+		for i := 0; i < 5; i++ {
+			iid := "incentive_" + strconv.Itoa(i)
+			d.CollectedExternalRewards.Set(iid, int64(10000+i))
+			d.ExternalRewardLastCollectTimes.Set(iid, int64(2000))
+		}
+	}
+}
+
+func CollectReward20(cur realm) {
+	if v, ok := deposits.Get("dep_20inc_0"); ok {
+		d := v.(*Deposit)
+		d.CollectedInternalReward += 50000
+		d.InternalRewardLastCollectTime = 2000
+		for i := 0; i < 20; i++ {
+			iid := "incentive_" + strconv.Itoa(i)
+			d.CollectedExternalRewards.Set(iid, int64(10000+i))
+			d.ExternalRewardLastCollectTimes.Set(iid, int64(2000))
+		}
+	}
+}
+
+// ============================================================
+// UINT TREE: monotonic growth
+// ============================================================
+
+func UintTreeAppendFirst(cur realm) {
+	uintTree = NewUintTree()
+	uintTree.Set(1000, NewBigInt(999999))
+}
+
+func UintTreeGrowTo10(cur realm) {
+	for i := 1; i <= 10; i++ {
+		uintTree.Set(int64(1000+i*100), NewBigInt(uint64(999999+i)))
+	}
+}
+
+func UintTreeAppendAt10(cur realm) {
+	uintTree.Set(3000, NewBigInt(888888))
+}
+
+func UintTreeGrowTo100(cur realm) {
+	for i := 11; i <= 100; i++ {
+		uintTree.Set(int64(1000+i*100), NewBigInt(uint64(999999+i)))
+	}
+}
+
+func UintTreeAppendAt100(cur realm) {
+	uintTree.Set(20000, NewBigInt(777777))
+}
+
+func UintTreeUpdateAt100(cur realm) {
+	uintTree.Set(3000, NewBigInt(666666))
+}
+
+// ============================================================
+// TICK WITH NESTED ACCUMULATION
+// ============================================================
+
+func newStakerTick(numAcc int) *StakerTick {
+	t := &StakerTick{
+		Id:                   0,
+		StakedLiquidityGross: NewBigInt(1000000),
+		StakedLiquidityDelta: NewBigInt(500000),
+		OutsideAccumulation:  NewUintTree(),
+	}
+	for i := 0; i < numAcc; i++ {
+		t.OutsideAccumulation.Set(int64(1000+i*100), NewBigInt(uint64(i*1000)))
+	}
+	return t
+}
+
+func TickCreate0Acc(cur realm) {
+	tickTree.Set("tick_0acc_"+strconv.Itoa(counter), newStakerTick(0))
+	counter++
+}
+
+func TickCreate10Acc(cur realm) {
+	tickTree.Set("tick_10acc_"+strconv.Itoa(counter), newStakerTick(10))
+	counter++
+}
+
+func TickCreate50Acc(cur realm) {
+	tickTree.Set("tick_50acc_"+strconv.Itoa(counter), newStakerTick(50))
+	counter++
+}
+
+func TickAppendAccAt50(cur realm) {
+	if v, ok := tickTree.Get("tick_50acc_0"); ok {
+		t := v.(*StakerTick)
+		t.OutsideAccumulation.Set(99999, NewBigInt(12345))
+	}
+}
+
+func TickUpdateLiqAt50(cur realm) {
+	if v, ok := tickTree.Get("tick_50acc_0"); ok {
+		t := v.(*StakerTick)
+		t.StakedLiquidityGross = NewBigInt(2000000)
+		t.StakedLiquidityDelta = NewBigInt(1000000)
+	}
+}
+
+// ============================================================
+// STAKER POOL: re-persist with UintTree growth
+// ============================================================
+
+func newStakerPool(entriesPerTree int) *StakerPool {
+	p := &StakerPool{
+		PoolPath:                      "gno.land/r/gnoswap/pool:token0:token1:3000",
+		StakedLiquidity:               NewUintTree(),
+		RewardCache:                   NewUintTree(),
+		GlobalRewardRatioAccumulation: NewUintTree(),
+		HistoricalTick:                NewUintTree(),
+		Ticks:                         avl.NewTree(),
+		IncentiveIds:                  avl.NewTree(),
+	}
+	for i := 0; i < entriesPerTree; i++ {
+		ts := int64(1000 + i*100)
+		p.StakedLiquidity.Set(ts, NewBigInt(uint64(1000000+i)))
+		p.RewardCache.Set(ts, int64(500+i))
+		p.GlobalRewardRatioAccumulation.Set(ts, NewBigInt(uint64(i*10000)))
+		p.HistoricalTick.Set(ts, int32(i))
+	}
+	return p
+}
+
+func StakerPoolCreate0(cur realm) {
+	pools.Set("pool_0ent", newStakerPool(0))
+}
+
+func StakerPoolCreate10(cur realm) {
+	pools.Set("pool_10ent", newStakerPool(10))
+}
+
+func StakerPoolCreate50(cur realm) {
+	pools.Set("pool_50ent", newStakerPool(50))
+}
+
+func StakerPoolAppend4Trees(cur realm) {
+	if v, ok := pools.Get("pool_50ent"); ok {
+		p := v.(*StakerPool)
+		ts := int64(99999)
+		p.StakedLiquidity.Set(ts, NewBigInt(9999999))
+		p.RewardCache.Set(ts, int64(9999))
+		p.GlobalRewardRatioAccumulation.Set(ts, NewBigInt(8888888))
+		p.HistoricalTick.Set(ts, int32(42))
+		pools.Set("pool_50ent", p)
+	}
+}
+
+func StakerPoolAddTick(cur realm) {
+	if v, ok := pools.Get("pool_50ent"); ok {
+		p := v.(*StakerPool)
+		p.Ticks.Set("tick_new", newStakerTick(10))
+		pools.Set("pool_50ent", p)
+	}
+}
+
+// ============================================================
+// FULL STAKE SIMULATION
+// ============================================================
+
+func SimulateStakeFirst(cur realm) {
+	// Create pool
+	pool := newStakerPool(0)
+	pool.StakedLiquidity.Set(1000, NewBigInt(1000000))
+	pool.GlobalRewardRatioAccumulation.Set(1000, NewBigInt(0))
+	pool.HistoricalTick.Set(1000, int32(0))
+	pool.RewardCache.Set(1000, int64(500))
+	// Add 2 ticks
+	pool.Ticks.Set("tick_lower", newStakerTick(1))
+	pool.Ticks.Set("tick_upper", newStakerTick(1))
+	pools.Set("pool_stake", pool)
+
+	// Create deposit with 0 incentives
+	deposits.Set("dep_stake_0", newDeposit(0))
+}
+
+func SetupBusyPool(cur realm) {
+	pool := newStakerPool(20)
+	for i := 0; i < 10; i++ {
+		pool.Ticks.Set("tick_"+strconv.Itoa(i), newStakerTick(5))
+	}
+	for i := 0; i < 5; i++ {
+		pool.IncentiveIds.Set("incentive_"+strconv.Itoa(i), true)
+	}
+	pools.Set("pool_busy", pool)
+	// Pre-create 100 deposits
+	for i := 0; i < 100; i++ {
+		deposits.Set("dep_busy_"+strconv.Itoa(i), newDeposit(5))
+	}
+}
+
+func SimulateStakeBusy(cur realm) {
+	if v, ok := pools.Get("pool_busy"); ok {
+		p := v.(*StakerPool)
+		ts := int64(50000)
+		p.StakedLiquidity.Set(ts, NewBigInt(9000000))
+		p.GlobalRewardRatioAccumulation.Set(ts, NewBigInt(5555555))
+		p.HistoricalTick.Set(ts, int32(100))
+		p.RewardCache.Set(ts, int64(1000))
+		// Update 2 existing ticks
+		if tv, tok := p.Ticks.Get("tick_0"); tok {
+			t := tv.(*StakerTick)
+			t.StakedLiquidityGross = NewBigInt(2000000)
+			t.OutsideAccumulation.Set(ts, NewBigInt(999))
+		}
+		if tv, tok := p.Ticks.Get("tick_1"); tok {
+			t := tv.(*StakerTick)
+			t.StakedLiquidityGross = NewBigInt(2000000)
+			t.OutsideAccumulation.Set(ts, NewBigInt(999))
+		}
+		pools.Set("pool_busy", p)
+	}
+	// Create new deposit with 5 incentives
+	deposits.Set("dep_busy_new", newDeposit(5))
+}

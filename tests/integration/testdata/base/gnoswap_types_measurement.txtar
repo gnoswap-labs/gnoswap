@@ -1,0 +1,508 @@
+## GnoSwap Data Type Storage Measurement
+## N = number of existing entries in the pools/positions tree
+## Measures Create / Update / Delete for Pool-like and Position-like structs
+## These types mirror the actual GnoSwap Pool and Position struct layouts
+## with *BigInt fields (simulating *u256.Uint / *i256.Int)
+## Scale factor: N = 1, 100, 1,000
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/gswtypes -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== POSITION-LIKE STRUCT: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePositions -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update liquidity field (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update fee growth fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateFees -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update all fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Delete - set burned=true (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionBurn -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Delete - remove from tree (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POSITION-LIKE STRUCT: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePositions -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update liquidity (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update fees (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateFees -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update all (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Burn (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionBurn -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Remove (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POSITION-LIKE STRUCT: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePositions -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -max-deposit 2000000000ugnot -memo "" test1
+
+# Position: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update liquidity (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update fees (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateFees -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Update all (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Burn (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionBurn -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Position: Remove (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PositionRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POOL-LIKE STRUCT: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePools -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update slot0 (sqrtPrice + tick) (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateSlot0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update fee growth globals (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateFeeGrowth -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update liquidity (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update balances (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateBalances -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update all mutable fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POOL-LIKE STRUCT: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePools -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update slot0 (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateSlot0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update fee growth (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateFeeGrowth -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update liquidity (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update balances (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateBalances -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update all (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POOL-LIKE STRUCT: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulatePools -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -max-deposit 2000000000ugnot -memo "" test1
+
+# Pool: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update slot0 (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateSlot0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update fee growth (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateFeeGrowth -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update liquidity (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update balances (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateBalances -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Update all (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pool: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PoolRemove -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== TICK-LIKE STRUCT (per-pool ticks): N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulateTicks -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== TICK-LIKE STRUCT: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulateTicks -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== TICK-LIKE STRUCT: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func PopulateTicks -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -max-deposit 2000000000ugnot -memo "" test1
+
+# Tick: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tick: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/gswtypes -func TickDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/gswtypes"
+gno = "0.9"
+-- main.gno --
+package gswtypes
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+// BigInt simulates *u256.Uint / *i256.Int without importing the actual package.
+// Uses [4]uint64 to approximate 256-bit storage footprint.
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+func NewBigIntFull(a, b, c, d uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{a, b, c, d}}
+}
+
+// ---------- Slot0-like ----------
+type Slot0 struct {
+	SqrtPriceX96 *BigInt
+	Tick         int32
+	FeeProtocol  uint8
+	Unlocked     bool
+}
+
+// ---------- Position-like (mirrors contract/r/gnoswap/position/position.gno) ----------
+type Position struct {
+	PoolKey                  string
+	TickLower                int32
+	TickUpper                int32
+	Liquidity                *BigInt
+	FeeGrowthInside0LastX128 *BigInt
+	FeeGrowthInside1LastX128 *BigInt
+	TokensOwed0              *BigInt
+	TokensOwed1              *BigInt
+	Token0Balance            *BigInt
+	Token1Balance            *BigInt
+	Burned                   bool
+}
+
+// ---------- TickInfo-like (mirrors contract/r/gnoswap/pool/pool.gno:TickInfo) ----------
+type TickInfo struct {
+	LiquidityGross                 *BigInt
+	LiquidityNet                   *BigInt
+	FeeGrowthOutside0X128          *BigInt
+	FeeGrowthOutside1X128          *BigInt
+	TickCumulativeOutside          int64
+	SecondsPerLiquidityOutsideX128 *BigInt
+	SecondsOutside                 uint32
+	Initialized                    bool
+}
+
+// ---------- Pool-like (mirrors contract/r/gnoswap/pool/pool.gno:Pool) ----------
+type Pool struct {
+	Token0Path           string
+	Token1Path           string
+	Fee                  uint32
+	TickSpacing          int32
+	Slot0                Slot0
+	Balance0             *BigInt
+	Balance1             *BigInt
+	ProtocolFee0         *BigInt
+	ProtocolFee1         *BigInt
+	MaxLiquidityPerTick  *BigInt
+	FeeGrowthGlobal0X128 *BigInt
+	FeeGrowthGlobal1X128 *BigInt
+	Liquidity            *BigInt
+	Ticks                *avl.Tree
+	Positions            *avl.Tree
+}
+
+var (
+	positions *avl.Tree
+	pools     *avl.Tree
+	ticks     *avl.Tree
+
+	opCounter int
+)
+
+// ============ POPULATE ============
+
+func PopulatePositions(cur realm, n int) {
+	positions = avl.NewTree()
+	for i := 0; i < n; i++ {
+		positions.Set("pos_"+strconv.Itoa(i), &Position{
+			PoolKey:                  "gno.land/r/demo/token0:gno.land/r/demo/token1:3000",
+			TickLower:                int32(-887272 + i),
+			TickUpper:                int32(887272 - i),
+			Liquidity:                NewBigInt(uint64(1000000 + i)),
+			FeeGrowthInside0LastX128: NewBigInt(0),
+			FeeGrowthInside1LastX128: NewBigInt(0),
+			TokensOwed0:              NewBigInt(0),
+			TokensOwed1:              NewBigInt(0),
+			Token0Balance:            NewBigInt(uint64(500000 + i)),
+			Token1Balance:            NewBigInt(uint64(500000 + i)),
+			Burned:                   false,
+		})
+	}
+	opCounter = n
+}
+
+func PopulatePools(cur realm, n int) {
+	pools = avl.NewTree()
+	for i := 0; i < n; i++ {
+		pools.Set("pool_"+strconv.Itoa(i), &Pool{
+			Token0Path:           "gno.land/r/demo/token" + strconv.Itoa(i),
+			Token1Path:           "gno.land/r/demo/token" + strconv.Itoa(i+1),
+			Fee:                  3000,
+			TickSpacing:          60,
+			Slot0:                Slot0{SqrtPriceX96: NewBigIntFull(0, 1, 0, 0), Tick: 0, FeeProtocol: 0, Unlocked: true},
+			Balance0:             NewBigInt(1000000),
+			Balance1:             NewBigInt(1000000),
+			ProtocolFee0:         NewBigInt(0),
+			ProtocolFee1:         NewBigInt(0),
+			MaxLiquidityPerTick:  NewBigIntFull(0, 0, 1, 0),
+			FeeGrowthGlobal0X128: NewBigInt(0),
+			FeeGrowthGlobal1X128: NewBigInt(0),
+			Liquidity:            NewBigInt(5000000),
+			Ticks:                avl.NewTree(),
+			Positions:            avl.NewTree(),
+		})
+	}
+	opCounter = n
+}
+
+func PopulateTicks(cur realm, n int) {
+	ticks = avl.NewTree()
+	for i := 0; i < n; i++ {
+		ticks.Set("tick_"+strconv.Itoa(i), &TickInfo{
+			LiquidityGross:                 NewBigInt(uint64(100000 + i)),
+			LiquidityNet:                   NewBigInt(uint64(50000 + i)),
+			FeeGrowthOutside0X128:          NewBigInt(0),
+			FeeGrowthOutside1X128:          NewBigInt(0),
+			TickCumulativeOutside:          int64(i),
+			SecondsPerLiquidityOutsideX128: NewBigInt(0),
+			SecondsOutside:                 0,
+			Initialized:                    true,
+		})
+	}
+	opCounter = n
+}
+
+// ============ POSITION CRUD ============
+
+func PositionCreate(cur realm) {
+	positions.Set("pos_new_"+strconv.Itoa(opCounter), &Position{
+		PoolKey:                  "gno.land/r/demo/token0:gno.land/r/demo/token1:3000",
+		TickLower:                -100,
+		TickUpper:                100,
+		Liquidity:                NewBigInt(9999999),
+		FeeGrowthInside0LastX128: NewBigInt(0),
+		FeeGrowthInside1LastX128: NewBigInt(0),
+		TokensOwed0:              NewBigInt(0),
+		TokensOwed1:              NewBigInt(0),
+		Token0Balance:            NewBigInt(5000000),
+		Token1Balance:            NewBigInt(5000000),
+		Burned:                   false,
+	})
+	opCounter++
+}
+
+func PositionUpdateLiquidity(cur realm) {
+	if v, ok := positions.Get("pos_0"); ok {
+		pos := v.(*Position)
+		pos.Liquidity = NewBigInt(8888888)
+	}
+}
+
+func PositionUpdateFees(cur realm) {
+	if v, ok := positions.Get("pos_0"); ok {
+		pos := v.(*Position)
+		pos.FeeGrowthInside0LastX128 = NewBigIntFull(1000, 2000, 0, 0)
+		pos.FeeGrowthInside1LastX128 = NewBigIntFull(3000, 4000, 0, 0)
+		pos.TokensOwed0 = NewBigInt(12345)
+		pos.TokensOwed1 = NewBigInt(67890)
+	}
+}
+
+func PositionUpdateAll(cur realm) {
+	if v, ok := positions.Get("pos_0"); ok {
+		pos := v.(*Position)
+		pos.Liquidity = NewBigInt(7777777)
+		pos.FeeGrowthInside0LastX128 = NewBigIntFull(9999, 9999, 0, 0)
+		pos.FeeGrowthInside1LastX128 = NewBigIntFull(8888, 8888, 0, 0)
+		pos.TokensOwed0 = NewBigInt(11111)
+		pos.TokensOwed1 = NewBigInt(22222)
+		pos.Token0Balance = NewBigInt(3333333)
+		pos.Token1Balance = NewBigInt(4444444)
+	}
+}
+
+func PositionBurn(cur realm) {
+	if v, ok := positions.Get("pos_0"); ok {
+		pos := v.(*Position)
+		pos.Burned = true
+		pos.Liquidity = NewBigInt(0)
+	}
+}
+
+func PositionRemove(cur realm) {
+	positions.Remove("pos_0")
+}
+
+// ============ POOL CRUD ============
+
+func PoolCreate(cur realm) {
+	pools.Set("pool_new_"+strconv.Itoa(opCounter), &Pool{
+		Token0Path:           "gno.land/r/demo/newtoken0",
+		Token1Path:           "gno.land/r/demo/newtoken1",
+		Fee:                  500,
+		TickSpacing:          10,
+		Slot0:                Slot0{SqrtPriceX96: NewBigIntFull(0, 1, 0, 0), Tick: 0, FeeProtocol: 0, Unlocked: true},
+		Balance0:             NewBigInt(0),
+		Balance1:             NewBigInt(0),
+		ProtocolFee0:         NewBigInt(0),
+		ProtocolFee1:         NewBigInt(0),
+		MaxLiquidityPerTick:  NewBigIntFull(0, 0, 1, 0),
+		FeeGrowthGlobal0X128: NewBigInt(0),
+		FeeGrowthGlobal1X128: NewBigInt(0),
+		Liquidity:            NewBigInt(0),
+		Ticks:                avl.NewTree(),
+		Positions:            avl.NewTree(),
+	})
+	opCounter++
+}
+
+func PoolUpdateSlot0(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		pool := v.(*Pool)
+		pool.Slot0.SqrtPriceX96 = NewBigIntFull(12345, 67890, 0, 0)
+		pool.Slot0.Tick = 1234
+	}
+}
+
+func PoolUpdateFeeGrowth(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		pool := v.(*Pool)
+		pool.FeeGrowthGlobal0X128 = NewBigIntFull(11111, 22222, 33333, 0)
+		pool.FeeGrowthGlobal1X128 = NewBigIntFull(44444, 55555, 66666, 0)
+	}
+}
+
+func PoolUpdateLiquidity(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		pool := v.(*Pool)
+		pool.Liquidity = NewBigInt(9999999)
+	}
+}
+
+func PoolUpdateBalances(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		pool := v.(*Pool)
+		pool.Balance0 = NewBigInt(2000000)
+		pool.Balance1 = NewBigInt(3000000)
+	}
+}
+
+func PoolUpdateAll(cur realm) {
+	if v, ok := pools.Get("pool_0"); ok {
+		pool := v.(*Pool)
+		pool.Slot0.SqrtPriceX96 = NewBigIntFull(99999, 88888, 0, 0)
+		pool.Slot0.Tick = -5678
+		pool.FeeGrowthGlobal0X128 = NewBigIntFull(77777, 66666, 55555, 0)
+		pool.FeeGrowthGlobal1X128 = NewBigIntFull(44444, 33333, 22222, 0)
+		pool.Liquidity = NewBigInt(7777777)
+		pool.Balance0 = NewBigInt(8000000)
+		pool.Balance1 = NewBigInt(9000000)
+		pool.ProtocolFee0 = NewBigInt(100)
+		pool.ProtocolFee1 = NewBigInt(200)
+	}
+}
+
+func PoolRemove(cur realm) {
+	pools.Remove("pool_0")
+}
+
+// ============ TICK CRUD ============
+
+func TickCreate(cur realm) {
+	ticks.Set("tick_new_"+strconv.Itoa(opCounter), &TickInfo{
+		LiquidityGross:                 NewBigInt(500000),
+		LiquidityNet:                   NewBigInt(250000),
+		FeeGrowthOutside0X128:          NewBigInt(0),
+		FeeGrowthOutside1X128:          NewBigInt(0),
+		TickCumulativeOutside:          0,
+		SecondsPerLiquidityOutsideX128: NewBigInt(0),
+		SecondsOutside:                 0,
+		Initialized:                    true,
+	})
+	opCounter++
+}
+
+func TickUpdate(cur realm) {
+	if v, ok := ticks.Get("tick_0"); ok {
+		tick := v.(*TickInfo)
+		tick.LiquidityGross = NewBigInt(999999)
+		tick.LiquidityNet = NewBigInt(444444)
+		tick.FeeGrowthOutside0X128 = NewBigIntFull(1111, 2222, 0, 0)
+		tick.FeeGrowthOutside1X128 = NewBigIntFull(3333, 4444, 0, 0)
+	}
+}
+
+func TickDelete(cur realm) {
+	ticks.Remove("tick_0")
+}
