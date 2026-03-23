@@ -1,0 +1,558 @@
+## u256 Pointer vs Value Type Storage Measurement
+## Compares *BigInt (pointer, simulating *u256.Uint) vs [4]uint64 (value, inline)
+## Measures: Create / Update / Delete for varying pointer counts
+## Scale factor: N = 1, 100
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/u256cmp -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== SINGLE FIELD: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PopulateBg -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 1 field: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrOneCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 1 field: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValOneCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 1 field: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrOneUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 1 field: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValOneUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 1 field: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrOneDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 1 field: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValOneDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS (Position-like): N=1 ========== ###
+
+# Pointer 5 fields: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 5 fields: Update 1 field (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Update 1 field (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 5 fields: Update all fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Update all fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 5 fields: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 10 FIELDS (Pool-like): N=1 ========== ###
+
+# Pointer 10 fields: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrTenCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 10 fields: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValTenCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 10 fields: Update 1 field (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrTenUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 10 fields: Update 1 field (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValTenUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 10 fields: Update all fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrTenUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 10 fields: Update all fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValTenUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 10 fields: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrTenDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 10 fields: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValTenDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== POSITION-LIKE REALISTIC: N=1 ========== ###
+
+# Pointer Position: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer Position: Update liquidity (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionUpdateLiq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Update liquidity (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionUpdateLiq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer Position: Update all (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Update all (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionUpdateAll -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer Position: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PopulateBg -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 5 fields: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 10 fields: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrTenCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 10 fields: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValTenCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer Position: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer 5 fields: Update 1 (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrFiveUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value 5 fields: Update 1 (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValFiveUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Pointer Position: Update liquidity (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func PtrPositionUpdateLiq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Value Position: Update liquidity (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/u256cmp -func ValPositionUpdateLiq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/u256cmp"
+gno = "0.9"
+-- main.gno --
+package u256cmp
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+// ============================================================
+// BigInt as pointer type (simulates *u256.Uint)
+// ============================================================
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+func NewBigIntFull(a, b, c, d uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{a, b, c, d}}
+}
+
+// ============================================================
+// U256V = value type (inline [4]uint64, no pointer indirection)
+// ============================================================
+type U256V [4]uint64
+
+func NewU256V(v uint64) U256V {
+	return U256V{v, 0, 0, 0}
+}
+
+func NewU256VFull(a, b, c, d uint64) U256V {
+	return U256V{a, b, c, d}
+}
+
+// ============================================================
+// Structs with 1 u256 field
+// ============================================================
+type PtrOne struct {
+	Value *BigInt
+}
+
+type ValOne struct {
+	Value U256V
+}
+
+// ============================================================
+// Structs with 5 u256 fields (Position-like count)
+// ============================================================
+type PtrFive struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+}
+
+type ValFive struct {
+	F0 U256V
+	F1 U256V
+	F2 U256V
+	F3 U256V
+	F4 U256V
+}
+
+// ============================================================
+// Structs with 10 u256 fields (Pool-like count)
+// ============================================================
+type PtrTen struct {
+	F0 *BigInt
+	F1 *BigInt
+	F2 *BigInt
+	F3 *BigInt
+	F4 *BigInt
+	F5 *BigInt
+	F6 *BigInt
+	F7 *BigInt
+	F8 *BigInt
+	F9 *BigInt
+}
+
+type ValTen struct {
+	F0 U256V
+	F1 U256V
+	F2 U256V
+	F3 U256V
+	F4 U256V
+	F5 U256V
+	F6 U256V
+	F7 U256V
+	F8 U256V
+	F9 U256V
+}
+
+// ============================================================
+// Realistic Position: pointer vs value
+// ============================================================
+type PtrPosition struct {
+	PoolKey                  string
+	TickLower                int32
+	TickUpper                int32
+	Liquidity                *BigInt
+	FeeGrowthInside0LastX128 *BigInt
+	FeeGrowthInside1LastX128 *BigInt
+	TokensOwed0              *BigInt
+	TokensOwed1              *BigInt
+	Burned                   bool
+}
+
+type ValPosition struct {
+	PoolKey                  string
+	TickLower                int32
+	TickUpper                int32
+	Liquidity                U256V
+	FeeGrowthInside0LastX128 U256V
+	FeeGrowthInside1LastX128 U256V
+	TokensOwed0              U256V
+	TokensOwed1              U256V
+	Burned                   bool
+}
+
+// ============================================================
+// Storage
+// ============================================================
+var (
+	bgTree   *avl.Tree
+	ptrTree  *avl.Tree
+	valTree  *avl.Tree
+	counter  int
+)
+
+func init() {
+	bgTree = avl.NewTree()
+	ptrTree = avl.NewTree()
+	valTree = avl.NewTree()
+}
+
+func PopulateBg(cur realm, n int) {
+	bgTree = avl.NewTree()
+	for i := 0; i < n; i++ {
+		bgTree.Set("bg_"+strconv.Itoa(i), i)
+	}
+	// Reset test trees
+	ptrTree = avl.NewTree()
+	valTree = avl.NewTree()
+	counter = 0
+}
+
+// ============================================================
+// 1 FIELD CRUD
+// ============================================================
+
+func PtrOneCreate(cur realm) {
+	ptrTree.Set("ptr1_"+strconv.Itoa(counter), &PtrOne{
+		Value: NewBigInt(1000000),
+	})
+	counter++
+}
+
+func ValOneCreate(cur realm) {
+	valTree.Set("val1_"+strconv.Itoa(counter), &ValOne{
+		Value: NewU256V(1000000),
+	})
+	counter++
+}
+
+func PtrOneUpdate(cur realm) {
+	if v, ok := ptrTree.Get("ptr1_0"); ok {
+		s := v.(*PtrOne)
+		s.Value = NewBigIntFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func ValOneUpdate(cur realm) {
+	if v, ok := valTree.Get("val1_0"); ok {
+		s := v.(*ValOne)
+		s.Value = NewU256VFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func PtrOneDelete(cur realm) {
+	ptrTree.Remove("ptr1_0")
+}
+
+func ValOneDelete(cur realm) {
+	valTree.Remove("val1_0")
+}
+
+// ============================================================
+// 5 FIELDS CRUD
+// ============================================================
+
+func PtrFiveCreate(cur realm) {
+	ptrTree.Set("ptr5_"+strconv.Itoa(counter), &PtrFive{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500),
+	})
+	counter++
+}
+
+func ValFiveCreate(cur realm) {
+	valTree.Set("val5_"+strconv.Itoa(counter), &ValFive{
+		F0: NewU256V(100), F1: NewU256V(200), F2: NewU256V(300),
+		F3: NewU256V(400), F4: NewU256V(500),
+	})
+	counter++
+}
+
+func PtrFiveUpdateOne(cur realm) {
+	if v, ok := ptrTree.Get("ptr5_0"); ok {
+		s := v.(*PtrFive)
+		s.F0 = NewBigIntFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func ValFiveUpdateOne(cur realm) {
+	if v, ok := valTree.Get("val5_0"); ok {
+		s := v.(*ValFive)
+		s.F0 = NewU256VFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func PtrFiveUpdateAll(cur realm) {
+	if v, ok := ptrTree.Get("ptr5_0"); ok {
+		s := v.(*PtrFive)
+		s.F0 = NewBigIntFull(11111, 22222, 33333, 44444)
+		s.F1 = NewBigIntFull(55555, 66666, 77777, 88888)
+		s.F2 = NewBigIntFull(99999, 11111, 22222, 33333)
+		s.F3 = NewBigIntFull(44444, 55555, 66666, 77777)
+		s.F4 = NewBigIntFull(88888, 99999, 11111, 22222)
+	}
+}
+
+func ValFiveUpdateAll(cur realm) {
+	if v, ok := valTree.Get("val5_0"); ok {
+		s := v.(*ValFive)
+		s.F0 = NewU256VFull(11111, 22222, 33333, 44444)
+		s.F1 = NewU256VFull(55555, 66666, 77777, 88888)
+		s.F2 = NewU256VFull(99999, 11111, 22222, 33333)
+		s.F3 = NewU256VFull(44444, 55555, 66666, 77777)
+		s.F4 = NewU256VFull(88888, 99999, 11111, 22222)
+	}
+}
+
+func PtrFiveDelete(cur realm) {
+	ptrTree.Remove("ptr5_0")
+}
+
+func ValFiveDelete(cur realm) {
+	valTree.Remove("val5_0")
+}
+
+// ============================================================
+// 10 FIELDS CRUD
+// ============================================================
+
+func PtrTenCreate(cur realm) {
+	ptrTree.Set("ptr10_"+strconv.Itoa(counter), &PtrTen{
+		F0: NewBigInt(100), F1: NewBigInt(200), F2: NewBigInt(300),
+		F3: NewBigInt(400), F4: NewBigInt(500), F5: NewBigInt(600),
+		F6: NewBigInt(700), F7: NewBigInt(800), F8: NewBigInt(900),
+		F9: NewBigInt(1000),
+	})
+	counter++
+}
+
+func ValTenCreate(cur realm) {
+	valTree.Set("val10_"+strconv.Itoa(counter), &ValTen{
+		F0: NewU256V(100), F1: NewU256V(200), F2: NewU256V(300),
+		F3: NewU256V(400), F4: NewU256V(500), F5: NewU256V(600),
+		F6: NewU256V(700), F7: NewU256V(800), F8: NewU256V(900),
+		F9: NewU256V(1000),
+	})
+	counter++
+}
+
+func PtrTenUpdateOne(cur realm) {
+	if v, ok := ptrTree.Get("ptr10_0"); ok {
+		s := v.(*PtrTen)
+		s.F0 = NewBigIntFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func ValTenUpdateOne(cur realm) {
+	if v, ok := valTree.Get("val10_0"); ok {
+		s := v.(*ValTen)
+		s.F0 = NewU256VFull(99999, 88888, 77777, 66666)
+	}
+}
+
+func PtrTenUpdateAll(cur realm) {
+	if v, ok := ptrTree.Get("ptr10_0"); ok {
+		s := v.(*PtrTen)
+		s.F0 = NewBigIntFull(11111, 22222, 33333, 44444)
+		s.F1 = NewBigIntFull(55555, 66666, 77777, 88888)
+		s.F2 = NewBigIntFull(99999, 11111, 22222, 33333)
+		s.F3 = NewBigIntFull(44444, 55555, 66666, 77777)
+		s.F4 = NewBigIntFull(88888, 99999, 11111, 22222)
+		s.F5 = NewBigIntFull(12345, 23456, 34567, 45678)
+		s.F6 = NewBigIntFull(56789, 67890, 78901, 89012)
+		s.F7 = NewBigIntFull(90123, 12340, 23450, 34560)
+		s.F8 = NewBigIntFull(45670, 56780, 67890, 78900)
+		s.F9 = NewBigIntFull(89010, 90120, 12300, 23400)
+	}
+}
+
+func ValTenUpdateAll(cur realm) {
+	if v, ok := valTree.Get("val10_0"); ok {
+		s := v.(*ValTen)
+		s.F0 = NewU256VFull(11111, 22222, 33333, 44444)
+		s.F1 = NewU256VFull(55555, 66666, 77777, 88888)
+		s.F2 = NewU256VFull(99999, 11111, 22222, 33333)
+		s.F3 = NewU256VFull(44444, 55555, 66666, 77777)
+		s.F4 = NewU256VFull(88888, 99999, 11111, 22222)
+		s.F5 = NewU256VFull(12345, 23456, 34567, 45678)
+		s.F6 = NewU256VFull(56789, 67890, 78901, 89012)
+		s.F7 = NewU256VFull(90123, 12340, 23450, 34560)
+		s.F8 = NewU256VFull(45670, 56780, 67890, 78900)
+		s.F9 = NewU256VFull(89010, 90120, 12300, 23400)
+	}
+}
+
+func PtrTenDelete(cur realm) {
+	ptrTree.Remove("ptr10_0")
+}
+
+func ValTenDelete(cur realm) {
+	valTree.Remove("val10_0")
+}
+
+// ============================================================
+// REALISTIC POSITION CRUD
+// ============================================================
+
+func PtrPositionCreate(cur realm) {
+	ptrTree.Set("ptrpos_"+strconv.Itoa(counter), &PtrPosition{
+		PoolKey:                  "gno.land/r/demo/token0:gno.land/r/demo/token1:3000",
+		TickLower:                -887272,
+		TickUpper:                887272,
+		Liquidity:                NewBigInt(1000000),
+		FeeGrowthInside0LastX128: NewBigInt(0),
+		FeeGrowthInside1LastX128: NewBigInt(0),
+		TokensOwed0:              NewBigInt(0),
+		TokensOwed1:              NewBigInt(0),
+		Burned:                   false,
+	})
+	counter++
+}
+
+func ValPositionCreate(cur realm) {
+	valTree.Set("valpos_"+strconv.Itoa(counter), &ValPosition{
+		PoolKey:                  "gno.land/r/demo/token0:gno.land/r/demo/token1:3000",
+		TickLower:                -887272,
+		TickUpper:                887272,
+		Liquidity:                NewU256V(1000000),
+		FeeGrowthInside0LastX128: NewU256V(0),
+		FeeGrowthInside1LastX128: NewU256V(0),
+		TokensOwed0:              NewU256V(0),
+		TokensOwed1:              NewU256V(0),
+		Burned:                   false,
+	})
+	counter++
+}
+
+func PtrPositionUpdateLiq(cur realm) {
+	if v, ok := ptrTree.Get("ptrpos_0"); ok {
+		s := v.(*PtrPosition)
+		s.Liquidity = NewBigInt(9999999)
+	}
+}
+
+func ValPositionUpdateLiq(cur realm) {
+	if v, ok := valTree.Get("valpos_0"); ok {
+		s := v.(*ValPosition)
+		s.Liquidity = NewU256V(9999999)
+	}
+}
+
+func PtrPositionUpdateAll(cur realm) {
+	if v, ok := ptrTree.Get("ptrpos_0"); ok {
+		s := v.(*PtrPosition)
+		s.Liquidity = NewBigInt(7777777)
+		s.FeeGrowthInside0LastX128 = NewBigIntFull(9999, 9999, 0, 0)
+		s.FeeGrowthInside1LastX128 = NewBigIntFull(8888, 8888, 0, 0)
+		s.TokensOwed0 = NewBigInt(11111)
+		s.TokensOwed1 = NewBigInt(22222)
+	}
+}
+
+func ValPositionUpdateAll(cur realm) {
+	if v, ok := valTree.Get("valpos_0"); ok {
+		s := v.(*ValPosition)
+		s.Liquidity = NewU256V(7777777)
+		s.FeeGrowthInside0LastX128 = NewU256VFull(9999, 9999, 0, 0)
+		s.FeeGrowthInside1LastX128 = NewU256VFull(8888, 8888, 0, 0)
+		s.TokensOwed0 = NewU256V(11111)
+		s.TokensOwed1 = NewU256V(22222)
+	}
+}
+
+func PtrPositionDelete(cur realm) {
+	ptrTree.Remove("ptrpos_0")
+}
+
+func ValPositionDelete(cur realm) {
+	valTree.Remove("valpos_0")
+}

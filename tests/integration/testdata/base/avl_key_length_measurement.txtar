@@ -1,0 +1,295 @@
+## AVL Tree Key Length Storage Measurement
+## Compares storage cost when avl.Tree keys are 1, 10, 100 chars
+## Measures: Create / Update / Delete for int value and *struct value
+## Scale factor: N = 1, 100
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/avlkey -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== INT VALUE, N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func PopulateBg -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Create int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Create int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Create int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Update int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Update int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Update int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Delete int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntDelete1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Delete int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntDelete10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Delete int (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntDelete100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== STRUCT VALUE, N=1 ========== ###
+
+# Key 1 char: Create struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Create struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Create struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Update struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Update struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Update struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Delete struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructDelete1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Delete struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructDelete10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Delete struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructDelete100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== INT VALUE, N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func PopulateBg -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Create int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Create int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Create int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Update int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Update int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Update int (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func IntUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== STRUCT VALUE, N=100 ========== ###
+
+# Key 1 char: Create struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Create struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Create struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 1 char: Update struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 10 chars: Update struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Key 100 chars: Update struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/avlkey -func StructUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/avlkey"
+gno = "0.9"
+-- main.gno --
+package avlkey
+
+import (
+	"strings"
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+type Info struct {
+	A *BigInt
+	B *BigInt
+	C *BigInt
+	D string
+	E int64
+}
+
+var (
+	tree    *avl.Tree
+	counter int
+)
+
+func init() {
+	tree = avl.NewTree()
+}
+
+// ============================================================
+// Key generators
+// ============================================================
+
+func key1() string {
+	return "k"
+}
+
+func key10() string {
+	return "k_10chars_"
+}
+
+func key100() string {
+	return "k_" + strings.Repeat("x", 98)
+}
+
+// ============================================================
+// Background populate
+// ============================================================
+
+func PopulateBg(cur realm, n int) {
+	tree = avl.NewTree()
+	for i := 0; i < n; i++ {
+		tree.Set("bg_"+strconv.Itoa(i), i)
+	}
+	counter = 0
+}
+
+// ============================================================
+// INT value CRUD
+// ============================================================
+
+func IntCreate1(cur realm) {
+	tree.Set(key1()+"_int_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func IntCreate10(cur realm) {
+	tree.Set(key10()+"_int_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func IntCreate100(cur realm) {
+	tree.Set(key100()+"_int_"+strconv.Itoa(counter), 42)
+	counter++
+}
+
+func IntUpdate1(cur realm) {
+	k := key1() + "_int_0"
+	if _, ok := tree.Get(k); ok {
+		tree.Set(k, 99999)
+	}
+}
+
+func IntUpdate10(cur realm) {
+	k := key10() + "_int_0"
+	if _, ok := tree.Get(k); ok {
+		tree.Set(k, 99999)
+	}
+}
+
+func IntUpdate100(cur realm) {
+	k := key100() + "_int_0"
+	if _, ok := tree.Get(k); ok {
+		tree.Set(k, 99999)
+	}
+}
+
+func IntDelete1(cur realm) {
+	tree.Remove(key1() + "_int_0")
+}
+
+func IntDelete10(cur realm) {
+	tree.Remove(key10() + "_int_0")
+}
+
+func IntDelete100(cur realm) {
+	tree.Remove(key100() + "_int_0")
+}
+
+// ============================================================
+// STRUCT value CRUD
+// ============================================================
+
+func StructCreate1(cur realm) {
+	tree.Set(key1()+"_st_"+strconv.Itoa(counter), &Info{
+		A: NewBigInt(100), B: NewBigInt(200), C: NewBigInt(300),
+		D: "gno.land/r/demo/pool:token0:token1:3000", E: 42,
+	})
+	counter++
+}
+
+func StructCreate10(cur realm) {
+	tree.Set(key10()+"_st_"+strconv.Itoa(counter), &Info{
+		A: NewBigInt(100), B: NewBigInt(200), C: NewBigInt(300),
+		D: "gno.land/r/demo/pool:token0:token1:3000", E: 42,
+	})
+	counter++
+}
+
+func StructCreate100(cur realm) {
+	tree.Set(key100()+"_st_"+strconv.Itoa(counter), &Info{
+		A: NewBigInt(100), B: NewBigInt(200), C: NewBigInt(300),
+		D: "gno.land/r/demo/pool:token0:token1:3000", E: 42,
+	})
+	counter++
+}
+
+func StructUpdate1(cur realm) {
+	k := key1() + "_st_0"
+	if v, ok := tree.Get(k); ok {
+		s := v.(*Info)
+		s.A = NewBigInt(99999)
+	}
+}
+
+func StructUpdate10(cur realm) {
+	k := key10() + "_st_0"
+	if v, ok := tree.Get(k); ok {
+		s := v.(*Info)
+		s.A = NewBigInt(99999)
+	}
+}
+
+func StructUpdate100(cur realm) {
+	k := key100() + "_st_0"
+	if v, ok := tree.Get(k); ok {
+		s := v.(*Info)
+		s.A = NewBigInt(99999)
+	}
+}
+
+func StructDelete1(cur realm) {
+	tree.Remove(key1() + "_st_0")
+}
+
+func StructDelete10(cur realm) {
+	tree.Remove(key10() + "_st_0")
+}
+
+func StructDelete100(cur realm) {
+	tree.Remove(key100() + "_st_0")
+}

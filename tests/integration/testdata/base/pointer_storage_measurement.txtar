@@ -1,0 +1,344 @@
+## Pointer vs Value Struct Storage Measurement
+## N = number of existing structs in background avl.Tree
+## Compares: value struct vs pointer struct for Create / Update / Delete
+## Also: nested pointer struct, partial field update
+## Scale factor: N = 1, 100, 1,000
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/ptrstorage -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== N=1 ========== ###
+
+# Populate 1 background entry
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func Populate -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Value struct (3 fields)
+# Create value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Pointer struct (3 fields)
+# Create pointer struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreatePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update pointer struct - mutate fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrSmallMutate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update pointer struct - replace (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrSmallReplace -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete pointer struct - nil (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeletePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Large value struct (10 fields)
+# Create large value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateValueLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update large value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateValueLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete large value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteValueLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Large pointer struct (10 fields)
+# Create large pointer struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreatePtrLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update large pointer - mutate (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrLargeMutate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update large pointer - replace (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrLargeReplace -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete large pointer - nil (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeletePtrLarge -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Nested pointer struct (struct with *Inner fields)
+# Create nested pointer struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update nested - mutate inner pointer fields (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateNestedInner -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update nested - replace entire struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateNestedReplace -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete nested - nil (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+## Partial field update comparison
+# Setup: initialize both value and pointer structs for partial update test
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func SetupPartial -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update - single field on value struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdateValue -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update - single field on pointer struct (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdatePtr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== N=100 ========== ###
+
+# Populate 100 background entries
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func Populate -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create value struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update value struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete value struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create pointer struct (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreatePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update pointer - mutate (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrSmallMutate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete pointer - nil (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeletePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create nested (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update nested inner (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateNestedInner -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete nested (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update value (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func SetupPartial -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdateValue -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update pointer (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdatePtr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== N=1,000 ========== ###
+
+# Populate 1,000 background entries
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func Populate -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create value struct (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update value struct (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete value struct (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteValueSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create pointer struct (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreatePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update pointer - mutate (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdatePtrSmallMutate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete pointer - nil (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeletePtrSmall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Create nested (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func CreateNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update nested inner (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func UpdateNestedInner -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Delete nested (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func DeleteNested -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update value (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func SetupPartial -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdateValue -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Partial update pointer (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/ptrstorage -func PartialUpdatePtr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/ptrstorage"
+gno = "0.9"
+-- main.gno --
+package ptrstorage
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+type Small struct {
+	A int
+	B int
+	C int
+}
+
+type Large struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+}
+
+type Inner struct {
+	Value int
+	Name  string
+}
+
+type Nested struct {
+	ID     int
+	Label  string
+	Inner1 *Inner
+	Inner2 *Inner
+	Inner3 *Inner
+}
+
+var (
+	bgState *avl.Tree
+
+	valueSmall Small
+	ptrSmall   *Small
+
+	valueLarge Large
+	ptrLarge   *Large
+
+	ptrNested *Nested
+
+	partialValue Large
+	partialPtr   *Large
+)
+
+func Populate(cur realm, n int) {
+	bgState = avl.NewTree()
+	for i := 0; i < n; i++ {
+		bgState.Set("bg_"+strconv.Itoa(i), &Small{A: i, B: i * 2, C: i * 3})
+	}
+}
+
+// ============ VALUE STRUCT (Small) ============
+
+func CreateValueSmall(cur realm) {
+	valueSmall = Small{A: 1, B: 2, C: 3}
+}
+
+func UpdateValueSmall(cur realm) {
+	valueSmall = Small{A: 100, B: 200, C: 300}
+}
+
+func DeleteValueSmall(cur realm) {
+	valueSmall = Small{}
+}
+
+// ============ POINTER STRUCT (Small) ============
+
+func CreatePtrSmall(cur realm) {
+	ptrSmall = &Small{A: 1, B: 2, C: 3}
+}
+
+func UpdatePtrSmallMutate(cur realm) {
+	ptrSmall.A = 100
+	ptrSmall.B = 200
+	ptrSmall.C = 300
+}
+
+func UpdatePtrSmallReplace(cur realm) {
+	ptrSmall = &Small{A: 999, B: 888, C: 777}
+}
+
+func DeletePtrSmall(cur realm) {
+	ptrSmall = nil
+}
+
+// ============ VALUE STRUCT (Large) ============
+
+func CreateValueLarge(cur realm) {
+	valueLarge = Large{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+}
+
+func UpdateValueLarge(cur realm) {
+	valueLarge = Large{A: 10, B: 20, C: 30, D: 40, E: 50, F: 60, G: 70, H: 80, I: 90, J: 100}
+}
+
+func DeleteValueLarge(cur realm) {
+	valueLarge = Large{}
+}
+
+// ============ POINTER STRUCT (Large) ============
+
+func CreatePtrLarge(cur realm) {
+	ptrLarge = &Large{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+}
+
+func UpdatePtrLargeMutate(cur realm) {
+	ptrLarge.A = 10
+	ptrLarge.B = 20
+	ptrLarge.C = 30
+	ptrLarge.D = 40
+	ptrLarge.E = 50
+	ptrLarge.F = 60
+	ptrLarge.G = 70
+	ptrLarge.H = 80
+	ptrLarge.I = 90
+	ptrLarge.J = 100
+}
+
+func UpdatePtrLargeReplace(cur realm) {
+	ptrLarge = &Large{A: 999, B: 888, C: 777, D: 666, E: 555, F: 444, G: 333, H: 222, I: 111, J: 0}
+}
+
+func DeletePtrLarge(cur realm) {
+	ptrLarge = nil
+}
+
+// ============ NESTED POINTER STRUCT ============
+
+func CreateNested(cur realm) {
+	ptrNested = &Nested{
+		ID:     1,
+		Label:  "position_001",
+		Inner1: &Inner{Value: 100, Name: "fee_growth_0"},
+		Inner2: &Inner{Value: 200, Name: "fee_growth_1"},
+		Inner3: &Inner{Value: 300, Name: "liquidity"},
+	}
+}
+
+func UpdateNestedInner(cur realm) {
+	ptrNested.Inner1.Value = 999
+	ptrNested.Inner2.Value = 888
+	ptrNested.Inner3.Value = 777
+}
+
+func UpdateNestedReplace(cur realm) {
+	ptrNested = &Nested{
+		ID:     2,
+		Label:  "position_002",
+		Inner1: &Inner{Value: 1000, Name: "fee_growth_0_v2"},
+		Inner2: &Inner{Value: 2000, Name: "fee_growth_1_v2"},
+		Inner3: &Inner{Value: 3000, Name: "liquidity_v2"},
+	}
+}
+
+func DeleteNested(cur realm) {
+	ptrNested = nil
+}
+
+// ============ PARTIAL FIELD UPDATE ============
+
+func SetupPartial(cur realm) {
+	partialValue = Large{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+	partialPtr = &Large{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+}
+
+func PartialUpdateValue(cur realm) {
+	partialValue.A = 999
+}
+
+func PartialUpdatePtr(cur realm) {
+	partialPtr.A = 999
+}

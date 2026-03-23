@@ -1,0 +1,245 @@
+## Collection CRUD Storage Measurement
+## N = number of existing entries in the collection
+## Measures single-item Create / Update / Delete on: map, slice, avl.Tree
+## Scale factor: N = 1, 100, 1,000
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/collcrud -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== MAP: N=1 ========== ###
+
+# Populate map to 1 entry
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateMap -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Create one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Update one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Delete one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Set nil (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapSetNil -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== MAP: N=100 ========== ###
+
+# Populate map to 100 entries
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateMap -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Create one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Update one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Delete one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== MAP: N=1,000 ========== ###
+
+# Populate map to 1,000 entries
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateMap -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Create one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Update one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Map: Delete one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func MapDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== SLICE: N=1 ========== ###
+
+# Populate slice to 1 element
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateSlice -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Append one element (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceAppendOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Update one element (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Shrink by one (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceShrinkOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Set nil (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceSetNil -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== SLICE: N=100 ========== ###
+
+# Populate slice to 100 elements
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateSlice -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Append one element (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceAppendOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Update one element (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Shrink by one (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceShrinkOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== SLICE: N=1,000 ========== ###
+
+# Populate slice to 1,000 elements
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateSlice -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Append one element (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceAppendOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Update one element (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Slice: Shrink by one (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func SliceShrinkOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AVL TREE: N=1 ========== ###
+
+# Populate tree to 1 entry
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateTree -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Create one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Update one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Delete one entry (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AVL TREE: N=100 ========== ###
+
+# Populate tree to 100 entries
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateTree -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Create one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Update one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Delete one entry (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== AVL TREE: N=1,000 ========== ###
+
+# Populate tree to 1,000 entries
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func PopulateTree -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Create one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeCreateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Update one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeUpdateOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree: Delete one entry (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/collcrud -func TreeDeleteOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/collcrud"
+gno = "0.9"
+-- main.gno --
+package collcrud
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+var (
+	storedMap   map[string]int
+	storedSlice []int
+	storedTree  *avl.Tree
+
+	opCounter int
+)
+
+// ============ POPULATE ============
+
+func PopulateMap(cur realm, n int) {
+	storedMap = make(map[string]int)
+	for i := 0; i < n; i++ {
+		storedMap["key_"+strconv.Itoa(i)] = i
+	}
+	opCounter = n
+}
+
+func PopulateSlice(cur realm, n int) {
+	storedSlice = make([]int, n)
+	for i := 0; i < n; i++ {
+		storedSlice[i] = i
+	}
+	opCounter = n
+}
+
+func PopulateTree(cur realm, n int) {
+	storedTree = avl.NewTree()
+	for i := 0; i < n; i++ {
+		storedTree.Set("key_"+strconv.Itoa(i), i)
+	}
+	opCounter = n
+}
+
+// ============ MAP CRUD ============
+
+func MapCreateOne(cur realm) {
+	storedMap["new_key_"+strconv.Itoa(opCounter)] = 99999
+	opCounter++
+}
+
+func MapUpdateOne(cur realm) {
+	storedMap["key_0"] = 88888
+}
+
+func MapDeleteOne(cur realm) {
+	delete(storedMap, "key_0")
+}
+
+func MapSetNil(cur realm) {
+	storedMap = nil
+}
+
+// ============ SLICE CRUD ============
+
+func SliceAppendOne(cur realm) {
+	storedSlice = append(storedSlice, 99999)
+}
+
+func SliceUpdateOne(cur realm) {
+	if len(storedSlice) > 0 {
+		storedSlice[0] = 88888
+	}
+}
+
+func SliceShrinkOne(cur realm) {
+	if len(storedSlice) > 0 {
+		storedSlice = storedSlice[:len(storedSlice)-1]
+	}
+}
+
+func SliceSetNil(cur realm) {
+	storedSlice = nil
+}
+
+// ============ AVL TREE CRUD ============
+
+func TreeCreateOne(cur realm) {
+	storedTree.Set("new_key_"+strconv.Itoa(opCounter), 99999)
+	opCounter++
+}
+
+func TreeUpdateOne(cur realm) {
+	storedTree.Set("key_0", 88888)
+}
+
+func TreeDeleteOne(cur realm) {
+	storedTree.Remove("key_0")
+}

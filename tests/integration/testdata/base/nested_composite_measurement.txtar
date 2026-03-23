@@ -1,0 +1,350 @@
+## Nested Composite Data Structure Storage Measurement
+## N = number of existing entries in the collection
+## Measures: []Struct vs []*Struct, map[string]Struct vs map[string]*Struct, avl.Tree + struct
+## Scale factor: N = 1, 100, 1,000
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+# Deploy realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/nested -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== []Struct vs []*Struct: N=1 ========== ###
+
+# Populate value slice to 1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueSlice -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Populate pointer slice to 1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrSlice -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Append one (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Append one (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Update one (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Update one via pointer (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Delete last (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Delete last (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== []Struct vs []*Struct: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueSlice -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrSlice -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Append (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Append (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== []Struct vs []*Struct: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueSlice -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrSlice -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Append (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Append (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceAppend -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []Struct: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# []*Struct: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrSliceDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== map[string]Struct vs map[string]*Struct: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueMap -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrMap -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Update via pointer (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== map[string]Struct vs map[string]*Struct: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueMap -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrMap -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== map[string]Struct vs map[string]*Struct: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateValueMap -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulatePtrMap -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]Struct: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]*Struct: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== avl.Tree + Struct: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateTreeStruct -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== avl.Tree + Struct: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateTreeStruct -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== avl.Tree + Struct: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateTreeStruct -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Tree+Struct: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func TreeStructDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/nested"
+gno = "0.9"
+-- main.gno --
+package nested
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+type Item struct {
+	ID    int
+	Name  string
+	Value int
+}
+
+var (
+	valueSlice []Item
+	ptrSlice   []*Item
+
+	valueMap map[string]Item
+	ptrMap   map[string]*Item
+
+	treeStruct *avl.Tree
+
+	opCounter int
+)
+
+// ============ POPULATE ============
+
+func PopulateValueSlice(cur realm, n int) {
+	valueSlice = make([]Item, n)
+	for i := 0; i < n; i++ {
+		valueSlice[i] = Item{ID: i, Name: "item_" + strconv.Itoa(i), Value: i * 10}
+	}
+}
+
+func PopulatePtrSlice(cur realm, n int) {
+	ptrSlice = make([]*Item, n)
+	for i := 0; i < n; i++ {
+		ptrSlice[i] = &Item{ID: i, Name: "item_" + strconv.Itoa(i), Value: i * 10}
+	}
+}
+
+func PopulateValueMap(cur realm, n int) {
+	valueMap = make(map[string]Item)
+	for i := 0; i < n; i++ {
+		valueMap["key_"+strconv.Itoa(i)] = Item{ID: i, Name: "item_" + strconv.Itoa(i), Value: i * 10}
+	}
+	opCounter = n
+}
+
+func PopulatePtrMap(cur realm, n int) {
+	ptrMap = make(map[string]*Item)
+	for i := 0; i < n; i++ {
+		ptrMap["key_"+strconv.Itoa(i)] = &Item{ID: i, Name: "item_" + strconv.Itoa(i), Value: i * 10}
+	}
+	opCounter = n
+}
+
+func PopulateTreeStruct(cur realm, n int) {
+	treeStruct = avl.NewTree()
+	for i := 0; i < n; i++ {
+		treeStruct.Set("key_"+strconv.Itoa(i), &Item{ID: i, Name: "item_" + strconv.Itoa(i), Value: i * 10})
+	}
+	opCounter = n
+}
+
+// ============ []Struct CRUD ============
+
+func ValueSliceAppend(cur realm) {
+	valueSlice = append(valueSlice, Item{ID: 99999, Name: "new_item", Value: 99999})
+}
+
+func ValueSliceUpdate(cur realm) {
+	if len(valueSlice) > 0 {
+		valueSlice[0] = Item{ID: 0, Name: "updated_item", Value: 88888}
+	}
+}
+
+func ValueSliceDelete(cur realm) {
+	if len(valueSlice) > 0 {
+		valueSlice = valueSlice[:len(valueSlice)-1]
+	}
+}
+
+// ============ []*Struct CRUD ============
+
+func PtrSliceAppend(cur realm) {
+	ptrSlice = append(ptrSlice, &Item{ID: 99999, Name: "new_item", Value: 99999})
+}
+
+func PtrSliceUpdate(cur realm) {
+	if len(ptrSlice) > 0 {
+		ptrSlice[0].Name = "updated_item"
+		ptrSlice[0].Value = 88888
+	}
+}
+
+func PtrSliceDelete(cur realm) {
+	if len(ptrSlice) > 0 {
+		ptrSlice = ptrSlice[:len(ptrSlice)-1]
+	}
+}
+
+// ============ map[string]Struct CRUD ============
+
+func ValueMapCreate(cur realm) {
+	valueMap["new_key_"+strconv.Itoa(opCounter)] = Item{ID: 99999, Name: "new_item", Value: 99999}
+	opCounter++
+}
+
+func ValueMapUpdate(cur realm) {
+	valueMap["key_0"] = Item{ID: 0, Name: "updated_item", Value: 88888}
+}
+
+func ValueMapDelete(cur realm) {
+	delete(valueMap, "key_0")
+}
+
+// ============ map[string]*Struct CRUD ============
+
+func PtrMapCreate(cur realm) {
+	ptrMap["new_key_"+strconv.Itoa(opCounter)] = &Item{ID: 99999, Name: "new_item", Value: 99999}
+	opCounter++
+}
+
+func PtrMapUpdate(cur realm) {
+	if v, ok := ptrMap["key_0"]; ok {
+		v.Name = "updated_item"
+		v.Value = 88888
+	}
+}
+
+func PtrMapDelete(cur realm) {
+	delete(ptrMap, "key_0")
+}
+
+// ============ avl.Tree + *Struct CRUD ============
+
+func TreeStructCreate(cur realm) {
+	treeStruct.Set("new_key_"+strconv.Itoa(opCounter), &Item{ID: 99999, Name: "new_item", Value: 99999})
+	opCounter++
+}
+
+func TreeStructUpdate(cur realm) {
+	if v, ok := treeStruct.Get("key_0"); ok {
+		item := v.(*Item)
+		item.Name = "updated_item"
+		item.Value = 88888
+	}
+}
+
+func TreeStructDelete(cur realm) {
+	treeStruct.Remove("key_0")
+}
