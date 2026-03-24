@@ -17,10 +17,7 @@ func (s StoreKey) String() string {
 const (
 	// Pool data storage keys
 	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
-	StoreKeyPoolTicks            StoreKey = "pool:ticks"           // AVL bucket of per-pool ticks trees
-	StoreKeyPoolTickBitmaps      StoreKey = "pool:tickBitmaps"     // AVL bucket of per-pool tick bitmaps
 	StoreKeyPoolPositions        StoreKey = "pool:positions"       // AVL bucket of per-pool positions trees
-	StoreKeyPoolObservations     StoreKey = "pool:observations"    // AVL bucket of per-pool observation state
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
@@ -68,56 +65,6 @@ func (s *poolStore) SetPools(pools *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 
-func (s *poolStore) HasPoolTicksBucket() bool {
-	return s.kvStore.Has(StoreKeyPoolTicks.String())
-}
-
-func (s *poolStore) GetPoolTicksBucket() *avl.Tree {
-	bucket, err := s.kvStore.GetTree(StoreKeyPoolTicks.String())
-	if err != nil {
-		panic(err)
-	}
-
-	if bucket == nil {
-		panic("pool ticks bucket is nil")
-	}
-
-	return bucket
-}
-
-func (s *poolStore) SetPoolTicksBucket(bucket *avl.Tree) error {
-	if bucket == nil {
-		panic("pool ticks bucket is nil")
-	}
-
-	return s.kvStore.Set(StoreKeyPoolTicks.String(), bucket)
-}
-
-func (s *poolStore) HasPoolTickBitmapsBucket() bool {
-	return s.kvStore.Has(StoreKeyPoolTickBitmaps.String())
-}
-
-func (s *poolStore) GetPoolTickBitmapsBucket() *avl.Tree {
-	bucket, err := s.kvStore.GetTree(StoreKeyPoolTickBitmaps.String())
-	if err != nil {
-		panic(err)
-	}
-
-	if bucket == nil {
-		panic("pool tick bitmaps bucket is nil")
-	}
-
-	return bucket
-}
-
-func (s *poolStore) SetPoolTickBitmapsBucket(bucket *avl.Tree) error {
-	if bucket == nil {
-		panic("pool tick bitmaps bucket is nil")
-	}
-
-	return s.kvStore.Set(StoreKeyPoolTickBitmaps.String(), bucket)
-}
-
 func (s *poolStore) HasPoolPositionsBucket() bool {
 	return s.kvStore.Has(StoreKeyPoolPositions.String())
 }
@@ -141,87 +88,6 @@ func (s *poolStore) SetPoolPositionsBucket(bucket *avl.Tree) error {
 	}
 
 	return s.kvStore.Set(StoreKeyPoolPositions.String(), bucket)
-}
-
-func (s *poolStore) HasPoolObservationsBucket() bool {
-	return s.kvStore.Has(StoreKeyPoolObservations.String())
-}
-
-func (s *poolStore) GetPoolObservationsBucket() *avl.Tree {
-	bucket, err := s.kvStore.GetTree(StoreKeyPoolObservations.String())
-	if err != nil {
-		panic(err)
-	}
-
-	if bucket == nil {
-		panic("pool observations bucket is nil")
-	}
-
-	return bucket
-}
-
-func (s *poolStore) SetPoolObservationsBucket(bucket *avl.Tree) error {
-	if bucket == nil {
-		panic("pool observations bucket is nil")
-	}
-
-	return s.kvStore.Set(StoreKeyPoolObservations.String(), bucket)
-}
-
-func (s *poolStore) GetPoolTicks(poolPath string) *avl.Tree {
-	bucket := s.GetPoolTicksBucket()
-	result, ok := bucket.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("ticks not found for poolPath: %s", poolPath))
-	}
-
-	ticks, ok := result.(*avl.Tree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast ticks to *avl.Tree: %T", result))
-	}
-	if ticks == nil {
-		panic("ticks is nil")
-	}
-	return ticks
-}
-
-func (s *poolStore) SetPoolTicks(poolPath string, ticks *avl.Tree) error {
-	if ticks == nil {
-		panic("ticks is nil")
-	}
-
-	bucket := s.GetPoolTicksBucket()
-	bucket.Set(poolPath, ticks)
-
-	return s.SetPoolTicksBucket(bucket)
-}
-
-func (s *poolStore) GetPoolTickBitmaps(poolPath string) *avl.Tree {
-	bucket := s.GetPoolTickBitmapsBucket()
-	result, ok := bucket.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("tick bitmaps not found for poolPath: %s", poolPath))
-	}
-
-	tickBitmaps, ok := result.(*avl.Tree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast tickBitmaps to *avl.Tree: %T", result))
-	}
-	if tickBitmaps == nil {
-		panic("tickBitmaps is nil")
-	}
-	return tickBitmaps
-}
-
-func (s *poolStore) SetPoolTickBitmaps(poolPath string, tickBitmaps *avl.Tree) error {
-	if tickBitmaps == nil {
-		panic("tickBitmaps is nil")
-	}
-
-	bucket := s.GetPoolTickBitmapsBucket()
-	bucket.Set(poolPath, tickBitmaps)
-
-	return s.SetPoolTickBitmapsBucket(bucket)
 }
 
 func (s *poolStore) GetPoolPositions(poolPath string) *avl.Tree {
@@ -250,34 +116,6 @@ func (s *poolStore) SetPoolPositions(poolPath string, positions *avl.Tree) error
 	bucket.Set(poolPath, positions)
 
 	return s.SetPoolPositionsBucket(bucket)
-}
-
-func (s *poolStore) GetPoolObservationState(poolPath string) *ObservationState {
-	bucket := s.GetPoolObservationsBucket()
-	result, ok := bucket.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("observationState not found for poolPath: %s", poolPath))
-	}
-
-	observationState, ok := result.(*ObservationState)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *ObservationState: %T", result))
-	}
-	if observationState == nil {
-		panic("observationState is nil")
-	}
-	return observationState
-}
-
-func (s *poolStore) SetPoolObservationState(poolPath string, observationState *ObservationState) error {
-	if observationState == nil {
-		panic("observationState is nil")
-	}
-
-	bucket := s.GetPoolObservationsBucket()
-	bucket.Set(poolPath, observationState)
-
-	return s.SetPoolObservationsBucket(bucket)
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {

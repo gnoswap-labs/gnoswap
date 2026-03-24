@@ -237,26 +237,11 @@ type IPoolStore interface {
 	HasPools() bool
 	GetPools() *avl.Tree
 	SetPools(pools *avl.Tree) error
-	HasPoolTicksBucket() bool
-	GetPoolTicksBucket() *avl.Tree
-	SetPoolTicksBucket(bucket *avl.Tree) error
-	HasPoolTickBitmapsBucket() bool
-	GetPoolTickBitmapsBucket() *avl.Tree
-	SetPoolTickBitmapsBucket(bucket *avl.Tree) error
 	HasPoolPositionsBucket() bool
 	GetPoolPositionsBucket() *avl.Tree
 	SetPoolPositionsBucket(bucket *avl.Tree) error
-	HasPoolObservationsBucket() bool
-	GetPoolObservationsBucket() *avl.Tree
-	SetPoolObservationsBucket(bucket *avl.Tree) error
-	GetPoolTicks(poolPath string) *avl.Tree
-	SetPoolTicks(poolPath string, ticks *avl.Tree) error
-	GetPoolTickBitmaps(poolPath string) *avl.Tree
-	SetPoolTickBitmaps(poolPath string, tickBitmaps *avl.Tree) error
 	GetPoolPositions(poolPath string) *avl.Tree
 	SetPoolPositions(poolPath string, positions *avl.Tree) error
-	GetPoolObservationState(poolPath string) *ObservationState
-	SetPoolObservationState(poolPath string, observationState *ObservationState) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
