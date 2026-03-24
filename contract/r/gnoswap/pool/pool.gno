@@ -207,6 +207,27 @@ func (p *Pool) Clone() *Pool {
 	}
 }
 
+func (p *Pool) CloneCore() *Pool {
+	return &Pool{
+		token0Path:  p.token0Path,
+		token1Path:  p.token1Path,
+		fee:         p.fee,
+		tickSpacing: p.tickSpacing,
+		slot0: Slot0{
+			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
+			tick:         p.slot0.tick,
+			feeProtocol:  p.slot0.feeProtocol,
+			unlocked:     p.slot0.unlocked,
+		},
+		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
+		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
+		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
+		liquidity:            p.liquidity.Clone(),
+	}
+}
+
 func NewPool(
 	token0Path string,
 	token1Path string,
