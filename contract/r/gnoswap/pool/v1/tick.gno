@@ -11,8 +11,19 @@ import (
 )
 
 const (
+	MAX_LIQUIDITY_PER_TICK_SPACING_1   = "191757530477355301479181766273477"
+	MAX_LIQUIDITY_PER_TICK_SPACING_10  = "1917569901783203986719870431555990"
+	MAX_LIQUIDITY_PER_TICK_SPACING_60  = "11505743598341114571880798222544994"
+	MAX_LIQUIDITY_PER_TICK_SPACING_200 = "38350317471085141830651933667504588"
 	MIN_TICK int32 = -887272
 	MAX_TICK int32 = 887272
+)
+
+var (
+	maxLiquidityPerTickSpacing1FromDec   = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_1)
+	maxLiquidityPerTickSpacing10FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_10)
+	maxLiquidityPerTickSpacing60FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_60)
+	maxLiquidityPerTickSpacing200FromDec = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_200)
 )
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
@@ -313,6 +324,26 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 	return &tickInfo
 }
 
+// calculateMaxLiquidityPerTick calculates the maximum liquidity
+// per tick for a given tick spacing.
+func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
+	switch tickSpacing {
+	case 1:
+		return maxLiquidityPerTickSpacing1FromDec
+	case 10:
+		return maxLiquidityPerTickSpacing10FromDec
+	case 60:
+		return maxLiquidityPerTickSpacing60FromDec
+	case 200:
+		return maxLiquidityPerTickSpacing200FromDec
+	default:
+		minTick := (MIN_TICK / tickSpacing) * tickSpacing
+		maxTick := (MAX_TICK / tickSpacing) * tickSpacing
+		numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
+
+		return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
+	}
+}
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
 //
 // This function computes the fee growth for token 0 and token 1 below a given tick (`tickLower`)

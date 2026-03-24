@@ -59,7 +59,7 @@ func (i *poolV1) GetTickSpacing(poolPath string) int32 {
 }
 
 func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) string {
-	return i.mustGetPool(poolPath).MaxLiquidityPerTick().ToString()
+	return calculateMaxLiquidityPerTick(i.mustGetPool(poolPath).TickSpacing()).ToString()
 }
 
 func (i *poolV1) GetSlot0FeeProtocol(poolPath string) uint8 {
