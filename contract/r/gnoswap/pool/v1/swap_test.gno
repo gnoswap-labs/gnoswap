@@ -99,29 +99,29 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 			// Given: Specific protocol fee state
 			pool := &pl.Pool{}
 			protocolFees := pl.ProtocolFees{}
-			protocolFees.SetToken0(u256.MustFromDecimal(test.initialFees["token0"]))
-			protocolFees.SetToken1(u256.MustFromDecimal(test.initialFees["token1"]))
+			protocolFees.SetToken0(u256.MustFromDecimal(test.initialFees["token0"]).Int64())
+			protocolFees.SetToken1(u256.MustFromDecimal(test.initialFees["token1"]).Int64())
 			pool.SetProtocolFees(protocolFees)
 
-			deductAmount0 := u256.MustFromDecimal(test.deductionAmount["token0"])
-			deductAmount1 := u256.MustFromDecimal(test.deductionAmount["token1"])
+			deductAmount0 := u256.MustFromDecimal(test.deductionAmount["token0"]).Int64()
+			deductAmount1 := u256.MustFromDecimal(test.deductionAmount["token1"]).Int64()
 
 			// When: Execute protocol fee deduction
 			actualDeducted0, actualDeducted1 := getMockInstance().saveProtocolFees(pool, deductAmount0, deductAmount1)
 
 			// Then: Verify expected deduction and remaining balance
-			expectedDeducted0 := u256.MustFromDecimal(test.expectedDeducted["token0"])
-			expectedDeducted1 := u256.MustFromDecimal(test.expectedDeducted["token1"])
-			expectedRemaining0 := u256.MustFromDecimal(test.expectedRemaining["token0"])
-			expectedRemaining1 := u256.MustFromDecimal(test.expectedRemaining["token1"])
+			expectedDeducted0 := u256.MustFromDecimal(test.expectedDeducted["token0"]).Int64()
+			expectedDeducted1 := u256.MustFromDecimal(test.expectedDeducted["token1"]).Int64()
+			expectedRemaining0 := u256.MustFromDecimal(test.expectedRemaining["token0"]).Int64()
+			expectedRemaining1 := u256.MustFromDecimal(test.expectedRemaining["token1"]).Int64()
 
-			uassert.Equal(t, expectedDeducted0.ToString(), actualDeducted0.ToString(),
+			uassert.Equal(t, expectedDeducted0, actualDeducted0,
 				"Token0 deduction amount is different from expected")
-			uassert.Equal(t, expectedDeducted1.ToString(), actualDeducted1.ToString(),
+			uassert.Equal(t, expectedDeducted1, actualDeducted1,
 				"Token1 deduction amount is different from expected")
-			uassert.Equal(t, expectedRemaining0.ToString(), pool.ProtocolFeesToken0().ToString(),
+			uassert.Equal(t, expectedRemaining0, pool.ProtocolFeesToken0(),
 				"Token0 remaining fee is different from expected")
-			uassert.Equal(t, expectedRemaining1.ToString(), pool.ProtocolFeesToken1().ToString(),
+			uassert.Equal(t, expectedRemaining1, pool.ProtocolFeesToken1(),
 				"Token1 remaining fee is different from expected")
 
 			t.Logf("✓ %s: %s", test.description, test.businessImpact)
@@ -1042,11 +1042,11 @@ func createMockLiquidityPool() *pl.Pool {
 		},
 		liquidity: u256.MustFromDecimal("1000000000000000000"),
 		protocolFees: struct {
-			token0 *u256.Uint
-			token1 *u256.Uint
+			token0 int64
+			token1 int64
 		}{
-			token0: u256.Zero(),
-			token1: u256.Zero(),
+			token0: 0,
+			token1: 0,
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),

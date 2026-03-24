@@ -19,8 +19,8 @@ func testInitData(t *testing.T) {
 		token0Path: "token0",
 		token1Path: "token1",
 		balances: mockBalances{
-			token0: u256.NewUint(1000),
-			token1: u256.NewUint(2000),
+			token0: 1000,
+			token1: 2000,
 		},
 		fee:                 3000,
 		tickSpacing:         10,
@@ -34,8 +34,8 @@ func testInitData(t *testing.T) {
 		feeGrowthGlobal0X128: u256.NewUint(1000000000000000000),
 		feeGrowthGlobal1X128: u256.NewUint(2000000000000000000),
 		protocolFees: mockBalances{
-			token0: u256.NewUint(1000),
-			token1: u256.NewUint(2000),
+			token0: 1000,
+			token1: 2000,
 		},
 		liquidity: u256.NewUint(1000000),
 	}
@@ -62,8 +62,8 @@ func testInitData(t *testing.T) {
 	positionInfo.SetLiquidity("1000000")
 	positionInfo.SetFeeGrowthInside0LastX128("2000000")
 	positionInfo.SetFeeGrowthInside1LastX128("3000000")
-	positionInfo.SetTokensOwed0("4000000")
-	positionInfo.SetTokensOwed1("5000000")
+	positionInfo.SetTokensOwed0(4000000)
+	positionInfo.SetTokensOwed1(5000000)
 
 	mockPositions.Set("test_position", positionInfo)
 	mockPool.SetPositions(mockPositions)

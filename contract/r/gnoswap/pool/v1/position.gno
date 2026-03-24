@@ -102,20 +102,11 @@ func positionUpdate(
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128.ToString())
 
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		curOwed0 := u256.MustFromDecimal(position.TokensOwed0())
-		curOwed1 := u256.MustFromDecimal(position.TokensOwed1())
+		owed0 := safeAddInt64(position.TokensOwed0(), safeConvertToInt64(tokensOwed0))
+		owed1 := safeAddInt64(position.TokensOwed1(), safeConvertToInt64(tokensOwed1))
 
-		owed0, overflow := u256.Zero().AddOverflow(curOwed0, tokensOwed0)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
-		owed1, overflow := u256.Zero().AddOverflow(curOwed1, tokensOwed1)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
-
-		position.SetTokensOwed0(owed0.ToString())
-		position.SetTokensOwed1(owed1.ToString())
+		position.SetTokensOwed0(owed0)
+		position.SetTokensOwed1(owed1)
 	}
 
 	return position, nil
@@ -147,12 +138,12 @@ func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
 }
 
 // PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) string {
+func PositionTokensOwed0(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed0()
 }
 
 // PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) string {
+func PositionTokensOwed1(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed1()
 }
 

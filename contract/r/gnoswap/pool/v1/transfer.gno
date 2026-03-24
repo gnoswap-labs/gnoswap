@@ -43,15 +43,15 @@ func (i *poolV1) safeTransfer(
 ) {
 	token0 := p.BalanceToken0()
 	token1 := p.BalanceToken1()
+	amountInt64 := safeConvertToInt64(amount)
 
-	if err := validatePoolBalance(token0, token1, amount, isToken0); err != nil {
+	if err := validatePoolBalance(token0, token1, amountInt64, isToken0); err != nil {
 		panic(err)
 	}
-	amountInt64 := safeConvertToInt64(amount)
 
 	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 
-	newBalance, err := updatePoolBalance(token0, token1, amount, isToken0)
+	newBalance, err := updatePoolBalance(token0, token1, amountInt64, isToken0)
 	if err != nil {
 		panic(err)
 	}
@@ -119,23 +119,9 @@ func (i *poolV1) safeTransferFrom(
 
 	// update pool balances
 	if isToken0 {
-		beforeToken0 := poolBalances.Token0().Clone()
-		poolBalances.SetToken0(u256.Zero().Add(poolBalances.Token0(), amount))
-		if poolBalances.Token0().Lt(beforeToken0) {
-			panic(ufmt.Sprintf(
-				"%v. token0(%s) < beforeToken0(%s)",
-				errBalanceUpdateFailed, poolBalances.Token0().ToString(), beforeToken0.ToString(),
-			))
-		}
+		poolBalances.SetToken0(safeAddInt64(poolBalances.Token0(), amountInt64))
 	} else {
-		beforeToken1 := poolBalances.Token1().Clone()
-		poolBalances.SetToken1(u256.Zero().Add(poolBalances.Token1(), amount))
-		if poolBalances.Token1().Lt(beforeToken1) {
-			panic(ufmt.Sprintf(
-				"%v. token1(%s) < beforeToken1(%s)",
-				errBalanceUpdateFailed, poolBalances.Token1().ToString(), beforeToken1.ToString(),
-			))
-		}
+		poolBalances.SetToken1(safeAddInt64(poolBalances.Token1(), amountInt64))
 	}
 
 	p.SetBalances(poolBalances)
@@ -229,12 +215,12 @@ func (i *poolV1) safeSwapCallback(
 		// zeroForOne: pool receives token0 (positive), sends token1 (negative)
 		amount0Delta = amountIn
 		amount1Delta = amountOut
-		beforeTokenBalance = p.BalanceToken0().Int64()
+		beforeTokenBalance = p.BalanceToken0()
 	} else {
 		// !zeroForOne: pool receives token1 (positive), sends token0 (negative)
 		amount0Delta = amountOut
 		amount1Delta = amountIn
-		beforeTokenBalance = p.BalanceToken1().Int64()
+		beforeTokenBalance = p.BalanceToken1()
 	}
 
 	// execute swap callback
@@ -257,14 +243,13 @@ func (i *poolV1) safeSwapCallback(
 
 	// check overflow update pool balance
 	resultTokenBalance := safeAddInt64(beforeTokenBalance, amountIn)
-	resultTokenBalanceUint := u256.NewUintFromInt64(resultTokenBalance)
 
 	poolBalances := p.Balances()
 
 	if zeroForOne {
-		poolBalances.SetToken0(resultTokenBalanceUint)
+		poolBalances.SetToken0(resultTokenBalance)
 	} else {
-		poolBalances.SetToken1(resultTokenBalanceUint)
+		poolBalances.SetToken1(resultTokenBalance)
 	}
 
 	p.SetBalances(poolBalances)
@@ -272,27 +257,24 @@ func (i *poolV1) safeSwapCallback(
 
 // validatePoolBalance checks if the pool has sufficient balance of either token0 and token1
 // before proceeding with a transfer. This prevents the pool won't go into a negative balance.
-func validatePoolBalance(token0, token1, amount *u256.Uint, isToken0 bool) error {
-	if token0 == nil || token1 == nil || amount == nil {
-		return ufmt.Errorf(
-			"%v. token0(%s) or token1(%s) or amount(%s) is nil",
-			errTransferFailed, token0.ToString(), token1.ToString(), amount.ToString(),
-		)
+func validatePoolBalance(token0, token1, amount int64, isToken0 bool) error {
+	if amount < 0 {
+		return ufmt.Errorf("%v. amount(%d) must be positive", errTransferFailed, amount)
 	}
 
 	if isToken0 {
-		if token0.Lt(amount) {
+		if token0 < amount {
 			return ufmt.Errorf(
-				"%v. token0(%s) >= amount(%s)",
-				errTransferFailed, token0.ToString(), amount.ToString(),
+				"%v. token0(%d) >= amount(%d)",
+				errTransferFailed, token0, amount,
 			)
 		}
 		return nil
 	}
-	if token1.Lt(amount) {
+	if token1 < amount {
 		return ufmt.Errorf(
-			"%v. token1(%s) >= amount(%s)",
-			errTransferFailed, token1.ToString(), amount.ToString(),
+			"%v. token1(%d) >= amount(%d)",
+			errTransferFailed, token1, amount,
 		)
 	}
 	return nil
@@ -301,34 +283,28 @@ func validatePoolBalance(token0, token1, amount *u256.Uint, isToken0 bool) error
 // updatePoolBalance calculates the new balance after a transfer and validate.
 // It ensures the resulting balance won't be negative or overflow.
 func updatePoolBalance(
-	token0, token1, amount *u256.Uint,
+	token0, token1, amount int64,
 	isToken0 bool,
-) (*u256.Uint, error) {
-	var overflow bool
-	var newBalance *u256.Uint
+) (int64, error) {
+	if amount < 0 {
+		return 0, ufmt.Errorf("%v. amount(%d) must be positive", errBalanceUpdateFailed, amount)
+	}
 
 	if isToken0 {
-		newBalance, overflow = u256.Zero().SubOverflow(token0, amount)
-		if isBalanceOverflowOrNegative(overflow, newBalance) {
-			return nil, ufmt.Errorf(
-				"%v. cannot decrease, token0(%s) - amount(%s)",
-				errBalanceUpdateFailed, token0.ToString(), amount.ToString(),
+		if token0 < amount {
+			return 0, ufmt.Errorf(
+				"%v. cannot decrease, token0(%d) - amount(%d)",
+				errBalanceUpdateFailed, token0, amount,
 			)
 		}
-		return newBalance, nil
+		return safeSubInt64(token0, amount), nil
 	}
 
-	newBalance, overflow = u256.Zero().SubOverflow(token1, amount)
-	if isBalanceOverflowOrNegative(overflow, newBalance) {
-		return nil, ufmt.Errorf(
-			"%v. cannot decrease, token1(%s) - amount(%s)",
-			errBalanceUpdateFailed, token1.ToString(), amount.ToString(),
+	if token1 < amount {
+		return 0, ufmt.Errorf(
+			"%v. cannot decrease, token1(%d) - amount(%d)",
+			errBalanceUpdateFailed, token1, amount,
 		)
 	}
-	return newBalance, nil
-}
-
-// isBalanceOverflowOrNegative checks if the balance calculation resulted in an overflow or negative value.
-func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
-	return overflow || newBalance.Lt(zero)
+	return safeSubInt64(token1, amount), nil
 }

@@ -62,7 +62,7 @@ func NewDefaultPositionInfo() PositionInfo {
 		liquidity:                "0",
 		feeGrowthInside0LastX128: "0",
 		feeGrowthInside1LastX128: "0",
-		tokensOwed0:              "0",
-		tokensOwed1:              "0",
+		tokensOwed0:              0,
+		tokensOwed1:              0,
 	}
 }
