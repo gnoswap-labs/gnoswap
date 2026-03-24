@@ -51,7 +51,19 @@ func (p *positionV1) GetPositionIDs(offset, count int) []uint64 {
 // GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
 func (p *positionV1) GetPosition(id uint64) (position.Position, bool) {
-	return p.store.GetPosition(id)
+	pos, ok := p.store.GetPosition(id)
+	if !ok {
+		return position.Position{}, false
+	}
+	if !pl.ExistsPoolPath(pos.PoolKey()) {
+		return pos, true
+	}
+
+	balance0, balance1 := calculatePositionBalances(&pos)
+	pos.SetToken0Balance(balance0)
+	pos.SetToken1Balance(balance1)
+
+	return pos, true
 }
 
 // ExistPosition checks if a position exists for a given position ID
