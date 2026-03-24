@@ -21,8 +21,8 @@ const (
 	StoreKeyPoolTickBitmaps      StoreKey = "pool:tickBitmaps"     // AVL bucket of per-pool tick bitmaps
 	StoreKeyPoolPositions        StoreKey = "pool:positions"       // AVL bucket of per-pool positions trees
 	StoreKeyPoolObservations     StoreKey = "pool:observations"    // AVL bucket of per-pool observation state
-	StoreKeyFeeAmountTickSpacing   StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
-	StoreKeySlot0FeeProtocol       StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
+	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
+	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
 	// Protocol fee storage keys
 	StoreKeyPoolCreationFee  StoreKey = "poolCreationFee"  // Pool creation fee amount

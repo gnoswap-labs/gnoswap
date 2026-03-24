@@ -93,30 +93,7 @@ func (i *poolV1) CreatePool(
 	pool := newPool(poolInfo)
 	poolPath := poolInfo.poolPath()
 
-	pools := i.store.GetPools()
-	pools.Set(poolPath, pool.CloneCore())
-
-	err = i.store.SetPools(pools)
-	if err != nil {
-		panic(err)
-	}
-
-	err = i.store.SetPoolTicks(poolPath, pool.Ticks())
-	if err != nil {
-		panic(err)
-	}
-
-	err = i.store.SetPoolTickBitmaps(poolPath, pool.TickBitmaps())
-	if err != nil {
-		panic(err)
-	}
-
-	err = i.store.SetPoolPositions(poolPath, pool.Positions())
-	if err != nil {
-		panic(err)
-	}
-
-	err = i.store.SetPoolObservationState(poolPath, pool.ObservationState())
+	err = i.savePool(pool)
 	if err != nil {
 		panic(err)
 	}
@@ -182,7 +159,7 @@ func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
 	return i.store.SetFeeAmountTickSpacing(feeAmountTickSpacing)
 }
 
-func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
+func (i *poolV1) lookupPoolCore(poolPath string) (*pl.Pool, error) {
 	pools := i.store.GetPools()
 
 	iPool, exist := pools.Get(poolPath)
@@ -195,13 +172,89 @@ func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 		return nil, ufmt.Errorf("failed to cast pool to *Pool: %T", iPool)
 	}
 
-	pool := p.CloneCore()
+	return p, nil
+}
+
+func (i *poolV1) getPoolCore(poolPath string) (*pl.Pool, error) {
+	p, err := i.lookupPoolCore(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.CloneCore(), nil
+}
+
+func (i *poolV1) getPoolWithoutPositions(poolPath string) (*pl.Pool, error) {
+	pool, err := i.getPoolCore(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
 	pool.SetTicks(i.store.GetPoolTicks(poolPath))
 	pool.SetTickBitmaps(i.store.GetPoolTickBitmaps(poolPath))
-	pool.SetPositions(i.store.GetPoolPositions(poolPath))
 	pool.SetObservationState(i.store.GetPoolObservationState(poolPath))
 
 	return pool, nil
+}
+
+func (i *poolV1) getPoolWithObservationState(poolPath string) (*pl.Pool, error) {
+	pool, err := i.getPoolCore(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	pool.SetObservationState(i.store.GetPoolObservationState(poolPath))
+
+	return pool, nil
+}
+
+func (i *poolV1) getPoolCoreWithPositions(poolPath string) (*pl.Pool, error) {
+	pool, err := i.getPoolCore(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	pool.SetPositions(i.store.GetPoolPositions(poolPath))
+
+	return pool, nil
+}
+
+func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
+	pool, err := i.getPoolWithoutPositions(poolPath)
+	if err != nil {
+		return nil, err
+	}
+
+	pool.SetPositions(i.store.GetPoolPositions(poolPath))
+
+	return pool, nil
+}
+
+func (i *poolV1) mustGetPoolCore(poolPath string) *pl.Pool {
+	p, err := i.getPoolCore(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+
+	return p
+}
+
+func (i *poolV1) mustGetPoolWithoutPositions(poolPath string) *pl.Pool {
+	p, err := i.getPoolWithoutPositions(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+
+	return p
+}
+
+func (i *poolV1) mustGetPoolWithObservationState(poolPath string) *pl.Pool {
+	p, err := i.getPoolWithObservationState(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+
+	return p
 }
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
@@ -219,13 +272,35 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 	return i.mustGetPool(poolPath)
 }
 
-// savePool updates a pool in the pools map and persists to storage.
-// This ensures that modifications to pool objects are properly saved.
-func (i *poolV1) savePool(pool *pl.Pool) error {
+func (i *poolV1) mustGetPoolCoreBy(token0Path, token1Path string, fee uint32) *pl.Pool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	return i.mustGetPoolCore(poolPath)
+}
+
+func (i *poolV1) mustGetPoolWithoutPositionsBy(token0Path, token1Path string, fee uint32) *pl.Pool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	return i.mustGetPoolWithoutPositions(poolPath)
+}
+
+func (i *poolV1) mustGetPoolCoreWithPositionsBy(token0Path, token1Path string, fee uint32) *pl.Pool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	p, err := i.getPoolCoreWithPositions(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+
+	return p
+}
+
+func (i *poolV1) savePoolCore(pool *pl.Pool) error {
 	pools := i.store.GetPools()
 	pools.Set(pool.PoolPath(), pool.CloneCore())
 
-	err := i.store.SetPools(pools)
+	return i.store.SetPools(pools)
+}
+
+func (i *poolV1) savePoolWithoutPositions(pool *pl.Pool) error {
+	err := i.savePoolCore(pool)
 	if err != nil {
 		return err
 	}
@@ -240,12 +315,27 @@ func (i *poolV1) savePool(pool *pl.Pool) error {
 		return err
 	}
 
-	err = i.store.SetPoolPositions(pool.PoolPath(), pool.Positions())
+	return i.store.SetPoolObservationState(pool.PoolPath(), pool.ObservationState())
+}
+
+func (i *poolV1) savePoolCoreWithPositions(pool *pl.Pool) error {
+	err := i.savePoolCore(pool)
 	if err != nil {
 		return err
 	}
 
-	return i.store.SetPoolObservationState(pool.PoolPath(), pool.ObservationState())
+	return i.store.SetPoolPositions(pool.PoolPath(), pool.Positions())
+}
+
+// savePool updates a pool in the pools map and persists to storage.
+// This ensures that modifications to pool objects are properly saved.
+func (i *poolV1) savePool(pool *pl.Pool) error {
+	err := i.savePoolWithoutPositions(pool)
+	if err != nil {
+		return err
+	}
+
+	return i.store.SetPoolPositions(pool.PoolPath(), pool.Positions())
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
