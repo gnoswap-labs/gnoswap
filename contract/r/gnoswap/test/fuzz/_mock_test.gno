@@ -17,6 +17,10 @@ import (
 
 type mockPoolStore struct {
 	pools                *avl.Tree
+	poolTicks            *avl.Tree
+	tickBitmaps          *avl.Tree
+	positions            *avl.Tree
+	observationStates    *avl.Tree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -39,6 +43,102 @@ func (s *mockPoolStore) GetPools() *avl.Tree {
 // SetPools stores the map containing all pool data.
 func (s *mockPoolStore) SetPools(pools *avl.Tree) error {
 	s.pools = pools
+	return nil
+}
+
+func (s *mockPoolStore) HasPoolTicksBucket() bool {
+	return s.poolTicks != nil
+}
+
+func (s *mockPoolStore) GetPoolTicksBucket() *avl.Tree {
+	return s.poolTicks
+}
+
+func (s *mockPoolStore) SetPoolTicksBucket(bucket *avl.Tree) error {
+	s.poolTicks = bucket
+	return nil
+}
+
+func (s *mockPoolStore) HasPoolTickBitmapsBucket() bool {
+	return s.tickBitmaps != nil
+}
+
+func (s *mockPoolStore) GetPoolTickBitmapsBucket() *avl.Tree {
+	return s.tickBitmaps
+}
+
+func (s *mockPoolStore) SetPoolTickBitmapsBucket(bucket *avl.Tree) error {
+	s.tickBitmaps = bucket
+	return nil
+}
+
+func (s *mockPoolStore) HasPoolPositionsBucket() bool {
+	return s.positions != nil
+}
+
+func (s *mockPoolStore) GetPoolPositionsBucket() *avl.Tree {
+	return s.positions
+}
+
+func (s *mockPoolStore) SetPoolPositionsBucket(bucket *avl.Tree) error {
+	s.positions = bucket
+	return nil
+}
+
+func (s *mockPoolStore) HasPoolObservationsBucket() bool {
+	return s.observationStates != nil
+}
+
+func (s *mockPoolStore) GetPoolObservationsBucket() *avl.Tree {
+	return s.observationStates
+}
+
+func (s *mockPoolStore) SetPoolObservationsBucket(bucket *avl.Tree) error {
+	s.observationStates = bucket
+	return nil
+}
+
+func (s *mockPoolStore) GetPoolTicks(poolPath string) *avl.Tree {
+	result, _ := s.poolTicks.Get(poolPath)
+	ticks, _ := result.(*avl.Tree)
+	return ticks
+}
+
+func (s *mockPoolStore) SetPoolTicks(poolPath string, ticks *avl.Tree) error {
+	s.poolTicks.Set(poolPath, ticks)
+	return nil
+}
+
+func (s *mockPoolStore) GetPoolTickBitmaps(poolPath string) *avl.Tree {
+	result, _ := s.tickBitmaps.Get(poolPath)
+	tickBitmaps, _ := result.(*avl.Tree)
+	return tickBitmaps
+}
+
+func (s *mockPoolStore) SetPoolTickBitmaps(poolPath string, tickBitmaps *avl.Tree) error {
+	s.tickBitmaps.Set(poolPath, tickBitmaps)
+	return nil
+}
+
+func (s *mockPoolStore) GetPoolPositions(poolPath string) *avl.Tree {
+	result, _ := s.positions.Get(poolPath)
+	positions, _ := result.(*avl.Tree)
+	return positions
+}
+
+func (s *mockPoolStore) SetPoolPositions(poolPath string, positions *avl.Tree) error {
+	s.positions.Set(poolPath, positions)
+	return nil
+}
+
+func (s *mockPoolStore) GetPoolObservationState(poolPath string) *pool.ObservationState {
+	result, _ := s.observationStates.Get(poolPath)
+	observationState, _ := result.(*pool.ObservationState)
+	return observationState
+}
+
+func (s *mockPoolStore) SetPoolObservationState(poolPath string, observationState *pool.ObservationState) error {
+	s.observationStates.Set(poolPath, observationState)
 	return nil
 }
 
@@ -165,6 +265,10 @@ func NewMockPoolStoreWithHook(
 
 	return &mockPoolStore{
 		pools:                avl.NewTree(),
+		poolTicks:            avl.NewTree(),
+		tickBitmaps:          avl.NewTree(),
+		positions:            avl.NewTree(),
+		observationStates:    avl.NewTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,

@@ -728,3 +728,48 @@ func TestStoreUpdateValues(t *testing.T) {
 		})
 	}
 }
+
+func TestStoreSetAndGetPoolSplitComponents(t *testing.T) {
+	resetTestState(t)
+	ps := NewPoolStore(kvStore)
+	poolPath := "foo:bar:500"
+
+	uassert.NoError(t, ps.SetPoolTicksBucket(avl.NewTree()))
+	uassert.NoError(t, ps.SetPoolTickBitmapsBucket(avl.NewTree()))
+	uassert.NoError(t, ps.SetPoolPositionsBucket(avl.NewTree()))
+	uassert.NoError(t, ps.SetPoolObservationsBucket(avl.NewTree()))
+
+	ticks := avl.NewTree()
+	ticks.Set("tick:10", "tick-data")
+	uassert.NoError(t, ps.SetPoolTicks(poolPath, ticks))
+
+	tickBitmaps := avl.NewTree()
+	tickBitmaps.Set("0", "bitmap-data")
+	uassert.NoError(t, ps.SetPoolTickBitmaps(poolPath, tickBitmaps))
+
+	positions := avl.NewTree()
+	positions.Set("position-key", "position-data")
+	uassert.NoError(t, ps.SetPoolPositions(poolPath, positions))
+
+	observationState := NewObservationState(123)
+	uassert.NoError(t, ps.SetPoolObservationState(poolPath, observationState))
+
+	retrievedTicks := ps.GetPoolTicks(poolPath)
+	tickValue, tickExists := retrievedTicks.Get("tick:10")
+	uassert.True(t, tickExists, "tick should exist")
+	uassert.Equal(t, "tick-data", tickValue)
+
+	retrievedTickBitmaps := ps.GetPoolTickBitmaps(poolPath)
+	tickBitmapValue, tickBitmapExists := retrievedTickBitmaps.Get("0")
+	uassert.True(t, tickBitmapExists, "tick bitmap should exist")
+	uassert.Equal(t, "bitmap-data", tickBitmapValue)
+
+	retrievedPositions := ps.GetPoolPositions(poolPath)
+	positionValue, positionExists := retrievedPositions.Get("position-key")
+	uassert.True(t, positionExists, "position should exist")
+	uassert.Equal(t, "position-data", positionValue)
+
+	retrievedObservationState := ps.GetPoolObservationState(poolPath)
+	uassert.Equal(t, uint16(1), retrievedObservationState.Cardinality())
+	uassert.Equal(t, int64(123), retrievedObservationState.Observations()[0].BlockTimestamp())
+}
