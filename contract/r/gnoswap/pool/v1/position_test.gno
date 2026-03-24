@@ -170,14 +170,14 @@ func simulateFeeGrowth(t *testing.T, pool *pl.Pool, feeGrowth0, feeGrowth1 strin
 func validatePositionFees(t *testing.T, position pl.PositionInfo, expectedLevel string) {
 	t.Helper()
 
-	hasToken0Fees := position.TokensOwed0().Gt(u256.Zero())
-	hasToken1Fees := position.TokensOwed1().Gt(u256.Zero())
+	hasToken0Fees := position.TokensOwed0() > 0
+	hasToken1Fees := position.TokensOwed1() > 0
 
 	switch expectedLevel {
 	case "none":
 		if hasToken0Fees || hasToken1Fees {
 			t.Errorf("Expected no fees but found token0: %s, token1: %s",
-				position.TokensOwed0().ToString(), position.TokensOwed1().ToString())
+				formatInt(position.TokensOwed0()), formatInt(position.TokensOwed1()))
 		}
 	case "low", "medium", "high":
 		if !hasToken0Fees && !hasToken1Fees {
@@ -202,7 +202,7 @@ func assertPositionInvariants(t *testing.T, position pl.PositionInfo) {
 	}
 
 	// Tokens owed should never be negative
-	if position.TokensOwed0().Lt(u256.Zero()) || position.TokensOwed1().Lt(u256.Zero()) {
+	if position.TokensOwed0() < 0 || position.TokensOwed1() < 0 {
 		t.Error("Tokens owed values are negative")
 	}
 }
@@ -410,8 +410,8 @@ func TestPositionUpdate_FeeAccumulation(t *testing.T) {
 			position.SetLiquidity(u256.MustFromDecimal(scenario.initialLiquidity))
 			position.SetFeeGrowthInside0LastX128(u256.Zero())
 			position.SetFeeGrowthInside1LastX128(u256.Zero())
-			position.SetTokensOwed0(u256.Zero())
-			position.SetTokensOwed1(u256.Zero())
+			position.SetTokensOwed0(0)
+			position.SetTokensOwed1(0)
 
 			// update position
 			liquidityDelta := i256.MustFromDecimal(scenario.liquidityDelta)
@@ -437,8 +437,8 @@ func TestPositionUpdate_FeeAccumulation(t *testing.T) {
 				// Validate fee tracking
 				if scenario.name == "whale_position_fee_check" {
 					// Whale should accumulate fees
-					uassert.True(t, newPos.TokensOwed0().Gt(u256.Zero()), "Whale should have token0 fees")
-					uassert.True(t, newPos.TokensOwed1().Gt(u256.Zero()), "Whale should have token1 fees")
+					uassert.True(t, newPos.TokensOwed0() > 0, "Whale should have token0 fees")
+					uassert.True(t, newPos.TokensOwed1() > 0, "Whale should have token1 fees")
 				}
 
 				// Ensure invariants
@@ -461,6 +461,8 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 		initialFeeGrowth0Last *u256.Uint
 		initialFeeGrowth1Last *u256.Uint
 		shouldError           bool
+		shouldPanic           bool
+		panicMsg              string
 		errorMsg              string
 	}{
 		{
@@ -471,7 +473,8 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			feeGrowthInside1X128:  u256.MustFromDecimal("50"),
 			initialFeeGrowth0Last: u256.MustFromDecimal("100"),
 			initialFeeGrowth1Last: u256.MustFromDecimal("100"),
-			shouldError:           false,
+			shouldPanic:           true,
+			panicMsg:              "overflows int64 range",
 		},
 		{
 			name:                  "Negative Liquidity Delta",
@@ -513,14 +516,21 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			position.SetLiquidity(tt.initialLiquidity)
 			position.SetFeeGrowthInside0LastX128(tt.initialFeeGrowth0Last)
 			position.SetFeeGrowthInside1LastX128(tt.initialFeeGrowth1Last)
-			position.SetTokensOwed0(u256.Zero())
-			position.SetTokensOwed1(u256.Zero())
+			position.SetTokensOwed0(0)
+			position.SetTokensOwed1(0)
+
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
+				})
+				return
+			}
 
 			result, err := positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
 			if err != nil {
 				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
-				if result.TokensOwed0().Lt(u256.Zero()) || result.TokensOwed1().Lt(u256.Zero()) {
+				if result.TokensOwed0() < 0 || result.TokensOwed1() < 0 {
 					t.Errorf("result contains negative values: tokensOwed0=%v, tokensOwed1=%v",
 						result.TokensOwed0(), result.TokensOwed1())
 				}
@@ -837,8 +847,8 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 				}
 
 				// Update position with simulated fees
-				position.SetTokensOwed0(feeAmount0)
-				position.SetTokensOwed1(feeAmount1)
+				position.SetTokensOwed0(safeConvertToInt64(feeAmount0))
+				position.SetTokensOwed1(safeConvertToInt64(feeAmount1))
 				pool.Positions().Set(posKey, position)
 			}
 
@@ -880,20 +890,11 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 
 		// Update position to trigger fee calculation
 		params.liquidityDelta = i256.Zero()
-		_, _, _, err := modifyPosition(pool, params)
+		uassert.PanicsContains(t, "overflows int64 range", func() {
+			modifyPosition(pool, params)
+		})
 
-		// Then: Should handle without overflow
-		uassert.NoError(t, err, "Fee calculation should not overflow")
-
-		posKey := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
-		positionValue, _ := pool.Positions().Get(posKey)
-		position := positionValue.(pl.PositionInfo)
-
-		// Verify fees are calculated
-		uassert.True(t, position.TokensOwed0().Gt(u256.Zero()), "Should have token0 fees")
-		uassert.True(t, position.TokensOwed1().Gt(u256.Zero()), "Should have token1 fees")
-
-		t.Logf("✓ Fee overflow protection: Successfully handled maximum values")
+		t.Logf("✓ Fee overflow protection: overflow is rejected at int64 boundary")
 	})
 
 	t.Run("fee_accumulation_different_ranges", func(t *testing.T) {
@@ -936,8 +937,8 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 				position := positionValue.(pl.PositionInfo)
 
 				// Simulate fee accumulation for in-range positions
-				position.SetTokensOwed0(u256.NewUint(1000))
-				position.SetTokensOwed1(u256.NewUint(1000))
+				position.SetTokensOwed0(1000)
+				position.SetTokensOwed1(1000)
 				pool.Positions().Set(posKey, position)
 			}
 		}
@@ -960,13 +961,13 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			position := positionValue.(pl.PositionInfo)
 
 			if r.inRange {
-				uassert.True(t, position.TokensOwed0().Gt(u256.Zero()) || position.TokensOwed1().Gt(u256.Zero()),
+				uassert.True(t, position.TokensOwed0() > 0 || position.TokensOwed1() > 0,
 					"In-range position should accumulate fees")
 				t.Logf("✓ %s: Accumulated fees as expected", r.description)
 			} else {
 				// Out-of-range positions may still accumulate some fees depending on implementation
 				t.Logf("✓ %s: Fee state: token0=%s, token1=%s",
-					r.description, position.TokensOwed0().ToString(), position.TokensOwed1().ToString())
+					r.description, formatInt(position.TokensOwed0()), formatInt(position.TokensOwed1()))
 			}
 		}
 	})
@@ -1290,7 +1291,7 @@ func TestPositionTokensOwed0(t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func(t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, tokensOwed *u256.Uint)
+		verifyFn func(t *testing.T, tokensOwed int64)
 	}{
 		{
 			name: "success - get tokens owed for position",
@@ -1307,8 +1308,8 @@ func TestPositionTokensOwed0(t *testing.T) {
 				modifyPosition(pool, params)
 				return pool, key
 			},
-			verifyFn: func(t *testing.T, tokensOwed *u256.Uint) {
-				uassert.NotNil(t, tokensOwed)
+			verifyFn: func(t *testing.T, tokensOwed int64) {
+				uassert.True(t, tokensOwed >= 0)
 			},
 		},
 	}
@@ -1326,7 +1327,7 @@ func TestPositionTokensOwed1(t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func(t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, tokensOwed *u256.Uint)
+		verifyFn func(t *testing.T, tokensOwed int64)
 	}{
 		{
 			name: "success - get tokens owed for position",
@@ -1343,8 +1344,8 @@ func TestPositionTokensOwed1(t *testing.T) {
 				modifyPosition(pool, params)
 				return pool, key
 			},
-			verifyFn: func(t *testing.T, tokensOwed *u256.Uint) {
-				uassert.NotNil(t, tokensOwed)
+			verifyFn: func(t *testing.T, tokensOwed int64) {
+				uassert.True(t, tokensOwed >= 0)
 			},
 		},
 	}
@@ -1535,8 +1536,8 @@ func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
 		initialOwed0 := position.TokensOwed0()
 		initialOwed1 := position.TokensOwed1()
 
-		uassert.True(t, initialOwed0.Eq(u256.Zero()) || initialOwed0.Gt(u256.Zero()))
-		uassert.True(t, initialOwed1.Eq(u256.Zero()) || initialOwed1.Gt(u256.Zero()))
+		uassert.True(t, initialOwed0 >= 0)
+		uassert.True(t, initialOwed1 >= 0)
 
 		// Remove liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-1000000")
@@ -1551,7 +1552,7 @@ func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
 		finalOwed0 := position2.TokensOwed0()
 		finalOwed1 := position2.TokensOwed1()
 
-		uassert.True(t, finalOwed0.Gte(initialOwed0))
-		uassert.True(t, finalOwed1.Gte(initialOwed1))
+		uassert.True(t, finalOwed0 >= initialOwed0)
+		uassert.True(t, finalOwed1 >= initialOwed1)
 	})
 }

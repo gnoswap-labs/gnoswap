@@ -103,14 +103,8 @@ func positionUpdate(
 
 	// add tokensOwed only when it's greater than 0
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		owed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), tokensOwed0)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
-		owed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), tokensOwed1)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
+		owed0 := safeAddInt64(position.TokensOwed0(), safeConvertToInt64(tokensOwed0))
+		owed1 := safeAddInt64(position.TokensOwed1(), safeConvertToInt64(tokensOwed1))
 
 		position.SetTokensOwed0(owed0)
 		position.SetTokensOwed1(owed1)
@@ -145,12 +139,12 @@ func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) *u256.Uint {
 }
 
 // PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed0(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed0()
 }
 
 // PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed1(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed1()
 }
 

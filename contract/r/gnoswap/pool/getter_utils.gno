@@ -40,8 +40,8 @@ func clonePositionInfo(src PositionInfo) PositionInfo {
 		liquidity:                u256.Zero().Set(src.liquidity),
 		feeGrowthInside0LastX128: u256.Zero().Set(src.feeGrowthInside0LastX128),
 		feeGrowthInside1LastX128: u256.Zero().Set(src.feeGrowthInside1LastX128),
-		tokensOwed0:              u256.Zero().Set(src.tokensOwed0),
-		tokensOwed1:              u256.Zero().Set(src.tokensOwed1),
+		tokensOwed0:              src.tokensOwed0,
+		tokensOwed1:              src.tokensOwed1,
 	}
 }
 
@@ -63,7 +63,7 @@ func NewDefaultPositionInfo() PositionInfo {
 		liquidity:                u256.Zero(),
 		feeGrowthInside0LastX128: u256.Zero(),
 		feeGrowthInside1LastX128: u256.Zero(),
-		tokensOwed0:              u256.Zero(),
-		tokensOwed1:              u256.Zero(),
+		tokensOwed0:              0,
+		tokensOwed1:              0,
 	}
 }

@@ -180,6 +180,8 @@ func formatUint(v any) string {
 	default:
 		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
+
+	return ""
 }
 
 // formatInt converts various signed integer types to string representation.
@@ -194,6 +196,8 @@ func formatInt(v any) string {
 	default:
 		panic(ufmt.Sprintf("invalid type: %T", v))
 	}
+
+	return ""
 }
 
 // formatBool converts a boolean value to string representation.

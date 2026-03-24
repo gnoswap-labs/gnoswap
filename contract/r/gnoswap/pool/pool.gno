@@ -38,8 +38,8 @@ func (p *Pool) Token0Path() string                  { return p.token0Path }
 func (p *Pool) Token1Path() string                  { return p.token1Path }
 func (p *Pool) Fee() uint32                         { return p.fee }
 func (p *Pool) Balances() Balances                  { return p.balances }
-func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
-func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
+func (p *Pool) BalanceToken0() int64                { return p.balances.token0 }
+func (p *Pool) BalanceToken1() int64                { return p.balances.token1 }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
 func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return p.maxLiquidityPerTick }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
@@ -50,8 +50,8 @@ func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
 func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
 func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
+func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
@@ -75,11 +75,11 @@ func (p *Pool) SetBalances(balances Balances) {
 	p.balances = balances
 }
 
-func (p *Pool) SetBalanceToken0(token0 *u256.Uint) {
+func (p *Pool) SetBalanceToken0(token0 int64) {
 	p.balances.token0 = token0
 }
 
-func (p *Pool) SetBalanceToken1(token1 *u256.Uint) {
+func (p *Pool) SetBalanceToken1(token1 int64) {
 	p.balances.token1 = token1
 }
 
@@ -107,11 +107,11 @@ func (p *Pool) SetProtocolFees(protocolFees ProtocolFees) {
 	p.protocolFees = protocolFees
 }
 
-func (p *Pool) SetProtocolFeesToken0(token0 *u256.Uint) {
+func (p *Pool) SetProtocolFeesToken0(token0 int64) {
 	p.protocolFees.token0 = token0
 }
 
-func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint) {
+func (p *Pool) SetProtocolFeesToken1(token1 int64) {
 	p.protocolFees.token1 = token1
 }
 
@@ -242,7 +242,7 @@ type Balances struct{ TokenPair }
 
 func newBalances() Balances {
 	return Balances{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
+		TokenPair: NewTokenPair(0, 0),
 	}
 }
 
@@ -250,32 +250,29 @@ type ProtocolFees struct{ TokenPair }
 
 func newProtocolFees() ProtocolFees {
 	return ProtocolFees{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
+		TokenPair: NewTokenPair(0, 0),
 	}
 }
 
 type TokenPair struct {
-	token0, token1 *u256.Uint
+	token0, token1 int64
 }
 
-func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
+func NewTokenPair(token0, token1 int64) TokenPair {
 	return TokenPair{
 		token0: token0,
 		token1: token1,
 	}
 }
 
-func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
-func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
+func (t *TokenPair) Token0() int64 { return t.token0 }
+func (t *TokenPair) Token1() int64 { return t.token1 }
 
-func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
-func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
+func (t *TokenPair) SetToken0(token0 int64) { t.token0 = token0 }
+func (t *TokenPair) SetToken1(token1 int64) { t.token1 = token1 }
 
 func (t *TokenPair) Clone() TokenPair {
-	return NewTokenPair(
-		t.token0.Clone(),
-		t.token1.Clone(),
-	)
+	return NewTokenPair(t.token0, t.token1)
 }
 
 type Slot0 struct {
@@ -416,17 +413,17 @@ type PositionInfo struct {
 	feeGrowthInside1LastX128 *u256.Uint
 
 	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
+	tokensOwed0 int64
 
 	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
+	tokensOwed1 int64
 }
 
 func (p *PositionInfo) Liquidity() *u256.Uint                { return p.liquidity }
 func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return p.feeGrowthInside0LastX128 }
 func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return p.feeGrowthInside1LastX128 }
-func (p *PositionInfo) TokensOwed0() *u256.Uint              { return p.tokensOwed0 }
-func (p *PositionInfo) TokensOwed1() *u256.Uint              { return p.tokensOwed1 }
+func (p *PositionInfo) TokensOwed0() int64                   { return p.tokensOwed0 }
+func (p *PositionInfo) TokensOwed1() int64                   { return p.tokensOwed1 }
 
 func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint) {
 	p.liquidity = liquidity
@@ -440,10 +437,10 @@ func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u25
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
-func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed0(tokensOwed0 int64) {
 	p.tokensOwed0 = tokensOwed0
 }
 
-func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed1(tokensOwed1 int64) {
 	p.tokensOwed1 = tokensOwed1
 }

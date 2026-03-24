@@ -10,10 +10,10 @@ import (
 
 func newPoolFixture() *Pool {
 	pool := NewPool("foo", "bar", 500, u256.MustFromDecimal("100"), 10, 5, 6, u256.MustFromDecimal("700"))
-	pool.SetBalanceToken0(u256.MustFromDecimal("1000"))
-	pool.SetBalanceToken1(u256.MustFromDecimal("2000"))
-	pool.SetProtocolFeesToken0(u256.MustFromDecimal("3000"))
-	pool.SetProtocolFeesToken1(u256.MustFromDecimal("4000"))
+	pool.SetBalanceToken0(1000)
+	pool.SetBalanceToken1(2000)
+	pool.SetProtocolFeesToken0(3000)
+	pool.SetProtocolFeesToken1(4000)
 	pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("5000"))
 	pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("6000"))
 	pool.SetLiquidity(u256.MustFromDecimal("7000"))
@@ -40,8 +40,8 @@ func newPositionInfoFixture() PositionInfo {
 	positionInfo.SetLiquidity(u256.MustFromDecimal("1000"))
 	positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2000"))
 	positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3000"))
-	positionInfo.SetTokensOwed0(u256.MustFromDecimal("4000"))
-	positionInfo.SetTokensOwed1(u256.MustFromDecimal("5000"))
+	positionInfo.SetTokensOwed0(4000)
+	positionInfo.SetTokensOwed1(5000)
 	return positionInfo
 }
 
@@ -155,10 +155,10 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				pool.SetToken1Path("mutated1")
 				pool.SetFee(600)
 				pool.SetTickSpacing(20)
-				pool.SetBalanceToken0(u256.MustFromDecimal("1010"))
-				pool.SetBalanceToken1(u256.MustFromDecimal("2020"))
-				pool.SetProtocolFeesToken0(u256.MustFromDecimal("3030"))
-				pool.SetProtocolFeesToken1(u256.MustFromDecimal("4040"))
+				pool.SetBalanceToken0(1010)
+				pool.SetBalanceToken1(2020)
+				pool.SetProtocolFeesToken0(3030)
+				pool.SetProtocolFeesToken1(4040)
 				pool.SetMaxLiquidityPerTick(u256.MustFromDecimal("5050"))
 				pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("6060"))
 				pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("7070"))
@@ -176,10 +176,10 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				uassert.Equal(t, "bar", pool.Token1Path())
 				uassert.Equal(t, uint32(500), pool.Fee())
 				uassert.Equal(t, int32(10), pool.TickSpacing())
-				uassert.Equal(t, "1000", pool.BalanceToken0().ToString())
-				uassert.Equal(t, "2000", pool.BalanceToken1().ToString())
-				uassert.Equal(t, "3000", pool.ProtocolFeesToken0().ToString())
-				uassert.Equal(t, "4000", pool.ProtocolFeesToken1().ToString())
+				uassert.Equal(t, int64(1000), pool.BalanceToken0())
+				uassert.Equal(t, int64(2000), pool.BalanceToken1())
+				uassert.Equal(t, int64(3000), pool.ProtocolFeesToken0())
+				uassert.Equal(t, int64(4000), pool.ProtocolFeesToken1())
 				uassert.Equal(t, "8000", pool.MaxLiquidityPerTick().ToString())
 				uassert.Equal(t, "5000", pool.FeeGrowthGlobal0X128().ToString())
 				uassert.Equal(t, "6000", pool.FeeGrowthGlobal1X128().ToString())
@@ -263,16 +263,16 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				positionInfo.SetLiquidity(u256.MustFromDecimal("1111"))
 				positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2222"))
 				positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3333"))
-				positionInfo.SetTokensOwed0(u256.MustFromDecimal("4444"))
-				positionInfo.SetTokensOwed1(u256.MustFromDecimal("5555"))
+				positionInfo.SetTokensOwed0(4444)
+				positionInfo.SetTokensOwed1(5555)
 			},
 			assertRaw: func(t *testing.T) {
 				positionInfo := implementation.(*MockPool).Response.responses["GetPosition"][0].(PositionInfo)
 				uassert.Equal(t, "1000", positionInfo.Liquidity().ToString())
 				uassert.Equal(t, "2000", positionInfo.FeeGrowthInside0LastX128().ToString())
 				uassert.Equal(t, "3000", positionInfo.FeeGrowthInside1LastX128().ToString())
-				uassert.Equal(t, "4000", positionInfo.TokensOwed0().ToString())
-				uassert.Equal(t, "5000", positionInfo.TokensOwed1().ToString())
+				uassert.Equal(t, int64(4000), positionInfo.TokensOwed0())
+				uassert.Equal(t, int64(5000), positionInfo.TokensOwed1())
 			},
 		},
 		{

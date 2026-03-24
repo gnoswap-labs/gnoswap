@@ -845,20 +845,20 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 			afterFees1 := pool.ProtocolFeesToken1()
 
 			// Verify collected amount does not exceed previous balance
-			collected0 := u256.MustFromDecimal(amount0)
-			collected1 := u256.MustFromDecimal(amount1)
+			collected0 := safeConvertToInt64(u256.MustFromDecimal(amount0))
+			collected1 := safeConvertToInt64(u256.MustFromDecimal(amount1))
 
-			uassert.True(t, collected0.Cmp(beforeFees0) <= 0,
+			uassert.True(t, collected0 <= beforeFees0,
 				"Collected amount exceeds available fees")
-			uassert.True(t, collected1.Cmp(beforeFees1) <= 0,
+			uassert.True(t, collected1 <= beforeFees1,
 				"Collected amount exceeds available fees")
 
 			// Verify protocol fees are appropriately decreased
-			expectedAfter0 := new(u256.Uint).Sub(beforeFees0, collected0)
-			expectedAfter1 := new(u256.Uint).Sub(beforeFees1, collected1)
+			expectedAfter0 := safeSubInt64(beforeFees0, collected0)
+			expectedAfter1 := safeSubInt64(beforeFees1, collected1)
 
-			uassert.Equal(t, expectedAfter0.ToString(), afterFees0.ToString())
-			uassert.Equal(t, expectedAfter1.ToString(), afterFees1.ToString())
+			uassert.Equal(t, expectedAfter0, afterFees0)
+			uassert.Equal(t, expectedAfter1, afterFees1)
 
 			t.Logf("✓ %s: %s (Collected: %s/%s) - %s",
 				test.description, test.expectedOutcome, amount0, amount1, test.governanceImpact)
@@ -1084,9 +1084,9 @@ func TestCollect(t *testing.T) {
 
 			// Verify tokensOwed decreased correctly
 			positionAfter := mustGetPositionByPool(pool, positionKey)
-			uassert.Equal(t, tt.expectedOwed0After, positionAfter.TokensOwed0().ToString(),
+			uassert.Equal(t, tt.expectedOwed0After, formatInt(positionAfter.TokensOwed0()),
 				"TokensOwed0 should decrease by collected amount")
-			uassert.Equal(t, tt.expectedOwed1After, positionAfter.TokensOwed1().ToString(),
+			uassert.Equal(t, tt.expectedOwed1After, formatInt(positionAfter.TokensOwed1()),
 				"TokensOwed1 should decrease by collected amount")
 
 			// Verify pool balance >= tokensOwed invariant
@@ -1095,7 +1095,7 @@ func TestCollect(t *testing.T) {
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
 				tt.request0, tt.request1,
-				positionBefore.TokensOwed0().ToString(), positionBefore.TokensOwed1().ToString(),
+				formatInt(positionBefore.TokensOwed0()), formatInt(positionBefore.TokensOwed1()),
 				tt.expectedOwed0After, tt.expectedOwed1After)
 
 			resetObject(t)
@@ -1109,12 +1109,12 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
-	uassert.True(t, pool.BalanceToken0().Cmp(position.TokensOwed0()) >= 0,
+	uassert.True(t, pool.BalanceToken0() >= position.TokensOwed0(),
 		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
-			pool.BalanceToken0().ToString(), position.TokensOwed0().ToString()))
-	uassert.True(t, pool.BalanceToken1().Cmp(position.TokensOwed1()) >= 0,
+			formatInt(pool.BalanceToken0()), formatInt(position.TokensOwed0())))
+	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
-			pool.BalanceToken1().ToString(), position.TokensOwed1().ToString()))
+			formatInt(pool.BalanceToken1()), formatInt(position.TokensOwed1())))
 }
 
 func TestSwap_ZeroOutputAllowed(t *testing.T) {
