@@ -28,8 +28,8 @@ func assertIsValidAmount(amount int64) {
 
 // assertIsValidRewardAmountFormat ensures the reward amount string is formatted as "tokenPath:amount".
 func assertIsValidRewardAmountFormat(rewardAmountStr string) {
-	parts := strings.SplitN(rewardAmountStr, ":", 2)
-	if len(parts) != 2 {
+	separatorIdx := strings.LastIndex(rewardAmountStr, ":")
+	if separatorIdx <= 0 || separatorIdx == len(rewardAmountStr)-1 {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("invalid format for SetTokenMinimumRewardAmount params: expected 'tokenPath:amount', got '%s'", rewardAmountStr),

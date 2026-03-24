@@ -107,9 +107,9 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 	assertIsValidRewardAmountFormat(paramsStr)
 
 	// Parse the paramsStr
-	parts := strings.SplitN(paramsStr, ":", 2)
-	tokenPath := parts[0]
-	amountStr := parts[1]
+	separatorIdx := strings.LastIndex(paramsStr, ":")
+	tokenPath := paramsStr[:separatorIdx]
+	amountStr := paramsStr[separatorIdx+1:]
 	amount64, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil {
 		panic(makeErrorWithDetails(
