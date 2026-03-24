@@ -2,13 +2,13 @@ package v1
 
 import (
 	"strconv"
-	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
@@ -94,19 +94,12 @@ func (p *positionV1) isOwnerOrOperator(positionId uint64, addr address) bool {
 // - token1Path string
 // - fee uint32
 func splitOf(poolKey string) (string, string, uint32) {
-	res := strings.Split(poolKey, ":")
-	if len(res) != 3 {
+	pToken0, pToken1, pFee, err := pl.ParsePoolPath(poolKey)
+	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid poolKey(%s)", poolKey)))
 	}
 
-	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]
-
-	pFee, err := strconv.Atoi(pFeeStr)
-	if err != nil {
-		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid fee(%s)", pFeeStr)))
-	}
-
-	return pToken0, pToken1, uint32(pFee)
+	return pToken0, pToken1, pFee
 }
 
 func formatUint(v any) string {

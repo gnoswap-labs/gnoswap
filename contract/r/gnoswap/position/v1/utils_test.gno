@@ -6,6 +6,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -230,7 +231,7 @@ func TestPoolKeyDivide(t *testing.T) {
 	}{
 		{
 			name:          "pool key divide is success by valid poolKey",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
+			poolKey:       pl.GetPoolPath(gnsPath, wugnotPath, fee500),
 			expectedPath0: gnsPath,
 			expectedPath1: wugnotPath,
 			expectedFee:   fee500,
@@ -307,19 +308,19 @@ func TestSplitOf(t *testing.T) {
 		{
 			name:          "split of is failed by invalid delimiter",
 			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/gnoland/wugnot-500",
-			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee(gno.land/r/gnoland/wugnot-500)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey(gno.land/r/gnoswap:v1/gns:gno.land/r/gnoland/wugnot-500)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by non-numeric fee",
 			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:fee",
-			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee(fee)",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey(gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:fee)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by missing fee part",
 			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:",
-			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid fee()",
+			expectedError: "[GNOSWAP-POSITION-004] invalid input data || invalid poolKey(gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:)",
 			shouldPanic:   true,
 		},
 		{
@@ -330,7 +331,7 @@ func TestSplitOf(t *testing.T) {
 		},
 		{
 			name:          "split of is success by valid poolKey",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
+			poolKey:       pl.GetPoolPath("gno.land/r/gnoswap/gns", "gno.land/r/gnoland/wugnot", 500),
 			expectedPath0: "gno.land/r/gnoswap/gns",
 			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   500,
@@ -338,7 +339,7 @@ func TestSplitOf(t *testing.T) {
 		},
 		{
 			name:          "split of is success by poolKey with large fee",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:10000",
+			poolKey:       pl.GetPoolPath("gno.land/r/gnoswap/gns", "gno.land/r/gnoland/wugnot", 10000),
 			expectedPath0: "gno.land/r/gnoswap/gns",
 			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   10000,
@@ -346,7 +347,7 @@ func TestSplitOf(t *testing.T) {
 		},
 		{
 			name:          "split of is success by poolKey with minimal fee",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:1",
+			poolKey:       pl.GetPoolPath("gno.land/r/gnoswap/gns", "gno.land/r/gnoland/wugnot", 1),
 			expectedPath0: "gno.land/r/gnoswap/gns",
 			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   1,
