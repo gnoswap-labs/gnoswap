@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"strings"
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
@@ -79,35 +80,46 @@ func TestGetPoolPath(t *testing.T) {
 		token0Path string
 		token1Path string
 		fee        uint32
-		want       string
 	}{
 		{
 			name:       "normal order",
 			token0Path: "gno.land/r/onbloc/bar",
 			token1Path: "gno.land/r/onbloc/foo",
 			fee:        500,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		},
 		{
 			name:       "reversed order",
 			token0Path: "gno.land/r/onbloc/foo",
 			token1Path: "gno.land/r/onbloc/bar",
 			fee:        500,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500",
 		},
 		{
 			name:       "fee 3000",
 			token0Path: "gno.land/r/onbloc/bar",
 			token1Path: "gno.land/r/onbloc/qux",
 			fee:        3000,
-			want:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-			uassert.Equal(t, tt.want, got)
+			token0, token1, fee, err := ParsePoolPath(got)
+
+			uassert.NoError(t, err)
+			uassert.True(t, strings.HasPrefix(got, poolPathVersion))
+			uassert.Equal(t, uint32(tt.fee), fee)
+			uassert.True(t, token0 <= token1)
+			uassert.Equal(t, GetPoolPath(tt.token0Path, tt.token1Path, tt.fee), GetPoolPath(token0, token1, fee))
 		})
 	}
+}
+
+func TestParsePoolPath_LegacyFormat(t *testing.T) {
+	token0, token1, fee, err := ParsePoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, "gno.land/r/onbloc/bar", token0)
+	uassert.Equal(t, "gno.land/r/onbloc/foo", token1)
+	uassert.Equal(t, uint32(500), fee)
 }

@@ -9,15 +9,18 @@ import (
 
 func TestGetPoolPath(t *testing.T) {
 	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
-	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	if path != expected {
-		t.Errorf("Expected path %s, got %s", expected, path)
-	}
+	token0, token1, fee, err := pl.ParsePoolPath(path)
+	uassert.NoError(t, err)
+	uassert.Equal(t, barTokenPath, token0)
+	uassert.Equal(t, fooTokenPath, token1)
+	uassert.Equal(t, uint32(500), fee)
 
 	path = GetPoolPath(fooTokenPath, barTokenPath, 500)
-	if path != expected {
-		t.Errorf("Expected tokens to be sorted, expected %s, got %s", expected, path)
-	}
+	token0, token1, fee, err = pl.ParsePoolPath(path)
+	uassert.NoError(t, err)
+	uassert.Equal(t, barTokenPath, token0)
+	uassert.Equal(t, fooTokenPath, token1)
+	uassert.Equal(t, uint32(500), fee)
 }
 
 func TestTickSpacingMap(t *testing.T) {

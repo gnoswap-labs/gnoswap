@@ -1,16 +1,21 @@
 package pool
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
+	"gno.land/p/gnoswap/strcodec"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 const (
 	MAX_TICK            int32 = 887272
 	ENCODED_TICK_OFFSET int32 = MAX_TICK
+	poolPathVersion           = "PK1"
 )
+
+var errInvalidPoolPathEncoding = errors.New("invalid pool path encoding")
 
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
@@ -19,7 +24,53 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	return token0Path + ":" + token1Path + ":" + strconv.FormatUint(uint64(fee), 10)
+	return poolPathVersion + strcodec.EncodeString(token0Path) + strcodec.EncodeString(token1Path) + strcodec.EncodeUint32(fee)
+}
+
+func ParsePoolPath(poolPath string) (string, string, uint32, error) {
+	if strings.HasPrefix(poolPath, poolPathVersion) {
+		return parseEncodedPoolPath(poolPath)
+	}
+
+	return parseLegacyPoolPath(poolPath)
+}
+
+func parseEncodedPoolPath(poolPath string) (string, string, uint32, error) {
+	offset := len(poolPathVersion)
+	token0Path, offset, err := strcodec.DecodeString(poolPath, offset)
+	if err != nil {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	token1Path, offset, err := strcodec.DecodeString(poolPath, offset)
+	if err != nil {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	fee, offset, err := strcodec.DecodeUint32(poolPath, offset)
+	if err != nil {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	if offset != len(poolPath) {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	return token0Path, token1Path, fee, nil
+}
+
+func parseLegacyPoolPath(poolPath string) (string, string, uint32, error) {
+	poolPathSplit := strings.Split(poolPath, ":")
+	if len(poolPathSplit) != 3 {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	fee, err := strconv.ParseUint(poolPathSplit[2], 10, 32)
+	if err != nil {
+		return "", "", 0, errInvalidPoolPathEncoding
+	}
+
+	return poolPathSplit[0], poolPathSplit[1], uint32(fee), nil
 }
 
 // EncodeTickKey encodes a tick to a string key for the tick tree.
