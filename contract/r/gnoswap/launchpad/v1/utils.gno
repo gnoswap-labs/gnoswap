@@ -30,17 +30,16 @@ func formatInt(value int64) string {
 // parseProjectTierID parses a project tier ID into its project ID and duration.
 // Returns the project ID {tokenPath}:{createdHeight} and the duration of the project tier (30, 90, 180).
 func parseProjectTierID(projectTierID string) (string, int64) {
-	parts := strings.Split(projectTierID, ":")
-	if len(parts) != 3 {
+	separatorIdx := strings.LastIndex(projectTierID, ":")
+	if separatorIdx <= 0 || separatorIdx == len(projectTierID)-1 {
 		panic(makeErrorWithDetails(
 			errInvalidData,
 			ufmt.Sprintf("(%s)", projectTierID),
 		))
 	}
 
-	projectID := parts[0] + ":" + parts[1]
-
-	tierDuration, err := strconv.ParseInt(parts[2], 10, 64)
+	projectID := projectTierID[:separatorIdx]
+	tierDuration, err := strconv.ParseInt(projectTierID[separatorIdx+1:], 10, 64)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			errInvalidData,

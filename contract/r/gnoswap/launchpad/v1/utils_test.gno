@@ -39,6 +39,13 @@ func TestUtils_parseProjectTierID(t *testing.T) {
 			expectedPanic:     false,
 		},
 		{
+			name:              "valid project tier id when project id contains colon",
+			projectTierID:     "gno.land/r/demo/token:subproject:100:30",
+			expectedProjectID: "gno.land/r/demo/token:subproject:100",
+			expectedDuration:  30,
+			expectedPanic:     false,
+		},
+		{
 			name:             "panic when tier id has only 2 parts",
 			projectTierID:    "gno.land/r/demo/token:100",
 			expectedPanic:    true,
