@@ -3,23 +3,22 @@ package v1
 import (
 	"math"
 	"strconv"
-	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	pool "gno.land/r/gnoswap/pool"
 )
 
 // poolPathDivide splits a pool path into token addresses and fee tier.
 func poolPathDivide(poolPath string) (string, string, string) {
-	res := strings.Split(poolPath, ":")
-	if len(res) != 3 {
+	pToken0, pToken1, fee, err := pool.ParsePoolPath(poolPath)
+	if err != nil {
 		panic(errInvalidPoolPath)
 	}
 
-	pToken0, pToken1, fee := res[0], res[1], res[2]
-	return pToken0, pToken1, fee
+	return pToken0, pToken1, strconv.FormatUint(uint64(fee), 10)
 }
 
 // positionIdFrom converts a uint64 position ID to grc721.TokenID.

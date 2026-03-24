@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func TestPoolPathDivide(t *testing.T) {
@@ -17,8 +18,8 @@ func TestPoolPathDivide(t *testing.T) {
 		shouldPanic bool
 	}{
 		// Valid cases
-		{"Valid pool path", "bar:baz:500", "bar", "baz", "500", false},
-		{"Another valid pool path", "foo:bar:300", "foo", "bar", "300", false},
+		{"Valid legacy pool path", "bar:baz:500", "bar", "baz", "500", false},
+		{"Valid encoded pool path", pl.GetPoolPath("foo", "bar", 300), "bar", "foo", "300", false},
 
 		// Invalid cases
 		{"Missing fee", "bar:baz", "", "", "", true},
