@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
+	pool "gno.land/r/gnoswap/pool"
 )
 
 func TestGetDataForSinglePath(t *testing.T) {
@@ -1019,15 +1020,15 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 		{
 			name:         "single route single hop",
 			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500",
-			expected:     []string{"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500"}, // alphabetically ordered
+			expected:     []string{pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500)},
 			wantError:    false,
 		},
 		{
 			name:         "single route multi hop",
 			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500",
 			expected: []string{
-				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // alphabetically ordered
-				"gno.land/r/demo/gns:gno.land/r/demo/usdc:500",    // alphabetically ordered
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/gns", 3000),
+				pool.GetPoolPath("gno.land/r/demo/gns", "gno.land/r/demo/usdc", 500),
 			},
 			wantError: false,
 		},
@@ -1035,8 +1036,8 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 			name:         "multiple routes single hop each",
 			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000",
 			expected: []string{
-				"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", // alphabetically ordered
-				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // alphabetically ordered
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500),
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/gns", 3000),
 			},
 			wantError: false,
 		},
@@ -1044,9 +1045,9 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 			name:         "multiple routes with multi hop",
 			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500",
 			expected: []string{
-				"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", // first route
-				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // second route first hop
-				"gno.land/r/demo/gns:gno.land/r/demo/usdc:500",    // second route second hop
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500),
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/demo/gns", 3000),
+				pool.GetPoolPath("gno.land/r/demo/gns", "gno.land/r/demo/usdc", 500),
 			},
 			wantError: false,
 		},
@@ -1054,9 +1055,9 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 			name:         "three hop route",
 			routePathArr: "tokenA:tokenB:500*POOL*tokenB:tokenC:3000*POOL*tokenC:tokenD:10000",
 			expected: []string{
-				"tokenA:tokenB:500",   // already alphabetically ordered
-				"tokenB:tokenC:3000",  // already alphabetically ordered
-				"tokenC:tokenD:10000", // already alphabetically ordered
+				pool.GetPoolPath("tokenA", "tokenB", 500),
+				pool.GetPoolPath("tokenB", "tokenC", 3000),
+				pool.GetPoolPath("tokenC", "tokenD", 10000),
 			},
 			wantError: false,
 		},
@@ -1064,8 +1065,8 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 			name:         "tokens need reordering",
 			routePathArr: "tokenZ:tokenA:500,tokenY:tokenB:3000",
 			expected: []string{
-				"tokenA:tokenZ:500",  // reordered alphabetically
-				"tokenB:tokenY:3000", // reordered alphabetically
+				pool.GetPoolPath("tokenZ", "tokenA", 500),
+				pool.GetPoolPath("tokenY", "tokenB", 3000),
 			},
 			wantError: false,
 		},
@@ -1073,12 +1074,12 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 			name:         "complex mixed routes",
 			routePathArr: "tokenA:tokenB:500,tokenC:tokenD:3000*POOL*tokenD:tokenE:10000,tokenF:tokenG:100*POOL*tokenG:tokenH:200*POOL*tokenH:tokenI:300",
 			expected: []string{
-				"tokenA:tokenB:500",   // single hop
-				"tokenC:tokenD:3000",  // first hop of second route
-				"tokenD:tokenE:10000", // second hop of second route
-				"tokenF:tokenG:100",   // first hop of third route
-				"tokenG:tokenH:200",   // second hop of third route
-				"tokenH:tokenI:300",   // third hop of third route
+				pool.GetPoolPath("tokenA", "tokenB", 500),
+				pool.GetPoolPath("tokenC", "tokenD", 3000),
+				pool.GetPoolPath("tokenD", "tokenE", 10000),
+				pool.GetPoolPath("tokenF", "tokenG", 100),
+				pool.GetPoolPath("tokenG", "tokenH", 200),
+				pool.GetPoolPath("tokenH", "tokenI", 300),
 			},
 			wantError: false,
 		},
@@ -1113,16 +1114,16 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 		{
 			name:         "same token addresses (edge case)",
 			routePathArr: "tokenA:tokenA:500",
-			expected:     []string{"tokenA:tokenA:500"}, // same token, no reordering needed
+			expected:     []string{pool.GetPoolPath("tokenA", "tokenA", 500)},
 			wantError:    false,
 		},
 		{
 			name:         "real gnoswap token paths",
 			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",
 			expected: []string{
-				"gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500", // first route (already ordered)
-				"gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000", // second route first hop (already ordered)
-				"gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",  // second route second hop (already ordered)
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/onbloc/usdc", 500),
+				pool.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/onbloc/gns", 3000),
+				pool.GetPoolPath("gno.land/r/onbloc/gns", "gno.land/r/onbloc/usdc", 500),
 			},
 			wantError: false,
 		},
