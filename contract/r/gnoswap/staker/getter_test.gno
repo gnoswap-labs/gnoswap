@@ -167,12 +167,12 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetIncentiveRewardAmount",
-			setup: func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", u256.MustFromDecimal("3000")) },
+			setup: func(m *MockStaker) { m.Response.Set("GetIncentiveRewardAmount", int64(3000)) },
 			getter: func() any { return GetIncentiveRewardAmount("foo:bar:500", "incentive-1") },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
+			mutate: func(result any) { _ = result.(int64) + 1000 },
 			assertRaw: func(t *testing.T, m *MockStaker) {
-				value := m.Response.data["GetIncentiveRewardAmount"][0].(*u256.Uint)
-				uassert.Equal(t, "3000", value.ToString())
+				value := m.Response.data["GetIncentiveRewardAmount"][0].(int64)
+				uassert.Equal(t, int64(3000), value)
 			},
 		},
 		{

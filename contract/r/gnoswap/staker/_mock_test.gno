@@ -372,12 +372,12 @@ func (m *MockStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	return res[0].(address)
 }
 
-func (m *MockStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (m *MockStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetIncentiveRewardAmount")
 	if !ok {
-		return u256.Zero()
+		return 0
 	}
-	return res[0].(*u256.Uint)
+	return res[0].(int64)
 }
 
 func (m *MockStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {

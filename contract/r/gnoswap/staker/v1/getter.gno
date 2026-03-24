@@ -161,17 +161,17 @@ func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) 
 }
 
 // GetIncentiveRewardAmount returns the reward amount of an incentive.
-func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	incentive := s.getIncentive(poolPath, incentiveId)
 
-	return u256.NewUintFromInt64(incentive.RewardAmount())
+	return incentive.RewardAmount()
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount of an incentive as string.
 func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
 	rewardAmount := s.GetIncentiveRewardAmount(poolPath, incentiveId)
 
-	return rewardAmount.ToString()
+	return formatAnyInt(rewardAmount)
 }
 
 // GetIncentiveRewardPerSecond returns the reward per second of an incentive.

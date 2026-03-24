@@ -92,7 +92,7 @@ type IStakerGetter interface {
 	GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive
 	GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64
 	GetIncentiveRefundee(poolPath string, incentiveId string) address
-	GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint
+	GetIncentiveRewardAmount(poolPath string, incentiveId string) int64
 	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string
 	GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64
 	GetIncentiveRewardToken(poolPath string, incentiveId string) string
