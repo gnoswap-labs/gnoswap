@@ -518,6 +518,5 @@ func createTestPool() *pl.Pool {
 		10,                              // tickSpacing
 		0,                               // tick
 		0,                               // feeProtocol
-		u256.MustFromDecimal("1000000"), // maxLiquidityPerTick
 	)
 }

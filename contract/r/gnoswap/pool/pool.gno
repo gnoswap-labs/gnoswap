@@ -21,7 +21,6 @@ type Pool struct {
 	slot0                Slot0
 	balances             Balances // balances of the pool
 	protocolFees         ProtocolFees
-	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
 	feeGrowthGlobal0X128 *u256.Uint // uint256
 	feeGrowthGlobal1X128 *u256.Uint // uint256
 	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
@@ -41,7 +40,7 @@ func (p *Pool) Balances() Balances                  { return p.balances }
 func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
 func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
-func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return p.maxLiquidityPerTick }
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return calculateMaxLiquidityPerTick(p.tickSpacing) }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
 func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return p.slot0.sqrtPriceX96 }
 func (p *Pool) Slot0Tick() int32                    { return p.slot0.tick }
@@ -85,10 +84,6 @@ func (p *Pool) SetBalanceToken1(token1 *u256.Uint) {
 
 func (p *Pool) SetTickSpacing(tickSpacing int32) {
 	p.tickSpacing = tickSpacing
-}
-
-func (p *Pool) SetMaxLiquidityPerTick(maxLiquidityPerTick *u256.Uint) {
-	p.maxLiquidityPerTick = maxLiquidityPerTick
 }
 
 func (p *Pool) SetSlot0(slot0 Slot0) {
@@ -196,7 +191,6 @@ func (p *Pool) Clone() *Pool {
 		},
 		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
 		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
-		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
@@ -215,7 +209,6 @@ func NewPool(
 	tickSpacing int32,
 	tick int32,
 	slot0FeeProtocol uint8,
-	maxLiquidityPerTick *u256.Uint,
 ) *Pool {
 	slot0 := newSlot0(sqrtPriceX96, tick, slot0FeeProtocol, true)
 
@@ -225,7 +218,6 @@ func NewPool(
 		balances:             newBalances(),
 		fee:                  fee,
 		tickSpacing:          tickSpacing,
-		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),

@@ -25,7 +25,6 @@ func testInitData(t *testing.T) {
 		},
 		fee:                 3000,
 		tickSpacing:         10,
-		maxLiquidityPerTick: u256.NewUint(1000000),
 		slot0: mockSlot0{
 			sqrtPriceX96: u256.NewUint(1000000000000000000),
 			tick:         5,
@@ -127,8 +126,8 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get max liquidity per tick", func(t *testing.T) {
 			maxLiquidityPerTick := getMockInstance().GetMaxLiquidityPerTick(validPoolPath)
-			if maxLiquidityPerTick != "1000000" {
-				t.Errorf("Expected max liquidity per tick [%s], got %s", "1000000", maxLiquidityPerTick)
+			if maxLiquidityPerTick != "1917569901783203986719870431555990" {
+				t.Errorf("Expected max liquidity per tick [%s], got %s", "1917569901783203986719870431555990", maxLiquidityPerTick)
 			}
 		})
 

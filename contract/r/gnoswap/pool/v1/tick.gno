@@ -313,20 +313,6 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 	return &tickInfo
 }
 
-// calculateMaxLiquidityPerTick calculates the maximum liquidity
-// per tick for a given tick spacing.
-func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
-	// Floor MIN_TICK and MAX_TICK to the nearest multiple of tickSpacing
-	// This ensures that the tick range is properly aligned with the tickSpacing
-	// For example, if tickSpacing is 60 and MIN_TICK is -887272:
-	// -887272 / 60 = -14787.866... -> -14787 * 60 = -887220
-	minTick := (MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
-	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
-
-	return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
-}
-
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
 //
 // This function computes the fee growth for token 0 and token 1 below a given tick (`tickLower`)

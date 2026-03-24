@@ -174,3 +174,25 @@ func TestPool_TickMethods_BoundaryTicks(t *testing.T) {
 		uassert.Equal(t, info.LiquidityGross().ToString(), got.LiquidityGross().ToString())
 	}
 }
+
+func TestCalculateMaxLiquidityPerTick(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickSpacing int32
+		want        string
+	}{
+		{name: "tick spacing 1", tickSpacing: 1, want: MAX_LIQUIDITY_PER_TICK_SPACING_1},
+		{name: "tick spacing 10", tickSpacing: 10, want: MAX_LIQUIDITY_PER_TICK_SPACING_10},
+		{name: "tick spacing 60", tickSpacing: 60, want: MAX_LIQUIDITY_PER_TICK_SPACING_60},
+		{name: "tick spacing 200", tickSpacing: 200, want: MAX_LIQUIDITY_PER_TICK_SPACING_200},
+		{name: "entire range", tickSpacing: 887272, want: "113427455640312821154458202477256070485"},
+		{name: "custom tick spacing", tickSpacing: 2302, want: "441351967472034323558203122479595605"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateMaxLiquidityPerTick(tt.tickSpacing)
+			uassert.Equal(t, tt.want, got.ToString())
+		})
+	}
+}

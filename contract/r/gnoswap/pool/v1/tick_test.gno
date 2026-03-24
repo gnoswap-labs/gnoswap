@@ -12,54 +12,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestcalculateMaxLiquidityPerTick(t *testing.T) {
-	tests := []struct {
-		name        string
-		tickSpacing int32
-		want        string // expected result in string format
-	}{
-		{
-			name:        "tick spacing 1 (for 0.01% pool)",
-			tickSpacing: 1,
-			want:        "191757530477355301479181766273477",
-		},
-		{
-			name:        "tick spacing 10 (for 0.05% pool)",
-			tickSpacing: 10,
-			want:        "1917569901783203986719870431555990",
-		},
-		{
-			name:        "tick spacing 60 (for 0.3% pool)",
-			tickSpacing: 60,
-			want:        "11505743598341114571880798222544994",
-		},
-		{
-			name:        "tick spacing 200 (for 1% pool)",
-			tickSpacing: 200,
-			want:        "38350317471085141830651933667504588",
-		},
-		{
-			name:        "entire range",
-			tickSpacing: 887272,
-			want:        "113427455640312821154458202477256070485",
-		},
-		{
-			name:        "custom tick spacing",
-			tickSpacing: 2302,
-			want:        "441351967472034323558203122479595605",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := calculateMaxLiquidityPerTick(tt.tickSpacing)
-			if got.ToString() != tt.want {
-				t.Errorf("calculateMaxLiquidityPerTick() = %v, want %v", got.ToString(), tt.want)
-			}
-		})
-	}
-}
-
 func TestCalculateFeeGrowthInside(t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
