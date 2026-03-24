@@ -157,7 +157,6 @@ func (i *poolV1) Burn(
 	positionKey := getPositionKey(tickLower, tickUpper)
 
 	setPosition(pool, positionKey, position)
-	mustGetPositionByPool(pool, positionKey)
 
 	// Save pool state after modifyPosition may have updated liquidity
 	err = i.savePool(pool)
