@@ -168,6 +168,10 @@ func (i *poolV1) Swap(
 	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
 	pool.SetSlot0(slot0Start)
+	err := i.savePool(pool)
+	if err != nil {
+		panic(err)
+	}
 	startTick := pool.Slot0Tick()
 
 	// Call swap start hook if set
@@ -185,6 +189,11 @@ func (i *poolV1) Swap(
 		slot0End := pool.Slot0()
 		slot0End.SetUnlocked(true)
 		pool.SetSlot0(slot0End)
+
+		err := i.savePool(pool)
+		if err != nil {
+			panic(err)
+		}
 
 		if i.store.HasSwapEndHook() {
 			swapEndHook := i.store.GetSwapEndHook()
@@ -232,6 +241,10 @@ func (i *poolV1) Swap(
 	}
 
 	applySwapResult(pool, result)
+	err = i.savePool(pool)
+	if err != nil {
+		panic(err)
+	}
 
 	// transfer swap result to recipient then receive input tokens from swap callback
 	if zeroForOne {

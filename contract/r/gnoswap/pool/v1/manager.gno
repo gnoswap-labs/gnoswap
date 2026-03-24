@@ -94,9 +94,29 @@ func (i *poolV1) CreatePool(
 	poolPath := poolInfo.poolPath()
 
 	pools := i.store.GetPools()
-	pools.Set(poolPath, pool)
+	pools.Set(poolPath, pool.CloneCore())
 
 	err = i.store.SetPools(pools)
+	if err != nil {
+		panic(err)
+	}
+
+	err = i.store.SetPoolTicks(poolPath, pool.Ticks())
+	if err != nil {
+		panic(err)
+	}
+
+	err = i.store.SetPoolTickBitmaps(poolPath, pool.TickBitmaps())
+	if err != nil {
+		panic(err)
+	}
+
+	err = i.store.SetPoolPositions(poolPath, pool.Positions())
+	if err != nil {
+		panic(err)
+	}
+
+	err = i.store.SetPoolObservationState(poolPath, pool.ObservationState())
 	if err != nil {
 		panic(err)
 	}
@@ -175,7 +195,13 @@ func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 		return nil, ufmt.Errorf("failed to cast pool to *Pool: %T", iPool)
 	}
 
-	return p, nil
+	pool := p.CloneCore()
+	pool.SetTicks(i.store.GetPoolTicks(poolPath))
+	pool.SetTickBitmaps(i.store.GetPoolTickBitmaps(poolPath))
+	pool.SetPositions(i.store.GetPoolPositions(poolPath))
+	pool.SetObservationState(i.store.GetPoolObservationState(poolPath))
+
+	return pool, nil
 }
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
@@ -197,9 +223,29 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 // This ensures that modifications to pool objects are properly saved.
 func (i *poolV1) savePool(pool *pl.Pool) error {
 	pools := i.store.GetPools()
-	pools.Set(pool.PoolPath(), pool)
+	pools.Set(pool.PoolPath(), pool.CloneCore())
 
-	return i.store.SetPools(pools)
+	err := i.store.SetPools(pools)
+	if err != nil {
+		return err
+	}
+
+	err = i.store.SetPoolTicks(pool.PoolPath(), pool.Ticks())
+	if err != nil {
+		return err
+	}
+
+	err = i.store.SetPoolTickBitmaps(pool.PoolPath(), pool.TickBitmaps())
+	if err != nil {
+		return err
+	}
+
+	err = i.store.SetPoolPositions(pool.PoolPath(), pool.Positions())
+	if err != nil {
+		return err
+	}
+
+	return i.store.SetPoolObservationState(pool.PoolPath(), pool.ObservationState())
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.

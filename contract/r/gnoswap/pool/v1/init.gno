@@ -52,6 +52,34 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	if !poolStore.HasPoolTicksBucket() {
+		err := poolStore.SetPoolTicksBucket(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !poolStore.HasPoolTickBitmapsBucket() {
+		err := poolStore.SetPoolTickBitmapsBucket(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !poolStore.HasPoolPositionsBucket() {
+		err := poolStore.SetPoolPositionsBucket(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !poolStore.HasPoolObservationsBucket() {
+		err := poolStore.SetPoolObservationsBucket(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
 	if !poolStore.HasFeeAmountTickSpacing() {
 		err := poolStore.SetFeeAmountTickSpacing(defaultFeeAmountTickSpacing)
 		if err != nil {
