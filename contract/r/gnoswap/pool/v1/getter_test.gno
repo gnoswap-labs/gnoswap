@@ -81,22 +81,7 @@ func testInitData(t *testing.T) {
 		panic(err)
 	}
 
-	err = getMockInstance().store.SetPoolTicks("token0:token1:3000", mockTicks)
-	if err != nil {
-		panic(err)
-	}
-
-	err = getMockInstance().store.SetPoolTickBitmaps("token0:token1:3000", mockTickBitmaps)
-	if err != nil {
-		panic(err)
-	}
-
 	err = getMockInstance().store.SetPoolPositions("token0:token1:3000", mockPositions)
-	if err != nil {
-		panic(err)
-	}
-
-	err = getMockInstance().store.SetPoolObservationState("token0:token1:3000", mockObservationState)
 	if err != nil {
 		panic(err)
 	}
@@ -902,6 +887,19 @@ func TestGetPoolWithError(t *testing.T) {
 			} else {
 				uassert.True(t, err == nil)
 				uassert.True(t, pool != nil)
+				uassert.True(t, pool.Ticks() != nil)
+				uassert.True(t, pool.TickBitmaps() != nil)
+				uassert.True(t, pool.ObservationState() != nil)
+
+				tickInfo, tickErr := pool.GetTick(0)
+				uassert.True(t, tickErr == nil)
+				uassert.Equal(t, int64(5), tickInfo.TickCumulativeOutside())
+
+				tickBitmap, exists := pool.TickBitmaps().Get("0")
+				uassert.True(t, exists)
+				uassert.True(t, tickBitmap != nil)
+
+				uassert.Equal(t, uint16(1), pool.ObservationState().Cardinality())
 			}
 		})
 	}
