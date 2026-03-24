@@ -3,8 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"encoding/base64"
-	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -474,12 +472,9 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 	return feeGrowthInside, nil
 }
 
-// computePositionKey generates a unique base64-encoded key for a liquidity position.
+// computePositionKey generates a compact deterministic key for a liquidity position.
 func computePositionKey(tickLower, tickUpper int32) string {
-	currentRealmPath := runtime.CurrentRealm().PkgPath()
-	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
-	return encoded
+	return pl.EncodeTickKey(tickLower) + pl.EncodeTickKey(tickUpper)
 }
 
 // calculatePositionBalances computes token balances for a position at current price.

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
-	"strconv"
 	"testing"
 	"time"
 
@@ -303,9 +301,8 @@ func initializeSetup() {
 	// Set poolPath for later use
 	poolPath = barPath + ":" + fooPath + ":3000"
 
-	// Set positionKey for later use (base64 encoded)
-	positionKeyRaw := "gno.land/r/gnoswap/position__" + strconv.Itoa(int(min_tick)) + "__" + strconv.Itoa(int(max_tick))
-	positionKey = base64.StdEncoding.EncodeToString([]byte(positionKeyRaw))
+	// Set positionKey for later use
+	positionKey = pl.EncodeTickKey(min_tick) + pl.EncodeTickKey(max_tick)
 }
 
 func createPool() {
@@ -1013,7 +1010,7 @@ func getObservationState() {
 // [SCENARIO] 2.23. GetPoolPositionKeys
 // [INFO] Check GetPoolPositionKeys method
 // [EXPECTED] position keys count: 1
-// [EXPECTED] position key[0]: Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjIwX184ODcyMjA=
+// [EXPECTED] position key[0]: 00000000520001774492
 //
 // [SCENARIO] 2.24. GetPositionLiquidity
 // [INFO] Check GetPositionLiquidity method

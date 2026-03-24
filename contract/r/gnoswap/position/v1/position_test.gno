@@ -281,98 +281,98 @@ func TestComputePositionKey(t *testing.T) {
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/position__-100__200"
+			expected:  "00008871720000887472",
 		},
 		{
 			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/position__0__0"
+			expected:  "00008872720000887272",
 		},
 		{
 			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/position__-50__150"
+			expected:  "00008872220000887422",
 		},
 		{
 			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/position__300__300"
+			expected:  "00008875720000887572",
 		},
 		{
 			name:      "Normal tick range",
 			owner:     alice,
 			tickLower: -600,
 			tickUpper: 600,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjAwX182MDA=", // Base64 of "gno.land/r/gnoswap/position__300__300"
+			expected:  "00008866720000887872",
 		},
 		{
 			name:      "Wide tick range",
 			owner:     alice,
 			tickLower: -887220,
 			tickUpper: 887220,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjIwX184ODcyMjA=", // Base64 of "gno.land/r/gnoswap/position__-887220__887220"
+			expected:  "00000000520001774492",
 		},
 		{
 			name:      "Narrow tick range",
 			owner:     alice,
 			tickLower: -60,
 			tickUpper: 60,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjBfXzYw", // Base64 of "gno.land/r/gnoswap/position__-60__60"
+			expected:  "00008872120000887332",
 		},
 		{
 			name:      "Asymmetric range",
 			owner:     alice,
 			tickLower: -1000,
 			tickUpper: 500,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fNTAw", // Base64 of "gno.land/r/gnoswap/position__-1000__500"
+			expected:  "00008862720000887772",
 		},
 		{
 			name:      "Positive range",
 			owner:     alice,
 			tickLower: 100,
 			tickUpper: 1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18xMDBfXzEwMDA=", // Base64 of "gno.land/r/gnoswap/position__100__1000"
+			expected:  "00008873720000888272",
 		},
 		{
 			name:      "Negative range",
 			owner:     alice,
 			tickLower: -2000,
 			tickUpper: -1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMjAwMF9fLTEwMDA=", // Base64 of "gno.land/r/gnoswap/position__-2000__-1000"
+			expected:  "00008852720000886272",
 		},
 		{
 			name:      "Zero lower bound",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18xMDAw", // Base64 of "gno.land/r/gnoswap/position__0__1000"
+			expected:  "00008872720000888272",
 		},
 		{
 			name:      "Zero upper bound",
 			owner:     alice,
 			tickLower: -1000,
 			tickUpper: 0,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fMA==", // Base64 of "gno.land/r/gnoswap/position__-1000__0"
+			expected:  "00008862720000887272",
 		},
 		{
 			name:      "Minimum values",
 			owner:     alice,
 			tickLower: -887272,
 			tickUpper: -887272 + 60,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjcyX18tODg3MjEy", // Base64 of "gno.land/r/gnoswap/position__-887272__-887212"
+			expected:  "00000000000000000060",
 		},
 		{
 			name:      "Maximum values",
 			owner:     alice,
 			tickLower: 887272 - 60,
 			tickUpper: 887272,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX184ODcyMTJfXzg4NzI3Mg==", // Base64 of "gno.land/r/gnoswap/position__887272__887272"
+			expected:  "00017744840001774544",
 		},
 	}
 

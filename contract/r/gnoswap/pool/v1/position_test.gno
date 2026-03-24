@@ -1191,7 +1191,7 @@ func TestPositionLiquidity(t *testing.T) {
 			},
 			expectedResult:       "0",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-POOL-005] requested data not found || positionKey(Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTIwX18xMjA=) does not exist",
+			expectedPanicMessage: "[GNOSWAP-POOL-005] requested data not found || positionKey(00008871520000887392) does not exist",
 		},
 	}
 
