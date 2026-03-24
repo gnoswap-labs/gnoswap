@@ -157,7 +157,7 @@ func computePositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	return pool.EncodeTickKey(tickLower) + pool.EncodeTickKey(tickUpper)
+	return pool.EncodePositionKey(tickLower, tickUpper)
 }
 
 // Output:

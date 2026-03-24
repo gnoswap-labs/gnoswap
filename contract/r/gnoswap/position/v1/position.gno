@@ -474,7 +474,7 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 
 // computePositionKey generates a compact deterministic key for a liquidity position.
 func computePositionKey(tickLower, tickUpper int32) string {
-	return pl.EncodeTickKey(tickLower) + pl.EncodeTickKey(tickUpper)
+	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
 // calculatePositionBalances computes token balances for a position at current price.

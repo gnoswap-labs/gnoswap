@@ -23,12 +23,12 @@ import (
 //   - tickLower: Lower boundary tick of position range
 //   - tickUpper: Upper boundary tick of position range
 //
-// Key Format: EncodeTickKey(tickLower) + EncodeTickKey(tickUpper)
+// Key Format: EncodePositionKey(tickLower, tickUpper)
 func getPositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	return pl.EncodeTickKey(tickLower) + pl.EncodeTickKey(tickUpper)
+	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
 // positionUpdate updates a position's liquidity and calculates fees owed.

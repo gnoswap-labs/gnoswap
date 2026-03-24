@@ -302,7 +302,7 @@ func initializeSetup() {
 	poolPath = barPath + ":" + fooPath + ":3000"
 
 	// Set positionKey for later use
-	positionKey = pl.EncodeTickKey(min_tick) + pl.EncodeTickKey(max_tick)
+	positionKey = pl.EncodePositionKey(min_tick, max_tick)
 }
 
 func createPool() {

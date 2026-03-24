@@ -73,6 +73,27 @@ func TestEncodeTickKey_Ordering(t *testing.T) {
 	uassert.True(t, key1 < key3)
 }
 
+func TestEncodePositionKey(t *testing.T) {
+	tests := []struct {
+		name      string
+		tickLower int32
+		tickUpper int32
+		want      string
+	}{
+		{"narrow range", -60, 60, "00008872120000887332"},
+		{"negative range", -2000, -1000, "00008852720000886272"},
+		{"wide range", -887220, 887220, "00000000520001774492"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := EncodePositionKey(tt.tickLower, tt.tickUpper)
+			uassert.Equal(t, tt.want, got)
+			uassert.Equal(t, 20, len(got))
+		})
+	}
+}
+
 func TestGetPoolPath(t *testing.T) {
 	tests := []struct {
 		name       string
