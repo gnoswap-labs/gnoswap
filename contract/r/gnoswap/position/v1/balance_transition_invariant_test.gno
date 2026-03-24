@@ -140,8 +140,8 @@ func TestMintTransitionInvariantMatchesActualTransfers(t *testing.T) {
 	calcAfter0, calcAfter1 := calculatePositionBalances(positionAfter)
 	assertDecimalStringsWithinOne(t, amount0, calcAfter0.ToString(), "mint calcAfter should match actual token0 deposit")
 	assertDecimalStringsWithinOne(t, amount1, calcAfter1.ToString(), "mint calcAfter should match actual token1 deposit")
-	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), positionAfter.Token0Balance().ToString(), "mint reads should return token0 balance matching calcAfter")
-	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), positionAfter.Token1Balance().ToString(), "mint reads should return token1 balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), mockInstance.GetPositionToken0Balance(positionId).ToString(), "mint token0 getter should return balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), mockInstance.GetPositionToken1Balance(positionId).ToString(), "mint token1 getter should return balance matching calcAfter")
 }
 
 func TestIncreaseLiquidityTransitionInvariantMatchesActualTransfers(t *testing.T) {
@@ -172,8 +172,8 @@ func TestIncreaseLiquidityTransitionInvariantMatchesActualTransfers(t *testing.T
 	positionAfter := mockInstance.mustGetPosition(positionId)
 	calcAfter0, calcAfter1 := calculatePositionBalances(positionAfter)
 	assertCalcIncreaseMatchesAmountsWithinOne(t, calcBefore0, calcBefore1, calcAfter0, calcAfter1, amount0, amount1, "increase calc delta should match actual deposit")
-	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), positionAfter.Token0Balance().ToString(), "increase reads should return token0 balance matching calcAfter")
-	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), positionAfter.Token1Balance().ToString(), "increase reads should return token1 balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), mockInstance.GetPositionToken0Balance(positionId).ToString(), "increase token0 getter should return balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), mockInstance.GetPositionToken1Balance(positionId).ToString(), "increase token1 getter should return balance matching calcAfter")
 }
 
 func TestDecreaseLiquidityTransitionInvariantMatchesActualTransfers(t *testing.T) {
@@ -204,8 +204,8 @@ func TestDecreaseLiquidityTransitionInvariantMatchesActualTransfers(t *testing.T
 	positionAfter := mockInstance.mustGetPosition(positionId)
 	calcAfter0, calcAfter1 := calculatePositionBalances(positionAfter)
 	assertCalcDecreaseMatchesAmountsWithinOne(t, calcBefore0, calcBefore1, calcAfter0, calcAfter1, amount0, amount1, "decrease calc delta should match actual withdrawal")
-	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), positionAfter.Token0Balance().ToString(), "decrease reads should return token0 balance matching calcAfter")
-	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), positionAfter.Token1Balance().ToString(), "decrease reads should return token1 balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), mockInstance.GetPositionToken0Balance(positionId).ToString(), "decrease token0 getter should return balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), mockInstance.GetPositionToken1Balance(positionId).ToString(), "decrease token1 getter should return balance matching calcAfter")
 }
 
 func TestRepositionTransitionInvariantMatchesActualTransfers(t *testing.T) {
@@ -254,6 +254,6 @@ func TestRepositionTransitionInvariantMatchesActualTransfers(t *testing.T) {
 	positionAfter := mockInstance.mustGetPosition(positionId)
 	calcAfter0, calcAfter1 := calculatePositionBalances(positionAfter)
 	assertCalcIncreaseMatchesAmountsWithinOne(t, calcCleared0, calcCleared1, calcAfter0, calcAfter1, amount0, amount1, "reposition calc delta should match actual redeposit")
-	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), positionAfter.Token0Balance().ToString(), "reposition reads should return token0 balance matching calcAfter")
-	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), positionAfter.Token1Balance().ToString(), "reposition reads should return token1 balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter0.ToString(), mockInstance.GetPositionToken0Balance(positionId).ToString(), "reposition token0 getter should return balance matching calcAfter")
+	assertDecimalStringsWithinOne(t, calcAfter1.ToString(), mockInstance.GetPositionToken1Balance(positionId).ToString(), "reposition token1 getter should return balance matching calcAfter")
 }

@@ -51,19 +51,7 @@ func (p *positionV1) GetPositionIDs(offset, count int) []uint64 {
 // GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
 func (p *positionV1) GetPosition(id uint64) (position.Position, bool) {
-	pos, ok := p.store.GetPosition(id)
-	if !ok {
-		return position.Position{}, false
-	}
-	if !pl.ExistsPoolPath(pos.PoolKey()) {
-		return pos, true
-	}
-
-	balance0, balance1 := calculatePositionBalances(&pos)
-	pos.SetToken0Balance(balance0)
-	pos.SetToken1Balance(balance1)
-
-	return pos, true
+	return p.store.GetPosition(id)
 }
 
 // ExistPosition checks if a position exists for a given position ID
@@ -101,6 +89,25 @@ func (p *positionV1) GetPositionTickUpper(positionId uint64) int32 {
 
 func (p *positionV1) GetPositionLiquidity(positionId uint64) *u256.Uint {
 	return p.mustGetPosition(positionId).Liquidity()
+}
+
+func (p *positionV1) GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint) {
+	position := p.mustGetPosition(positionId)
+	if !pl.ExistsPoolPath(position.PoolKey()) {
+		return u256.Zero(), u256.Zero()
+	}
+
+	return calculatePositionBalances(position)
+}
+
+func (p *positionV1) GetPositionToken0Balance(positionId uint64) *u256.Uint {
+	balance0, _ := p.GetPositionTokenBalances(positionId)
+	return balance0
+}
+
+func (p *positionV1) GetPositionToken1Balance(positionId uint64) *u256.Uint {
+	_, balance1 := p.GetPositionTokenBalances(positionId)
+	return balance1
 }
 
 func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {

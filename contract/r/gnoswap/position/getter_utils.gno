@@ -11,8 +11,6 @@ func clonePosition(position Position) Position {
 		feeGrowthInside1LastX128: position.feeGrowthInside1LastX128.Clone(),
 		tokensOwed0:              position.tokensOwed0.Clone(),
 		tokensOwed1:              position.tokensOwed1.Clone(),
-		token0Balance:            position.token0Balance.Clone(),
-		token1Balance:            position.token1Balance.Clone(),
 		burned:                   position.burned,
 	}
 }

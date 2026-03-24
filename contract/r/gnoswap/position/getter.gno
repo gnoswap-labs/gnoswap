@@ -37,30 +37,16 @@ func IsInRange(positionId uint64) bool {
 
 // GetPositionTokenBalances returns the token0 balance of a position.
 func GetPositionTokenBalances(positionId uint64) (string, string) {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return "", ""
-	}
-
-	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
+	balance0, balance1 := getImplementation().GetPositionTokenBalances(positionId)
+	return balance0.ToString(), balance1.ToString()
 }
 
 func GetPositionToken0Balance(positionId uint64) *u256.Uint {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return u256.Zero()
-	}
-
-	return position.Token0Balance().Clone()
+	return getImplementation().GetPositionToken0Balance(positionId).Clone()
 }
 
 func GetPositionToken1Balance(positionId uint64) *u256.Uint {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return u256.Zero()
-	}
-
-	return position.Token1Balance().Clone()
+	return getImplementation().GetPositionToken1Balance(positionId).Clone()
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.

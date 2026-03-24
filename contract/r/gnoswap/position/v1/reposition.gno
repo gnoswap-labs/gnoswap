@@ -83,19 +83,6 @@ func (p *positionV1) Reposition(
 		},
 	)
 
-	// before update position, calculate token balances
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
-
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
-	if overflow {
-		panic(newErrorWithDetail(errOverflow, "token0Balance + amount0 overflow"))
-	}
-
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
-	if overflow {
-		panic(newErrorWithDetail(errOverflow, "token1Balance + amount1 overflow"))
-	}
-
 	// update position tickLower, tickUpper to new value
 	// because getCurrentFeeGrowth() uses tickLower, tickUpper
 	position.SetTickLower(tickLower)
@@ -109,8 +96,6 @@ func (p *positionV1) Reposition(
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	position.SetLiquidity(liquidity)
-	position.SetToken0Balance(token0Balance)
-	position.SetToken1Balance(token1Balance)
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )

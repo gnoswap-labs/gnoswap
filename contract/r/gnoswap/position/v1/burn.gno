@@ -56,8 +56,6 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
-
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0, overflow0 := u256.Zero().AddOverflow(position.TokensOwed0(), burnedAmount0)
 	if overflow0 {
@@ -79,23 +77,11 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
 
-	newToken0Balance, underflow := u256.Zero().SubOverflow(calculatedToken0Balance, burnedAmount0)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken0Balance - burnedAmount0 underflow"))
-	}
-
-	newToken1Balance, underflow := u256.Zero().SubOverflow(calculatedToken1Balance, burnedAmount1)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken1Balance - burnedAmount1 underflow"))
-	}
-
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
 	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
 	position.SetLiquidity(newLiquidity)
-	position.SetToken0Balance(newToken0Balance)
-	position.SetToken1Balance(newToken1Balance)
 
 	p.mustUpdatePosition(params.positionId, *position)
 

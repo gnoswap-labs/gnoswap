@@ -101,22 +101,12 @@ func TestDecreaseLiquidityRefreshesPriceDerivedTokenBalances(t *testing.T) {
 		"",
 	)
 
-	storedBeforeSwap := mockInstance.mustGetPosition(1)
-	storedToken0BeforeSwap := storedBeforeSwap.Token0Balance().ToString()
-	storedToken1BeforeSwap := storedBeforeSwap.Token1Balance().ToString()
-
 	movePoolPriceForPositionTest(t, false, "300000")
 
 	positionAfterSwap := mockInstance.mustGetPosition(1)
 	calculatedToken0AfterSwap, calculatedToken1AfterSwap := calculatePositionBalances(positionAfterSwap)
-	assertDecimalStringsWithinOne(t, calculatedToken0AfterSwap.ToString(), positionAfterSwap.Token0Balance().ToString(), "position reads should derive token0 balance from current price")
-	assertDecimalStringsWithinOne(t, calculatedToken1AfterSwap.ToString(), positionAfterSwap.Token1Balance().ToString(), "position reads should derive token1 balance from current price")
-
-	uassert.True(
-		t,
-		storedToken0BeforeSwap != calculatedToken0AfterSwap.ToString() || storedToken1BeforeSwap != calculatedToken1AfterSwap.ToString(),
-		"price movement should change current position composition before any liquidity action",
-	)
+	assertDecimalStringsWithinOne(t, calculatedToken0AfterSwap.ToString(), mockInstance.GetPositionToken0Balance(1).ToString(), "position token0 getter should derive from current price")
+	assertDecimalStringsWithinOne(t, calculatedToken1AfterSwap.ToString(), mockInstance.GetPositionToken1Balance(1).ToString(), "position token1 getter should derive from current price")
 	testing.SetOriginCaller(adminAddr)
 
 	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
@@ -130,8 +120,8 @@ func TestDecreaseLiquidityRefreshesPriceDerivedTokenBalances(t *testing.T) {
 	positionAfterBurn := mockInstance.mustGetPosition(1)
 	calculatedToken0AfterBurn, calculatedToken1AfterBurn := calculatePositionBalances(positionAfterBurn)
 
-	assertDecimalStringsWithinOne(t, calculatedToken0AfterBurn.ToString(), positionAfterBurn.Token0Balance().ToString(), "burn reads should return token0 balance from current-price accounting")
-	assertDecimalStringsWithinOne(t, calculatedToken1AfterBurn.ToString(), positionAfterBurn.Token1Balance().ToString(), "burn reads should return token1 balance from current-price accounting")
+	assertDecimalStringsWithinOne(t, calculatedToken0AfterBurn.ToString(), mockInstance.GetPositionToken0Balance(1).ToString(), "burn token0 getter should return current-price accounting")
+	assertDecimalStringsWithinOne(t, calculatedToken1AfterBurn.ToString(), mockInstance.GetPositionToken1Balance(1).ToString(), "burn token1 getter should return current-price accounting")
 }
 
 func TestRepositionResetsBalancesFromClearedPosition(t *testing.T) {
@@ -170,8 +160,8 @@ func TestRepositionResetsBalancesFromClearedPosition(t *testing.T) {
 
 	clearedPosition := mockInstance.mustGetPosition(1)
 	uassert.True(t, clearedPosition.IsClear(), "position should be clear before reposition")
-	uassert.Equal(t, "0", clearedPosition.Token0Balance().ToString())
-	uassert.Equal(t, "0", clearedPosition.Token1Balance().ToString())
+	uassert.Equal(t, "0", mockInstance.GetPositionToken0Balance(1).ToString())
+	uassert.Equal(t, "0", mockInstance.GetPositionToken1Balance(1).ToString())
 	testing.SetOriginCaller(adminAddr)
 
 	_, _, _, _, _, _ = mockInstanceReposition(
@@ -189,7 +179,7 @@ func TestRepositionResetsBalancesFromClearedPosition(t *testing.T) {
 	repositioned := mockInstance.mustGetPosition(1)
 	calculatedToken0AfterReposition, calculatedToken1AfterReposition := calculatePositionBalances(repositioned)
 
-	uassert.True(t, repositioned.Token0Balance().ToString() != "0" || repositioned.Token1Balance().ToString() != "0", "reposition should rebuild non-zero balances from new liquidity")
-	assertDecimalStringsWithinOne(t, calculatedToken0AfterReposition.ToString(), repositioned.Token0Balance().ToString(), "reposition reads should return current-price token0 accounting")
-	assertDecimalStringsWithinOne(t, calculatedToken1AfterReposition.ToString(), repositioned.Token1Balance().ToString(), "reposition reads should return current-price token1 accounting")
+	uassert.True(t, mockInstance.GetPositionToken0Balance(1).ToString() != "0" || mockInstance.GetPositionToken1Balance(1).ToString() != "0", "reposition should rebuild non-zero balances from new liquidity")
+	assertDecimalStringsWithinOne(t, calculatedToken0AfterReposition.ToString(), mockInstance.GetPositionToken0Balance(1).ToString(), "reposition token0 getter should return current-price accounting")
+	assertDecimalStringsWithinOne(t, calculatedToken1AfterReposition.ToString(), mockInstance.GetPositionToken1Balance(1).ToString(), "reposition token1 getter should return current-price accounting")
 }
