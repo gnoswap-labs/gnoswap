@@ -66,15 +66,6 @@ func assertAmountSpecifiedIsNotZero(amountSpecified string) {
 	}
 }
 
-func assertPayerIsPreviousRealmOrOriginCaller(payer address) {
-	if payer != runtime.PreviousRealm().Address() && payer != runtime.OriginCaller() {
-		panic(newErrorWithDetail(
-			errInvalidPayer,
-			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),
-		))
-	}
-}
-
 func assertIsValidTokenOrder(token0Path, token1Path string) {
 	if token0Path >= token1Path {
 		panic(newErrorWithDetail(
