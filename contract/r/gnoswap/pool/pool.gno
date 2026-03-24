@@ -19,8 +19,8 @@ type Pool struct {
 	fee                  uint32 // fee tier of the pool
 	tickSpacing          int32  // spacing between ticks
 	slot0                Slot0
-	balances             Balances // balances of the pool
-	protocolFees         ProtocolFees
+	balances             TokenPair // balances of the pool
+	protocolFees         TokenPair
 	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
 	feeGrowthGlobal0X128 *u256.Uint // uint256
 	feeGrowthGlobal1X128 *u256.Uint // uint256
@@ -37,9 +37,9 @@ func (p *Pool) PoolPath() string                    { return GetPoolPath(p.token
 func (p *Pool) Token0Path() string                  { return p.token0Path }
 func (p *Pool) Token1Path() string                  { return p.token1Path }
 func (p *Pool) Fee() uint32                         { return p.fee }
-func (p *Pool) Balances() Balances                  { return p.balances }
-func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
-func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
+func (p *Pool) Balances() TokenPair                 { return p.balances }
+func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.Token0() }
+func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.Token1() }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
 func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return p.maxLiquidityPerTick }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
@@ -49,9 +49,9 @@ func (p *Pool) Slot0FeeProtocol() uint8             { return p.slot0.feeProtocol
 func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
 func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
-func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
+func (p *Pool) ProtocolFees() TokenPair             { return p.protocolFees }
+func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.Token0() }
+func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.Token1() }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
@@ -71,16 +71,16 @@ func (p *Pool) SetFee(fee uint32) {
 	p.fee = fee
 }
 
-func (p *Pool) SetBalances(balances Balances) {
+func (p *Pool) SetBalances(balances TokenPair) {
 	p.balances = balances
 }
 
 func (p *Pool) SetBalanceToken0(token0 *u256.Uint) {
-	p.balances.token0 = token0
+	p.balances.SetToken0(token0)
 }
 
 func (p *Pool) SetBalanceToken1(token1 *u256.Uint) {
-	p.balances.token1 = token1
+	p.balances.SetToken1(token1)
 }
 
 func (p *Pool) SetTickSpacing(tickSpacing int32) {
@@ -103,16 +103,16 @@ func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint) {
 	p.feeGrowthGlobal1X128 = feeGrowthGlobal1X128
 }
 
-func (p *Pool) SetProtocolFees(protocolFees ProtocolFees) {
+func (p *Pool) SetProtocolFees(protocolFees TokenPair) {
 	p.protocolFees = protocolFees
 }
 
 func (p *Pool) SetProtocolFeesToken0(token0 *u256.Uint) {
-	p.protocolFees.token0 = token0
+	p.protocolFees.SetToken0(token0)
 }
 
 func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint) {
-	p.protocolFees.token1 = token1
+	p.protocolFees.SetToken1(token1)
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
@@ -194,8 +194,8 @@ func (p *Pool) Clone() *Pool {
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
-		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
-		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
+		balances:             p.balances.Clone(),
+		protocolFees:         p.protocolFees.Clone(),
 		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
@@ -222,14 +222,14 @@ func NewPool(
 	return &Pool{
 		token0Path:           token0Path,
 		token1Path:           token1Path,
-		balances:             newBalances(),
+		balances:             newTokenPair(),
 		fee:                  fee,
 		tickSpacing:          tickSpacing,
 		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         newProtocolFees(),
+		protocolFees:         newTokenPair(),
 		liquidity:            u256.Zero(),
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
@@ -238,44 +238,23 @@ func NewPool(
 	}
 }
 
-type Balances struct{ TokenPair }
-
-func newBalances() Balances {
-	return Balances{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
-	}
-}
-
-type ProtocolFees struct{ TokenPair }
-
-func newProtocolFees() ProtocolFees {
-	return ProtocolFees{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
-	}
-}
-
 type TokenPair struct {
 	token0, token1 *u256.Uint
 }
 
-func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
+func newTokenPair() TokenPair {
 	return TokenPair{
-		token0: token0,
-		token1: token1,
+		token0: u256.Zero(),
+		token1: u256.Zero(),
 	}
 }
 
-func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
-func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
-
-func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
-func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
-
-func (t *TokenPair) Clone() TokenPair {
-	return NewTokenPair(
-		t.token0.Clone(),
-		t.token1.Clone(),
-	)
+func (p *TokenPair) Token0() *u256.Uint          { return p.token0 }
+func (p *TokenPair) Token1() *u256.Uint          { return p.token1 }
+func (p *TokenPair) SetToken0(token0 *u256.Uint) { p.token0 = token0 }
+func (p *TokenPair) SetToken1(token1 *u256.Uint) { p.token1 = token1 }
+func (p *TokenPair) Clone() TokenPair {
+	return TokenPair{token0: p.token0.Clone(), token1: p.token1.Clone()}
 }
 
 type Slot0 struct {

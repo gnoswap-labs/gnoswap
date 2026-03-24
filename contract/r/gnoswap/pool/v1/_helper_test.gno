@@ -493,11 +493,11 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	slot0.SetTick(params.slot0.tick)
 	slot0.SetUnlocked(params.slot0.unlocked)
 
-	balances := pl.Balances{}
+	balances := pl.TokenPair{}
 	balances.SetToken0(params.balances.token0)
 	balances.SetToken1(params.balances.token1)
 
-	protocolFees := pl.ProtocolFees{}
+	protocolFees := pl.TokenPair{}
 	protocolFees.SetToken0(params.protocolFees.token0)
 	protocolFees.SetToken1(params.protocolFees.token1)
 

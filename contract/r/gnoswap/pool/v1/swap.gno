@@ -93,7 +93,7 @@ type SwapResult struct {
 	NewSqrtPrice         *u256.Uint
 	NewTick              int32
 	NewLiquidity         *u256.Uint
-	NewProtocolFees      pl.ProtocolFees
+	NewProtocolFees      pl.TokenPair
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
 }

@@ -10,9 +10,9 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -98,7 +98,7 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Given: Specific protocol fee state
 			pool := &pl.Pool{}
-			protocolFees := pl.ProtocolFees{}
+			protocolFees := pl.TokenPair{}
 			protocolFees.SetToken0(u256.MustFromDecimal(test.initialFees["token0"]))
 			protocolFees.SetToken1(u256.MustFromDecimal(test.initialFees["token1"]))
 			pool.SetProtocolFees(protocolFees)
