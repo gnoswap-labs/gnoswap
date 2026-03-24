@@ -203,7 +203,7 @@ func (i *poolV1) Collect(
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	pool := i.mustGetPoolCoreWithPositionsBy(token0Path, token1Path, fee)
 	// Generate position key by combining position contract path with tick range
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
@@ -253,7 +253,7 @@ func (i *poolV1) Collect(
 
 	setPosition(pool, positionKey, *position)
 
-	if err := i.savePool(pool); err != nil {
+	if err := i.savePoolCoreWithPositions(pool); err != nil {
 		panic(err)
 	}
 
@@ -315,7 +315,7 @@ func (i *poolV1) collectProtocol(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	pool := i.mustGetPoolCoreBy(token0Path, token1Path, fee)
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
@@ -344,7 +344,7 @@ func (i *poolV1) collectProtocol(
 	}
 	pool.SetBalanceToken1(newBalanceToken1)
 
-	err = i.savePool(pool)
+	err = i.savePoolCore(pool)
 	if err != nil {
 		panic(err)
 	}
@@ -378,8 +378,13 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 ) {
 	halt.AssertIsNotHaltedPool()
 
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	pool := i.mustGetPoolWithoutPositionsBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
+	if err != nil {
+		panic(err)
+	}
+
+	err = i.savePoolWithoutPositions(pool)
 	if err != nil {
 		panic(err)
 	}

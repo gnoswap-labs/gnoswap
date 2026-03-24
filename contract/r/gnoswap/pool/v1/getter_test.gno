@@ -56,6 +56,9 @@ func testInitData(t *testing.T) {
 
 	mockTicks.Set(pl.EncodeTickKey(0), tickInfo)
 	mockPool.SetTicks(mockTicks)
+	mockTickBitmaps := avl.NewTree()
+	mockTickBitmaps.Set("0", u256.NewUint(1))
+	mockPool.SetTickBitmaps(mockTickBitmaps)
 
 	mockPositions := avl.NewTree()
 
@@ -68,10 +71,32 @@ func testInitData(t *testing.T) {
 
 	mockPositions.Set("test_position", positionInfo)
 	mockPool.SetPositions(mockPositions)
+	mockObservationState := pl.NewObservationState(123)
+	mockPool.SetObservationState(mockObservationState)
 
 	pools := getMockInstance().store.GetPools()
-	pools.Set("token0:token1:3000", mockPool)
+	pools.Set("token0:token1:3000", mockPool.CloneCore())
 	err := getMockInstance().store.SetPools(pools)
+	if err != nil {
+		panic(err)
+	}
+
+	err = getMockInstance().store.SetPoolTicks("token0:token1:3000", mockTicks)
+	if err != nil {
+		panic(err)
+	}
+
+	err = getMockInstance().store.SetPoolTickBitmaps("token0:token1:3000", mockTickBitmaps)
+	if err != nil {
+		panic(err)
+	}
+
+	err = getMockInstance().store.SetPoolPositions("token0:token1:3000", mockPositions)
+	if err != nil {
+		panic(err)
+	}
+
+	err = getMockInstance().store.SetPoolObservationState("token0:token1:3000", mockObservationState)
 	if err != nil {
 		panic(err)
 	}

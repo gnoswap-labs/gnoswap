@@ -153,7 +153,7 @@ func (i *poolV1) Swap(
 		))
 	}
 
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	pool := i.mustGetPoolWithoutPositionsBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
 	if !slot0Start.Unlocked() {
@@ -168,7 +168,7 @@ func (i *poolV1) Swap(
 	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
 	pool.SetSlot0(slot0Start)
-	err := i.savePool(pool)
+	err := i.savePoolCore(pool)
 	if err != nil {
 		panic(err)
 	}
@@ -190,7 +190,7 @@ func (i *poolV1) Swap(
 		slot0End.SetUnlocked(true)
 		pool.SetSlot0(slot0End)
 
-		err := i.savePool(pool)
+		err := i.savePoolCore(pool)
 		if err != nil {
 			panic(err)
 		}
@@ -241,7 +241,7 @@ func (i *poolV1) Swap(
 	}
 
 	applySwapResult(pool, result)
-	err = i.savePool(pool)
+	err = i.savePoolWithoutPositions(pool)
 	if err != nil {
 		panic(err)
 	}
@@ -318,7 +318,7 @@ func (i *poolV1) DrySwap(
 		return "0", "0", false
 	}
 
-	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	pool := i.mustGetPoolWithoutPositionsBy(token0Path, token1Path, fee)
 
 	// no liquidity -> simulation fails
 	if pool.Liquidity().IsZero() {

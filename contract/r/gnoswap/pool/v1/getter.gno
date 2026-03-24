@@ -34,66 +34,12 @@ func (i *poolV1) GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 	return spacing
 }
 
-func (i *poolV1) GetToken0Path(poolPath string) string {
-	return i.mustGetPool(poolPath).Token0Path()
-}
+func (i *poolV1) mustGetPositionInfo(poolPath, key string) *pl.PositionInfo {
+	if !i.ExistsPoolPath(poolPath) {
+		panic(makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("expected poolPath(%s) to exist", poolPath)))
+	}
 
-func (i *poolV1) GetToken1Path(poolPath string) string {
-	return i.mustGetPool(poolPath).Token1Path()
-}
-
-func (i *poolV1) GetFee(poolPath string) uint32 {
-	return i.mustGetPool(poolPath).Fee()
-}
-
-func (i *poolV1) GetBalanceToken0(poolPath string) string {
-	return i.mustGetPool(poolPath).BalanceToken0().ToString()
-}
-
-func (i *poolV1) GetBalanceToken1(poolPath string) string {
-	return i.mustGetPool(poolPath).BalanceToken1().ToString()
-}
-
-func (i *poolV1) GetTickSpacing(poolPath string) int32 {
-	return i.mustGetPool(poolPath).TickSpacing()
-}
-
-func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) string {
-	return i.mustGetPool(poolPath).MaxLiquidityPerTick().ToString()
-}
-
-func (i *poolV1) GetSlot0FeeProtocol(poolPath string) uint8 {
-	return i.mustGetPool(poolPath).Slot0FeeProtocol()
-}
-
-func (i *poolV1) GetSlot0Unlocked(poolPath string) bool {
-	return i.mustGetPool(poolPath).Slot0Unlocked()
-}
-
-func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) string {
-	return i.mustGetPool(poolPath).FeeGrowthGlobal0X128().ToString()
-}
-
-func (i *poolV1) GetFeeGrowthGlobal1X128(poolPath string) string {
-	return i.mustGetPool(poolPath).FeeGrowthGlobal1X128().ToString()
-}
-
-func (i *poolV1) GetProtocolFeesToken0(poolPath string) string {
-	return i.mustGetPool(poolPath).ProtocolFeesToken0().ToString()
-}
-
-func (i *poolV1) GetProtocolFeesToken1(poolPath string) string {
-	return i.mustGetPool(poolPath).ProtocolFeesToken1().ToString()
-}
-
-func (i *poolV1) GetLiquidity(poolPath string) string {
-	return i.mustGetPool(poolPath).Liquidity().ToString()
-}
-
-func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
-	pool := i.mustGetPool(poolPath)
-
-	positions := pool.Positions()
+	positions := i.store.GetPoolPositions(poolPath)
 
 	result, exist := positions.Get(key)
 	if !exist {
@@ -109,6 +55,86 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 	}
 
 	return &position
+}
+
+func (i *poolV1) mustGetTickInfo(poolPath string, tick int32) *pl.TickInfo {
+	if !i.ExistsPoolPath(poolPath) {
+		panic(makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("expected poolPath(%s) to exist", poolPath)))
+	}
+
+	ticks := i.store.GetPoolTicks(poolPath)
+
+	result, exist := ticks.Get(pl.EncodeTickKey(tick))
+	if !exist {
+		panic(ufmt.Errorf("tick %d not found", tick))
+	}
+
+	tickInfo, ok := result.(pl.TickInfo)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", result))
+	}
+
+	return &tickInfo
+}
+
+func (i *poolV1) GetToken0Path(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).Token0Path()
+}
+
+func (i *poolV1) GetToken1Path(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).Token1Path()
+}
+
+func (i *poolV1) GetFee(poolPath string) uint32 {
+	return i.mustGetPoolCore(poolPath).Fee()
+}
+
+func (i *poolV1) GetBalanceToken0(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).BalanceToken0().ToString()
+}
+
+func (i *poolV1) GetBalanceToken1(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).BalanceToken1().ToString()
+}
+
+func (i *poolV1) GetTickSpacing(poolPath string) int32 {
+	return i.mustGetPoolCore(poolPath).TickSpacing()
+}
+
+func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).MaxLiquidityPerTick().ToString()
+}
+
+func (i *poolV1) GetSlot0FeeProtocol(poolPath string) uint8 {
+	return i.mustGetPoolCore(poolPath).Slot0FeeProtocol()
+}
+
+func (i *poolV1) GetSlot0Unlocked(poolPath string) bool {
+	return i.mustGetPoolCore(poolPath).Slot0Unlocked()
+}
+
+func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).FeeGrowthGlobal0X128().ToString()
+}
+
+func (i *poolV1) GetFeeGrowthGlobal1X128(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).FeeGrowthGlobal1X128().ToString()
+}
+
+func (i *poolV1) GetProtocolFeesToken0(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).ProtocolFeesToken0().ToString()
+}
+
+func (i *poolV1) GetProtocolFeesToken1(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).ProtocolFeesToken1().ToString()
+}
+
+func (i *poolV1) GetLiquidity(poolPath string) string {
+	return i.mustGetPoolCore(poolPath).Liquidity().ToString()
+}
+
+func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
+	return i.mustGetPositionInfo(poolPath, key)
 }
 
 func (i *poolV1) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
@@ -128,72 +154,63 @@ func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) string {
 }
 
 func (i *poolV1) GetTickLiquidityGross(poolPath string, tick int32) string {
-	pool := i.mustGetPool(poolPath)
-	return GetTickLiquidityGross(pool, tick).ToString()
+	return i.mustGetTickInfo(poolPath, tick).LiquidityGross().ToString()
 }
 
 func (i *poolV1) GetTickLiquidityNet(poolPath string, tick int32) string {
-	pool := i.mustGetPool(poolPath)
-	return GetTickLiquidityNet(pool, tick).ToString()
+	return i.mustGetTickInfo(poolPath, tick).LiquidityNet().ToString()
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
-	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside0X128(pool, tick).ToString()
+	return i.mustGetTickInfo(poolPath, tick).FeeGrowthOutside0X128().ToString()
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
-	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside1X128(pool, tick).ToString()
+	return i.mustGetTickInfo(poolPath, tick).FeeGrowthOutside1X128().ToString()
 }
 
 func (i *poolV1) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
-	pool := i.mustGetPool(poolPath)
-	return GetTickCumulativeOutside(pool, tick)
+	return i.mustGetTickInfo(poolPath, tick).TickCumulativeOutside()
 }
 
 func (i *poolV1) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
-	pool := i.mustGetPool(poolPath)
-	return GetTickSecondsPerLiquidityOutsideX128(pool, tick).ToString()
+	return i.mustGetTickInfo(poolPath, tick).SecondsPerLiquidityOutsideX128().ToString()
 }
 
 func (i *poolV1) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
-	pool := i.mustGetPool(poolPath)
-	return GetTickSecondsOutside(pool, tick)
+	return i.mustGetTickInfo(poolPath, tick).SecondsOutside()
 }
 
 func (i *poolV1) GetTickInitialized(poolPath string, tick int32) bool {
-	pool := i.mustGetPool(poolPath)
-	return GetTickInitialized(pool, tick)
+	return i.mustGetTickInfo(poolPath, tick).Initialized()
 }
 
 func (i *poolV1) GetSlot0Tick(poolPath string) int32 {
-	return i.mustGetPool(poolPath).Slot0Tick()
+	return i.mustGetPoolCore(poolPath).Slot0Tick()
 }
 
 func (i *poolV1) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	slot0 := i.mustGetPool(poolPath).Slot0()
-	return slot0.SqrtPriceX96()
+	return i.mustGetPoolCore(poolPath).Slot0SqrtPriceX96().Clone()
 }
 
 func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
-	pool := i.mustGetPool(poolPath)
-	return pool.FeeGrowthGlobal0X128(), pool.FeeGrowthGlobal1X128()
+	pool := i.mustGetPoolCore(poolPath)
+	return pool.FeeGrowthGlobal0X128().Clone(), pool.FeeGrowthGlobal1X128().Clone()
 }
 
 func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
-	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside0X128(pool, tick), GetTickFeeGrowthOutside1X128(pool, tick)
+	tickInfo := i.mustGetTickInfo(poolPath, tick)
+	return tickInfo.FeeGrowthOutside0X128().Clone(), tickInfo.FeeGrowthOutside1X128().Clone()
 }
 
 func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
 	position := i.MustGetPosition(poolPath, key)
-	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128()
+	return position.FeeGrowthInside0LastX128().Clone(), position.FeeGrowthInside1LastX128().Clone()
 }
 
 func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	position := i.MustGetPosition(poolPath, key)
-	return position.Liquidity()
+	return position.Liquidity().Clone()
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
@@ -207,8 +224,11 @@ func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
 	secondsPerLiquidityCumulativeX128 string,
 	blockTimestamp int64,
 ) {
-	pool := i.mustGetPool(poolPath)
-	observationState := pool.ObservationState()
+	if !i.ExistsPoolPath(poolPath) {
+		panic(makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("expected poolPath(%s) to exist", poolPath)))
+	}
+
+	observationState := i.store.GetPoolObservationState(poolPath)
 
 	if observationState == nil {
 		return 0, "0", "0", 0
@@ -223,6 +243,8 @@ func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
 	liquidityCumulative = lastObservation.LiquidityCumulative().ToString()
 	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128().ToString()
 	blockTimestamp = lastObservation.BlockTimestamp()
+
+	_ = secondsAgo
 
 	return
 }
@@ -243,11 +265,7 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 //
 // Returns TWAP tick and error
 func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return 0, nil, err
-	}
-
+	pool := i.mustGetPoolWithObservationState(poolPath)
 	return getTWAP(pool, secondsAgo)
 }
 
@@ -277,24 +295,23 @@ func (i *poolV1) GetFeeAmountTickSpacings() map[uint32]int32 {
 
 // GetPoolPositionCount returns the number of positions in a pool.
 func (i *poolV1) GetPoolPositionCount(poolPath string) int {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
+	if !i.ExistsPoolPath(poolPath) {
 		return 0
 	}
 
-	return pool.Positions().Size()
+	return i.store.GetPoolPositions(poolPath).Size()
 }
 
 // GetPoolPositionKeys returns a paginated list of position keys in a pool.
 func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
+	if !i.ExistsPoolPath(poolPath) {
 		return []string{}
 	}
 
 	positionKeys := make([]string, 0)
+	positions := i.store.GetPoolPositions(poolPath)
 
-	pool.Positions().IterateByOffset(offset, count, func(key string, _ any) bool {
+	positions.IterateByOffset(offset, count, func(key string, _ any) bool {
 		positionKeys = append(positionKeys, key)
 		return false
 	})
@@ -302,47 +319,55 @@ func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []strin
 	return positionKeys
 }
 
-// Tick enumeration
-
 // GetInitializedTicksInRange returns initialized ticks within the given range.
 func (i *poolV1) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
+	if !i.ExistsPoolPath(poolPath) {
 		return []int32{}
 	}
 
+	ticksTree := i.store.GetPoolTicks(poolPath)
 	ticks := make([]int32, 0)
+	startTickKey := pl.EncodeTickKey(tickLower)
+	endTickKey := pl.EncodeTickKey(tickUpper + 1)
 
-	pool.IterateTicks(tickLower, tickUpper, func(tick int32, _ pl.TickInfo) bool {
-		ticks = append(ticks, tick)
+	ticksTree.Iterate(startTickKey, endTickKey, func(key string, _ any) bool {
+		ticks = append(ticks, pl.DecodeTickKey(key))
 		return false
 	})
 
 	return ticks
 }
 
-// Structure getters
-
 // GetTickInfo returns the tick info for a given tick.
 func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return pl.TickInfo{}, err
+	if !i.ExistsPoolPath(poolPath) {
+		return pl.TickInfo{}, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	return pool.GetTick(tick)
+	ticks := i.store.GetPoolTicks(poolPath)
+	iTickInfo, ok := ticks.Get(pl.EncodeTickKey(tick))
+	if !ok {
+		return pl.TickInfo{}, ufmt.Errorf("tick %d not found", tick)
+	}
+
+	tickInfo, ok := iTickInfo.(pl.TickInfo)
+	if !ok {
+		return pl.TickInfo{}, ufmt.Errorf("failed to cast tickInfo: %T", iTickInfo)
+	}
+
+	return tickInfo.Clone(), nil
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.
 func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return nil, err
+	if !i.ExistsPoolPath(poolPath) {
+		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
+	tickBitmaps := i.store.GetPoolTickBitmaps(poolPath)
 	wordPosStr := strconv.Itoa(int(wordPos))
 
-	iTickBitmap, ok := pool.TickBitmaps().Get(wordPosStr)
+	iTickBitmap, ok := tickBitmaps.Get(wordPosStr)
 	if !ok {
 		return nil, ufmt.Errorf("tick bitmap %d not found", wordPos)
 	}
@@ -352,17 +377,17 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, err
 		return nil, ufmt.Errorf("failed to cast tick bitmap: %T", iTickBitmap)
 	}
 
-	return tickBitmap, nil
+	return tickBitmap.Clone(), nil
 }
 
 // GetPosition returns the position info for a given key.
 func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return pl.PositionInfo{}, err
+	if !i.ExistsPoolPath(poolPath) {
+		return pl.PositionInfo{}, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	iPositionInfo, ok := pool.Positions().Get(key)
+	positions := i.store.GetPoolPositions(poolPath)
+	iPositionInfo, ok := positions.Get(key)
 	if !ok {
 		return pl.PositionInfo{}, ufmt.Errorf("position %s not found", key)
 	}
@@ -377,12 +402,11 @@ func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
 
 // GetObservationState returns the observation state for a pool.
 func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return nil, err
+	if !i.ExistsPoolPath(poolPath) {
+		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	observationState := pool.ObservationState()
+	observationState := i.store.GetPoolObservationState(poolPath)
 	if observationState == nil {
 		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
 	}
