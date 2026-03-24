@@ -185,27 +185,11 @@ func (i *poolV1) getPoolCore(poolPath string) (*pl.Pool, error) {
 }
 
 func (i *poolV1) getPoolWithoutPositions(poolPath string) (*pl.Pool, error) {
-	pool, err := i.getPoolCore(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	pool.SetTicks(i.store.GetPoolTicks(poolPath))
-	pool.SetTickBitmaps(i.store.GetPoolTickBitmaps(poolPath))
-	pool.SetObservationState(i.store.GetPoolObservationState(poolPath))
-
-	return pool, nil
+	return i.getPoolCore(poolPath)
 }
 
 func (i *poolV1) getPoolWithObservationState(poolPath string) (*pl.Pool, error) {
-	pool, err := i.getPoolCore(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	pool.SetObservationState(i.store.GetPoolObservationState(poolPath))
-
-	return pool, nil
+	return i.getPoolCore(poolPath)
 }
 
 func (i *poolV1) getPoolCoreWithPositions(poolPath string) (*pl.Pool, error) {
@@ -300,22 +284,7 @@ func (i *poolV1) savePoolCore(pool *pl.Pool) error {
 }
 
 func (i *poolV1) savePoolWithoutPositions(pool *pl.Pool) error {
-	err := i.savePoolCore(pool)
-	if err != nil {
-		return err
-	}
-
-	err = i.store.SetPoolTicks(pool.PoolPath(), pool.Ticks())
-	if err != nil {
-		return err
-	}
-
-	err = i.store.SetPoolTickBitmaps(pool.PoolPath(), pool.TickBitmaps())
-	if err != nil {
-		return err
-	}
-
-	return i.store.SetPoolObservationState(pool.PoolPath(), pool.ObservationState())
+	return i.savePoolCore(pool)
 }
 
 func (i *poolV1) savePoolCoreWithPositions(pool *pl.Pool) error {

@@ -183,6 +183,33 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 }
 
 func (p *Pool) Clone() *Pool {
+	clonedTicks := avl.NewTree()
+	p.ticks.IterateByOffset(0, p.ticks.Size(), func(key string, value any) bool {
+		tickInfo, ok := value.(TickInfo)
+		if ok {
+			clonedTicks.Set(key, tickInfo.Clone())
+		}
+		return false
+	})
+
+	clonedTickBitmaps := avl.NewTree()
+	p.tickBitmaps.IterateByOffset(0, p.tickBitmaps.Size(), func(key string, value any) bool {
+		tickBitmap, ok := value.(*u256.Uint)
+		if ok {
+			clonedTickBitmaps.Set(key, tickBitmap.Clone())
+		}
+		return false
+	})
+
+	clonedPositions := avl.NewTree()
+	p.positions.IterateByOffset(0, p.positions.Size(), func(key string, value any) bool {
+		positionInfo, ok := value.(PositionInfo)
+		if ok {
+			clonedPositions.Set(key, clonePositionInfo(positionInfo))
+		}
+		return false
+	})
+
 	return &Pool{
 		token0Path:  p.token0Path,
 		token1Path:  p.token1Path,
@@ -200,10 +227,10 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
-		observationState:     NewObservationState(time.Now().Unix()),
+		ticks:                clonedTicks,
+		tickBitmaps:          clonedTickBitmaps,
+		positions:            clonedPositions,
+		observationState:     p.observationState,
 	}
 }
 
@@ -225,6 +252,9 @@ func (p *Pool) CloneCore() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
+		ticks:                p.ticks,
+		tickBitmaps:          p.tickBitmaps,
+		observationState:     p.observationState,
 	}
 }
 

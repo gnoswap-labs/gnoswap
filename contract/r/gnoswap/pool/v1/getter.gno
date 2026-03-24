@@ -62,17 +62,12 @@ func (i *poolV1) mustGetTickInfo(poolPath string, tick int32) *pl.TickInfo {
 		panic(makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("expected poolPath(%s) to exist", poolPath)))
 	}
 
-	ticks := i.store.GetPoolTicks(poolPath)
-
-	result, exist := ticks.Get(pl.EncodeTickKey(tick))
-	if !exist {
-		panic(ufmt.Errorf("tick %d not found", tick))
+	pool := i.mustGetPoolCore(poolPath)
+	tickInfo, err := pool.GetTick(tick)
+	if err != nil {
+		panic(err)
 	}
-
-	tickInfo, ok := result.(pl.TickInfo)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", result))
-	}
+	tickInfo = tickInfo.Clone()
 
 	return &tickInfo
 }
@@ -228,7 +223,7 @@ func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
 		panic(makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("expected poolPath(%s) to exist", poolPath)))
 	}
 
-	observationState := i.store.GetPoolObservationState(poolPath)
+	observationState := i.mustGetPoolCore(poolPath).ObservationState()
 
 	if observationState == nil {
 		return 0, "0", "0", 0
@@ -265,7 +260,7 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 //
 // Returns TWAP tick and error
 func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	pool := i.mustGetPoolWithObservationState(poolPath)
+	pool := i.mustGetPoolCore(poolPath)
 	return getTWAP(pool, secondsAgo)
 }
 
@@ -325,7 +320,7 @@ func (i *poolV1) GetInitializedTicksInRange(poolPath string, tickLower, tickUppe
 		return []int32{}
 	}
 
-	ticksTree := i.store.GetPoolTicks(poolPath)
+	ticksTree := i.mustGetPoolCore(poolPath).Ticks()
 	ticks := make([]int32, 0)
 	startTickKey := pl.EncodeTickKey(tickLower)
 	endTickKey := pl.EncodeTickKey(tickUpper + 1)
@@ -344,15 +339,9 @@ func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
 		return pl.TickInfo{}, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	ticks := i.store.GetPoolTicks(poolPath)
-	iTickInfo, ok := ticks.Get(pl.EncodeTickKey(tick))
-	if !ok {
-		return pl.TickInfo{}, ufmt.Errorf("tick %d not found", tick)
-	}
-
-	tickInfo, ok := iTickInfo.(pl.TickInfo)
-	if !ok {
-		return pl.TickInfo{}, ufmt.Errorf("failed to cast tickInfo: %T", iTickInfo)
+	tickInfo, err := i.mustGetPoolCore(poolPath).GetTick(tick)
+	if err != nil {
+		return pl.TickInfo{}, err
 	}
 
 	return tickInfo.Clone(), nil
@@ -364,7 +353,7 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, err
 		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	tickBitmaps := i.store.GetPoolTickBitmaps(poolPath)
+	tickBitmaps := i.mustGetPoolCore(poolPath).TickBitmaps()
 	wordPosStr := strconv.Itoa(int(wordPos))
 
 	iTickBitmap, ok := tickBitmaps.Get(wordPosStr)
@@ -406,7 +395,7 @@ func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, err
 		return nil, ufmt.Errorf("expected poolPath(%s) to exist", poolPath)
 	}
 
-	observationState := i.store.GetPoolObservationState(poolPath)
+	observationState := i.mustGetPoolCore(poolPath).ObservationState()
 	if observationState == nil {
 		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
 	}
