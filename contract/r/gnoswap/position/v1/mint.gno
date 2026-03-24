@@ -54,10 +54,10 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		liquidity,
 		feeGrowthInside0LastX128,
 		feeGrowthInside1LastX128,
-		u256.Zero(),
-		u256.Zero(),
-		amount0,
-		amount1,
+		0,
+		0,
+		safeConvertToInt64(amount0),
+		safeConvertToInt64(amount1),
 		false,
 		zeroAddress,
 	)
@@ -136,18 +136,9 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	}
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
-	liquidityAmount, overflow := u256.Zero().AddOverflow(position.Liquidity(), liquidity)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
+	liquidityAmount := u256.Zero().Add(position.Liquidity(), liquidity)
+	token0Balance := safeAddInt64(calculatedToken0Balance, safeConvertToInt64(amount0))
+	token1Balance := safeAddInt64(calculatedToken1Balance, safeConvertToInt64(amount1))
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)

@@ -380,24 +380,24 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		token0, token1, fee,
 		caller,
 		position.TickLower(), position.TickUpper(),
-		tokensOwed0.ToString(), tokensOwed1.ToString(),
+		formatInt(tokensOwed0), formatInt(tokensOwed1),
 	)
 	amount0Uint256 := u256.MustFromDecimal(amount0)
 	amount1Uint256 := u256.MustFromDecimal(amount1)
+	amount0Int64 := safeConvertToInt64(amount0Uint256)
+	amount1Int64 := safeConvertToInt64(amount1Uint256)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
-	if underflow {
+	if tokensOwed0 < amount0Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
-	position.SetTokensOwed0(tokensOwed0Updated)
+	position.SetTokensOwed0(safeSubInt64(tokensOwed0, amount0Int64))
 
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
-	if underflow {
+	if tokensOwed1 < amount1Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
-	position.SetTokensOwed1(tokensOwed1Updated)
+	position.SetTokensOwed1(safeSubInt64(tokensOwed1, amount1Int64))
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
@@ -484,16 +484,18 @@ func computePositionKey(tickLower, tickUpper int32) string {
 
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
-func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.Uint) {
+func calculatePositionBalances(position *position.Position) (int64, int64) {
 	liquidity := position.Liquidity()
 	if liquidity.IsZero() {
-		return u256.Zero(), u256.Zero()
+		return 0, 0
 	}
 
-	return common.GetAmountsForLiquidity(
+	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		pl.GetSlot0SqrtPriceX96(position.PoolKey()), // currentSqrtPriceX96
 		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
 	)
+
+	return safeConvertToInt64(token0Balance), safeConvertToInt64(token1Balance)
 }

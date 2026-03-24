@@ -89,10 +89,10 @@ func newDummyPosition(id uint64) position.Position {
 		u256.NewUint(1000),
 		u256.NewUint(10),
 		u256.NewUint(20),
-		u256.NewUint(30),
-		u256.NewUint(40),
-		u256.NewUint(1000),
-		u256.NewUint(1000),
+		30,
+		40,
+		1000,
+		1000,
 		false,
 		"user1",
 	)
@@ -148,8 +148,8 @@ func TestMustGetPosition(t *testing.T) {
 				uassert.Equal(t, tt.expectedPosition.Liquidity().ToString(), result.Liquidity().ToString())
 				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside0LastX128().ToString(), result.FeeGrowthInside0LastX128().ToString())
 				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside1LastX128().ToString(), result.FeeGrowthInside1LastX128().ToString())
-				uassert.Equal(t, tt.expectedPosition.TokensOwed0().ToString(), result.TokensOwed0().ToString())
-				uassert.Equal(t, tt.expectedPosition.TokensOwed1().ToString(), result.TokensOwed1().ToString())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed0(), result.TokensOwed0())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed1(), result.TokensOwed1())
 				uassert.Equal(t, tt.expectedPosition.Burned(), result.Burned())
 			}
 		})
@@ -166,8 +166,8 @@ func TestSetPosition(t *testing.T) {
 	changedPosition.SetLiquidity(u256.NewUint(2000))
 	changedPosition.SetFeeGrowthInside0LastX128(u256.NewUint(20))
 	changedPosition.SetFeeGrowthInside1LastX128(u256.NewUint(40))
-	changedPosition.SetTokensOwed0(u256.NewUint(60))
-	changedPosition.SetTokensOwed1(u256.NewUint(80))
+	changedPosition.SetTokensOwed0(60)
+	changedPosition.SetTokensOwed1(80)
 	changedPosition.SetBurned(true)
 
 	tests := []struct {
@@ -200,8 +200,8 @@ func TestSetPosition(t *testing.T) {
 			uassert.Equal(t, tt.inputPosition.Liquidity().ToString(), storedPosition.Liquidity().ToString())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128().ToString(), storedPosition.FeeGrowthInside0LastX128().ToString())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128().ToString(), storedPosition.FeeGrowthInside1LastX128().ToString())
-			uassert.Equal(t, tt.inputPosition.TokensOwed0().ToString(), storedPosition.TokensOwed0().ToString())
-			uassert.Equal(t, tt.inputPosition.TokensOwed1().ToString(), storedPosition.TokensOwed1().ToString())
+				uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
+				uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
 			uassert.Equal(t, tt.inputPosition.Burned(), storedPosition.Burned())
 		})
 	}
@@ -1500,8 +1500,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	currentBalance1 := pool.BalanceToken1()
 
 	// Reduce pool balance to 50% to create burn > collect scenario
-	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
-	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	reducedBalance0 := currentBalance0 / 2
+	reducedBalance1 := currentBalance1 / 2
 	pool.SetBalanceToken0(reducedBalance0)
 	pool.SetBalanceToken1(reducedBalance1)
 

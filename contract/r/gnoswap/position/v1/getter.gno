@@ -88,7 +88,7 @@ func (p *positionV1) GetPositionTickUpper(positionId uint64) int32 {
 }
 
 func (p *positionV1) GetPositionLiquidity(positionId uint64) *u256.Uint {
-	return p.mustGetPosition(positionId).Liquidity()
+	return p.mustGetPosition(positionId).Liquidity().Clone()
 }
 
 func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
@@ -99,11 +99,11 @@ func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u25
 	return p.mustGetPosition(positionId).FeeGrowthInside1LastX128()
 }
 
-func (p *positionV1) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed0(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed0()
 }
 
-func (p *positionV1) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed1(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed1()
 }
 

@@ -90,17 +90,17 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.TokensOwed0().ToString()
+				return position.TokensOwed0()
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 		{
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.TokensOwed1().ToString()
+				return position.TokensOwed1()
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 		{
 			name: "get position is success by burned",
@@ -134,16 +134,16 @@ func TestPositionGetter(t *testing.T) {
 		{
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).TokensOwed0().ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed0()
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 		{
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).TokensOwed1().ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed1()
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 		{
 			name: "get position is success by isBurned",
@@ -283,14 +283,14 @@ func TestGetPositionTokenBalances(t *testing.T) {
 			name: "token0 balance is not nil after mint",
 			testFunc: func() bool {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.Token0Balance() != nil
+				return position.Token0Balance() > 0
 			},
 		},
 		{
 			name: "token1 balance is not nil after mint",
 			testFunc: func() bool {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.Token1Balance() != nil
+				return position.Token1Balance() > 0
 			},
 		},
 	}
@@ -431,16 +431,16 @@ func TestGetPositionDetailsGetter(t *testing.T) {
 		{
 			name: "GetPositionTokensOwed0 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionTokensOwed0(positionId).ToString()
+				return mockInstance.GetPositionTokensOwed0(positionId)
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 		{
 			name: "GetPositionTokensOwed1 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionTokensOwed1(positionId).ToString()
+				return mockInstance.GetPositionTokensOwed1(positionId)
 			},
-			expected: "0",
+			expected: int64(0),
 		},
 	}
 
