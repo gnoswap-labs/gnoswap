@@ -165,7 +165,7 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) address {
 }
 
 // GetIncentiveRewardAmount returns the total reward amount of an incentive.
-func GetIncentiveRewardAmount(poolPath string, incentiveId string) string {
+func GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
 }
 

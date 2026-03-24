@@ -365,7 +365,7 @@ func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) string {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	if !t.isActive("GetIncentiveRewardAmount") {
 		panic("test implementation: GetIncentiveRewardAmount not supported")
 	}

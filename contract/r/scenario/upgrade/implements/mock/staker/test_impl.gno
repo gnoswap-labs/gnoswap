@@ -438,12 +438,12 @@ func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	).(address)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) string {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	return t.ExecuteFn(
 		"GetIncentiveRewardAmount",
 		func(args ...any) any { return t.instance.GetIncentiveRewardAmount(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
-	).(string)
+	).(int64)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
