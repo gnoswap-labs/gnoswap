@@ -1,0 +1,413 @@
+## Compare uint256 storage strategies: pointer vs string encoding
+## Measures storage deposit for struct fields stored as *u256.Uint vs string
+## Tests Create / Update / Read for each approach with realistic field counts
+
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/u256strategy -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### Baseline ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 1 FIELD: Create ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrCreate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 1 FIELD: Update ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrUpdate1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 1 FIELD: Read + compute ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrRead1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrRead1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS (Position-like): Create ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrCreate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrCreate5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS: Update 1 field ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrUpdate5One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrUpdate5One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS: Update all fields ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrUpdate5All -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrUpdate5All -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS: Read + compute (sum all) ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrRead5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrRead5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 5 FIELDS: Delete ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrDelete5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrDelete5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 8 FIELDS (Pool-like): Create ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrCreate8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrCreate8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 8 FIELDS: Update 1 field ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrUpdate8One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrUpdate8One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 8 FIELDS: Update all fields ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrUpdate8All -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrUpdate8All -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== 8 FIELDS: Read + compute ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrRead8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrRead8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== N=10: Create 10 entries in AVL ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func PtrCreateN10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/u256strategy -func StrCreateN10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/u256strategy"
+gno = "0.9"
+-- main.gno --
+package u256strategy
+
+import (
+	"strconv"
+
+	u256 "gno.land/p/gnoswap/uint256"
+	avl "gno.land/p/nt/avl/v0"
+)
+
+// ============ Pointer strategy: *u256.Uint fields ============
+
+type PtrStruct1 struct {
+	Value *u256.Uint
+}
+
+type PtrStruct5 struct {
+	Liquidity    *u256.Uint
+	FeeGrowth0   *u256.Uint
+	FeeGrowth1   *u256.Uint
+	TokensOwed0  *u256.Uint
+	TokensOwed1  *u256.Uint
+}
+
+type PtrStruct8 struct {
+	SqrtPriceX96  *u256.Uint
+	Liquidity     *u256.Uint
+	FeeGrowth0    *u256.Uint
+	FeeGrowth1    *u256.Uint
+	Balance0      *u256.Uint
+	Balance1      *u256.Uint
+	ProtocolFee0  *u256.Uint
+	ProtocolFee1  *u256.Uint
+}
+
+// ============ String strategy: string-encoded fields ============
+
+type StrStruct1 struct {
+	Value string
+}
+
+type StrStruct5 struct {
+	Liquidity    string
+	FeeGrowth0   string
+	FeeGrowth1   string
+	TokensOwed0  string
+	TokensOwed1  string
+}
+
+type StrStruct8 struct {
+	SqrtPriceX96  string
+	Liquidity     string
+	FeeGrowth0    string
+	FeeGrowth1    string
+	Balance0      string
+	Balance1      string
+	ProtocolFee0  string
+	ProtocolFee1  string
+}
+
+// ============ Package-level state ============
+
+var (
+	ptrTree1 *avl.Tree
+	strTree1 *avl.Tree
+	ptrTree5 *avl.Tree
+	strTree5 *avl.Tree
+	ptrTree8 *avl.Tree
+	strTree8 *avl.Tree
+
+	ptrTreeN *avl.Tree
+	strTreeN *avl.Tree
+
+	sink interface{}
+)
+
+func init() {
+	ptrTree1 = avl.NewTree()
+	strTree1 = avl.NewTree()
+	ptrTree5 = avl.NewTree()
+	strTree5 = avl.NewTree()
+	ptrTree8 = avl.NewTree()
+	strTree8 = avl.NewTree()
+	ptrTreeN = avl.NewTree()
+	strTreeN = avl.NewTree()
+}
+
+// ============ Baseline ============
+
+func Empty(cur realm) {}
+
+// ============ 1 FIELD ============
+
+func PtrCreate1(cur realm) {
+	ptrTree1.Set("k", &PtrStruct1{
+		Value: u256.MustFromDecimal("123456789012345678901234567890"),
+	})
+}
+
+func StrCreate1(cur realm) {
+	strTree1.Set("k", &StrStruct1{
+		Value: "123456789012345678901234567890",
+	})
+}
+
+func PtrUpdate1(cur realm) {
+	v, _ := ptrTree1.Get("k")
+	s := v.(*PtrStruct1)
+	s.Value = u256.MustFromDecimal("999999999999999999999999999999")
+}
+
+func StrUpdate1(cur realm) {
+	v, _ := strTree1.Get("k")
+	s := v.(*StrStruct1)
+	s.Value = "999999999999999999999999999999"
+}
+
+func PtrRead1(cur realm) {
+	v, _ := ptrTree1.Get("k")
+	s := v.(*PtrStruct1)
+	result := new(u256.Uint).Add(s.Value, u256.One())
+	sink = result
+}
+
+func StrRead1(cur realm) {
+	v, _ := strTree1.Get("k")
+	s := v.(*StrStruct1)
+	val := u256.MustFromDecimal(s.Value)
+	result := new(u256.Uint).Add(val, u256.One())
+	sink = result
+}
+
+// ============ 5 FIELDS (Position-like) ============
+
+func PtrCreate5(cur realm) {
+	ptrTree5.Set("pos_0", &PtrStruct5{
+		Liquidity:   u256.MustFromDecimal("1000000000000000000"),
+		FeeGrowth0:  u256.MustFromDecimal("340282366920938463463374607431768211456"),
+		FeeGrowth1:  u256.MustFromDecimal("170141183460469231731687303715884105728"),
+		TokensOwed0: u256.Zero(),
+		TokensOwed1: u256.Zero(),
+	})
+}
+
+func StrCreate5(cur realm) {
+	strTree5.Set("pos_0", &StrStruct5{
+		Liquidity:   "1000000000000000000",
+		FeeGrowth0:  "340282366920938463463374607431768211456",
+		FeeGrowth1:  "170141183460469231731687303715884105728",
+		TokensOwed0: "0",
+		TokensOwed1: "0",
+	})
+}
+
+func PtrUpdate5One(cur realm) {
+	v, _ := ptrTree5.Get("pos_0")
+	s := v.(*PtrStruct5)
+	s.Liquidity = u256.MustFromDecimal("2000000000000000000")
+}
+
+func StrUpdate5One(cur realm) {
+	v, _ := strTree5.Get("pos_0")
+	s := v.(*StrStruct5)
+	s.Liquidity = "2000000000000000000"
+}
+
+func PtrUpdate5All(cur realm) {
+	v, _ := ptrTree5.Get("pos_0")
+	s := v.(*PtrStruct5)
+	s.Liquidity = u256.MustFromDecimal("3000000000000000000")
+	s.FeeGrowth0 = u256.MustFromDecimal("680564733841876926926749214863536422912")
+	s.FeeGrowth1 = u256.MustFromDecimal("340282366920938463463374607431768211456")
+	s.TokensOwed0 = u256.MustFromDecimal("50000")
+	s.TokensOwed1 = u256.MustFromDecimal("60000")
+}
+
+func StrUpdate5All(cur realm) {
+	v, _ := strTree5.Get("pos_0")
+	s := v.(*StrStruct5)
+	s.Liquidity = "3000000000000000000"
+	s.FeeGrowth0 = "680564733841876926926749214863536422912"
+	s.FeeGrowth1 = "340282366920938463463374607431768211456"
+	s.TokensOwed0 = "50000"
+	s.TokensOwed1 = "60000"
+}
+
+func PtrRead5(cur realm) {
+	v, _ := ptrTree5.Get("pos_0")
+	s := v.(*PtrStruct5)
+	result := new(u256.Uint).Add(s.Liquidity, s.FeeGrowth0)
+	result = new(u256.Uint).Add(result, s.FeeGrowth1)
+	result = new(u256.Uint).Add(result, s.TokensOwed0)
+	result = new(u256.Uint).Add(result, s.TokensOwed1)
+	sink = result
+}
+
+func StrRead5(cur realm) {
+	v, _ := strTree5.Get("pos_0")
+	s := v.(*StrStruct5)
+	liq := u256.MustFromDecimal(s.Liquidity)
+	fg0 := u256.MustFromDecimal(s.FeeGrowth0)
+	fg1 := u256.MustFromDecimal(s.FeeGrowth1)
+	to0 := u256.MustFromDecimal(s.TokensOwed0)
+	to1 := u256.MustFromDecimal(s.TokensOwed1)
+	result := new(u256.Uint).Add(liq, fg0)
+	result = new(u256.Uint).Add(result, fg1)
+	result = new(u256.Uint).Add(result, to0)
+	result = new(u256.Uint).Add(result, to1)
+	sink = result
+}
+
+func PtrDelete5(cur realm) {
+	ptrTree5.Remove("pos_0")
+}
+
+func StrDelete5(cur realm) {
+	strTree5.Remove("pos_0")
+}
+
+// ============ 8 FIELDS (Pool-like) ============
+
+func PtrCreate8(cur realm) {
+	ptrTree8.Set("pool_0", &PtrStruct8{
+		SqrtPriceX96: u256.MustFromDecimal("79228162514264337593543950336"),
+		Liquidity:    u256.MustFromDecimal("1000000000000000000"),
+		FeeGrowth0:   u256.Zero(),
+		FeeGrowth1:   u256.Zero(),
+		Balance0:     u256.MustFromDecimal("5000000"),
+		Balance1:     u256.MustFromDecimal("3000000"),
+		ProtocolFee0: u256.Zero(),
+		ProtocolFee1: u256.Zero(),
+	})
+}
+
+func StrCreate8(cur realm) {
+	strTree8.Set("pool_0", &StrStruct8{
+		SqrtPriceX96: "79228162514264337593543950336",
+		Liquidity:    "1000000000000000000",
+		FeeGrowth0:   "0",
+		FeeGrowth1:   "0",
+		Balance0:     "5000000",
+		Balance1:     "3000000",
+		ProtocolFee0: "0",
+		ProtocolFee1: "0",
+	})
+}
+
+func PtrUpdate8One(cur realm) {
+	v, _ := ptrTree8.Get("pool_0")
+	s := v.(*PtrStruct8)
+	s.Liquidity = u256.MustFromDecimal("9999999999999999999")
+}
+
+func StrUpdate8One(cur realm) {
+	v, _ := strTree8.Get("pool_0")
+	s := v.(*StrStruct8)
+	s.Liquidity = "9999999999999999999"
+}
+
+func PtrUpdate8All(cur realm) {
+	v, _ := ptrTree8.Get("pool_0")
+	s := v.(*PtrStruct8)
+	s.SqrtPriceX96 = u256.MustFromDecimal("158456325028528675187087900672")
+	s.Liquidity = u256.MustFromDecimal("5000000000000000000")
+	s.FeeGrowth0 = u256.MustFromDecimal("340282366920938463463374607431768211456")
+	s.FeeGrowth1 = u256.MustFromDecimal("170141183460469231731687303715884105728")
+	s.Balance0 = u256.MustFromDecimal("10000000")
+	s.Balance1 = u256.MustFromDecimal("8000000")
+	s.ProtocolFee0 = u256.MustFromDecimal("1000")
+	s.ProtocolFee1 = u256.MustFromDecimal("2000")
+}
+
+func StrUpdate8All(cur realm) {
+	v, _ := strTree8.Get("pool_0")
+	s := v.(*StrStruct8)
+	s.SqrtPriceX96 = "158456325028528675187087900672"
+	s.Liquidity = "5000000000000000000"
+	s.FeeGrowth0 = "340282366920938463463374607431768211456"
+	s.FeeGrowth1 = "170141183460469231731687303715884105728"
+	s.Balance0 = "10000000"
+	s.Balance1 = "8000000"
+	s.ProtocolFee0 = "1000"
+	s.ProtocolFee1 = "2000"
+}
+
+func PtrRead8(cur realm) {
+	v, _ := ptrTree8.Get("pool_0")
+	s := v.(*PtrStruct8)
+	result := new(u256.Uint).Add(s.Liquidity, s.FeeGrowth0)
+	result = new(u256.Uint).Add(result, s.Balance0)
+	sink = result
+}
+
+func StrRead8(cur realm) {
+	v, _ := strTree8.Get("pool_0")
+	s := v.(*StrStruct8)
+	liq := u256.MustFromDecimal(s.Liquidity)
+	fg0 := u256.MustFromDecimal(s.FeeGrowth0)
+	b0 := u256.MustFromDecimal(s.Balance0)
+	result := new(u256.Uint).Add(liq, fg0)
+	result = new(u256.Uint).Add(result, b0)
+	sink = result
+}
+
+// ============ N=10: Multiple entries in AVL ============
+
+func PtrCreateN10(cur realm) {
+	for i := 0; i < 10; i++ {
+		key := "pos_" + strconv.Itoa(i)
+		ptrTreeN.Set(key, &PtrStruct5{
+			Liquidity:   u256.MustFromDecimal("1000000000000000000"),
+			FeeGrowth0:  u256.MustFromDecimal("340282366920938463463374607431768211456"),
+			FeeGrowth1:  u256.MustFromDecimal("170141183460469231731687303715884105728"),
+			TokensOwed0: u256.Zero(),
+			TokensOwed1: u256.Zero(),
+		})
+	}
+}
+
+func StrCreateN10(cur realm) {
+	for i := 0; i < 10; i++ {
+		key := "pos_" + strconv.Itoa(i)
+		strTreeN.Set(key, &StrStruct5{
+			Liquidity:   "1000000000000000000",
+			FeeGrowth0:  "340282366920938463463374607431768211456",
+			FeeGrowth1:  "170141183460469231731687303715884105728",
+			TokensOwed0: "0",
+			TokensOwed1: "0",
+		})
+	}
+}
