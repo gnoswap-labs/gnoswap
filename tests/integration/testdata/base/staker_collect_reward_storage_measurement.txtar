@@ -1,0 +1,438 @@
+## CollectReward Storage Pattern Measurement
+## Isolates each storage write that occurs during a CollectReward call:
+##   1. Deposit internal reward fields (scalar updates)
+##   2. Deposit external reward AVL trees (per-incentive updates)
+##   3. ExternalIncentive field updates (rewardAmount deduction)
+##   4. RewardCache UintTree append (time-series growth)
+##   5. Full CollectReward simulation (all writes combined)
+## Measures storage delta for each individual operation
+
+loadpkg gno.land/p/nt/avl/v0
+
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/collectsim -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### ========== SETUP ========== ###
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func Setup -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== DEPOSIT: internal reward field updates ========== ###
+
+# Update collectedInternalReward (int64 scalar)
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetInternalReward -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Update internalRewardLastCollectTime (int64 scalar)
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetInternalLCT -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== DEPOSIT: external reward AVL updates (1 incentive) ========== ###
+
+# Set collectedExternalRewards for 1 incentive
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetExtReward1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Set externalRewardLastCollectTimes for 1 incentive
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetExtLCT1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== DEPOSIT: external reward AVL updates (5 incentives) ========== ###
+
+# Set collectedExternalRewards for 5 incentives
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetExtReward5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Set externalRewardLastCollectTimes for 5 incentives
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositSetExtLCT5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== DEPOSIT: remove ended incentive ========== ###
+
+# Remove 1 incentive from externalIncentiveIds
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func DepositRemoveIncentive1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== EXTERNAL INCENTIVE: field updates ========== ###
+
+# Deduct rewardAmount (simulate reward distribution)
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func IncentiveDeductReward -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Add distributedRewardAmount
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func IncentiveAddDistributed -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Write-back incentive to tree
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func IncentiveWriteBack -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== REWARD CACHE: UintTree append (time-series growth) ========== ###
+
+# Append 1st entry to RewardCache
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheAppend1st -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Append at size=10
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheGrowTo10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheAppendAt10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Append at size=50
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheGrowTo50 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheAppendAt50 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Grow to size=100, then append 1
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheGrowTo100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheAppendAt100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# Grow to size=1000, then append 1
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheGrowTo1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func RewardCacheAppendAt1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== FULL COLLECT: 0 incentives ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func FullCollect0 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== FULL COLLECT: 5 incentives ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func FullCollect5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== FULL COLLECT: 20 incentives ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func FullCollect20 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== FULL COLLECT: repeated (2nd call, same deposit) ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/collectsim -func FullCollect5Again -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/collectsim"
+gno = "0.9"
+-- main.gno --
+package collectsim
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl/v0"
+)
+
+// ============================================================
+// Types
+// ============================================================
+
+type BigInt struct {
+	arr [4]uint64
+}
+
+func NewBigInt(v uint64) *BigInt {
+	return &BigInt{arr: [4]uint64{v, 0, 0, 0}}
+}
+
+type Warmup struct {
+	Index          int
+	TimeDuration   int64
+	NextWarmupTime int64
+	WarmupRatio    uint64
+}
+
+type Deposit struct {
+	Warmups                        []Warmup
+	Liquidity                      *BigInt
+	TargetPoolPath                 string
+	Owner                          string
+	StakeTime                      int64
+	InternalRewardLastCollectTime  int64
+	CollectedInternalReward        int64
+	CollectedExternalRewards       *avl.Tree // incentiveId -> int64
+	ExternalRewardLastCollectTimes *avl.Tree // incentiveId -> int64
+	ExternalIncentiveIds           *avl.Tree // incentiveId -> bool
+	TickLower                      int32
+	TickUpper                      int32
+}
+
+type ExternalIncentive struct {
+	IncentiveId             string
+	TargetPoolPath          string
+	RewardToken             string
+	RewardAmount            int64
+	TotalRewardAmount       int64
+	RewardPerSecond         int64
+	DistributedRewardAmount int64
+	StartTimestamp          int64
+	EndTimestamp            int64
+	Refundee                string
+	Refunded                bool
+}
+
+type UintTree struct {
+	Tree *avl.Tree
+}
+
+func NewUintTree() *UintTree {
+	return &UintTree{Tree: avl.NewTree()}
+}
+
+func (t *UintTree) Set(ts int64, val interface{}) {
+	t.Tree.Set(encodeInt64(ts), val)
+}
+
+func encodeInt64(v int64) string {
+	s := strconv.FormatInt(v+1000000000000, 10)
+	for len(s) < 20 {
+		s = "0" + s
+	}
+	return s
+}
+
+// ============================================================
+// Storage
+// ============================================================
+
+var (
+	deposits    *avl.Tree // positionId -> *Deposit
+	incentives  *avl.Tree // incentiveId -> *ExternalIncentive
+	rewardCache *UintTree // timestamp -> int64
+	totalEmission int64
+)
+
+func defaultWarmups() []Warmup {
+	return []Warmup{
+		{Index: 0, TimeDuration: 0, NextWarmupTime: 1000, WarmupRatio: 30},
+		{Index: 1, TimeDuration: 86400, NextWarmupTime: 87400, WarmupRatio: 50},
+		{Index: 2, TimeDuration: 604800, NextWarmupTime: 605800, WarmupRatio: 70},
+		{Index: 3, TimeDuration: 2592000, NextWarmupTime: 2593000, WarmupRatio: 100},
+	}
+}
+
+func newDeposit(numIncentives int) *Deposit {
+	d := &Deposit{
+		Warmups:                        defaultWarmups(),
+		Liquidity:                      NewBigInt(1000000),
+		TargetPoolPath:                 "gno.land/r/pool:tok0:tok1:3000",
+		Owner:                          "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+		StakeTime:                      1000,
+		InternalRewardLastCollectTime:  1000,
+		CollectedInternalReward:        0,
+		CollectedExternalRewards:       avl.NewTree(),
+		ExternalRewardLastCollectTimes: avl.NewTree(),
+		ExternalIncentiveIds:           avl.NewTree(),
+		TickLower:                      -887272,
+		TickUpper:                      887272,
+	}
+	for i := 0; i < numIncentives; i++ {
+		iid := "inc_" + strconv.Itoa(i)
+		d.CollectedExternalRewards.Set(iid, int64(0))
+		d.ExternalRewardLastCollectTimes.Set(iid, int64(1000))
+		d.ExternalIncentiveIds.Set(iid, true)
+	}
+	return d
+}
+
+func newIncentive(id string, rewardAmount int64) *ExternalIncentive {
+	return &ExternalIncentive{
+		IncentiveId:             id,
+		TargetPoolPath:          "gno.land/r/pool:tok0:tok1:3000",
+		RewardToken:             "gno.land/r/gns",
+		RewardAmount:            rewardAmount,
+		TotalRewardAmount:       rewardAmount,
+		RewardPerSecond:         rewardAmount / 86400,
+		DistributedRewardAmount: 0,
+		StartTimestamp:          1000,
+		EndTimestamp:            87400,
+		Refundee:                "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+		Refunded:                false,
+	}
+}
+
+// ============================================================
+// Setup
+// ============================================================
+
+func Setup(cur realm) {
+	deposits = avl.NewTree()
+	incentives = avl.NewTree()
+	rewardCache = NewUintTree()
+	totalEmission = 0
+
+	// Create deposits with varying incentive counts
+	deposits.Set("dep_0", newDeposit(0))
+	deposits.Set("dep_1", newDeposit(1))
+	deposits.Set("dep_5", newDeposit(5))
+	deposits.Set("dep_20", newDeposit(20))
+	deposits.Set("dep_5_repeat", newDeposit(5))
+
+	// Create incentives
+	for i := 0; i < 20; i++ {
+		iid := "inc_" + strconv.Itoa(i)
+		incentives.Set(iid, newIncentive(iid, 1000000))
+	}
+}
+
+// ============================================================
+// DEPOSIT: internal reward fields (scalar)
+// ============================================================
+
+func DepositSetInternalReward(cur realm) {
+	v, _ := deposits.Get("dep_5")
+	d := v.(*Deposit)
+	d.CollectedInternalReward += 50000
+}
+
+func DepositSetInternalLCT(cur realm) {
+	v, _ := deposits.Get("dep_5")
+	d := v.(*Deposit)
+	d.InternalRewardLastCollectTime = 2000
+}
+
+// ============================================================
+// DEPOSIT: external reward AVL updates
+// ============================================================
+
+func DepositSetExtReward1(cur realm) {
+	v, _ := deposits.Get("dep_1")
+	d := v.(*Deposit)
+	d.CollectedExternalRewards.Set("inc_0", int64(10000))
+}
+
+func DepositSetExtLCT1(cur realm) {
+	v, _ := deposits.Get("dep_1")
+	d := v.(*Deposit)
+	d.ExternalRewardLastCollectTimes.Set("inc_0", int64(2000))
+}
+
+func DepositSetExtReward5(cur realm) {
+	v, _ := deposits.Get("dep_5")
+	d := v.(*Deposit)
+	for i := 0; i < 5; i++ {
+		d.CollectedExternalRewards.Set("inc_"+strconv.Itoa(i), int64(10000+i))
+	}
+}
+
+func DepositSetExtLCT5(cur realm) {
+	v, _ := deposits.Get("dep_5")
+	d := v.(*Deposit)
+	for i := 0; i < 5; i++ {
+		d.ExternalRewardLastCollectTimes.Set("inc_"+strconv.Itoa(i), int64(2000))
+	}
+}
+
+func DepositRemoveIncentive1(cur realm) {
+	v, _ := deposits.Get("dep_5")
+	d := v.(*Deposit)
+	d.ExternalIncentiveIds.Remove("inc_0")
+}
+
+// ============================================================
+// EXTERNAL INCENTIVE: field updates
+// ============================================================
+
+func IncentiveDeductReward(cur realm) {
+	v, _ := incentives.Get("inc_0")
+	inc := v.(*ExternalIncentive)
+	inc.RewardAmount -= 50000
+}
+
+func IncentiveAddDistributed(cur realm) {
+	v, _ := incentives.Get("inc_0")
+	inc := v.(*ExternalIncentive)
+	inc.DistributedRewardAmount += 50000
+}
+
+func IncentiveWriteBack(cur realm) {
+	v, _ := incentives.Get("inc_0")
+	inc := v.(*ExternalIncentive)
+	incentives.Set("inc_0", inc)
+}
+
+// ============================================================
+// REWARD CACHE: UintTree time-series growth
+// ============================================================
+
+func RewardCacheAppend1st(cur realm) {
+	rewardCache = NewUintTree()
+	rewardCache.Set(1000, int64(500))
+}
+
+func RewardCacheGrowTo10(cur realm) {
+	for i := 1; i <= 9; i++ {
+		rewardCache.Set(int64(1000+i*100), int64(500+i))
+	}
+}
+
+func RewardCacheAppendAt10(cur realm) {
+	rewardCache.Set(5000, int64(999))
+}
+
+func RewardCacheGrowTo50(cur realm) {
+	for i := 10; i <= 49; i++ {
+		rewardCache.Set(int64(1000+i*100), int64(500+i))
+	}
+}
+
+func RewardCacheAppendAt50(cur realm) {
+	rewardCache.Set(20000, int64(1500))
+}
+
+func RewardCacheGrowTo100(cur realm) {
+	for i := 50; i <= 99; i++ {
+		rewardCache.Set(int64(1000+i*100), int64(500+i))
+	}
+}
+
+func RewardCacheAppendAt100(cur realm) {
+	rewardCache.Set(30000, int64(2000))
+}
+
+func RewardCacheGrowTo1000(cur realm) {
+	for i := 100; i <= 999; i++ {
+		rewardCache.Set(int64(1000+i*100), int64(500+i))
+	}
+}
+
+func RewardCacheAppendAt1000(cur realm) {
+	rewardCache.Set(200000, int64(3000))
+}
+
+// ============================================================
+// FULL COLLECT SIMULATION
+// ============================================================
+
+func fullCollect(depositKey string, numIncentives int, timestamp int64) {
+	v, _ := deposits.Get(depositKey)
+	d := v.(*Deposit)
+
+	// 1. Internal reward
+	d.CollectedInternalReward += 50000
+	d.InternalRewardLastCollectTime = timestamp
+
+	// 2. External rewards (per incentive)
+	for i := 0; i < numIncentives; i++ {
+		iid := "inc_" + strconv.Itoa(i)
+
+		// Update deposit external reward tracking
+		d.CollectedExternalRewards.Set(iid, int64(10000+i))
+		d.ExternalRewardLastCollectTimes.Set(iid, timestamp)
+
+		// Update incentive
+		iv, _ := incentives.Get(iid)
+		inc := iv.(*ExternalIncentive)
+		inc.RewardAmount -= int64(10000 + i)
+		inc.DistributedRewardAmount += int64(10000 + i)
+		incentives.Set(iid, inc)
+	}
+
+	// 3. RewardCache append
+	rewardCache.Set(timestamp, int64(500))
+
+	// 4. Global emission
+	totalEmission += 50000
+}
+
+func FullCollect0(cur realm) {
+	fullCollect("dep_0", 0, 3000)
+}
+
+func FullCollect5(cur realm) {
+	fullCollect("dep_5", 5, 4000)
+}
+
+func FullCollect20(cur realm) {
+	fullCollect("dep_20", 20, 5000)
+}
+
+func FullCollect5Again(cur realm) {
+	fullCollect("dep_5_repeat", 5, 6000)
+}
