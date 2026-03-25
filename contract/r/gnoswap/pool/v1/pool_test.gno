@@ -1084,9 +1084,9 @@ func TestCollect(t *testing.T) {
 
 			// Verify tokensOwed decreased correctly
 			positionAfter := mustGetPositionByPool(pool, positionKey)
-			uassert.Equal(t, tt.expectedOwed0After, positionAfter.TokensOwed0().ToString(),
+			uassert.Equal(t, tt.expectedOwed0After, positionAfter.TokensOwed0(),
 				"TokensOwed0 should decrease by collected amount")
-			uassert.Equal(t, tt.expectedOwed1After, positionAfter.TokensOwed1().ToString(),
+			uassert.Equal(t, tt.expectedOwed1After, positionAfter.TokensOwed1(),
 				"TokensOwed1 should decrease by collected amount")
 
 			// Verify pool balance >= tokensOwed invariant
@@ -1095,7 +1095,7 @@ func TestCollect(t *testing.T) {
 			t.Logf("✓ Collected %s/%s (requested %s/%s, before owed %s/%s, after owed %s/%s)",
 				amount0, amount1,
 				tt.request0, tt.request1,
-				positionBefore.TokensOwed0().ToString(), positionBefore.TokensOwed1().ToString(),
+				positionBefore.TokensOwed0(), positionBefore.TokensOwed1(),
 				tt.expectedOwed0After, tt.expectedOwed1After)
 
 			resetObject(t)
@@ -1109,12 +1109,15 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
-	uassert.True(t, pool.BalanceToken0().Cmp(position.TokensOwed0()) >= 0,
+	owed0 := u256.MustFromDecimal(position.TokensOwed0())
+	owed1 := u256.MustFromDecimal(position.TokensOwed1())
+
+	uassert.True(t, pool.BalanceToken0().Cmp(owed0) >= 0,
 		ufmt.Sprintf("Pool balance0 (%s) must be >= tokensOwed0 (%s)",
-			pool.BalanceToken0().ToString(), position.TokensOwed0().ToString()))
-	uassert.True(t, pool.BalanceToken1().Cmp(position.TokensOwed1()) >= 0,
+			pool.BalanceToken0().ToString(), position.TokensOwed0()))
+	uassert.True(t, pool.BalanceToken1().Cmp(owed1) >= 0,
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
-			pool.BalanceToken1().ToString(), position.TokensOwed1().ToString()))
+			pool.BalanceToken1().ToString(), position.TokensOwed1()))
 }
 
 func TestSwap_ZeroOutputAllowed(t *testing.T) {

@@ -310,9 +310,6 @@ func newSlot0(
 
 // TickInfo stores information about a specific tick in the pool.
 // TIcks represent discrete price points that can be used as boundaries for positions.
-//
-// Numeric fields are stored as decimal strings
-// to reduce per-tick storage from ~820 bytes/pointer to ~30-80 bytes/string.
 type TickInfo struct {
 	liquidityGross string // total position liquidity that references this tick
 	liquidityNet   string // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
