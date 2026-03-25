@@ -67,10 +67,10 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 	})
 
 	makeTickInfo := func(
-		liquidityGross *u256.Uint,
-		liquidityNet *i256.Int,
-		feeGrowthOutside0X128 *u256.Uint,
-		feeGrowthOutside1X128 *u256.Uint,
+		liquidityGross string,
+		liquidityNet string,
+		feeGrowthOutside0X128 string,
+		feeGrowthOutside1X128 string,
 		initialized bool,
 	) pl.TickInfo {
 		tickInfo := pl.TickInfo{}
@@ -84,17 +84,17 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 
 	// Setup test ticks
 	pool.Ticks().Set("0", makeTickInfo(
-		u256.NewUint(1000),
-		i256.NewInt(100),
-		u256.NewUint(5),
-		u256.NewUint(7),
+		"1000",
+		"100",
+		"5",
+		"7",
 		true,
 	))
 	pool.Ticks().Set("100", makeTickInfo(
-		u256.NewUint(2000),
-		i256.NewInt(-100),
-		u256.NewUint(10),
-		u256.NewUint(15),
+		"2000",
+		"-100",
+		"10",
+		"15",
 		true,
 	))
 
@@ -391,8 +391,8 @@ func TestTickUpdate(t *testing.T) {
 			shouldPanic:          false,
 			verify: func() {
 				info := getTick(pool, 1)
-				uassert.Equal(t, info.FeeGrowthOutside0X128().ToString(), "1")
-				uassert.Equal(t, info.FeeGrowthOutside1X128().ToString(), "2")
+				uassert.Equal(t, info.FeeGrowthOutside0X128(), "1")
+				uassert.Equal(t, info.FeeGrowthOutside1X128(), "2")
 			},
 		},
 		{
@@ -412,8 +412,8 @@ func TestTickUpdate(t *testing.T) {
 			shouldPanic:          false,
 			verify: func() {
 				info := getTick(pool, 1)
-				uassert.Equal(t, info.FeeGrowthOutside0X128().ToString(), "1")
-				uassert.Equal(t, info.FeeGrowthOutside1X128().ToString(), "2")
+				uassert.Equal(t, info.FeeGrowthOutside0X128(), "1")
+				uassert.Equal(t, info.FeeGrowthOutside1X128(), "2")
 			},
 		},
 		{
@@ -429,8 +429,8 @@ func TestTickUpdate(t *testing.T) {
 			shouldPanic:          false,
 			verify: func() {
 				info := getTick(pool, 2)
-				uassert.Equal(t, info.FeeGrowthOutside0X128().ToString(), "0")
-				uassert.Equal(t, info.FeeGrowthOutside1X128().ToString(), "0")
+				uassert.Equal(t, info.FeeGrowthOutside0X128(), "0")
+				uassert.Equal(t, info.FeeGrowthOutside1X128(), "0")
 			},
 		},
 	}
@@ -705,11 +705,11 @@ func initTick(
 	t.Helper()
 
 	info := getTick(pool, tick)
-	info.SetFeeGrowthOutside0X128(feeGrowthOutside0X128)
-	info.SetFeeGrowthOutside1X128(feeGrowthOutside1X128)
-	info.SetLiquidityGross(liquidityGross)
-	info.SetLiquidityNet(liquidityNet)
-	info.SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128)
+	info.SetFeeGrowthOutside0X128(feeGrowthOutside0X128.ToString())
+	info.SetFeeGrowthOutside1X128(feeGrowthOutside1X128.ToString())
+	info.SetLiquidityGross(liquidityGross.ToString())
+	info.SetLiquidityNet(liquidityNet.ToString())
+	info.SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128.ToString())
 	info.SetTickCumulativeOutside(tickCumulativeOutside)
 	info.SetSecondsOutside(secondsOutside)
 	info.SetInitialized(initialized)
@@ -730,11 +730,21 @@ type mockTickInfo struct {
 
 func (t *mockTickInfo) toTickInfo() pl.TickInfo {
 	tickInfo := pl.NewTickInfo()
-	tickInfo.SetFeeGrowthOutside0X128(t.feeGrowthOutside0X128)
-	tickInfo.SetFeeGrowthOutside1X128(t.feeGrowthOutside1X128)
-	tickInfo.SetLiquidityGross(t.liquidityGross)
-	tickInfo.SetLiquidityNet(t.liquidityNet)
-	tickInfo.SetSecondsPerLiquidityOutsideX128(t.secondsPerLiquidityOutsideX128)
+	if t.feeGrowthOutside0X128 != nil {
+		tickInfo.SetFeeGrowthOutside0X128(t.feeGrowthOutside0X128.ToString())
+	}
+	if t.feeGrowthOutside1X128 != nil {
+		tickInfo.SetFeeGrowthOutside1X128(t.feeGrowthOutside1X128.ToString())
+	}
+	if t.liquidityGross != nil {
+		tickInfo.SetLiquidityGross(t.liquidityGross.ToString())
+	}
+	if t.liquidityNet != nil {
+		tickInfo.SetLiquidityNet(t.liquidityNet.ToString())
+	}
+	if t.secondsPerLiquidityOutsideX128 != nil {
+		tickInfo.SetSecondsPerLiquidityOutsideX128(t.secondsPerLiquidityOutsideX128.ToString())
+	}
 	tickInfo.SetTickCumulativeOutside(t.tickCumulativeOutside)
 	tickInfo.SetSecondsOutside(t.secondsOutside)
 	tickInfo.SetInitialized(t.initialized)
@@ -747,11 +757,21 @@ func setMockPoolTick(
 	tickInfo mockTickInfo,
 ) {
 	info := getTick(pool, tick)
-	info.SetFeeGrowthOutside0X128(tickInfo.feeGrowthOutside0X128)
-	info.SetFeeGrowthOutside1X128(tickInfo.feeGrowthOutside1X128)
-	info.SetLiquidityGross(tickInfo.liquidityGross)
-	info.SetLiquidityNet(tickInfo.liquidityNet)
-	info.SetSecondsPerLiquidityOutsideX128(tickInfo.secondsPerLiquidityOutsideX128)
+	if tickInfo.feeGrowthOutside0X128 != nil {
+		info.SetFeeGrowthOutside0X128(tickInfo.feeGrowthOutside0X128.ToString())
+	}
+	if tickInfo.feeGrowthOutside1X128 != nil {
+		info.SetFeeGrowthOutside1X128(tickInfo.feeGrowthOutside1X128.ToString())
+	}
+	if tickInfo.liquidityGross != nil {
+		info.SetLiquidityGross(tickInfo.liquidityGross.ToString())
+	}
+	if tickInfo.liquidityNet != nil {
+		info.SetLiquidityNet(tickInfo.liquidityNet.ToString())
+	}
+	if tickInfo.secondsPerLiquidityOutsideX128 != nil {
+		info.SetSecondsPerLiquidityOutsideX128(tickInfo.secondsPerLiquidityOutsideX128.ToString())
+	}
 	info.SetTickCumulativeOutside(tickInfo.tickCumulativeOutside)
 	info.SetSecondsOutside(tickInfo.secondsOutside)
 	info.SetInitialized(tickInfo.initialized)

@@ -129,22 +129,22 @@ func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) string {
 
 func (i *poolV1) GetTickLiquidityGross(poolPath string, tick int32) string {
 	pool := i.mustGetPool(poolPath)
-	return GetTickLiquidityGross(pool, tick).ToString()
+	return GetTickLiquidityGross(pool, tick)
 }
 
 func (i *poolV1) GetTickLiquidityNet(poolPath string, tick int32) string {
 	pool := i.mustGetPool(poolPath)
-	return GetTickLiquidityNet(pool, tick).ToString()
+	return GetTickLiquidityNet(pool, tick)
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
 	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside0X128(pool, tick).ToString()
+	return GetTickFeeGrowthOutside0X128(pool, tick)
 }
 
 func (i *poolV1) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
 	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside1X128(pool, tick).ToString()
+	return GetTickFeeGrowthOutside1X128(pool, tick)
 }
 
 func (i *poolV1) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
@@ -154,7 +154,7 @@ func (i *poolV1) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
 
 func (i *poolV1) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
 	pool := i.mustGetPool(poolPath)
-	return GetTickSecondsPerLiquidityOutsideX128(pool, tick).ToString()
+	return GetTickSecondsPerLiquidityOutsideX128(pool, tick)
 }
 
 func (i *poolV1) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
@@ -183,7 +183,8 @@ func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint
 
 func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
 	pool := i.mustGetPool(poolPath)
-	return GetTickFeeGrowthOutside0X128(pool, tick), GetTickFeeGrowthOutside1X128(pool, tick)
+	return u256.MustFromDecimal(GetTickFeeGrowthOutside0X128(pool, tick)),
+		u256.MustFromDecimal(GetTickFeeGrowthOutside1X128(pool, tick))
 }
 
 func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {

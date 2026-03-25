@@ -7,7 +7,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -45,12 +44,12 @@ func testInitData(t *testing.T) {
 	mockTicks := avl.NewTree()
 
 	tickInfo := pl.TickInfo{}
-	tickInfo.SetLiquidityGross(u256.NewUint(1000000))
-	tickInfo.SetLiquidityNet(i256.NewInt(2000000))
-	tickInfo.SetFeeGrowthOutside0X128(u256.NewUint(3000000))
-	tickInfo.SetFeeGrowthOutside1X128(u256.NewUint(4000000))
+	tickInfo.SetLiquidityGross("1000000")
+	tickInfo.SetLiquidityNet("2000000")
+	tickInfo.SetFeeGrowthOutside0X128("3000000")
+	tickInfo.SetFeeGrowthOutside1X128("4000000")
 	tickInfo.SetTickCumulativeOutside(5)
-	tickInfo.SetSecondsPerLiquidityOutsideX128(u256.NewUint(6000000))
+	tickInfo.SetSecondsPerLiquidityOutsideX128("6000000")
 	tickInfo.SetSecondsOutside(7)
 	tickInfo.SetInitialized(true)
 
@@ -927,7 +926,7 @@ func TestGetTickInfoWithError(t *testing.T) {
 				uassert.True(t, err != nil)
 			} else {
 				uassert.True(t, err == nil)
-				uassert.Equal(t, "1000000", tickInfo.LiquidityGross().ToString())
+				uassert.Equal(t, "1000000", tickInfo.LiquidityGross())
 			}
 		})
 	}

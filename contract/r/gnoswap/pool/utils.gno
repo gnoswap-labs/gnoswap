@@ -10,32 +10,22 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-func encodeU256(v *u256.Uint) string {
-	if v == nil {
-		return "0"
+func validateU256Str(s string) {
+	if s == "" {
+		return
 	}
-	return v.ToString()
+	if _, err := u256.FromDecimal(s); err != nil {
+		panic("invalid u256 string: " + s)
+	}
 }
 
-func decodeU256(s string) *u256.Uint {
-	if s == "" || s == "0" {
-		return u256.Zero()
+func validateI256Str(s string) {
+	if s == "" {
+		return
 	}
-	return u256.MustFromDecimal(s)
-}
-
-func encodeI256(v *i256.Int) string {
-	if v == nil {
-		return "0"
+	if _, err := i256.FromDecimal(s); err != nil {
+		panic("invalid i256 string: " + s)
 	}
-	return v.ToString()
-}
-
-func decodeI256(s string) *i256.Int {
-	if s == "" || s == "0" {
-		return i256.Zero()
-	}
-	return i256.MustFromDecimal(s)
 }
 
 const (

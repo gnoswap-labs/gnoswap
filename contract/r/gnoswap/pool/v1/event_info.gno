@@ -22,12 +22,12 @@ type tickEventInfo struct {
 // - i: initialized
 func (t *tickEventInfo) ToString() string {
 	return "{\"t\":" + formatInt(t.tickID) +
-		",\"lg\":\"" + t.tickInfo.LiquidityGross().ToString() + "\"" +
-		",\"ln\":\"" + t.tickInfo.LiquidityNet().ToString() + "\"" +
-		",\"fg0\":\"" + t.tickInfo.FeeGrowthOutside0X128().ToString() + "\"" +
-		",\"fg1\":\"" + t.tickInfo.FeeGrowthOutside1X128().ToString() + "\"" +
+		",\"lg\":\"" + t.tickInfo.LiquidityGross() + "\"" +
+		",\"ln\":\"" + t.tickInfo.LiquidityNet() + "\"" +
+		",\"fg0\":\"" + t.tickInfo.FeeGrowthOutside0X128() + "\"" +
+		",\"fg1\":\"" + t.tickInfo.FeeGrowthOutside1X128() + "\"" +
 		",\"tco\":\"" + formatInt(t.tickInfo.TickCumulativeOutside()) + "\"" +
-		",\"spl\":\"" + t.tickInfo.SecondsPerLiquidityOutsideX128().ToString() + "\"" +
+		",\"spl\":\"" + t.tickInfo.SecondsPerLiquidityOutsideX128() + "\"" +
 		",\"so\":\"" + formatUint(t.tickInfo.SecondsOutside()) + "\"" +
 		",\"i\":\"" + formatBool(t.tickInfo.Initialized()) + "\"}"
 }

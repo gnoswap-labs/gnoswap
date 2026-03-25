@@ -3,7 +3,6 @@ package pool
 import (
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -24,12 +23,12 @@ func newPoolFixture() *Pool {
 
 func newTickInfoFixture() TickInfo {
 	tickInfo := NewTickInfo()
-	tickInfo.SetLiquidityGross(u256.MustFromDecimal("1000"))
-	tickInfo.SetLiquidityNet(i256.MustFromDecimal("2000"))
-	tickInfo.SetFeeGrowthOutside0X128(u256.MustFromDecimal("3000"))
-	tickInfo.SetFeeGrowthOutside1X128(u256.MustFromDecimal("4000"))
+	tickInfo.SetLiquidityGross("1000")
+	tickInfo.SetLiquidityNet("2000")
+	tickInfo.SetFeeGrowthOutside0X128("3000")
+	tickInfo.SetFeeGrowthOutside1X128("4000")
 	tickInfo.SetTickCumulativeOutside(5)
-	tickInfo.SetSecondsPerLiquidityOutsideX128(u256.MustFromDecimal("6000"))
+	tickInfo.SetSecondsPerLiquidityOutsideX128("6000")
 	tickInfo.SetSecondsOutside(7)
 	tickInfo.SetInitialized(true)
 	return tickInfo
@@ -215,23 +214,23 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				tickInfo := result.(TickInfo)
-				tickInfo.SetLiquidityGross(u256.MustFromDecimal("1010"))
-				tickInfo.SetLiquidityNet(i256.MustFromDecimal("2020"))
-				tickInfo.SetFeeGrowthOutside0X128(u256.MustFromDecimal("3030"))
-				tickInfo.SetFeeGrowthOutside1X128(u256.MustFromDecimal("4040"))
+				tickInfo.SetLiquidityGross("1010")
+				tickInfo.SetLiquidityNet("2020")
+				tickInfo.SetFeeGrowthOutside0X128("3030")
+				tickInfo.SetFeeGrowthOutside1X128("4040")
 				tickInfo.SetTickCumulativeOutside(50)
-				tickInfo.SetSecondsPerLiquidityOutsideX128(u256.MustFromDecimal("6060"))
+				tickInfo.SetSecondsPerLiquidityOutsideX128("6060")
 				tickInfo.SetSecondsOutside(70)
 				tickInfo.SetInitialized(false)
 			},
 			assertRaw: func(t *testing.T) {
 				tickInfo := implementation.(*MockPool).Response.responses["GetTickInfo"][0].(TickInfo)
-				uassert.Equal(t, "1000", tickInfo.LiquidityGross().ToString())
-				uassert.Equal(t, "2000", tickInfo.LiquidityNet().ToString())
-				uassert.Equal(t, "3000", tickInfo.FeeGrowthOutside0X128().ToString())
-				uassert.Equal(t, "4000", tickInfo.FeeGrowthOutside1X128().ToString())
+				uassert.Equal(t, "1000", tickInfo.LiquidityGross())
+				uassert.Equal(t, "2000", tickInfo.LiquidityNet())
+				uassert.Equal(t, "3000", tickInfo.FeeGrowthOutside0X128())
+				uassert.Equal(t, "4000", tickInfo.FeeGrowthOutside1X128())
 				uassert.Equal(t, int64(5), tickInfo.TickCumulativeOutside())
-				uassert.Equal(t, "6000", tickInfo.SecondsPerLiquidityOutsideX128().ToString())
+				uassert.Equal(t, "6000", tickInfo.SecondsPerLiquidityOutsideX128())
 				uassert.Equal(t, uint32(7), tickInfo.SecondsOutside())
 				uassert.Equal(t, true, tickInfo.Initialized())
 			},

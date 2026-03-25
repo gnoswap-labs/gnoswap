@@ -6,7 +6,6 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -311,20 +310,23 @@ func newSlot0(
 
 // TickInfo stores information about a specific tick in the pool.
 // TIcks represent discrete price points that can be used as boundaries for positions.
+//
+// Numeric fields are stored as decimal strings
+// to reduce per-tick storage from ~820 bytes/pointer to ~30-80 bytes/string.
 type TickInfo struct {
-	liquidityGross *u256.Uint // total position liquidity that references this tick
-	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
+	liquidityGross string // total position liquidity that references this tick
+	liquidityNet   string // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
 
 	// fee growth per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	feeGrowthOutside0X128 *u256.Uint
-	feeGrowthOutside1X128 *u256.Uint
+	feeGrowthOutside0X128 string
+	feeGrowthOutside1X128 string
 
 	tickCumulativeOutside int64 // cumulative tick value on the other side of the tick
 
 	// the seconds per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	secondsPerLiquidityOutsideX128 *u256.Uint
+	secondsPerLiquidityOutsideX128 string
 
 	// the seconds spent on the other side of the tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
@@ -334,11 +336,11 @@ type TickInfo struct {
 }
 
 // TickInfo Getters methods
-func (t *TickInfo) LiquidityGross() *u256.Uint        { return t.liquidityGross }
-func (t *TickInfo) LiquidityNet() *i256.Int           { return t.liquidityNet }
-func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint { return t.feeGrowthOutside0X128 }
-func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint { return t.feeGrowthOutside1X128 }
-func (t *TickInfo) SecondsPerLiquidityOutsideX128() *u256.Uint {
+func (t *TickInfo) LiquidityGross() string        { return t.liquidityGross }
+func (t *TickInfo) LiquidityNet() string          { return t.liquidityNet }
+func (t *TickInfo) FeeGrowthOutside0X128() string { return t.feeGrowthOutside0X128 }
+func (t *TickInfo) FeeGrowthOutside1X128() string { return t.feeGrowthOutside1X128 }
+func (t *TickInfo) SecondsPerLiquidityOutsideX128() string {
 	return t.secondsPerLiquidityOutsideX128
 }
 func (t *TickInfo) SecondsOutside() uint32       { return t.secondsOutside }
@@ -346,23 +348,28 @@ func (t *TickInfo) Initialized() bool            { return t.initialized }
 func (t *TickInfo) TickCumulativeOutside() int64 { return t.tickCumulativeOutside }
 
 // TickInfo Setters methods
-func (t *TickInfo) SetLiquidityGross(liquidityGross *u256.Uint) {
+func (t *TickInfo) SetLiquidityGross(liquidityGross string) {
+	validateU256Str(liquidityGross)
 	t.liquidityGross = liquidityGross
 }
 
-func (t *TickInfo) SetLiquidityNet(liquidityNet *i256.Int) {
+func (t *TickInfo) SetLiquidityNet(liquidityNet string) {
+	validateI256Str(liquidityNet)
 	t.liquidityNet = liquidityNet
 }
 
-func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 *u256.Uint) {
+func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 string) {
+	validateU256Str(feeGrowthOutside0X128)
 	t.feeGrowthOutside0X128 = feeGrowthOutside0X128
 }
 
-func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 *u256.Uint) {
+func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 string) {
+	validateU256Str(feeGrowthOutside1X128)
 	t.feeGrowthOutside1X128 = feeGrowthOutside1X128
 }
 
-func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 *u256.Uint) {
+func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 string) {
+	validateU256Str(secondsPerLiquidityOutsideX128)
 	t.secondsPerLiquidityOutsideX128 = secondsPerLiquidityOutsideX128
 }
 
@@ -380,12 +387,12 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 
 func (t *TickInfo) Clone() TickInfo {
 	return TickInfo{
-		feeGrowthOutside0X128:          t.feeGrowthOutside0X128.Clone(),
-		feeGrowthOutside1X128:          t.feeGrowthOutside1X128.Clone(),
-		liquidityGross:                 t.liquidityGross.Clone(),
-		liquidityNet:                   t.liquidityNet.Clone(),
+		feeGrowthOutside0X128:          t.feeGrowthOutside0X128,
+		feeGrowthOutside1X128:          t.feeGrowthOutside1X128,
+		liquidityGross:                 t.liquidityGross,
+		liquidityNet:                   t.liquidityNet,
 		tickCumulativeOutside:          t.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128.Clone(),
+		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128,
 		secondsOutside:                 t.secondsOutside,
 		initialized:                    t.initialized,
 	}
@@ -393,57 +400,54 @@ func (t *TickInfo) Clone() TickInfo {
 
 func NewTickInfo() TickInfo {
 	return TickInfo{
-		liquidityGross:                 u256.Zero(),
-		liquidityNet:                   i256.Zero(),
-		feeGrowthOutside0X128:          u256.Zero(),
-		feeGrowthOutside1X128:          u256.Zero(),
-		secondsPerLiquidityOutsideX128: u256.Zero(),
+		liquidityGross:                 "0",
+		liquidityNet:                   "0",
+		feeGrowthOutside0X128:          "0",
+		feeGrowthOutside1X128:          "0",
+		secondsPerLiquidityOutsideX128: "0",
 		secondsOutside:                 0,
 		initialized:                    false,
 		tickCumulativeOutside:          0,
 	}
 }
 
+// PositionInfo stores liquidity and fee state for a position.
+// Numeric fields are stored as decimal strings to reduce storage cost.
 type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
-
-	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
-
-	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
+	liquidity                string // amount of liquidity owned by this position
+	feeGrowthInside0LastX128 string // fee growth per unit of liquidity for token0 as of last update
+	feeGrowthInside1LastX128 string // fee growth per unit of liquidity for token1 as of last update
+	tokensOwed0              string // accumulated fees in token0 waiting to be collected
+	tokensOwed1              string // accumulated fees in token1 waiting to be collected
 }
 
-func (p *PositionInfo) Liquidity() *u256.Uint                { return p.liquidity }
-func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return p.feeGrowthInside0LastX128 }
-func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return p.feeGrowthInside1LastX128 }
-func (p *PositionInfo) TokensOwed0() *u256.Uint              { return p.tokensOwed0 }
-func (p *PositionInfo) TokensOwed1() *u256.Uint              { return p.tokensOwed1 }
+func (p *PositionInfo) Liquidity() string                { return p.liquidity }
+func (p *PositionInfo) FeeGrowthInside0LastX128() string { return p.feeGrowthInside0LastX128 }
+func (p *PositionInfo) FeeGrowthInside1LastX128() string { return p.feeGrowthInside1LastX128 }
+func (p *PositionInfo) TokensOwed0() string              { return p.tokensOwed0 }
+func (p *PositionInfo) TokensOwed1() string              { return p.tokensOwed1 }
 
-func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint) {
+func (p *PositionInfo) SetLiquidity(liquidity string) {
+	validateU256Str(liquidity)
 	p.liquidity = liquidity
 }
 
-func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 string) {
+	validateU256Str(feeGrowthInside0LastX128)
 	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 }
 
-func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 string) {
+	validateU256Str(feeGrowthInside1LastX128)
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
-func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed0(tokensOwed0 string) {
+	validateU256Str(tokensOwed0)
 	p.tokensOwed0 = tokensOwed0
 }
 
-func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed1(tokensOwed1 string) {
+	validateU256Str(tokensOwed1)
 	p.tokensOwed1 = tokensOwed1
 }
