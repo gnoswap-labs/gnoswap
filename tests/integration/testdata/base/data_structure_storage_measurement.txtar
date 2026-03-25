@@ -1,0 +1,378 @@
+loadpkg gno.land/p/nt/avl/v0
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/datastructstorage -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### Baseline ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Create (persist to storage) ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Read from persisted state ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLRead100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Update single item in persisted tree ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Add item to persisted tree ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLAddOne100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Delete single item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLDeleteOne100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Iterate persisted tree ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### AVL Tree: Clear ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func AVLClear -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Create (persist to storage) ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Read from persisted state ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapRead100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Update single item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Add item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapAddOne100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Delete single item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapDeleteOne100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Iterate persisted map ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Map: Clear ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func MapClear -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Create (persist to storage) ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceCreate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceCreate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Read from persisted state ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceRead100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Update single item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceUpdate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Append item ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceAppendOne100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Shrink ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceShrink100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Slice: Clear ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func SliceClear -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Value: Create + persist ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValSmallCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValLargeCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValXLargeCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Value: Update ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValSmallUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValLargeUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValXLargeUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Value: Read ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValSmallRead -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructValLargeRead -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Pointer: Create + persist ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrSmallCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrLargeCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrXLargeCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Pointer: Update ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrSmallUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrLargeUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrXLargeUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### Struct Pointer: Read ###
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrSmallRead -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/test/datastructstorage -func StructPtrLargeRead -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/test/datastructstorage"
+gno = "0.9"
+-- main.gno --
+package datastructstorage
+
+import (
+	"strconv"
+
+	avl "gno.land/p/nt/avl/v0"
+)
+
+// ============ Struct types ============
+
+type SmallStruct struct {
+	A int
+	B int
+	C int
+}
+
+type LargeStruct struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+}
+
+type XLargeStruct struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+	K, L, M, N, O int
+	P, Q, R, S, T int
+}
+
+// ============ Package-level state (persisted) ============
+
+var (
+	avlTree  *avl.Tree
+	storeMap map[string]int
+	storeSlice []int
+
+	valSmall  SmallStruct
+	valLarge  LargeStruct
+	valXLarge XLargeStruct
+
+	ptrSmall  *SmallStruct
+	ptrLarge  *LargeStruct
+	ptrXLarge *XLargeStruct
+)
+
+// ============ Baseline ============
+
+func Empty(cur realm) {
+	return
+}
+
+// ============ AVL Tree: persisted ============
+
+func AVLCreate10(cur realm) {
+	avlTree = avl.NewTree()
+	for i := 0; i < 10; i++ {
+		avlTree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func AVLCreate100(cur realm) {
+	avlTree = avl.NewTree()
+	for i := 0; i < 100; i++ {
+		avlTree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func AVLRead100(cur realm) {
+	_, _ = avlTree.Get("50")
+}
+
+func AVLUpdate100(cur realm) {
+	avlTree.Set("50", 9999)
+}
+
+func AVLAddOne100(cur realm) {
+	avlTree.Set("new_key", 12345)
+}
+
+func AVLDeleteOne100(cur realm) {
+	avlTree.Remove("50")
+}
+
+func AVLIterate100(cur realm) {
+	sum := 0
+	avlTree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func AVLClear(cur realm) {
+	avlTree = avl.NewTree()
+}
+
+// ============ Map: persisted ============
+
+func MapCreate10(cur realm) {
+	storeMap = make(map[string]int)
+	for i := 0; i < 10; i++ {
+		storeMap[strconv.Itoa(i)] = i
+	}
+}
+
+func MapCreate100(cur realm) {
+	storeMap = make(map[string]int)
+	for i := 0; i < 100; i++ {
+		storeMap[strconv.Itoa(i)] = i
+	}
+}
+
+func MapRead100(cur realm) {
+	_ = storeMap["50"]
+}
+
+func MapUpdate100(cur realm) {
+	storeMap["50"] = 9999
+}
+
+func MapAddOne100(cur realm) {
+	storeMap["new_key"] = 12345
+}
+
+func MapDeleteOne100(cur realm) {
+	delete(storeMap, "50")
+}
+
+func MapIterate100(cur realm) {
+	sum := 0
+	for _, v := range storeMap {
+		sum += v
+	}
+}
+
+func MapClear(cur realm) {
+	storeMap = make(map[string]int)
+}
+
+// ============ Slice: persisted ============
+
+func SliceCreate10(cur realm) {
+	storeSlice = make([]int, 0, 10)
+	for i := 0; i < 10; i++ {
+		storeSlice = append(storeSlice, i)
+	}
+}
+
+func SliceCreate100(cur realm) {
+	storeSlice = make([]int, 0, 100)
+	for i := 0; i < 100; i++ {
+		storeSlice = append(storeSlice, i)
+	}
+}
+
+func SliceRead100(cur realm) {
+	_ = storeSlice[50]
+}
+
+func SliceUpdate100(cur realm) {
+	storeSlice[50] = 9999
+}
+
+func SliceAppendOne100(cur realm) {
+	storeSlice = append(storeSlice, 12345)
+}
+
+func SliceShrink100(cur realm) {
+	storeSlice = storeSlice[:len(storeSlice)-1]
+}
+
+func SliceClear(cur realm) {
+	storeSlice = nil
+}
+
+// ============ Struct Value: persisted ============
+
+func StructValSmallCreate(cur realm) {
+	valSmall = SmallStruct{A: 1, B: 2, C: 3}
+}
+
+func StructValLargeCreate(cur realm) {
+	valLarge = LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+}
+
+func StructValXLargeCreate(cur realm) {
+	valXLarge = XLargeStruct{
+		A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10,
+		K: 11, L: 12, M: 13, N: 14, O: 15, P: 16, Q: 17, R: 18, S: 19, T: 20,
+	}
+}
+
+func StructValSmallUpdate(cur realm) {
+	valSmall.A = 100
+	valSmall.B = 200
+	valSmall.C = 300
+}
+
+func StructValLargeUpdate(cur realm) {
+	valLarge.A = 100
+	valLarge.F = 600
+	valLarge.J = 1000
+}
+
+func StructValXLargeUpdate(cur realm) {
+	valXLarge.A = 100
+	valXLarge.K = 1100
+	valXLarge.T = 2000
+}
+
+func StructValSmallRead(cur realm) {
+	_ = valSmall.A + valSmall.B + valSmall.C
+}
+
+func StructValLargeRead(cur realm) {
+	_ = valLarge.A + valLarge.B + valLarge.C + valLarge.D + valLarge.E +
+		valLarge.F + valLarge.G + valLarge.H + valLarge.I + valLarge.J
+}
+
+// ============ Struct Pointer: persisted ============
+
+func StructPtrSmallCreate(cur realm) {
+	ptrSmall = &SmallStruct{A: 1, B: 2, C: 3}
+}
+
+func StructPtrLargeCreate(cur realm) {
+	ptrLarge = &LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+}
+
+func StructPtrXLargeCreate(cur realm) {
+	ptrXLarge = &XLargeStruct{
+		A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10,
+		K: 11, L: 12, M: 13, N: 14, O: 15, P: 16, Q: 17, R: 18, S: 19, T: 20,
+	}
+}
+
+func StructPtrSmallUpdate(cur realm) {
+	ptrSmall.A = 100
+	ptrSmall.B = 200
+	ptrSmall.C = 300
+}
+
+func StructPtrLargeUpdate(cur realm) {
+	ptrLarge.A = 100
+	ptrLarge.F = 600
+	ptrLarge.J = 1000
+}
+
+func StructPtrXLargeUpdate(cur realm) {
+	ptrXLarge.A = 100
+	ptrXLarge.K = 1100
+	ptrXLarge.T = 2000
+}
+
+func StructPtrSmallRead(cur realm) {
+	_ = ptrSmall.A + ptrSmall.B + ptrSmall.C
+}
+
+func StructPtrLargeRead(cur realm) {
+	_ = ptrLarge.A + ptrLarge.B + ptrLarge.C + ptrLarge.D + ptrLarge.E +
+		ptrLarge.F + ptrLarge.G + ptrLarge.H + ptrLarge.I + ptrLarge.J
+}
