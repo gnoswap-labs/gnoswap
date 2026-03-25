@@ -490,8 +490,8 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			obs := &pl.Observation{}
 			obs.SetBlockTimestamp(100)
 			obs.SetTickCumulative(5000000000)
-			obs.SetLiquidityCumulative(u256.MustFromDecimal("3000000"))
-			obs.SetSecondsPerLiquidityCumulativeX128(u256.Zero())
+			obs.SetLiquidityCumulative("3000000")
+			obs.SetSecondsPerLiquidityCumulativeX128("0")
 			obs.SetInitialized(true)
 			observationState.SetObservations(map[uint16]*pl.Observation{0: obs})
 			pool.SetObservationState(observationState)
@@ -499,7 +499,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 
 			lastObs, _ := lastObservation(pool.ObservationState())
 			beforeTickCumulative := lastObs.TickCumulative()
-			beforeLiquidityCumulative := new(u256.Uint).Set(lastObs.LiquidityCumulative())
+			beforeLiquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 
 			observationState = pool.ObservationState()
 			lastObs, err := lastObservation(observationState)
@@ -512,7 +512,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			writeObservation(observationState2, currentTime, tt.initialTick, pool.Liquidity())
 			lastObs, _ = lastObservation(observationState2)
 			tickCumulative := lastObs.TickCumulative()
-			liquidityCumulative := new(u256.Uint).Set(lastObs.LiquidityCumulative())
+			liquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 			lastUpdateTime := lastObs.BlockTimestamp()
 
 			// Then: Verify expected behavior

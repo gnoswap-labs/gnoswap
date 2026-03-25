@@ -222,8 +222,8 @@ func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
 	}
 
 	tickCumulative = lastObservation.TickCumulative()
-	liquidityCumulative = lastObservation.LiquidityCumulative().ToString()
-	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128().ToString()
+	liquidityCumulative = lastObservation.LiquidityCumulative()
+	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128()
 	blockTimestamp = lastObservation.BlockTimestamp()
 
 	return

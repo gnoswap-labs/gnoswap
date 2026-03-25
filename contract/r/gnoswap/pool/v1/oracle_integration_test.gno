@@ -70,7 +70,9 @@ func TestOracle_SwapScenarios(t *testing.T) {
 
 				// Verify liquidity cumulative is monotonically increasing
 				for i := 1; i < len(liquidityCumulatives); i++ {
-					uassert.True(t, liquidityCumulatives[i-1].Gte(liquidityCumulatives[i]),
+					prev := u256.MustFromDecimal(liquidityCumulatives[i-1])
+					curr := u256.MustFromDecimal(liquidityCumulatives[i])
+					uassert.True(t, prev.Gte(curr),
 						"Liquidity cumulative should be non-decreasing forward in time")
 				}
 			},
@@ -90,7 +92,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 					"Tick cumulative should accumulate even with zero liquidity")
 
 				// Liquidity cumulative should remain zero
-				uassert.Equal(t, "0", obs.LiquidityCumulative().ToString(),
+				uassert.Equal(t, "0", obs.LiquidityCumulative(),
 					"Liquidity cumulative should remain zero")
 			},
 		},
@@ -151,7 +153,7 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(t *testing.T) {
 
 	uassert.NoError(t, err, "Should not error when querying secondsAgo=0 after init")
 	uassert.Equal(t, int64(0), tickCumulative, "Initial tick cumulative should be 0")
-	uassert.NotNil(t, secondsPerLiquidity, "Seconds per liquidity should not be nil")
+	uassert.NotEqual(t, "", secondsPerLiquidity, "Seconds per liquidity should not be empty")
 
 	// Test with time progression
 	newTime := currentTime + 10
@@ -167,7 +169,7 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(t *testing.T) {
 
 	uassert.NoError(t, err, "Should create virtual observation for current time")
 	uassert.Equal(t, int64(1000), tickCumulative2, "Should calculate tick cumulative correctly (100 * 10)")
-	uassert.NotNil(t, secondsPerLiquidity2, "Seconds per liquidity should be calculated")
+	uassert.NotEqual(t, "", secondsPerLiquidity2, "Seconds per liquidity should be calculated")
 }
 
 // Verify before/after observations are accurate when target is at boundaries (<, =, >) with cardinality 1 and N
@@ -358,7 +360,7 @@ func TestObservationState_IndexWrapping(t *testing.T) {
 
 	uassert.NoError(t, err, "Should interpolate after wrapping")
 	uassert.NotEqual(t, int64(0), tickCumulative, "Should calculate tick cumulative")
-	uassert.NotNil(t, secondsPerLiquidity, "Should calculate seconds per liquidity")
+	uassert.NotEqual(t, "", secondsPerLiquidity, "Should calculate seconds per liquidity")
 }
 
 // Reject cardinalityNext > max, allow cardinalityNext == max
@@ -465,7 +467,7 @@ func TestObservationState_Transform(t *testing.T) {
 		// With zero liquidity, use max(1, liquidity) = 1
 		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
 		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
-		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
+		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128(), "Should handle zero liquidity correctly")
 	})
 }
 

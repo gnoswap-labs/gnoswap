@@ -282,8 +282,8 @@ func (i *poolV1) Swap(
 		"balanceToken1", pool.BalanceToken1().ToString(),
 		"ticks", ticksToString(pool, startTick, pool.Slot0Tick()),
 		"tickCumulative", formatInt(lastObservation.TickCumulative()),
-		"liquidityCumulative", lastObservation.LiquidityCumulative().ToString(),
-		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128().ToString(),
+		"liquidityCumulative", lastObservation.LiquidityCumulative(),
+		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
 		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
 	)
 
@@ -680,7 +680,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		if !cache.computedLatestObservation {
 			observationState := pool.ObservationState()
 			if observationState != nil {
-				tickCumulative, secondsPerLiquidity, err := observeSingle(
+				tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 					observationState,
 					cache.blockTimestamp,
 					0,
@@ -691,13 +691,12 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 				)
 				if err == nil {
 					cache.tickCumulative = tickCumulative
-					cache.secondsPerLiquidityCumulativeX128 = secondsPerLiquidity
+					cache.secondsPerLiquidityCumulativeX128 = u256.MustFromDecimal(secondsPerLiquidityStr)
 					cache.computedLatestObservation = true
 				}
 			}
 		}
 
-		// Ensure cache has valid values even if oracle computation fails
 		if cache.secondsPerLiquidityCumulativeX128 == nil {
 			cache.secondsPerLiquidityCumulativeX128 = u256.Zero()
 		}

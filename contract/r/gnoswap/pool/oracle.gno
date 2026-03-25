@@ -1,8 +1,5 @@
 package pool
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
 
 // ObservationState manages the oracle's historical data
 type ObservationState struct {
@@ -36,18 +33,18 @@ func (os *ObservationState) SetObservations(observations map[uint16]*Observation
 }
 
 type Observation struct {
-	blockTimestamp                    int64      // timestamp of the observation
-	tickCumulative                    int64      // cumulative tick up to this timestamp
-	liquidityCumulative               *u256.Uint // cumulative liquidity up to this timestamp
-	secondsPerLiquidityCumulativeX128 *u256.Uint // cumulative seconds per liquidity
-	initialized                       bool       // whether this observation has been initialized
+	blockTimestamp                    int64  // timestamp of the observation
+	tickCumulative                    int64  // cumulative tick up to this timestamp
+	liquidityCumulative               string // cumulative liquidity up to this timestamp
+	secondsPerLiquidityCumulativeX128 string // cumulative seconds per liquidity
+	initialized                       bool   // whether this observation has been initialized
 }
 
 // Observation Getters methods
-func (o *Observation) BlockTimestamp() int64           { return o.blockTimestamp }
-func (o *Observation) TickCumulative() int64           { return o.tickCumulative }
-func (o *Observation) LiquidityCumulative() *u256.Uint { return o.liquidityCumulative }
-func (o *Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint {
+func (o *Observation) BlockTimestamp() int64  { return o.blockTimestamp }
+func (o *Observation) TickCumulative() int64  { return o.tickCumulative }
+func (o *Observation) LiquidityCumulative() string { return o.liquidityCumulative }
+func (o *Observation) SecondsPerLiquidityCumulativeX128() string {
 	return o.secondsPerLiquidityCumulativeX128
 }
 func (o *Observation) Initialized() bool { return o.initialized }
@@ -61,11 +58,13 @@ func (o *Observation) SetTickCumulative(tickCumulative int64) {
 	o.tickCumulative = tickCumulative
 }
 
-func (o *Observation) SetLiquidityCumulative(liquidityCumulative *u256.Uint) {
+func (o *Observation) SetLiquidityCumulative(liquidityCumulative string) {
+	validateU256Str(liquidityCumulative)
 	o.liquidityCumulative = liquidityCumulative
 }
 
-func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 *u256.Uint) {
+func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 string) {
+	validateU256Str(secondsPerLiquidityCumulativeX128)
 	o.secondsPerLiquidityCumulativeX128 = secondsPerLiquidityCumulativeX128
 }
 
@@ -77,8 +76,8 @@ func (o *Observation) Clone() *Observation {
 	return &Observation{
 		blockTimestamp:                    o.blockTimestamp,
 		tickCumulative:                    o.tickCumulative,
-		liquidityCumulative:               o.liquidityCumulative.Clone(),
-		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128.Clone(),
+		liquidityCumulative:               o.liquidityCumulative,
+		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128,
 		initialized:                       o.initialized,
 	}
 }
@@ -91,12 +90,11 @@ func NewObservationState(currentTime int64) *ObservationState {
 		observations:    make(map[uint16]*Observation),
 	}
 
-	// Initialize the first observation slot
 	state.observations[0] = NewObservation(
 		currentTime,
 		0,
-		u256.Zero(),
-		u256.Zero(),
+		"0",
+		"0",
 		true,
 	)
 
@@ -106,8 +104,8 @@ func NewObservationState(currentTime int64) *ObservationState {
 func NewObservation(
 	blockTimestamp int64,
 	tickCumulative int64,
-	liquidityCumulative *u256.Uint,
-	secondsPerLiquidityCumulativeX128 *u256.Uint,
+	liquidityCumulative string,
+	secondsPerLiquidityCumulativeX128 string,
 	initialized bool,
 ) *Observation {
 	return &Observation{
@@ -123,8 +121,8 @@ func NewDefaultObservation() *Observation {
 	return NewObservation(
 		0,
 		0,
-		u256.Zero(),
-		u256.Zero(),
+		"0",
+		"0",
 		false,
 	)
 }
