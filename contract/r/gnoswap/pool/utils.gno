@@ -4,8 +4,39 @@ import (
 	"strconv"
 	"strings"
 
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
+
+func encodeU256(v *u256.Uint) string {
+	if v == nil {
+		return "0"
+	}
+	return v.ToString()
+}
+
+func decodeU256(s string) *u256.Uint {
+	if s == "" || s == "0" {
+		return u256.Zero()
+	}
+	return u256.MustFromDecimal(s)
+}
+
+func encodeI256(v *i256.Int) string {
+	if v == nil {
+		return "0"
+	}
+	return v.ToString()
+}
+
+func decodeI256(s string) *i256.Int {
+	if s == "" || s == "0" {
+		return i256.Zero()
+	}
+	return i256.MustFromDecimal(s)
+}
 
 const (
 	MAX_TICK            int32 = 887272
