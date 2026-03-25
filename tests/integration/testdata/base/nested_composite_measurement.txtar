@@ -151,6 +151,51 @@ gnokey maketx call -pkgpath gno.land/r/test/nested -func ValueMapDelete -insecur
 # map[string]*Struct: Delete (N=1,000)
 gnokey maketx call -pkgpath gno.land/r/test/nested -func PtrMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 
+### ========== map[string]string: N=1 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateStringMap -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Create (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Update (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Update same length (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapUpdateSameLen -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Update longer value (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapUpdateLonger -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Delete (N=1)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== map[string]string: N=100 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateStringMap -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Create (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Update (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Delete (N=100)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+### ========== map[string]string: N=1,000 ========== ###
+
+gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateStringMap -args 1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Create (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapCreate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Update (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapUpdate -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# map[string]string: Delete (N=1,000)
+gnokey maketx call -pkgpath gno.land/r/test/nested -func StringMapDelete -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
 ### ========== avl.Tree + Struct: N=1 ========== ###
 
 gnokey maketx call -pkgpath gno.land/r/test/nested -func PopulateTreeStruct -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -212,8 +257,9 @@ var (
 	valueSlice []Item
 	ptrSlice   []*Item
 
-	valueMap map[string]Item
-	ptrMap   map[string]*Item
+	valueMap  map[string]Item
+	ptrMap    map[string]*Item
+	stringMap map[string]string
 
 	treeStruct *avl.Tree
 
@@ -328,6 +374,37 @@ func PtrMapUpdate(cur realm) {
 
 func PtrMapDelete(cur realm) {
 	delete(ptrMap, "key_0")
+}
+
+// ============ map[string]string CRUD ============
+
+func PopulateStringMap(cur realm, n int) {
+	stringMap = make(map[string]string)
+	for i := 0; i < n; i++ {
+		stringMap["key_"+strconv.Itoa(i)] = "value_" + strconv.Itoa(i*10)
+	}
+	opCounter = n
+}
+
+func StringMapCreate(cur realm) {
+	stringMap["new_key_"+strconv.Itoa(opCounter)] = "new_value_99999"
+	opCounter++
+}
+
+func StringMapUpdate(cur realm) {
+	stringMap["key_0"] = "updated_short"
+}
+
+func StringMapUpdateSameLen(cur realm) {
+	stringMap["key_0"] = "updated_samel"
+}
+
+func StringMapUpdateLonger(cur realm) {
+	stringMap["key_0"] = "this_is_a_much_longer_value_string_that_should_increase_storage_cost_significantly"
+}
+
+func StringMapDelete(cur realm) {
+	delete(stringMap, "key_0")
 }
 
 // ============ avl.Tree + *Struct CRUD ============
