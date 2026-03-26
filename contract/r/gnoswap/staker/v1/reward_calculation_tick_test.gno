@@ -54,7 +54,7 @@ func TestModifyDepositLower(t *testing.T) {
 	// deposit +10
 	liquidityDelta := i256.NewInt(10) // +10
 
-	tickResolver := NewTickResolver(tick)
+	tickResolver := NewTickResolver(tick, sr.NewPoolTimeSeries(0))
 	tickResolver.modifyDepositLower(50, liquidityDelta)
 
 	// stakedLiquidityGross += +10 => 10
@@ -78,7 +78,7 @@ func TestModifyDepositUpper(t *testing.T) {
 	tick := ticks.Get(200)
 
 	// deposit +10 => modifyDepositUpper
-	tickResolver := NewTickResolver(tick)
+	tickResolver := NewTickResolver(tick, sr.NewPoolTimeSeries(0))
 	tickResolver.modifyDepositUpper(70, i256.NewInt(10))
 
 	// stakedLiquidityGross=10, stakedLiquidityDelta = -10
@@ -140,7 +140,7 @@ func TestNewTickResolver(t *testing.T) {
 			ticks := sr.NewTicks()
 			tick := ticks.Get(tt.tickID)
 
-			tickResolver := NewTickResolver(tick)
+			tickResolver := NewTickResolver(tick, sr.NewPoolTimeSeries(0))
 
 			uassert.NotNil(t, tickResolver)
 			uassert.NotNil(t, tickResolver.Tick)
@@ -154,14 +154,14 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 	tests := []struct {
 		name           string
 		tickID         int32
-		setupFunc      func(*sr.Tick)
+		setupFunc      func(*sr.Tick, *sr.PoolTimeSeries)
 		queryTimestamp int64
 		expectedIsZero bool
 	}{
 		{
 			name:   "empty accumulation returns zero",
 			tickID: 100,
-			setupFunc: func(tick *sr.Tick) {
+			setupFunc: func(tick *sr.Tick, ts *sr.PoolTimeSeries) {
 				// No setup - empty accumulation
 			},
 			queryTimestamp: 1000,
@@ -170,8 +170,8 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 		{
 			name:   "single accumulation entry",
 			tickID: 100,
-			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(500, "12345")
+			setupFunc: func(tick *sr.Tick, ts *sr.PoolTimeSeries) {
+				ts.TickAccumulationFor(tick.Id()).Set(500, "12345")
 			},
 			queryTimestamp: 1000,
 			expectedIsZero: false,
@@ -179,10 +179,10 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 		{
 			name:   "multiple accumulation entries",
 			tickID: 100,
-			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(100, "1000")
-				tick.OutsideAccumulation().Set(500, "5000")
-				tick.OutsideAccumulation().Set(1000, "10000")
+			setupFunc: func(tick *sr.Tick, ts *sr.PoolTimeSeries) {
+				ts.TickAccumulationFor(tick.Id()).Set(100, "1000")
+				ts.TickAccumulationFor(tick.Id()).Set(500, "5000")
+				ts.TickAccumulationFor(tick.Id()).Set(1000, "10000")
 			},
 			queryTimestamp: 1500,
 			expectedIsZero: false,
@@ -193,12 +193,13 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ticks := sr.NewTicks()
 			tick := ticks.Get(tt.tickID)
+			ts := sr.NewPoolTimeSeries(0)
 
 			if tt.setupFunc != nil {
-				tt.setupFunc(tick)
+				tt.setupFunc(tick, ts)
 			}
 
-			tickResolver := NewTickResolver(tick)
+			tickResolver := NewTickResolver(tick, ts)
 			result := tickResolver.CurrentOutsideAccumulation(tt.queryTimestamp)
 
 			uassert.NotNil(t, result)
@@ -259,13 +260,14 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ticks := sr.NewTicks()
 			tick := ticks.Get(tt.tickID)
+			ts := sr.NewPoolTimeSeries(0)
 
 			// Set up current accumulation
 			if !tt.currentAcc.IsZero() {
-				tick.OutsideAccumulation().Set(tt.timestamp-100, tt.currentAcc.ToString())
+				ts.TickAccumulationFor(tt.tickID).Set(tt.timestamp-100, tt.currentAcc.ToString())
 			}
 
-			tickResolver := NewTickResolver(tick)
+			tickResolver := NewTickResolver(tick, ts)
 			tickResolver.updateCurrentOutsideAccumulation(tt.timestamp, tt.globalAcc)
 
 			// Verify the update

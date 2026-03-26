@@ -106,7 +106,7 @@ type PoolResolver struct {
 }
 
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
-	return NewIncentivesResolver(self.Incentives())
+	return NewIncentivesResolver(self.Incentives(), self.timeSeries)
 }
 
 // GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree from PoolTimeSeries.
@@ -168,7 +168,7 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 }
 
 func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
-	return NewTickResolver(self.Ticks().Get(tickId))
+	return NewTickResolver(self.Ticks().Get(tickId), self.timeSeries)
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.

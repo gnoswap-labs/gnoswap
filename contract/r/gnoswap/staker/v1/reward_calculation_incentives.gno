@@ -8,12 +8,20 @@ import (
 
 type IncentivesResolver struct {
 	*sr.Incentives
+	ts *sr.PoolTimeSeries
 }
 
-func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
+func NewIncentivesResolver(incentives *sr.Incentives, ts *sr.PoolTimeSeries) *IncentivesResolver {
 	return &IncentivesResolver{
 		Incentives: incentives,
+		ts:         ts,
 	}
+}
+
+// UnclaimablePeriods returns the unclaimable periods tree from PoolTimeSeries.
+// This overrides any embedded method so that reads/writes go to the sharded TS store.
+func (self *IncentivesResolver) UnclaimablePeriods() *sr.UintTree {
+	return self.ts.UnclaimablePeriods()
 }
 
 // Get incentive by incentiveId

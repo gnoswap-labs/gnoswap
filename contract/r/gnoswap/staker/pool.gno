@@ -3,7 +3,6 @@ package staker
 import (
 	"errors"
 	"strconv"
-	"time"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -28,9 +27,21 @@ const AllTierCount = 4 // 0, 1, 2, 3
 //     The cached per-second reward emitted for this pool.
 //     Stores new entry only when the reward is changed.
 //     PoolTier.cacheReward() updates this.
+//
+//   - unclaimablePeriods:
+//     Periods when external incentive rewards cannot be claimed (zero staked liquidity).
+//     Maps start timestamp -> end timestamp (0 means ongoing).
+//     Moved from Incentives to avoid dirtying Pool on every tick cross.
+//
+//   - tickAccumulations:
+//     Per-tick outside accumulation trees, keyed by EncodeInt(tickId).
+//     Each value is a *UintTree mapping timestamp -> string (u256.Uint in Q128).
+//     Moved from Tick.outsideAccumulation to avoid dirtying Pool on every tick cross.
 type PoolTimeSeries struct {
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> string (u256.Uint in Q128)
-	rewardCache                   *UintTree // uint64 timestamp -> int64 gnsReward
+	globalRewardRatioAccumulation *UintTree  // uint64 timestamp -> string (u256.Uint in Q128)
+	rewardCache                   *UintTree  // uint64 timestamp -> int64 gnsReward
+	unclaimablePeriods            *UintTree  // int64 timestamp -> int64 (0=ongoing, >0=end time)
+	tickAccumulations             *avl.Tree  // EncodeInt(int32 tickId) -> *UintTree (timestamp -> string)
 }
 
 // GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree
@@ -53,14 +64,42 @@ func (ts *PoolTimeSeries) SetRewardCache(tree *UintTree) {
 	ts.rewardCache = tree
 }
 
+// UnclaimablePeriods returns the unclaimable periods tree.
+// Maps start timestamp -> end timestamp (0 means ongoing).
+func (ts *PoolTimeSeries) UnclaimablePeriods() *UintTree {
+	return ts.unclaimablePeriods
+}
+
+// TickAccumulationFor returns the outside accumulation tree for the given tick ID,
+// creating a new empty tree if one does not yet exist.
+// The returned tree maps int64 timestamp -> string (u256.Uint in Q128).
+func (ts *PoolTimeSeries) TickAccumulationFor(tickId int32) *UintTree {
+	key := EncodeInt(tickId)
+	v, ok := ts.tickAccumulations.Get(key)
+	if ok {
+		if ut, ok := v.(*UintTree); ok {
+			return ut
+		}
+	}
+	ut := NewUintTree()
+	ts.tickAccumulations.Set(key, ut)
+	return ut
+}
+
 // NewPoolTimeSeries creates a new PoolTimeSeries initialized at the given time.
+// An initial unclaimable period is recorded because a newly created pool has no
+// staked positions yet.
 func NewPoolTimeSeries(currentTime int64) *PoolTimeSeries {
 	ts := &PoolTimeSeries{
 		globalRewardRatioAccumulation: NewUintTree(),
 		rewardCache:                   NewUintTree(),
+		unclaimablePeriods:            NewUintTree(),
+		tickAccumulations:             avl.NewTree(),
 	}
 	ts.globalRewardRatioAccumulation.Set(currentTime, "0")
 	ts.rewardCache.Set(currentTime, int64(0))
+	// Initial unclaimable period: no staked positions exist when the pool is first created.
+	ts.unclaimablePeriods.Set(currentTime, int64(0))
 	return ts
 }
 
@@ -232,16 +271,12 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //   - targetPoolPath: String identifier for the pool this incentive collection belongs to
 //     Used to associate incentives with their corresponding liquidity pool
 //
-//   - unclaimablePeriods: Tree storing periods when rewards cannot be claimed
-//     Maps start timestamp (key) to end timestamp (value)
-//     An end timestamp of 0 indicates an ongoing unclaimable period
-//     Used to track intervals when staking rewards are not claimable
+// Note: unclaimablePeriods has been moved to PoolTimeSeries to avoid dirtying
+// Pool when these time-series are updated during tick crosses.
 type Incentives struct {
 	incentives *avl.Tree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
-
-	unclaimablePeriods *UintTree // blockTimestamp -> any
 }
 
 // Incentives Getter/Setter methods
@@ -264,16 +299,6 @@ func (i *Incentives) TargetPoolPath() string {
 // SetTargetPoolPath sets the target pool path
 func (i *Incentives) SetTargetPoolPath(targetPoolPath string) {
 	i.targetPoolPath = targetPoolPath
-}
-
-// UnclaimablePeriods returns the unclaimable periods tree
-func (i *Incentives) UnclaimablePeriods() *UintTree {
-	return i.unclaimablePeriods
-}
-
-// SetUnclaimablePeriods sets the unclaimable periods tree
-func (i *Incentives) SetUnclaimablePeriods(unclaimablePeriods *UintTree) {
-	i.unclaimablePeriods = unclaimablePeriods
 }
 
 // Incentive returns an incentive by ID
@@ -302,16 +327,10 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 }
 
 func NewIncentives(targetPoolPath string) *Incentives {
-	result := &Incentives{
-		targetPoolPath:     targetPoolPath,
-		unclaimablePeriods: NewUintTree(),
-		incentives:         avl.NewTree(),
+	return &Incentives{
+		targetPoolPath: targetPoolPath,
+		incentives:     avl.NewTree(),
 	}
-
-	// initial unclaimable period starts, as there cannot be any staked positions yet.
-	currentTimestamp := time.Now().Unix()
-	result.unclaimablePeriods.Set(currentTimestamp, int64(0))
-	return result
 }
 
 type ExternalIncentive struct {
@@ -551,7 +570,6 @@ func (t *Ticks) Get(tickId int32) *Tick {
 			id:                   tickId,
 			stakedLiquidityGross: "0",
 			stakedLiquidityDelta: i256.Zero(),
-			outsideAccumulation:  NewUintTree(),
 		}
 		t.tree.Set(EncodeInt(tickId), tick)
 		return tick
@@ -622,7 +640,9 @@ func NewTicks() Ticks {
 // - id (int32): The ID of the tick.
 // - stakedLiquidityGross (string): Total gross staked liquidity at this tick (stored as decimal string, use StakedLiquidityGross() for *u256.Uint).
 // - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
-// - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
+//
+// Note: outsideAccumulation has been moved to PoolTimeSeries.tickAccumulations to avoid
+// dirtying Pool on every tick cross during swap execution.
 type Tick struct {
 	id int32
 
@@ -631,10 +651,6 @@ type Tick struct {
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
-
-	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
-	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
 }
 
 // Tick Getter/Setter methods
@@ -669,16 +685,6 @@ func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
 	t.stakedLiquidityDelta = stakedLiquidityDelta
 }
 
-// OutsideAccumulation returns the outside accumulation tree
-func (t *Tick) OutsideAccumulation() *UintTree {
-	return t.outsideAccumulation
-}
-
-// SetOutsideAccumulation sets the outside accumulation tree
-func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
-	t.outsideAccumulation = outsideAccumulation
-}
-
 // Clone returns a deep copy of the tick.
 func (t *Tick) Clone() *Tick {
 	if t == nil {
@@ -689,7 +695,6 @@ func (t *Tick) Clone() *Tick {
 		id:                   t.id,
 		stakedLiquidityGross: t.stakedLiquidityGross,
 		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
-		outsideAccumulation:  t.outsideAccumulation.Clone(),
 	}
 }
 
@@ -698,7 +703,6 @@ func NewTick(tickId int32) *Tick {
 		id:                   tickId,
 		stakedLiquidityGross: "0",
 		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTree(),
 	}
 }
 

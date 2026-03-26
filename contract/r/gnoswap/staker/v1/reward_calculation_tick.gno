@@ -16,12 +16,13 @@ var zeroUint256 = u256.Zero()
 
 type TickResolver struct {
 	*sr.Tick
+	ts *sr.PoolTimeSeries
 }
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
-	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
+	self.ts.TickAccumulationFor(self.Tick.Id()).ReverseIterate(0, timestamp, func(key int64, value any) bool {
 		v, ok := value.(string)
 		if !ok {
 			panic("failed to cast value to string")
@@ -59,12 +60,13 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
+	self.ts.TickAccumulationFor(self.Tick.Id()).Set(timestamp, newOutsideAccumulation.ToString())
 }
 
-func NewTickResolver(tick *sr.Tick) *TickResolver {
+func NewTickResolver(tick *sr.Tick, ts *sr.PoolTimeSeries) *TickResolver {
 	return &TickResolver{
 		Tick: tick,
+		ts:   ts,
 	}
 }
 
@@ -182,7 +184,7 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 
 	// Update the tick's outside accumulation for reward calculations
 	// This ensures proper reward distribution tracking across tick boundaries
-	tickResolver := NewTickResolver(tick)
+	tickResolver := NewTickResolver(tick, ts)
 	tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 }
 
@@ -238,7 +240,7 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 
 	for _, tickCross := range batch.Crosses() {
 		tick := batch.Pool().Ticks().Get(tickCross.TickID())
-		tickResolver := NewTickResolver(tick)
+		tickResolver := NewTickResolver(tick, ts)
 		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 
 		tickCrossEventInfo := NewTickCrossEventInfo(
