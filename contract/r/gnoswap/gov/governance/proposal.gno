@@ -85,8 +85,8 @@ func (p *Proposal) Status() *ProposalStatus {
 }
 
 // Metadata returns the proposal metadata.
-func (p *Proposal) Metadata() *ProposalMetadata {
-	return &p.metadata
+func (p *Proposal) Metadata() ProposalMetadata {
+	return p.metadata
 }
 
 

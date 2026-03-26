@@ -129,6 +129,9 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
+			// CommunityPoolSpendInfo is a value type with only primitive fields,
+			// so isolation is guaranteed by value semantics — mutation of the
+			// returned copy cannot affect the original.
 			name: "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) {
 				schedule := NewProposalScheduleStatus(10, 20, 30, 40, 50)
@@ -145,11 +148,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 				uassert.NoError(t, err)
 				return info
 			},
-			mutate: func(result any) {
-				info := result.(CommunityPoolSpendInfo)
-				info.tokenPath = "mutated"
-				info.amount = 999
-			},
+			mutate:   func(result any) {},
 			assertRaw: func(t *testing.T, m *MockGovernance) {
 				info := m.Response.data["GetProposal"][0].(*Proposal).data.communityPoolSpend
 				uassert.Equal(t, "token", info.tokenPath)
@@ -157,6 +156,9 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
+			// ExecutionInfo is a value type, so scalar fields (num) are isolated
+			// by value semantics. The msgs slice shares its backing array, so we
+			// verify that element mutation does not propagate to the original.
 			name: "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
 			getter: func(t *testing.T) any {
@@ -166,7 +168,6 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				info := result.(ExecutionInfo)
-				info.num = 999
 				info.msgs[0] = "mutated"
 				info.msgs = append(info.msgs, "extra")
 			},

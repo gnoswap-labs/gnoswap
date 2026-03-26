@@ -54,7 +54,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 			metadata := governance.NewProposalMetadata(tc.title, tc.description)
 
 			// when
-			err := NewProposalMetadataResolver(&metadata).Validate()
+			err := NewProposalMetadataResolver(metadata).Validate()
 
 			// then
 			if tc.expectedError {

@@ -55,8 +55,13 @@ func (d *Delegation) TotalDelegatedAmount() int64 { return d.delegateAmount }
 func (d *Delegation) UnDelegatedAmount() int64    { return d.unDelegateAmount }
 func (d *Delegation) CollectedAmount() int64      { return d.collectedAmount }
 
-// Withdraws getters
-func (d *Delegation) Withdraws() []DelegationWithdraw { return d.withdraws }
+// Withdraws returns a copy of the withdrawal slice to prevent unintended
+// mutation of the backing array through the returned header.
+func (d *Delegation) Withdraws() []DelegationWithdraw {
+	out := make([]DelegationWithdraw, len(d.withdraws))
+	copy(out, d.withdraws)
+	return out
+}
 
 // Setters
 func (d *Delegation) SetUnDelegateAmount(amount int64) {

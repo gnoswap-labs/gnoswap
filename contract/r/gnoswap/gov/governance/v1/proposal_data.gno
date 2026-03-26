@@ -7,10 +7,10 @@ import (
 )
 
 type ProposalMetadataResolver struct {
-	*governance.ProposalMetadata
+	governance.ProposalMetadata
 }
 
-func NewProposalMetadataResolver(metadata *governance.ProposalMetadata) *ProposalMetadataResolver {
+func NewProposalMetadataResolver(metadata governance.ProposalMetadata) *ProposalMetadataResolver {
 	return &ProposalMetadataResolver{
 		ProposalMetadata: metadata,
 	}

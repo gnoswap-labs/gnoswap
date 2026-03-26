@@ -15,7 +15,7 @@ type ProposalMetadata struct {
 //
 // Returns:
 //   - string: proposal title
-func (p *ProposalMetadata) Title() string {
+func (p ProposalMetadata) Title() string {
 	return p.title
 }
 
@@ -23,7 +23,7 @@ func (p *ProposalMetadata) Title() string {
 //
 // Returns:
 //   - string: proposal description
-func (p *ProposalMetadata) Description() string {
+func (p ProposalMetadata) Description() string {
 	return p.description
 }
 

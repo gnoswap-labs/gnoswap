@@ -471,6 +471,7 @@ func testActiveProposalAndVotingWeight() {
 // [EXPECTED] - Token path: gno.land/r/gnoswap/gns
 // [EXPECTED] - Amount: 1000
 // [INFO] Testing execution info (should fail for community pool spend)
+// [EXPECTED] Error getting execution info for community pool spend proposal: proposal is not a parameter change proposal
 //
 // [SCENARIO] 7. Test User Proposal Getters
 // [INFO] Testing user proposal getters
