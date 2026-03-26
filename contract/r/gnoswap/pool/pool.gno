@@ -29,7 +29,7 @@ type Pool struct {
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
-	observationState *ObservationState // oracle state with historical observations
+	observationState ObservationState // oracle state with historical observations
 }
 
 // Pool Getters methods
@@ -56,7 +56,7 @@ func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
 func (p *Pool) Positions() *avl.Tree                { return p.positions }
-func (p *Pool) ObservationState() *ObservationState { return p.observationState }
+func (p *Pool) ObservationState() ObservationState { return p.observationState }
 
 // Pool Setters methods
 func (p *Pool) SetToken0Path(token0Path string) {
@@ -131,7 +131,7 @@ func (p *Pool) SetPositions(positions *avl.Tree) {
 	p.positions = positions
 }
 
-func (p *Pool) SetObservationState(observationState *ObservationState) {
+func (p *Pool) SetObservationState(observationState ObservationState) {
 	p.observationState = observationState
 }
 

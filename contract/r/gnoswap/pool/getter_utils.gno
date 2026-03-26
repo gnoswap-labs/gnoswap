@@ -45,13 +45,14 @@ func clonePositionInfo(src PositionInfo) PositionInfo {
 	}
 }
 
-func cloneObservationState(src *ObservationState) *ObservationState {
-	if src == nil {
-		return nil
+func cloneObservationState(src ObservationState) ObservationState {
+	cloned := make(map[uint16]Observation, len(src.observations))
+	for k, v := range src.observations {
+		cloned[k] = v.Clone()
 	}
 
-	return &ObservationState{
-		observations:    make(map[uint16]*Observation),
+	return ObservationState{
+		observations:    cloned,
 		index:           src.index,
 		cardinality:     src.cardinality,
 		cardinalityNext: src.cardinalityNext,

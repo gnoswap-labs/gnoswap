@@ -669,17 +669,17 @@ func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
 	return res[0].(PositionInfo), res[1].(error)
 }
 
-func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {
+func (m *MockPool) GetObservationState(poolPath string) (ObservationState, error) {
 	res, ok := m.Response.Get("GetObservationState")
 	if !ok {
-		return nil, errors.New("not found")
+		return ObservationState{}, errors.New("not found")
 	}
 
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ObservationState), nil
+		return res[0].(ObservationState), nil
 	}
 
-	return res[0].(*ObservationState), res[1].(error)
+	return res[0].(ObservationState), res[1].(error)
 }
 
 func newMockPool(version string) *MockPool {

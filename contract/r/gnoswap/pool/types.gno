@@ -224,7 +224,7 @@ type IPoolGetter interface {
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error)
 	GetPosition(poolPath, key string) (PositionInfo, error)
-	GetObservationState(poolPath string) (*ObservationState, error)
+	GetObservationState(poolPath string) (ObservationState, error)
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.

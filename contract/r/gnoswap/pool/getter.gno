@@ -308,10 +308,10 @@ func GetPosition(poolPath, key string) (PositionInfo, error) {
 }
 
 // GetObservationState returns the observation state for a given pool path.
-func GetObservationState(poolPath string) (*ObservationState, error) {
+func GetObservationState(poolPath string) (ObservationState, error) {
 	observationState, err := getImplementation().GetObservationState(poolPath)
 	if err != nil {
-		return nil, err
+		return ObservationState{}, err
 	}
 
 	return cloneObservationState(observationState), nil

@@ -6,17 +6,17 @@ import (
 
 // ObservationState manages the oracle's historical data
 type ObservationState struct {
-	observations    map[uint16]*Observation // circular buffer of observations
-	index           uint16                  // the most-recently updated index of the observations array
-	cardinality     uint16                  // the current maximum number of observations that are being stored
-	cardinalityNext uint16                  // the next maximum number of observations to store, triggered in observations.write
+	observations    map[uint16]Observation // circular buffer of observations
+	index           uint16                 // the most-recently updated index of the observations array
+	cardinality     uint16                 // the current maximum number of observations that are being stored
+	cardinalityNext uint16                 // the next maximum number of observations to store, triggered in observations.write
 }
 
-// ObservationState Getters methods
-func (os *ObservationState) Index() uint16                         { return os.index }
-func (os *ObservationState) Cardinality() uint16                   { return os.cardinality }
-func (os *ObservationState) CardinalityNext() uint16               { return os.cardinalityNext }
-func (os *ObservationState) Observations() map[uint16]*Observation { return os.observations }
+// ObservationState Getters methods (value receivers for non-addressable access)
+func (os ObservationState) Index() uint16                        { return os.index }
+func (os ObservationState) Cardinality() uint16                  { return os.cardinality }
+func (os ObservationState) CardinalityNext() uint16              { return os.cardinalityNext }
+func (os ObservationState) Observations() map[uint16]Observation { return os.observations }
 
 // ObservationState Setters methods
 func (os *ObservationState) SetIndex(index uint16) {
@@ -31,7 +31,7 @@ func (os *ObservationState) SetCardinalityNext(cardinalityNext uint16) {
 	os.cardinalityNext = cardinalityNext
 }
 
-func (os *ObservationState) SetObservations(observations map[uint16]*Observation) {
+func (os *ObservationState) SetObservations(observations map[uint16]Observation) {
 	os.observations = observations
 }
 
@@ -43,14 +43,14 @@ type Observation struct {
 	initialized                       bool       // whether this observation has been initialized
 }
 
-// Observation Getters methods
-func (o *Observation) BlockTimestamp() int64           { return o.blockTimestamp }
-func (o *Observation) TickCumulative() int64           { return o.tickCumulative }
-func (o *Observation) LiquidityCumulative() *u256.Uint { return o.liquidityCumulative }
-func (o *Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint {
+// Observation Getters methods (value receivers for non-addressable access)
+func (o Observation) BlockTimestamp() int64           { return o.blockTimestamp }
+func (o Observation) TickCumulative() int64           { return o.tickCumulative }
+func (o Observation) LiquidityCumulative() *u256.Uint { return o.liquidityCumulative }
+func (o Observation) SecondsPerLiquidityCumulativeX128() *u256.Uint {
 	return o.secondsPerLiquidityCumulativeX128
 }
-func (o *Observation) Initialized() bool { return o.initialized }
+func (o Observation) Initialized() bool { return o.initialized }
 
 // Observation Setters methods
 func (o *Observation) SetBlockTimestamp(blockTimestamp int64) {
@@ -73,8 +73,8 @@ func (o *Observation) SetInitialized(initialized bool) {
 	o.initialized = initialized
 }
 
-func (o *Observation) Clone() *Observation {
-	return &Observation{
+func (o Observation) Clone() Observation {
+	return Observation{
 		blockTimestamp:                    o.blockTimestamp,
 		tickCumulative:                    o.tickCumulative,
 		liquidityCumulative:               o.liquidityCumulative.Clone(),
@@ -83,12 +83,12 @@ func (o *Observation) Clone() *Observation {
 	}
 }
 
-func NewObservationState(currentTime int64) *ObservationState {
-	state := &ObservationState{
+func NewObservationState(currentTime int64) ObservationState {
+	state := ObservationState{
 		index:           0,
 		cardinality:     1,
 		cardinalityNext: 1,
-		observations:    make(map[uint16]*Observation),
+		observations:    make(map[uint16]Observation),
 	}
 
 	// Initialize the first observation slot
@@ -109,8 +109,8 @@ func NewObservation(
 	liquidityCumulative *u256.Uint,
 	secondsPerLiquidityCumulativeX128 *u256.Uint,
 	initialized bool,
-) *Observation {
-	return &Observation{
+) Observation {
+	return Observation{
 		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    tickCumulative,
 		liquidityCumulative:               liquidityCumulative,
@@ -119,7 +119,7 @@ func NewObservation(
 	}
 }
 
-func NewDefaultObservation() *Observation {
+func NewDefaultObservation() Observation {
 	return NewObservation(
 		0,
 		0,

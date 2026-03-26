@@ -376,15 +376,15 @@ func (i *poolV1) GetPosition(poolPath, key string) (pl.PositionInfo, error) {
 }
 
 // GetObservationState returns the observation state for a pool.
-func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
+func (i *poolV1) GetObservationState(poolPath string) (pl.ObservationState, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return nil, err
+		return pl.ObservationState{}, err
 	}
 
 	observationState := pool.ObservationState()
-	if observationState == nil {
-		return nil, ufmt.Errorf("observation state not found for pool %s", poolPath)
+	if observationState.Cardinality() == 0 {
+		return pl.ObservationState{}, ufmt.Errorf("observation state not found for pool %s", poolPath)
 	}
 
 	return observationState, nil

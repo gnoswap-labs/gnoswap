@@ -20,7 +20,7 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	if p.ObservationState() == nil {
+	if p.ObservationState().Cardinality() == 0 {
 		return 0, nil, errors.New("observation state not initialized")
 	}
 
@@ -70,7 +70,7 @@ func writeObservationByPool(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	if p.ObservationState() == nil {
+	if p.ObservationState().Cardinality() == 0 {
 		p.SetObservationState(pl.NewObservationState(currentTime))
 	}
 
@@ -85,7 +85,7 @@ func writeObservationByPool(
 func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinalityNext uint16) error {
 	observationState := p.ObservationState()
 
-	if observationState == nil {
+	if observationState.Cardinality() == 0 {
 		return errors.New("observation state not initialized")
 	}
 
@@ -107,14 +107,14 @@ func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinality
 	return nil
 }
 
-func transform(lastObservation *pl.Observation, currentTime int64, tick int32, liquidity *u256.Uint) (*pl.Observation, error) {
-	timeDelta := currentTime - lastObservation.BlockTimestamp()
+func transform(last pl.Observation, currentTime int64, tick int32, liquidity *u256.Uint) (pl.Observation, error) {
+	timeDelta := currentTime - last.BlockTimestamp()
 	if timeDelta < 0 {
-		return nil, errors.New("time delta must be greater than 0")
+		return pl.Observation{}, errors.New("time delta must be greater than 0")
 	}
 
 	// calculate cumulative values
-	tickCumulative := lastObservation.TickCumulative() + int64(tick)*timeDelta
+	tickCumulative := last.TickCumulative() + int64(tick)*timeDelta
 
 	// calculate liquidity cumulative
 	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
@@ -122,7 +122,7 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 		panic(errOverflow)
 	}
 
-	liquidityCumulative := u256.Zero().Add(lastObservation.LiquidityCumulative(), liquidityDelta)
+	liquidityCumulative := u256.Zero().Add(last.LiquidityCumulative(), liquidityDelta)
 
 	// calculate seconds per liquidity
 	liquidityForCalc := liquidity
@@ -137,9 +137,8 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 		liquidityForCalc,
 	)
 
-	secondsPerLiquidityCumulativeX128 := lastObservation.SecondsPerLiquidityCumulativeX128().Clone()
-	secondsPerLiquidityCumulativeX128 = u256.Zero().Add(
-		secondsPerLiquidityCumulativeX128,
+	secondsPerLiquidityCumulativeX128 := u256.Zero().Add(
+		last.SecondsPerLiquidityCumulativeX128(),
 		secondsPerLiquidityDelta,
 	)
 
@@ -165,11 +164,10 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 		return currentCardinality, errors.New("nextCardinality exceeds maximum")
 	}
 
-	// This is more efficient than checking all slots from 0
 	for i := currentCardinality; i < nextCardinality; i++ {
-		observation := pl.NewDefaultObservation()
-		observation.SetBlockTimestamp(1)
-		os.Observations()[i] = observation
+		obs := pl.NewDefaultObservation()
+		obs.SetBlockTimestamp(1)
+		os.Observations()[i] = obs
 	}
 
 	return nextCardinality, nil
@@ -201,12 +199,12 @@ func writeObservation(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	lastObservation, err := lastObservation(os)
+	last, err := lastObservation(os)
 	if err != nil {
 		return err
 	}
 
-	if lastObservation.BlockTimestamp() == currentTime {
+	if last.BlockTimestamp() == currentTime {
 		return nil
 	}
 
@@ -222,7 +220,7 @@ func writeObservation(
 		os.Observations()[nextIndex] = pl.NewDefaultObservation()
 	}
 
-	observation, err := transform(lastObservation, currentTime, tick, liquidity)
+	observation, err := transform(last, currentTime, tick, liquidity)
 	if err != nil {
 		return err
 	}
@@ -233,10 +231,10 @@ func writeObservation(
 	return nil
 }
 
-func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
+func lastObservation(os *pl.ObservationState) (pl.Observation, error) {
 	observation, ok := os.Observations()[os.Index()]
-	if !ok || observation == nil {
-		return nil, errNotInitializedObservation
+	if !ok {
+		return pl.Observation{}, errNotInitializedObservation
 	}
 
 	return observation, nil
@@ -244,10 +242,10 @@ func lastObservation(os *pl.ObservationState) (*pl.Observation, error) {
 
 // observationAt returns the observation at a specific index
 // Returns error if the observation doesn't exist
-func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
+func observationAt(os *pl.ObservationState, index uint16) (pl.Observation, error) {
 	obs, ok := os.Observations()[index]
-	if !ok || obs == nil {
-		return nil, errNotInitializedObservation
+	if !ok {
+		return pl.Observation{}, errNotInitializedObservation
 	}
 
 	return obs, nil
@@ -344,23 +342,23 @@ func getSurroundingObservations(
 	index uint16,
 	liquidity *u256.Uint,
 	cardinality uint16,
-) (*pl.Observation, *pl.Observation, error) {
+) (pl.Observation, pl.Observation, error) {
 	// Optimistically set before to the newest observation
 	beforeOrAt, err := observationAt(os, index)
 	if err != nil {
-		return nil, nil, err
+		return pl.Observation{}, pl.Observation{}, err
 	}
 
 	// If the target is chronologically at or after the newest observation, we can early return
 	if lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
 		if beforeOrAt.BlockTimestamp() == target {
 			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
-			return beforeOrAt, nil, nil
+			return beforeOrAt, pl.Observation{}, nil
 		}
 		// Otherwise, we need to transform
 		atOrAfter, err := transform(beforeOrAt, target, tick, liquidity)
 		if err != nil {
-			return nil, nil, err
+			return pl.Observation{}, pl.Observation{}, err
 		}
 		return beforeOrAt, atOrAfter, nil
 	}
@@ -371,13 +369,13 @@ func getSurroundingObservations(
 	if err != nil || !beforeOrAt.Initialized() {
 		beforeOrAt, err = observationAt(os, 0)
 		if err != nil {
-			return nil, nil, err
+			return pl.Observation{}, pl.Observation{}, err
 		}
 	}
 
 	// Ensure that the target is chronologically at or after the oldest observation
 	if !lte(currentTime, beforeOrAt.BlockTimestamp(), target) {
-		return nil, nil, errObservationTooOld
+		return pl.Observation{}, pl.Observation{}, errObservationTooOld
 	}
 
 	// If we've reached this point, we have to binary search
@@ -390,11 +388,11 @@ func binarySearch(
 	target int64,
 	index uint16,
 	cardinality uint16,
-) (*pl.Observation, *pl.Observation, error) {
+) (pl.Observation, pl.Observation, error) {
 	l := uint64((index + 1) % cardinality) // oldest observation
 	r := l + uint64(cardinality) - 1       // newest observation
 	var i uint64
-	var beforeOrAt, atOrAfter *pl.Observation
+	var beforeOrAt, atOrAfter pl.Observation
 	var err error
 
 	for {
@@ -411,7 +409,7 @@ func binarySearch(
 		afterIndex := uint16((i + 1) % uint64(cardinality))
 		atOrAfter, err = observationAt(os, afterIndex)
 		if err != nil {
-			return nil, nil, err
+			return pl.Observation{}, pl.Observation{}, err
 		}
 
 		targetAtOrAfter := lte(currentTime, beforeOrAt.BlockTimestamp(), target)
