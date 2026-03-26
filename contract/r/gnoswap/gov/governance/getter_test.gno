@@ -130,14 +130,23 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProposalCommunityPoolSpendInfo",
-			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
+			setup: func(m *MockGovernance) {
+				schedule := NewProposalScheduleStatus(10, 20, 30, 40, 50)
+				actionStatus := NewProposalActionStatus(true)
+				voteStatus := NewProposalVoteStatus(100, 60)
+				status := NewProposalStatusBy(schedule, actionStatus, voteStatus)
+				metadata := NewProposalMetadata("title", "description")
+				data := NewProposalData(CommunityPoolSpend, NewCommunityPoolSpendInfo(adminAddr, "token", 70), ExecutionInfo{})
+				proposal := NewProposal(1, status, metadata, data, adminAddr, 2, 80, 90, 100)
+				m.Response.Set("GetProposal", proposal, nil)
+			},
 			getter: func(t *testing.T) any {
 				info, err := GetProposalCommunityPoolSpendInfo(1)
 				uassert.NoError(t, err)
 				return info
 			},
 			mutate: func(result any) {
-				info := result.(*CommunityPoolSpendInfo)
+				info := result.(CommunityPoolSpendInfo)
 				info.tokenPath = "mutated"
 				info.amount = 999
 			},
@@ -156,7 +165,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 				return info
 			},
 			mutate: func(result any) {
-				info := result.(*ExecutionInfo)
+				info := result.(ExecutionInfo)
 				info.num = 999
 				info.msgs[0] = "mutated"
 				info.msgs = append(info.msgs, "extra")

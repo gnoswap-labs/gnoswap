@@ -8,7 +8,7 @@ type Proposal struct {
 	configVersion int64             // The version of the governance config used
 	status        *ProposalStatus   // Current status and voting information
 	metadata      ProposalMetadata  // Title and description
-	data          *ProposalData     // Type-specific proposal data
+	data          ProposalData      // Type-specific proposal data
 	snapshotTime  int64             // Timestamp for voting weight snapshot lookup
 	createdAt     int64             // Creation timestamp
 	createdHeight int64             // Block height at creation
@@ -75,7 +75,7 @@ func (p *Proposal) SnapshotTime() int64 {
 }
 
 // Data returns the proposal data.
-func (p *Proposal) Data() *ProposalData {
+func (p *Proposal) Data() ProposalData {
 	return p.data
 }
 
@@ -126,7 +126,7 @@ func NewProposal(
 	proposalID int64,
 	status *ProposalStatus,
 	metadata ProposalMetadata,
-	data *ProposalData,
+	data ProposalData,
 	proposerAddress address,
 	configVersion int64,
 	snapshotTime int64,

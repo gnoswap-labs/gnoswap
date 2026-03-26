@@ -57,25 +57,25 @@ func TestProposal_Validation(t *testing.T) {
 	tests := []struct {
 		name          string
 		metadata      governance.ProposalMetadata
-		data          *governance.ProposalData
+		data          governance.ProposalData
 		expectedError bool
 	}{
 		{
 			name:          "Valid Text proposal",
 			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data:          governance.NewProposalData(governance.Text, nil, nil),
+			data:          governance.NewProposalData(governance.Text, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
 			expectedError: false,
 		},
 		{
 			name:          "Invalid metadata",
 			metadata:      governance.NewProposalMetadata("", "Valid Description"),
-			data:          governance.NewProposalData(governance.Text, nil, nil),
+			data:          governance.NewProposalData(governance.Text, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
 			expectedError: true,
 		},
 		{
 			name:          "Invalid CommunityPoolSpend proposal",
 			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data:          governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), nil),
+			data:          governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), governance.ExecutionInfo{}),
 			expectedError: true,
 		},
 	}
@@ -162,7 +162,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 				1,
 				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
 				governance.NewProposalMetadata("Test", "Test"),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.NewProposalData(tc.proposalType, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
 				address("g1proposer"),
 				1, // configVersion
 				baseTime.Unix(),
@@ -457,7 +457,7 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 				1,
 				NewProposalStatus(config, tc.maxVotingWeight, tc.proposalType.IsExecutable(), baseTime),
 				governance.NewProposalMetadata("Test Title", "Test Description"),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.NewProposalData(tc.proposalType, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
 				address("g1proposer"),
 				1,
 				baseTime,
@@ -524,7 +524,7 @@ func TestNewProposal(t *testing.T) {
 				1,
 				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
 				governance.NewProposalMetadata(tc.title, tc.description),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.NewProposalData(tc.proposalType, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
 				tc.proposer,
 				1, // configVersion
 				baseTime,

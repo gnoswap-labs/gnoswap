@@ -54,7 +54,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 			metadata := governance.NewProposalMetadata(tc.title, tc.description)
 
 			// when
-			err := NewProposalMetadataResolver(metadata).Validate()
+			err := NewProposalMetadataResolver(&metadata).Validate()
 
 			// then
 			if tc.expectedError {
@@ -74,8 +74,8 @@ func TestProposalData_Validation(t *testing.T) {
 	tests := []struct {
 		name                 string
 		proposalType         governance.ProposalType
-		spendInfo            *governance.CommunityPoolSpendInfo
-		execution            *governance.ExecutionInfo
+		spendInfo            governance.CommunityPoolSpendInfo
+		execution            governance.ExecutionInfo
 		expectedError        bool
 		expectedErrorMessage string
 	}{
@@ -193,7 +193,8 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 			info := governance.NewExecutionInfo(tc.num, tc.msgs)
 
 			// when
-			infos := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
+			data := governance.NewProposalData(governance.ParameterChange, governance.CommunityPoolSpendInfo{}, info)
+			infos := NewProposalDataResolver(data).ParameterChangesInfos()
 
 			// then
 			uassert.Equal(t, len(infos), len(tc.expectedInfos))

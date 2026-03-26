@@ -78,7 +78,7 @@ func newTestProposal(
 	id int64,
 	status *governance.ProposalStatus,
 	metadata governance.ProposalMetadata,
-	data *governance.ProposalData,
+	data governance.ProposalData,
 	proposer address,
 	configVersion int64,
 	snapshotTime int64,

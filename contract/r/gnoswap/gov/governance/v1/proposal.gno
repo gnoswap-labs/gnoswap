@@ -94,16 +94,11 @@ func (r *ProposalResolver) IsExecutable(current int64) bool {
 // CommunityPoolSpendTokenPath returns the token path for community pool spend proposals.
 // Returns empty string for other proposal types.
 func (r *ProposalResolver) CommunityPoolSpendTokenPath() string {
-	if r.Data() == nil {
+	if r.Type() != governance.CommunityPoolSpend {
 		return ""
 	}
 
-	communityPoolSpend := r.dataResolver.CommunityPoolSpend()
-	if communityPoolSpend == nil {
-		return ""
-	}
-
-	return communityPoolSpend.TokenPath()
+	return r.dataResolver.CommunityPoolSpend().TokenPath()
 }
 
 // vote records a vote for this proposal and updates vote tallies.

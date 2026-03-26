@@ -88,10 +88,10 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 
 // ProposalDataResolver handles business logic for proposal data.
 type ProposalDataResolver struct {
-	*governance.ProposalData
+	governance.ProposalData
 }
 
-func NewProposalDataResolver(proposalData *governance.ProposalData) *ProposalDataResolver {
+func NewProposalDataResolver(proposalData governance.ProposalData) *ProposalDataResolver {
 	return &ProposalDataResolver{
 		ProposalData: proposalData,
 	}
@@ -129,12 +129,7 @@ func (r *ProposalDataResolver) validateText() error {
 // Returns:
 //   - error: validation error if community pool spend data is invalid
 func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
-	// Validate recipient address
 	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
-	if communityPoolSpend == nil {
-		return makeErrorWithDetails(
-			errInvalidInput, "community pool spend info is missing")
-	}
 
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
@@ -159,12 +154,6 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 //   - error: validation error if parameter change data structure is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
-	if execution == nil {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"execution info is missing",
-		)
-	}
 	num := execution.Num()
 	msgs := execution.Msgs()
 
@@ -213,7 +202,7 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 
 	// Return empty slice if no executions
 	execution := r.Execution()
-	if execution == nil || execution.Num() <= 0 {
+	if execution.Num() <= 0 {
 		return infos
 	}
 
@@ -243,8 +232,8 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 //
 // Returns:
 //   - *ProposalData: proposal data configured for text proposal
-func NewProposalTextData() *governance.ProposalData {
-	return governance.NewProposalData(governance.Text, nil, nil)
+func NewProposalTextData() governance.ProposalData {
+	return governance.NewProposalData(governance.Text, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{})
 }
 
 // NewProposalCommunityPoolSpendData creates proposal data for a community pool spend proposal.
@@ -263,7 +252,7 @@ func NewProposalCommunityPoolSpendData(
 	to address,
 	amount int64,
 	communityPoolPackagePath string,
-) *governance.ProposalData {
+) governance.ProposalData {
 	// Create execution message for the token transfer
 	executionInfoMessage := makeExecuteMessage(
 		communityPoolPackagePath,
@@ -287,13 +276,13 @@ func NewProposalCommunityPoolSpendData(
 //
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
-func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
+func NewProposalExecutionData(numToExecute int64, executions string) governance.ProposalData {
 	// Split execution string into individual messages
 	msgs := strings.Split(executions, messageSeparator)
 
 	return governance.NewProposalData(
 		governance.ParameterChange,
-		nil,
+		governance.CommunityPoolSpendInfo{},
 		governance.NewExecutionInfo(numToExecute, msgs),
 	)
 }

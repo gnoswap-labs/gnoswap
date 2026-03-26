@@ -349,7 +349,7 @@ func (gv *governanceV1) createProposal(
 	maxVotingWeight int64,
 	snapshotTime int64,
 	proposalMetadata governance.ProposalMetadata,
-	proposalData *governance.ProposalData,
+	proposalData governance.ProposalData,
 	proposerAddress address,
 	proposerGnsBalance int64,
 	createdAt int64,

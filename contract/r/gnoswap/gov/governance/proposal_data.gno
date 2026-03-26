@@ -45,32 +45,32 @@ func NewProposalMetadata(title string, description string) ProposalMetadata {
 // ProposalData contains the type-specific data for a proposal.
 // This structure holds different data depending on the proposal type.
 type ProposalData struct {
-	proposalType       ProposalType            // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
-	communityPoolSpend *CommunityPoolSpendInfo // Data for community pool spending proposals
-	execution          *ExecutionInfo          // Data for parameter change proposals
+	proposalType       ProposalType          // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
+	communityPoolSpend CommunityPoolSpendInfo // Data for community pool spending proposals
+	execution          ExecutionInfo          // Data for parameter change proposals
 }
 
 // ProposalType returns the type of this proposal.
 //
 // Returns:
 //   - ProposalType: the proposal type
-func (p *ProposalData) ProposalType() ProposalType {
+func (p ProposalData) ProposalType() ProposalType {
 	return p.proposalType
 }
 
 // CommunityPoolSpend returns the community pool spending information.
 //
 // Returns:
-//   - *CommunityPoolSpendInfo: community pool spending details
-func (p *ProposalData) CommunityPoolSpend() *CommunityPoolSpendInfo {
+//   - CommunityPoolSpendInfo: community pool spending details
+func (p ProposalData) CommunityPoolSpend() CommunityPoolSpendInfo {
 	return p.communityPoolSpend
 }
 
 // Execution returns the execution information for parameter changes.
 //
 // Returns:
-//   - *ExecutionInfo: parameter change execution details
-func (p *ProposalData) Execution() *ExecutionInfo {
+//   - ExecutionInfo: parameter change execution details
+func (p ProposalData) Execution() ExecutionInfo {
 	return p.execution
 }
 
@@ -83,8 +83,8 @@ func (p *ProposalData) Execution() *ExecutionInfo {
 //
 // Returns:
 //   - *ProposalData: new proposal data instance
-func NewProposalData(proposalType ProposalType, communityPoolSpend *CommunityPoolSpendInfo, execution *ExecutionInfo) *ProposalData {
-	return &ProposalData{
+func NewProposalData(proposalType ProposalType, communityPoolSpend CommunityPoolSpendInfo, execution ExecutionInfo) ProposalData {
+	return ProposalData{
 		proposalType:       proposalType,
 		communityPoolSpend: communityPoolSpend,
 		execution:          execution,
@@ -98,8 +98,8 @@ type CommunityPoolSpendInfo struct {
 	amount    int64   // Amount of tokens to transfer
 }
 
-func NewCommunityPoolSpendInfo(to address, tokenPath string, amount int64) *CommunityPoolSpendInfo {
-	return &CommunityPoolSpendInfo{
+func NewCommunityPoolSpendInfo(to address, tokenPath string, amount int64) CommunityPoolSpendInfo {
+	return CommunityPoolSpendInfo{
 		to:        to,
 		tokenPath: tokenPath,
 		amount:    amount,
@@ -107,9 +107,9 @@ func NewCommunityPoolSpendInfo(to address, tokenPath string, amount int64) *Comm
 }
 
 /* Getter methods */
-func (i *CommunityPoolSpendInfo) To() address       { return i.to }
-func (i *CommunityPoolSpendInfo) TokenPath() string { return i.tokenPath }
-func (i *CommunityPoolSpendInfo) Amount() int64     { return i.amount }
+func (i CommunityPoolSpendInfo) To() address       { return i.to }
+func (i CommunityPoolSpendInfo) TokenPath() string { return i.tokenPath }
+func (i CommunityPoolSpendInfo) Amount() int64     { return i.amount }
 
 // ExecutionInfo contains information for parameter change execution.
 // Messages are encoded strings that specify function calls and parameters.
@@ -118,16 +118,16 @@ type ExecutionInfo struct {
 	msgs []string // Execution messages separated by messageSeparator (*GOV*)
 }
 
-func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
-	return &ExecutionInfo{
+func NewExecutionInfo(num int64, msgs []string) ExecutionInfo {
+	return ExecutionInfo{
 		num:  num,
 		msgs: msgs,
 	}
 }
 
 /* Getter methods */
-func (i *ExecutionInfo) Num() int64     { return i.num }
-func (i *ExecutionInfo) Msgs() []string { return i.msgs }
+func (i ExecutionInfo) Num() int64     { return i.num }
+func (i ExecutionInfo) Msgs() []string { return i.msgs }
 
 // ParameterChangeInfo represents a single parameter change to be executed.
 type ParameterChangeInfo struct {
@@ -157,13 +157,9 @@ func (p *ProposalMetadata) Clone() ProposalMetadata {
 	}
 }
 
-// Clone creates a deep copy of the CommunityPoolSpendInfo.
-func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
-	if i == nil {
-		return nil
-	}
-
-	return &CommunityPoolSpendInfo{
+// Clone creates a copy of the CommunityPoolSpendInfo.
+func (i CommunityPoolSpendInfo) Clone() CommunityPoolSpendInfo {
+	return CommunityPoolSpendInfo{
 		to:        i.to,
 		tokenPath: i.tokenPath,
 		amount:    i.amount,
@@ -171,27 +167,19 @@ func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
 }
 
 // Clone creates a deep copy of the ExecutionInfo.
-func (i *ExecutionInfo) Clone() *ExecutionInfo {
-	if i == nil {
-		return nil
-	}
-
+func (i ExecutionInfo) Clone() ExecutionInfo {
 	clonedMsgs := make([]string, len(i.msgs))
 	copy(clonedMsgs, i.msgs)
 
-	return &ExecutionInfo{
+	return ExecutionInfo{
 		num:  i.num,
 		msgs: clonedMsgs,
 	}
 }
 
 // Clone creates a deep copy of the ProposalData.
-func (p *ProposalData) Clone() *ProposalData {
-	if p == nil {
-		return nil
-	}
-
-	return &ProposalData{
+func (p ProposalData) Clone() ProposalData {
+	return ProposalData{
 		proposalType:       p.proposalType,
 		communityPoolSpend: p.communityPoolSpend.Clone(),
 		execution:          p.execution.Clone(),

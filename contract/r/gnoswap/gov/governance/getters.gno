@@ -185,34 +185,31 @@ func GetVotedAt(proposalID int64, addr address) (int64, error) {
 }
 
 // GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
-func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
+func GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error) {
 	proposal, err := getImplementation().GetProposal(proposalID)
 	if err != nil {
-		return nil, err
+		return CommunityPoolSpendInfo{}, err
 	}
 
-	proposalData := proposal.Data()
-	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
-		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
+	if proposal.Type() != CommunityPoolSpend {
+		return CommunityPoolSpendInfo{}, ufmt.Errorf("proposal is not a community pool spend proposal")
 	}
 
-	return proposalData.CommunityPoolSpend().Clone(), nil
+	return proposal.Data().CommunityPoolSpend(), nil
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
-func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
+func GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error) {
 	proposal, err := getImplementation().GetProposal(proposalID)
 	if err != nil {
-		return nil, err
+		return ExecutionInfo{}, err
 	}
 
-	proposalData := proposal.Data()
-
-	if proposalData == nil || proposalData.Execution() == nil {
-		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
+	if proposal.Type() != ParameterChange {
+		return ExecutionInfo{}, ufmt.Errorf("proposal is not a parameter change proposal")
 	}
 
-	return proposalData.Execution().Clone(), nil
+	return proposal.Data().Execution().Clone(), nil
 }
 
 // ==================================
