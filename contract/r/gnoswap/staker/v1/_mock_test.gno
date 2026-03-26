@@ -36,6 +36,7 @@ type MockStakerStore struct {
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
 	externalIncentivesByCreationTime *sr.UintTree
+	externalIncentiveIdsByTimeAndPool map[string]*avl.Tree
 }
 
 // DepositGnsAmount
@@ -351,6 +352,24 @@ func (s *MockStakerStore) SetExternalIncentivesByCreationTime(tree *sr.UintTree)
 	return nil
 }
 
+func (s *MockStakerStore) GetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) *avl.Tree {
+	tree, ok := s.externalIncentiveIdsByTimeAndPool[makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath)]
+	if !ok {
+		panic("external incentive ids by creation time and pool path not found")
+	}
+	return tree
+}
+
+func (s *MockStakerStore) SetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string, ids *avl.Tree) error {
+	s.externalIncentiveIdsByTimeAndPool[makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath)] = ids
+	return nil
+}
+
+func (s *MockStakerStore) DeleteExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) error {
+	delete(s.externalIncentiveIdsByTimeAndPool, makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath))
+	return nil
+}
+
 func newMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            1_000_000_000,
@@ -379,7 +398,12 @@ func newMockStakerStore() *MockStakerStore {
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
 		currentSwapBatch:                 &sr.SwapBatchProcessor{},
 		externalIncentivesByCreationTime: sr.NewUintTree(),
+		externalIncentiveIdsByTimeAndPool: make(map[string]*avl.Tree),
 	}
+}
+
+func makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime int64, poolPath string) string {
+	return ufmt.Sprintf("externalIncentivesByCreationTime:%s:%s", sr.EncodeInt64(creationTime), poolPath)
 }
 
 type mockPoolAccessor struct{}

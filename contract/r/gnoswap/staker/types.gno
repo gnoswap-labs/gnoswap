@@ -228,4 +228,7 @@ type IStakerStore interface {
 	HasExternalIncentivesByCreationTimeStoreKey() bool
 	GetExternalIncentivesByCreationTime() *UintTree
 	SetExternalIncentivesByCreationTime(tree *UintTree) error
+	GetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) *avl.Tree
+	SetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string, ids *avl.Tree) error
+	DeleteExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) error
 }

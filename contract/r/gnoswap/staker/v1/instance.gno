@@ -1,6 +1,9 @@
 package v1
 
-import sr "gno.land/r/gnoswap/staker"
+import (
+	avl "gno.land/p/nt/avl/v0"
+	sr "gno.land/r/gnoswap/staker"
+)
 
 type stakerV1 struct {
 	store            sr.IStakerStore
@@ -101,6 +104,47 @@ func (s *stakerV1) updateExternalIncentivesByCreationTime(externalIncentivesByCr
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (s *stakerV1) getExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) (*avl.Tree, bool) {
+	if !s.getExternalIncentivesByCreationTime().Has(creationTime) {
+		return nil, false
+	}
+
+	poolPaths := s.getExternalIncentivePoolPathsByCreationTime(creationTime)
+	if !poolPaths.Has(poolPath) {
+		return nil, false
+	}
+
+	return s.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime, poolPath), true
+}
+
+func (s *stakerV1) setExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string, ids *avl.Tree) {
+	err := s.store.SetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime, poolPath, ids)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (s *stakerV1) deleteExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) {
+	err := s.store.DeleteExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime, poolPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (s *stakerV1) getExternalIncentivePoolPathsByCreationTime(creationTime int64) *avl.Tree {
+	value, exists := s.getExternalIncentivesByCreationTime().Get(creationTime)
+	if !exists {
+		panic("external incentive creation time not found")
+	}
+
+	poolPaths, ok := value.(*avl.Tree)
+	if !ok {
+		panic("failed to cast external incentive pool paths to *avl.Tree")
+	}
+
+	return poolPaths
 }
 
 func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {

@@ -554,6 +554,28 @@ func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *UintTree) error 
 	return s.kvStore.Set(StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
+func (s *stakerStore) GetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) *avl.Tree {
+	result, err := s.kvStore.Get(makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath))
+	if err != nil {
+		panic(err)
+	}
+
+	tree, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return tree
+}
+
+func (s *stakerStore) SetExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string, ids *avl.Tree) error {
+	return s.kvStore.Set(makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath), ids)
+}
+
+func (s *stakerStore) DeleteExternalIncentiveIdsByCreationTimeAndPoolPath(creationTime int64, poolPath string) error {
+	return s.kvStore.Delete(makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime, poolPath))
+}
+
 // NewStakerStore creates a new staker store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewStakerStore(kvStore store.KVStore) IStakerStore {
@@ -568,4 +590,8 @@ func uint64ToString(id uint64) string {
 
 func makeIncentiveID(creator address, timestamp int64, index int64) string {
 	return ufmt.Sprintf("%s:%d:%d", creator.String(), timestamp, index)
+}
+
+func makeExternalIncentiveCreationTimePoolPathStoreKey(creationTime int64, poolPath string) string {
+	return ufmt.Sprintf("%s:%s:%s", StoreKeyExternalIncentivesByCreationTime.String(), EncodeInt64(creationTime), poolPath)
 }
