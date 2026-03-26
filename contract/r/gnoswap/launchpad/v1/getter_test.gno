@@ -899,7 +899,7 @@ func TestGetProjectTierRewardManager(t *testing.T) {
 			name:             "get non-existent reward manager",
 			createProject:    false,
 			expectedHasError: true,
-			expectedError:    "reward manager not found",
+			expectedError:    "reward manager(nonexistent-project-tier-id) not found",
 		},
 	}
 
@@ -1042,7 +1042,7 @@ func TestGetRewardState(t *testing.T) {
 			name:             "get reward state with non-existent project tier",
 			createDeposit:    false,
 			expectedHasError: true,
-			expectedError:    "reward manager not found",
+			expectedError:    "reward manager(nonexistent-project-tier-id) not found",
 		},
 	}
 

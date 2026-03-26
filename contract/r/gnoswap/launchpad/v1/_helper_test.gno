@@ -259,7 +259,11 @@ var (
 func initTestStore() {
 	testStore = &testLaunchpadStore{
 		projects:                  avl.NewTree(),
+		keyedProjects:             avl.NewTree(),
+		projectIDs:                avl.NewTree(),
 		projectTierRewardManagers: avl.NewTree(),
+		keyedProjectTierRewardManagers: avl.NewTree(),
+		projectTierRewardManagerIDs: avl.NewTree(),
 		depositCounter:            launchpad.NewCounter(),
 		deposits:                  avl.NewTree(),
 	}
@@ -276,7 +280,11 @@ func resetTestStore() {
 
 type testLaunchpadStore struct {
 	projects                  *avl.Tree
+	keyedProjects             *avl.Tree
+	projectIDs                *avl.Tree
 	projectTierRewardManagers *avl.Tree
+	keyedProjectTierRewardManagers *avl.Tree
+	projectTierRewardManagerIDs *avl.Tree
 	depositCounter            *launchpad.Counter
 	deposits                  *avl.Tree
 }
@@ -297,6 +305,42 @@ func (s *testLaunchpadStore) SetProjects(projects *avl.Tree) error {
 	return nil
 }
 
+func (s *testLaunchpadStore) GetProject(projectID string) (*launchpad.Project, bool) {
+	projectI, exists := s.keyedProjects.Get(projectID)
+	if !exists {
+		return nil, false
+	}
+
+	project, ok := projectI.(*launchpad.Project)
+	if !ok {
+		return nil, false
+	}
+
+	return project, true
+}
+
+func (s *testLaunchpadStore) SetProject(projectID string, project *launchpad.Project) error {
+	s.keyedProjects.Set(projectID, project)
+	return nil
+}
+
+func (s *testLaunchpadStore) HasProjectIDsKey() bool {
+	return s.projectIDs != nil
+}
+
+func (s *testLaunchpadStore) GetProjectIDs() *avl.Tree {
+	if s.projectIDs == nil {
+		return avl.NewTree()
+	}
+
+	return s.projectIDs
+}
+
+func (s *testLaunchpadStore) SetProjectIDs(projectIDs *avl.Tree) error {
+	s.projectIDs = projectIDs
+	return nil
+}
+
 func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
 	return s.projectTierRewardManagers != nil
 }
@@ -310,6 +354,42 @@ func (s *testLaunchpadStore) GetProjectTierRewardManagers() *avl.Tree {
 
 func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
 	s.projectTierRewardManagers = managers
+	return nil
+}
+
+func (s *testLaunchpadStore) GetProjectTierRewardManager(projectTierID string) (*launchpad.RewardManager, bool) {
+	managerI, exists := s.keyedProjectTierRewardManagers.Get(projectTierID)
+	if !exists {
+		return nil, false
+	}
+
+	manager, ok := managerI.(*launchpad.RewardManager)
+	if !ok {
+		return nil, false
+	}
+
+	return manager, true
+}
+
+func (s *testLaunchpadStore) SetProjectTierRewardManager(projectTierID string, manager *launchpad.RewardManager) error {
+	s.keyedProjectTierRewardManagers.Set(projectTierID, manager)
+	return nil
+}
+
+func (s *testLaunchpadStore) HasProjectTierRewardManagerIDsKey() bool {
+	return s.projectTierRewardManagerIDs != nil
+}
+
+func (s *testLaunchpadStore) GetProjectTierRewardManagerIDs() *avl.Tree {
+	if s.projectTierRewardManagerIDs == nil {
+		return avl.NewTree()
+	}
+
+	return s.projectTierRewardManagerIDs
+}
+
+func (s *testLaunchpadStore) SetProjectTierRewardManagerIDs(managerIDs *avl.Tree) error {
+	s.projectTierRewardManagerIDs = managerIDs
 	return nil
 }
 
