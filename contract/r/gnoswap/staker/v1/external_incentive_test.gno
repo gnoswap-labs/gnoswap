@@ -1049,25 +1049,21 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 
 	warmups := []sr.Warmup{
 		{
-			Index:          0,
 			TimeDuration:   0,
 			NextWarmupTime: startTime,
 			WarmupRatio:    30,
 		},
 		{
-			Index:          1,
 			TimeDuration:   0,
 			NextWarmupTime: startTime,
 			WarmupRatio:    50,
 		},
 		{
-			Index:          2,
 			TimeDuration:   0,
 			NextWarmupTime: startTime,
 			WarmupRatio:    70,
 		},
 		{
-			Index:          3,
 			TimeDuration:   math.MaxInt64,
 			NextWarmupTime: math.MaxInt64,
 			WarmupRatio:    100,
