@@ -35,6 +35,20 @@ func initStoreData(launchpadStore launchpad.ILaunchpadStore) error {
 		}
 	}
 
+	if !launchpadStore.HasProjectIDsKey() {
+		err := launchpadStore.SetProjectIDs(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !launchpadStore.HasProjectTierRewardManagerIDsKey() {
+		err := launchpadStore.SetProjectTierRewardManagerIDs(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
 	if !launchpadStore.HasDepositCounterStoreKey() {
 		err := launchpadStore.SetDepositCounter(launchpad.NewCounter())
 		if err != nil {

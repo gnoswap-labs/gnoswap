@@ -95,10 +95,22 @@ type ILaunchpadStore interface {
 	HasProjectsKey() bool
 	GetProjects() *avl.Tree
 	SetProjects(projects *avl.Tree) error
+	GetProject(projectID string) (*Project, bool)
+	SetProject(projectID string, project *Project) error
+
+	HasProjectIDsKey() bool
+	GetProjectIDs() *avl.Tree
+	SetProjectIDs(projectIDs *avl.Tree) error
 
 	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *avl.Tree
 	SetProjectTierRewardManagers(managers *avl.Tree) error
+	GetProjectTierRewardManager(projectTierID string) (*RewardManager, bool)
+	SetProjectTierRewardManager(projectTierID string, manager *RewardManager) error
+
+	HasProjectTierRewardManagerIDsKey() bool
+	GetProjectTierRewardManagerIDs() *avl.Tree
+	SetProjectTierRewardManagerIDs(managerIDs *avl.Tree) error
 
 	// DepositCounter
 	HasDepositCounterStoreKey() bool

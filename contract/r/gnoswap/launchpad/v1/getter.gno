@@ -12,8 +12,8 @@ import (
 
 // GetProjectCount returns the total number of projects.
 func (lp *launchpadV1) GetProjectCount() int {
-	projects := lp.store.GetProjects()
-	return projects.Size()
+	projectIDs := lp.getAllProjectIDs()
+	return projectIDs.Size()
 }
 
 // GetProjectIDs returns a paginated list of project IDs.
@@ -23,10 +23,9 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 		return []string{}
 	}
 
-	projects := lp.store.GetProjects()
 	projectIDs := make([]string, 0)
-
-	projects.IterateByOffset(offset, count, func(key string, value any) bool {
+	ids := lp.getAllProjectIDs()
+	ids.IterateByOffset(offset, count, func(key string, value any) bool {
 		projectIDs = append(projectIDs, key)
 		return false
 	})
@@ -38,15 +37,9 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 // GetProject retrieves a project by its ID.
 // Returns nil and error if project not found.
 func (lp *launchpadV1) GetProject(projectId string) (*launchpad.Project, error) {
-	projects := lp.store.GetProjects()
-	value, exists := projects.Get(projectId)
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectId))
-	}
-
-	project, ok := value.(*launchpad.Project)
-	if !ok {
-		return nil, errors.New("invalid project type")
+	project, err := lp.getProject(projectId)
+	if err != nil {
+		return nil, err
 	}
 
 	return project, nil
@@ -479,22 +472,16 @@ func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
 
 // GetProjectTierRewardManagerCount returns the total number of reward managers.
 func (lp *launchpadV1) GetProjectTierRewardManagerCount() int {
-	managers := lp.store.GetProjectTierRewardManagers()
-	return managers.Size()
+	managerIDs := lp.getAllProjectTierRewardManagerIDs()
+	return managerIDs.Size()
 }
 
 // GetProjectTierRewardManager retrieves a reward manager by project tier ID.
 // Returns nil and error if reward manager not found.
 func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launchpad.RewardManager, error) {
-	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
-	}
-
-	manager, ok := value.(*launchpad.RewardManager)
-	if !ok {
-		return nil, errors.New("invalid reward manager type")
+	manager, err := lp.getProjectTierRewardManager(projectTierId)
+	if err != nil {
+		return nil, err
 	}
 
 	return manager, nil
@@ -613,15 +600,9 @@ func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId strin
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
 // Returns nil and error if reward manager or reward state not found.
 func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
-	managers := lp.store.GetProjectTierRewardManagers()
-	value, exists := managers.Get(projectTierId)
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
-	}
-
-	manager, ok := value.(*launchpad.RewardManager)
-	if !ok {
-		return nil, errors.New("invalid reward manager type")
+	manager, err := lp.getProjectTierRewardManager(projectTierId)
+	if err != nil {
+		return nil, err
 	}
 
 	rewards := manager.Rewards()

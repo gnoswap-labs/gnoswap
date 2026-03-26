@@ -17,6 +17,8 @@ func (s StoreKey) String() string {
 const (
 	StoreKeyProjects                  StoreKey = "projects"                  // Projects tree
 	StoreKeyProjectTierRewardManagers StoreKey = "projectTierRewardManagers" // Project tier reward managers tree
+	StoreKeyProjectIDs                StoreKey = "projectIDs"                // Project ID index tree
+	StoreKeyProjectTierRewardManagerIDs StoreKey = "projectTierRewardManagerIDs" // Project tier reward manager ID index tree
 	StoreKeyDepositCounter            StoreKey = "depositCounter"            // Deposit counter
 	StoreKeyDeposits                  StoreKey = "deposits"                  // Deposits tree
 )
@@ -50,6 +52,55 @@ func (s *launchpadStore) SetProjects(projects *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProjects.String(), projects)
 }
 
+func makeStoreProjectKey(projectID string) string {
+	return "project:" + projectID
+}
+
+func (s *launchpadStore) GetProject(projectID string) (*Project, bool) {
+	storeKey := makeStoreProjectKey(projectID)
+	if !s.kvStore.Has(storeKey) {
+		return nil, false
+	}
+
+	result, err := s.kvStore.Get(storeKey)
+	if err != nil {
+		panic(err)
+	}
+
+	project, ok := result.(*Project)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *Project: %T", result))
+	}
+
+	return project, true
+}
+
+func (s *launchpadStore) SetProject(projectID string, project *Project) error {
+	return s.kvStore.Set(makeStoreProjectKey(projectID), project)
+}
+
+func (s *launchpadStore) HasProjectIDsKey() bool {
+	return s.kvStore.Has(StoreKeyProjectIDs.String())
+}
+
+func (s *launchpadStore) GetProjectIDs() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyProjectIDs.String())
+	if err != nil {
+		panic(err)
+	}
+
+	projectIDs, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return projectIDs
+}
+
+func (s *launchpadStore) SetProjectIDs(projectIDs *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyProjectIDs.String(), projectIDs)
+}
+
 // HasProjectTierRewardManagersKey checks if the project tier reward managers key exists in the store.
 func (s *launchpadStore) HasProjectTierRewardManagersKey() bool {
 	return s.kvStore.Has(StoreKeyProjectTierRewardManagers.String())
@@ -73,6 +124,55 @@ func (s *launchpadStore) GetProjectTierRewardManagers() *avl.Tree {
 // SetProjectTierRewardManagers stores the project tier reward managers tree.
 func (s *launchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProjectTierRewardManagers.String(), managers)
+}
+
+func makeStoreProjectTierRewardManagerKey(projectTierID string) string {
+	return "projectTierRewardManager:" + projectTierID
+}
+
+func (s *launchpadStore) GetProjectTierRewardManager(projectTierID string) (*RewardManager, bool) {
+	storeKey := makeStoreProjectTierRewardManagerKey(projectTierID)
+	if !s.kvStore.Has(storeKey) {
+		return nil, false
+	}
+
+	result, err := s.kvStore.Get(storeKey)
+	if err != nil {
+		panic(err)
+	}
+
+	manager, ok := result.(*RewardManager)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *RewardManager: %T", result))
+	}
+
+	return manager, true
+}
+
+func (s *launchpadStore) SetProjectTierRewardManager(projectTierID string, manager *RewardManager) error {
+	return s.kvStore.Set(makeStoreProjectTierRewardManagerKey(projectTierID), manager)
+}
+
+func (s *launchpadStore) HasProjectTierRewardManagerIDsKey() bool {
+	return s.kvStore.Has(StoreKeyProjectTierRewardManagerIDs.String())
+}
+
+func (s *launchpadStore) GetProjectTierRewardManagerIDs() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyProjectTierRewardManagerIDs.String())
+	if err != nil {
+		panic(err)
+	}
+
+	managerIDs, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return managerIDs
+}
+
+func (s *launchpadStore) SetProjectTierRewardManagerIDs(managerIDs *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyProjectTierRewardManagerIDs.String(), managerIDs)
 }
 
 // HasDepositCounterStoreKey checks if the deposit counter key exists in the store.
