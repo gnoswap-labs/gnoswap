@@ -172,8 +172,8 @@ func checkInRangePosition() {
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be in range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance())
+ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", pos.Token0Balance())
+ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func mintOutRangePosition() {
@@ -211,8 +211,8 @@ func checkOutRangePosition() {
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be out of range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance())
+ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", pos.Token0Balance())
+ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func executeSwap() {

@@ -243,20 +243,20 @@ func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) st
 	).(string)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed0",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed0(args[0].(uint64)) },
 		positionId,
-	).(string)
+	).(int64)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed1",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed1(args[0].(uint64)) },
 		positionId,
-	).(string)
+	).(int64)
 }
 
 func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {

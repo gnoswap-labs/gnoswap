@@ -34,7 +34,17 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			)
 	}
 
-	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
+	liquidityToRemove, err := u256.FromDecimal(params.liquidity)
+	if err != nil {
+		return params.positionId,
+			"",
+			fee0Str,
+			fee1Str,
+			"", "",
+			position.PoolKey(),
+			makeErrorWithDetails(errInvalidLiquidity, ufmt.Sprintf("liquidity(%s)", params.liquidity))
+	}
+
 	if liquidityToRemove.Gt(positionLiquidity) {
 		return params.positionId,
 			liquidityToRemove.ToString(),
@@ -53,6 +63,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
+	burnedAmount0Int64 := safeConvertToInt64(burnedAmount0)
+	burnedAmount1Int64 := safeConvertToInt64(burnedAmount1)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
@@ -60,46 +72,23 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	posTokensOwed0 := u256.MustFromDecimal(position.TokensOwed0())
-	posTokensOwed1 := u256.MustFromDecimal(position.TokensOwed1())
-
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(posTokensOwed0, burnedAmount0)
-	if overflow0 {
-		panic(newErrorWithDetail(
-			errOverflow,
-			ufmt.Sprintf("tokensOwed0(%s) + burnedAmount0(%s) exceeds uint256 max", posTokensOwed0.ToString(), burnedAmount0.ToString()),
-		))
-	}
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(posTokensOwed1, burnedAmount1)
-	if overflow1 {
-		panic(newErrorWithDetail(
-			errOverflow,
-			ufmt.Sprintf("tokensOwed1(%s) + burnedAmount1(%s) exceeds uint256 max", posTokensOwed1.ToString(), burnedAmount1.ToString()),
-		))
-	}
+	tokensOwed0 := safeAddInt64(position.TokensOwed0(), burnedAmount0Int64)
+	tokensOwed1 := safeAddInt64(position.TokensOwed1(), burnedAmount1Int64)
 
 	newLiquidity, underflow := u256.Zero().SubOverflow(positionLiquidity, liquidityToRemove)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
+	newToken0Balance := safeSubInt64(calculatedToken0Balance, burnedAmount0Int64)
+	newToken1Balance := safeSubInt64(calculatedToken1Balance, burnedAmount1Int64)
 
-	newToken0Balance, underflow := u256.Zero().SubOverflow(calculatedToken0Balance, burnedAmount0)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken0Balance - burnedAmount0 underflow"))
-	}
-
-	newToken1Balance, underflow := u256.Zero().SubOverflow(calculatedToken1Balance, burnedAmount1)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken1Balance - burnedAmount1 underflow"))
-	}
-
-	position.SetTokensOwed0(tokensOwed0.ToString())
-	position.SetTokensOwed1(tokensOwed1.ToString())
+	position.SetTokensOwed0(tokensOwed0)
+	position.SetTokensOwed1(tokensOwed1)
 	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128.ToString())
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128.ToString())
 	position.SetLiquidity(newLiquidity.ToString())
-	position.SetToken0Balance(newToken0Balance.ToString())
-	position.SetToken1Balance(newToken1Balance.ToString())
+	position.SetToken0Balance(newToken0Balance)
+	position.SetToken1Balance(newToken1Balance)
 
 	p.mustUpdatePosition(params.positionId, *position)
 
@@ -144,19 +133,18 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 
 	// Check for underflow when subtracting collected amounts from tokens owed
-	currentOwed0 := u256.MustFromDecimal(position.TokensOwed0())
-	newOwed0, underflow0 := u256.Zero().SubOverflow(currentOwed0, collectAmount0)
-	if underflow0 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%s) < collectAmount0(%s)", currentOwed0.ToString(), collectAmount0.ToString()))
-	}
-	position.SetTokensOwed0(newOwed0.ToString())
+	collectAmount0Int64 := safeConvertToInt64(collectAmount0)
+	collectAmount1Int64 := safeConvertToInt64(collectAmount1)
 
-	currentOwed1 := u256.MustFromDecimal(position.TokensOwed1())
-	newOwed1, underflow1 := u256.Zero().SubOverflow(currentOwed1, collectAmount1)
-	if underflow1 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%s) < collectAmount1(%s)", currentOwed1.ToString(), collectAmount1.ToString()))
+	if position.TokensOwed0() < collectAmount0Int64 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%d) < collectAmount0(%d)", position.TokensOwed0(), collectAmount0Int64))
 	}
-	position.SetTokensOwed1(newOwed1.ToString())
+	position.SetTokensOwed0(safeSubInt64(position.TokensOwed0(), collectAmount0Int64))
+
+	if position.TokensOwed1() < collectAmount1Int64 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%d) < collectAmount1(%d)", position.TokensOwed1(), collectAmount1Int64))
+	}
+	position.SetTokensOwed1(safeSubInt64(position.TokensOwed1(), collectAmount1Int64))
 
 	if position.IsClear() {
 		position.SetBurned(true) // just update flag (we don't want to burn actual position)
@@ -168,9 +156,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 }
 
 // calculateFees calculates the fees for the current position.
-func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
+func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (int64, int64) {
 	posLiquidity := u256.MustFromDecimal(position.Liquidity())
-
 	fee0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
 		u256.MustFromDecimal(position.FeeGrowthInside0LastX128()),
@@ -183,17 +170,7 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 		posLiquidity,
 	)
 
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.MustFromDecimal(position.TokensOwed0()), fee0)
-	if overflow0 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
-	}
-
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.MustFromDecimal(position.TokensOwed1()), fee1)
-	if overflow1 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
-	}
-
-	return tokensOwed0, tokensOwed1
+	return safeAddInt64(position.TokensOwed0(), safeConvertToInt64(fee0)), safeAddInt64(position.TokensOwed1(), safeConvertToInt64(fee1))
 }
 
 func calculateTokensOwed(

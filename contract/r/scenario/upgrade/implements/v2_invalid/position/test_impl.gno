@@ -198,14 +198,14 @@ func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) st
 	return t.instance.GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	if !t.isActive("GetPositionTokensOwed0") {
 		panic("test implementation: GetPositionTokensOwed0 not supported")
 	}
 	return t.instance.GetPositionTokensOwed0(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	if !t.isActive("GetPositionTokensOwed1") {
 		panic("test implementation: GetPositionTokensOwed1 not supported")
 	}

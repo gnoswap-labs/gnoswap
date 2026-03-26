@@ -246,8 +246,8 @@ func testPositionModification() {
 	println("[EXPECTED] Total liquidity after modification:", modifiedLiquidity.ToString())
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
-	println("[EXPECTED] Tokens owed 0:", tokensOwed0.ToString())
-	println("[EXPECTED] Tokens owed 1:", tokensOwed1.ToString())
+	println("[EXPECTED] Tokens owed 0:", tokensOwed0)
+	println("[EXPECTED] Tokens owed 1:", tokensOwed1)
 }
 
 func testPositionDeletion() {

@@ -89,10 +89,10 @@ func newDummyPosition(id uint64) position.Position {
 		"1000",
 		"10",
 		"20",
-		"30",
-		"40",
-		"1000",
-		"1000",
+		30,
+		40,
+		1000,
+		1000,
 		false,
 		"user1",
 	)
@@ -166,8 +166,8 @@ func TestSetPosition(t *testing.T) {
 	changedPosition.SetLiquidity("2000")
 	changedPosition.SetFeeGrowthInside0LastX128("20")
 	changedPosition.SetFeeGrowthInside1LastX128("40")
-	changedPosition.SetTokensOwed0("60")
-	changedPosition.SetTokensOwed1("80")
+	changedPosition.SetTokensOwed0(60)
+	changedPosition.SetTokensOwed1(80)
 	changedPosition.SetBurned(true)
 
 	tests := []struct {
@@ -200,8 +200,8 @@ func TestSetPosition(t *testing.T) {
 			uassert.Equal(t, tt.inputPosition.Liquidity(), storedPosition.Liquidity())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128(), storedPosition.FeeGrowthInside0LastX128())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128(), storedPosition.FeeGrowthInside1LastX128())
-			uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
-			uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
+				uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
+				uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
 			uassert.Equal(t, tt.inputPosition.Burned(), storedPosition.Burned())
 		})
 	}
@@ -1500,8 +1500,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	currentBalance1 := pool.BalanceToken1()
 
 	// Reduce pool balance to 50% to create burn > collect scenario
-	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
-	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	reducedBalance0 := u256.Zero().Div(currentBalance0, u256.NewUint(2))
+	reducedBalance1 := u256.Zero().Div(currentBalance1, u256.NewUint(2))
 	pool.SetBalanceToken0(reducedBalance0)
 	pool.SetBalanceToken1(reducedBalance1)
 

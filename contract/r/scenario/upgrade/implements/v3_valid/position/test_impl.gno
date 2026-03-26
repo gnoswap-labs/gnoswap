@@ -131,11 +131,11 @@ func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) st
 	return t.instance.GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	return t.instance.GetPositionTokensOwed0(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) string {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return t.instance.GetPositionTokensOwed1(positionId)
 }
 

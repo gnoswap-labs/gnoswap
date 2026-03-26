@@ -238,22 +238,22 @@ func (m *MockPosition) GetPositionTickUpper(positionId uint64) int32 {
 	return res[0].(int32)
 }
 
-func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) string {
+func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed0")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
-func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) string {
+func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed1")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
 func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {

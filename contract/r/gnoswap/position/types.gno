@@ -79,8 +79,8 @@ type IPositionGetter interface {
 	GetPositionLiquidity(positionId uint64) string
 	GetPositionFeeGrowthInside0LastX128(positionId uint64) string
 	GetPositionFeeGrowthInside1LastX128(positionId uint64) string
-	GetPositionTokensOwed0(positionId uint64) string
-	GetPositionTokensOwed1(positionId uint64) string
+	GetPositionTokensOwed0(positionId uint64) int64
+	GetPositionTokensOwed1(positionId uint64) int64
 	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	GetPositionOwner(positionId uint64) address
 }

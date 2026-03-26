@@ -1,6 +1,8 @@
 package position
 
 import (
+	"strconv"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -44,28 +46,28 @@ func IsInRange(positionId uint64) bool {
 func GetPositionTokenBalances(positionId uint64) (string, string) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return "", ""
+	return "", ""
 	}
 
-	return position.Token0Balance(), position.Token1Balance()
+	return strconv.FormatInt(position.Token0Balance(), 10), strconv.FormatInt(position.Token1Balance(), 10)
 }
 
-func GetPositionToken0Balance(positionId uint64) *u256.Uint {
+func GetPositionToken0Balance(positionId uint64) int64 {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero()
+		return 0
 	}
 
-	return u256FromStr(position.Token0Balance())
+	return position.Token0Balance()
 }
 
-func GetPositionToken1Balance(positionId uint64) *u256.Uint {
+func GetPositionToken1Balance(positionId uint64) int64 {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero()
+		return 0
 	}
 
-	return u256FromStr(position.Token1Balance())
+	return position.Token1Balance()
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
@@ -124,23 +126,23 @@ func GetPositionTicks(positionId uint64) (int32, int32) {
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
-func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
-	return u256FromStr(getImplementation().GetPositionTokensOwed0(positionId))
+func GetPositionTokensOwed0(positionId uint64) int64 {
+	return getImplementation().GetPositionTokensOwed0(positionId)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
-func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
-	return u256FromStr(getImplementation().GetPositionTokensOwed1(positionId))
+func GetPositionTokensOwed1(positionId uint64) int64 {
+	return getImplementation().GetPositionTokensOwed1(positionId)
 }
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
-func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
+func GetPositionTokensOwed(positionId uint64) (int64, int64) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero(), u256.Zero()
+		return 0, 0
 	}
 
-	return u256FromStr(position.TokensOwed0()), u256FromStr(position.TokensOwed1())
+	return position.TokensOwed0(), position.TokensOwed1()
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.

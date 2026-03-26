@@ -700,6 +700,9 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		if result == nil {
 			t.Error("GetPositionFeeGrowthInside0LastX128() returned nil")
 		}
+		if result.ToString() != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside0LastX128() = %s, want %s", result.ToString(), tt.expected)
+		}
 	}
 }
 
@@ -749,6 +752,9 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		if result == nil {
 			t.Error("GetPositionFeeGrowthInside1LastX128() returned nil")
 		}
+		if result.ToString() != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside1LastX128() = %s, want %s", result.ToString(), tt.expected)
+		}
 	}
 }
 
@@ -797,6 +803,9 @@ func TestGetPositionLiquidity(t *testing.T) {
 		}
 		if result == nil {
 			t.Error("GetPositionLiquidity() returned nil")
+		}
+		if result.ToString() != tt.expected {
+			t.Errorf("GetPositionLiquidity() = %s, want %s", result.ToString(), tt.expected)
 		}
 	}
 }
@@ -1003,7 +1012,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    string
+		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1015,7 +1024,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    "1000",
+			expected:    1000,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1040,8 +1049,8 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionTokensOwed0") != 1 {
 			t.Error("GetPositionTokensOwed0 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionTokensOwed0() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionTokensOwed0() = %d, want %d", result, tt.expected)
 		}
 	}
 }
@@ -1052,7 +1061,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    string
+		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1064,7 +1073,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    "1000",
+			expected:    1000,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1089,8 +1098,8 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionTokensOwed1") != 1 {
 			t.Error("GetPositionTokensOwed1 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionTokensOwed1() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionTokensOwed1() = %d, want %d", result, tt.expected)
 		}
 	}
 }

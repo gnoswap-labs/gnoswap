@@ -301,7 +301,7 @@ func getPositionToken0Balance() {
 	testing.SetRealm(adminRealm)
 
 	balance0 := pn.GetPositionToken0Balance(positionId)
-	println("[EXPECTED] position token0 balance:", balance0.ToString())
+	println("[EXPECTED] position token0 balance:", balance0)
 }
 
 func getPositionToken1Balance() {
@@ -309,7 +309,7 @@ func getPositionToken1Balance() {
 	testing.SetRealm(adminRealm)
 
 	balance1 := pn.GetPositionToken1Balance(positionId)
-	println("[EXPECTED] position token1 balance:", balance1.ToString())
+	println("[EXPECTED] position token1 balance:", balance1)
 }
 
 func getPositionFeeGrowthInside0LastX128() {
@@ -391,7 +391,7 @@ func getPositionTokensOwed0() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
-	println("[EXPECTED] position tokensOwed0:", tokensOwed0.ToString())
+	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 }
 
 func getPositionTokensOwed1() {
@@ -399,7 +399,7 @@ func getPositionTokensOwed1() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
-	println("[EXPECTED] position tokensOwed1:", tokensOwed1.ToString())
+	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
 func getPositionTokensOwed() {
@@ -407,8 +407,8 @@ func getPositionTokensOwed() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed0, tokensOwed1 := pn.GetPositionTokensOwed(positionId)
-	println("[EXPECTED] position tokensOwed0:", tokensOwed0.ToString())
-	println("[EXPECTED] position tokensOwed1:", tokensOwed1.ToString())
+	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
+	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
 func getUnclaimedFee() {

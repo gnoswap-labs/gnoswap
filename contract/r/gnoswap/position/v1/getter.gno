@@ -99,11 +99,11 @@ func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) stri
 	return p.mustGetPosition(positionId).FeeGrowthInside1LastX128()
 }
 
-func (p *positionV1) GetPositionTokensOwed0(positionId uint64) string {
+func (p *positionV1) GetPositionTokensOwed0(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed0()
 }
 
-func (p *positionV1) GetPositionTokensOwed1(positionId uint64) string {
+func (p *positionV1) GetPositionTokensOwed1(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed1()
 }
 
