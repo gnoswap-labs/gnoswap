@@ -83,8 +83,7 @@ func writeObservationByPool(
 		p.SetObservationState(pl.NewObservationState(currentTime))
 	}
 
-	os := p.ObservationState()
-	err := writeObservation(&os, currentTime, tick, liquidity)
+	os, err := writeObservation(p.ObservationState(), currentTime, tick, liquidity)
 	if err != nil {
 		return err
 	}
@@ -108,7 +107,7 @@ func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinality
 		return errors.New("observation cardinality next must be greater than current")
 	}
 
-	observationCardinalityNextNew, err := grow(&os, os.Cardinality(), observationCardinalityNext)
+	os, observationCardinalityNextNew, err := grow(os, os.Cardinality(), observationCardinalityNext)
 	if err != nil {
 		return err
 	}
@@ -168,17 +167,17 @@ func transform(last pl.Observation, currentTime int64, tick int32, liquidity *u2
 	), nil
 }
 
-func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (uint16, error) {
+func grow(os pl.ObservationState, currentCardinality, nextCardinality uint16) (pl.ObservationState, uint16, error) {
 	if currentCardinality <= 0 {
-		return currentCardinality, errors.New("currentCardinality must be greater than 0")
+		return os, currentCardinality, errors.New("currentCardinality must be greater than 0")
 	}
 
 	if nextCardinality <= currentCardinality {
-		return currentCardinality, nil
+		return os, currentCardinality, nil
 	}
 
 	if nextCardinality > maxObservationCardinality {
-		return currentCardinality, errors.New("nextCardinality exceeds maximum")
+		return os, currentCardinality, errors.New("nextCardinality exceeds maximum")
 	}
 
 	for i := currentCardinality; i < nextCardinality; i++ {
@@ -187,7 +186,7 @@ func grow(os *pl.ObservationState, currentCardinality, nextCardinality uint16) (
 		os.Observations()[i] = obs
 	}
 
-	return nextCardinality, nil
+	return os, nextCardinality, nil
 }
 
 func lte(time, a, b int64) bool {
@@ -211,18 +210,18 @@ func lte(time, a, b int64) bool {
 }
 
 func writeObservation(
-	os *pl.ObservationState,
+	os pl.ObservationState,
 	currentTime int64,
 	tick int32,
 	liquidity *u256.Uint,
-) error {
-	last, err := lastObservation(*os)
+) (pl.ObservationState, error) {
+	last, err := lastObservation(os)
 	if err != nil {
-		return err
+		return os, err
 	}
 
 	if last.BlockTimestamp() == currentTime {
-		return nil
+		return os, nil
 	}
 
 	// Check if we need to grow the cardinality
@@ -239,13 +238,13 @@ func writeObservation(
 
 	observation, err := transform(last, currentTime, tick, liquidity)
 	if err != nil {
-		return err
+		return os, err
 	}
 
 	os.Observations()[nextIndex] = observation
 	os.SetIndex(nextIndex)
 
-	return nil
+	return os, nil
 }
 
 func lastObservation(os pl.ObservationState) (pl.Observation, error) {
