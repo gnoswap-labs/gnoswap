@@ -25,8 +25,8 @@ import (
 type RewardManager struct {
 	rewards *avl.Tree // depositId -> RewardState
 
-	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
-	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
+	distributeAmountPerSecondX128   string // distribute amount per second, Q128
+	accumulatedRewardPerDepositX128 string // accumulated reward per GNS stake, Q128
 
 	totalDistributeAmount       int64 // total distributed amount
 	totalClaimedAmount          int64 // total claimed amount
@@ -50,22 +50,22 @@ func (rm *RewardManager) SetRewards(rewards *avl.Tree) {
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
-	return rm.distributeAmountPerSecondX128
+	return u256.MustFromDecimal(rm.distributeAmountPerSecondX128)
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	rm.distributeAmountPerSecondX128 = amount
+	rm.distributeAmountPerSecondX128 = amount.ToString()
 }
 
 // AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of the reward manager.
 func (rm *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
-	return rm.accumulatedRewardPerDepositX128
+	return u256.MustFromDecimal(rm.accumulatedRewardPerDepositX128)
 }
 
 // SetAccumulatedRewardPerDepositX128 sets the accumulated reward per deposit (Q128) of the reward manager.
 func (rm *RewardManager) SetAccumulatedRewardPerDepositX128(amount *u256.Uint) {
-	rm.accumulatedRewardPerDepositX128 = amount
+	rm.accumulatedRewardPerDepositX128 = amount.ToString()
 }
 
 // TotalDistributeAmount returns the total distribute amount of the reward manager.
@@ -161,8 +161,8 @@ func (rm RewardManager) Clone() *RewardManager {
 
 	return &RewardManager{
 		rewards:                         rewardsTree,
-		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128.Clone(),
-		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128.Clone(),
+		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128,
+		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128,
 		totalDistributeAmount:           rm.totalDistributeAmount,
 		totalClaimedAmount:              rm.totalClaimedAmount,
 		distributeStartTime:             rm.distributeStartTime,
@@ -191,8 +191,8 @@ func NewRewardManager(
 		accumulatedDistributeAmount:     0,
 		accumulatedHeight:               0,
 		accumulatedTime:                 0,
-		accumulatedRewardPerDepositX128: u256.Zero(),
-		distributeAmountPerSecondX128:   u256.Zero(),
+		accumulatedRewardPerDepositX128: "0",
+		distributeAmountPerSecondX128:   "0",
 		rewardClaimableDuration:         rewardCollectableDuration,
 		rewards:                         avl.NewTree(),
 	}

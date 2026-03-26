@@ -7,8 +7,8 @@ import (
 // RewardState represents the state of a reward for a deposit.
 // It contains the necessary data to manage and distribute rewards for a specific deposit.
 type RewardState struct {
-	priceDebtX128 *u256.Uint // price debt per GNS stake, Q128
-	claimableTime int64      // time when reward can be claimed
+	priceDebtX128 string // price debt per GNS stake, Q128
+	claimableTime int64  // time when reward can be claimed
 
 	depositAmount           int64 // amount of GNS staked
 	distributeStartTime     int64 // time when launchpad started staking
@@ -28,7 +28,7 @@ func NewRewardState(
 	claimableTime int64,
 ) *RewardState {
 	return &RewardState{
-		priceDebtX128:           accumulatedRewardPerDepositX128,
+		priceDebtX128:           accumulatedRewardPerDepositX128.ToString(),
 		depositAmount:           depositAmount,
 		distributeStartTime:     distributeStartTime,
 		distributeEndTime:       distributeEndTime,
@@ -41,12 +41,12 @@ func NewRewardState(
 
 // PriceDebtX128 returns the price debt (Q128) of the reward state.
 func (rs *RewardState) PriceDebtX128() *u256.Uint {
-	return rs.priceDebtX128
+	return u256.MustFromDecimal(rs.priceDebtX128)
 }
 
 // SetPriceDebtX128 sets the price debt (Q128) of the reward state.
 func (rs *RewardState) SetPriceDebtX128(debt *u256.Uint) {
-	rs.priceDebtX128 = debt
+	rs.priceDebtX128 = debt.ToString()
 }
 
 // ClaimableTime returns the claimable time of the reward state.
@@ -131,7 +131,7 @@ func (rs *RewardState) SetClaimedAmount(amount int64) {
 
 func (rs RewardState) Clone() *RewardState {
 	return &RewardState{
-		priceDebtX128:           rs.priceDebtX128.Clone(),
+		priceDebtX128:           rs.priceDebtX128,
 		claimableTime:           rs.claimableTime,
 		depositAmount:           rs.depositAmount,
 		distributeStartTime:     rs.distributeStartTime,

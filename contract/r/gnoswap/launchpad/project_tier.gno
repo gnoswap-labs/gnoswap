@@ -23,8 +23,8 @@ import (
 // - totalWithdrawCount (int64): The total number of withdrawals from the tier.
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
-	distributeAmountPerSecondX128 *u256.Uint // distribute amount per second, Q128
-	id                            string     // '{projectId}:duration' // duartion == 30, 90, 180
+	distributeAmountPerSecondX128 string // distribute amount per second, Q128
+	id                            string // '{projectId}:duration' // duartion == 30, 90, 180
 	totalDistributeAmount         int64
 	totalDepositAmount            int64 // accumulated deposit amount
 	totalWithdrawAmount           int64 // accumulated withdraw amount
@@ -37,12 +37,12 @@ type ProjectTier struct {
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
-	return pt.distributeAmountPerSecondX128
+	return u256.MustFromDecimal(pt.distributeAmountPerSecondX128)
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	pt.distributeAmountPerSecondX128 = amount
+	pt.distributeAmountPerSecondX128 = amount.ToString()
 }
 
 // ID returns the ID of the project tier.
@@ -148,7 +148,7 @@ func (pt ProjectTier) Clone() *ProjectTier {
 	return &ProjectTier{
 		id:                            pt.id,
 		totalDistributeAmount:         pt.totalDistributeAmount,
-		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128.Clone(),
+		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128,
 		startTime:                     pt.startTime,
 		endTime:                       pt.endTime,
 		totalDepositAmount:            pt.totalDepositAmount,
@@ -170,7 +170,7 @@ func NewProjectTier(
 	return &ProjectTier{
 		id:                            MakeProjectTierID(projectID, tierDuration),
 		totalDistributeAmount:         totalDistributeAmount,
-		distributeAmountPerSecondX128: u256.Zero(),
+		distributeAmountPerSecondX128: "0",
 		startTime:                     startTime,
 		endTime:                       endTime,
 		totalDepositAmount:            0,
