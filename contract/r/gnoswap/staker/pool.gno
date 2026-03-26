@@ -56,7 +56,7 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity *UintTree // uint64 timestamp -> string(uint256)
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
@@ -67,7 +67,7 @@ type Pool struct {
 
 	ticks Ticks // int32 tickId -> Tick tick
 
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
+	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> string(uint256) rewardRatioAccumulation
 
 	historicalTick *UintTree // uint64 timestamp -> int32 tickId
 }
@@ -201,11 +201,11 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		historicalTick:                NewUintTree(),
 	}
 
-	pool.GlobalRewardRatioAccumulation().Set(currentTime, u256.Zero())
+	pool.GlobalRewardRatioAccumulation().Set(currentTime, "0")
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.RewardCache().Set(currentTime, int64(0))
-	pool.StakedLiquidity().Set(currentTime, u256.Zero())
+	pool.StakedLiquidity().Set(currentTime, "0")
 
 	return pool
 }
@@ -511,7 +511,7 @@ func NewExternalIncentive(
 		createdHeight:           createdHeight,
 		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
-		refunded: false,
+		refunded:                false,
 	}
 }
 
@@ -537,8 +537,8 @@ func (t *Ticks) Get(tickId int32) *Tick {
 	if !ok {
 		tick := &Tick{
 			id:                   tickId,
-			stakedLiquidityGross: u256.Zero(),
-			stakedLiquidityDelta: i256.Zero(),
+			stakedLiquidityGross: "0",
+			stakedLiquidityDelta: "0",
 			outsideAccumulation:  NewUintTree(),
 		}
 		t.tree.Set(EncodeInt(tickId), tick)
@@ -558,7 +558,7 @@ func (self *Ticks) Has(tickId int32) bool {
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
-	if tick.stakedLiquidityGross.IsZero() {
+	if tick.StakedLiquidityGross().IsZero() {
 		t.tree.Remove(EncodeInt(tickId))
 		return
 	}
@@ -608,21 +608,21 @@ func NewTicks() Ticks {
 //
 // Fields:
 // - id (int32): The ID of the tick.
-// - stakedLiquidityGross (*u256.Uint): Total gross staked liquidity at this tick.
-// - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
+// - stakedLiquidityGross (string): Total gross staked liquidity at this tick (stored as decimal string, use StakedLiquidityGross() for uint256 string).
+// - stakedLiquidityDelta (string): Net change in staked liquidity at this tick.
 // - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
 type Tick struct {
 	id int32
 
 	// conceptually equal with Pool.liquidityGross but only for the staked positions
-	stakedLiquidityGross *u256.Uint
+	stakedLiquidityGross string
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
-	stakedLiquidityDelta *i256.Int
+	stakedLiquidityDelta string // string(int256)
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> string(uint256)
 }
 
 // Tick Getter/Setter methods
@@ -639,22 +639,22 @@ func (t *Tick) SetId(id int32) {
 
 // StakedLiquidityGross returns the staked liquidity gross
 func (t *Tick) StakedLiquidityGross() *u256.Uint {
-	return t.stakedLiquidityGross
+	return u256.MustFromDecimal(t.stakedLiquidityGross)
 }
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = stakedLiquidityGross.ToString()
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
 func (t *Tick) StakedLiquidityDelta() *i256.Int {
-	return t.stakedLiquidityDelta
+	return i256.MustFromDecimal(t.stakedLiquidityDelta)
 }
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = stakedLiquidityDelta.ToString()
 }
 
 // OutsideAccumulation returns the outside accumulation tree
@@ -675,8 +675,8 @@ func (t *Tick) Clone() *Tick {
 
 	return &Tick{
 		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
-		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
+		stakedLiquidityGross: t.stakedLiquidityGross,
+		stakedLiquidityDelta: t.stakedLiquidityDelta,
 		outsideAccumulation:  t.outsideAccumulation.Clone(),
 	}
 }
@@ -684,8 +684,8 @@ func (t *Tick) Clone() *Tick {
 func NewTick(tickId int32) *Tick {
 	return &Tick{
 		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
-		stakedLiquidityDelta: i256.Zero(),
+		stakedLiquidityGross: "0",
+		stakedLiquidityDelta: "0",
 		outsideAccumulation:  NewUintTree(),
 	}
 }
@@ -792,9 +792,9 @@ func NewSwapBatchProcessor(poolPath string, pool *Pool, timestamp int64) *SwapBa
 // This struct is used to accumulate tick cross events during a single swap transaction
 // for batch processing to optimize gas usage and computational efficiency
 type SwapTickCross struct {
-	tickID     int32     // The tick index that was crossed
-	zeroForOne bool      // Direction of the swap (true: token0->token1, false: token1->token0)
-	delta      *i256.Int // Pre-calculated liquidity delta for this tick cross
+	tickID     int32  // The tick index that was crossed
+	zeroForOne bool   // Direction of the swap (true: token0->token1, false: token1->token0)
+	delta      string // Pre-calculated liquidity delta for this tick cross
 }
 
 func (s *SwapTickCross) TickID() int32 {
@@ -806,13 +806,13 @@ func (s *SwapTickCross) ZeroForOne() bool {
 }
 
 func (s *SwapTickCross) Delta() *i256.Int {
-	return s.delta
+	return i256.MustFromDecimal(s.delta)
 }
 
 func NewSwapTickCross(tickID int32, zeroForOne bool, delta *i256.Int) *SwapTickCross {
 	return &SwapTickCross{
 		tickID:     tickID,
 		zeroForOne: zeroForOne,
-		delta:      delta,
+		delta:      delta.ToString(),
 	}
 }

@@ -2,7 +2,6 @@
 package v3_valid
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/staker"
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
@@ -162,7 +161,7 @@ func (t *TestStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incenti
 	return t.instance.GetDepositCollectedExternalReward(lpTokenId, incentiveId)
 }
 
-func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) string {
 	return t.instance.GetDepositLiquidity(lpTokenId)
 }
 
@@ -210,7 +209,7 @@ func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) string {
 	return t.instance.GetIncentiveRewardAmount(poolPath, incentiveId)
 }
 
@@ -334,7 +333,7 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	return t.instance.GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
 }
 

@@ -22,11 +22,11 @@ type TickResolver struct {
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
 	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		v, ok := value.(*u256.Uint)
+		v, ok := value.(string)
 		if !ok {
-			panic("failed to cast value to *u256.Uint")
+			panic("failed to cast value to string")
 		}
-		acc = v
+		acc = u256.MustFromDecimal(v)
 		return true
 	})
 	if acc == nil {
@@ -59,7 +59,7 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation)
+	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
 }
 
 func NewTickResolver(tick *sr.Tick) *TickResolver {

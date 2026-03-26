@@ -2,7 +2,6 @@
 package v2_invalid
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/staker"
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
@@ -277,7 +276,7 @@ func (t *TestStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incenti
 	return t.instance.GetDepositCollectedExternalReward(lpTokenId, incentiveId)
 }
 
-func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) string {
 	if !t.isActive("GetDepositLiquidity") {
 		panic("test implementation: GetDepositLiquidity not supported")
 	}
@@ -361,7 +360,7 @@ func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) string {
 	if !t.isActive("GetIncentiveRewardAmount") {
 		panic("test implementation: GetIncentiveRewardAmount not supported")
 	}
@@ -578,7 +577,7 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	if !t.isActive("GetPoolGlobalRewardRatioAccumulation") {
 		panic("test implementation: GetPoolGlobalRewardRatioAccumulation not supported")
 	}
