@@ -20,7 +20,6 @@ func TestAssert_AssertIsNotHaltedPool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 

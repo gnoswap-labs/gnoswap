@@ -235,14 +235,14 @@ func TestTypes_OpTypeString(t *testing.T) {
 			expected: "withdraw",
 		},
 		{
-			name:     "Custom operation string",
-			op:       OpType("custom"),
-			expected: "custom",
+			name:     "Unknown operation string",
+			op:       OpType(1 << 20),
+			expected: "unknown",
 		},
 		{
-			name:     "Empty operation string",
-			op:       OpType(""),
-			expected: "",
+			name:     "Zero operation string",
+			op:       OpType(0),
+			expected: "unknown",
 		},
 	}
 
@@ -324,23 +324,23 @@ func TestTypes_OpTypeIsValid(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Invalid operation",
-			op:       OpType("invalid"),
+			name:     "Invalid zero value",
+			op:       OpType(0),
 			expected: false,
 		},
 		{
-			name:     "Empty operation",
-			op:       OpType(""),
+			name:     "Invalid multi-bit value",
+			op:       OpTypePool | OpTypeRouter,
 			expected: false,
 		},
 		{
-			name:     "Case sensitive operation",
-			op:       OpType("POOL"),
+			name:     "Invalid out of range bit",
+			op:       OpType(1 << 20),
 			expected: false,
 		},
 		{
-			name:     "Partial operation",
-			op:       OpType("poo"),
+			name:     "Invalid all bits",
+			op:       OpTypeAll,
 			expected: false,
 		},
 	}
@@ -354,4 +354,83 @@ func TestTypes_OpTypeIsValid(t *testing.T) {
 			uassert.Equal(t, result, tc.expected)
 		})
 	}
+}
+
+func TestTypes_OpTypes(t *testing.T) {
+	ops := OpTypes()
+
+	// Should return all 12 operation types
+	uassert.Equal(t, len(ops), 12)
+
+	// Should be in deterministic order matching opTypeList
+	expected := []OpType{
+		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypeStaker, OpTypeLaunchpad, OpTypeGovernance, OpTypeGovStaker,
+		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission, OpTypeWithdraw,
+	}
+
+	for i, op := range ops {
+		uassert.Equal(t, uint64(op), uint64(expected[i]))
+	}
+
+	// Verify returned slice is a copy (independence)
+	ops[0] = OpType(0)
+	freshOps := OpTypes()
+	uassert.Equal(t, uint64(freshOps[0]), uint64(OpTypePool))
+}
+
+func TestTypes_OpTypeFromString(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		expectedOp OpType
+		expectedOk bool
+	}{
+		{"pool", "pool", OpTypePool, true},
+		{"position", "position", OpTypePosition, true},
+		{"protocol_fee", "protocol_fee", OpTypeProtocolFee, true},
+		{"router", "router", OpTypeRouter, true},
+		{"staker", "staker", OpTypeStaker, true},
+		{"launchpad", "launchpad", OpTypeLaunchpad, true},
+		{"governance", "governance", OpTypeGovernance, true},
+		{"gov_staker", "gov_staker", OpTypeGovStaker, true},
+		{"xgns", "xgns", OpTypeXGns, true},
+		{"community_pool", "community_pool", OpTypeCommunityPool, true},
+		{"emission", "emission", OpTypeEmission, true},
+		{"withdraw", "withdraw", OpTypeWithdraw, true},
+		{"invalid string", "invalid", OpType(0), false},
+		{"empty string", "", OpType(0), false},
+		{"uppercase", "POOL", OpType(0), false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			op, ok := OpTypeFromString(tc.input)
+			uassert.Equal(t, ok, tc.expectedOk)
+			uassert.Equal(t, uint64(op), uint64(tc.expectedOp))
+		})
+	}
+}
+
+func TestTypes_OpTypeBitValues(t *testing.T) {
+	// Verify each OpType is a distinct power of 2
+	uassert.Equal(t, uint64(OpTypePool), uint64(1))
+	uassert.Equal(t, uint64(OpTypePosition), uint64(2))
+	uassert.Equal(t, uint64(OpTypeProtocolFee), uint64(4))
+	uassert.Equal(t, uint64(OpTypeRouter), uint64(8))
+	uassert.Equal(t, uint64(OpTypeStaker), uint64(16))
+	uassert.Equal(t, uint64(OpTypeLaunchpad), uint64(32))
+	uassert.Equal(t, uint64(OpTypeGovernance), uint64(64))
+	uassert.Equal(t, uint64(OpTypeGovStaker), uint64(128))
+	uassert.Equal(t, uint64(OpTypeXGns), uint64(256))
+	uassert.Equal(t, uint64(OpTypeCommunityPool), uint64(512))
+	uassert.Equal(t, uint64(OpTypeEmission), uint64(1024))
+	uassert.Equal(t, uint64(OpTypeWithdraw), uint64(2048))
+
+	// OpTypeAll should be the OR of all individual types
+	var combined uint64
+	for _, op := range OpTypes() {
+		combined |= uint64(op)
+	}
+	uassert.Equal(t, uint64(OpTypeAll), combined)
 }

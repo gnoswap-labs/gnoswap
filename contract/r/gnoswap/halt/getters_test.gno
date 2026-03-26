@@ -297,8 +297,8 @@ func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {
 	err := setHaltLevel(HaltLevelNone)
 	uassert.NoError(t, err)
 
-	uassert.PanicsWithMessage(t, "invalid operation type: invalid_op", func() {
-		isHaltedOperation(OpType("invalid_op"))
+	uassert.PanicsWithMessage(t, "invalid operation type: unknown", func() {
+		isHaltedOperation(OpType(0))
 	})
 }
 
@@ -311,17 +311,17 @@ func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
 		expectedHalted   bool
 	}{
 		{
-			name:             "Single invalid OpType",
-			opTypes:          []OpType{OpType("invalid_op")},
+			name:             "Single invalid OpType (zero)",
+			opTypes:          []OpType{OpType(0)},
 			expectedError:    true,
-			expectedErrorMsg: "invalid operation type: invalid_op",
+			expectedErrorMsg: "invalid operation type: unknown",
 			expectedHalted:   true,
 		},
 		{
 			name:             "Valid and invalid OpTypes mixed",
-			opTypes:          []OpType{OpTypePool, OpType("invalid_op")},
+			opTypes:          []OpType{OpTypePool, OpType(0)},
 			expectedError:    true,
-			expectedErrorMsg: "invalid operation type: invalid_op",
+			expectedErrorMsg: "invalid operation type: unknown",
 			expectedHalted:   true,
 		},
 		{
