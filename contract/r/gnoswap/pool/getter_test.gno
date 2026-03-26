@@ -321,18 +321,18 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				return state
 			},
 			assertGot: func(t *testing.T, result any) {
-				state := result.(*ObservationState)
+				state := result.(ObservationState)
 				uassert.Equal(t, 0, len(state.Observations()))
 			},
 			mutate: func(result any) {
-				state := result.(*ObservationState)
+				state := result.(ObservationState)
 				state.SetIndex(8)
 				state.SetCardinality(9)
 				state.SetCardinalityNext(10)
 				state.Observations()[8] = NewObservation(1, 2, u256.MustFromDecimal("3"), u256.MustFromDecimal("4"), true)
 			},
 			assertRaw: func(t *testing.T) {
-				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
+				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(ObservationState)
 				uassert.Equal(t, uint16(3), state.Index())
 				uassert.Equal(t, uint16(4), state.Cardinality())
 				uassert.Equal(t, uint16(5), state.CardinalityNext())

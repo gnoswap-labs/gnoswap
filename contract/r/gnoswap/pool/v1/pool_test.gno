@@ -141,7 +141,7 @@ func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int6
 
 	// Update price cumulative
 	observationState := pool.ObservationState()
-	writeObservation(observationState, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	writeObservation(&observationState, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
 
 	afterObservation, _ := lastObservation(pool.ObservationState())
 	afterCumulative := afterObservation.TickCumulative()
@@ -483,17 +483,17 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			slot0.SetTick(tt.initialTick)
 			pool.SetSlot0(slot0)
 
-			observationState := &pl.ObservationState{}
+			observationState := pl.ObservationState{}
 			observationState.SetIndex(0)
 			observationState.SetCardinality(1)
 			observationState.SetCardinalityNext(1)
-			obs := &pl.Observation{}
+			obs := pl.Observation{}
 			obs.SetBlockTimestamp(100)
 			obs.SetTickCumulative(5000000000)
 			obs.SetLiquidityCumulative(u256.MustFromDecimal("3000000"))
 			obs.SetSecondsPerLiquidityCumulativeX128(u256.Zero())
 			obs.SetInitialized(true)
-			observationState.SetObservations(map[uint16]*pl.Observation{0: obs})
+			observationState.SetObservations(map[uint16]pl.Observation{0: obs})
 			pool.SetObservationState(observationState)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
@@ -501,16 +501,17 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 			beforeTickCumulative := lastObs.TickCumulative()
 			beforeLiquidityCumulative := new(u256.Uint).Set(lastObs.LiquidityCumulative())
 
-			observationState = pool.ObservationState()
-			lastObs, err := lastObservation(observationState)
+			os := pool.ObservationState()
+			lastObs, err := lastObservation(os)
 
 			uassert.NoError(t, err, "Last observation should succeed")
 			currentTime := lastObs.BlockTimestamp() + tt.timeElapsed
 
 			// When: Execute accumulation calculation
-			observationState2 := pool.ObservationState()
-			writeObservation(observationState2, currentTime, tt.initialTick, pool.Liquidity())
-			lastObs, _ = lastObservation(observationState2)
+			os2 := pool.ObservationState()
+			writeObservation(&os2, currentTime, tt.initialTick, pool.Liquidity())
+			pool.SetObservationState(os2)
+			lastObs, _ = lastObservation(os2)
 			tickCumulative := lastObs.TickCumulative()
 			liquidityCumulative := new(u256.Uint).Set(lastObs.LiquidityCumulative())
 			lastUpdateTime := lastObs.BlockTimestamp()

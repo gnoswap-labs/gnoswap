@@ -85,7 +85,7 @@ func TestObservationState_Write(t *testing.T) {
 			var err error
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err = writeObservation(os, write.time, write.tick, liquidity)
+				err = writeObservation(&os,write.time, write.tick, liquidity)
 				if tt.expectError && err != nil {
 					return // Expected error occurred
 				}
@@ -154,7 +154,7 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 			liquidity := u256.MustFromDecimal("1000000")
 			for i := 0; i < tt.numWrites; i++ {
 				writeTime := currentTime + int64((i+1)*60)
-				err := writeObservation(os, writeTime, int32(100*(i+1)), liquidity)
+				err := writeObservation(&os,writeTime, int32(100*(i+1)), liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
@@ -219,15 +219,15 @@ func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
 			initPoolTest(t)
 			pool := createTestPool()
 			currentTime := time.Now().Unix()
-			observationState := pool.ObservationState()
 
 			if tt.initialCardinality > 0 {
-				writeObservation(observationState, currentTime, pool.Slot0Tick(), pool.Liquidity())
-				observationState.SetCardinality(tt.initialCardinality)
-				observationState.SetCardinalityNext(tt.initialCardinalityNext)
-				pool.SetObservationState(observationState)
+				os := pool.ObservationState()
+				writeObservation(&os, currentTime, pool.Slot0Tick(), pool.Liquidity())
+				os.SetCardinality(tt.initialCardinality)
+				os.SetCardinalityNext(tt.initialCardinalityNext)
+				pool.SetObservationState(os)
 			} else {
-				pool.SetObservationState(nil)
+				pool.SetObservationState(pl.ObservationState{})
 			}
 
 			if tt.expectError {
@@ -282,7 +282,7 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err := writeObservation(os, write.time, write.tick, liquidity)
+				err := writeObservation(&os,write.time, write.tick, liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
@@ -444,7 +444,7 @@ func TestGetTWAP_ErrorCases(t *testing.T) {
 			name: "observation state not initialized",
 			setupPool: func() *pl.Pool {
 				pool := createTestPool()
-				pool.SetObservationState(nil)
+				pool.SetObservationState(pl.ObservationState{})
 				return pool
 			},
 			secondsAgo:    3600,
@@ -463,7 +463,7 @@ func TestGetTWAP_ErrorCases(t *testing.T) {
 
 // newObservationStateWithDelta seeds a 2-slot observation state so that the
 // tick cumulative delta over secondsAgo is tickDelta.
-func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.ObservationState {
+func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) pl.ObservationState {
 	now := time.Now().Unix()
 	start := now - int64(secondsAgo)
 
@@ -483,7 +483,7 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 
 // newObservationStateWithLiquidity seeds a 2-slot observation state with
 // tick cumulative delta and seconds per liquidity delta.
-func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, secondsPerLiquidityDelta *u256.Uint) *pl.ObservationState {
+func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, secondsPerLiquidityDelta *u256.Uint) pl.ObservationState {
 	now := time.Now().Unix()
 	start := now - int64(secondsAgo)
 

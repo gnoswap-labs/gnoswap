@@ -210,7 +210,7 @@ func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (
 	pool := i.mustGetPool(poolPath)
 	observationState := pool.ObservationState()
 
-	if observationState == nil {
+	if observationState.Cardinality() == 0 {
 		return 0, "0", "0", 0
 	}
 
