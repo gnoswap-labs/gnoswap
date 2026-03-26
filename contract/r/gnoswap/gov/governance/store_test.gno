@@ -2,6 +2,7 @@ package governance
 
 import (
 	"chain/runtime"
+	"strings"
 	"testing"
 
 	avl "gno.land/p/nt/avl/v0"
@@ -559,6 +560,78 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 
 				val, ok := retrieved.Get("user1")
 				uassert.True(t, ok, "user1 voting info should exist")
+				uassert.Equal(t, "vote_data", val)
+
+				aggregated := gs.GetProposalUserVotingInfos()
+				aggregatedProposalVotingInfosRaw, ok := aggregated.Get("1")
+				uassert.True(t, ok, "aggregated proposal voting infos for proposal 1 should exist")
+
+				aggregatedProposalVotingInfos, ok := aggregatedProposalVotingInfosRaw.(*avl.Tree)
+				uassert.True(t, ok, "aggregated proposal voting infos should be an AVL tree")
+
+				aggregatedValue, ok := aggregatedProposalVotingInfos.Get("user1")
+				uassert.True(t, ok, "aggregated user1 voting info should exist")
+				uassert.Equal(t, "vote_data", aggregatedValue)
+			},
+		},
+		{
+			name: "StoresEachProposalVotingTreeSeparately",
+			verifyFn: func(t *testing.T) {
+				resetTestState(t)
+				gs := NewGovernanceStore(kvStore)
+
+				err := gs.SetProposalUserVotingInfos(avl.NewTree())
+				uassert.NoError(t, err)
+
+				proposalOneVotingInfo := avl.NewTree()
+				proposalOneVotingInfo.Set("user1", "vote_data_1")
+				err = gs.SetProposalVotingInfos(1, proposalOneVotingInfo)
+				uassert.NoError(t, err)
+
+				proposalTwoVotingInfo := avl.NewTree()
+				proposalTwoVotingInfo.Set("user2", "vote_data_2")
+				err = gs.SetProposalVotingInfos(2, proposalTwoVotingInfo)
+				uassert.NoError(t, err)
+
+				keys, err := kvStore.GetAllKeys()
+				uassert.NoError(t, err)
+
+				hasProposalOneKey := false
+				hasProposalTwoKey := false
+				for _, key := range keys {
+					if strings.HasSuffix(key, ":proposalVotingInfos:1") {
+						hasProposalOneKey = true
+					}
+
+					if strings.HasSuffix(key, ":proposalVotingInfos:2") {
+						hasProposalTwoKey = true
+					}
+				}
+
+				uassert.True(t, hasProposalOneKey, "proposal 1 voting infos should be stored under its own key")
+				uassert.True(t, hasProposalTwoKey, "proposal 2 voting infos should be stored under its own key")
+			},
+		},
+		{
+			name: "ReadsLegacyAggregateVotingInfos",
+			verifyFn: func(t *testing.T) {
+				resetTestState(t)
+				gs := NewGovernanceStore(kvStore)
+
+				legacyProposalVotingInfos := avl.NewTree()
+				legacyProposalVotingInfos.Set("user1", "vote_data")
+
+				legacyVotingInfos := avl.NewTree()
+				legacyVotingInfos.Set("1", legacyProposalVotingInfos)
+
+				err := gs.SetProposalUserVotingInfos(legacyVotingInfos)
+				uassert.NoError(t, err)
+
+				retrieved, exists := gs.GetProposalVotingInfos(1)
+				uassert.True(t, exists, "legacy proposal voting infos for proposal 1 should exist")
+
+				val, ok := retrieved.Get("user1")
+				uassert.True(t, ok, "legacy user1 voting info should exist")
 				uassert.Equal(t, "vote_data", val)
 			},
 		},

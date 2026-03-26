@@ -3,6 +3,7 @@ package governance
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"gno.land/p/gnoswap/store"
 	avl "gno.land/p/nt/avl/v0"
@@ -23,7 +24,8 @@ const (
 
 	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
 
-	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
+	StoreKeyProposalUserVotingInfos   StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
+	StoreKeyProposalVotingInfosPrefix StoreKey = "proposalVotingInfos"     // Per-proposal voting infos keys
 
 	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping AVL tree
 )
@@ -185,26 +187,96 @@ func (s *governanceStore) GetProposalUserVotingInfos() *avl.Tree {
 		panic(err)
 	}
 
-	votingInfos, ok := result.(*avl.Tree)
+	legacyVotingInfos, ok := result.(*avl.Tree)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	votingInfos := avl.NewTree()
+	legacyVotingInfos.IterateByOffset(0, legacyVotingInfos.Size(), func(key string, value any) bool {
+		votingInfos.Set(key, value)
+		return false
+	})
+
+	proposalVotingInfoKeys, err := s.getProposalVotingInfoKeys()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, proposalKey := range proposalVotingInfoKeys {
+		proposalID, ok := parseProposalVotingInfosKey(proposalKey)
+		if !ok {
+			continue
+		}
+
+		proposalVotingInfos, exists := s.GetProposalVotingInfos(proposalID)
+		if !exists {
+			continue
+		}
+
+		votingInfos.Set(formatInt64Key(proposalID), proposalVotingInfos)
 	}
 
 	return votingInfos
 }
 
 func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {
-	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
+	if err := s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), avl.NewTree()); err != nil {
+		return err
+	}
+
+	proposalVotingInfoKeys, err := s.getProposalVotingInfoKeys()
+	if err != nil {
+		return err
+	}
+
+	for _, proposalKey := range proposalVotingInfoKeys {
+		if err := s.kvStore.Delete(proposalKey); err != nil {
+			return err
+		}
+	}
+
+	if votingInfos == nil {
+		return nil
+	}
+
+	votingInfos.IterateByOffset(0, votingInfos.Size(), func(key string, value any) bool {
+		proposalVotingInfos, ok := value.(*avl.Tree)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", value))
+		}
+
+		if err := s.kvStore.Set(formatProposalVotingInfosKey(key), proposalVotingInfos); err != nil {
+			panic(err)
+		}
+
+		return false
+	})
+
+	return nil
 }
 
 func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
-	votingInfos := s.GetProposalUserVotingInfos()
-	votingInfo, ok := votingInfos.Get(formatInt64Key(proposalID))
+	votingInfo, err := s.kvStore.Get(formatProposalVotingInfosKey(formatInt64Key(proposalID)))
+	if err == nil {
+		votingInfoTree, ok := votingInfo.(*avl.Tree)
+		if !ok {
+			return nil, false
+		}
+
+		return votingInfoTree, true
+	}
+
+	if !s.HasProposalUserVotingInfosStoreKey() {
+		return nil, false
+	}
+
+	legacyVotingInfos, ok := s.mustGetProposalUserVotingInfosRaw().Get(formatInt64Key(proposalID))
 	if !ok {
 		return nil, false
 	}
 
-	votingInfoTree, ok := votingInfo.(*avl.Tree)
+	votingInfoTree, ok := legacyVotingInfos.(*avl.Tree)
 	if !ok {
 		return nil, false
 	}
@@ -217,10 +289,7 @@ func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *
 		return errors.New("proposal user voting infos store key not found")
 	}
 
-	allVotingInfos := s.GetProposalUserVotingInfos()
-	allVotingInfos.Set(formatInt64Key(proposalID), votingInfos)
-
-	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
+	return s.kvStore.Set(formatProposalVotingInfosKey(formatInt64Key(proposalID)), votingInfos)
 }
 
 // User Proposals methods
@@ -333,4 +402,60 @@ func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
 // formatInt64Key formats int64 identifiers for storage keys.
 func formatInt64Key(id int64) string {
 	return strconv.FormatInt(id, 10)
+}
+
+func formatProposalVotingInfosKey(proposalID string) string {
+	return StoreKeyProposalVotingInfosPrefix.String() + ":" + proposalID
+}
+
+func (s *governanceStore) mustGetProposalUserVotingInfosRaw() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyProposalUserVotingInfos.String())
+	if err != nil {
+		panic(err)
+	}
+
+	votingInfos, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return votingInfos
+}
+
+func parseProposalVotingInfosKey(key string) (int64, bool) {
+	parts := strings.Split(key, ":")
+	if len(parts) < 2 {
+		return 0, false
+	}
+
+	prefixIndex := len(parts) - 2
+	if parts[prefixIndex] != StoreKeyProposalVotingInfosPrefix.String() {
+		return 0, false
+	}
+
+	proposalID, err := strconv.ParseInt(parts[len(parts)-1], 10, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return proposalID, true
+}
+
+func (s *governanceStore) getProposalVotingInfoKeys() ([]string, error) {
+	keys, err := s.kvStore.GetAllKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	proposalVotingInfoKeys := make([]string, 0)
+	for _, key := range keys {
+		if _, ok := parseProposalVotingInfosKey(key); !ok {
+			continue
+		}
+
+		parts := strings.Split(key, ":")
+		proposalVotingInfoKeys = append(proposalVotingInfoKeys, formatProposalVotingInfosKey(parts[len(parts)-1]))
+	}
+
+	return proposalVotingInfoKeys, nil
 }
