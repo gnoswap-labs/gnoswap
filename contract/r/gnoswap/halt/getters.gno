@@ -27,11 +27,12 @@ func GetHaltConfig() map[string]bool {
 }
 
 // GetHaltConfigJson returns the halt configuration as a JSON string.
+// Uses opTypeList for deterministic key ordering.
 func GetHaltConfigJson() string {
-	haltConfig := GetHaltConfig()
-
 	statusNodes := make(map[string]*json.Node)
-	for name, halted := range haltConfig {
+	for _, op := range opTypeList {
+		name := op.String()
+		halted := haltState&uint64(op) != 0
 		statusNodes[name] = json.BoolNode(name, halted)
 	}
 

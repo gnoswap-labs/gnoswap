@@ -38,13 +38,18 @@ func TestAssert_AssertIsNotHalted(t *testing.T) {
 				{HaltLevelEmergency, true},
 				{HaltLevelComplete, true},
 			} {
+				cleanup(t)
 				err := setHaltLevel(tc.level)
 				uassert.NoError(t, err)
 
 				if tc.shouldPanic {
-					uassert.PanicsWithMessage(t, op.panicMsg, op.assertFn)
+					uassert.PanicsWithMessage(t, op.panicMsg, func() {
+						op.assertFn()
+					})
 				} else {
-					uassert.NotPanics(t, op.assertFn)
+					uassert.NotPanics(t, func() {
+						op.assertFn()
+					})
 				}
 			}
 		})
@@ -61,6 +66,7 @@ func TestAssert_AssertIsNotHalted(t *testing.T) {
 			{HaltLevelEmergency, false},
 			{HaltLevelComplete, true},
 		} {
+			cleanup(t)
 			err := setHaltLevel(tc.level)
 			uassert.NoError(t, err)
 
@@ -87,6 +93,7 @@ func TestAssert_AssertIsNotHalted(t *testing.T) {
 			{HaltLevelEmergency, false},
 			{HaltLevelComplete, true},
 		} {
+			cleanup(t)
 			err := setHaltLevel(tc.level)
 			uassert.NoError(t, err)
 
@@ -118,6 +125,7 @@ func TestAssert_AssertIsNotHaltedOperation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cleanup(t)
 			err := setHaltLevel(tt.haltLevel)
 			uassert.NoError(t, err)
 
