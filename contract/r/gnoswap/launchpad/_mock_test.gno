@@ -169,15 +169,15 @@ func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (*ProjectTi
 	return res[0].(*ProjectTier), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
+func (m *MockLaunchpad) GetProjectCondition(projectId string, tokenPath string) (ProjectCondition, error) {
 	res, ok := m.Response.Get("GetProjectCondition")
 	if !ok {
-		return nil, nil
+		return ProjectCondition{}, nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ProjectCondition), nil
+		return res[0].(ProjectCondition), nil
 	}
-	return res[0].(*ProjectCondition), res[1].(error)
+	return res[0].(ProjectCondition), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {

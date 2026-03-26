@@ -49,15 +49,8 @@ func GetProjectRecipient(projectId string) (address, error) {
 
 // GetProjectCondition retrieves a specific condition of a project.
 // Returns a cloned condition to prevent external modification.
-func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
-	condition, err := getImplementation().GetProjectCondition(projectId, tokenPath)
-	if err != nil {
-		return nil, err
-	}
-	if condition == nil {
-		return nil, nil
-	}
-	return condition.Clone(), nil
+func GetProjectCondition(projectId string, tokenPath string) (ProjectCondition, error) {
+	return getImplementation().GetProjectCondition(projectId, tokenPath)
 }
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.

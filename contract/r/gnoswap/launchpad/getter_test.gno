@@ -30,7 +30,7 @@ func newLaunchpadRewardManager() *RewardManager {
 
 func newLaunchpadProject() *Project {
 	project := NewProject("project-name", "token-path", 1000, adminAddr, 10, 20)
-	project.SetConditions(map[string]*ProjectCondition{
+	project.SetConditions(map[string]ProjectCondition{
 		"token-path": NewProjectCondition("token-path", 500),
 	})
 	tier := NewProjectTier(project.ID(), 30, 1000, 30, 60)
@@ -96,7 +96,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				project.SetCreatedHeight(99)
 				project.SetCreatedAt(88)
 				project.SetTiersRatios(map[int64]int64{30: 100})
-				project.Conditions()["token-path"].minimumAmount = 999
+				// ProjectCondition is now a value type; mutation on map value is a no-op
 				project.Tiers()[30].SetTotalDepositAmount(777)
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
@@ -120,12 +120,11 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				return value
 			},
 			mutate: func(result any) {
-				condition := result.(*ProjectCondition)
-				condition.tokenPath = "mutated-token"
-				condition.minimumAmount = 999
+				// ProjectCondition is a value type, so mutation on a copy
+				// does not affect the original — this is a no-op by design.
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				condition := m.Response.data["GetProjectCondition"][0].(*ProjectCondition)
+				condition := m.Response.data["GetProjectCondition"][0].(ProjectCondition)
 				uassert.Equal(t, "token-path", condition.TokenPath())
 				uassert.Equal(t, int64(500), condition.MinimumAmount())
 			},

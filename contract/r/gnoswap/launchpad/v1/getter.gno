@@ -98,16 +98,16 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 
 // GetProjectCondition retrieves a specific condition of a project.
 // Returns nil and error if project or condition not found.
-func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
+func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (launchpad.ProjectCondition, error) {
 	project, err := lp.getProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.ProjectCondition{}, err
 	}
 
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("condition(%s) not found", tokenPath))
+		return launchpad.ProjectCondition{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("condition(%s) not found", tokenPath))
 	}
 
 	return condition, nil

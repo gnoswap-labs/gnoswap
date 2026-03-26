@@ -95,19 +95,19 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 }
 
 // GetProjectCondition retrieves a specific condition of a project.
-func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
+func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (launchpad.ProjectCondition, error) {
 	project, err := lp.GetProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.ProjectCondition{}, err
 	}
 
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, errors.New("condition not found")
+		return launchpad.ProjectCondition{}, errors.New("condition not found")
 	}
 
-	return condition.Clone(), nil
+	return condition, nil
 }
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.

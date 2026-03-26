@@ -42,7 +42,7 @@ type ILaunchpadGetter interface {
 	GetProjectTokenPath(projectId string) (string, error)
 	GetProjectDepositAmount(projectId string) (int64, error)
 	GetProjectRecipient(projectId string) (address, error)
-	GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error)
+	GetProjectCondition(projectId string, tokenPath string) (ProjectCondition, error)
 	GetProjectTiersRatios(projectId string) (map[int64]int64, error)
 	GetProjectCreatedHeight(projectId string) (int64, error)
 	GetProjectCreatedAt(projectId string) (int64, error)

@@ -22,19 +22,19 @@ type ProjectCondition struct {
 	minimumAmount int64
 }
 
-func (p *ProjectCondition) TokenPath() string {
+func (p ProjectCondition) TokenPath() string {
 	return p.tokenPath
 }
 
-func (p *ProjectCondition) MinimumAmount() int64 {
+func (p ProjectCondition) MinimumAmount() int64 {
 	return p.minimumAmount
 }
 
-func (p *ProjectCondition) IsAvailable() bool {
+func (p ProjectCondition) IsAvailable() bool {
 	return p.tokenPath != "" && p.minimumAmount > 0
 }
 
-func (p *ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmount int64) error {
+func (p ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmount int64) error {
 	if p.tokenPath != inputTokenPath {
 		return ufmt.Errorf("token path(%s) is not matched", inputTokenPath)
 	}
@@ -46,26 +46,26 @@ func (p *ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmo
 	return nil
 }
 
-func (p ProjectCondition) Clone() *ProjectCondition {
-	return &ProjectCondition{
+func (p ProjectCondition) Clone() ProjectCondition {
+	return ProjectCondition{
 		tokenPath:     p.tokenPath,
 		minimumAmount: p.minimumAmount,
 	}
 }
 
-func NewProjectCondition(tokenPath string, minimumAmount int64) *ProjectCondition {
-	return &ProjectCondition{
+func NewProjectCondition(tokenPath string, minimumAmount int64) ProjectCondition {
+	return ProjectCondition{
 		tokenPath:     tokenPath,
 		minimumAmount: minimumAmount,
 	}
 }
 
-func NewProjectConditionsWithError(conditionTokens string, conditionAmounts string) ([]*ProjectCondition, error) {
+func NewProjectConditionsWithError(conditionTokens string, conditionAmounts string) ([]ProjectCondition, error) {
 	if conditionTokens == "" && conditionAmounts == "" {
-		return []*ProjectCondition{}, nil
+		return []ProjectCondition{}, nil
 	}
 
-	conditions := []*ProjectCondition{}
+	conditions := []ProjectCondition{}
 
 	tokenPaths := strings.Split(conditionTokens, stringSplitterPad)
 	minimumAmounts := strings.Split(conditionAmounts, stringSplitterPad)

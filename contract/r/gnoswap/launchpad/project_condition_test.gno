@@ -35,7 +35,7 @@ func TestProjectCondition_Getters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}
@@ -95,7 +95,7 @@ func TestProjectCondition_IsAvailable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}
@@ -155,7 +155,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}

@@ -25,7 +25,7 @@ type Project struct {
 	tokenPath     string
 	depositAmount int64
 	recipient     address                      // string
-	conditions    map[string]*ProjectCondition // tokenPath -> Condition
+	conditions    map[string]ProjectCondition // tokenPath -> Condition
 	tiers         map[int64]*ProjectTier
 	tiersRatios   map[int64]int64
 	createdHeight int64
@@ -83,8 +83,8 @@ func (p *Project) SetRecipient(recipient address) {
 }
 
 // GetConditions returns the conditions map of the project.
-func (p *Project) Conditions() map[string]*ProjectCondition {
-	conditions := make(map[string]*ProjectCondition)
+func (p *Project) Conditions() map[string]ProjectCondition {
+	conditions := make(map[string]ProjectCondition)
 
 	for tokenPath, condition := range p.conditions {
 		conditions[tokenPath] = condition.Clone()
@@ -94,7 +94,7 @@ func (p *Project) Conditions() map[string]*ProjectCondition {
 }
 
 // SetConditions sets the conditions map of the project.
-func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
+func (p *Project) SetConditions(conditions map[string]ProjectCondition) {
 	p.conditions = conditions
 }
 
@@ -176,7 +176,7 @@ func NewProject(
 		tokenPath:     tokenPath,
 		depositAmount: depositAmount,
 		recipient:     recipient,
-		conditions:    make(map[string]*ProjectCondition),
+		conditions:    make(map[string]ProjectCondition),
 		tiers:         make(map[int64]*ProjectTier),
 		tiersRatios:   make(map[int64]int64),
 		createdHeight: createdHeight,
@@ -185,7 +185,7 @@ func NewProject(
 }
 
 func (p Project) Clone() *Project {
-	conditions := make(map[string]*ProjectCondition)
+	conditions := make(map[string]ProjectCondition)
 	for k, v := range p.conditions {
 		conditions[k] = v.Clone()
 	}

@@ -907,18 +907,15 @@ func TestProject_AddProjectTier(t *testing.T) {
 func TestProject_CheckProjectConditions(t *testing.T) {
 	tests := []struct {
 		name             string
-		conditions       map[string]*launchpad.ProjectCondition
+		conditions       map[string]launchpad.ProjectCondition
 		balanceFunc      func(tokenPath string, caller address) int64
 		expectedHasError bool
 		expectedError    string
 	}{
 		{
 			name: "check conditions passes with sufficient balance",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
-					return condition
-				}(),
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {
 				return 1500 // More than required
@@ -927,11 +924,8 @@ func TestProject_CheckProjectConditions(t *testing.T) {
 		},
 		{
 			name: "check conditions fails with insufficient balance",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
-					return condition
-				}(),
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {
 				return 500 // Less than required
@@ -941,13 +935,9 @@ func TestProject_CheckProjectConditions(t *testing.T) {
 		},
 		{
 			name: "check conditions with multiple tokens",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
-				}(),
-				"gno.land/r/demo/usdc": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/usdc", 500)
-				}(),
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000),
+				"gno.land/r/demo/usdc": launchpad.NewProjectCondition("gno.land/r/demo/usdc", 500),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {
 				if tokenPath == "gno.land/r/demo/gns" {
@@ -959,10 +949,8 @@ func TestProject_CheckProjectConditions(t *testing.T) {
 		},
 		{
 			name: "skip zero conditions",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/xgns": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/xgns", 0)
-				}(),
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/xgns": launchpad.NewProjectCondition("gno.land/r/demo/xgns", 0),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {
 				return 0 // Zero balance is okay for zero condition

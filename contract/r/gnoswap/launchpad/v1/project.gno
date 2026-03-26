@@ -89,7 +89,7 @@ func addProjectTier(p *launchpad.Project, tierDuration int64, projectTier *launc
 	p.SetTiers(tiers)
 }
 
-func addProjectCondition(p *launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) {
+func addProjectCondition(p *launchpad.Project, tokenPath string, condition launchpad.ProjectCondition) {
 	conditions := p.Conditions()
 	conditions[tokenPath] = condition
 
