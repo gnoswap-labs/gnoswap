@@ -34,7 +34,6 @@ var (
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
-
 )
 
 // Realms to mock frames
@@ -83,7 +82,7 @@ func newTestProposal(
 	configVersion int64,
 	snapshotTime int64,
 ) *governance.Proposal {
-	// Use snapshotTime as createdAt and 100 as default createdHeight for tests
+	// Use snapshotTime as the proposal creation time and 100 as default createdHeight for tests
 	return governance.NewProposal(
 		id,
 		status,
@@ -92,7 +91,6 @@ func newTestProposal(
 		proposer,
 		configVersion,
 		snapshotTime,
-		snapshotTime, // createdAt
-		100,          // createdHeight
+		100, // createdHeight
 	)
 }

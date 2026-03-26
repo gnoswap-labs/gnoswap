@@ -70,7 +70,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
-					baseCreatedAt,
 					100,
 				)
 				gv.addProposal(proposal)
@@ -88,7 +87,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
-					baseCreatedAt,
 					100,
 				)
 				gv.addProposal(proposal)
@@ -107,7 +105,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					governance.NewProposalMetadata("Old Title", "Old Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
-					baseCreatedAt,
 					100,
 				)
 				gv.addProposal(oldProposal)
@@ -120,7 +117,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					governance.NewProposalMetadata("New Title", "New Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, newCreatedAt,
-					newCreatedAt,
 					100,
 				)
 				gv.addProposal(newProposal)
@@ -138,7 +134,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 					governance.NewProposalMetadata("Test Title", "Test Description"),
 					NewProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
-					baseCreatedAt,
 					100,
 				)
 				gv.addProposal(proposal)
@@ -161,7 +156,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,
-						baseCreatedAt,
 						100,
 					)
 					gv.addProposal(proposal)
@@ -181,7 +175,6 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 						governance.NewProposalMetadata("Test Title", "Test Description"),
 						NewProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,
-						baseCreatedAt,
 						100,
 					)
 					gv.addProposal(proposal)
