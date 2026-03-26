@@ -59,11 +59,11 @@ func testInitData(t *testing.T) {
 	mockPositions := avl.NewTree()
 
 	positionInfo := pl.PositionInfo{}
-	positionInfo.SetLiquidity(u256.MustFromDecimal("1000000"))
-	positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2000000"))
-	positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3000000"))
-	positionInfo.SetTokensOwed0(u256.MustFromDecimal("4000000"))
-	positionInfo.SetTokensOwed1(u256.MustFromDecimal("5000000"))
+	positionInfo.SetLiquidity("1000000")
+	positionInfo.SetFeeGrowthInside0LastX128("2000000")
+	positionInfo.SetFeeGrowthInside1LastX128("3000000")
+	positionInfo.SetTokensOwed0("4000000")
+	positionInfo.SetTokensOwed1("5000000")
 
 	mockPositions.Set("test_position", positionInfo)
 	mockPool.SetPositions(mockPositions)
@@ -977,7 +977,7 @@ func TestGetPositionWithError(t *testing.T) {
 				uassert.True(t, err != nil)
 			} else {
 				uassert.True(t, err == nil)
-				uassert.Equal(t, "1000000", positionInfo.Liquidity().ToString())
+				uassert.Equal(t, "1000000", positionInfo.Liquidity())
 			}
 		})
 	}

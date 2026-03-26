@@ -112,19 +112,19 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 }
 
 func (i *poolV1) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
-	return i.MustGetPosition(poolPath, key).FeeGrowthInside0LastX128().ToString()
+	return i.MustGetPosition(poolPath, key).FeeGrowthInside0LastX128()
 }
 
 func (i *poolV1) GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
-	return i.MustGetPosition(poolPath, key).FeeGrowthInside1LastX128().ToString()
+	return i.MustGetPosition(poolPath, key).FeeGrowthInside1LastX128()
 }
 
 func (i *poolV1) GetPositionTokensOwed0(poolPath, key string) string {
-	return i.MustGetPosition(poolPath, key).TokensOwed0().ToString()
+	return i.MustGetPosition(poolPath, key).TokensOwed0()
 }
 
 func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) string {
-	return i.MustGetPosition(poolPath, key).TokensOwed1().ToString()
+	return i.MustGetPosition(poolPath, key).TokensOwed1()
 }
 
 func (i *poolV1) GetTickLiquidityGross(poolPath string, tick int32) string {
@@ -189,12 +189,13 @@ func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256
 
 func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
 	position := i.MustGetPosition(poolPath, key)
-	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128()
+	return u256.MustFromDecimal(position.FeeGrowthInside0LastX128()),
+		u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
 }
 
 func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	position := i.MustGetPosition(poolPath, key)
-	return position.Liquidity()
+	return u256.MustFromDecimal(position.Liquidity())
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {

@@ -403,46 +403,38 @@ func NewTickInfo() TickInfo {
 	}
 }
 
+// PositionInfo stores liquidity and fee state for a position.
+// Numeric fields are stored as decimal strings to reduce storage cost.
 type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
-
-	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
-
-	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
+	liquidity                string // amount of liquidity owned by this position
+	feeGrowthInside0LastX128 string // fee growth per unit of liquidity for token0 as of last update
+	feeGrowthInside1LastX128 string // fee growth per unit of liquidity for token1 as of last update
+	tokensOwed0              string // accumulated fees in token0 waiting to be collected
+	tokensOwed1              string // accumulated fees in token1 waiting to be collected
 }
 
-func (p *PositionInfo) Liquidity() *u256.Uint                { return p.liquidity }
-func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return p.feeGrowthInside0LastX128 }
-func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return p.feeGrowthInside1LastX128 }
-func (p *PositionInfo) TokensOwed0() *u256.Uint              { return p.tokensOwed0 }
-func (p *PositionInfo) TokensOwed1() *u256.Uint              { return p.tokensOwed1 }
+func (p *PositionInfo) Liquidity() string                { return p.liquidity }
+func (p *PositionInfo) FeeGrowthInside0LastX128() string { return p.feeGrowthInside0LastX128 }
+func (p *PositionInfo) FeeGrowthInside1LastX128() string { return p.feeGrowthInside1LastX128 }
+func (p *PositionInfo) TokensOwed0() string              { return p.tokensOwed0 }
+func (p *PositionInfo) TokensOwed1() string              { return p.tokensOwed1 }
 
-func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint) {
+func (p *PositionInfo) SetLiquidity(liquidity string) {
 	p.liquidity = liquidity
 }
 
-func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 string) {
 	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 }
 
-func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 string) {
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
-func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed0(tokensOwed0 string) {
 	p.tokensOwed0 = tokensOwed0
 }
 
-func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed1(tokensOwed1 string) {
 	p.tokensOwed1 = tokensOwed1
 }

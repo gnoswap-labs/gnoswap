@@ -52,7 +52,7 @@ func positionUpdate(
 ) (pl.PositionInfo, error) {
 	isZeroLiquidityDelta := liquidityDelta.IsZero()
 
-	posLiquidity := position.Liquidity()
+	posLiquidity := u256.MustFromDecimal(position.Liquidity())
 	if posLiquidity.IsZero() && isZeroLiquidityDelta {
 		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
@@ -78,8 +78,8 @@ func positionUpdate(
 		liquidityNext = common.LiquidityMathAddDelta(posLiquidity, liquidityDelta)
 	}
 
-	feeGrowthLast0 := position.FeeGrowthInside0LastX128()
-	feeGrowthLast1 := position.FeeGrowthInside1LastX128()
+	feeGrowthLast0 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
+	feeGrowthLast1 := u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
 
 	diff0 := u256.Zero().Sub(feeGrowthInside0X128, feeGrowthLast0)
 	diff1 := u256.Zero().Sub(feeGrowthInside1X128, feeGrowthLast1)
@@ -95,15 +95,15 @@ func positionUpdate(
 	}
 
 	if !isZeroLiquidityDelta {
-		position.SetLiquidity(liquidityNext)
+		position.SetLiquidity(liquidityNext.ToString())
 	}
 
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0X128)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128)
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0X128.ToString())
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128.ToString())
 
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		curOwed0 := position.TokensOwed0()
-		curOwed1 := position.TokensOwed1()
+		curOwed0 := u256.MustFromDecimal(position.TokensOwed0())
+		curOwed1 := u256.MustFromDecimal(position.TokensOwed1())
 
 		owed0, overflow := u256.Zero().AddOverflow(curOwed0, tokensOwed0)
 		if overflow {
@@ -114,8 +114,8 @@ func positionUpdate(
 			return pl.NewDefaultPositionInfo(), errOverflow
 		}
 
-		position.SetTokensOwed0(owed0)
-		position.SetTokensOwed1(owed1)
+		position.SetTokensOwed0(owed0.ToString())
+		position.SetTokensOwed1(owed1.ToString())
 	}
 
 	return position, nil
@@ -132,27 +132,27 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 }
 
 // PositionLiquidity returns the liquidity of a position.
-func PositionLiquidity(p *pl.Pool, key string) *u256.Uint {
+func PositionLiquidity(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).Liquidity()
 }
 
 // PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
-func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) *u256.Uint {
+func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).FeeGrowthInside0LastX128()
 }
 
 // PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
-func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) *u256.Uint {
+func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).FeeGrowthInside1LastX128()
 }
 
 // PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed0(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).TokensOwed0()
 }
 
 // PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed1(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).TokensOwed1()
 }
 
