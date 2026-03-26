@@ -93,10 +93,13 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
 		project.SetTier(deposit.Tier(), projectTier)
 
-		projects := lp.store.GetProjects()
-		if err := lp.store.SetProjects(projects); err != nil {
+		if err := lp.setProject(project.ID(), project); err != nil {
 			return "", 0, err
 		}
+	}
+
+	if err := lp.setProjectTierRewardManager(projectTier.ID(), rewardManager); err != nil {
+		return "", 0, err
 	}
 
 	return project.TokenPath(), rewardAmount, nil

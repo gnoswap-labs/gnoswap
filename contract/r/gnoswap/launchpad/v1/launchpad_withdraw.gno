@@ -143,6 +143,14 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 		return "", 0, err
 	}
 
+	if err := lp.setProject(project.ID(), project); err != nil {
+		return "", 0, err
+	}
+
+	if err := lp.setProjectTierRewardManager(projectTier.ID(), rewardManager); err != nil {
+		return "", 0, err
+	}
+
 	return project.Recipient(), withdrawalAmount, nil
 }
 

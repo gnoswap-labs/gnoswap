@@ -162,6 +162,14 @@ func (lp *launchpadV1) depositGns(
 		return nil, nil, false, "", err
 	}
 
+	if err := lp.setProject(project.ID(), project); err != nil {
+		return nil, nil, false, "", err
+	}
+
+	if err := lp.setProjectTierRewardManager(projectTier.ID(), rewardManager); err != nil {
+		return nil, nil, false, "", err
+	}
+
 	return deposit,
 		rewardState,
 		isFirstDeposit,

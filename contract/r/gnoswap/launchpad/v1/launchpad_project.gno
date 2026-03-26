@@ -157,16 +157,23 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 		params.currentTime,
 	)
 
-	// Get state components
-	projects := lp.store.GetProjects()
-	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
-
 	// check duplicate project
-	if projects.Has(project.ID()) {
+	if _, exists := lp.store.GetProject(project.ID()); exists {
 		return nil, makeErrorWithDetails(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", project.ID()),
 		)
+	}
+
+	// legacy aggregate fallback for pre-keyed state
+	if lp.store.HasProjectsKey() {
+		projects := lp.store.GetProjects()
+		if projects.Has(project.ID()) {
+			return nil, makeErrorWithDetails(
+				errDuplicateProject,
+				ufmt.Sprintf("project(%s) already exists", project.ID()),
+			)
+		}
 	}
 
 	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
@@ -207,24 +214,21 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 		)
 		addProjectTier(project, duration, projectTier)
 
-		projectTierRewardManagers.Set(projectTier.ID(), newRewardManager(
+		rewardManager := newRewardManager(
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
 			rewardCollectableDuration,
 			params.startTime,
 			params.startTime+tierDurationTime,
-		))
+		)
+		if err := lp.setProjectTierRewardManager(projectTier.ID(), rewardManager); err != nil {
+			return nil, err
+		}
 	}
 
 	project.SetTiersRatios(projectTierRatios)
-	projects.Set(project.ID(), project)
-
-	// Save the modified state back
-	if err := lp.store.SetProjects(projects); err != nil {
-		return nil, err
-	}
-	if err := lp.store.SetProjectTierRewardManagers(projectTierRewardManagers); err != nil {
+	if err := lp.setProject(project.ID(), project); err != nil {
 		return nil, err
 	}
 
