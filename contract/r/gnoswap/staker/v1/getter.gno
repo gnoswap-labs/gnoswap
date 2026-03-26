@@ -32,6 +32,27 @@ func (s *stakerV1) getPoolByPoolPath(poolPath string) *sr.Pool {
 	return pool
 }
 
+// getPoolTimeSeriesByPoolPath retrieves the PoolTimeSeries by its pool path.
+func (s *stakerV1) getPoolTimeSeriesByPoolPath(poolPath string) *sr.PoolTimeSeries {
+	result, ok := s.store.GetPoolTimeSeries().Get(poolPath)
+	if !ok {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) pool time series does not exist", poolPath)),
+		)
+	}
+
+	ts, ok := result.(*sr.PoolTimeSeries)
+	if !ok {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) pool time series does not exist", poolPath)),
+		)
+	}
+
+	return ts
+}
+
 // GetPool returns the pool for the given path.
 func (s *stakerV1) GetPool(poolPath string) *sr.Pool {
 	return s.getPoolByPoolPath(poolPath)
@@ -344,8 +365,14 @@ func (s *stakerV1) GetPoolReward(tier uint64) int64 {
 
 // GetPoolStakedLiquidity returns the current total staked liquidity of a pool.
 func (s *stakerV1) GetPoolStakedLiquidity(poolPath string) string {
-	pool := s.getPoolByPoolPath(poolPath)
-	liquidity := NewPoolResolver(pool).CurrentStakedLiquidity(time.Now().Unix())
+	pools := s.getPools()
+	pool, ok := pools.Get(poolPath)
+	if !ok {
+		return u256.Zero().ToString()
+	}
+	now := time.Now().Unix()
+	ts := pools.GetOrCreateTimeSeries(poolPath, now)
+	liquidity := NewPoolResolver(pool, ts).CurrentStakedLiquidity(now)
 	if liquidity == nil {
 		return u256.Zero().ToString()
 	}
@@ -454,14 +481,14 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 
 // GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
 func (s *stakerV1) GetPoolRewardCacheCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.RewardCache().Size())
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	return uint64(ts.RewardCache().Size())
 }
 
 // GetPoolRewardCacheIDs returns a paginated list of reward cache timestamps for a pool.
 func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	rewardCache := pool.RewardCache()
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	rewardCache := ts.RewardCache()
 
 	ids := make([]int64, 0)
 	rewardCache.IterateByOffset(offset, count, func(key int64, _ any) bool {
@@ -474,8 +501,8 @@ func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []i
 
 // GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
 func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.RewardCache().Get(int64(timestamp))
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	value, ok := ts.RewardCache().Get(int64(timestamp))
 	if !ok {
 		return 0
 	}
@@ -510,14 +537,14 @@ func (s *stakerV1) GetPoolIncentiveIDs(poolPath string, offset, count int) []str
 
 // GetPoolGlobalRewardRatioAccumulationCount returns the number of global reward ratio accumulation entries for a pool.
 func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	return uint64(pool.GlobalRewardRatioAccumulation().Size())
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	return uint64(ts.GlobalRewardRatioAccumulation().Size())
 }
 
 // GetPoolGlobalRewardRatioAccumulationIDs returns a paginated list of timestamps for global reward ratio accumulation entries.
 func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64 {
-	pool := s.getPoolByPoolPath(poolPath)
-	accumulation := pool.GlobalRewardRatioAccumulation()
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	accumulation := ts.GlobalRewardRatioAccumulation()
 
 	ids := make([]uint64, 0)
 	accumulation.IterateByOffset(offset, count, func(key int64, _ any) bool {
@@ -529,19 +556,20 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offs
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
+// Values are stored as decimal strings and converted to *u256.Uint on retrieval.
 func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
-	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
+	ts := s.getPoolTimeSeriesByPoolPath(poolPath)
+	value, ok := ts.GlobalRewardRatioAccumulation().Get(int64(timestamp))
 	if !ok {
 		return u256.Zero()
 	}
 
-	accumulation, ok := value.(*u256.Uint)
+	str, ok := value.(string)
 	if !ok {
-		panic("failed to cast global reward ratio accumulation to *u256.Uint")
+		panic("failed to cast global reward ratio accumulation to string")
 	}
 
-	return accumulation
+	return u256.MustFromDecimal(str)
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.

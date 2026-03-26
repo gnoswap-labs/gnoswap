@@ -115,13 +115,15 @@ func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 func (s *stakerV1) setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	s.emissionAccessor.MintAndDistributeGns()
 
-	pool := s.getPools().GetPoolOrNil(poolPath)
+	pools := s.getPools()
+	pool := pools.GetPoolOrNil(poolPath)
 	if pool == nil {
 		pool = sr.NewPool(poolPath, currentTime)
-		s.getPools().set(poolPath, pool)
+		pools.set(poolPath, pool)
+		pools.setTimeSeries(poolPath, sr.NewPoolTimeSeries(currentTime))
 	}
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
 	s.updatePoolTier(poolTier)
 }
 

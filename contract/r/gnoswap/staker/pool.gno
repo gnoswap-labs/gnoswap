@@ -13,6 +13,57 @@ import (
 
 const AllTierCount = 4 // 0, 1, 2, 3
 
+// PoolTimeSeries holds time-series data for a pool that is updated frequently.
+// It is stored separately from Pool so that updates to these trees do not dirty
+// the Pool object in GnoVM's persistent store, reducing storage writes per tx.
+//
+// Fields:
+//
+//   - globalRewardRatioAccumulation:
+//     Global ratio of Time / TotalStake accumulation(since the pool creation)
+//     Stores new entry only when tick cross or stake/unstake happens.
+//     It is used to calculate the reward for a staked position at certain time.
+//
+//   - rewardCache:
+//     The cached per-second reward emitted for this pool.
+//     Stores new entry only when the reward is changed.
+//     PoolTier.cacheReward() updates this.
+type PoolTimeSeries struct {
+	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> string (u256.Uint in Q128)
+	rewardCache                   *UintTree // uint64 timestamp -> int64 gnsReward
+}
+
+// GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree
+func (ts *PoolTimeSeries) GlobalRewardRatioAccumulation() *UintTree {
+	return ts.globalRewardRatioAccumulation
+}
+
+// SetGlobalRewardRatioAccumulation sets the global reward ratio accumulation tree
+func (ts *PoolTimeSeries) SetGlobalRewardRatioAccumulation(tree *UintTree) {
+	ts.globalRewardRatioAccumulation = tree
+}
+
+// RewardCache returns the reward cache tree
+func (ts *PoolTimeSeries) RewardCache() *UintTree {
+	return ts.rewardCache
+}
+
+// SetRewardCache sets the reward cache tree
+func (ts *PoolTimeSeries) SetRewardCache(tree *UintTree) {
+	ts.rewardCache = tree
+}
+
+// NewPoolTimeSeries creates a new PoolTimeSeries initialized at the given time.
+func NewPoolTimeSeries(currentTime int64) *PoolTimeSeries {
+	ts := &PoolTimeSeries{
+		globalRewardRatioAccumulation: NewUintTree(),
+		rewardCache:                   NewUintTree(),
+	}
+	ts.globalRewardRatioAccumulation.Set(currentTime, "0")
+	ts.rewardCache.Set(currentTime, int64(0))
+	return ts
+}
+
 // Pool is a struct for storing an incentivized pool information
 // Each pool stores Incentives and Ticks associated with it.
 //
@@ -33,19 +84,9 @@ const AllTierCount = 4 // 0, 1, 2, 3
 //     The accumulated undisributed unclaimable reward.
 //     Reset to 0 when processUnclaimableReward is called and sent to community pool.
 //
-//   - rewardCache:
-//     The cached per-second reward emitted for this pool.
-//     Stores new entry only when the reward is changed.
-//     PoolTier.cacheReward() updates this.
-//
 // - incentives: The external incentives associated with the pool.
 //
 // - ticks: The Ticks associated with the pool.
-//
-//   - globalRewardRatioAccumulation:
-//     Global ratio of Time / TotalStake accumulation(since the pool creation)
-//     Stores new entry only when tick cross or stake/unstake happens.
-//     It is used to calculate the reward for a staked position at certain time.
 //
 //   - historicalTick:
 //     The historical tick for the pool at a given time.
@@ -53,21 +94,20 @@ const AllTierCount = 4 // 0, 1, 2, 3
 //     but it provides correct ordering for the staked position's ticks.
 //     Therefore, you should not compare it for equality, only for ordering.
 //     Set when tick cross happens or a new position is created.
+//
+// Note: globalRewardRatioAccumulation and rewardCache have been moved to
+// PoolTimeSeries to avoid dirtying Pool when these time-series are updated.
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity *UintTree // uint64 timestamp -> string (u256.Uint)
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
 
-	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
-
 	incentives *Incentives
 
 	ticks Ticks // int32 tickId -> Tick tick
-
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
 
 	historicalTick *UintTree // uint64 timestamp -> int32 tickId
 }
@@ -114,16 +154,6 @@ func (p *Pool) SetUnclaimableAcc(unclaimableAcc int64) {
 	p.unclaimableAcc = unclaimableAcc
 }
 
-// RewardCache returns the reward cache tree
-func (p *Pool) RewardCache() *UintTree {
-	return p.rewardCache
-}
-
-// SetRewardCache sets the reward cache tree
-func (p *Pool) SetRewardCache(rewardCache *UintTree) {
-	p.rewardCache = rewardCache
-}
-
 // Incentives returns the incentives
 func (p *Pool) Incentives() *Incentives {
 	return p.incentives
@@ -144,16 +174,6 @@ func (p *Pool) SetTicks(ticks Ticks) {
 	p.ticks = ticks
 }
 
-// GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree
-func (p *Pool) GlobalRewardRatioAccumulation() *UintTree {
-	return p.globalRewardRatioAccumulation
-}
-
-// SetGlobalRewardRatioAccumulation sets the global reward ratio accumulation tree
-func (p *Pool) SetGlobalRewardRatioAccumulation(globalRewardRatioAccumulation *UintTree) {
-	p.globalRewardRatioAccumulation = globalRewardRatioAccumulation
-}
-
 // HistoricalTick returns the historical tick tree
 func (p *Pool) HistoricalTick() *UintTree {
 	return p.historicalTick
@@ -171,42 +191,34 @@ func (p *Pool) Clone() *Pool {
 	}
 
 	return &Pool{
-		poolPath:                      p.poolPath,
-		stakedLiquidity:               nil,
-		lastUnclaimableTime:           p.lastUnclaimableTime,
-		unclaimableAcc:                p.unclaimableAcc,
-		rewardCache:                   nil,
-		incentives:                    nil,
-		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: nil,
-		historicalTick:                nil,
+		poolPath:            p.poolPath,
+		stakedLiquidity:     nil,
+		lastUnclaimableTime: p.lastUnclaimableTime,
+		unclaimableAcc:      p.unclaimableAcc,
+		incentives:          nil,
+		ticks:               NewTicks(),
+		historicalTick:      nil,
 	}
 }
 
 // NewPool creates a new pool with the given poolPath and currentHeight.
+// The caller must also create a companion PoolTimeSeries via NewPoolTimeSeries(currentTime)
+// and store it in the Pools.timeSeries tree.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
-		poolPath:        poolPath,
-		stakedLiquidity: NewUintTree(),
+		poolPath: poolPath,
 		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
 		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
 		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
 		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
-		lastUnclaimableTime:           0,
-		unclaimableAcc:                0,
-		rewardCache:                   NewUintTree(),
-		incentives:                    NewIncentives(poolPath),
-		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: NewUintTree(),
-		historicalTick:                NewUintTree(),
+		lastUnclaimableTime: 0,
+		unclaimableAcc:      0,
+		stakedLiquidity:     NewUintTree(),
+		incentives:          NewIncentives(poolPath),
+		ticks:               NewTicks(),
+		historicalTick:      NewUintTree(),
 	}
-
-	pool.GlobalRewardRatioAccumulation().Set(currentTime, "0")
-
-	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
-	pool.RewardCache().Set(currentTime, int64(0))
 	pool.StakedLiquidity().Set(currentTime, "0")
-
 	return pool
 }
 

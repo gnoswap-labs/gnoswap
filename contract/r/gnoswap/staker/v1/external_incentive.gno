@@ -65,10 +65,12 @@ func (s *stakerV1) CreateExternalIncentive(
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 	incentiveId := s.store.NextIncentiveID(caller, currentTime)
-	pool := s.getPools().GetPoolOrNil(targetPoolPath)
+	pools := s.getPools()
+	pool := pools.GetPoolOrNil(targetPoolPath)
 	if pool == nil {
 		pool = sr.NewPool(targetPoolPath, currentTime)
-		s.getPools().set(targetPoolPath, pool)
+		pools.set(targetPoolPath, pool)
+		pools.setTimeSeries(targetPoolPath, sr.NewPoolTimeSeries(currentTime))
 	}
 
 	incentive := sr.NewExternalIncentive(
@@ -94,7 +96,8 @@ func (s *stakerV1) CreateExternalIncentive(
 	// store external incentive information for each incentiveId
 	externalIncentives.Set(incentiveId, incentive)
 
-	poolResolver := NewPoolResolver(pool)
+	ts := pools.GetOrCreateTimeSeries(targetPoolPath, currentTime)
+	poolResolver := NewPoolResolver(pool, ts)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
 	// add incentive to time-based index for lazy discovery during CollectReward
@@ -142,7 +145,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	assertIsPoolExists(s, targetPoolPath)
 
 	// checks if the pool has been incentivized
-	pool, exists := s.getPools().Get(targetPoolPath)
+	endPools := s.getPools()
+	pool, exists := endPools.Get(targetPoolPath)
 	if !exists {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -150,7 +154,9 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		))
 	}
 
-	poolResolver := NewPoolResolver(pool)
+	// timeSeries is not needed for IncentivesResolver, but pass it for consistency
+	endTs := endPools.GetOrCreateTimeSeries(targetPoolPath, 0)
+	poolResolver := NewPoolResolver(pool, endTs)
 	incentivesResolver := poolResolver.IncentivesResolver()
 
 	// Get incentive to check if GNS already refunded

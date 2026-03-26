@@ -26,6 +26,7 @@ const (
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
 	StoreKeyPools                            StoreKey = "pools"
+	StoreKeyPoolTimeSeries                   StoreKey = "poolTimeSeries"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
 	StoreKeyPoolTierCounts                   StoreKey = "poolTierCounts"
@@ -299,6 +300,29 @@ func (s *stakerStore) GetPools() *avl.Tree {
 
 func (s *stakerStore) SetPools(pools *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
+}
+
+// PoolTimeSeries
+func (s *stakerStore) HasPoolTimeSeriesStoreKey() bool {
+	return s.kvStore.Has(StoreKeyPoolTimeSeries.String())
+}
+
+func (s *stakerStore) GetPoolTimeSeries() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyPoolTimeSeries.String())
+	if err != nil {
+		panic(err)
+	}
+
+	tree, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return tree
+}
+
+func (s *stakerStore) SetPoolTimeSeries(tree *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyPoolTimeSeries.String(), tree)
 }
 
 // PoolTierMemberships

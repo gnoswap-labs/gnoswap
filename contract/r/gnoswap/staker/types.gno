@@ -175,6 +175,11 @@ type IStakerStore interface {
 	GetPools() *avl.Tree
 	SetPools(pools *avl.Tree) error
 
+	// PoolTimeSeries (sharded time-series data, separate from Pool objects)
+	HasPoolTimeSeriesStoreKey() bool
+	GetPoolTimeSeries() *avl.Tree
+	SetPoolTimeSeries(tree *avl.Tree) error
+
 	// PoolTierMemberships
 	HasPoolTierMembershipsStoreKey() bool
 	GetPoolTierMemberships() *avl.Tree

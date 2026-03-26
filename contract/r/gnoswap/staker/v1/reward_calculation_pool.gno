@@ -17,12 +17,14 @@ var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pools represents the global pool storage
 type Pools struct {
-	tree *avl.Tree // string poolPath -> pool
+	tree       *avl.Tree // string poolPath -> *sr.Pool
+	timeSeries *avl.Tree // string poolPath -> *sr.PoolTimeSeries
 }
 
 func NewPools() *Pools {
 	return &Pools{
-		tree: avl.NewTree(),
+		tree:       avl.NewTree(),
+		timeSeries: avl.NewTree(),
 	}
 }
 
@@ -53,6 +55,35 @@ func (self *Pools) set(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
 
+// GetTimeSeries returns the PoolTimeSeries for the given poolPath, or nil if not found.
+func (self *Pools) GetTimeSeries(poolPath string) (*sr.PoolTimeSeries, bool) {
+	v, ok := self.timeSeries.Get(poolPath)
+	if !ok {
+		return nil, false
+	}
+	ts, ok := v.(*sr.PoolTimeSeries)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast v to *sr.PoolTimeSeries: %T", v))
+	}
+	return ts, true
+}
+
+// GetOrCreateTimeSeries returns the PoolTimeSeries for the given poolPath,
+// creating a new one if it does not exist yet.
+func (self *Pools) GetOrCreateTimeSeries(poolPath string, currentTime int64) *sr.PoolTimeSeries {
+	ts, ok := self.GetTimeSeries(poolPath)
+	if !ok {
+		ts = sr.NewPoolTimeSeries(currentTime)
+		self.timeSeries.Set(poolPath, ts)
+	}
+	return ts
+}
+
+// setTimeSeries stores the PoolTimeSeries for the given poolPath.
+func (self *Pools) setTimeSeries(poolPath string, ts *sr.PoolTimeSeries) {
+	self.timeSeries.Set(poolPath, ts)
+}
+
 // Has returns true if the pool exists for the given poolPath
 func (self *Pools) Has(poolPath string) bool {
 	return self.tree.Has(poolPath)
@@ -68,12 +99,24 @@ func (self *Pools) IterateAll(fn func(key string, pool *sr.Pool) bool) {
 	})
 }
 
+// PoolResolver wraps a Pool and its companion PoolTimeSeries for reward calculation.
 type PoolResolver struct {
 	*sr.Pool
+	timeSeries *sr.PoolTimeSeries
 }
 
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 	return NewIncentivesResolver(self.Incentives())
+}
+
+// GlobalRewardRatioAccumulation returns the global reward ratio accumulation tree from PoolTimeSeries.
+func (self *PoolResolver) GlobalRewardRatioAccumulation() *sr.UintTree {
+	return self.timeSeries.GlobalRewardRatioAccumulation()
+}
+
+// RewardCache returns the reward cache tree from PoolTimeSeries.
+func (self *PoolResolver) RewardCache() *sr.UintTree {
+	return self.timeSeries.RewardCache()
 }
 
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
@@ -257,10 +300,11 @@ func (self *RewardState) reset() {
 	}
 }
 
-// NewPool creates a new pool with the given poolPath and currentHeight.
-func NewPoolResolver(pool *sr.Pool) *PoolResolver {
+// NewPoolResolver creates a PoolResolver from a Pool and its companion PoolTimeSeries.
+func NewPoolResolver(pool *sr.Pool, ts *sr.PoolTimeSeries) *PoolResolver {
 	return &PoolResolver{
-		Pool: pool,
+		Pool:       pool,
+		timeSeries: ts,
 	}
 }
 

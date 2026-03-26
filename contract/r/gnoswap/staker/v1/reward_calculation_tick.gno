@@ -176,7 +176,8 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 	}
 
 	// Update pool's cumulative deposit with the liquidity change
-	poolResolver := NewPoolResolver(pool)
+	ts := s.getPools().GetOrCreateTimeSeries(pool.PoolPath(), timestamp)
+	poolResolver := NewPoolResolver(pool, ts)
 	newAcc := poolResolver.modifyDeposit(liquidityDelta, timestamp, nextTick)
 
 	// Update the tick's outside accumulation for reward calculations
@@ -226,7 +227,8 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 
 	// Phase 3: Apply cumulative changes to pool state in a single operation
 	// This is the key optimization - one pool update instead of many
-	poolResolver := NewPoolResolver(batch.Pool())
+	ts := s.getPools().GetOrCreateTimeSeries(batch.PoolPath(), timestamp)
+	poolResolver := NewPoolResolver(batch.Pool(), ts)
 	newAcc := poolResolver.modifyDeposit(cumulativeDelta, timestamp, lastTick)
 
 	// Phase 4: Update individual tick outside accumulations for reward tracking

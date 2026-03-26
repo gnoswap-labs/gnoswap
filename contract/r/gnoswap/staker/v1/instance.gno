@@ -11,7 +11,8 @@ type stakerV1 struct {
 
 func (s *stakerV1) getPools() *Pools {
 	return &Pools{
-		tree: s.store.GetPools(),
+		tree:       s.store.GetPools(),
+		timeSeries: s.store.GetPoolTimeSeries(),
 	}
 }
 

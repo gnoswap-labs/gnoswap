@@ -105,8 +105,10 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 		currentEmission:          getEmission(),
 	}
 
-	pools.set(initialPoolPath, sr.NewPool(initialPoolPath, currentTime+1))
-	result.changeTier(currentHeight+1, currentTime+1, pools, initialPoolPath, 1)
+	initTime := currentTime + 1
+	pools.set(initialPoolPath, sr.NewPool(initialPoolPath, initTime))
+	pools.GetOrCreateTimeSeries(initialPoolPath, initTime)
+	result.changeTier(currentHeight+1, initTime, pools, initialPoolPath, 1)
 	return result
 }
 
@@ -207,7 +209,8 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		poolResolver := NewPoolResolver(pool)
+		ts := pools.GetOrCreateTimeSeries(poolPath, currentTime)
+		poolResolver := NewPoolResolver(pool, ts)
 		// prevent new rewards from accumulating after tier removal
 		poolResolver.cacheReward(currentTime, 0)
 	} else {
@@ -236,7 +239,8 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 			return false // Skip if no pools in tier
 		}
 
-		poolResolver := NewPoolResolver(pool)
+		ts := pools.GetOrCreateTimeSeries(key, currentTime)
+		poolResolver := NewPoolResolver(pool, ts)
 		poolResolver.cacheReward(currentTime, poolReward)
 		return false
 	})
@@ -314,7 +318,8 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 		}
 
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
-		poolResolver := NewPoolResolver(pool)
+		ts := pools.GetOrCreateTimeSeries(key, currentTimestamp)
+		poolResolver := NewPoolResolver(pool, ts)
 		poolResolver.cacheInternalReward(currentTimestamp, poolReward)
 		return false
 	})

@@ -81,7 +81,8 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		pool = sr.NewPool(poolPath, param.CurrentTime)
 		param.Pools.set(poolPath, pool)
 	}
-	poolResolver := NewPoolResolver(pool)
+	ts := param.Pools.GetOrCreateTimeSeries(poolPath, param.CurrentTime)
+	poolResolver := NewPoolResolver(pool, ts)
 
 	lastCollectTime := depositResolver.InternalRewardLastCollectTime()
 
@@ -159,11 +160,13 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 // calculates internal unclaimable reward for the pool
 func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
-	pool, ok := s.getPools().Get(poolPath)
+	pools := s.getPools()
+	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return 0
 	}
-	poolResolver := NewPoolResolver(pool)
+	ts := pools.GetOrCreateTimeSeries(poolPath, endTimestamp)
+	poolResolver := NewPoolResolver(pool, ts)
 	return poolResolver.processUnclaimableReward(endTimestamp)
 }
 

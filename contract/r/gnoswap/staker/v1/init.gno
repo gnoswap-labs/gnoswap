@@ -135,6 +135,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasPoolTimeSeriesStoreKey() {
+		err := stakerStore.SetPoolTimeSeries(initializedPools.timeSeries)
+		if err != nil {
+			return err
+		}
+	}
+
 	if !stakerStore.HasPoolTierMembershipsStoreKey() {
 		err := stakerStore.SetPoolTierMemberships(initializedPoolTier.membership)
 		if err != nil {
@@ -211,18 +218,20 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
 	basicPoolPath := "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+	currentTime := time.Now().Unix()
 
 	pools := NewPools()
 	pl := NewPools().GetPoolOrNil(basicPoolPath)
 	if pl == nil {
-		pl = sr.NewPool(basicPoolPath, time.Now().Unix())
+		pl = sr.NewPool(basicPoolPath, currentTime)
 		pools.set(basicPoolPath, pl)
+		pools.setTimeSeries(basicPoolPath, sr.NewPoolTimeSeries(currentTime))
 	}
 
 	poolTier := NewPoolTier(
 		pools,
 		runtime.ChainHeight(),
-		time.Now().Unix(),
+		currentTime,
 		basicPoolPath,
 		emission.GetStakerEmissionAmountPerSecond,
 		emission.GetStakerEmissionAmountPerSecondInRange,

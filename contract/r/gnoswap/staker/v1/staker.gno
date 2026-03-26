@@ -346,7 +346,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
-	poolResolver := NewPoolResolver(pool)
+	ts := pools.GetOrCreateTimeSeries(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool, ts)
 
 	isInRange := false
 	if pn.IsInRange(positionId) {
@@ -578,8 +579,10 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"currentHeight", formatAnyInt(blockHeight),
 		)
 
-		pool, _ := s.getPools().Get(deposit.TargetPoolPath())
-		poolResolver := NewPoolResolver(pool)
+		pools := s.getPools()
+		pool, _ := pools.Get(deposit.TargetPoolPath())
+		ts := pools.GetOrCreateTimeSeries(deposit.TargetPoolPath(), currentTime)
+		poolResolver := NewPoolResolver(pool, ts)
 		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
 		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
 
@@ -679,8 +682,10 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	rewardPenalty := formatAnyInt(reward.InternalPenalty)
 
 	poolPath := depositResolver.TargetPoolPath()
-	pool, _ := s.getPools().Get(poolPath)
-	poolResolver := NewPoolResolver(pool)
+	pools := s.getPools()
+	pool, _ := pools.Get(poolPath)
+	ts := pools.GetOrCreateTimeSeries(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool, ts)
 
 	// Get accumulator values for reward calculation tracking
 	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
@@ -765,8 +770,10 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 
 	// Get pool and accumulator values for reward calculation tracking
 	currentTime := time.Now().Unix()
-	pool, _ := s.getPools().Get(poolPath)
-	poolResolver := NewPoolResolver(pool)
+	pools := s.getPools()
+	pool, _ := pools.Get(poolPath)
+	ts := pools.GetOrCreateTimeSeries(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool, ts)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
 	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
@@ -795,17 +802,20 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 func (s *stakerV1) applyUnStake(positionId uint64) error {
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
-	pool, ok := s.getPools().Get(depositResolver.TargetPoolPath())
-	poolResolver := NewPoolResolver(pool)
+	targetPoolPath := depositResolver.TargetPoolPath()
+	unPools := s.getPools()
+	pool, ok := unPools.Get(targetPoolPath)
 	if !ok {
 		return ufmt.Errorf(
 			"%v: pool(%s) does not exist",
-			errDataNotFound, depositResolver.TargetPoolPath(),
+			errDataNotFound, targetPoolPath,
 		)
 	}
 
 	currentTime := time.Now().Unix()
-	currentTick := s.poolAccessor.GetSlot0Tick(depositResolver.TargetPoolPath())
+	unTs := unPools.GetOrCreateTimeSeries(targetPoolPath, currentTime)
+	poolResolver := NewPoolResolver(pool, unTs)
+	currentTick := s.poolAccessor.GetSlot0Tick(targetPoolPath)
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(depositResolver.Liquidity()))
 	if pn.IsInRange(positionId) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
@@ -846,7 +856,9 @@ func hasTokenOwnership(owner, caller address) error {
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
-	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
+	// timeSeries is not needed for IsExternallyIncentivizedPool, but pass it for consistency
+	ts := s.getPools().GetOrCreateTimeSeries(poolPath, 0)
+	hasExternal := NewPoolResolver(pool, ts).IsExternallyIncentivizedPool()
 
 	if !hasInternal && !hasExternal {
 		return ufmt.Errorf(
