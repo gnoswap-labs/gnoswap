@@ -20,17 +20,17 @@ func ExistsPoolPath(poolPath string) bool {
 }
 
 // GetBalances returns the balances of the pool.
-func GetBalances(poolPath string) (string, string) {
+func GetBalances(poolPath string) (int64, int64) {
 	return getImplementation().GetBalanceToken0(poolPath), getImplementation().GetBalanceToken1(poolPath)
 }
 
 // GetBalanceToken0 returns the balance of token0 in the pool.
-func GetBalanceToken0(poolPath string) string {
+func GetBalanceToken0(poolPath string) int64 {
 	return getImplementation().GetBalanceToken0(poolPath)
 }
 
 // GetBalanceToken1 returns the balance of token1 in the pool.
-func GetBalanceToken1(poolPath string) string {
+func GetBalanceToken1(poolPath string) int64 {
 	return getImplementation().GetBalanceToken1(poolPath)
 }
 

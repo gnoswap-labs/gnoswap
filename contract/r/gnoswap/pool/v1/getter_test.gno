@@ -105,15 +105,15 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get balance token0", func(t *testing.T) {
 			balanceToken0 := getMockInstance().GetBalanceToken0(validPoolPath)
-			if balanceToken0 != "1000" {
-				t.Errorf("Expected balance token0 [%s], got %s", "1000", balanceToken0)
+			if balanceToken0 != 1000 {
+				t.Errorf("Expected balance token0 [%d], got %d", 1000, balanceToken0)
 			}
 		})
 
 		t.Run("get balance token1", func(t *testing.T) {
 			balanceToken1 := getMockInstance().GetBalanceToken1(validPoolPath)
-			if balanceToken1 != "2000" {
-				t.Errorf("Expected balance token1 [%s], got %s", "2000", balanceToken1)
+			if balanceToken1 != 2000 {
+				t.Errorf("Expected balance token1 [%d], got %d", 2000, balanceToken1)
 			}
 		})
 

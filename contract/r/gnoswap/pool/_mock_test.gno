@@ -232,22 +232,22 @@ func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, er
 	return res[0].(*Pool), res[1].(error)
 }
 
-func (m *MockPool) GetBalanceToken0(poolPath string) string {
+func (m *MockPool) GetBalanceToken0(poolPath string) int64 {
 	res, ok := m.Response.Get("GetBalanceToken0")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
-func (m *MockPool) GetBalanceToken1(poolPath string) string {
+func (m *MockPool) GetBalanceToken1(poolPath string) int64 {
 	res, ok := m.Response.Get("GetBalanceToken1")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
 func (m *MockPool) GetFee(poolPath string) uint32 {

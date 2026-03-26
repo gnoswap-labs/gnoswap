@@ -160,14 +160,14 @@ func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Poo
 	return t.instance.GetPool(token0Path, token1Path, fee)
 }
 
-func (t *TestPool) GetBalanceToken0(poolPath string) string {
+func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	if !t.isActive("GetBalanceToken0") {
 		panic("test implementation: GetBalanceToken0 not supported")
 	}
 	return t.instance.GetBalanceToken0(poolPath)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) string {
+func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
 	if !t.isActive("GetBalanceToken1") {
 		panic("test implementation: GetBalanceToken1 not supported")
 	}

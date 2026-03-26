@@ -96,11 +96,11 @@ func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Poo
 	return t.instance.GetPool(token0Path, token1Path, fee)
 }
 
-func (t *TestPool) GetBalanceToken0(poolPath string) string {
+func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	return t.instance.GetBalanceToken0(poolPath)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) string {
+func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
 	return t.instance.GetBalanceToken1(poolPath)
 }
 

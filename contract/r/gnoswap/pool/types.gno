@@ -136,9 +136,9 @@ type IPoolSwap interface {
 type IPoolGetter interface {
 	ExistsPoolPath(poolPath string) bool
 
-	GetBalanceToken0(poolPath string) string
+	GetBalanceToken0(poolPath string) int64
 
-	GetBalanceToken1(poolPath string) string
+	GetBalanceToken1(poolPath string) int64
 
 	GetFee(poolPath string) uint32
 

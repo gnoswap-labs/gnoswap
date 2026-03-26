@@ -796,7 +796,7 @@ func TestGetBalanceToken0(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token0 is success",
@@ -808,7 +808,7 @@ func TestGetBalanceToken0(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 
@@ -845,7 +845,7 @@ func TestGetBalanceToken1(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token1 is success",
@@ -857,7 +857,7 @@ func TestGetBalanceToken1(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 

@@ -46,12 +46,12 @@ func (i *poolV1) GetFee(poolPath string) uint32 {
 	return i.mustGetPool(poolPath).Fee()
 }
 
-func (i *poolV1) GetBalanceToken0(poolPath string) string {
-	return formatInt(i.mustGetPool(poolPath).BalanceToken0())
+func (i *poolV1) GetBalanceToken0(poolPath string) int64 {
+	return i.mustGetPool(poolPath).BalanceToken0()
 }
 
-func (i *poolV1) GetBalanceToken1(poolPath string) string {
-	return formatInt(i.mustGetPool(poolPath).BalanceToken1())
+func (i *poolV1) GetBalanceToken1(poolPath string) int64 {
+	return i.mustGetPool(poolPath).BalanceToken1()
 }
 
 func (i *poolV1) GetTickSpacing(poolPath string) int32 {

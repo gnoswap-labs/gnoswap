@@ -216,8 +216,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		balance0 := pl.GetBalanceToken0(poolPath)
 		balance1 := pl.GetBalanceToken1(poolPath)
 
-		token0Balance := u256.MustFromDecimal(balance0)
-		token1Balance := u256.MustFromDecimal(balance1)
+		token0Balance := u256.NewUint(uint64(balance0))
+		token1Balance := u256.NewUint(uint64(balance1))
 		println("token1Balance", token1Balance.ToString())
 
 		overflowAmount := u256.Zero().Add(token0Balance, u256.One()).ToString()

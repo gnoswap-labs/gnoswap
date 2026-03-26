@@ -228,20 +228,20 @@ func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Poo
 	return result[0].(*pool.Pool), result[1].(error)
 }
 
-func (t *TestPool) GetBalanceToken0(poolPath string) string {
+func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	return t.ExecuteFn(
 		"GetBalanceToken0",
 		func(args ...any) any { return t.instance.GetBalanceToken0(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(int64)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) string {
+func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
 	return t.ExecuteFn(
 		"GetBalanceToken1",
 		func(args ...any) any { return t.instance.GetBalanceToken1(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(int64)
 }
 
 func (t *TestPool) GetFee(poolPath string) uint32 {
