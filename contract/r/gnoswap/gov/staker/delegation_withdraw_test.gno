@@ -52,7 +52,6 @@ func TestNewDelegationWithdraw(t *testing.T) {
 			)
 
 			// then
-			uassert.NotNil(t, withdraw)
 			uassert.Equal(t, withdraw.DelegationID(), tc.delegationID)
 			uassert.Equal(t, withdraw.UnDelegateAmount(), tc.unDelegateAmount)
 			uassert.Equal(t, withdraw.UnDelegatedHeight(), tc.createdHeight)
@@ -101,7 +100,6 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 			)
 
 			// then
-			uassert.NotNil(t, withdraw)
 			uassert.Equal(t, withdraw.DelegationID(), tc.delegationID)
 			uassert.Equal(t, withdraw.UnDelegateAmount(), tc.unDelegateAmount)
 			uassert.Equal(t, withdraw.UnDelegatedHeight(), tc.createdHeight)

@@ -266,15 +266,15 @@ func (m *MockGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
 	return res[0].(int)
 }
 
-func (m *MockGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error) {
+func (m *MockGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]DelegationWithdraw, error) {
 	res, ok := m.Response.Get("GetDelegationWithdraws")
 	if !ok {
 		return nil, nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].([]*DelegationWithdraw), nil
+		return res[0].([]DelegationWithdraw), nil
 	}
-	return res[0].([]*DelegationWithdraw), res[1].(error)
+	return res[0].([]DelegationWithdraw), res[1].(error)
 }
 
 func (m *MockGovStaker) GetCollectableWithdrawAmount(delegationID int64) int64 {
