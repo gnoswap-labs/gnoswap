@@ -172,8 +172,8 @@ func checkInRangePosition() {
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Position should be in range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", position.GetPositionToken1Balance(1))
 }
 
 func mintOutRangePosition() {
@@ -211,8 +211,8 @@ func checkOutRangePosition() {
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Position should be out of range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", position.GetPositionToken0Balance(2))
+	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", position.GetPositionToken1Balance(2))
 }
 
 func executeSwap() {
@@ -287,8 +287,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [SCENARIO] 3. Check in-range position state
 // [EXPECTED] Position liquidity should be 170132354
 // [EXPECTED] Position should be in range
-// [EXPECTED] Token0 balance should be 50000000
-// [EXPECTED] Token1 balance should be 50000000
+// [EXPECTED] Token0 balance should be 49999999
+// [EXPECTED] Token1 balance should be 49999999
 //
 // [SCENARIO] 4. Mint out-range position
 // [INFO] Minting out-range position
@@ -300,7 +300,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [SCENARIO] 5. Check out-range position state
 // [EXPECTED] Position liquidity should be 680471001
 // [EXPECTED] Position should be out of range
-// [EXPECTED] Token0 balance should be 50000000
+// [EXPECTED] Token0 balance should be 49999999
 // [EXPECTED] Token1 balance should be 0
 //
 // [SCENARIO] 6. Execute swap to test ranges

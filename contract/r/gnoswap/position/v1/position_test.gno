@@ -91,8 +91,6 @@ func newDummyPosition(id uint64) position.Position {
 		u256.NewUint(20),
 		u256.NewUint(30),
 		u256.NewUint(40),
-		u256.NewUint(1000),
-		u256.NewUint(1000),
 		false,
 		"user1",
 	)

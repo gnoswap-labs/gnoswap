@@ -202,6 +202,33 @@ func (m *MockPosition) GetPositionLiquidity(positionId uint64) *u256.Uint {
 	return res[0].(*u256.Uint)
 }
 
+func (m *MockPosition) GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint) {
+	res, ok := m.Response.Get("GetPositionTokenBalances")
+	if !ok {
+		return nil, nil
+	}
+
+	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+}
+
+func (m *MockPosition) GetPositionToken0Balance(positionId uint64) *u256.Uint {
+	res, ok := m.Response.Get("GetPositionToken0Balance")
+	if !ok {
+		return nil
+	}
+
+	return res[0].(*u256.Uint)
+}
+
+func (m *MockPosition) GetPositionToken1Balance(positionId uint64) *u256.Uint {
+	res, ok := m.Response.Get("GetPositionToken1Balance")
+	if !ok {
+		return nil
+	}
+
+	return res[0].(*u256.Uint)
+}
+
 func (m *MockPosition) GetPositionOperator(positionId uint64) address {
 	res, ok := m.Response.Get("GetPositionOperator")
 	if !ok {

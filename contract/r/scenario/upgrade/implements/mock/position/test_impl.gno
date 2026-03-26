@@ -227,6 +227,18 @@ func (t *TestPosition) GetPositionLiquidity(positionId uint64) *u256.Uint {
 	).(*u256.Uint)
 }
 
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint) {
+	result := t.ExecuteFn(
+		"GetPositionTokenBalances",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetPositionTokenBalances(args[0].(uint64))
+			return []any{r1, r2}
+		},
+		positionId,
+	).([]any)
+	return result[0].(*u256.Uint), result[1].(*u256.Uint)
+}
+
 func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
 	return t.ExecuteFn(
 		"GetPositionFeeGrowthInside0LastX128",

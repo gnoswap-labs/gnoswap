@@ -194,8 +194,8 @@ func testDecreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] BAR balance increased by %d from decrease\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance increased by %d from decrease\n", fooChange)
 
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", position.GetPositionToken1Balance(1))
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())

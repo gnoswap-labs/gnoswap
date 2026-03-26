@@ -238,8 +238,8 @@ func testRepositionAndBalance() {
 	pos, _ = position.GetPosition(1)
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Final position tick range should be [%d, %d]\n", pos.TickLower(), pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Final position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Final position token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Final position token0 balance should be %s\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Final position token1 balance should be %s\n", position.GetPositionToken1Balance(1))
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken0PoolBalance-beforeToken0PoolBalance)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken1PoolBalance-beforeToken1PoolBalance)
 
@@ -329,7 +329,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] User FOO balance after reposition should be 99999999999999
 // [EXPECTED] Final position liquidity should be 432601712
 // [EXPECTED] Final position tick range should be [9000, 13000]
-// [EXPECTED] Final position token0 balance should be 50000000
+// [EXPECTED] Final position token0 balance should be 49999999
 // [EXPECTED] Final position token1 balance should be 0
 // [EXPECTED] Final pool balance change should be 50000000
 // [EXPECTED] Final pool balance change should be 0

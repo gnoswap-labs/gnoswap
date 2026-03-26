@@ -56,8 +56,6 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		feeGrowthInside1LastX128,
 		u256.Zero(),
 		u256.Zero(),
-		amount0,
-		amount1,
 		false,
 		zeroAddress,
 	)
@@ -128,8 +126,6 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
-
 	feeGrowth := FeeGrowthInside{
 		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
@@ -137,14 +133,6 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
 	liquidityAmount, overflow := u256.Zero().AddOverflow(position.Liquidity(), liquidity)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
@@ -156,8 +144,6 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
 
 	position.SetLiquidity(liquidityAmount)
-	position.SetToken0Balance(token0Balance)
-	position.SetToken1Balance(token1Balance)
 	position.SetBurned(false)
 
 	err := p.setPosition(params.positionId, *position)

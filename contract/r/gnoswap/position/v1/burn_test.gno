@@ -124,8 +124,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.MustFromDecimal("200"),     // feeGrowthInside1LastX128
 					u256.MustFromDecimal("10"),      // tokensOwed0
 					u256.MustFromDecimal("20"),      // tokensOwed1
-					u256.MustFromDecimal("500"),     // token0Balance
-					u256.MustFromDecimal("600"),     // token1Balance
 					false,                           // burned
 					"",                              // operator
 				)
@@ -151,8 +149,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.MustFromDecimal("200"),
 					u256.MustFromDecimal("50"),
 					u256.MustFromDecimal("75"),
-					u256.MustFromDecimal("500"),
-					u256.MustFromDecimal("600"),
 					false, // burned
 					"",    // operator
 				)
@@ -178,8 +174,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.MustFromDecimal("200"),
 					u256.MustFromDecimal("0"),
 					u256.MustFromDecimal("0"),
-					u256.Zero(),
-					u256.Zero(),
 					false, // burned
 					"",    // operator
 				)
@@ -205,8 +199,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.Zero(),
 					u256.MustFromDecimal(MAX_UINT256), // Already max tokens owed
 					u256.Zero(),
-					u256.Zero(),
-					u256.Zero(),
 					false, // burned
 					"",    // operator
 				)
@@ -231,8 +223,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.Zero(),
 					u256.Zero(),
 					u256.MustFromDecimal(MAX_UINT256), // Already max tokens owed
-					u256.Zero(),
-					u256.Zero(),
 					false, // burned
 					"",    // operator
 				)
@@ -257,8 +247,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.Zero(),
 					u256.MustFromDecimal("1000"),
 					u256.MustFromDecimal("2000"),
-					u256.MustFromDecimal("50000000"),
-					u256.MustFromDecimal("60000000"),
 					false, // burned
 					"",    // operator
 				)
@@ -284,8 +272,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					u256.MustFromDecimal("200"),
 					u256.MustFromDecimal("999999"),
 					u256.MustFromDecimal("888888"),
-					u256.MustFromDecimal("5000"),
-					u256.MustFromDecimal("6000"),
 					false, // burned
 					"",    // operator
 				)

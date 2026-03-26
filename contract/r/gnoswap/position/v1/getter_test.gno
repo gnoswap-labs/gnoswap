@@ -282,15 +282,15 @@ func TestGetPositionTokenBalances(t *testing.T) {
 		{
 			name: "token0 balance is not nil after mint",
 			testFunc: func() bool {
-				position := mockInstance.mustGetPosition(positionId)
-				return position.Token0Balance() != nil
+				balance0, _ := mockInstance.GetPositionTokenBalances(positionId)
+				return balance0 != nil
 			},
 		},
 		{
 			name: "token1 balance is not nil after mint",
 			testFunc: func() bool {
-				position := mockInstance.mustGetPosition(positionId)
-				return position.Token1Balance() != nil
+				_, balance1 := mockInstance.GetPositionTokenBalances(positionId)
+				return balance1 != nil
 			},
 		},
 	}

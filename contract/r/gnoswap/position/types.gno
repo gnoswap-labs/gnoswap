@@ -76,6 +76,7 @@ type IPositionGetter interface {
 	GetPositionTickLower(positionId uint64) int32
 	GetPositionTickUpper(positionId uint64) int32
 	GetPositionLiquidity(positionId uint64) *u256.Uint
+	GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint)
 	GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint
 	GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint
 	GetPositionTokensOwed0(positionId uint64) *u256.Uint

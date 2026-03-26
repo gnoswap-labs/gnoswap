@@ -91,6 +91,15 @@ func (p *positionV1) GetPositionLiquidity(positionId uint64) *u256.Uint {
 	return p.mustGetPosition(positionId).Liquidity()
 }
 
+func (p *positionV1) GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint) {
+	position := p.mustGetPosition(positionId)
+	if !pl.ExistsPoolPath(position.PoolKey()) {
+		return u256.Zero(), u256.Zero()
+	}
+
+	return calculatePositionBalances(position)
+}
+
 func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
 	return p.mustGetPosition(positionId).FeeGrowthInside0LastX128()
 }
