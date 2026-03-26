@@ -36,11 +36,11 @@ func newTickInfoFixture() TickInfo {
 
 func newPositionInfoFixture() PositionInfo {
 	positionInfo := PositionInfo{}
-	positionInfo.SetLiquidity("1000")
-	positionInfo.SetFeeGrowthInside0LastX128("2000")
-	positionInfo.SetFeeGrowthInside1LastX128("3000")
-	positionInfo.SetTokensOwed0("4000")
-	positionInfo.SetTokensOwed1("5000")
+	positionInfo.SetLiquidity(u256.MustFromDecimal("1000"))
+	positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2000"))
+	positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3000"))
+	positionInfo.SetTokensOwed0(u256.MustFromDecimal("4000"))
+	positionInfo.SetTokensOwed1(u256.MustFromDecimal("5000"))
 	return positionInfo
 }
 
@@ -259,19 +259,19 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				positionInfo := result.(PositionInfo)
-				positionInfo.SetLiquidity("1111")
-				positionInfo.SetFeeGrowthInside0LastX128("2222")
-				positionInfo.SetFeeGrowthInside1LastX128("3333")
-				positionInfo.SetTokensOwed0("4444")
-				positionInfo.SetTokensOwed1("5555")
+				positionInfo.SetLiquidity(u256.MustFromDecimal("1111"))
+				positionInfo.SetFeeGrowthInside0LastX128(u256.MustFromDecimal("2222"))
+				positionInfo.SetFeeGrowthInside1LastX128(u256.MustFromDecimal("3333"))
+				positionInfo.SetTokensOwed0(u256.MustFromDecimal("4444"))
+				positionInfo.SetTokensOwed1(u256.MustFromDecimal("5555"))
 			},
 			assertRaw: func(t *testing.T) {
 				positionInfo := implementation.(*MockPool).Response.responses["GetPosition"][0].(PositionInfo)
-				uassert.Equal(t, "1000", positionInfo.Liquidity())
-				uassert.Equal(t, "2000", positionInfo.FeeGrowthInside0LastX128())
-				uassert.Equal(t, "3000", positionInfo.FeeGrowthInside1LastX128())
-				uassert.Equal(t, "4000", positionInfo.TokensOwed0())
-				uassert.Equal(t, "5000", positionInfo.TokensOwed1())
+				uassert.Equal(t, "1000", positionInfo.Liquidity().ToString())
+				uassert.Equal(t, "2000", positionInfo.FeeGrowthInside0LastX128().ToString())
+				uassert.Equal(t, "3000", positionInfo.FeeGrowthInside1LastX128().ToString())
+				uassert.Equal(t, "4000", positionInfo.TokensOwed0().ToString())
+				uassert.Equal(t, "5000", positionInfo.TokensOwed1().ToString())
 			},
 		},
 		{
