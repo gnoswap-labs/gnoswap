@@ -4,29 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
-
-func validateU256Str(s string) {
-	if s == "" {
-		return
-	}
-	if _, err := u256.FromDecimal(s); err != nil {
-		panic("invalid u256 string: " + s)
-	}
-}
-
-func validateI256Str(s string) {
-	if s == "" {
-		return
-	}
-	if _, err := i256.FromDecimal(s); err != nil {
-		panic("invalid i256 string: " + s)
-	}
-}
 
 const (
 	MAX_TICK            int32 = 887272

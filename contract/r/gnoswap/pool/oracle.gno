@@ -59,12 +59,10 @@ func (o *Observation) SetTickCumulative(tickCumulative int64) {
 }
 
 func (o *Observation) SetLiquidityCumulative(liquidityCumulative string) {
-	validateU256Str(liquidityCumulative)
 	o.liquidityCumulative = liquidityCumulative
 }
 
 func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 string) {
-	validateU256Str(secondsPerLiquidityCumulativeX128)
 	o.secondsPerLiquidityCumulativeX128 = secondsPerLiquidityCumulativeX128
 }
 

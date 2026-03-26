@@ -346,27 +346,22 @@ func (t *TickInfo) TickCumulativeOutside() int64 { return t.tickCumulativeOutsid
 
 // TickInfo Setters methods
 func (t *TickInfo) SetLiquidityGross(liquidityGross string) {
-	validateU256Str(liquidityGross)
 	t.liquidityGross = liquidityGross
 }
 
 func (t *TickInfo) SetLiquidityNet(liquidityNet string) {
-	validateI256Str(liquidityNet)
 	t.liquidityNet = liquidityNet
 }
 
 func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 string) {
-	validateU256Str(feeGrowthOutside0X128)
 	t.feeGrowthOutside0X128 = feeGrowthOutside0X128
 }
 
 func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 string) {
-	validateU256Str(feeGrowthOutside1X128)
 	t.feeGrowthOutside1X128 = feeGrowthOutside1X128
 }
 
 func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 string) {
-	validateU256Str(secondsPerLiquidityOutsideX128)
 	t.secondsPerLiquidityOutsideX128 = secondsPerLiquidityOutsideX128
 }
 
@@ -425,26 +420,21 @@ func (p *PositionInfo) TokensOwed0() string              { return p.tokensOwed0 
 func (p *PositionInfo) TokensOwed1() string              { return p.tokensOwed1 }
 
 func (p *PositionInfo) SetLiquidity(liquidity string) {
-	validateU256Str(liquidity)
 	p.liquidity = liquidity
 }
 
 func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 string) {
-	validateU256Str(feeGrowthInside0LastX128)
 	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 }
 
 func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 string) {
-	validateU256Str(feeGrowthInside1LastX128)
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
 func (p *PositionInfo) SetTokensOwed0(tokensOwed0 string) {
-	validateU256Str(tokensOwed0)
 	p.tokensOwed0 = tokensOwed0
 }
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 string) {
-	validateU256Str(tokensOwed1)
 	p.tokensOwed1 = tokensOwed1
 }
