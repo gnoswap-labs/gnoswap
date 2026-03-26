@@ -203,11 +203,9 @@ func TestGetterIncentiveRewardAmounts(t *testing.T) {
 	// rewardPerSecond = 10_000_000 / 3600 = 2777
 	uassert.Equal(t, int64(2777), rewardPerSecond)
 
-	// Test int64/string variants
+	// Test reward amount getter
 	rewardAmount := state.instance.GetIncentiveRewardAmount(state.poolPath, state.incentiveId)
-	rewardAmountStr := state.instance.GetIncentiveRewardAmountAsString(state.poolPath, state.incentiveId)
 	uassert.Equal(t, int64(10_000_000), rewardAmount)
-	uassert.Equal(t, "10000000", rewardAmountStr)
 }
 
 func TestGetterPoolIncentiveDepositObjects(t *testing.T) {

@@ -169,11 +169,6 @@ func GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
 }
 
-// GetIncentiveRewardAmountAsString returns the total reward amount of an incentive as string.
-func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	return getImplementation().GetIncentiveRewardAmountAsString(poolPath, incentiveId)
-}
-
 // GetIncentiveRewardPerSecond returns the reward rate per second of an incentive.
 func GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveRewardPerSecond(poolPath, incentiveId)
