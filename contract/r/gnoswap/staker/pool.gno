@@ -56,18 +56,19 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity *UintTree // uint64 timestamp -> string(u256) staked liquidity
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
 
-	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
+	rewardCache         *UintTree // uint64 timestamp -> int64 gnsReward (grows only on tier/halving changes)
+	currentRewardPerSec int64     // cached current reward rate, avoids O(log N) ReverseIterate in hot path
 
 	incentives *Incentives
 
 	ticks Ticks // int32 tickId -> Tick tick
 
-	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> *u256.Uint(Q128) rewardRatioAccumulation
+	globalRewardRatioAccumulation *UintTree // uint64 timestamp -> string(u256) rewardRatioAccumulation
 
 	historicalTick *UintTree // uint64 timestamp -> int32 tickId
 }
@@ -124,6 +125,17 @@ func (p *Pool) SetRewardCache(rewardCache *UintTree) {
 	p.rewardCache = rewardCache
 }
 
+// CurrentRewardPerSec returns the cached current reward per second.
+// This avoids an O(log N) ReverseIterate on rewardCache in the hot path.
+func (p *Pool) CurrentRewardPerSec() int64 {
+	return p.currentRewardPerSec
+}
+
+// SetCurrentRewardPerSec sets the cached current reward per second.
+func (p *Pool) SetCurrentRewardPerSec(v int64) {
+	p.currentRewardPerSec = v
+}
+
 // Incentives returns the incentives
 func (p *Pool) Incentives() *Incentives {
 	return p.incentives
@@ -176,6 +188,7 @@ func (p *Pool) Clone() *Pool {
 		lastUnclaimableTime:           p.lastUnclaimableTime,
 		unclaimableAcc:                p.unclaimableAcc,
 		rewardCache:                   nil,
+		currentRewardPerSec:           p.currentRewardPerSec,
 		incentives:                    nil,
 		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: nil,
@@ -195,6 +208,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
+		currentRewardPerSec:           0,
 		incentives:                    NewIncentives(poolPath),
 		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: NewUintTree(),

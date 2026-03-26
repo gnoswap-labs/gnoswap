@@ -164,15 +164,19 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 	return reward
 }
 
-// cacheReward sets the current reward for the pool
+// cacheReward sets the current reward for the pool.
 // If the pool is in unclaimable period, it will end the unclaimable period, updates the reward, and start the unclaimable period again.
 //
 // Important behavior for initial tier assignment:
 // - When a pool first receives a tier, oldTierReward=0 and currentTierReward>0
 // - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
 // - This ensures unclaimable period tracking begins from the moment rewards start emitting
+//
+// Note: Uses Pool.CurrentRewardPerSec() (O(1) field read) for the early-exit check
+// instead of CurrentReward(time) (O(log N) ReverseIterate), since the field is
+// always kept in sync with rewardCache on every write.
 func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64) {
-	oldTierReward := self.CurrentReward(currentTime)
+	oldTierReward := self.Pool.CurrentRewardPerSec()
 	if oldTierReward == currentTierReward {
 		return
 	}
@@ -184,6 +188,10 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
+	// Keep field and time-series in sync.
+	// rewardCache UintTree is still needed for calculateInternalReward to correctly
+	// split reward intervals at halving/tier-change boundaries.
+	self.Pool.SetCurrentRewardPerSec(currentTierReward)
 	self.RewardCache().Set(currentTime, currentTierReward)
 
 	if isInUnclaimable {
@@ -193,12 +201,18 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// cacheInternalReward caches the current emission and updates the global reward ratio accumulation.
+// cacheInternalReward caches the current emission for the pool.
+//
+// Note: globalRewardRatioAccumulation is intentionally NOT updated here.
+// It is updated only in modifyDeposit (stake, unstake, tick cross), which are the
+// only events that change stakedLiquidity. Between two modifyDeposit calls, liquidity
+// is constant, so calculateGlobalRewardRatioAccumulation can correctly extrapolate
+// the accumulated value to any queried time without an intermediate checkpoint.
+// Adding a checkpoint on every CollectReward (via applyCacheToAllPools) was the
+// primary cause of unbounded UintTree growth, writing O(K_pools * log N) AVL nodes
+// per transaction.
 func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
 	self.cacheReward(currentTime, currentEmission)
-
-	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
