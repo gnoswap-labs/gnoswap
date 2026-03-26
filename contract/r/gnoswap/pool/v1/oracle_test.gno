@@ -85,7 +85,7 @@ func TestObservationState_Write(t *testing.T) {
 			var err error
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err = writeObservation(&os,write.time, write.tick, liquidity)
+				os, err = writeObservation(os, write.time, write.tick, liquidity)
 				if tt.expectError && err != nil {
 					return // Expected error occurred
 				}
@@ -154,7 +154,8 @@ func TestObservationState_CircularBuffer(t *testing.T) {
 			liquidity := u256.MustFromDecimal("1000000")
 			for i := 0; i < tt.numWrites; i++ {
 				writeTime := currentTime + int64((i+1)*60)
-				err := writeObservation(&os,writeTime, int32(100*(i+1)), liquidity)
+				var err error
+				os, err = writeObservation(os, writeTime, int32(100*(i+1)), liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
@@ -222,7 +223,7 @@ func TestPool_IncreaseObservationCardinalityNext(t *testing.T) {
 
 			if tt.initialCardinality > 0 {
 				os := pool.ObservationState()
-				writeObservation(&os, currentTime, pool.Slot0Tick(), pool.Liquidity())
+				os, _ = writeObservation(os, currentTime, pool.Slot0Tick(), pool.Liquidity())
 				os.SetCardinality(tt.initialCardinality)
 				os.SetCardinalityNext(tt.initialCardinalityNext)
 				pool.SetObservationState(os)
@@ -282,7 +283,8 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 
 			for _, write := range tt.writes {
 				liquidity := u256.MustFromDecimal(write.liquidity)
-				err := writeObservation(&os,write.time, write.tick, liquidity)
+				var err error
+				os, err = writeObservation(os, write.time, write.tick, liquidity)
 				uassert.NoError(t, err, "Write should succeed")
 			}
 

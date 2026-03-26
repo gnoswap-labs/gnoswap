@@ -105,8 +105,9 @@ func TestOracle_SwapScenarios(t *testing.T) {
 			currentCard := os.Cardinality()
 			neededCard := uint16(len(tt.scenarios) + 1) // +1 for initial observation
 			if neededCard > currentCard {
-				_, err := grow(&os, currentCard, neededCard)
-				uassert.NoError(t, err, "Should grow cardinality")
+				var growErr error
+				os, _, growErr = grow(os, currentCard, neededCard)
+				uassert.NoError(t, growErr, "Should grow cardinality")
 				os.SetCardinalityNext(neededCard)
 				pool.SetObservationState(os)
 			}
@@ -119,7 +120,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 
 				// writeObservation will initialize observation state if needed
 				os := pool.ObservationState()
-				err := writeObservation(&os, scenario.time, scenario.tick, pool.Liquidity())
+				os, err := writeObservation(os, scenario.time, scenario.tick, pool.Liquidity())
 				uassert.NoError(t, err, ufmt.Sprintf("Observation at %s should succeed", scenario.description))
 				pool.SetObservationState(os)
 			}
@@ -230,7 +231,8 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 		os := pl.NewObservationState(currentTime)
 
 		// Grow to cardinality 5
-		_, err := grow(&os,1, 5)
+		var err error
+		os, _, err = grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
 		// Simulate multiple writes
@@ -239,7 +241,7 @@ func TestObservationState_BoundaryConditions(t *testing.T) {
 
 		// Write observations at different times
 		for i := int64(1); i <= 4; i++ {
-			err := writeObservation(&os,currentTime+i*100, 100, liquidity)
+			os, err = writeObservation(os, currentTime+i*100, 100, liquidity)
 			uassert.NoError(t, err, "Should write observation")
 		}
 
@@ -270,7 +272,7 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 	currentCard := uint16(1)
 	nextCard := uint16(10)
 
-	newCardinality, err := grow(&os, currentCard, nextCard)
+	os, newCardinality, err := grow(os, currentCard, nextCard)
 	uassert.NoError(t, err, "Should grow successfully")
 	uassert.Equal(t, nextCard, newCardinality, "Should return new cardinality")
 
@@ -291,7 +293,7 @@ func TestObservationState_GrowInvariants(t *testing.T) {
 
 	// Test growing again
 	newCard2 := uint16(20)
-	newCardinality2, err := grow(&os, nextCard, newCard2)
+	os, newCardinality2, err := grow(os, nextCard, newCard2)
 	uassert.NoError(t, err, "Should grow successfully again")
 	uassert.Equal(t, newCard2, newCardinality2, "Should return new cardinality")
 
@@ -310,16 +312,18 @@ func TestObservationState_IndexWrapping(t *testing.T) {
 
 	// Grow to small cardinality for easy testing
 	cardinality := uint16(5)
-	_, err := grow(&os,1, cardinality)
+	var err error
+	os, _, err = grow(os, 1, cardinality)
 	uassert.NoError(t, err, "Should grow successfully")
 	os.SetCardinality(cardinality)
 
 	liquidity := u256.MustFromDecimal("1000000")
 
 	// Fill all slots to wrap around
+	var wErr error
 	for i := int64(1); i <= 7; i++ { // More than cardinality to force wrapping
-		err := writeObservation(&os,currentTime+i*100, 100, liquidity)
-		uassert.NoError(t, err, "Should write observation")
+		os, wErr = writeObservation(os, currentTime+i*100, 100, liquidity)
+		uassert.NoError(t, wErr, "Should write observation")
 	}
 
 	// After wrapping, index should be (7 % 5) = 2
@@ -379,7 +383,7 @@ func TestObservationState_CardinalityNexts(t *testing.T) {
 		testValue := maxObservationCardinality // This is the max allowed
 
 		// First verify that max is accepted
-		_, err := grow(&os,1, testValue)
+		_, _, err := grow(os, 1, testValue)
 		uassert.NoError(t, err, "Should accept max cardinality")
 
 		// The actual test for > max is in the grow function implementation
@@ -391,23 +395,23 @@ func TestObservationState_CardinalityNexts(t *testing.T) {
 		// This would be expensive in real test, so we test the logic
 		// by checking if maxObservationCardinality is accepted
 		if maxObservationCardinality <= 100 { // Only test if max is reasonable
-			_, err := grow(&os,1, maxObservationCardinality)
+			_, _, err := grow(os, 1, maxObservationCardinality)
 			uassert.NoError(t, err, "Should allow cardinality == max")
 		} else {
 			// Test with smaller value that the logic would accept
 			testMax := uint16(100)
-			_, err := grow(&os,1, testMax)
+			_, _, err := grow(os, 1, testMax)
 			uassert.NoError(t, err, "Should allow valid cardinality")
 		}
 	})
 
 	t.Run("Reject invalid grow operations", func(t *testing.T) {
 		// Test grow with current > next
-		_, err := grow(&os,10, 5)
+		_, _, err := grow(os, 10, 5)
 		uassert.NoError(t, err, "Should return current when next <= current")
 
 		// Test grow with current = 0
-		_, err = grow(&os,0, 10)
+		_, _, err = grow(os, 0, 10)
 		uassert.Error(t, err, "Should reject when current cardinality is 0")
 	})
 }
@@ -431,11 +435,11 @@ func TestObservationState_ObservationAt(t *testing.T) {
 
 	t.Run("Uninitialized observation", func(t *testing.T) {
 		// Grow to create slots (new slots are created with initialized=false)
-		_, err := grow(&os,1, 5)
+		grownOs, _, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
 		// observationAt should return uninitialized observation (without error)
-		obs, err := observationAt(os, 3)
+		obs, err := observationAt(grownOs, 3)
 		uassert.NoError(t, err, "Should return observation even if uninitialized")
 		uassert.NotNil(t, obs, "Observation should not be nil")
 		uassert.False(t, obs.Initialized(), "Observation should be uninitialized")

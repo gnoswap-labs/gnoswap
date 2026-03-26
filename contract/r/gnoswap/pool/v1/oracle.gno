@@ -107,7 +107,9 @@ func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinality
 		return errors.New("observation cardinality next must be greater than current")
 	}
 
-	os, observationCardinalityNextNew, err := grow(os, os.Cardinality(), observationCardinalityNext)
+	var observationCardinalityNextNew uint16
+	var err error
+	os, observationCardinalityNextNew, err = grow(os, os.Cardinality(), observationCardinalityNext)
 	if err != nil {
 		return err
 	}
