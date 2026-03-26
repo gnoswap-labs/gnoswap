@@ -6,28 +6,24 @@ import (
 
 // IsHalted returns true if any of the specified operation types are halted.
 // Returns error if any operation type is invalid.
-func IsHalted(opTypes ...OpType) (bool, error) {
-	for _, op := range opTypes {
+func IsHalted(ops ...OpType) (bool, error) {
+	var mask uint64
+	for _, op := range ops {
 		if !op.IsValid() {
 			return true, makeErrorWithDetails(errInvalidOpType, op.String())
 		}
-
-		halted, err := haltStates.IsOperationHalted(op)
-		if err != nil {
-			return true, err
-		}
-
-		if halted {
-			return true, nil
-		}
+		mask |= uint64(op)
 	}
-
-	return false, nil
+	return haltState&mask != 0, nil
 }
 
-// GetHaltConfig returns a copy of the current halt configuration.
-func GetHaltConfig() HaltConfig {
-	return haltStates.ToConfig()
+// GetHaltConfig returns the current halt configuration as a map of operation name to halted status.
+func GetHaltConfig() map[string]bool {
+	config := make(map[string]bool, len(opTypeList))
+	for _, op := range opTypeList {
+		config[op.String()] = haltState&uint64(op) != 0
+	}
+	return config
 }
 
 // GetHaltConfigJson returns the halt configuration as a JSON string.
@@ -35,13 +31,11 @@ func GetHaltConfigJson() string {
 	haltConfig := GetHaltConfig()
 
 	statusNodes := make(map[string]*json.Node)
-
-	for op, halted := range haltConfig {
-		statusNodes[op.String()] = json.BoolNode(op.String(), halted)
+	for name, halted := range haltConfig {
+		statusNodes[name] = json.BoolNode(name, halted)
 	}
 
 	objectNode := json.ObjectNode("status", statusNodes)
-
 	return objectNode.String()
 }
 
@@ -111,11 +105,5 @@ func isHaltedOperation(op OpType) bool {
 	if !op.IsValid() {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
 	}
-
-	halted, err := haltStates.IsOperationHalted(op)
-	if err != nil {
-		panic(err)
-	}
-
-	return halted
+	return haltState&uint64(op) != 0
 }
