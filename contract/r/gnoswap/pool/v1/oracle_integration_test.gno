@@ -90,7 +90,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 					"Tick cumulative should accumulate even with zero liquidity")
 
 				// Liquidity cumulative should remain zero
-				uassert.Equal(t, "0", obs.LiquidityCumulative().ToString(),
+				uassert.Equal(t, "0", obs.LiquidityCumulative(),
 					"Liquidity cumulative should remain zero")
 			},
 		},
@@ -467,7 +467,7 @@ func TestObservationState_Transform(t *testing.T) {
 		// With zero liquidity, use max(1, liquidity) = 1
 		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
 		expected := u256.MulDiv(u256.NewUint(100), q128FromDecimal, u256.One())
-		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128().ToString(), "Should handle zero liquidity correctly")
+		uassert.Equal(t, expected.ToString(), obs.SecondsPerLiquidityCumulativeX128(), "Should handle zero liquidity correctly")
 	})
 }
 

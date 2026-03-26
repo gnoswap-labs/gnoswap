@@ -48,7 +48,7 @@ func clonePositionInfo(src PositionInfo) PositionInfo {
 func cloneObservationState(src ObservationState) ObservationState {
 	cloned := make(map[uint16]Observation, len(src.observations))
 	for k, v := range src.observations {
-		cloned[k] = v.Clone()
+		cloned[k] = v // all fields are value types (int64, string, bool)
 	}
 
 	return ObservationState{

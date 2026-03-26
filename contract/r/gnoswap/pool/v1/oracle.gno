@@ -13,6 +13,14 @@ var max160 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^
 // maxObservationCardinality defines the maximum number of observations to store
 const maxObservationCardinality uint16 = 65535
 
+// decodeU256 converts a decimal string to *u256.Uint
+func decodeU256(s string) *u256.Uint {
+	if s == "" || s == "0" {
+		return u256.Zero()
+	}
+	return u256.MustFromDecimal(s)
+}
+
 // getTWAP calculates the time-weighted average price between two points in time
 // Returns the arithmetic mean tick and harmonic mean liquidity over the time period
 func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
@@ -120,13 +128,17 @@ func transform(last pl.Observation, currentTime int64, tick int32, liquidity *u2
 	// calculate cumulative values
 	tickCumulative := last.TickCumulative() + int64(tick)*timeDelta
 
+	// decode string → u256 for computation
+	lastLiqCum := decodeU256(last.LiquidityCumulative())
+	lastSecPerLiq := decodeU256(last.SecondsPerLiquidityCumulativeX128())
+
 	// calculate liquidity cumulative
 	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
 	if overflow {
 		panic(errOverflow)
 	}
 
-	liquidityCumulative := u256.Zero().Add(last.LiquidityCumulative(), liquidityDelta)
+	liquidityCumulative := u256.Zero().Add(lastLiqCum, liquidityDelta)
 
 	// calculate seconds per liquidity
 	liquidityForCalc := liquidity
@@ -142,15 +154,16 @@ func transform(last pl.Observation, currentTime int64, tick int32, liquidity *u2
 	)
 
 	secondsPerLiquidityCumulativeX128 := u256.Zero().Add(
-		last.SecondsPerLiquidityCumulativeX128(),
+		lastSecPerLiq,
 		secondsPerLiquidityDelta,
 	)
 
+	// encode u256 → string for storage
 	return pl.NewObservation(
 		currentTime,
 		tickCumulative,
-		liquidityCumulative,
-		secondsPerLiquidityCumulativeX128,
+		liquidityCumulative.ToString(),
+		secondsPerLiquidityCumulativeX128.ToString(),
 		true,
 	), nil
 }
@@ -279,10 +292,10 @@ func observeSingle(
 				return 0, nil, err
 			}
 
-			return transformed.TickCumulative(), transformed.SecondsPerLiquidityCumulativeX128(), nil
+			return transformed.TickCumulative(), decodeU256(transformed.SecondsPerLiquidityCumulativeX128()), nil
 		}
 
-		return last.TickCumulative(), last.SecondsPerLiquidityCumulativeX128(), nil
+		return last.TickCumulative(), decodeU256(last.SecondsPerLiquidityCumulativeX128()), nil
 	}
 
 	target := currentTime - int64(secondsAgo)
@@ -302,11 +315,11 @@ func observeSingle(
 	}
 
 	if target == beforeOrAt.BlockTimestamp() {
-		return beforeOrAt.TickCumulative(), beforeOrAt.SecondsPerLiquidityCumulativeX128(), nil
+		return beforeOrAt.TickCumulative(), decodeU256(beforeOrAt.SecondsPerLiquidityCumulativeX128()), nil
 	}
 
 	if target == atOrAfter.BlockTimestamp() {
-		return atOrAfter.TickCumulative(), atOrAfter.SecondsPerLiquidityCumulativeX128(), nil
+		return atOrAfter.TickCumulative(), decodeU256(atOrAfter.SecondsPerLiquidityCumulativeX128()), nil
 	}
 
 	// interpolate between the two observations
@@ -318,13 +331,13 @@ func observeSingle(
 		((atOrAfter.TickCumulative()-beforeOrAt.TickCumulative())/observationTimeDelta)*targetDelta
 
 	// for secondsPerLiquidity, need to interpolate carefully
-	secondsPerLiquidityDelta := u256.Zero().Sub(
-		atOrAfter.SecondsPerLiquidityCumulativeX128(),
-		beforeOrAt.SecondsPerLiquidityCumulativeX128(),
-	)
+	beforeSecPerLiq := decodeU256(beforeOrAt.SecondsPerLiquidityCumulativeX128())
+	afterSecPerLiq := decodeU256(atOrAfter.SecondsPerLiquidityCumulativeX128())
+
+	secondsPerLiquidityDelta := u256.Zero().Sub(afterSecPerLiq, beforeSecPerLiq)
 
 	secondsPerLiquidity := u256.Zero().Add(
-		beforeOrAt.SecondsPerLiquidityCumulativeX128(),
+		beforeSecPerLiq,
 		u256.MulDiv(
 			secondsPerLiquidityDelta,
 			u256.NewUintFromInt64(targetDelta),

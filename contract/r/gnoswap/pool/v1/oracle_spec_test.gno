@@ -53,7 +53,7 @@ func testInitializeSetsFirstSlot(t *testing.T) {
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
-	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 }
 
 func TestOracleGrow(t *testing.T) {
@@ -95,7 +95,7 @@ func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 	uassert.NoError(t, err)
 
 	obs0 := os.Observations()[0]
-	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
 	uassert.True(t, obs0.Initialized())
@@ -123,7 +123,7 @@ func testGrowAddsDataToSlots(t *testing.T) {
 
 	for i := uint16(1); i < 5; i++ {
 		obs := os.Observations()[i]
-		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128().ToString())
+		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128())
 		uassert.Equal(t, int64(0), obs.TickCumulative())
 		uassert.False(t, obs.Initialized())
 	}
@@ -159,7 +159,7 @@ func testSingleElementOverwrite(t *testing.T) {
 
 	obs0 := os.Observations()[0]
 	uassert.True(t, obs0.Initialized())
-	uassert.Equal(t, "340282366920938463463374607431768211456", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "340282366920938463463374607431768211456", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+1, obs0.BlockTimestamp())
 
@@ -168,7 +168,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 = os.Observations()[0]
-	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(10), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+6, obs0.BlockTimestamp())
 
@@ -177,7 +177,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 = os.Observations()[0]
-	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(7), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+9, obs0.BlockTimestamp())
 }
@@ -219,7 +219,7 @@ func testWritesIndexOnTimeChange(t *testing.T) {
 
 	obs1 := os.Observations()[1]
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
-	uassert.Equal(t, "2041694201525630780780247644590609268736", obs1.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "2041694201525630780780247644590609268736", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.True(t, obs1.Initialized())
 	uassert.Equal(t, currentTime+6, obs1.BlockTimestamp())
 }
@@ -248,7 +248,7 @@ func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 	uassert.Equal(t, uint16(2), os.Index())
 
 	obs2 := os.Observations()[2]
-	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(20), obs2.TickCumulative())
 	uassert.True(t, obs2.Initialized())
 	uassert.Equal(t, currentTime+7, obs2.BlockTimestamp())
@@ -275,7 +275,7 @@ func testWrapsAround(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 := os.Observations()[0]
-	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(14), obs0.TickCumulative())
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime+12, obs0.BlockTimestamp())
@@ -304,19 +304,19 @@ func testAccumulatesLiquidity(t *testing.T) {
 	obs1 := os.Observations()[1]
 	uassert.True(t, obs1.Initialized())
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
-	uassert.Equal(t, "1020847100762815390390123822295304634368", obs1.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1020847100762815390390123822295304634368", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+3, obs1.BlockTimestamp())
 
 	obs2 := os.Observations()[2]
 	uassert.True(t, obs2.Initialized())
 	uassert.Equal(t, int64(12), obs2.TickCumulative())
-	uassert.Equal(t, "1701411834604692317316873037158841057280", obs2.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1701411834604692317316873037158841057280", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+7, obs2.BlockTimestamp())
 
 	obs3 := os.Observations()[3]
 	uassert.True(t, obs3.Initialized())
 	uassert.Equal(t, int64(-23), obs3.TickCumulative())
-	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+12, obs3.BlockTimestamp())
 
 	obs4, ok := os.Observations()[4]
@@ -375,8 +375,8 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	os.Observations()[0] = pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
-		u256.Zero(), // liquidityCumulative
-		u256.Zero(), // secondsPerLiquidityCumulativeX128
+		"0", // liquidityCumulative
+		"0", // secondsPerLiquidityCumulativeX128
 		true,
 	)
 
