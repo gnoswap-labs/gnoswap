@@ -122,11 +122,11 @@ func checkInitialPositionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Initial position tickUpper should be %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance())
 }
 
 func increasePositionLiquidity() {
@@ -154,11 +154,11 @@ func checkIncreasedPositionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Increased position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Increased position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance())
 }
 
 func executeSwap() {
@@ -217,7 +217,7 @@ func checkFinalPositionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
 

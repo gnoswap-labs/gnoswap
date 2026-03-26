@@ -263,11 +263,11 @@ func getPosition() {
 		println("[EXPECTED] position poolKey:", position.PoolKey())
 		ufmt.Printf("[EXPECTED] position tickLower: %d\n", position.TickLower())
 		ufmt.Printf("[EXPECTED] position tickUpper: %d\n", position.TickUpper())
-		println("[EXPECTED] position liquidity:", position.Liquidity().ToString())
-		println("[EXPECTED] position feeGrowthInside0LastX128:", position.FeeGrowthInside0LastX128().ToString())
-		println("[EXPECTED] position feeGrowthInside1LastX128:", position.FeeGrowthInside1LastX128().ToString())
-		println("[EXPECTED] position tokensOwed0:", position.TokensOwed0().ToString())
-		println("[EXPECTED] position tokensOwed1:", position.TokensOwed1().ToString())
+		println("[EXPECTED] position liquidity:", position.Liquidity())
+		println("[EXPECTED] position feeGrowthInside0LastX128:", position.FeeGrowthInside0LastX128())
+		println("[EXPECTED] position feeGrowthInside1LastX128:", position.FeeGrowthInside1LastX128())
+		println("[EXPECTED] position tokensOwed0:", position.TokensOwed0())
+		println("[EXPECTED] position tokensOwed1:", position.TokensOwed1())
 	}
 }
 
