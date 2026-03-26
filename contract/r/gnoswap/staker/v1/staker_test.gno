@@ -641,14 +641,20 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 
 	// Create pool map for timestamp 100
 	poolMap1 := avl.NewTree()
-	poolMap1.Set(poolPath1, []string{"incentive1"})
+	poolMap1.Set(poolPath1, true)
 	tree.Set(100, poolMap1)
+	instance.store.SetExternalIncentiveIdsByCreationTimeAndPoolPath(100, poolPath1, avl.NewTree())
+	instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(100, poolPath1).Set("incentive1", true)
 
 	// Create pool map for timestamp 200
 	poolMap2 := avl.NewTree()
-	poolMap2.Set(poolPath1, []string{"incentive2"})
-	poolMap2.Set(poolPath2, []string{"incentive3"})
+	poolMap2.Set(poolPath1, true)
+	poolMap2.Set(poolPath2, true)
 	tree.Set(200, poolMap2)
+	instance.store.SetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath1, avl.NewTree())
+	instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath1).Set("incentive2", true)
+	instance.store.SetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath2, avl.NewTree())
+	instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath2).Set("incentive3", true)
 
 	err := instance.store.SetExternalIncentivesByCreationTime(tree)
 	if err != nil {
@@ -675,13 +681,12 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected *avl.Tree at timestamp 100, got %T", value1)
 	}
-	idsValue1, exists := pMap1.Get(poolPath1)
-	if !exists {
+	if !pMap1.Has(poolPath1) {
 		t.Error("Expected incentives for poolPath1 at timestamp 100")
 	}
-	ids1 := idsValue1.([]string)
-	if len(ids1) != 1 || ids1[0] != "incentive1" {
-		t.Errorf("Expected [incentive1], got %v", ids1)
+	ids1 := instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(100, poolPath1)
+	if ids1.Size() != 1 || !ids1.Has("incentive1") {
+		t.Errorf("Expected incentive1 in leaf set")
 	}
 
 	// Verify data at timestamp 200
@@ -695,22 +700,20 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	}
 
 	// Check poolPath1 at timestamp 200
-	idsValue2a, exists := pMap2.Get(poolPath1)
-	if !exists {
+	if !pMap2.Has(poolPath1) {
 		t.Error("Expected incentives for poolPath1 at timestamp 200")
 	}
-	ids2a := idsValue2a.([]string)
-	if len(ids2a) != 1 || ids2a[0] != "incentive2" {
-		t.Errorf("Expected [incentive2], got %v", ids2a)
+	ids2a := instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath1)
+	if ids2a.Size() != 1 || !ids2a.Has("incentive2") {
+		t.Errorf("Expected incentive2 in leaf set")
 	}
 
 	// Check poolPath2 at timestamp 200
-	idsValue2b, exists := pMap2.Get(poolPath2)
-	if !exists {
+	if !pMap2.Has(poolPath2) {
 		t.Error("Expected incentives for poolPath2 at timestamp 200")
 	}
-	ids2b := idsValue2b.([]string)
-	if len(ids2b) != 1 || ids2b[0] != "incentive3" {
-		t.Errorf("Expected [incentive3], got %v", ids2b)
+	ids2b := instance.store.GetExternalIncentiveIdsByCreationTimeAndPoolPath(200, poolPath2)
+	if ids2b.Size() != 1 || !ids2b.Has("incentive3") {
+		t.Errorf("Expected incentive3 in leaf set")
 	}
 }
