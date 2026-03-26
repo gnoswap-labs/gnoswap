@@ -153,23 +153,23 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
-		panic(makeErrorWithDetails(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
-		))
-	}
+	// // must be at least +1 day midnight
+	// tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	// if startTimestamp < tomorrowMidnight {
+	// 	panic(makeErrorWithDetails(
+	// 		errInvalidIncentiveStartTime,
+	// 		ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
+	// 	))
+	// }
 
-	// must be midnight of the day
-	startTime := time.Unix(startTimestamp, 0)
-	if !isMidnight(startTime) {
-		panic(makeErrorWithDetails(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
-		))
-	}
+	// // must be midnight of the day
+	// startTime := time.Unix(startTimestamp, 0)
+	// if !isMidnight(startTime) {
+	// 	panic(makeErrorWithDetails(
+	// 		errInvalidIncentiveStartTime,
+	// 		ufmt.Sprintf("startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
+	// 	))
+	// }
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
