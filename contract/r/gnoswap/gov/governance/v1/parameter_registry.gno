@@ -601,7 +601,10 @@ func CreateParameterHandlers() *ParameterRegistry {
 			},
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
-				opType := halt.OpType(params[0])
+				opType, ok := halt.OpTypeFromString(params[0])
+				if !ok {
+					return ufmt.Errorf("invalid operation type: %s", params[0])
+				}
 				allowed := parseBool(params[1])
 
 				halt.SetOperationStatus(cross, opType, allowed)
@@ -728,16 +731,16 @@ func CreateParameterHandlers() *ParameterRegistry {
 				// Create a new launchpad project
 				lp.CreateProject(
 					cross,
-					params[0],                                     // name
-					params[1],                                     // tokenPath
-					address(params[2]),                            // recipient
-					parseNumber(params[3], kindInt64).(int64),     // depositAmount
-					params[4],                                     // conditionTokens
-					params[5],                                     // conditionAmounts
-					parseNumber(params[6], kindInt64).(int64),     // tier30Ratio
-					parseNumber(params[7], kindInt64).(int64),     // tier90Ratio
-					parseNumber(params[8], kindInt64).(int64),     // tier180Ratio
-					parseNumber(params[9], kindInt64).(int64),     // startTime
+					params[0],          // name
+					params[1],          // tokenPath
+					address(params[2]), // recipient
+					parseNumber(params[3], kindInt64).(int64), // depositAmount
+					params[4], // conditionTokens
+					params[5], // conditionAmounts
+					parseNumber(params[6], kindInt64).(int64), // tier30Ratio
+					parseNumber(params[7], kindInt64).(int64), // tier90Ratio
+					parseNumber(params[8], kindInt64).(int64), // tier180Ratio
+					parseNumber(params[9], kindInt64).(int64), // startTime
 				)
 				return nil
 			},
