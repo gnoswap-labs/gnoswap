@@ -46,7 +46,7 @@ func TestIncentivesCreate(t *testing.T) {
 			poolPath := "test_pool_create"
 			creator := testutils.TestAddress("creator")
 			pool := sr.NewPool(poolPath, time.Now().Unix())
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(time.Now().Unix()))
 			incentives := poolResolver.IncentivesResolver()
 
 			currentTime := time.Now().Unix()
@@ -120,7 +120,7 @@ func TestIncentivesUpdate(t *testing.T) {
 			poolPath := "test_pool_update"
 			creator := testutils.TestAddress("creator")
 			pool := sr.NewPool(poolPath, time.Now().Unix())
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(time.Now().Unix()))
 			incentives := poolResolver.IncentivesResolver()
 
 			currentTime := time.Now().Unix()
@@ -179,7 +179,7 @@ func TestStartUnclaimablePeriod(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			poolPath := "test_pool_start_unclaimable"
 			pool := sr.NewPool(poolPath, time.Now().Unix())
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(time.Now().Unix()))
 			incentives := poolResolver.IncentivesResolver()
 
 			// Start unclaimable period
@@ -237,7 +237,7 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			poolPath := "test_pool_end_unclaimable"
 			pool := sr.NewPool(poolPath, time.Now().Unix())
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(time.Now().Unix()))
 			incentives := poolResolver.IncentivesResolver()
 
 			// Start unclaimable period
@@ -271,7 +271,7 @@ func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	pool := sr.NewPool(poolPath, currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	incentives := poolResolver.IncentivesResolver()
 
 	// Clear the initial unclaimable period created with the pool so we can control the windows.
@@ -406,7 +406,7 @@ func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	pool := sr.NewPool(poolPath, currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	incentives := poolResolver.IncentivesResolver()
 
 	// Clear the initial unclaimable period
@@ -449,7 +449,7 @@ func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	pool := sr.NewPool(poolPath, currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	incentives := poolResolver.IncentivesResolver()
 
 	// Clear the initial unclaimable period
@@ -497,7 +497,7 @@ func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	pool := sr.NewPool(poolPath, currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	incentives := poolResolver.IncentivesResolver()
 
 	// Clear the initial unclaimable period
@@ -545,7 +545,7 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	pool := sr.NewPool(poolPath, currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	incentives := poolResolver.IncentivesResolver()
 
 	// Clear the initial unclaimable period

@@ -159,7 +159,7 @@ func TestNewPoolResolver(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
-			resolver := NewPoolResolver(pool)
+			resolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			uassert.NotNil(t, resolver)
 			uassert.NotNil(t, resolver.Pool)
@@ -183,7 +183,7 @@ func TestIncentivesResolverFromPool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			incentivesResolver := poolResolver.IncentivesResolver()
 			uassert.NotNil(t, incentivesResolver)
@@ -208,7 +208,7 @@ func TestCurrentGlobalRewardRatioAccumulation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			timestamp, acc := poolResolver.CurrentGlobalRewardRatioAccumulation(tt.currentTime)
 
@@ -298,7 +298,7 @@ func TestCurrentTick(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			if tt.setupHistoricalTicks != nil {
 				tt.setupHistoricalTicks(poolResolver)
@@ -333,7 +333,7 @@ func TestCurrentStakedLiquidity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			liquidity := poolResolver.CurrentStakedLiquidity(tt.currentTime)
 
@@ -360,7 +360,7 @@ func TestCurrentRewardPool(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			reward := poolResolver.CurrentReward(tt.currentTime)
 			uassert.Equal(t, int64(0), reward)
@@ -393,7 +393,7 @@ func TestCacheRewardPool(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			poolResolver.cacheReward(tt.currentTime, tt.currentTierReward)
 
@@ -422,7 +422,7 @@ func TestCacheInternalReward(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			poolResolver.cacheInternalReward(tt.currentTime, tt.currentEmission)
 
@@ -457,7 +457,7 @@ func TestCalculateGlobalRewardRatioAccumulation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			acc := poolResolver.calculateGlobalRewardRatioAccumulation(tt.currentTime, tt.currentStakedLiquidity)
 
@@ -485,7 +485,7 @@ func TestUpdateGlobalRewardRatioAccumulation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			newAcc := poolResolver.updateGlobalRewardRatioAccumulation(tt.currentTime, tt.currentStakedLiquidity)
 
@@ -517,7 +517,7 @@ func TestRewardStateOf(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			warmups := make([]sr.Warmup, tt.numWarmups)
 			for i := 0; i < tt.numWarmups; i++ {
@@ -563,7 +563,7 @@ func TestUnclaimablePeriod(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 
 			// Start unclaimable period
 			poolResolver.startUnclaimablePeriod(tt.currentTime)
@@ -593,7 +593,7 @@ func TestProcessUnclaimableReward(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(tt.currentTime))
 			pools := NewPools()
 			pools.set(tt.poolPath, pool)
 
@@ -624,7 +624,7 @@ func TestIsExternallyIncentivizedPool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			// Should be false initially
 			result := poolResolver.IsExternallyIncentivizedPool()
@@ -651,7 +651,7 @@ func TestTickResolver(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool(tt.poolPath, currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			tickResolver := poolResolver.TickResolver(tt.tickId)
 			uassert.NotNil(t, tickResolver)
@@ -695,7 +695,7 @@ func TestRewardStateApplyWarmup(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			currentTime := time.Now().Unix()
 			pool := sr.NewPool("test_pool", currentTime)
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 			warmups := make([]sr.Warmup, len(tt.warmupRatios))
 			for i, ratio := range tt.warmupRatios {
@@ -732,7 +732,7 @@ func TestRewardStateApplyWarmup(t *testing.T) {
 func TestRewardStateReset(t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 	warmups := []sr.Warmup{
 		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},
@@ -773,7 +773,7 @@ func TestRewardStateReset(t *testing.T) {
 func TestRewardStateReset_MultipleResets(t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 	warmups := []sr.Warmup{
 		{WarmupRatio: 50, NextWarmupTime: currentTime + 86400},
@@ -811,7 +811,7 @@ func TestRewardStateReset_MultipleResets(t *testing.T) {
 func TestRewardStateReset_PreservesSliceLength(t *testing.T) {
 	currentTime := time.Now().Unix()
 	pool := sr.NewPool("test_pool", currentTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 
 	warmups := []sr.Warmup{
 		{WarmupRatio: 30, NextWarmupTime: currentTime + 86400},

@@ -36,7 +36,7 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 		100, // createdHeight
 		currentTime,
 	)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(0))
 	poolResolver.IncentivesResolver().create(creator, endedIncentive)
 
 	// After fix: pool should NOT show as incentivized with only ended incentives
@@ -253,7 +253,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, endedIncentive)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, endedIncentive)
 			},
 			expected: false,
 		},
@@ -280,7 +280,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, activeIncentive)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, activeIncentive)
 			},
 			expected: true,
 		},
@@ -314,7 +314,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, endedIncentive)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, endedIncentive)
 
 				// Second incentive: active (ID "b_active" comes after "a_ended")
 				activeIncentive := sr.NewExternalIncentive(
@@ -329,7 +329,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, activeIncentive)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, activeIncentive)
 			},
 			expected: true,
 		},
@@ -358,7 +358,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 						100,
 						currentTime,
 					)
-					NewPoolResolver(pool).IncentivesResolver().create(creator, ended)
+					NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, ended)
 				}
 
 				// One active incentive (alphabetically last)
@@ -374,7 +374,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, active)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, active)
 			},
 			expected: true,
 		},
@@ -400,7 +400,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, futureIncentive)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, futureIncentive)
 			},
 			expected: true,
 		},
@@ -429,7 +429,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, ended)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, ended)
 
 				// Future incentive (alphabetically second)
 				future := sr.NewExternalIncentive(
@@ -444,7 +444,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, future)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, future)
 
 				// Active incentive (alphabetically last)
 				active := sr.NewExternalIncentive(
@@ -459,7 +459,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 					100,
 					currentTime,
 				)
-				NewPoolResolver(pool).IncentivesResolver().create(creator, active)
+				NewPoolResolver(pool, sr.NewPoolTimeSeries(0)).IncentivesResolver().create(creator, active)
 			},
 			expected: true,
 		},
@@ -478,7 +478,7 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 
 			tt.setup(t, pool, currentTime)
 
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 			result := poolResolver.IsExternallyIncentivizedPool()
 
 			uassert.Equal(t, tt.expected, result)

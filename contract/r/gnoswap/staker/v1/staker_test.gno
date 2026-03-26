@@ -528,7 +528,7 @@ func TestUnStakeToken(t *testing.T) {
 	// Get pool state before unstaking
 	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
 	uassert.NotNil(t, pool)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(0))
 
 	// Get deposit info before unstaking
 	deposit := getMockInstance().getDeposits().get(positionId)
@@ -599,7 +599,7 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 		currentTime-86400,
 	)
 
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	// Create deposit (simulating StakeToken)

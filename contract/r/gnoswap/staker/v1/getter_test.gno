@@ -22,6 +22,7 @@ type testState struct {
 	incentive        *sr.ExternalIncentive
 	deposit          *sr.Deposit
 	pool             *sr.Pool
+	timeSeries       *sr.PoolTimeSeries
 	fixedTimestamp   int64
 	fixedBlockHeight int64
 }
@@ -54,9 +55,11 @@ func setupBasicTestState(t *testing.T) *testState {
 	// Setup warmup template via manager method
 	state.instance.SetWarmUp(30, 86400*5) // 30%, 5 days
 
-	// Direct store access for complex state: Pool
+	// Direct store access for complex state: Pool + companion PoolTimeSeries
 	state.pool = sr.NewPool(state.poolPath, state.fixedTimestamp)
+	state.timeSeries = sr.NewPoolTimeSeries(state.fixedTimestamp)
 	state.instance.store.GetPools().Set(state.poolPath, state.pool)
+	state.instance.store.GetPoolTimeSeries().Set(state.poolPath, state.timeSeries)
 
 	// Direct store access for complex state: ExternalIncentive
 	state.incentive = sr.NewExternalIncentive(
@@ -684,10 +687,10 @@ func TestGetterIncentiveActiveStatus(t *testing.T) {
 func TestGetterPoolRewardCache(t *testing.T) {
 	state := setupBasicTestState(t)
 
-	// Add some reward cache entries
-	state.pool.RewardCache().Set(state.fixedTimestamp, int64(1000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
+	// Add some reward cache entries (stored in PoolTimeSeries, not Pool)
+	state.timeSeries.RewardCache().Set(state.fixedTimestamp, int64(1000))
+	state.timeSeries.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
+	state.timeSeries.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
 
 	// Test count
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
@@ -748,14 +751,14 @@ func TestGetterPoolIncentive(t *testing.T) {
 func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 	state := setupBasicTestState(t)
 
-	// Add some accumulation entries (avoiding fixedTimestamp as NewPool initializes with it)
+	// Add some accumulation entries (stored in PoolTimeSeries, not Pool; values as decimal strings)
 	acc1 := u256.MustFromDecimal("1000000000000000000")
 	acc2 := u256.MustFromDecimal("2000000000000000000")
 	acc3 := u256.MustFromDecimal("3000000000000000000")
 
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3)
+	state.timeSeries.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1.ToString())
+	state.timeSeries.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2.ToString())
+	state.timeSeries.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3.ToString())
 
 	// Test count
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)

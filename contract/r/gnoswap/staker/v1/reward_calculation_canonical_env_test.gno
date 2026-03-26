@@ -247,12 +247,14 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 }
 
 func (self *canonicalRewardState) UnclaimableExternalRewardOf(depositId uint64, incentiveId string) int64 {
-	pool, ok := self.global.pools.Get(self.global.deposits.get(depositId).TargetPoolPath())
+	targetPoolPath := self.global.deposits.get(depositId).TargetPoolPath()
+	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
 		panic("pool not found")
 	}
 
-	poolResolver := NewPoolResolver(pool)
+	ts := self.global.pools.GetOrCreateTimeSeries(targetPoolPath, 0)
+	poolResolver := NewPoolResolver(pool, ts)
 
 	return poolResolver.IncentivesResolver().calculateUnclaimableReward(incentiveId)
 }
@@ -287,7 +289,8 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		self.global.pools.set(poolPath, pool)
 	}
 
-	poolResolver := NewPoolResolver(pool)
+	ts := self.global.pools.GetOrCreateTimeSeries(poolPath, currentTimestamp)
+	poolResolver := NewPoolResolver(pool, ts)
 
 	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
@@ -403,7 +406,8 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	}
 
 	// Add active incentive IDs to deposit
-	poolResolver := NewPoolResolver(pool)
+	ts := self.global.pools.GetOrCreateTimeSeries(targetPoolPath, currentTimestamp)
+	poolResolver := NewPoolResolver(pool, ts)
 	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
@@ -462,7 +466,8 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 	}
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
-	poolResolver := NewPoolResolver(pool)
+	unstakeTs := self.global.pools.GetOrCreateTimeSeries(deposit.TargetPoolPath(), currentTimestamp)
+	poolResolver := NewPoolResolver(pool, unstakeTs)
 	if self.isInRange(deposit) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}
@@ -542,7 +547,8 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 		pl = sr.NewPool(targetPoolPath, self.CurrentTime())
 		self.global.pools.set(targetPoolPath, pl)
 	}
-	plResolver := NewPoolResolver(pl)
+	plTs := self.global.pools.GetOrCreateTimeSeries(targetPoolPath, self.CurrentTime())
+	plResolver := NewPoolResolver(pl, plTs)
 	plResolver.IncentivesResolver().create(refundee, incentive)
 
 	return incentive.IncentiveId()

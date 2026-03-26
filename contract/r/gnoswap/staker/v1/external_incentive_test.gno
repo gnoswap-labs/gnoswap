@@ -73,7 +73,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 			)
 
 			// add incentive
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(100))
 			poolResolver.IncentivesResolver().create(creator, incentive)
 
 			// verify incentive was created
@@ -132,7 +132,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	)
 
 	// Add incentive to pool
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	tests := []struct {
@@ -456,7 +456,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		externalIncentives.Set(incentiveId, incentive)
 
 		// Add to pool
-		poolResolver := NewPoolResolver(pool)
+		poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(currentTime))
 		poolResolver.IncentivesResolver().create(creator, incentive)
 
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
@@ -585,7 +585,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		externalIncentives := instance.store.GetExternalIncentives()
 		externalIncentives.Set(incentiveId, incentive)
 
-		poolResolver := NewPoolResolver(pool)
+		poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(baseTime))
 		poolResolver.IncentivesResolver().create(creator, incentive)
 
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
@@ -720,7 +720,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		externalIncentives := instance.store.GetExternalIncentives()
 		externalIncentives.Set(incentiveId, incentive)
 
-		poolResolver := NewPoolResolver(pools[i])
+		poolResolver := NewPoolResolver(pools[i], sr.NewPoolTimeSeries(currentTime))
 		poolResolver.IncentivesResolver().create(creator, incentive)
 
 		// Add to time-based index (2-level structure)
@@ -866,7 +866,7 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 	// Create pool
 	pool := sr.NewPool(poolPath, baseTime)
 	instance.getPools().set(poolPath, pool)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(baseTime))
 
 	// Create 3 concurrent incentives with different tokens
 	tokens := []string{WUGNOT_PATH, GNS_PATH, "gno.land/r/onbloc/bar"}
@@ -1044,7 +1044,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		startTime-100,
 	)
 
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(startTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	warmups := []sr.Warmup{
@@ -1163,7 +1163,7 @@ func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
 		startTime-100,
 	)
 
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(startTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
@@ -1237,7 +1237,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
 		startTime-100,
 	)
 
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(startTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	// Create deposit
@@ -1303,7 +1303,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
 		startTime-100,
 	)
 
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(startTime))
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})

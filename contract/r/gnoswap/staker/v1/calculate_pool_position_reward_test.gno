@@ -479,7 +479,7 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(0))
 				poolResolver.StakedLiquidity().Set(baseTime, "1000000")
@@ -523,7 +523,7 @@ func TestCalcPositionReward(t *testing.T) {
 				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(0))
 				poolResolver.StakedLiquidity().Set(baseTime, "1000000")
@@ -579,7 +579,7 @@ func TestCalcPositionReward(t *testing.T) {
 				poolTier.changeTier(baseHeight, stakeTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, stakeTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
 				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
 				poolResolver.StakedLiquidity().Set(stakeTime, "1000000")
@@ -634,7 +634,7 @@ func TestCalcPositionReward(t *testing.T) {
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime-100))
 				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
 
 				// Create deposit
@@ -680,7 +680,7 @@ func TestCalcPositionReward(t *testing.T) {
 				pool := sr.NewPool(poolPath, baseTime-100)
 				s.getPools().set(poolPath, pool)
 
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime-100))
 
 				// Create deposit first
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
@@ -776,7 +776,7 @@ func TestCalcPositionReward(t *testing.T) {
 				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state with tick at 500 (out of range)
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(500))   // Out of range
 				poolResolver.StakedLiquidity().Set(baseTime, "0") // No in-range liquidity
@@ -821,7 +821,7 @@ func TestCalcPositionReward(t *testing.T) {
 				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(0))
 				poolResolver.StakedLiquidity().Set(baseTime, "1000000")
@@ -868,7 +868,7 @@ func TestCalcPositionReward(t *testing.T) {
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
 
 				// Create deposit
@@ -929,7 +929,7 @@ func TestCalcPositionReward(t *testing.T) {
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime-2000))
 				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
 
 				// Create deposit (staked after incentive ended)
@@ -994,7 +994,7 @@ func TestCalcPositionReward(t *testing.T) {
 				)
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime-100))
 				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
 
 				// Create deposit
@@ -1062,7 +1062,7 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, stakeTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
 				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
 				poolResolver.StakedLiquidity().Set(stakeTime, "1000000")
@@ -1115,7 +1115,7 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, stakeTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(stakeTime, "0")
 				poolResolver.HistoricalTick().Set(stakeTime, int32(0))
 				poolResolver.StakedLiquidity().Set(stakeTime, "1000000")
@@ -1166,7 +1166,7 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(0))
 				poolResolver.StakedLiquidity().Set(baseTime, "1000000")
@@ -1212,7 +1212,7 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver := NewPoolResolver(pool)
+				poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 				poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 				poolResolver.HistoricalTick().Set(baseTime, int32(0))
 				poolResolver.StakedLiquidity().Set(baseTime, largeLiquidity.ToString())
@@ -1385,7 +1385,7 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 			s.getDeposits().set(positionId, deposit)
 
 			// Initialize pool state with specified current tick
-			poolResolver := NewPoolResolver(pool)
+			poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 			poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 			poolResolver.HistoricalTick().Set(baseTime, tt.currentTick)
 			if tt.expectInRange {
@@ -1443,7 +1443,7 @@ func TestCalcPositionReward_RewardAggregation(t *testing.T) {
 	s.getDeposits().set(positionId, deposit)
 
 	// Initialize pool state
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime))
 	poolResolver.GlobalRewardRatioAccumulation().Set(baseTime, "0")
 	poolResolver.HistoricalTick().Set(baseTime, int32(0))
 	poolResolver.StakedLiquidity().Set(baseTime, "1000000")
@@ -1483,7 +1483,7 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 	s.getPools().set(poolPath, pool)
 
 	// Create multiple external incentives
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, s.getPools().GetOrCreateTimeSeries(poolPath, baseTime-100))
 	for i := 0; i < 5; i++ {
 		incentive := sr.NewExternalIncentive(
 			"integrity-incentive-"+string(rune('A'+i)),
@@ -1891,7 +1891,7 @@ func TestLazyRemoval_DeletedIncentive(t *testing.T) {
 
 	// Create pool WITHOUT any incentives (simulates deleted/refunded incentive)
 	pool := sr.NewPool(poolPath, baseTime)
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := NewPoolResolver(pool, sr.NewPoolTimeSeries(baseTime))
 
 	// Create deposit with an incentive ID that doesn't exist in pool
 	warmups := sr.DefaultWarmupTemplate()
