@@ -6,6 +6,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 func TestGetProjectCount(t *testing.T) {
@@ -682,6 +683,30 @@ func TestGetDepositCount(t *testing.T) {
 		// Verify
 		uassert.Equal(t, 1, count)
 	})
+
+	t.Run("legacy tree uses deposit counter for count", func(t *testing.T) {
+		resetTestStore()
+		initTestStore()
+		lp := getTestImplementation()
+
+		legacyDeposit := launchpad.NewDeposit(
+			"legacy-1",
+			"project-1",
+			30,
+			testutils.TestAddress("legacy-user"),
+			1000000,
+			1,
+			100,
+			200,
+		)
+
+		store := testStore.(*testLaunchpadStore)
+		store.deposits.Set("legacy-1", legacyDeposit)
+		store.depositCounter.Next()
+
+		uassert.Equal(t, 1, lp.GetDepositCount())
+		uassert.Equal(t, int64(1), lp.GetCurrentDepositId())
+	})
 }
 
 func TestGetCurrentDepositId(t *testing.T) {
@@ -761,6 +786,35 @@ func TestGetDeposit(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("get legacy tree deposit through fallback", func(t *testing.T) {
+		resetTestStore()
+		initTestStore()
+		lp := getTestImplementation()
+
+		legacyDeposit := launchpad.NewDeposit(
+			"legacy-deposit",
+			"legacy-project",
+			30,
+			testutils.TestAddress("legacy-user"),
+			1000000,
+			1,
+			100,
+			200,
+		)
+
+		store := testStore.(*testLaunchpadStore)
+		store.deposits.Set("legacy-deposit", legacyDeposit)
+
+		deposit, err := lp.GetDeposit("legacy-deposit")
+		uassert.NoError(t, err)
+		uassert.NotNil(t, deposit)
+		uassert.Equal(t, "legacy-project", deposit.ProjectID())
+
+		projectID, err := lp.GetDepositProjectID("legacy-deposit")
+		uassert.NoError(t, err)
+		uassert.Equal(t, "legacy-project", projectID)
+	})
 }
 
 func TestGetDepositProjectID(t *testing.T) {

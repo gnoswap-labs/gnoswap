@@ -111,6 +111,49 @@ func TestLaunchpadWithdraw_CollectDepositGnsUnauthorized(t *testing.T) {
 	})
 }
 
+func TestLaunchpadWithdraw_CollectDepositGnsLegacyFallback(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	userAddr := testutils.TestAddress("legacy_user")
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t, userAddr)
+	lp := getTestImplementation()
+
+	store := testStore.(*testLaunchpadStore)
+	legacyDeposit, exists := store.depositsByID["1"]
+	uassert.True(t, exists)
+	store.deposits.Set("1", legacyDeposit)
+	delete(store.depositsByID, "1")
+
+	// sanity check: only legacy tree has the deposit now
+	uassert.False(t, store.HasDeposit("missing"))
+	_, keyedExists := store.depositsByID["1"]
+	uassert.False(t, keyedExists)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	testing.SetOriginCaller(userAddr)
+	testing.SkipHeights(60*60*24*180/5 + 2)
+
+	var amount int64
+	var err error
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		amount, err = lp.CollectDepositGns("1")
+	}(cross)
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000000000), amount)
+
+	depositAfter, exists := store.GetDeposit("1")
+	uassert.True(t, exists)
+	uassert.True(t, depositAfter.IsWithdrawn(), "legacy fallback deposit should be withdrawable")
+}
+
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function
 // including both success and error cases across different tier durations.
 func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {

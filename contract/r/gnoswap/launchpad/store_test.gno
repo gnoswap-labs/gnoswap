@@ -409,3 +409,94 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 		})
 	}
 }
+
+func TestStoreSetAndGetDepositByID(t *testing.T) {
+	resetTestState(t)
+	ls := NewLaunchpadStore(kvStore)
+
+	depositID := "deposit-1"
+	deposit := NewDeposit(
+		depositID,
+		"project-1",
+		30,
+		testutils.TestAddress("depositor"),
+		1000000,
+		1,
+		100,
+		200,
+	)
+
+	err := ls.SetDeposit(depositID, deposit)
+	uassert.NoError(t, err)
+	uassert.True(t, ls.HasDeposit(depositID))
+
+	retrieved, exists := ls.GetDeposit(depositID)
+	uassert.True(t, exists)
+	uassert.NotEqual(t, nil, retrieved)
+	uassert.Equal(t, depositID, retrieved.ID())
+}
+
+func TestStoreGetDepositLegacyFallback(t *testing.T) {
+	resetTestState(t)
+	ls := NewLaunchpadStore(kvStore)
+
+	deposits := avl.NewTree()
+	depositID := "legacy-deposit"
+	deposit := NewDeposit(
+		depositID,
+		"project-1",
+		90,
+		testutils.TestAddress("legacy"),
+		2000000,
+		1,
+		100,
+		200,
+	)
+	deposits.Set(depositID, deposit)
+
+	err := ls.SetDeposits(deposits)
+	uassert.NoError(t, err)
+
+	retrieved, exists := ls.GetDeposit(depositID)
+	uassert.True(t, exists)
+	uassert.NotEqual(t, nil, retrieved)
+	uassert.Equal(t, depositID, retrieved.ID())
+	uassert.True(t, ls.HasDeposit(depositID))
+}
+
+func TestStoreGetDepositPrefersKeyedEntry(t *testing.T) {
+	resetTestState(t)
+	ls := NewLaunchpadStore(kvStore)
+
+	depositID := "shared-deposit"
+	legacyDeposit := NewDeposit(
+		depositID,
+		"legacy-project",
+		30,
+		testutils.TestAddress("legacy"),
+		1000000,
+		1,
+		100,
+		200,
+	)
+	keyedDeposit := NewDeposit(
+		depositID,
+		"keyed-project",
+		90,
+		testutils.TestAddress("keyed"),
+		2000000,
+		2,
+		200,
+		400,
+	)
+
+	deposits := avl.NewTree()
+	deposits.Set(depositID, legacyDeposit)
+	uassert.NoError(t, ls.SetDeposits(deposits))
+	uassert.NoError(t, ls.SetDeposit(depositID, keyedDeposit))
+
+	retrieved, exists := ls.GetDeposit(depositID)
+	uassert.True(t, exists)
+	uassert.NotEqual(t, nil, retrieved)
+	uassert.Equal(t, "keyed-project", retrieved.ProjectID())
+}
