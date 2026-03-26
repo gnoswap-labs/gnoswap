@@ -343,7 +343,7 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			false,
-			p.MaxLiquidityPerTick(),
+			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)
 
 		flippedUpper = tickUpdate(
@@ -354,7 +354,7 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			true,
-			p.MaxLiquidityPerTick(),
+			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)
 
 		if flippedLower {

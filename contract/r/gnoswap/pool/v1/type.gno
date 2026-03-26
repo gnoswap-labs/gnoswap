@@ -170,7 +170,6 @@ func (step *StepComputations) clampTickNext() {
 }
 
 func newPool(poolInfo *poolCreateConfig) *pl.Pool {
-	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 
 	return pl.NewPool(
@@ -181,6 +180,5 @@ func newPool(poolInfo *poolCreateConfig) *pl.Pool {
 		poolInfo.TickSpacing(),
 		tick,
 		poolInfo.slot0FeeProtocol,
-		maxLiquidityPerTick,
 	)
 }
