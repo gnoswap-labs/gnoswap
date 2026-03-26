@@ -101,8 +101,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 					time.Now().Unix(),
 					time.Now().Unix()+1000,
 				)
-				deposits := lp.store.GetDeposits()
-				deposits.Set(depositID, deposit)
+				lp.store.SetDeposit(depositID, deposit)
 				return depositID
 			},
 			caller:        ownerAddr,
@@ -132,8 +131,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 					time.Now().Unix(),
 					time.Now().Unix()+1000,
 				)
-				deposits := lp.store.GetDeposits()
-				deposits.Set(depositID, deposit)
+				lp.store.SetDeposit(depositID, deposit)
 				return depositID
 			},
 			caller:        otherAddr,

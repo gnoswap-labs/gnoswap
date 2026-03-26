@@ -133,9 +133,9 @@ func (lp *launchpadV1) depositGns(
 		projectTier.EndTime(),
 	)
 
-	// Get state and store deposit
-	deposits := lp.store.GetDeposits()
-	deposits.Set(depositID, deposit)
+	if err := lp.store.SetDeposit(depositID, deposit); err != nil {
+		return nil, nil, false, "", err
+	}
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
@@ -156,11 +156,6 @@ func (lp *launchpadV1) depositGns(
 	// update tier data after adding reward state to reward manager
 	depositToTier(projectTier, deposit)
 	project.SetTier(tierDuration, projectTier)
-
-	// Save the modified state back
-	if err := lp.store.SetDeposits(deposits); err != nil {
-		return nil, nil, false, "", err
-	}
 
 	return deposit,
 		rewardState,

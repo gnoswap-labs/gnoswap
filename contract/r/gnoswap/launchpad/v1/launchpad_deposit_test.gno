@@ -115,10 +115,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				uassert.Equal(t, int64(1000000), deposit.DepositAmount())
 				uassert.Equal(t, int64(30), deposit.Tier())
 
-				// Verify deposit exists in deposits tree
-				deposits := lp.store.GetDeposits()
-				_, exists := deposits.Get(depositID)
-				uassert.True(t, exists)
+				uassert.True(t, lp.store.HasDeposit(depositID))
 			},
 		},
 		{

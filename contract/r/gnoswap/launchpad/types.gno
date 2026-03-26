@@ -109,4 +109,8 @@ type ILaunchpadStore interface {
 	HasDepositsKey() bool
 	GetDeposits() *avl.Tree
 	SetDeposits(deposits *avl.Tree) error
+
+	HasDeposit(depositID string) bool
+	GetDeposit(depositID string) (*Deposit, bool)
+	SetDeposit(depositID string, deposit *Deposit) error
 }

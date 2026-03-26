@@ -61,15 +61,9 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
 }
 
 func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
-	deposits := lp.store.GetDeposits()
-	depositI, ok := deposits.Get(depositID)
+	deposit, ok := lp.store.GetDeposit(depositID)
 	if !ok {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
-	}
-
-	deposit, ok := depositI.(*launchpad.Deposit)
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
 	}
 
 	return deposit, nil

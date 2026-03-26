@@ -262,6 +262,7 @@ func initTestStore() {
 		projectTierRewardManagers: avl.NewTree(),
 		depositCounter:            launchpad.NewCounter(),
 		deposits:                  avl.NewTree(),
+		depositsByID:              make(map[string]*launchpad.Deposit),
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -279,6 +280,7 @@ type testLaunchpadStore struct {
 	projectTierRewardManagers *avl.Tree
 	depositCounter            *launchpad.Counter
 	deposits                  *avl.Tree
+	depositsByID              map[string]*launchpad.Deposit
 }
 
 func (s *testLaunchpadStore) HasProjectsKey() bool {
@@ -343,6 +345,48 @@ func (s *testLaunchpadStore) GetDeposits() *avl.Tree {
 
 func (s *testLaunchpadStore) SetDeposits(deposits *avl.Tree) error {
 	s.deposits = deposits
+	return nil
+}
+
+func (s *testLaunchpadStore) HasDeposit(depositID string) bool {
+	if s.depositsByID == nil {
+		return false
+	}
+
+	_, exists := s.depositsByID[depositID]
+	return exists
+}
+
+func (s *testLaunchpadStore) GetDeposit(depositID string) (*launchpad.Deposit, bool) {
+	if s.depositsByID != nil {
+		if deposit, ok := s.depositsByID[depositID]; ok {
+			return deposit, true
+		}
+	}
+
+	if s.deposits == nil {
+		return nil, false
+	}
+
+	value, exists := s.deposits.Get(depositID)
+	if !exists {
+		return nil, false
+	}
+
+	deposit, ok := value.(*launchpad.Deposit)
+	if !ok {
+		return nil, false
+	}
+
+	return deposit, true
+}
+
+func (s *testLaunchpadStore) SetDeposit(depositID string, deposit *launchpad.Deposit) error {
+	if s.depositsByID == nil {
+		s.depositsByID = make(map[string]*launchpad.Deposit)
+	}
+
+	s.depositsByID[depositID] = deposit
 	return nil
 }
 

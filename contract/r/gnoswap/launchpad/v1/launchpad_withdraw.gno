@@ -134,12 +134,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	// and prevents accessing reward state for already withdrawn deposits
 	removeRewardState(rewardManager, deposit.ID())
 
-	// Store updated deposit in state
-	deposits := lp.store.GetDeposits()
-	deposits.Set(deposit.ID(), deposit)
-
-	// Save the modified state back
-	if err := lp.store.SetDeposits(deposits); err != nil {
+	if err := lp.store.SetDeposit(deposit.ID(), deposit); err != nil {
 		return "", 0, err
 	}
 

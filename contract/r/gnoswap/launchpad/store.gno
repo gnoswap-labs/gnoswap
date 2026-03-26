@@ -21,6 +21,10 @@ const (
 	StoreKeyDeposits                  StoreKey = "deposits"                  // Deposits tree
 )
 
+func makeDepositStoreKey(depositID string) string {
+	return ufmt.Sprintf("%s:%s", StoreKeyDeposits.String(), depositID)
+}
+
 type launchpadStore struct {
 	kvStore store.KVStore
 }
@@ -129,6 +133,59 @@ func (s *launchpadStore) GetDeposits() *avl.Tree {
 // SetDeposits stores the deposits tree.
 func (s *launchpadStore) SetDeposits(deposits *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
+}
+
+func (s *launchpadStore) HasDeposit(depositID string) bool {
+	if s.kvStore.Has(makeDepositStoreKey(depositID)) {
+		return true
+	}
+
+	if !s.HasDepositsKey() {
+		return false
+	}
+
+	deposits := s.GetDeposits()
+	_, ok := deposits.Get(depositID)
+	return ok
+}
+
+func (s *launchpadStore) GetDeposit(depositID string) (*Deposit, bool) {
+	depositStoreKey := makeDepositStoreKey(depositID)
+
+	if s.kvStore.Has(depositStoreKey) {
+		result, err := s.kvStore.Get(depositStoreKey)
+		if err != nil {
+			panic(err)
+		}
+
+		deposit, ok := result.(*Deposit)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast result to *Deposit: %T", result))
+		}
+
+		return deposit, true
+	}
+
+	if !s.HasDepositsKey() {
+		return nil, false
+	}
+
+	deposits := s.GetDeposits()
+	value, ok := deposits.Get(depositID)
+	if !ok {
+		return nil, false
+	}
+
+	deposit, ok := value.(*Deposit)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *Deposit: %T", value))
+	}
+
+	return deposit, true
+}
+
+func (s *launchpadStore) SetDeposit(depositID string, deposit *Deposit) error {
+	return s.kvStore.Set(makeDepositStoreKey(depositID), deposit)
 }
 
 // NewLaunchpadStore creates a new launchpad store instance with the provided KV store.
