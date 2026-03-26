@@ -1,26 +1,25 @@
 package position
 
-import u256 "gno.land/p/gnoswap/uint256"
-
 // Position represents a liquidity position in a pool.
 // Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
+// All uint256 fields are stored as decimal strings to reduce realm object overhead.
 type Position struct {
-	operator  address    // address that is approved for spending this token
-	poolKey   string     // poolPath of the pool which this has lp token
-	tickLower int32      // the lower tick of the position, bounds are included
-	tickUpper int32      // the upper tick of the position
-	liquidity *u256.Uint // liquidity of the position
+	operator  address // address that is approved for spending this token
+	poolKey   string  // poolPath of the pool which this has lp token
+	tickLower int32   // the lower tick of the position, bounds are included
+	tickUpper int32   // the upper tick of the position
+	liquidity string  // liquidity of the position
 
 	// fee growth of the aggregate position as of the last action on the individual position
-	feeGrowthInside0LastX128 *u256.Uint
-	feeGrowthInside1LastX128 *u256.Uint
+	feeGrowthInside0LastX128 string
+	feeGrowthInside1LastX128 string
 
 	// how many uncollected tokens are owed to the position, as of the last computation
-	tokensOwed0 *u256.Uint
-	tokensOwed1 *u256.Uint
+	tokensOwed0 string
+	tokensOwed1 string
 
-	token0Balance *u256.Uint // token0 balance of the position
-	token1Balance *u256.Uint // token1 balance of the position
+	token0Balance string // token0 balance of the position
+	token1Balance string // token1 balance of the position
 
 	burned bool // whether the position has been burned (we don't burn the NFT, just mark as burned)
 }
@@ -33,11 +32,11 @@ func (p *Position) SetPoolKey(poolKey string) {
 	p.poolKey = poolKey
 }
 
-func (p *Position) Liquidity() *u256.Uint {
+func (p *Position) Liquidity() string {
 	return p.liquidity
 }
 
-func (p *Position) SetLiquidity(liquidity *u256.Uint) {
+func (p *Position) SetLiquidity(liquidity string) {
 	p.liquidity = liquidity
 }
 
@@ -57,51 +56,51 @@ func (p *Position) SetTickUpper(tickUpper int32) {
 	p.tickUpper = tickUpper
 }
 
-func (p *Position) TokensOwed0() *u256.Uint {
+func (p *Position) TokensOwed0() string {
 	return p.tokensOwed0
 }
 
-func (p *Position) SetTokensOwed0(tokensOwed0 *u256.Uint) {
+func (p *Position) SetTokensOwed0(tokensOwed0 string) {
 	p.tokensOwed0 = tokensOwed0
 }
 
-func (p *Position) TokensOwed1() *u256.Uint {
+func (p *Position) TokensOwed1() string {
 	return p.tokensOwed1
 }
 
-func (p *Position) SetTokensOwed1(tokensOwed1 *u256.Uint) {
+func (p *Position) SetTokensOwed1(tokensOwed1 string) {
 	p.tokensOwed1 = tokensOwed1
 }
 
-func (p *Position) Token0Balance() *u256.Uint {
+func (p *Position) Token0Balance() string {
 	return p.token0Balance
 }
 
-func (p *Position) SetToken0Balance(token0Balance *u256.Uint) {
+func (p *Position) SetToken0Balance(token0Balance string) {
 	p.token0Balance = token0Balance
 }
 
-func (p *Position) Token1Balance() *u256.Uint {
+func (p *Position) Token1Balance() string {
 	return p.token1Balance
 }
 
-func (p *Position) SetToken1Balance(token1Balance *u256.Uint) {
+func (p *Position) SetToken1Balance(token1Balance string) {
 	p.token1Balance = token1Balance
 }
 
-func (p *Position) FeeGrowthInside0LastX128() *u256.Uint {
+func (p *Position) FeeGrowthInside0LastX128() string {
 	return p.feeGrowthInside0LastX128
 }
 
-func (p *Position) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
+func (p *Position) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 string) {
 	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 }
 
-func (p *Position) FeeGrowthInside1LastX128() *u256.Uint {
+func (p *Position) FeeGrowthInside1LastX128() string {
 	return p.feeGrowthInside1LastX128
 }
 
-func (p *Position) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
+func (p *Position) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 string) {
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
@@ -123,17 +122,21 @@ func (p *Position) SetOperator(operator address) {
 
 // isClear reports whether the position is empty
 func (p *Position) IsClear() bool {
-	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
+	return isZeroStr(p.liquidity) && isZeroStr(p.tokensOwed0) && isZeroStr(p.tokensOwed1)
+}
+
+func isZeroStr(s string) bool {
+	return s == "" || s == "0"
 }
 
 func NewPosition(
 	poolKey string,
 	tickLower int32,
 	tickUpper int32,
-	liquidity *u256.Uint,
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 *u256.Uint,
-	tokensOwed0, tokensOwed1 *u256.Uint,
-	token0Balance, token1Balance *u256.Uint,
+	liquidity string,
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 string,
+	tokensOwed0, tokensOwed1 string,
+	token0Balance, token1Balance string,
 	burned bool,
 	operator address,
 ) *Position {

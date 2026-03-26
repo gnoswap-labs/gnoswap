@@ -119,7 +119,7 @@ func (p *positionV1) Mint(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(id).ToString(),
+		"positionLiquidity", p.GetPositionLiquidity(id),
 		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
 		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
 		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
@@ -219,7 +219,7 @@ func (p *positionV1) IncreaseLiquidity(
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
 		"token1Balance", pl.GetBalanceToken1(poolPath),
@@ -302,7 +302,7 @@ func (p *positionV1) DecreaseLiquidity(
 		"amount0", amount0,
 		"amount1", amount1,
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
 		"token1Balance", pl.GetBalanceToken1(poolPath),
@@ -371,8 +371,8 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, currentFeeGrowth)
 
-	position.SetFeeGrowthInside0LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128))
-	position.SetFeeGrowthInside1LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128))
+	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
+	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
@@ -391,13 +391,13 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
-	position.SetTokensOwed0(tokensOwed0Updated)
+	position.SetTokensOwed0(tokensOwed0Updated.ToString())
 
 	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
-	position.SetTokensOwed1(tokensOwed1Updated)
+	position.SetTokensOwed1(tokensOwed1Updated.ToString())
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
@@ -416,8 +416,8 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
-		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128().ToString(),
-		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128().ToString(),
+		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128(),
+		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128(),
 	)
 
 	chain.Emit(
@@ -485,7 +485,7 @@ func computePositionKey(tickLower, tickUpper int32) string {
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
 func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.Uint) {
-	liquidity := position.Liquidity()
+	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {
 		return u256.Zero(), u256.Zero()
 	}

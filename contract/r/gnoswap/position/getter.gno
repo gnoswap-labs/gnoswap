@@ -5,6 +5,11 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
+// u256FromStr is a convenience wrapper for u256.MustFromDecimal.
+func u256FromStr(s string) *u256.Uint {
+	return u256.MustFromDecimal(s)
+}
+
 // GetPositionCount returns the total number of positions.
 func GetPositionCount() int {
 	return getImplementation().GetPositionCount()
@@ -42,7 +47,7 @@ func GetPositionTokenBalances(positionId uint64) (string, string) {
 		return "", ""
 	}
 
-	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
+	return position.Token0Balance(), position.Token1Balance()
 }
 
 func GetPositionToken0Balance(positionId uint64) *u256.Uint {
@@ -51,7 +56,7 @@ func GetPositionToken0Balance(positionId uint64) *u256.Uint {
 		return u256.Zero()
 	}
 
-	return position.Token0Balance().Clone()
+	return u256FromStr(position.Token0Balance())
 }
 
 func GetPositionToken1Balance(positionId uint64) *u256.Uint {
@@ -60,17 +65,17 @@ func GetPositionToken1Balance(positionId uint64) *u256.Uint {
 		return u256.Zero()
 	}
 
-	return position.Token1Balance().Clone()
+	return u256FromStr(position.Token1Balance())
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
 func GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId).Clone()
+	return u256FromStr(getImplementation().GetPositionFeeGrowthInside0LastX128(positionId))
 }
 
 // GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside for token1.
 func GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId).Clone()
+	return u256FromStr(getImplementation().GetPositionFeeGrowthInside1LastX128(positionId))
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
@@ -80,12 +85,12 @@ func GetPositionFeeGrowthInsideLastX128(positionId uint64) (*u256.Uint, *u256.Ui
 		return u256.Zero(), u256.Zero()
 	}
 
-	return position.FeeGrowthInside0LastX128().Clone(), position.FeeGrowthInside1LastX128().Clone()
+	return u256FromStr(position.FeeGrowthInside0LastX128()), u256FromStr(position.FeeGrowthInside1LastX128())
 }
 
 // GetPositionLiquidity returns the liquidity amount of a position.
 func GetPositionLiquidity(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(positionId).Clone()
+	return u256FromStr(getImplementation().GetPositionLiquidity(positionId))
 }
 
 // GetPositionOperator returns the operator address of a position.
@@ -120,12 +125,12 @@ func GetPositionTicks(positionId uint64) (int32, int32) {
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
 func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed0(positionId).Clone()
+	return u256FromStr(getImplementation().GetPositionTokensOwed0(positionId))
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
 func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed1(positionId).Clone()
+	return u256FromStr(getImplementation().GetPositionTokensOwed1(positionId))
 }
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
@@ -135,7 +140,7 @@ func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
 		return u256.Zero(), u256.Zero()
 	}
 
-	return position.TokensOwed0().Clone(), position.TokensOwed1().Clone()
+	return u256FromStr(position.TokensOwed0()), u256FromStr(position.TokensOwed1())
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.

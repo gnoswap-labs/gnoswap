@@ -116,18 +116,18 @@ func TestBurn_CalculateFees(t *testing.T) {
 			name: "Normal case - fees accrued on both tokens",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
-					"pool:key",                      // poolKey
-					int32(-887220),                  // tickLower
-					int32(887220),                   // tickUpper
-					u256.MustFromDecimal("1000000"), // liquidity
-					u256.MustFromDecimal("100"),     // feeGrowthInside0LastX128
-					u256.MustFromDecimal("200"),     // feeGrowthInside1LastX128
-					u256.MustFromDecimal("10"),      // tokensOwed0
-					u256.MustFromDecimal("20"),      // tokensOwed1
-					u256.MustFromDecimal("500"),     // token0Balance
-					u256.MustFromDecimal("600"),     // token1Balance
-					false,                           // burned
-					"",                              // operator
+					"pool:key",    // poolKey
+					int32(-887220), // tickLower
+					int32(887220),  // tickUpper
+					"1000000",      // liquidity
+					"100",          // feeGrowthInside0LastX128
+					"200",          // feeGrowthInside1LastX128
+					"10",           // tokensOwed0
+					"20",           // tokensOwed1
+					"500",          // token0Balance
+					"600",          // token1Balance
+					false,          // burned
+					"",             // operator
 				)
 				return pos
 			},
@@ -146,15 +146,8 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					u256.MustFromDecimal("1000000"),
-					u256.MustFromDecimal("100"),
-					u256.MustFromDecimal("200"),
-					u256.MustFromDecimal("50"),
-					u256.MustFromDecimal("75"),
-					u256.MustFromDecimal("500"),
-					u256.MustFromDecimal("600"),
-					false, // burned
-					"",    // operator
+					"1000000", "100", "200", "50", "75", "500", "600",
+					false, "",
 				)
 				return pos
 			},
@@ -173,15 +166,8 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					u256.Zero(),
-					u256.MustFromDecimal("100"),
-					u256.MustFromDecimal("200"),
-					u256.MustFromDecimal("0"),
-					u256.MustFromDecimal("0"),
-					u256.Zero(),
-					u256.Zero(),
-					false, // burned
-					"",    // operator
+					"0", "100", "200", "0", "0", "0", "0",
+					false, "",
 				)
 				return pos
 			},
@@ -200,15 +186,10 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128,
-					u256.Zero(),
-					u256.Zero(),
-					u256.MustFromDecimal(MAX_UINT256), // Already max tokens owed
-					u256.Zero(),
-					u256.Zero(),
-					u256.Zero(),
-					false, // burned
-					"",    // operator
+					q128.ToString(), "0", "0",
+					MAX_UINT256, // Already max tokens owed
+					"0", "0", "0",
+					false, "",
 				)
 				return pos
 			},
@@ -226,15 +207,11 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128,
-					u256.Zero(),
-					u256.Zero(),
-					u256.Zero(),
-					u256.MustFromDecimal(MAX_UINT256), // Already max tokens owed
-					u256.Zero(),
-					u256.Zero(),
-					false, // burned
-					"",    // operator
+					q128.ToString(), "0", "0",
+					"0",
+					MAX_UINT256, // Already max tokens owed
+					"0", "0",
+					false, "",
 				)
 				return pos
 			},
@@ -252,15 +229,9 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					u256.MustFromDecimal("100000000000000000"),
-					u256.Zero(),
-					u256.Zero(),
-					u256.MustFromDecimal("1000"),
-					u256.MustFromDecimal("2000"),
-					u256.MustFromDecimal("50000000"),
-					u256.MustFromDecimal("60000000"),
-					false, // burned
-					"",    // operator
+					"100000000000000000", "0", "0",
+					"1000", "2000", "50000000", "60000000",
+					false, "",
 				)
 				return pos
 			},
@@ -279,15 +250,9 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					u256.MustFromDecimal("1000000"),
-					u256.MustFromDecimal("100"),
-					u256.MustFromDecimal("200"),
-					u256.MustFromDecimal("999999"),
-					u256.MustFromDecimal("888888"),
-					u256.MustFromDecimal("5000"),
-					u256.MustFromDecimal("6000"),
-					false, // burned
-					"",    // operator
+					"1000000", "100", "200",
+					"999999", "888888", "5000", "6000",
+					false, "",
 				)
 				return pos
 			},
@@ -323,26 +288,26 @@ func TestBurn_CalculateFees(t *testing.T) {
 func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 	tests := []struct {
 		name             string
-		tokensOwed0      *u256.Uint
-		tokensOwed1      *u256.Uint
+		tokensOwed0      string
+		tokensOwed1      string
 		expectedPanicMsg string
 	}{
 		{
 			name:             "overflow on tokensOwed0 + burnedAmount0",
-			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
-			tokensOwed1:      u256.Zero(),
+			tokensOwed0:      MAX_UINT256,
+			tokensOwed1:      "0",
 			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed0(",
 		},
 		{
 			name:             "overflow on tokensOwed1 + burnedAmount1",
-			tokensOwed0:      u256.Zero(),
-			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed0:      "0",
+			tokensOwed1:      MAX_UINT256,
 			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed1(",
 		},
 		{
 			name:             "overflow on both tokensOwed0 and tokensOwed1",
-			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
-			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed0:      MAX_UINT256,
+			tokensOwed1:      MAX_UINT256,
 			expectedPanicMsg: "[GNOSWAP-POSITION-014] overflow || tokensOwed0(",
 		},
 	}
@@ -363,8 +328,8 @@ func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 			)
 
 			pos := mockInstance.mustGetPosition(1)
-			pos.SetTokensOwed0(u256.Zero().Set(tc.tokensOwed0))
-			pos.SetTokensOwed1(u256.Zero().Set(tc.tokensOwed1))
+			pos.SetTokensOwed0(tc.tokensOwed0)
+			pos.SetTokensOwed1(tc.tokensOwed1)
 			mockInstance.mustUpdatePosition(1, *pos)
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))

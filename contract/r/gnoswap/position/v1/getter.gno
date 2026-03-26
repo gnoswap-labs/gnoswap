@@ -87,23 +87,23 @@ func (p *positionV1) GetPositionTickUpper(positionId uint64) int32 {
 	return p.mustGetPosition(positionId).TickUpper()
 }
 
-func (p *positionV1) GetPositionLiquidity(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionLiquidity(positionId uint64) string {
 	return p.mustGetPosition(positionId).Liquidity()
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return p.mustGetPosition(positionId).FeeGrowthInside0LastX128()
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 	return p.mustGetPosition(positionId).FeeGrowthInside1LastX128()
 }
 
-func (p *positionV1) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed0(positionId uint64) string {
 	return p.mustGetPosition(positionId).TokensOwed0()
 }
 
-func (p *positionV1) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed1(positionId uint64) string {
 	return p.mustGetPosition(positionId).TokensOwed1()
 }
 
@@ -121,7 +121,7 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 	position := p.mustGetPosition(positionId)
 
-	liquidity := position.Liquidity()
+	liquidity := u256.MustFromDecimal(position.Liquidity())
 	tickLower := position.TickLower()
 	tickUpper := position.TickUpper()
 
@@ -133,8 +133,8 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	tickUpperFeeGrowthOutside0X128, tickUpperFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
 	tickLowerFeeGrowthOutside0X128, tickLowerFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
 
-	feeGrowthInside0LastX128 := position.FeeGrowthInside0LastX128()
-	feeGrowthInside1LastX128 := position.FeeGrowthInside1LastX128()
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
 
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *u256.Uint
 

@@ -66,7 +66,7 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by liquidity",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.Liquidity().ToString()
+				return position.Liquidity()
 			},
 			expected: "2541592",
 		},
@@ -74,7 +74,7 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.FeeGrowthInside0LastX128().ToString()
+				return position.FeeGrowthInside0LastX128()
 			},
 			expected: "0",
 		},
@@ -82,7 +82,7 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.FeeGrowthInside1LastX128().ToString()
+				return position.FeeGrowthInside1LastX128()
 			},
 			expected: "0",
 		},
@@ -90,7 +90,7 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.TokensOwed0().ToString()
+				return position.TokensOwed0()
 			},
 			expected: "0",
 		},
@@ -98,7 +98,7 @@ func TestPositionGetter(t *testing.T) {
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.TokensOwed1().ToString()
+				return position.TokensOwed1()
 			},
 			expected: "0",
 		},
@@ -113,35 +113,35 @@ func TestPositionGetter(t *testing.T) {
 		{
 			name: "get position is success by liquidity",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).Liquidity().ToString()
+				return mockInstance.mustGetPosition(positionId).Liquidity()
 			},
 			expected: "2541592",
 		},
 		{
 			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).FeeGrowthInside0LastX128().ToString()
+				return mockInstance.mustGetPosition(positionId).FeeGrowthInside0LastX128()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).FeeGrowthInside1LastX128().ToString()
+				return mockInstance.mustGetPosition(positionId).FeeGrowthInside1LastX128()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).TokensOwed0().ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed0()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
-				return mockInstance.mustGetPosition(positionId).TokensOwed1().ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed1()
 			},
 			expected: "0",
 		},
@@ -280,17 +280,17 @@ func TestGetPositionTokenBalances(t *testing.T) {
 		testFunc func() bool
 	}{
 		{
-			name: "token0 balance is not nil after mint",
+			name: "token0 balance is not empty after mint",
 			testFunc: func() bool {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.Token0Balance() != nil
+				return position.Token0Balance() != ""
 			},
 		},
 		{
-			name: "token1 balance is not nil after mint",
+			name: "token1 balance is not empty after mint",
 			testFunc: func() bool {
 				position := mockInstance.mustGetPosition(positionId)
-				return position.Token1Balance() != nil
+				return position.Token1Balance() != ""
 			},
 		},
 	}
@@ -410,35 +410,35 @@ func TestGetPositionDetailsGetter(t *testing.T) {
 		{
 			name: "GetPositionLiquidity returns non-zero liquidity",
 			testFunc: func() any {
-				return mockInstance.GetPositionLiquidity(positionId).ToString()
+				return mockInstance.GetPositionLiquidity(positionId)
 			},
 			expected: "2541592",
 		},
 		{
 			name: "GetPositionFeeGrowthInside0LastX128 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionFeeGrowthInside0LastX128(positionId).ToString()
+				return mockInstance.GetPositionFeeGrowthInside0LastX128(positionId)
 			},
 			expected: "0",
 		},
 		{
 			name: "GetPositionFeeGrowthInside1LastX128 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionFeeGrowthInside1LastX128(positionId).ToString()
+				return mockInstance.GetPositionFeeGrowthInside1LastX128(positionId)
 			},
 			expected: "0",
 		},
 		{
 			name: "GetPositionTokensOwed0 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionTokensOwed0(positionId).ToString()
+				return mockInstance.GetPositionTokensOwed0(positionId)
 			},
 			expected: "0",
 		},
 		{
 			name: "GetPositionTokensOwed1 returns zero initially",
 			testFunc: func() any {
-				return mockInstance.GetPositionTokensOwed1(positionId).ToString()
+				return mockInstance.GetPositionTokensOwed1(positionId)
 			},
 			expected: "0",
 		},

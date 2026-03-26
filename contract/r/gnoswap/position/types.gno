@@ -5,6 +5,7 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 )
 
+
 type IPosition interface {
 	IPositionManager
 	IPositionGetter
@@ -75,11 +76,11 @@ type IPositionGetter interface {
 	GetPositionPoolKey(positionId uint64) string
 	GetPositionTickLower(positionId uint64) int32
 	GetPositionTickUpper(positionId uint64) int32
-	GetPositionLiquidity(positionId uint64) *u256.Uint
-	GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint
-	GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint
-	GetPositionTokensOwed0(positionId uint64) *u256.Uint
-	GetPositionTokensOwed1(positionId uint64) *u256.Uint
+	GetPositionLiquidity(positionId uint64) string
+	GetPositionFeeGrowthInside0LastX128(positionId uint64) string
+	GetPositionFeeGrowthInside1LastX128(positionId uint64) string
+	GetPositionTokensOwed0(positionId uint64) string
+	GetPositionTokensOwed1(positionId uint64) string
 	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	GetPositionOwner(positionId uint64) address
 }

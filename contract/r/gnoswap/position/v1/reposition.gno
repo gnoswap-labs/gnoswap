@@ -57,9 +57,9 @@ func (p *positionV1) Reposition(
 			ufmt.Sprintf(
 				"position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)",
 				positionId,
-				position.Liquidity().ToString(),
-				position.TokensOwed0().ToString(),
-				position.TokensOwed1().ToString(),
+				position.Liquidity(),
+				position.TokensOwed0(),
+				position.TokensOwed1(),
 			),
 		))
 	}
@@ -105,18 +105,18 @@ func (p *positionV1) Reposition(
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
-	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128)
-	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
+	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
+	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
-	position.SetLiquidity(liquidity)
-	position.SetToken0Balance(token0Balance)
-	position.SetToken1Balance(token1Balance)
+	position.SetLiquidity(liquidity.ToString())
+	position.SetToken0Balance(token0Balance.ToString())
+	position.SetToken1Balance(token1Balance.ToString())
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
 	// > at this point, that position will have unclaimedFee which isn't intended
-	position.SetTokensOwed0(u256.Zero())
-	position.SetTokensOwed1(u256.Zero())
+	position.SetTokensOwed0("0")
+	position.SetTokensOwed1("0")
 	position.SetBurned(false)
 	p.mustUpdatePosition(positionId, *position)
 
@@ -142,7 +142,7 @@ func (p *positionV1) Reposition(
 		"prevTickUpper", formatInt(oldTickUpper),
 		"poolPath", poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolKey),
 		"token0Balance", poolToken0Balance,
 		"token1Balance", poolToken1Balance,
