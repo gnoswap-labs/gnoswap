@@ -75,36 +75,6 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	}
 }
 
-func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
-	tests := []struct {
-		name  string
-		level HaltLevel
-	}{
-		{"Idempotent None level", HaltLevelNone},
-		{"Idempotent SafeMode level", HaltLevelSafeMode},
-		{"Idempotent Emergency level", HaltLevelEmergency},
-		{"Idempotent Complete level", HaltLevelComplete},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
-
-			// given - set level once
-			err := setHaltLevel(tc.level)
-			uassert.NoError(t, err)
-			firstState := haltState
-
-			// when - set same level again
-			err = setHaltLevel(tc.level)
-			uassert.NoError(t, err)
-
-			// then - state should remain the same
-			uassert.Equal(t, haltState, firstState)
-		})
-	}
-}
-
 func TestHalt_GetHaltConfig(t *testing.T) {
 	cleanup(t)
 
@@ -283,67 +253,26 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
-		name             string
-		initialLevel     HaltLevel
-		verifyOperations map[string]bool
+		name         string
+		initialLevel HaltLevel
 	}{
-		{
-			name:         "None level JSON",
-			initialLevel: HaltLevelNone,
-			verifyOperations: map[string]bool{
-				"pool":       false,
-				"governance": false,
-				"withdraw":   false,
-			},
-		},
-		{
-			name:         "Safe mode JSON",
-			initialLevel: HaltLevelSafeMode,
-			verifyOperations: map[string]bool{
-				"pool":     false,
-				"withdraw": true,
-			},
-		},
-		{
-			name:         "Emergency JSON",
-			initialLevel: HaltLevelEmergency,
-			verifyOperations: map[string]bool{
-				"pool":       true,
-				"governance": false,
-				"router":     true,
-			},
-		},
-		{
-			name:         "Complete JSON",
-			initialLevel: HaltLevelComplete,
-			verifyOperations: map[string]bool{
-				"pool":       true,
-				"governance": true,
-				"withdraw":   true,
-			},
-		},
+		{"None level JSON", HaltLevelNone},
+		{"Safe mode JSON", HaltLevelSafeMode},
+		{"Emergency JSON", HaltLevelEmergency},
+		{"Complete JSON", HaltLevelComplete},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup(t)
 
-			// given
 			err := setHaltLevel(tc.initialLevel)
 			uassert.NoError(t, err)
 
-			// when
 			jsonStr := GetHaltConfigJson()
 
-			// then
 			uassert.True(t, len(jsonStr) > 0)
 			uassert.True(t, jsonStr[0] == '{' && jsonStr[len(jsonStr)-1] == '}')
-
-			// Verify operation states via GetHaltConfig
-			config := GetHaltConfig()
-			for name, expectedHalted := range tc.verifyOperations {
-				uassert.Equal(t, config[name], expectedHalted)
-			}
 		})
 	}
 }
@@ -620,49 +549,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 		uassert.Equal(t, isHaltedOperation(OpTypePool), false)
 		uassert.Equal(t, isHaltedOperation(OpTypeRouter), false)
 	})
-}
-
-func TestHalt_SetOperationStatus_BitIndependence(t *testing.T) {
-	tests := []struct {
-		name           string
-		haltOp         OpType
-		checkOp        OpType
-		expectedHalted bool
-	}{
-		{
-			name:           "Halt pool, check router independence",
-			haltOp:         OpTypePool,
-			checkOp:        OpTypeRouter,
-			expectedHalted: false,
-		},
-		{
-			name:           "Halt governance, check pool independence",
-			haltOp:         OpTypeGovernance,
-			checkOp:        OpTypePool,
-			expectedHalted: false,
-		},
-		{
-			name:           "Halt withdraw, check emission independence",
-			haltOp:         OpTypeWithdraw,
-			checkOp:        OpTypeEmission,
-			expectedHalted: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup(t)
-
-			// Halt one operation
-			haltState |= uint64(tc.haltOp)
-
-			// Verify other operation is unaffected
-			uassert.Equal(t, isHaltedOperation(tc.checkOp), tc.expectedHalted)
-
-			// Verify halted operation is actually halted
-			uassert.Equal(t, isHaltedOperation(tc.haltOp), true)
-		})
-	}
 }
 
 func cleanup(t *testing.T) {

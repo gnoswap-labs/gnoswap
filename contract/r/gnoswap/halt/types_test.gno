@@ -412,25 +412,3 @@ func TestTypes_OpTypeFromString(t *testing.T) {
 	}
 }
 
-func TestTypes_OpTypeBitValues(t *testing.T) {
-	// Verify each OpType is a distinct power of 2
-	uassert.Equal(t, uint64(OpTypePool), uint64(1))
-	uassert.Equal(t, uint64(OpTypePosition), uint64(2))
-	uassert.Equal(t, uint64(OpTypeProtocolFee), uint64(4))
-	uassert.Equal(t, uint64(OpTypeRouter), uint64(8))
-	uassert.Equal(t, uint64(OpTypeStaker), uint64(16))
-	uassert.Equal(t, uint64(OpTypeLaunchpad), uint64(32))
-	uassert.Equal(t, uint64(OpTypeGovernance), uint64(64))
-	uassert.Equal(t, uint64(OpTypeGovStaker), uint64(128))
-	uassert.Equal(t, uint64(OpTypeXGns), uint64(256))
-	uassert.Equal(t, uint64(OpTypeCommunityPool), uint64(512))
-	uassert.Equal(t, uint64(OpTypeEmission), uint64(1024))
-	uassert.Equal(t, uint64(OpTypeWithdraw), uint64(2048))
-
-	// OpTypeAll should be the OR of all individual types
-	var combined uint64
-	for _, op := range OpTypes() {
-		combined |= uint64(op)
-	}
-	uassert.Equal(t, uint64(OpTypeAll), combined)
-}

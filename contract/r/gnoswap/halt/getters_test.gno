@@ -6,291 +6,77 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestGetters_IsHaltedPool(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
+func TestGetters_IndividualGetters(t *testing.T) {
+	type getterFunc func() bool
+
+	// Operations halted in Emergency+Complete but not in None+SafeMode
+	standardOps := []struct {
+		name   string
+		getter getterFunc
 	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
+		{"Pool", IsHaltedPool},
+		{"Position", IsHaltedPosition},
+		{"ProtocolFee", IsHaltedProtocolFee},
+		{"Router", IsHaltedRouter},
+		{"Staker", IsHaltedStaker},
+		{"Launchpad", IsHaltedLaunchpad},
+		{"GovStaker", IsHaltedGovStaker},
+		{"XGns", IsHaltedXGns},
+		{"CommunityPool", IsHaltedCommunityPool},
+		{"Emission", IsHaltedEmission},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedPool()
-			uassert.Equal(t, result, tt.expected)
+	for _, op := range standardOps {
+		t.Run(op.name, func(t *testing.T) {
+			for _, tc := range []struct {
+				level    HaltLevel
+				expected bool
+			}{
+				{HaltLevelNone, false},
+				{HaltLevelSafeMode, false},
+				{HaltLevelEmergency, true},
+				{HaltLevelComplete, true},
+			} {
+				err := setHaltLevel(tc.level)
+				uassert.NoError(t, err)
+				uassert.Equal(t, op.getter(), tc.expected)
+			}
 		})
 	}
-}
 
-func TestGetters_IsHaltedPosition(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
+	// Governance: only halted in Complete
+	t.Run("Governance", func(t *testing.T) {
+		for _, tc := range []struct {
+			level    HaltLevel
+			expected bool
+		}{
+			{HaltLevelNone, false},
+			{HaltLevelSafeMode, false},
+			{HaltLevelEmergency, false},
+			{HaltLevelComplete, true},
+		} {
+			err := setHaltLevel(tc.level)
 			uassert.NoError(t, err)
-			result := IsHaltedPosition()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
+			uassert.Equal(t, IsHaltedGovernance(), tc.expected)
+		}
+	})
 
-func TestGetters_IsHaltedProtocolFee(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
+	// Withdraw: halted in SafeMode+Complete, not in None+Emergency
+	t.Run("Withdraw", func(t *testing.T) {
+		for _, tc := range []struct {
+			level    HaltLevel
+			expected bool
+		}{
+			{HaltLevelNone, false},
+			{HaltLevelSafeMode, true},
+			{HaltLevelEmergency, false},
+			{HaltLevelComplete, true},
+		} {
+			err := setHaltLevel(tc.level)
 			uassert.NoError(t, err)
-			result := IsHaltedProtocolFee()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedRouter(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedRouter()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedStaker(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedStaker()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedLaunchpad(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedLaunchpad()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedGovernance(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, false},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedGovernance()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedGovStaker(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedGovStaker()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedXGns(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedXGns()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedCommunityPool(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedCommunityPool()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedEmission(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, false},
-		{"Emergency", HaltLevelEmergency, true},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedEmission()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_IsHaltedWithdraw(t *testing.T) {
-	tests := []struct {
-		name      string
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"None level", HaltLevelNone, false},
-		{"SafeMode", HaltLevelSafeMode, true},
-		{"Emergency", HaltLevelEmergency, false},
-		{"Complete", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := IsHaltedWithdraw()
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-func TestGetters_isHaltedOperation(t *testing.T) {
-	tests := []struct {
-		name      string
-		opType    OpType
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"Pool in None", OpTypePool, HaltLevelNone, false},
-		{"Pool in Emergency", OpTypePool, HaltLevelEmergency, true},
-		{"Governance in Emergency", OpTypeGovernance, HaltLevelEmergency, false},
-		{"Withdraw in SafeMode", OpTypeWithdraw, HaltLevelSafeMode, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-			result := isHaltedOperation(tt.opType)
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
+			uassert.Equal(t, IsHaltedWithdraw(), tc.expected)
+		}
+	})
 }
 
 func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {

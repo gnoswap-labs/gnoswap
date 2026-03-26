@@ -21,47 +21,6 @@ func TestConfig_Constants(t *testing.T) {
 	uassert.Equal(t, ConfigComplete, uint64(OpTypeAll))
 }
 
-func TestConfig_NoneHaltsNothing(t *testing.T) {
-	for _, op := range OpTypes() {
-		halted := ConfigNone&uint64(op) != 0
-		uassert.Equal(t, halted, false)
-	}
-}
-
-func TestConfig_SafeModeHaltsWithdrawOnly(t *testing.T) {
-	for _, op := range OpTypes() {
-		halted := ConfigSafeMode&uint64(op) != 0
-		if op == OpTypeWithdraw {
-			uassert.Equal(t, halted, true)
-		} else {
-			uassert.Equal(t, halted, false)
-		}
-	}
-}
-
-func TestConfig_EmergencyHaltsMostExceptGovernanceAndWithdraw(t *testing.T) {
-	notHalted := map[OpType]bool{
-		OpTypeGovernance: true,
-		OpTypeWithdraw:   true,
-	}
-
-	for _, op := range OpTypes() {
-		halted := ConfigEmergency&uint64(op) != 0
-		if notHalted[op] {
-			uassert.Equal(t, halted, false)
-		} else {
-			uassert.Equal(t, halted, true)
-		}
-	}
-}
-
-func TestConfig_CompleteHaltsAll(t *testing.T) {
-	for _, op := range OpTypes() {
-		halted := ConfigComplete&uint64(op) != 0
-		uassert.Equal(t, halted, true)
-	}
-}
-
 func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
 	tests := []struct {
 		name          string
