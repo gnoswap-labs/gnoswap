@@ -13,14 +13,15 @@ var max160 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^
 // maxObservationCardinality defines the maximum number of observations to store
 const maxObservationCardinality uint16 = 65535
 
-// GetTWAP calculates the time-weighted average price between two points in time
+// getTWAP calculates the time-weighted average price between two points in time
 // Returns the arithmetic mean tick and harmonic mean liquidity over the time period
 func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if secondsAgo == 0 {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	if p.ObservationState().Cardinality() == 0 {
+	os := p.ObservationState()
+	if os.Cardinality() == 0 {
 		return 0, nil, errors.New("observation state not initialized")
 	}
 
@@ -29,13 +30,13 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	currentTime := time.Now().Unix()
 
 	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := observe(
-		p.ObservationState(),
+		os,
 		currentTime,
 		secondsAgos,
 		p.Slot0Tick(),
-		p.ObservationState().Index(),
+		os.Index(),
 		p.Liquidity(),
-		p.ObservationState().Cardinality(),
+		os.Cardinality(),
 	)
 	if err != nil {
 		return 0, nil, err
@@ -74,18 +75,20 @@ func writeObservationByPool(
 		p.SetObservationState(pl.NewObservationState(currentTime))
 	}
 
-	err := writeObservation(p.ObservationState(), currentTime, tick, liquidity)
+	os := p.ObservationState()
+	err := writeObservation(&os, currentTime, tick, liquidity)
 	if err != nil {
 		return err
 	}
+	p.SetObservationState(os)
 
 	return nil
 }
 
 func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinalityNext uint16) error {
-	observationState := p.ObservationState()
+	os := p.ObservationState()
 
-	if observationState.Cardinality() == 0 {
+	if os.Cardinality() == 0 {
 		return errors.New("observation state not initialized")
 	}
 
@@ -93,16 +96,17 @@ func increaseObservationCardinalityNextByPool(p *pl.Pool, observationCardinality
 		return errors.New("observation cardinality next exceeds maximum")
 	}
 
-	if observationCardinalityNext <= observationState.CardinalityNext() {
+	if observationCardinalityNext <= os.CardinalityNext() {
 		return errors.New("observation cardinality next must be greater than current")
 	}
 
-	observationCardinalityNextNew, err := grow(observationState, observationState.Cardinality(), observationCardinalityNext)
+	observationCardinalityNextNew, err := grow(&os, os.Cardinality(), observationCardinalityNext)
 	if err != nil {
 		return err
 	}
 
-	observationState.SetCardinalityNext(observationCardinalityNextNew)
+	os.SetCardinalityNext(observationCardinalityNextNew)
+	p.SetObservationState(os)
 
 	return nil
 }
@@ -199,7 +203,7 @@ func writeObservation(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	last, err := lastObservation(os)
+	last, err := lastObservation(*os)
 	if err != nil {
 		return err
 	}
@@ -231,7 +235,7 @@ func writeObservation(
 	return nil
 }
 
-func lastObservation(os *pl.ObservationState) (pl.Observation, error) {
+func lastObservation(os pl.ObservationState) (pl.Observation, error) {
 	observation, ok := os.Observations()[os.Index()]
 	if !ok {
 		return pl.Observation{}, errNotInitializedObservation
@@ -242,7 +246,7 @@ func lastObservation(os *pl.ObservationState) (pl.Observation, error) {
 
 // observationAt returns the observation at a specific index
 // Returns error if the observation doesn't exist
-func observationAt(os *pl.ObservationState, index uint16) (pl.Observation, error) {
+func observationAt(os pl.ObservationState, index uint16) (pl.Observation, error) {
 	obs, ok := os.Observations()[index]
 	if !ok {
 		return pl.Observation{}, errNotInitializedObservation
@@ -253,7 +257,7 @@ func observationAt(os *pl.ObservationState, index uint16) (pl.Observation, error
 
 // observeSingle returns the data for a single observation at a specific time ago
 func observeSingle(
-	os *pl.ObservationState,
+	os pl.ObservationState,
 	currentTime int64,
 	secondsAgo uint32,
 	tick int32,
@@ -335,7 +339,7 @@ func observeSingle(
 // It uses binary search over the logical time-ordered view of the circular buffer.
 // Logical order starts at (index+1) % cardinality (oldest) and ends at index (latest).
 func getSurroundingObservations(
-	os *pl.ObservationState,
+	os pl.ObservationState,
 	target int64,
 	currentTime int64,
 	tick int32,
@@ -383,7 +387,7 @@ func getSurroundingObservations(
 }
 
 func binarySearch(
-	os *pl.ObservationState,
+	os pl.ObservationState,
 	currentTime int64,
 	target int64,
 	index uint16,
@@ -431,7 +435,7 @@ func binarySearch(
 
 // observe returns the cumulative tick and liquidity as of each timestamp secondsAgo from the current time.
 func observe(
-	os *pl.ObservationState,
+	os pl.ObservationState,
 	currentTime int64,
 	secondsAgos []uint32,
 	tick int32,

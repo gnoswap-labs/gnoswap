@@ -679,7 +679,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		// Compute oracle values on first initialized tick cross
 		if !cache.computedLatestObservation {
 			observationState := pool.ObservationState()
-			if observationState != nil {
+			if observationState.Cardinality() > 0 {
 				tickCumulative, secondsPerLiquidity, err := observeSingle(
 					observationState,
 					cache.blockTimestamp,
