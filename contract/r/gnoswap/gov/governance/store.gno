@@ -265,6 +265,22 @@ func (s *governanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 	return proposalIDs, true
 }
 
+func (s *governanceStore) SetUserProposalIDs(user string, proposalIDs []int64) error {
+	if !s.HasUserProposalsStoreKey() {
+		return errors.New("user proposals store key not found")
+	}
+
+	userProposals := s.GetUserProposals()
+
+	if len(proposalIDs) == 0 {
+		userProposals.Remove(user)
+	} else {
+		userProposals.Set(user, proposalIDs)
+	}
+
+	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
+}
+
 func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	if !s.HasUserProposalsStoreKey() {
 		return errors.New("user proposals store key not found")

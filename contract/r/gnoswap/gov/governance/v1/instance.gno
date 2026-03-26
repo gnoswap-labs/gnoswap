@@ -109,20 +109,35 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64)
 // This function is used to remove inactive proposals from the user proposals list.
 // It is used to clean up user's active proposal list when creating a new proposal.
 func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, current int64) error {
-	proposals := g.getUserProposals(proposerAddress.String())
-
-	for _, proposal := range proposals {
-		proposalResolver := NewProposalResolver(proposal)
-
-		if !proposalResolver.IsActive(current) {
-			err := g.store.RemoveUserProposal(proposerAddress.String(), proposal.ID())
-			if err != nil {
-				return err
-			}
-		}
+	proposalIDs, exists := g.store.GetUserProposalIDs(proposerAddress.String())
+	if !exists {
+		return nil
 	}
 
-	return nil
+	retainedProposalIDs := make([]int64, 0, len(proposalIDs))
+	removedInactiveProposal := false
+
+	for _, proposalID := range proposalIDs {
+		proposal, proposalExists := g.store.GetProposal(proposalID)
+		if !proposalExists {
+			retainedProposalIDs = append(retainedProposalIDs, proposalID)
+			continue
+		}
+
+		proposalResolver := NewProposalResolver(proposal)
+		if proposalResolver.IsActive(current) {
+			retainedProposalIDs = append(retainedProposalIDs, proposalID)
+			continue
+		}
+
+		removedInactiveProposal = true
+	}
+
+	if !removedInactiveProposal {
+		return nil
+	}
+
+	return g.store.SetUserProposalIDs(proposerAddress.String(), retainedProposalIDs)
 }
 
 // Proposal voting info methods

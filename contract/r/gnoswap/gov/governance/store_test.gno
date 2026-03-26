@@ -736,6 +736,78 @@ func TestStoreAddUserProposal(t *testing.T) {
 	}
 }
 
+func TestStoreSetUserProposalIDs(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupFn      func(gs IGovernanceStore)
+		actionFn     func(gs IGovernanceStore) error
+		verifyFn     func(*testing.T, IGovernanceStore)
+		expectedErr  string
+	}{
+		{
+			name: "set user proposal IDs preserves order",
+			setupFn: func(gs IGovernanceStore) {
+				userProposals := avl.NewTree()
+				userProposals.Set("user1", []int64{100})
+				gs.SetUserProposals(userProposals)
+			},
+			actionFn: func(gs IGovernanceStore) error {
+				return gs.SetUserProposalIDs("user1", []int64{3, 1, 2})
+			},
+			verifyFn: func(t *testing.T, gs IGovernanceStore) {
+				proposalIDs, exists := gs.GetUserProposalIDs("user1")
+				uassert.True(t, exists)
+				uassert.Equal(t, 3, len(proposalIDs))
+				uassert.Equal(t, int64(3), proposalIDs[0])
+				uassert.Equal(t, int64(1), proposalIDs[1])
+				uassert.Equal(t, int64(2), proposalIDs[2])
+			},
+		},
+		{
+			name: "empty user proposal IDs removes user key",
+			setupFn: func(gs IGovernanceStore) {
+				userProposals := avl.NewTree()
+				userProposals.Set("user1", []int64{1, 2})
+				gs.SetUserProposals(userProposals)
+			},
+			actionFn: func(gs IGovernanceStore) error {
+				return gs.SetUserProposalIDs("user1", []int64{})
+			},
+			verifyFn: func(t *testing.T, gs IGovernanceStore) {
+				_, exists := gs.GetUserProposalIDs("user1")
+				uassert.False(t, exists)
+			},
+		},
+		{
+			name: "not initialized returns error",
+			actionFn: func(gs IGovernanceStore) error {
+				return gs.SetUserProposalIDs("user1", []int64{1})
+			},
+			expectedErr: "user proposals store key not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			gs := NewGovernanceStore(kvStore)
+
+			if tt.setupFn != nil {
+				tt.setupFn(gs)
+			}
+
+			err := tt.actionFn(gs)
+			if tt.expectedErr != "" {
+				uassert.ErrorContains(t, err, tt.expectedErr)
+				return
+			}
+
+			uassert.NoError(t, err)
+			tt.verifyFn(t, gs)
+		})
+	}
+}
+
 func TestStoreMultipleSetAndGet(t *testing.T) {
 	resetTestState(t)
 

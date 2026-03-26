@@ -217,3 +217,119 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 		})
 	}
 }
+
+func TestInstance_RemoveInactiveUserProposals_WriteOptimization(t *testing.T) {
+	config := governance.Config{
+		VotingStartDelay: 100,
+		VotingPeriod:     200,
+		ExecutionDelay:   100,
+		ExecutionWindow:  200,
+		Quorum:           50,
+	}
+
+	proposerAddr := testutils.TestAddress("proposer")
+	baseCreatedAt := int64(1000)
+	expiredTime := baseCreatedAt + config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay + config.ExecutionWindow
+
+	tests := []struct {
+		name                       string
+		setup                      func(gv *governanceV1)
+		currentTime                int64
+		expectedSetUserIDsCalls    int
+		expectedRemoveUserPropCall int
+		expectedUserIDsExists      bool
+		expectedUserIDs            []int64
+	}{
+		{
+			name: "mixed active and inactive proposals uses one batch persist",
+			setup: func(gv *governanceV1) {
+				expiredProposal := governance.NewProposal(
+					1,
+					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					governance.NewProposalMetadata("Old Title", "Old Description"),
+					NewProposalTextData(),
+					proposerAddr, 1, baseCreatedAt,
+					baseCreatedAt,
+					100,
+				)
+				gv.addProposal(expiredProposal)
+
+				activeCreatedAt := expiredTime + 50
+				activeProposal := governance.NewProposal(
+					2,
+					NewProposalStatus(config, 1000, false, activeCreatedAt),
+					governance.NewProposalMetadata("New Title", "New Description"),
+					NewProposalTextData(),
+					proposerAddr, 1, activeCreatedAt,
+					activeCreatedAt,
+					100,
+				)
+				gv.addProposal(activeProposal)
+			},
+			currentTime:                expiredTime + 50 + config.VotingStartDelay + 50,
+			expectedSetUserIDsCalls:    1,
+			expectedRemoveUserPropCall: 0,
+			expectedUserIDsExists:      true,
+			expectedUserIDs:            []int64{2},
+		},
+		{
+			name: "all active proposals perform no cleanup writes",
+			setup: func(gv *governanceV1) {
+				for i := int64(1); i <= 2; i++ {
+					proposal := governance.NewProposal(
+						i,
+						NewProposalStatus(config, 1000, false, baseCreatedAt),
+						governance.NewProposalMetadata("Title", "Description"),
+						NewProposalTextData(),
+						proposerAddr, 1, baseCreatedAt,
+						baseCreatedAt,
+						100,
+					)
+					gv.addProposal(proposal)
+				}
+			},
+			currentTime:                baseCreatedAt + config.VotingStartDelay + 50,
+			expectedSetUserIDsCalls:    0,
+			expectedRemoveUserPropCall: 0,
+			expectedUserIDsExists:      true,
+			expectedUserIDs:            []int64{1, 2},
+		},
+		{
+			name: "orphaned proposal ID is preserved without cleanup writes",
+			setup: func(gv *governanceV1) {
+				userProposalIDs := []int64{999}
+				gv.store.SetUserProposalIDs(proposerAddr.String(), userProposalIDs)
+
+				store := gv.store.(*mockGovernanceStore)
+				store.setUserProposalIDsCalls = 0
+			},
+			currentTime:                baseCreatedAt,
+			expectedSetUserIDsCalls:    0,
+			expectedRemoveUserPropCall: 0,
+			expectedUserIDsExists:      true,
+			expectedUserIDs:            []int64{999},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gv := newMockGovernance()
+			tc.setup(gv)
+
+			err := gv.removeInactiveUserProposals(proposerAddr, tc.currentTime)
+			uassert.Nil(t, err)
+
+			store := gv.store.(*mockGovernanceStore)
+			uassert.Equal(t, tc.expectedSetUserIDsCalls, store.setUserProposalIDsCalls)
+			uassert.Equal(t, tc.expectedRemoveUserPropCall, store.removeUserProposalCalls)
+
+			proposalIDs, exists := gv.store.GetUserProposalIDs(proposerAddr.String())
+			uassert.Equal(t, tc.expectedUserIDsExists, exists)
+			uassert.Equal(t, len(tc.expectedUserIDs), len(proposalIDs))
+
+			for i, expectedID := range tc.expectedUserIDs {
+				uassert.Equal(t, expectedID, proposalIDs[i])
+			}
+		})
+	}
+}

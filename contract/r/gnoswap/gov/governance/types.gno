@@ -138,6 +138,7 @@ type IGovernanceStore interface {
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
+	SetUserProposalIDs(user string, proposalIDs []int64) error
 	SetUserProposals(userProposals *avl.Tree) error
 	AddUserProposal(user string, proposalID int64) error
 	RemoveUserProposal(user string, proposalID int64) error

@@ -14,6 +14,8 @@ type mockGovernanceStore struct {
 	proposalUserVotingInfos   *avl.Tree
 	userProposals             *avl.Tree
 	setProposalVotingInfosErr error
+	setUserProposalIDsCalls   int
+	removeUserProposalCalls   int
 }
 
 // Counter methods
@@ -176,6 +178,8 @@ func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) err
 }
 
 func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) error {
+	m.removeUserProposalCalls++
+
 	if m.userProposals == nil {
 		return nil
 	}
@@ -200,6 +204,22 @@ func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) 
 		m.userProposals.Remove(user)
 	} else {
 		m.userProposals.Set(user, newProposalIDs)
+	}
+
+	return nil
+}
+
+func (m *mockGovernanceStore) SetUserProposalIDs(user string, proposalIDs []int64) error {
+	m.setUserProposalIDsCalls++
+
+	if m.userProposals == nil {
+		m.userProposals = avl.NewTree()
+	}
+
+	if len(proposalIDs) == 0 {
+		m.userProposals.Remove(user)
+	} else {
+		m.userProposals.Set(user, proposalIDs)
 	}
 
 	return nil
