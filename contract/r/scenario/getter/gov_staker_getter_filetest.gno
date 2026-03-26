@@ -95,10 +95,6 @@ func testGovStakerGetters(delegationId1 int64) {
 	totalLockedAmount := staker.GetTotalLockedAmount()
 	println("[EXPECTED] Total Locked Amount:", totalLockedAmount)
 
-	// GetLockedAmount
-	lockedAmount := staker.GetLockedAmount()
-	println("[EXPECTED] Locked Amount:", lockedAmount)
-
 	// GetUnDelegationLockupPeriod
 	lockupPeriod := staker.GetUnDelegationLockupPeriod()
 	println("[EXPECTED] Undelegation Lockup Period:", lockupPeriod)
@@ -278,7 +274,6 @@ func testGovStakerGetters(delegationId1 int64) {
 // [EXPECTED] Total xGNS Supply: 500000000
 // [EXPECTED] Total Delegated: 500000000
 // [EXPECTED] Total Locked Amount: 500000000
-// [EXPECTED] Locked Amount: 500000000
 // [EXPECTED] Undelegation Lockup Period: 604800
 // [EXPECTED] Emission Reward Balance: 0
 //

@@ -125,13 +125,6 @@ func (t *TestGovStaker) GetTotalLockedAmount() int64 {
 	).(int64)
 }
 
-func (t *TestGovStaker) GetLockedAmount() int64 {
-	return t.ExecuteFn(
-		"GetLockedAmount",
-		func(args ...any) any { return t.instance.GetLockedAmount() },
-	).(int64)
-}
-
 func (t *TestGovStaker) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
 	result := t.ExecuteFn(
 		"GetDelegationSnapshots",

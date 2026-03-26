@@ -29,12 +29,6 @@ func (gs *govStakerV1) GetTotalLockedAmount() int64 {
 	return gs.store.GetTotalLockedAmount()
 }
 
-// GetLockedAmount returns total locked GNS amount.
-// This returns the same value as GetTotalLockedAmount() from the store.
-func (gs *govStakerV1) GetLockedAmount() int64 {
-	return gs.store.GetTotalLockedAmount()
-}
-
 // GetUnDelegationLockupPeriod returns the undelegation lockup period in seconds.
 func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
 	return gs.store.GetUnDelegationLockupPeriod()

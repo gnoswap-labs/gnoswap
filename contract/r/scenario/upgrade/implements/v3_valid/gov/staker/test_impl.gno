@@ -67,10 +67,6 @@ func (t *TestGovStaker) GetTotalLockedAmount() int64 {
 	return t.instance.GetTotalLockedAmount()
 }
 
-func (t *TestGovStaker) GetLockedAmount() int64 {
-	return t.instance.GetLockedAmount()
-}
-
 func (t *TestGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	return t.instance.GetTotalDelegationAmountAtSnapshot(snapshotTime)
 }
