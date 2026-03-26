@@ -660,7 +660,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -672,7 +672,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -709,7 +709,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -721,7 +721,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -758,7 +758,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -770,7 +770,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000000),
+			expected:    "1000000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1003,7 +1003,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1015,7 +1015,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1052,7 +1052,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1064,7 +1064,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
