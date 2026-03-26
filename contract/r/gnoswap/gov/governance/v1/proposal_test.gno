@@ -56,7 +56,7 @@ func TestProposal_TypeOperations(t *testing.T) {
 func TestProposal_Validation(t *testing.T) {
 	tests := []struct {
 		name          string
-		metadata      *governance.ProposalMetadata
+		metadata      governance.ProposalMetadata
 		data          *governance.ProposalData
 		expectedError bool
 	}{

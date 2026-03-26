@@ -35,8 +35,8 @@ func (p *ProposalMetadata) Description() string {
 //
 // Returns:
 //   - *ProposalMetadata: new metadata instance with trimmed whitespace
-func NewProposalMetadata(title string, description string) *ProposalMetadata {
-	return &ProposalMetadata{
+func NewProposalMetadata(title string, description string) ProposalMetadata {
+	return ProposalMetadata{
 		title:       strings.TrimSpace(title),
 		description: strings.TrimSpace(description),
 	}
@@ -150,12 +150,8 @@ func (i *ParameterChangeInfo) Function() string { return i.function }
 func (i *ParameterChangeInfo) Params() []string { return i.params }
 
 // Clone creates a deep copy of the ProposalMetadata.
-func (p *ProposalMetadata) Clone() *ProposalMetadata {
-	if p == nil {
-		return nil
-	}
-
-	return &ProposalMetadata{
+func (p *ProposalMetadata) Clone() ProposalMetadata {
+	return ProposalMetadata{
 		title:       p.title,
 		description: p.description,
 	}

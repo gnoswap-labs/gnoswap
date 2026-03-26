@@ -348,7 +348,7 @@ func (gv *governanceV1) createProposal(
 	config governance.Config,
 	maxVotingWeight int64,
 	snapshotTime int64,
-	proposalMetadata *governance.ProposalMetadata,
+	proposalMetadata governance.ProposalMetadata,
 	proposalData *governance.ProposalData,
 	proposerAddress address,
 	proposerGnsBalance int64,
@@ -356,7 +356,7 @@ func (gv *governanceV1) createProposal(
 	createdHeight int64,
 ) (*governance.Proposal, error) {
 	// Validate proposal metadata (title and description)
-	metadataResolver := NewProposalMetadataResolver(proposalMetadata)
+	metadataResolver := NewProposalMetadataResolver(&proposalMetadata)
 	err := metadataResolver.Validate()
 	if err != nil {
 		return nil, err
