@@ -295,16 +295,16 @@ func (gs *govStakerV1) GetDelegationWithdrawCount(delegationID int64) int {
 }
 
 // GetDelegationWithdraws returns a paginated list of delegation withdraws for a specific delegation.
-func (gs *govStakerV1) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+func (gs *govStakerV1) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
 	delegation, exists := gs.store.GetDelegation(delegationID)
 	if !exists {
-		return []*staker.DelegationWithdraw{}, nil
+		return []staker.DelegationWithdraw{}, nil
 	}
 
 	withdraws := delegation.Withdraws()
 	size := len(withdraws)
 	if offset >= size {
-		return []*staker.DelegationWithdraw{}, nil
+		return []staker.DelegationWithdraw{}, nil
 	}
 
 	end := offset + count
