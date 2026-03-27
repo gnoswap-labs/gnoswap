@@ -870,7 +870,7 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	return u256.Zero().Set(pn.GetPositionLiquidity(positionId))
+	return u256.MustFromDecimal(pn.GetPositionLiquidity(positionId))
 }
 
 func getTickOf(positionId uint64) (int32, int32) {

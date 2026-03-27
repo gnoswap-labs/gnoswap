@@ -223,7 +223,7 @@ func verifyPositionIntegrity() {
 		panic("position should still exist")
 	}
 
-	ufmt.Printf("[EXPECTED] position still exists with liquidity: %s\n", position.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] position still exists with liquidity: %s\n", position.Liquidity())
 
 	// Verify NFT is still owned by admin
 	owner, err := gnft.OwnerOf(positionIdFrom(1))

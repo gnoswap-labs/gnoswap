@@ -12,13 +12,13 @@ func newStoredPosition() *Position {
 		"foo:bar:3000",
 		-100,
 		100,
-		u256.MustFromDecimal("1000"),
-		u256.MustFromDecimal("2000"),
-		u256.MustFromDecimal("3000"),
-		u256.MustFromDecimal("4000"),
-		u256.MustFromDecimal("5000"),
-		u256.MustFromDecimal("6000"),
-		u256.MustFromDecimal("7000"),
+		"1000",
+		"2000",
+		"3000",
+		4000,
+		5000,
+		6000,
+		7000,
 		false,
 		adminAddr,
 	)
@@ -29,13 +29,13 @@ func mutatePosition(position *Position) {
 	position.SetTickLower(-200)
 	position.SetTickUpper(200)
 	position.SetBurned(true)
-	position.Liquidity().Set(u256.MustFromDecimal("1100"))
-	position.FeeGrowthInside0LastX128().Set(u256.MustFromDecimal("2200"))
-	position.FeeGrowthInside1LastX128().Set(u256.MustFromDecimal("3300"))
-	position.TokensOwed0().Set(u256.MustFromDecimal("4400"))
-	position.TokensOwed1().Set(u256.MustFromDecimal("5500"))
-	position.Token0Balance().Set(u256.MustFromDecimal("6600"))
-	position.Token1Balance().Set(u256.MustFromDecimal("7700"))
+	position.SetLiquidity("1100")
+	position.SetFeeGrowthInside0LastX128("2200")
+	position.SetFeeGrowthInside1LastX128("3300")
+	position.SetTokensOwed0(4400)
+	position.SetTokensOwed1(5500)
+	position.SetToken0Balance(6600)
+	position.SetToken1Balance(7700)
 }
 
 func assertPositionUnchanged(t *testing.T, position *Position) {
@@ -45,13 +45,13 @@ func assertPositionUnchanged(t *testing.T, position *Position) {
 	uassert.Equal(t, int32(-100), position.TickLower())
 	uassert.Equal(t, int32(100), position.TickUpper())
 	uassert.Equal(t, false, position.Burned())
-	uassert.Equal(t, "1000", position.Liquidity().ToString())
-	uassert.Equal(t, "2000", position.FeeGrowthInside0LastX128().ToString())
-	uassert.Equal(t, "3000", position.FeeGrowthInside1LastX128().ToString())
-	uassert.Equal(t, "4000", position.TokensOwed0().ToString())
-	uassert.Equal(t, "5000", position.TokensOwed1().ToString())
-	uassert.Equal(t, "6000", position.Token0Balance().ToString())
-	uassert.Equal(t, "7000", position.Token1Balance().ToString())
+	uassert.Equal(t, "1000", position.Liquidity())
+	uassert.Equal(t, "2000", position.FeeGrowthInside0LastX128())
+	uassert.Equal(t, "3000", position.FeeGrowthInside1LastX128())
+	uassert.Equal(t, int64(4000), position.TokensOwed0())
+	uassert.Equal(t, int64(5000), position.TokensOwed1())
+	uassert.Equal(t, int64(6000), position.Token0Balance())
+	uassert.Equal(t, int64(7000), position.Token1Balance())
 }
 
 func TestGetPositionIsolation(t *testing.T) {
@@ -73,23 +73,23 @@ func TestGetPositionIsolation(t *testing.T) {
 	uassert.Equal(t, int32(-200), result.TickLower())
 	uassert.Equal(t, int32(200), result.TickUpper())
 	uassert.Equal(t, true, result.Burned())
-	uassert.Equal(t, "1100", result.Liquidity().ToString())
-	uassert.Equal(t, "2200", result.FeeGrowthInside0LastX128().ToString())
-	uassert.Equal(t, "3300", result.FeeGrowthInside1LastX128().ToString())
-	uassert.Equal(t, "4400", result.TokensOwed0().ToString())
-	uassert.Equal(t, "5500", result.TokensOwed1().ToString())
-	uassert.Equal(t, "6600", result.Token0Balance().ToString())
-	uassert.Equal(t, "7700", result.Token1Balance().ToString())
+	uassert.Equal(t, "1100", result.Liquidity())
+	uassert.Equal(t, "2200", result.FeeGrowthInside0LastX128())
+	uassert.Equal(t, "3300", result.FeeGrowthInside1LastX128())
+	uassert.Equal(t, int64(4400), result.TokensOwed0())
+	uassert.Equal(t, int64(5500), result.TokensOwed1())
+	uassert.Equal(t, int64(6600), result.Token0Balance())
+	uassert.Equal(t, int64(7700), result.Token1Balance())
 
-	if storedPosition.Liquidity() == result.Liquidity() ||
-		storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
-		storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
-		storedPosition.TokensOwed0() == result.TokensOwed0() ||
-		storedPosition.TokensOwed1() == result.TokensOwed1() ||
-		storedPosition.Token0Balance() == result.Token0Balance() ||
-		storedPosition.Token1Balance() == result.Token1Balance() {
-		t.Fatal("GetPosition() returned aliased nested mutable state")
-	}
+			if storedPosition.Liquidity() == result.Liquidity() ||
+				storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
+				storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
+				storedPosition.TokensOwed0() == result.TokensOwed0() ||
+				storedPosition.TokensOwed1() == result.TokensOwed1() ||
+				storedPosition.Token0Balance() == result.Token0Balance() ||
+				storedPosition.Token1Balance() == result.Token1Balance() {
+				t.Fatal("GetPosition() returned aliased nested mutable state")
+			}
 }
 
 func TestGetPositionIDsIsolation(t *testing.T) {
@@ -127,9 +127,9 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return stored
 			},
 			getter: func() any { return GetPositionToken0Balance(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9000")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9000", result.(*u256.Uint).ToString()) },
-			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, "6000", raw.Token0Balance().ToString()) },
+			mutate: func(result any) { _ = result.(int64) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(6000), result.(int64)) },
+			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(6000), raw.Token0Balance()) },
 		},
 		{
 			name: "GetPositionToken1Balance",
@@ -139,34 +139,34 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return stored
 			},
 			getter: func() any { return GetPositionToken1Balance(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9100")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9100", result.(*u256.Uint).ToString()) },
-			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, "7000", raw.Token1Balance().ToString()) },
+			mutate: func(result any) { _ = result.(int64) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(7000), result.(int64)) },
+			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(7000), raw.Token1Balance()) },
 		},
 		{
 			name: "GetPositionFeeGrowthInside0LastX128",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetPositionFeeGrowthInside0LastX128", u256.MustFromDecimal("2000"))
+				m.Response.Set("GetPositionFeeGrowthInside0LastX128", "2000")
 				return nil
 			},
 			getter: func() any { return GetPositionFeeGrowthInside0LastX128(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9200")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9200", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "2000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "2000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside0LastX128"][0].(*u256.Uint).ToString())
+				uassert.Equal(t, "2000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside0LastX128"][0].(string))
 			},
 		},
 		{
 			name: "GetPositionFeeGrowthInside1LastX128",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetPositionFeeGrowthInside1LastX128", u256.MustFromDecimal("3000"))
+				m.Response.Set("GetPositionFeeGrowthInside1LastX128", "3000")
 				return nil
 			},
 			getter: func() any { return GetPositionFeeGrowthInside1LastX128(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9300")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9300", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "3000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "3000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside1LastX128"][0].(*u256.Uint).ToString())
+				uassert.Equal(t, "3000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside1LastX128"][0].(string))
 			},
 		},
 		{
@@ -182,56 +182,56 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("9400"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("9500"))
+				_ = values[0].(string)
+				_ = values[1].(string)
 			},
 			assertSame: func(t *testing.T, result any) {
 				values := result.([]any)
-				uassert.Equal(t, "9400", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "9500", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "2000", values[0].(string))
+				uassert.Equal(t, "3000", values[1].(string))
 			},
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "2000", raw.FeeGrowthInside0LastX128().ToString())
-				uassert.Equal(t, "3000", raw.FeeGrowthInside1LastX128().ToString())
+				uassert.Equal(t, "2000", raw.FeeGrowthInside0LastX128())
+				uassert.Equal(t, "3000", raw.FeeGrowthInside1LastX128())
 			},
 		},
 		{
 			name: "GetPositionLiquidity",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetPositionLiquidity", u256.MustFromDecimal("1000"))
+				m.Response.Set("GetPositionLiquidity", "1000")
 				return nil
 			},
 			getter: func() any { return GetPositionLiquidity(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9600")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9600", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "1000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "1000", implementation.(*MockPosition).Response.data["GetPositionLiquidity"][0].(*u256.Uint).ToString())
+				uassert.Equal(t, "1000", implementation.(*MockPosition).Response.data["GetPositionLiquidity"][0].(string))
 			},
 		},
 		{
 			name: "GetPositionTokensOwed0",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetPositionTokensOwed0", u256.MustFromDecimal("4000"))
+				m.Response.Set("GetPositionTokensOwed0", int64(4000))
 				return nil
 			},
 			getter: func() any { return GetPositionTokensOwed0(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9700")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9700", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(int64) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(4000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "4000", implementation.(*MockPosition).Response.data["GetPositionTokensOwed0"][0].(*u256.Uint).ToString())
+				uassert.Equal(t, int64(4000), implementation.(*MockPosition).Response.data["GetPositionTokensOwed0"][0].(int64))
 			},
 		},
 		{
 			name: "GetPositionTokensOwed1",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetPositionTokensOwed1", u256.MustFromDecimal("5000"))
+				m.Response.Set("GetPositionTokensOwed1", int64(5000))
 				return nil
 			},
 			getter: func() any { return GetPositionTokensOwed1(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9800")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9800", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(int64) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(5000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "5000", implementation.(*MockPosition).Response.data["GetPositionTokensOwed1"][0].(*u256.Uint).ToString())
+				uassert.Equal(t, int64(5000), implementation.(*MockPosition).Response.data["GetPositionTokensOwed1"][0].(int64))
 			},
 		},
 		{
@@ -247,17 +247,17 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("9900"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("9910"))
+				_ = values[0].(int64)
+				_ = values[1].(int64)
 			},
 			assertSame: func(t *testing.T, result any) {
 				values := result.([]any)
-				uassert.Equal(t, "9900", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "9910", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, int64(4000), values[0].(int64))
+				uassert.Equal(t, int64(5000), values[1].(int64))
 			},
 			assertRaw: func(t *testing.T, raw *Position) {
-				uassert.Equal(t, "4000", raw.TokensOwed0().ToString())
-				uassert.Equal(t, "5000", raw.TokensOwed1().ToString())
+				uassert.Equal(t, int64(4000), raw.TokensOwed0())
+				uassert.Equal(t, int64(5000), raw.TokensOwed1())
 			},
 		},
 		{
@@ -301,4 +301,29 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			tt.assertRaw(t, stored)
 		})
 	}
+}
+
+func TestGetPositionTokenBalances(t *testing.T) {
+	t.Run("returns balances for existing position", func(t *testing.T) {
+		resetTestState(t)
+		mockPosition := newMockPosition("v1")
+		implementation = mockPosition
+
+		stored := newStoredPosition()
+		mockPosition.Response.Set("GetPosition", *stored, true)
+
+		token0Balance, token1Balance := GetPositionTokenBalances(1)
+		uassert.Equal(t, int64(6000), token0Balance)
+		uassert.Equal(t, int64(7000), token1Balance)
+	})
+
+	t.Run("returns zero balances for missing position", func(t *testing.T) {
+		resetTestState(t)
+		mockPosition := newMockPosition("v1")
+		implementation = mockPosition
+
+		token0Balance, token1Balance := GetPositionTokenBalances(999)
+		uassert.Equal(t, int64(0), token0Balance)
+		uassert.Equal(t, int64(0), token1Balance)
+	})
 }

@@ -103,7 +103,7 @@ func testIncreaseLiquidityAndBalance() {
 	barBalanceBefore := bar.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
 	pos, _ := position.GetPosition(1)
-	liquidityBefore := pos.Liquidity().ToString()
+	liquidityBefore := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance before increase should be %d\n", barBalanceBefore)
 	ufmt.Printf("[EXPECTED] User FOO balance before increase should be %d\n", fooBalanceBefore)
@@ -130,7 +130,7 @@ func testIncreaseLiquidityAndBalance() {
 	barBalanceAfter := bar.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)
 	pos, _ = position.GetPosition(1)
-	liquidityAfter := pos.Liquidity().ToString()
+	liquidityAfter := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance after increase should be %d\n", barBalanceAfter)
 	ufmt.Printf("[EXPECTED] User FOO balance after increase should be %d\n", fooBalanceAfter)
@@ -142,8 +142,8 @@ func testIncreaseLiquidityAndBalance() {
 	ufmt.Printf("[EXPECTED] BAR balance decreased by %d\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance decreased by %d\n", fooChange)
 
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance().ToString())
+ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", pos.Token0Balance())
+ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", pos.Token1Balance())
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())

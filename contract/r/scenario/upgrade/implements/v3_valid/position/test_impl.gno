@@ -119,23 +119,23 @@ func (t *TestPosition) GetPositionTickUpper(positionId uint64) int32 {
 	return t.instance.GetPositionTickUpper(positionId)
 }
 
-func (t *TestPosition) GetPositionLiquidity(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
 	return t.instance.GetPositionLiquidity(positionId)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return t.instance.GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 	return t.instance.GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	return t.instance.GetPositionTokensOwed0(positionId)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return t.instance.GetPositionTokensOwed1(positionId)
 }
 

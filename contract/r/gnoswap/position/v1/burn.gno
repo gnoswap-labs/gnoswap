@@ -20,7 +20,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
-	if position.Liquidity().IsZero() {
+	positionLiquidity := u256.MustFromDecimal(position.Liquidity())
+	if positionLiquidity.IsZero() {
 		return params.positionId,
 			"",
 			fee0Str,
@@ -34,7 +35,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
-	if liquidityToRemove.Gt(position.Liquidity()) {
+
+	if liquidityToRemove.Gt(positionLiquidity) {
 		return params.positionId,
 			liquidityToRemove.ToString(),
 			fee0Str,
@@ -43,15 +45,15 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			position.PoolKey(),
 			makeErrorWithDetails(
 				errInvalidLiquidity,
-				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), position.Liquidity().ToString()),
+				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
 			)
 	}
 
 	pToken0, pToken1, pFee := splitOf(position.PoolKey())
 	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
-	burnedAmount0 := u256.MustFromDecimal(burn0)
-	burnedAmount1 := u256.MustFromDecimal(burn1)
+	burnedAmount0 := safeParseRequestAmount(burn0)
+	burnedAmount1 := safeParseRequestAmount(burn1)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
@@ -59,41 +61,27 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(position.TokensOwed0(), burnedAmount0)
-	if overflow0 {
-		panic(newErrorWithDetail(
-			errOverflow,
-			ufmt.Sprintf("tokensOwed0(%s) + burnedAmount0(%s) exceeds uint256 max", position.TokensOwed0().ToString(), burnedAmount0.ToString()),
-		))
-	}
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(position.TokensOwed1(), burnedAmount1)
-	if overflow1 {
-		panic(newErrorWithDetail(
-			errOverflow,
-			ufmt.Sprintf("tokensOwed1(%s) + burnedAmount1(%s) exceeds uint256 max", position.TokensOwed1().ToString(), burnedAmount1.ToString()),
-		))
-	}
+	tokensOwed0 := safeAddInt64(position.TokensOwed0(), burnedAmount0)
+	tokensOwed1 := safeAddInt64(position.TokensOwed1(), burnedAmount1)
 
-	newLiquidity, underflow := u256.Zero().SubOverflow(position.Liquidity(), liquidityToRemove)
+	newLiquidity, underflow := u256.Zero().SubOverflow(positionLiquidity, liquidityToRemove)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
-
-	newToken0Balance, underflow := u256.Zero().SubOverflow(calculatedToken0Balance, burnedAmount0)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken0Balance - burnedAmount0 underflow"))
+	newToken0Balance := safeSubInt64(calculatedToken0Balance, burnedAmount0)
+	if newToken0Balance < 0 {
+		panic(newErrorWithDetail(errUnderflow, ufmt.Sprintf("calculatedToken0Balance(%d) - burnedAmount0(%d) underflow", calculatedToken0Balance, burnedAmount0)))
 	}
-
-	newToken1Balance, underflow := u256.Zero().SubOverflow(calculatedToken1Balance, burnedAmount1)
-	if underflow {
-		panic(newErrorWithDetail(errUnderflow, "calculatedToken1Balance - burnedAmount1 underflow"))
+	newToken1Balance := safeSubInt64(calculatedToken1Balance, burnedAmount1)
+	if newToken1Balance < 0 {
+		panic(newErrorWithDetail(errUnderflow, ufmt.Sprintf("calculatedToken1Balance(%d) - burnedAmount1(%d) underflow", calculatedToken1Balance, burnedAmount1)))
 	}
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
-	position.SetLiquidity(newLiquidity)
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128.ToString())
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128.ToString())
+	position.SetLiquidity(newLiquidity.ToString())
 	position.SetToken0Balance(newToken0Balance)
 	position.SetToken1Balance(newToken1Balance)
 
@@ -136,21 +124,22 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
-	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
-
 	// Check for underflow when subtracting collected amounts from tokens owed
-	newOwed0, underflow0 := u256.Zero().SubOverflow(position.TokensOwed0(), collectAmount0)
-	if underflow0 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%s) < collectAmount0(%s)", position.TokensOwed0().ToString(), collectAmount0.ToString()))
-	}
-	position.SetTokensOwed0(newOwed0)
+	collectAmount0Int64 := safeConvertToInt64(collectAmount0)
+	collectAmount1Int64 := safeConvertToInt64(collectAmount1)
 
-	newOwed1, underflow1 := u256.Zero().SubOverflow(position.TokensOwed1(), collectAmount1)
-	if underflow1 {
-		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%s) < collectAmount1(%s)", position.TokensOwed1().ToString(), collectAmount1.ToString()))
+	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0Int64)
+	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1Int64)
+
+	if position.TokensOwed0() < collectAmount0Int64 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%d) < collectAmount0(%d)", position.TokensOwed0(), collectAmount0Int64))
 	}
-	position.SetTokensOwed1(newOwed1)
+	position.SetTokensOwed0(safeSubInt64(position.TokensOwed0(), collectAmount0Int64))
+
+	if position.TokensOwed1() < collectAmount1Int64 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%d) < collectAmount1(%d)", position.TokensOwed1(), collectAmount1Int64))
+	}
+	position.SetTokensOwed1(safeSubInt64(position.TokensOwed1(), collectAmount1Int64))
 
 	if position.IsClear() {
 		position.SetBurned(true) // just update flag (we don't want to burn actual position)
@@ -162,30 +151,21 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 }
 
 // calculateFees calculates the fees for the current position.
-func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
+func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (int64, int64) {
+	posLiquidity := u256.MustFromDecimal(position.Liquidity())
 	fee0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
-		position.FeeGrowthInside0LastX128(),
-		position.Liquidity(),
+		u256.MustFromDecimal(position.FeeGrowthInside0LastX128()),
+		posLiquidity,
 	)
 
 	fee1 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside1LastX128,
-		position.FeeGrowthInside1LastX128(),
-		position.Liquidity(),
+		u256.MustFromDecimal(position.FeeGrowthInside1LastX128()),
+		posLiquidity,
 	)
 
-	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed0()), fee0)
-	if overflow0 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
-	}
-
-	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.Zero().Set(position.TokensOwed1()), fee1)
-	if overflow1 {
-		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
-	}
-
-	return tokensOwed0, tokensOwed1
+	return safeAddInt64(position.TokensOwed0(), safeConvertToInt64(fee0)), safeAddInt64(position.TokensOwed1(), safeConvertToInt64(fee1))
 }
 
 func calculateTokensOwed(

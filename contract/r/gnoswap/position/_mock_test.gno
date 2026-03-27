@@ -175,31 +175,31 @@ func (m *MockPosition) IsInRange(positionId uint64) bool {
 	return res[0].(bool)
 }
 
-func (m *MockPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func (m *MockPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside0LastX128")
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
-func (m *MockPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func (m *MockPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside1LastX128")
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
-func (m *MockPosition) GetPositionLiquidity(positionId uint64) *u256.Uint {
+func (m *MockPosition) GetPositionLiquidity(positionId uint64) string {
 	res, ok := m.Response.Get("GetPositionLiquidity")
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
 func (m *MockPosition) GetPositionOperator(positionId uint64) address {
@@ -238,22 +238,22 @@ func (m *MockPosition) GetPositionTickUpper(positionId uint64) int32 {
 	return res[0].(int32)
 }
 
-func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (m *MockPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed0")
 	if !ok {
-		return nil
+		return 0
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(int64)
 }
 
-func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed1")
 	if !ok {
-		return nil
+		return 0
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(int64)
 }
 
 func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {

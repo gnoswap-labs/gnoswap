@@ -37,7 +37,7 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
-			liquidity.ToString(),
+			liquidity,
 			"0",
 			"0",
 			deadline,
@@ -117,7 +117,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
-			liquidity.ToString(),
+			liquidity,
 			"0",
 			"0",
 			deadline,
@@ -187,7 +187,7 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
-			liquidity.ToString(),
+			liquidity,
 			"0",
 			"0",
 			deadline,
@@ -195,8 +195,8 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 
 		// Verify position is now empty
 		liquidityAfterDecrease := position.GetPositionLiquidity(tokenId)
-		if !liquidityAfterDecrease.IsZero() {
-			panic(ufmt.Sprintf("Position should be empty after DecreaseLiquidity, but has %s", liquidityAfterDecrease.ToString()))
+		if liquidityAfterDecrease != "0" {
+			panic(ufmt.Sprintf("Position should be empty after DecreaseLiquidity, but has %s", liquidityAfterDecrease))
 		}
 
 		// Generate params for reposition
@@ -282,7 +282,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
-			liquidity.ToString(),
+			liquidity,
 			"0",
 			"0",
 			deadline,
