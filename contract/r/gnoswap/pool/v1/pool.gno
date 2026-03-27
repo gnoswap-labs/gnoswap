@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"strconv"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -340,18 +341,12 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64,
 }
 
 func minRequestedAmount(request string, available int64) int64 {
-	requested := u256.MustFromDecimal(request)
-	requestedValue, overflow := requested.Uint64WithOverflow()
-	if overflow || requestedValue > uint64(INT64_MAX) {
+	requested, err := strconv.ParseInt(request, 10, 64)
+	if err != nil || requested > available {
 		return available
 	}
 
-	requestedInt64 := int64(requestedValue)
-	if requestedInt64 < available {
-		return requestedInt64
-	}
-
-	return available
+	return requested
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
