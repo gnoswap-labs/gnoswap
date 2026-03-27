@@ -478,8 +478,8 @@ func getFeeGrowthGlobalX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetFeeGrowthGlobalX128(poolPath)
-	println("[EXPECTED] feeGrowthGlobal0X128:", feeGrowth0.ToString())
-	println("[EXPECTED] feeGrowthGlobal1X128:", feeGrowth1.ToString())
+	println("[EXPECTED] feeGrowthGlobal0X128:", feeGrowth0)
+	println("[EXPECTED] feeGrowthGlobal1X128:", feeGrowth1)
 }
 
 func getFeeGrowthGlobals() {
@@ -487,8 +487,8 @@ func getFeeGrowthGlobals() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetFeeGrowthGlobalX128(poolPath)
-	println("[EXPECTED] feeGrowthGlobal0:", feeGrowth0.ToString())
-	println("[EXPECTED] feeGrowthGlobal1:", feeGrowth1.ToString())
+	println("[EXPECTED] feeGrowthGlobal0:", feeGrowth0)
+	println("[EXPECTED] feeGrowthGlobal1:", feeGrowth1)
 }
 
 func getLiquidity() {
@@ -547,8 +547,8 @@ func getPositionFeeGrowthInsideLastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
-	println("[EXPECTED] positionFeeGrowthInside0LastX128:", feeGrowth0.ToString())
-	println("[EXPECTED] positionFeeGrowthInside1LastX128:", feeGrowth1.ToString())
+	println("[EXPECTED] positionFeeGrowthInside0LastX128:", feeGrowth0)
+	println("[EXPECTED] positionFeeGrowthInside1LastX128:", feeGrowth1)
 }
 
 func getPositionFeeGrowthInsideLasts() {
@@ -556,8 +556,8 @@ func getPositionFeeGrowthInsideLasts() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
-	println("[EXPECTED] positionFeeGrowthInside0Last:", feeGrowth0.ToString())
-	println("[EXPECTED] positionFeeGrowthInside1Last:", feeGrowth1.ToString())
+	println("[EXPECTED] positionFeeGrowthInside0Last:", feeGrowth0)
+	println("[EXPECTED] positionFeeGrowthInside1Last:", feeGrowth1)
 }
 
 func getPoolPositionCount() {
@@ -584,7 +584,7 @@ func getPositionLiquidity() {
 	testing.SetRealm(adminRealm)
 
 	liquidity := pl.GetPositionLiquidity(poolPath, positionKey)
-	println("[EXPECTED] position liquidity:", liquidity.ToString())
+	println("[EXPECTED] position liquidity:", liquidity)
 }
 
 func getPositionTokensOwed0() {
@@ -650,7 +650,7 @@ func getSlot0SqrtPriceX96() {
 	testing.SetRealm(adminRealm)
 
 	sqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolPath)
-	println("[EXPECTED] slot0 sqrtPriceX96:", sqrtPriceX96.ToString())
+	println("[EXPECTED] slot0 sqrtPriceX96:", sqrtPriceX96)
 }
 
 func getSlot0Tick() {
@@ -698,8 +698,8 @@ func getTickFeeGrowthOutsideX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
-	println("[EXPECTED] tick feeGrowthOutside0X128 at min_tick:", feeGrowth0.ToString())
-	println("[EXPECTED] tick feeGrowthOutside1X128 at min_tick:", feeGrowth1.ToString())
+	println("[EXPECTED] tick feeGrowthOutside0X128 at min_tick:", feeGrowth0)
+	println("[EXPECTED] tick feeGrowthOutside1X128 at min_tick:", feeGrowth1)
 }
 
 func getTickFeeGrowthOutsides() {
@@ -707,8 +707,8 @@ func getTickFeeGrowthOutsides() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
-	println("[EXPECTED] tick feeGrowthOutside0 at min_tick:", feeGrowth0.ToString())
-	println("[EXPECTED] tick feeGrowthOutside1 at min_tick:", feeGrowth1.ToString())
+	println("[EXPECTED] tick feeGrowthOutside0 at min_tick:", feeGrowth0)
+	println("[EXPECTED] tick feeGrowthOutside1 at min_tick:", feeGrowth1)
 }
 
 func getTickInitialized() {

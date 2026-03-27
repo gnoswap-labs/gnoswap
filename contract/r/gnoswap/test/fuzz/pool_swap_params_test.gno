@@ -136,10 +136,10 @@ func (p *poolSwapParams) isValidPoolExists() bool {
 	return pool.ExistsPoolPath(poolPath)
 }
 
-// isValidPriceLimitDirection checks if price limit direction is correct
+	// isValidPriceLimitDirection checks if price limit direction is correct
 func (p *poolSwapParams) isValidPriceLimitDirection() bool {
 	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
-	currentPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	currentPrice := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))
 
 	priceLimit := u256.MustFromDecimal(p.sqrtPriceLimitX96)
 	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
@@ -377,6 +377,6 @@ func (p *poolSwapParams) setPriceLimit(t *fuzz.T) {
 		return
 	}
 
-	currentPriceUint := pool.GetSlot0SqrtPriceX96(poolPath)
-	p.sqrtPriceLimitX96 = generatePriceLimitFromCurrent(t, currentPriceUint.ToString(), p.zeroForOne)
+	currentPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	p.sqrtPriceLimitX96 = generatePriceLimitFromCurrent(t, currentPrice, p.zeroForOne)
 }

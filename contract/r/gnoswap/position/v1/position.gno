@@ -118,7 +118,7 @@ func (p *positionV1) Mint(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"sqrtPriceX96", poolSqrtPriceX96,
 		"positionLiquidity", p.GetPositionLiquidity(id),
 		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
 		"token0Balance", formatInt(pl.GetBalanceToken0(processedInput.poolPath)),
@@ -218,7 +218,7 @@ func (p *positionV1) IncreaseLiquidity(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
 		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
@@ -301,7 +301,7 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
 		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
 		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
@@ -467,8 +467,8 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	feeGrowthInside := FeeGrowthInside{
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128),
+		feeGrowthInside1LastX128: u256.MustFromDecimal(feeGrowthInside1LastX128),
 	}
 
 	return feeGrowthInside, nil
@@ -491,7 +491,7 @@ func calculatePositionBalances(position *position.Position) (int64, int64) {
 	}
 
 	token0Balance, token1Balance := common.GetAmountsForLiquidity(
-		pl.GetSlot0SqrtPriceX96(position.PoolKey()), // currentSqrtPriceX96
+		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
 		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,

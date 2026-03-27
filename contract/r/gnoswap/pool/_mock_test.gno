@@ -2,8 +2,6 @@ package pool
 
 import (
 	"errors"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // MockResponse tracks method calls for testing purposes
@@ -286,13 +284,13 @@ func (m *MockPool) GetFeeGrowthGlobal1X128(poolPath string) string {
 	return res[0].(string)
 }
 
-func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 	res, ok := m.Response.Get("GetFeeGrowthGlobalX128")
 	if !ok {
-		return nil, nil
+		return "", ""
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(string), res[1].(string)
 }
 
 func (m *MockPool) GetLiquidity(poolPath string) string {
@@ -358,22 +356,22 @@ func (m *MockPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) str
 	return res[0].(string)
 }
 
-func (m *MockPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (m *MockPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInsideLastX128")
 	if !ok {
-		return nil, nil
+		return "", ""
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(string), res[1].(string)
 }
 
-func (m *MockPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
+func (m *MockPool) GetPositionLiquidity(poolPath, key string) string {
 	res, ok := m.Response.Get("GetPositionLiquidity")
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
 func (m *MockPool) GetPositionTokensOwed0(poolPath, key string) int64 {
@@ -421,13 +419,13 @@ func (m *MockPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return res[0].(uint8)
 }
 
-func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) string {
 	res, ok := m.Response.Get("GetSlot0SqrtPriceX96")
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
 func (m *MockPool) GetSlot0Tick(poolPath string) int32 {
@@ -475,13 +473,13 @@ func (m *MockPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) str
 	return res[0].(string)
 }
 
-func (m *MockPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (m *MockPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	res, ok := m.Response.Get("GetTickFeeGrowthOutsideX128")
 	if !ok {
-		return nil, nil
+		return "", ""
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(string), res[1].(string)
 }
 
 func (m *MockPool) GetTickInitialized(poolPath string, tick int32) bool {

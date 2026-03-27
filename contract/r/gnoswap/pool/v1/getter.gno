@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"gno.land/p/nt/ufmt/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -172,29 +171,29 @@ func (i *poolV1) GetSlot0Tick(poolPath string) int32 {
 	return i.mustGetPool(poolPath).Slot0Tick()
 }
 
-func (i *poolV1) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	return i.mustGetPool(poolPath).Slot0SqrtPriceX96()
+func (i *poolV1) GetSlot0SqrtPriceX96(poolPath string) string {
+	return i.mustGetPool(poolPath).Slot0SqrtPriceX96().ToString()
 }
 
-func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 	pool := i.mustGetPool(poolPath)
-	return pool.FeeGrowthGlobal0X128(), pool.FeeGrowthGlobal1X128()
+	return pool.FeeGrowthGlobal0X128().ToString(), pool.FeeGrowthGlobal1X128().ToString()
 }
 
-func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	pool := i.mustGetPool(poolPath)
-	return u256.MustFromDecimal(GetTickFeeGrowthOutside0X128(pool, tick)),
-		u256.MustFromDecimal(GetTickFeeGrowthOutside1X128(pool, tick))
+	return GetTickFeeGrowthOutside0X128(pool, tick),
+		GetTickFeeGrowthOutside1X128(pool, tick)
 }
 
-func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	position := i.MustGetPosition(poolPath, key)
-	return u256.MustFromDecimal(position.FeeGrowthInside0LastX128()),
-		u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
+	return position.FeeGrowthInside0LastX128(),
+		position.FeeGrowthInside1LastX128()
 }
 
-func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	return u256.MustFromDecimal(i.MustGetPosition(poolPath, key).Liquidity())
+func (i *poolV1) GetPositionLiquidity(poolPath, key string) string {
+	return i.MustGetPosition(poolPath, key).Liquidity()
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {

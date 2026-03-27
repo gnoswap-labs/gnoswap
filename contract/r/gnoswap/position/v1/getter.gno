@@ -129,9 +129,17 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 
 	currentTick := pl.GetSlot0Tick(poolKey)
 
-	feeGrowthGlobal0X128, feeGrowthGlobal1X128 := pl.GetFeeGrowthGlobalX128(poolKey)
-	tickUpperFeeGrowthOutside0X128, tickUpperFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
-	tickLowerFeeGrowthOutside0X128, tickLowerFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	feeGrowthGlobal0X128Str, feeGrowthGlobal1X128Str := pl.GetFeeGrowthGlobalX128(poolKey)
+	feeGrowthGlobal0X128 := u256.MustFromDecimal(feeGrowthGlobal0X128Str)
+	feeGrowthGlobal1X128 := u256.MustFromDecimal(feeGrowthGlobal1X128Str)
+
+	tickUpperFeeGrowthOutside0X128Str, tickUpperFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
+	tickUpperFeeGrowthOutside0X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside0X128Str)
+	tickUpperFeeGrowthOutside1X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside1X128Str)
+
+	tickLowerFeeGrowthOutside0X128Str, tickLowerFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	tickLowerFeeGrowthOutside0X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside0X128Str)
+	tickLowerFeeGrowthOutside1X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside1X128Str)
 
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(position.FeeGrowthInside1LastX128())

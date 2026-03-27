@@ -2,7 +2,6 @@
 package v3_valid
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
 )
@@ -120,7 +119,7 @@ func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) string {
 	return t.instance.GetFeeGrowthGlobal1X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 	return t.instance.GetFeeGrowthGlobalX128(poolPath)
 }
 
@@ -148,11 +147,11 @@ func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) str
 	return t.instance.GetPositionFeeGrowthInside1LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	return t.instance.GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
 	return t.instance.GetPositionLiquidity(poolPath, key)
 }
 
@@ -176,7 +175,7 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) string {
 	return t.instance.GetSlot0SqrtPriceX96(poolPath)
 }
 
@@ -200,7 +199,7 @@ func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) str
 	return t.instance.GetTickFeeGrowthOutside1X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	return t.instance.GetTickFeeGrowthOutsideX128(poolPath, tick)
 }
 

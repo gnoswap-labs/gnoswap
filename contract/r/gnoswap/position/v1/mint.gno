@@ -52,8 +52,8 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		params.tickLower,
 		params.tickUpper,
 		liquidity.ToString(),
-		feeGrowthInside0LastX128.ToString(),
-		feeGrowthInside1LastX128.ToString(),
+		feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128,
 		0,
 		0,
 		safeConvertToInt64(amount0),
@@ -126,13 +126,13 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	feeGrowth := FeeGrowthInside{
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128Str),
+		feeGrowthInside1LastX128: u256.MustFromDecimal(feeGrowthInside1LastX128Str),
 	}
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
@@ -147,8 +147,8 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
 
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128.ToString())
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128.ToString())
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128Str)
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
 
 	position.SetLiquidity(liquidityAmount.ToString())
 	position.SetToken0Balance(token0Balance)

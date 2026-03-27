@@ -1,8 +1,6 @@
 package pool
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
+
 
 // GetPoolCount returns the total number of pools.
 func GetPoolCount() int {
@@ -60,9 +58,8 @@ func GetFeeGrowthGlobal1X128(poolPath string) string {
 }
 
 // GetFeeGrowthGlobalX128 returns the global fee growth for both tokens.
-func GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
-	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
-	return feeGrowthGlobal0.Clone(), feeGrowthGlobal1.Clone()
+func GetFeeGrowthGlobalX128(poolPath string) (string, string) {
+	return getImplementation().GetFeeGrowthGlobalX128(poolPath)
 }
 
 // GetLiquidity returns the current liquidity in the pool.
@@ -96,9 +93,8 @@ func GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
-	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
-	return feeGrowthInside0.Clone(), feeGrowthInside1.Clone()
+func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+	return getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
 // GetPoolPositionCount returns the number of positions in a pool.
@@ -112,8 +108,8 @@ func GetPoolPositionKeys(poolPath string, offset, count int) []string {
 }
 
 // GetPositionLiquidity returns the liquidity of a position.
-func GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(poolPath, key).Clone()
+func GetPositionLiquidity(poolPath, key string) string {
+	return getImplementation().GetPositionLiquidity(poolPath, key)
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
@@ -152,8 +148,8 @@ func GetSlot0FeeProtocol(poolPath string) uint8 {
 }
 
 // GetSlot0SqrtPriceX96 returns the current sqrt price from slot0.
-func GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	return getImplementation().GetSlot0SqrtPriceX96(poolPath).Clone()
+func GetSlot0SqrtPriceX96(poolPath string) string {
+	return getImplementation().GetSlot0SqrtPriceX96(poolPath)
 }
 
 // GetSlot0Tick returns the current tick from slot0.
@@ -182,9 +178,8 @@ func GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
 }
 
 // GetTickFeeGrowthOutsideX128 returns fee growth outside for both tokens at a tick.
-func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
-	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
-	return feeGrowthOutside0.Clone(), feeGrowthOutside1.Clone()
+func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+	return getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
 }
 
 // GetTickInitialized returns whether a tick is initialized.

@@ -60,7 +60,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
@@ -83,8 +83,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128.ToString())
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128.ToString())
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128Str)
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
 	position.SetLiquidity(newLiquidity.ToString())
 	position.SetToken0Balance(newToken0Balance)
 	position.SetToken1Balance(newToken1Balance)

@@ -86,58 +86,58 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetFeeGrowthGlobalX128",
-			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000")) },
+			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", "1000", "2000") },
 			getter: func() any {
 				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("3000"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("4000"))
+				values[0] = "3000"
+				values[1] = "4000"
 			},
 			assertRaw: func(t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetFeeGrowthGlobalX128"]
-				uassert.Equal(t, "1000", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "2000", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "1000", values[0].(string))
+				uassert.Equal(t, "2000", values[1].(string))
 			},
 		},
 		{
 			name: "GetPositionLiquidity",
-			setup: func(m *MockPool) { m.Response.Set("GetPositionLiquidity", u256.MustFromDecimal("1000")) },
+			setup: func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
 			getter: func() any { return GetPositionLiquidity("foo:bar:500", "pos") },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
+			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetPositionLiquidity"][0].(*u256.Uint)
-				uassert.Equal(t, "1000", value.ToString())
+				value := implementation.(*MockPool).Response.responses["GetPositionLiquidity"][0].(string)
+				uassert.Equal(t, "1000", value)
 			},
 		},
 		{
 			name: "GetTickFeeGrowthOutsideX128",
-			setup: func(m *MockPool) { m.Response.Set("GetTickFeeGrowthOutsideX128", u256.MustFromDecimal("1100"), u256.MustFromDecimal("2200")) },
+			setup: func(m *MockPool) { m.Response.Set("GetTickFeeGrowthOutsideX128", "1100", "2200") },
 			getter: func() any {
 				fee0, fee1 := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("3300"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("4400"))
+				values[0] = "3300"
+				values[1] = "4400"
 			},
 			assertRaw: func(t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetTickFeeGrowthOutsideX128"]
-				uassert.Equal(t, "1100", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "2200", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "1100", values[0].(string))
+				uassert.Equal(t, "2200", values[1].(string))
 			},
 		},
 		{
 			name: "GetSlot0SqrtPriceX96",
-			setup: func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
+			setup: func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", "3000") },
 			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
+			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(*u256.Uint)
-				uassert.Equal(t, "3000", value.ToString())
+				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(string)
+				uassert.Equal(t, "3000", value)
 			},
 		},
 		{

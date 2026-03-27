@@ -5,8 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // TestRegisterInitializer tests the pool upgrade system with table-driven approach
@@ -652,7 +651,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		setup        func(t *testing.T)
 		poolPath     string
 		callerRealm  runtime.Realm
-		expectedSqrt *u256.Uint
+		expectedSqrt string
 	}{
 		{
 			name: "get slot0 sqrt price x96 is success",
@@ -664,7 +663,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 			},
 			poolPath:     "mock_pool_path",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedSqrt: u256.NewUint(0),
+			expectedSqrt: "0",
 		},
 	}
 
@@ -686,8 +685,8 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") != 1 {
 			t.Error("GetSlot0SqrtPriceX96 was not called on the implementation")
 		}
-		if sqrtPrice == nil {
-			t.Error("GetSlot0SqrtPriceX96() returned nil")
+		if sqrtPrice == "" {
+			t.Error("GetSlot0SqrtPriceX96() returned empty string")
 		}
 	}
 }
@@ -894,8 +893,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		setup        func(t *testing.T)
 		poolPath     string
 		callerRealm  runtime.Realm
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 	}{
 		{
 			name: "get fee growth global x128 is success",
@@ -907,8 +906,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 			},
 			poolPath:     "mock_pool_path",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedFee0: u256.NewUint(0),
-			expectedFee1: u256.NewUint(0),
+			expectedFee0: "0",
+			expectedFee1: "0",
 		},
 	}
 
@@ -932,8 +931,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") != 1 {
 			t.Error("GetFeeGrowthGlobalX128 was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetFeeGrowthGlobalX128() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetFeeGrowthGlobalX128() returned empty string")
 		}
 	}
 }
@@ -946,8 +945,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 		poolPath     string
 		key          string
 		callerRealm  runtime.Realm
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 	}{
 		{
 			name: "get position fee growth inside last x128 is success",
@@ -960,8 +959,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 			poolPath:     "mock_pool_path",
 			key:          "mock_key",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedFee0: u256.NewUint(0),
-			expectedFee1: u256.NewUint(0),
+			expectedFee0: "0",
+			expectedFee1: "0",
 		},
 	}
 
@@ -985,8 +984,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInsideLastX128 was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetPositionFeeGrowthInsideLastX128() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetPositionFeeGrowthInsideLastX128() returned empty string")
 		}
 	}
 }
@@ -1954,7 +1953,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		setup             func(t *testing.T)
 		poolPath          string
 		key               string
-		expectedLiquidity *u256.Uint
+		expectedLiquidity string
 	}{
 		{
 			name: "get position liquidity is success",
@@ -1966,7 +1965,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 			},
 			poolPath:          "mock_pool_path",
 			key:               "mock_key",
-			expectedLiquidity: u256.NewUint(1000000),
+			expectedLiquidity: "1000000",
 		},
 	}
 
@@ -1988,8 +1987,8 @@ func TestGetPositionLiquidity(t *testing.T) {
 		if mockPool.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
-		if liquidity == nil {
-			t.Error("GetPositionLiquidity() returned nil")
+		if liquidity == "" {
+			t.Error("GetPositionLiquidity() returned empty string")
 		}
 	}
 }

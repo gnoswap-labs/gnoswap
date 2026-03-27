@@ -2,7 +2,6 @@
 package v2_invalid
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
 )
@@ -202,7 +201,7 @@ func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) string {
 	return t.instance.GetFeeGrowthGlobal1X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 	if !t.isActive("GetFeeGrowthGlobalX128") {
 		panic("test implementation: GetFeeGrowthGlobalX128 not supported")
 	}
@@ -251,14 +250,14 @@ func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) str
 	return t.instance.GetPositionFeeGrowthInside1LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	if !t.isActive("GetPositionFeeGrowthInsideLastX128") {
 		panic("test implementation: GetPositionFeeGrowthInsideLastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
 	if !t.isActive("GetPositionLiquidity") {
 		panic("test implementation: GetPositionLiquidity not supported")
 	}
@@ -300,7 +299,7 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) string {
 	if !t.isActive("GetSlot0SqrtPriceX96") {
 		panic("test implementation: GetSlot0SqrtPriceX96 not supported")
 	}
@@ -342,7 +341,7 @@ func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) str
 	return t.instance.GetTickFeeGrowthOutside1X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	if !t.isActive("GetTickFeeGrowthOutsideX128") {
 		panic("test implementation: GetTickFeeGrowthOutsideX128 not supported")
 	}

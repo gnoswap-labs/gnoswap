@@ -400,9 +400,9 @@ func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
 	}(cross)
 }
 
-func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	testing.SetRealm(adminRealm)
-	return func(cur realm) *u256.Uint {
+	return func(cur realm) string {
 		testing.SetRealm(adminRealm)
 		return pool.GetSlot0SqrtPriceX96(poolPath)
 	}(cross)

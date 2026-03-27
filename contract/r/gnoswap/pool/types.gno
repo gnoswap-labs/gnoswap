@@ -1,7 +1,6 @@
 package pool
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 )
 
@@ -148,7 +147,7 @@ type IPoolGetter interface {
 
 	GetFeeGrowthGlobal1X128(poolPath string) string
 
-	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
+	GetFeeGrowthGlobalX128(poolPath string) (string, string)
 
 	GetLiquidity(poolPath string) string
 
@@ -162,9 +161,9 @@ type IPoolGetter interface {
 
 	GetPositionFeeGrowthInside1LastX128(poolPath, key string) string
 
-	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint)
+	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string)
 
-	GetPositionLiquidity(poolPath, key string) *u256.Uint
+	GetPositionLiquidity(poolPath, key string) string
 
 	GetPositionTokensOwed0(poolPath, key string) int64
 
@@ -176,7 +175,7 @@ type IPoolGetter interface {
 
 	GetSlot0FeeProtocol(poolPath string) uint8
 
-	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
+	GetSlot0SqrtPriceX96(poolPath string) string
 
 	GetSlot0Tick(poolPath string) int32
 
@@ -188,7 +187,7 @@ type IPoolGetter interface {
 
 	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string
 
-	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint)
+	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string)
 
 	GetTickInitialized(poolPath string, tick int32) bool
 
