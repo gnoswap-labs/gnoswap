@@ -240,7 +240,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 
@@ -276,7 +276,7 @@ func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, erro
 	return t.instance.GetTickInfo(poolPath, tick)
 }
 
-func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 

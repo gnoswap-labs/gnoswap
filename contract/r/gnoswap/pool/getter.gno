@@ -257,12 +257,8 @@ func GetWithdrawalFee() uint64 {
 
 // GetTWAP returns the time-weighted average price for a pool.
 // Returns arithmetic mean tick and harmonic mean liquidity over the time period.
-func GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	tick, liquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
-	if err != nil {
-		return tick, nil, err
-	}
-	return tick, liquidity.Clone(), nil
+func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+	return getImplementation().GetTWAP(poolPath, secondsAgo)
 }
 
 // Structure getters
@@ -288,13 +284,8 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.
-func GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
-	tickBitmap, err := getImplementation().GetTickBitmaps(poolPath, wordPos)
-	if err != nil {
-		return nil, err
-	}
-
-	return tickBitmap.Clone(), nil
+func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
+	return getImplementation().GetTickBitmaps(poolPath, wordPos)
 }
 
 // GetPosition returns the position info for a given key.

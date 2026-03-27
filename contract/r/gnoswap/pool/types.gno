@@ -208,7 +208,7 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+	GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error)
 
 	GetPoolCount() int
 	GetPoolPaths(offset, count int) []string
@@ -222,7 +222,7 @@ type IPoolGetter interface {
 	// Structure getters
 	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
-	GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error)
+	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
 	GetPosition(poolPath, key string) (PositionInfo, error)
 	GetObservationState(poolPath string) (*ObservationState, error)
 }

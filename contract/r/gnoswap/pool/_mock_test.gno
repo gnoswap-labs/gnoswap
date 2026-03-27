@@ -565,17 +565,17 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	res, ok := m.Response.Get("GetTWAP")
 	if !ok {
-		return 0, nil, errors.New("not found")
+		return 0, "", errors.New("not found")
 	}
 
 	if len(res) < 3 || res[2] == nil {
-		return res[0].(int32), res[1].(*u256.Uint), nil
+		return res[0].(int32), res[1].(string), nil
 	}
 
-	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
+	return res[0].(int32), res[1].(string), res[2].(error)
 }
 
 // Pool enumeration
@@ -647,15 +647,15 @@ func (m *MockPool) GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 	return res[0].(TickInfo), res[1].(error)
 }
 
-func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	res, ok := m.Response.Get("GetTickBitmaps")
 	if !ok {
-		return nil, errors.New("not found")
+		return "", errors.New("not found")
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*u256.Uint), nil
+		return res[0].(string), nil
 	}
-	return res[0].(*u256.Uint), res[1].(error)
+	return res[0].(string), res[1].(error)
 }
 
 func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {

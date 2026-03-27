@@ -237,16 +237,16 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetTickBitmaps",
-			setup: func(m *MockPool) { m.Response.Set("GetTickBitmaps", u256.MustFromDecimal("1234"), nil) },
+			setup: func(m *MockPool) { m.Response.Set("GetTickBitmaps", "1234", nil) },
 			getter: func() any {
 				bitmap, err := GetTickBitmaps("foo:bar:500", 0)
 				uassert.NoError(t, err)
 				return bitmap
 			},
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("5678")) },
+			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				bitmap := implementation.(*MockPool).Response.responses["GetTickBitmaps"][0].(*u256.Uint)
-				uassert.Equal(t, "1234", bitmap.ToString())
+				bitmap := implementation.(*MockPool).Response.responses["GetTickBitmaps"][0].(string)
+				uassert.Equal(t, "1234", bitmap)
 			},
 		},
 		{
@@ -291,16 +291,16 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetTWAP",
-			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
+			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), "5000", error(nil)) },
 			getter: func() any {
 				_, liquidity, err := GetTWAP("foo:bar:500", 10)
 				uassert.NoError(t, err)
 				return liquidity
 			},
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("6000")) },
+			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
-				uassert.Equal(t, "5000", value.ToString())
+				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(string)
+				uassert.Equal(t, "5000", value)
 			},
 		},
 		{

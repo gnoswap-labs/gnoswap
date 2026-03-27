@@ -172,8 +172,7 @@ func (i *poolV1) GetSlot0Tick(poolPath string) int32 {
 }
 
 func (i *poolV1) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	slot0 := i.mustGetPool(poolPath).Slot0()
-	return slot0.SqrtPriceX96()
+	return i.mustGetPool(poolPath).Slot0SqrtPriceX96()
 }
 
 func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
@@ -194,8 +193,7 @@ func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256
 }
 
 func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	position := i.MustGetPosition(poolPath, key)
-	return u256.MustFromDecimal(position.Liquidity())
+	return u256.MustFromDecimal(i.MustGetPosition(poolPath, key).Liquidity())
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
@@ -244,13 +242,18 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 //   - secondsAgo: Number of seconds ago to calculate TWAP from
 //
 // Returns TWAP tick and error
-func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return 0, nil, err
+		return 0, "", err
 	}
 
-	return getTWAP(pool, secondsAgo)
+	tick, liquidity, err := getTWAP(pool, secondsAgo)
+	if err != nil {
+		return 0, "", err
+	}
+
+	return tick, liquidity.ToString(), nil
 }
 
 // GetPoolCount returns the total number of pools.
@@ -336,25 +339,25 @@ func (i *poolV1) GetTickInfo(poolPath string, tick int32) (pl.TickInfo, error) {
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.
-func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	wordPosStr := strconv.Itoa(int(wordPos))
 
 	iTickBitmap, ok := pool.TickBitmaps().Get(wordPosStr)
 	if !ok {
-		return nil, ufmt.Errorf("tick bitmap %d not found", wordPos)
+		return "", ufmt.Errorf("tick bitmap %d not found", wordPos)
 	}
 
 	tickBitmap, ok := iTickBitmap.(*u256.Uint)
 	if !ok {
-		return nil, ufmt.Errorf("failed to cast tick bitmap: %T", iTickBitmap)
+		return "", ufmt.Errorf("failed to cast tick bitmap: %T", iTickBitmap)
 	}
 
-	return tickBitmap, nil
+	return tickBitmap.ToString(), nil
 }
 
 // GetPosition returns the position info for a given key.

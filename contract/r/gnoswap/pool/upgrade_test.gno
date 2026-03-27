@@ -1140,7 +1140,7 @@ func TestGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, "0", errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 

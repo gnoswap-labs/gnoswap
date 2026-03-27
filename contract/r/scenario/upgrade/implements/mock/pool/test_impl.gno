@@ -288,6 +288,7 @@ func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Ui
 	return result[0].(*u256.Uint), result[1].(*u256.Uint)
 }
 
+
 func (t *TestPool) GetLiquidity(poolPath string) string {
 	return t.ExecuteFn(
 		"GetLiquidity",
@@ -540,7 +541,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	result := t.ExecuteFn(
 		"GetTWAP",
 		func(args ...any) any {
@@ -549,7 +550,7 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 		},
 		poolPath, secondsAgo,
 	).([]any)
-	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
+	return result[0].(int32), result[1].(string), result[2].(error)
 }
 
 // Pool enumeration
@@ -618,7 +619,7 @@ func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, erro
 	return result[0].(pool.TickInfo), result[1].(error)
 }
 
-func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	result := t.ExecuteFn(
 		"GetTickBitmaps",
 		func(args ...any) any {
@@ -627,7 +628,7 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, e
 		},
 		poolPath, wordPos,
 	).([]any)
-	return result[0].(*u256.Uint), result[1].(error)
+	return result[0].(string), result[1].(error)
 }
 
 func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
