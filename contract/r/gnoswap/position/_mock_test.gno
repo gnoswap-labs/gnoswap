@@ -1,9 +1,5 @@
 package position
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
 // MockResponse is a simple mock response helper
 type MockResponse struct {
 	data      map[string][]any
@@ -256,13 +252,13 @@ func (m *MockPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (m *MockPosition) GetUnclaimedFee(positionId uint64) (string, string) {
 	res, ok := m.Response.Get("GetUnclaimedFee")
 	if !ok {
-		return nil, nil
+		return "", ""
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(string), res[1].(string)
 }
 
 func (m *MockPosition) GetPositionOwner(positionId uint64) address {

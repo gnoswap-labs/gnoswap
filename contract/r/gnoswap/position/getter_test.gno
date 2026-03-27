@@ -3,7 +3,6 @@ package position
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -263,7 +262,7 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		{
 			name: "GetUnclaimedFee",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetUnclaimedFee", u256.MustFromDecimal("1111"), u256.MustFromDecimal("2222"))
+				m.Response.Set("GetUnclaimedFee", "1111", "2222")
 				return nil
 			},
 			getter: func() any {
@@ -272,18 +271,18 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("9920"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("9930"))
+				values[0] = "9920"
+				values[1] = "9930"
 			},
 			assertSame: func(t *testing.T, result any) {
 				values := result.([]any)
-				uassert.Equal(t, "9920", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "9930", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "9920", values[0].(string))
+				uassert.Equal(t, "9930", values[1].(string))
 			},
 			assertRaw: func(t *testing.T, raw *Position) {
 				values := implementation.(*MockPosition).Response.data["GetUnclaimedFee"]
-				uassert.Equal(t, "1111", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "2222", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "1111", values[0].(string))
+				uassert.Equal(t, "2222", values[1].(string))
 			},
 		},
 	}

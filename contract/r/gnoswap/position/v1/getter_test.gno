@@ -553,8 +553,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setup(t)
 			fee0, fee1 := mockInstance.GetUnclaimedFee(tc.positionId)
-			uassert.Equal(t, tc.expectedFee0, fee0.ToString())
-			uassert.Equal(t, tc.expectedFee1, fee1.ToString())
+			uassert.Equal(t, tc.expectedFee0, fee0)
+			uassert.Equal(t, tc.expectedFee1, fee1)
 		})
 	}
 }

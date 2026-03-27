@@ -3,7 +3,6 @@ package v2_invalid
 
 import (
 	grc721 "gno.land/p/demo/tokens/grc721"
-	u256 "gno.land/p/gnoswap/uint256"
 	gnft "gno.land/r/gnoswap/gnft"
 	position "gno.land/r/gnoswap/position"
 	v1 "gno.land/r/gnoswap/position/v1"
@@ -212,7 +211,7 @@ func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return t.instance.GetPositionTokensOwed1(positionId)
 }
 
-func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (t *TestPosition) GetUnclaimedFee(positionId uint64) (string, string) {
 	if !t.isActive("GetUnclaimedFee") {
 		panic("test implementation: GetUnclaimedFee not supported")
 	}

@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -1101,8 +1100,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 		name         string
 		setup        func(t *testing.T)
 		positionId   uint64
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 		callerRealm  runtime.Realm
 	}{
 		{
@@ -1114,8 +1113,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:   1,
-			expectedFee0: u256.NewUint(1000),
-			expectedFee1: u256.NewUint(2000),
+			expectedFee0: "1000",
+			expectedFee1: "2000",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1140,8 +1139,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 		if mockPosition.Response.CallCount("GetUnclaimedFee") != 1 {
 			t.Error("GetUnclaimedFee was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetUnclaimedFee() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetUnclaimedFee() returned empty string")
 		}
 	}
 }

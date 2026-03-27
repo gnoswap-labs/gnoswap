@@ -416,8 +416,8 @@ func getUnclaimedFee() {
 	testing.SetRealm(adminRealm)
 
 	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
-	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0.ToString())
-	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1.ToString())
+	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
+	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
 func getPositionOwner() {

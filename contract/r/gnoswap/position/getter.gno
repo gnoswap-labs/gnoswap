@@ -1,7 +1,6 @@
 package position
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -139,9 +138,8 @@ func GetPositionTokensOwed(positionId uint64) (int64, int64) {
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
-func GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
-	unclaimedFee0, unclaimedFee1 := getImplementation().GetUnclaimedFee(positionId)
-	return unclaimedFee0.Clone(), unclaimedFee1.Clone()
+func GetUnclaimedFee(positionId uint64) (string, string) {
+	return getImplementation().GetUnclaimedFee(positionId)
 }
 
 // GetPositionOwner returns the owner address of a position NFT.
