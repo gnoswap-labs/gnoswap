@@ -65,12 +65,6 @@ func GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
 	return feeGrowthGlobal0.Clone(), feeGrowthGlobal1.Clone()
 }
 
-// GetFeeGrowthGlobals returns the global fee growth for both tokens.
-func GetFeeGrowthGlobals(poolPath string) (string, string) {
-	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
-	return feeGrowthGlobal0.ToString(), feeGrowthGlobal1.ToString()
-}
-
 // GetLiquidity returns the current liquidity in the pool.
 func GetLiquidity(poolPath string) string {
 	return getImplementation().GetLiquidity(poolPath)
@@ -105,12 +99,6 @@ func GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
 func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
 	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
 	return feeGrowthInside0.Clone(), feeGrowthInside1.Clone()
-}
-
-// GetPositionFeeGrowthInsideLasts returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLasts(poolPath, key string) (string, string) {
-	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
-	return feeGrowthInside0.ToString(), feeGrowthInside1.ToString()
 }
 
 // GetPoolPositionCount returns the number of positions in a pool.
@@ -197,12 +185,6 @@ func GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
 func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
 	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
 	return feeGrowthOutside0.Clone(), feeGrowthOutside1.Clone()
-}
-
-// GetTickFeeGrowthOutsides returns fee growth outside for both tokens at a tick.
-func GetTickFeeGrowthOutsides(poolPath string, tick int32) (string, string) {
-	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
-	return feeGrowthOutside0.ToString(), feeGrowthOutside1.ToString()
 }
 
 // GetTickInitialized returns whether a tick is initialized.
