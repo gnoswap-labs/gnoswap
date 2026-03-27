@@ -1,7 +1,6 @@
 package v1
 
 import (
-	b64 "encoding/base64"
 	"math"
 	"strconv"
 
@@ -19,11 +18,6 @@ func marshal(data *json.Node) string {
 	}
 
 	return string(b)
-}
-
-// b64Encode encodes data to base64 string
-func b64Encode(data string) string {
-	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
 
 // formatUint formats a uint64 to a string
