@@ -828,7 +828,7 @@ func TestOracleFiveObservations(t *testing.T) {
 	}
 }
 
-func setupFiveObservations(startTime int64) *pl.ObservationState {
+func setupFiveObservations(startTime int64) pl.ObservationState {
 	os := pl.NewObservationState(startTime)
 
 	os, _, _ = grow(os, 1, 5)
@@ -842,7 +842,7 @@ func setupFiveObservations(startTime int64) *pl.ObservationState {
 	os, _ = writeObservation(os, startTime+13, -2, u256.NewUint(9))
 	os, _ = writeObservation(os, startTime+19, 4, u256.NewUint(2))
 
-	return &os
+	return os
 }
 
 func testFiveObservationsIndexCardinality(t *testing.T) {
@@ -858,7 +858,7 @@ func testFiveObservationsLatestSameTime(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+19, 0, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+19, 0, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
 	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq.ToString())
@@ -868,7 +868,7 @@ func testFiveObservationsLatest5SecondsAfter(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+24, 5, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+24, 5, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
 	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq.ToString())
@@ -878,7 +878,7 @@ func testFiveObservationsCurrent5SecondsAfter(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+24, 0, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+24, 0, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(9), tickCum)
 	uassert.Equal(t, "2347138135642758877746181518404363115684", secondsPerLiq.ToString())
@@ -888,7 +888,7 @@ func testFiveObservationsBetweenLatestSameTime(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+19, 3, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+19, 3, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
 	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq.ToString())
@@ -898,7 +898,7 @@ func testFiveObservationsBetweenLatestAfter(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+24, 8, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+24, 8, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
 	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq.ToString())
@@ -908,7 +908,7 @@ func testFiveObservationsOldest(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+19, 14, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+19, 14, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
 	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq.ToString())
@@ -918,7 +918,7 @@ func testFiveObservationsOldestAfterTime(t *testing.T) {
 	startTime := time.Now().Unix()
 	os := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(*os,startTime+25, 20, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os,startTime+25, 20, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
 	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq.ToString())
