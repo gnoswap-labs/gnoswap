@@ -7,7 +7,6 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -20,8 +19,8 @@ func testInitData(t *testing.T) {
 		token0Path: "token0",
 		token1Path: "token1",
 		balances: mockBalances{
-			token0: u256.NewUint(1000),
-			token1: u256.NewUint(2000),
+			token0: 1000,
+			token1: 2000,
 		},
 		fee:                 3000,
 		tickSpacing:         10,
@@ -35,8 +34,8 @@ func testInitData(t *testing.T) {
 		feeGrowthGlobal0X128: u256.NewUint(1000000000000000000),
 		feeGrowthGlobal1X128: u256.NewUint(2000000000000000000),
 		protocolFees: mockBalances{
-			token0: u256.NewUint(1000),
-			token1: u256.NewUint(2000),
+			token0: 1000,
+			token1: 2000,
 		},
 		liquidity: u256.NewUint(1000000),
 	}
@@ -45,12 +44,12 @@ func testInitData(t *testing.T) {
 	mockTicks := avl.NewTree()
 
 	tickInfo := pl.TickInfo{}
-	tickInfo.SetLiquidityGross(u256.NewUint(1000000))
-	tickInfo.SetLiquidityNet(i256.NewInt(2000000))
-	tickInfo.SetFeeGrowthOutside0X128(u256.NewUint(3000000))
-	tickInfo.SetFeeGrowthOutside1X128(u256.NewUint(4000000))
+	tickInfo.SetLiquidityGross("1000000")
+	tickInfo.SetLiquidityNet("2000000")
+	tickInfo.SetFeeGrowthOutside0X128("3000000")
+	tickInfo.SetFeeGrowthOutside1X128("4000000")
 	tickInfo.SetTickCumulativeOutside(5)
-	tickInfo.SetSecondsPerLiquidityOutsideX128(u256.NewUint(6000000))
+	tickInfo.SetSecondsPerLiquidityOutsideX128("6000000")
 	tickInfo.SetSecondsOutside(7)
 	tickInfo.SetInitialized(true)
 
@@ -60,11 +59,11 @@ func testInitData(t *testing.T) {
 	mockPositions := avl.NewTree()
 
 	positionInfo := pl.PositionInfo{}
-	positionInfo.SetLiquidity(u256.NewUint(1000000))
-	positionInfo.SetFeeGrowthInside0LastX128(u256.NewUint(2000000))
-	positionInfo.SetFeeGrowthInside1LastX128(u256.NewUint(3000000))
-	positionInfo.SetTokensOwed0(u256.NewUint(4000000))
-	positionInfo.SetTokensOwed1(u256.NewUint(5000000))
+	positionInfo.SetLiquidity("1000000")
+	positionInfo.SetFeeGrowthInside0LastX128("2000000")
+	positionInfo.SetFeeGrowthInside1LastX128("3000000")
+	positionInfo.SetTokensOwed0(4000000)
+	positionInfo.SetTokensOwed1(5000000)
 
 	mockPositions.Set("test_position", positionInfo)
 	mockPool.SetPositions(mockPositions)
@@ -106,15 +105,15 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get balance token0", func(t *testing.T) {
 			balanceToken0 := getMockInstance().GetBalanceToken0(validPoolPath)
-			if balanceToken0 != "1000" {
-				t.Errorf("Expected balance token0 [%s], got %s", "1000", balanceToken0)
+			if balanceToken0 != 1000 {
+				t.Errorf("Expected balance token0 [%d], got %d", 1000, balanceToken0)
 			}
 		})
 
 		t.Run("get balance token1", func(t *testing.T) {
 			balanceToken1 := getMockInstance().GetBalanceToken1(validPoolPath)
-			if balanceToken1 != "2000" {
-				t.Errorf("Expected balance token1 [%s], got %s", "2000", balanceToken1)
+			if balanceToken1 != 2000 {
+				t.Errorf("Expected balance token1 [%d], got %d", 2000, balanceToken1)
 			}
 		})
 
@@ -176,15 +175,15 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get protocol fees token0", func(t *testing.T) {
 			protocolFeesToken0 := getMockInstance().GetProtocolFeesToken0(validPoolPath)
-			if protocolFeesToken0 != "1000" {
-				t.Errorf("Expected protocol fees token0 [%s], got %s", "1000", protocolFeesToken0)
+			if protocolFeesToken0 != 1000 {
+				t.Errorf("Expected protocol fees token0 [%d], got %d", 1000, protocolFeesToken0)
 			}
 		})
 
 		t.Run("get protocol fees token1", func(t *testing.T) {
 			protocolFeesToken1 := getMockInstance().GetProtocolFeesToken1(validPoolPath)
-			if protocolFeesToken1 != "2000" {
-				t.Errorf("Expected protocol fees token1 [%s], got %s", "2000", protocolFeesToken1)
+			if protocolFeesToken1 != 2000 {
+				t.Errorf("Expected protocol fees token1 [%d], got %d", 2000, protocolFeesToken1)
 			}
 		})
 
@@ -311,8 +310,8 @@ func TestPositionGetters(t *testing.T) {
 		expectedLiquidity                string
 		expectedFeeGrowthInside0LastX128 string
 		expectedFeeGrowthInside1LastX128 string
-		expectedTokensOwed0              string
-		expectedTokensOwed1              string
+		expectedTokensOwed0              int64
+		expectedTokensOwed1              int64
 		expectedHasPanic                 bool
 		expectedPanicMessage             string
 	}{
@@ -323,8 +322,8 @@ func TestPositionGetters(t *testing.T) {
 			expectedLiquidity:                "1000000",
 			expectedFeeGrowthInside0LastX128: "2000000",
 			expectedFeeGrowthInside1LastX128: "3000000",
-			expectedTokensOwed0:              "4000000",
-			expectedTokensOwed1:              "5000000",
+			expectedTokensOwed0:              4000000,
+			expectedTokensOwed1:              5000000,
 			expectedHasPanic:                 false,
 		},
 		{
@@ -334,8 +333,8 @@ func TestPositionGetters(t *testing.T) {
 			expectedLiquidity:                "0",
 			expectedFeeGrowthInside0LastX128: "0",
 			expectedFeeGrowthInside1LastX128: "0",
-			expectedTokensOwed0:              "0",
-			expectedTokensOwed1:              "0",
+			expectedTokensOwed0:              0,
+			expectedTokensOwed1:              0,
 			expectedHasPanic:                 true,
 			expectedPanicMessage:             "[GNOSWAP-POOL-005] requested data not found",
 		},
@@ -348,8 +347,8 @@ func TestPositionGetters(t *testing.T) {
 			var liquidity string
 			var feeGrowthInside0LastX128 string
 			var feeGrowthInside1LastX128 string
-			var tokensOwed0 string
-			var tokensOwed1 string
+			var tokensOwed0 int64
+			var tokensOwed1 int64
 
 			if tt.expectedHasPanic {
 				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
@@ -927,7 +926,7 @@ func TestGetTickInfoWithError(t *testing.T) {
 				uassert.True(t, err != nil)
 			} else {
 				uassert.True(t, err == nil)
-				uassert.Equal(t, "1000000", tickInfo.LiquidityGross().ToString())
+				uassert.Equal(t, "1000000", tickInfo.LiquidityGross())
 			}
 		})
 	}
@@ -978,7 +977,7 @@ func TestGetPositionWithError(t *testing.T) {
 				uassert.True(t, err != nil)
 			} else {
 				uassert.True(t, err == nil)
-				uassert.Equal(t, "1000000", positionInfo.Liquidity().ToString())
+				uassert.Equal(t, "1000000", positionInfo.Liquidity())
 			}
 		})
 	}

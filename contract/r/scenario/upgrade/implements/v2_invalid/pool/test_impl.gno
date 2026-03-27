@@ -160,14 +160,14 @@ func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Poo
 	return t.instance.GetPool(token0Path, token1Path, fee)
 }
 
-func (t *TestPool) GetBalanceToken0(poolPath string) string {
+func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
 	if !t.isActive("GetBalanceToken0") {
 		panic("test implementation: GetBalanceToken0 not supported")
 	}
 	return t.instance.GetBalanceToken0(poolPath)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) string {
+func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
 	if !t.isActive("GetBalanceToken1") {
 		panic("test implementation: GetBalanceToken1 not supported")
 	}
@@ -265,28 +265,28 @@ func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	return t.instance.GetPositionLiquidity(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
 	if !t.isActive("GetPositionTokensOwed0") {
 		panic("test implementation: GetPositionTokensOwed0 not supported")
 	}
 	return t.instance.GetPositionTokensOwed0(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
 	if !t.isActive("GetPositionTokensOwed1") {
 		panic("test implementation: GetPositionTokensOwed1 not supported")
 	}
 	return t.instance.GetPositionTokensOwed1(poolPath, key)
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
 	if !t.isActive("GetProtocolFeesToken0") {
 		panic("test implementation: GetProtocolFeesToken0 not supported")
 	}
 	return t.instance.GetProtocolFeesToken0(poolPath)
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
 	if !t.isActive("GetProtocolFeesToken1") {
 		panic("test implementation: GetProtocolFeesToken1 not supported")
 	}
@@ -412,7 +412,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	if !t.isActive("GetTWAP") {
 		panic("test implementation: GetTWAP not supported")
 	}
@@ -472,7 +472,7 @@ func (t *TestPool) GetTickInfo(poolPath string, tick int32) (pool.TickInfo, erro
 	return t.instance.GetTickInfo(poolPath, tick)
 }
 
-func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
+func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
 	if !t.isActive("GetTickBitmaps") {
 		panic("test implementation: GetTickBitmaps not supported")
 	}

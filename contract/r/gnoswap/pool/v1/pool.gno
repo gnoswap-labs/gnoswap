@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"strconv"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -141,17 +142,8 @@ func (i *poolV1) Burn(
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
 
-		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), amount0)
-		if overflow {
-			panic(errOverflow)
-		}
-		position.SetTokensOwed0(tokensOwed0)
-
-		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), amount1)
-		if overflow {
-			panic(errOverflow)
-		}
-		position.SetTokensOwed1(tokensOwed1)
+		position.SetTokensOwed0(safeAddInt64(position.TokensOwed0(), safeConvertToInt64(amount0)))
+		position.SetTokensOwed1(safeAddInt64(position.TokensOwed1(), safeConvertToInt64(amount1)))
 	}
 
 	positionKey := getPositionKey(tickLower, tickUpper)
@@ -211,45 +203,26 @@ func (i *poolV1) Collect(
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
-	var amount0, amount1 *u256.Uint
-
-	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount0 = u256Min(amount0Req, position.TokensOwed0())
-
-	amount1Req := u256.MustFromDecimal(amount1Requested)
-	amount1 = u256Min(amount1Req, position.TokensOwed1())
+	amount0 := minRequestedAmount(amount0Requested, position.TokensOwed0())
+	amount1 := minRequestedAmount(amount1Requested, position.TokensOwed1())
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
-	if amount0.Gt(zero) {
-		tokenOwed0, overflow := u256.Zero().SubOverflow(position.TokensOwed0(), amount0)
-		if overflow {
-			panic(errOverflow)
-		}
-
-		token0Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken0(), amount0)
-		if overflow {
-			panic(errOverflow)
-		}
+	if amount0 > 0 {
+		tokenOwed0 := safeSubInt64(position.TokensOwed0(), amount0)
+		token0Balance := safeSubInt64(pool.BalanceToken0(), amount0)
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, safeConvertToInt64(amount0))
+		common.SafeGRC20Approve(cross, pool.Token0Path(), positionAddr, amount0)
 	}
-	if amount1.Gt(zero) {
-		tokenOwed1, overflow := u256.Zero().SubOverflow(position.TokensOwed1(), amount1)
-		if overflow {
-			panic(errOverflow)
-		}
-
-		token1Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken1(), amount1)
-		if overflow {
-			panic(errOverflow)
-		}
+	if amount1 > 0 {
+		tokenOwed1 := safeSubInt64(position.TokensOwed1(), amount1)
+		token1Balance := safeSubInt64(pool.BalanceToken1(), amount1)
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(cross, pool.Token1Path(), positionAddr, safeConvertToInt64(amount1))
+		common.SafeGRC20Approve(cross, pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, *position)
@@ -258,7 +231,7 @@ func (i *poolV1) Collect(
 		panic(err)
 	}
 
-	return amount0.ToString(), amount1.ToString()
+	return formatInt(amount0), formatInt(amount1)
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
@@ -324,21 +297,19 @@ func (i *poolV1) collectProtocol(
 		return "0", "0"
 	}
 
-	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
-	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
+	amount0 := minRequestedAmount(amount0Requested, pool.ProtocolFeesToken0())
+	amount1 := minRequestedAmount(amount1Requested, pool.ProtocolFeesToken1())
 
-	amount0, amount1 = i.saveProtocolFees(pool, amount0.Clone(), amount1.Clone())
-	uAmount0 := safeConvertToInt64(amount0)
-	uAmount1 := safeConvertToInt64(amount1)
+	amount0, amount1 = i.saveProtocolFees(pool, amount0, amount1)
 
-	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, uAmount0)
+	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, amount0)
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.SetBalanceToken0(newBalanceToken0)
 
-	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, uAmount1)
+	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, amount1)
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)
@@ -350,25 +321,32 @@ func (i *poolV1) collectProtocol(
 		panic(err)
 	}
 
-	return amount0.ToString(), amount1.ToString()
+	return formatInt(amount0), formatInt(amount1)
 }
 
 // saveProtocolFees updates the protocol fee balances after collection.
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
-func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
-	token0Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken0(), amount0)
-	if underflow {
-		panic(errOverflow)
-	}
-	pool.SetProtocolFeesToken0(token0Fees)
-
-	token1Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken1(), amount1)
-	if underflow {
+func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64, int64) {
+	if pool.ProtocolFeesToken0() < amount0 {
 		panic(errUnderflow)
 	}
-	pool.SetProtocolFeesToken1(token1Fees)
+	pool.SetProtocolFeesToken0(safeSubInt64(pool.ProtocolFeesToken0(), amount0))
+
+	if pool.ProtocolFeesToken1() < amount1 {
+		panic(errUnderflow)
+	}
+	pool.SetProtocolFeesToken1(safeSubInt64(pool.ProtocolFeesToken1(), amount1))
 
 	return amount0, amount1
+}
+
+func minRequestedAmount(request string, available int64) int64 {
+	requested, err := strconv.ParseInt(request, 10, 64)
+	if err != nil || requested > available {
+		return available
+	}
+
+	return requested
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
