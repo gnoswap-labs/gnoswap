@@ -127,10 +127,6 @@ func main() {
 	getLiquidity()
 	println()
 
-	println("[SCENARIO] 2.15. GetMaxLiquidityPerTick")
-	getMaxLiquidityPerTick()
-	println()
-
 	println("[SCENARIO] 2.16. GetObservation")
 	getObservation()
 	println()
@@ -497,14 +493,6 @@ func getLiquidity() {
 
 	liquidity := pl.GetLiquidity(poolPath)
 	println("[EXPECTED] liquidity:", liquidity)
-}
-
-func getMaxLiquidityPerTick() {
-	println("[INFO] Check GetMaxLiquidityPerTick method")
-	testing.SetRealm(adminRealm)
-
-	maxLiquidityPerTick := pl.GetMaxLiquidityPerTick(poolPath)
-	println("[EXPECTED] maxLiquidityPerTick:", maxLiquidityPerTick)
 }
 
 func getObservation() {
@@ -972,10 +960,6 @@ func getObservationState() {
 // [SCENARIO] 2.14. GetLiquidity
 // [INFO] Check GetLiquidity method
 // [EXPECTED] liquidity: 100000000
-//
-// [SCENARIO] 2.15. GetMaxLiquidityPerTick
-// [INFO] Check GetMaxLiquidityPerTick method
-// [EXPECTED] maxLiquidityPerTick: 11505743598341114571880798222544994
 //
 // [SCENARIO] 2.16. GetObservation
 // [INFO] Check GetObservation method

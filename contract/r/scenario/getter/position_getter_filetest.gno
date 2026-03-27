@@ -297,8 +297,8 @@ func getPositionTokenBalances() {
 	println("[EXPECTED] position token1 balance:", balance1)
 	println("[EXPECTED] pool token0 balance:", bar.BalanceOf(poolAddr))
 	println("[EXPECTED] pool token1 balance:", foo.BalanceOf(poolAddr))
-	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0.ToString())
-	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1.ToString())
+	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
+	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
 func getPositionToken0Balance() {
