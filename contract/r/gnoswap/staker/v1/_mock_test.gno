@@ -3,8 +3,6 @@ package v1
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/p/demo/tokens/grc721"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
