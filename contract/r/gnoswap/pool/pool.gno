@@ -187,8 +187,8 @@ func (p *Pool) Clone() *Pool {
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
-		balances:             p.balances.Clone(),
-		protocolFees:         p.protocolFees.Clone(),
+		balances:             p.balances,
+		protocolFees:         p.protocolFees,
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
@@ -243,9 +243,6 @@ func (p *TokenPair) Token0() int64          { return p.token0 }
 func (p *TokenPair) Token1() int64          { return p.token1 }
 func (p *TokenPair) SetToken0(token0 int64) { p.token0 = token0 }
 func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
-func (p *TokenPair) Clone() TokenPair {
-	return TokenPair{token0: p.token0, token1: p.token1}
-}
 
 type Slot0 struct {
 	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
