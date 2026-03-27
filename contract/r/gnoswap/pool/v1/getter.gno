@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strconv"
-
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
@@ -345,16 +343,9 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 		return "", err
 	}
 
-	wordPosStr := strconv.Itoa(int(wordPos))
-
-	iTickBitmap, ok := pool.TickBitmaps().Get(wordPosStr)
+	tickBitmap, ok := pool.TickBitmaps()[wordPos]
 	if !ok {
 		return "", ufmt.Errorf("tick bitmap %d not found", wordPos)
-	}
-
-	tickBitmap, ok := iTickBitmap.(string)
-	if !ok {
-		return "", ufmt.Errorf("failed to cast tick bitmap to string: %T", iTickBitmap)
 	}
 
 	return tickBitmap, nil
