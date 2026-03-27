@@ -98,7 +98,7 @@ func main() {
 	println("[SCENARIO] 3. Initial TWAP Query (0 seconds ago)")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 	twapTick, twapLiquidity, _ := pool.GetTWAP(poolPath, 0)
-	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago - tick: %d, liquidity: %s\n", twapTick, twapLiquidity.ToString())
+	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago - tick: %d, liquidity: %s\n", twapTick, twapLiquidity)
 	println()
 
 	// Wait 4 hours (2880 blocks)
@@ -111,15 +111,15 @@ func main() {
 	println("[SCENARIO] 5. TWAP Queries After Time Passed")
 
 	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
 	println()
 
 	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h)
 	println()
 
 	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h)
 	println()
 
 	println("[INFO] Test completed successfully")

@@ -460,7 +460,7 @@ func TestTickNextInitializedTickWithinOneWordHalfWayEmptyWord(t *testing.T) {
 
 // HELPERs
 var (
-	tickBitmaps map[int16]*u256.Uint = make(map[int16]*u256.Uint)
+	tickBitmaps map[int16]string = make(map[int16]string)
 )
 
 // tickBitmapPosition calculates the word and bit position for a given tick
@@ -489,11 +489,11 @@ func TickBitmapFlipTick_Helper(
 	// 1 << bitPos
 	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-	if tickBitmaps[wordPos] == nil {
-		tickBitmaps[wordPos] = u256.Zero()
+	if tickBitmaps[wordPos] == "" {
+		tickBitmaps[wordPos] = "0"
 	}
-	tickBitmaps[wordPos] = tickBitmaps[wordPos]
-	tickBitmaps[wordPos] = new(u256.Uint).Xor(tickBitmaps[wordPos], mask)
+	current := u256.MustFromDecimal(tickBitmaps[wordPos])
+	tickBitmaps[wordPos] = new(u256.Uint).Xor(current, mask).ToString()
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
@@ -521,12 +521,11 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 
 		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
 
-		if tickBitmaps[wordPos] == nil {
-			tickBitmaps[wordPos] = u256.Zero()
+		if tickBitmaps[wordPos] == "" {
+			tickBitmaps[wordPos] = "0"
 		}
-		tickBitmaps[wordPos] = tickBitmaps[wordPos]
-
-		masked := new(u256.Uint).And(tickBitmaps[wordPos], mask)
+		current := u256.MustFromDecimal(tickBitmaps[wordPos])
+		masked := new(u256.Uint).And(current, mask)
 
 		initialized := !(masked.IsZero())
 
@@ -547,11 +546,11 @@ func TickBitmapNextInitializedTickWithInOneWord_Helper(
 	_mask = new(u256.Uint).Sub(_mask, u256.NewUint(1))
 	mask := BitwiseNotForUint256BitmapIndexing_Helper(_mask)
 
-	if tickBitmaps[wordPos] == nil {
-		tickBitmaps[wordPos] = u256.Zero()
+	if tickBitmaps[wordPos] == "" {
+		tickBitmaps[wordPos] = "0"
 	}
-	tickBitmaps[wordPos] = tickBitmaps[wordPos]
-	masked := new(u256.Uint).And(tickBitmaps[wordPos], mask)
+	current := u256.MustFromDecimal(tickBitmaps[wordPos])
+	masked := new(u256.Uint).And(current, mask)
 
 	initialized := !(masked.IsZero())
 	if initialized {
@@ -579,10 +578,10 @@ func BitwiseNotForUint256BitmapIndexing_Helper(x *u256.Uint) *u256.Uint {
 }
 
 func InitializeTickBitmaps_Helper() {
-	tickBitmaps = make(map[int16]*u256.Uint)
+	tickBitmaps = make(map[int16]string)
 }
 
-func GetTickBitmaps_Helper() map[int16]*u256.Uint {
+func GetTickBitmaps_Helper() map[int16]string {
 	return tickBitmaps
 }
 

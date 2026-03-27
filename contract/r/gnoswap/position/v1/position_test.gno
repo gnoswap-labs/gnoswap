@@ -1500,8 +1500,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	currentBalance1 := pool.BalanceToken1()
 
 	// Reduce pool balance to 50% to create burn > collect scenario
-	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
-	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	reducedBalance0 := currentBalance0 / 2
+	reducedBalance1 := currentBalance1 / 2
 	pool.SetBalanceToken0(reducedBalance0)
 	pool.SetBalanceToken1(reducedBalance1)
 

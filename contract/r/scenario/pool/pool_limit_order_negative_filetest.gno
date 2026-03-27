@@ -26,7 +26,7 @@ import (
 const (
 	maxApprove int64 = 9223372036854775806
 
-	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_INT64 string = "9223372036854775807"
 )
 
 var (
@@ -140,8 +140,8 @@ func main() {
 		adminAddr,
 		-120,
 		0,
-		MAX_UINT128,
-		MAX_UINT128,
+		MAX_INT64,
+		MAX_INT64,
 	)
 
 	println("[EXPECTED] Collect 0:", collect0, "expected: 60207195")

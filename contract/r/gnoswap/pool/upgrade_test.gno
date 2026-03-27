@@ -796,7 +796,7 @@ func TestGetBalanceToken0(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token0 is success",
@@ -808,7 +808,7 @@ func TestGetBalanceToken0(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 
@@ -845,7 +845,7 @@ func TestGetBalanceToken1(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token1 is success",
@@ -857,7 +857,7 @@ func TestGetBalanceToken1(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 
@@ -1140,7 +1140,7 @@ func TestGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, "0", errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -1863,7 +1863,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		poolPath    string
-		expectedFee string
+		expectedFee int64
 	}{
 		{
 			name: "get protocol fees token0 is success",
@@ -1874,7 +1874,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
-			expectedFee: "1000",
+			expectedFee: 1000,
 		},
 	}
 
@@ -1908,7 +1908,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		poolPath    string
-		expectedFee string
+		expectedFee int64
 	}{
 		{
 			name: "get protocol fees token1 is success",
@@ -1919,7 +1919,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
-			expectedFee: "1000",
+			expectedFee: 1000,
 		},
 	}
 
