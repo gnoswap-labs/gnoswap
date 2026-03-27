@@ -363,36 +363,36 @@ func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	).(*u256.Uint)
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed0",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed0(args[0].(string), args[1].(string)) },
 		poolPath, key,
-	).(string)
+	).(int64)
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed1",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed1(args[0].(string), args[1].(string)) },
 		poolPath, key,
-	).(string)
+	).(int64)
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
 	return t.ExecuteFn(
 		"GetProtocolFeesToken0",
 		func(args ...any) any { return t.instance.GetProtocolFeesToken0(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(int64)
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
 	return t.ExecuteFn(
 		"GetProtocolFeesToken1",
 		func(args ...any) any { return t.instance.GetProtocolFeesToken1(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(int64)
 }
 
 func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {

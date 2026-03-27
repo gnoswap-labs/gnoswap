@@ -129,32 +129,32 @@ func GetPositionLiquidity(poolPath, key string) *u256.Uint {
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
-func GetPositionTokensOwed0(poolPath, key string) string {
+func GetPositionTokensOwed0(poolPath, key string) int64 {
 	return getImplementation().GetPositionTokensOwed0(poolPath, key)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
-func GetPositionTokensOwed1(poolPath, key string) string {
+func GetPositionTokensOwed1(poolPath, key string) int64 {
 	return getImplementation().GetPositionTokensOwed1(poolPath, key)
 }
 
 // GetPositionTokensOwedInfos returns the amount of tokens owed for both tokens.
-func GetPositionTokensOwed(poolPath, key string) (string, string) {
+func GetPositionTokensOwed(poolPath, key string) (int64, int64) {
 	return getImplementation().GetPositionTokensOwed0(poolPath, key), getImplementation().GetPositionTokensOwed1(poolPath, key)
 }
 
 // GetProtocolFeesToken0 returns accumulated protocol fees for token0.
-func GetProtocolFeesToken0(poolPath string) string {
+func GetProtocolFeesToken0(poolPath string) int64 {
 	return getImplementation().GetProtocolFeesToken0(poolPath)
 }
 
 // GetProtocolFeesToken1 returns accumulated protocol fees for token1.
-func GetProtocolFeesToken1(poolPath string) string {
+func GetProtocolFeesToken1(poolPath string) int64 {
 	return getImplementation().GetProtocolFeesToken1(poolPath)
 }
 
 // GetProtocolFeesTokens returns the accumulated protocol fees for both tokens.
-func GetProtocolFeesTokens(poolPath string) (string, string) {
+func GetProtocolFeesTokens(poolPath string) (int64, int64) {
 	return getImplementation().GetProtocolFeesToken0(poolPath), getImplementation().GetProtocolFeesToken1(poolPath)
 }
 

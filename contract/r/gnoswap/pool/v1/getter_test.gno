@@ -175,15 +175,15 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get protocol fees token0", func(t *testing.T) {
 			protocolFeesToken0 := getMockInstance().GetProtocolFeesToken0(validPoolPath)
-			if protocolFeesToken0 != "1000" {
-				t.Errorf("Expected protocol fees token0 [%s], got %s", "1000", protocolFeesToken0)
+			if protocolFeesToken0 != 1000 {
+				t.Errorf("Expected protocol fees token0 [%d], got %d", 1000, protocolFeesToken0)
 			}
 		})
 
 		t.Run("get protocol fees token1", func(t *testing.T) {
 			protocolFeesToken1 := getMockInstance().GetProtocolFeesToken1(validPoolPath)
-			if protocolFeesToken1 != "2000" {
-				t.Errorf("Expected protocol fees token1 [%s], got %s", "2000", protocolFeesToken1)
+			if protocolFeesToken1 != 2000 {
+				t.Errorf("Expected protocol fees token1 [%d], got %d", 2000, protocolFeesToken1)
 			}
 		})
 
@@ -310,8 +310,8 @@ func TestPositionGetters(t *testing.T) {
 		expectedLiquidity                string
 		expectedFeeGrowthInside0LastX128 string
 		expectedFeeGrowthInside1LastX128 string
-		expectedTokensOwed0              string
-		expectedTokensOwed1              string
+		expectedTokensOwed0              int64
+		expectedTokensOwed1              int64
 		expectedHasPanic                 bool
 		expectedPanicMessage             string
 	}{
@@ -322,8 +322,8 @@ func TestPositionGetters(t *testing.T) {
 			expectedLiquidity:                "1000000",
 			expectedFeeGrowthInside0LastX128: "2000000",
 			expectedFeeGrowthInside1LastX128: "3000000",
-			expectedTokensOwed0:              "4000000",
-			expectedTokensOwed1:              "5000000",
+			expectedTokensOwed0:              4000000,
+			expectedTokensOwed1:              5000000,
 			expectedHasPanic:                 false,
 		},
 		{
@@ -333,8 +333,8 @@ func TestPositionGetters(t *testing.T) {
 			expectedLiquidity:                "0",
 			expectedFeeGrowthInside0LastX128: "0",
 			expectedFeeGrowthInside1LastX128: "0",
-			expectedTokensOwed0:              "0",
-			expectedTokensOwed1:              "0",
+			expectedTokensOwed0:              0,
+			expectedTokensOwed1:              0,
 			expectedHasPanic:                 true,
 			expectedPanicMessage:             "[GNOSWAP-POOL-005] requested data not found",
 		},
@@ -347,8 +347,8 @@ func TestPositionGetters(t *testing.T) {
 			var liquidity string
 			var feeGrowthInside0LastX128 string
 			var feeGrowthInside1LastX128 string
-			var tokensOwed0 string
-			var tokensOwed1 string
+			var tokensOwed0 int64
+			var tokensOwed1 int64
 
 			if tt.expectedHasPanic {
 				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {

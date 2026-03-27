@@ -376,40 +376,40 @@ func (m *MockPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	return res[0].(*u256.Uint)
 }
 
-func (m *MockPool) GetPositionTokensOwed0(poolPath, key string) string {
+func (m *MockPool) GetPositionTokensOwed0(poolPath, key string) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed0")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
-func (m *MockPool) GetPositionTokensOwed1(poolPath, key string) string {
+func (m *MockPool) GetPositionTokensOwed1(poolPath, key string) int64 {
 	res, ok := m.Response.Get("GetPositionTokensOwed1")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
-func (m *MockPool) GetProtocolFeesToken0(poolPath string) string {
+func (m *MockPool) GetProtocolFeesToken0(poolPath string) int64 {
 	res, ok := m.Response.Get("GetProtocolFeesToken0")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
-func (m *MockPool) GetProtocolFeesToken1(poolPath string) string {
+func (m *MockPool) GetProtocolFeesToken1(poolPath string) int64 {
 	res, ok := m.Response.Get("GetProtocolFeesToken1")
 	if !ok {
-		return ""
+		return 0
 	}
 
-	return res[0].(string)
+	return res[0].(int64)
 }
 
 func (m *MockPool) GetSlot0FeeProtocol(poolPath string) uint8 {

@@ -156,19 +156,19 @@ func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 	return t.instance.GetPositionLiquidity(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
 	return t.instance.GetPositionTokensOwed0(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) string {
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
 	return t.instance.GetPositionTokensOwed1(poolPath, key)
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
 	return t.instance.GetProtocolFeesToken0(poolPath)
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) string {
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
 	return t.instance.GetProtocolFeesToken1(poolPath)
 }
 

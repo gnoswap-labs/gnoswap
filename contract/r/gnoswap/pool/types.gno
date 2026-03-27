@@ -166,13 +166,13 @@ type IPoolGetter interface {
 
 	GetPositionLiquidity(poolPath, key string) *u256.Uint
 
-	GetPositionTokensOwed0(poolPath, key string) string
+	GetPositionTokensOwed0(poolPath, key string) int64
 
-	GetPositionTokensOwed1(poolPath, key string) string
+	GetPositionTokensOwed1(poolPath, key string) int64
 
-	GetProtocolFeesToken0(poolPath string) string
+	GetProtocolFeesToken0(poolPath string) int64
 
-	GetProtocolFeesToken1(poolPath string) string
+	GetProtocolFeesToken1(poolPath string) int64
 
 	GetSlot0FeeProtocol(poolPath string) uint8
 

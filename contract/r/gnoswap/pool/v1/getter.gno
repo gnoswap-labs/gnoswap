@@ -78,12 +78,12 @@ func (i *poolV1) GetFeeGrowthGlobal1X128(poolPath string) string {
 	return i.mustGetPool(poolPath).FeeGrowthGlobal1X128().ToString()
 }
 
-func (i *poolV1) GetProtocolFeesToken0(poolPath string) string {
-	return formatInt(i.mustGetPool(poolPath).ProtocolFeesToken0())
+func (i *poolV1) GetProtocolFeesToken0(poolPath string) int64 {
+	return i.mustGetPool(poolPath).ProtocolFeesToken0()
 }
 
-func (i *poolV1) GetProtocolFeesToken1(poolPath string) string {
-	return formatInt(i.mustGetPool(poolPath).ProtocolFeesToken1())
+func (i *poolV1) GetProtocolFeesToken1(poolPath string) int64 {
+	return i.mustGetPool(poolPath).ProtocolFeesToken1()
 }
 
 func (i *poolV1) GetLiquidity(poolPath string) string {
@@ -119,12 +119,12 @@ func (i *poolV1) GetPositionFeeGrowthInside1LastX128(poolPath, key string) strin
 	return i.MustGetPosition(poolPath, key).FeeGrowthInside1LastX128()
 }
 
-func (i *poolV1) GetPositionTokensOwed0(poolPath, key string) string {
-	return formatInt(i.MustGetPosition(poolPath, key).TokensOwed0())
+func (i *poolV1) GetPositionTokensOwed0(poolPath, key string) int64 {
+	return i.MustGetPosition(poolPath, key).TokensOwed0()
 }
 
-func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) string {
-	return formatInt(i.MustGetPosition(poolPath, key).TokensOwed1())
+func (i *poolV1) GetPositionTokensOwed1(poolPath, key string) int64 {
+	return i.MustGetPosition(poolPath, key).TokensOwed1()
 }
 
 func (i *poolV1) GetTickLiquidityGross(poolPath string, tick int32) string {
