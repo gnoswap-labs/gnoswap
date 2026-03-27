@@ -276,12 +276,12 @@ func (m *MockStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incenti
 	return res[0].(int64)
 }
 
-func (m *MockStaker) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+func (m *MockStaker) GetDepositLiquidity(lpTokenId uint64) string {
 	res, ok := m.Response.Get("GetDepositLiquidity")
 	if !ok {
-		return u256.Zero()
+		return "0"
 	}
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint).ToString()
 }
 
 func (m *MockStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
@@ -372,20 +372,12 @@ func (m *MockStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	return res[0].(address)
 }
 
-func (m *MockStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (m *MockStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetIncentiveRewardAmount")
 	if !ok {
-		return u256.Zero()
+		return 0
 	}
-	return res[0].(*u256.Uint)
-}
-
-func (m *MockStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	res, ok := m.Response.Get("GetIncentiveRewardAmountAsString")
-	if !ok {
-		return "0"
-	}
-	return res[0].(string)
+	return res[0].(int64)
 }
 
 func (m *MockStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
@@ -620,12 +612,12 @@ func (m *MockStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	return res[0].([]uint64)
 }
 
-func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulation")
 	if !ok {
-		return u256.Zero()
+		return "0"
 	}
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint).ToString()
 }
 
 func (m *MockStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {

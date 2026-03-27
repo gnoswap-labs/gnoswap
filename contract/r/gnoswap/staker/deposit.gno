@@ -8,19 +8,19 @@ import (
 )
 
 type Deposit struct {
-	warmups                        []Warmup   // warmup information
-	liquidity                      *u256.Uint // liquidity
-	targetPoolPath                 string     // staked position's pool path
-	owner                          address    // owner address
-	stakeTime                      int64      // staked time
-	internalRewardLastCollectTime  int64      // last collect time for internal reward
-	collectedInternalReward        int64      // collected internal reward
-	collectedExternalRewards       *avl.Tree  // collected external reward by incentive id (incentiveID -> int64)
-	externalRewardLastCollectTimes *avl.Tree  // last collect time for external rewards by incentive id (incentiveID -> int64)
-	externalIncentiveIds           *avl.Tree  // external incentive ids for this deposit (incentiveID -> bool)
-	lastExternalIncentiveUpdatedAt int64      // last time when external incentive ids were synced
-	tickLower                      int32      // tick lower
-	tickUpper                      int32      // tick upper
+	warmups                        []Warmup  // warmup information
+	liquidity                      string    // liquidity (stored as decimal string, use Liquidity() for uint256 string)
+	targetPoolPath                 string    // staked position's pool path
+	owner                          address   // owner address
+	stakeTime                      int64     // staked time
+	internalRewardLastCollectTime  int64     // last collect time for internal reward
+	collectedInternalReward        int64     // collected internal reward
+	collectedExternalRewards       *avl.Tree // collected external reward by incentive id (incentiveID -> int64)
+	externalRewardLastCollectTimes *avl.Tree // last collect time for external rewards by incentive id (incentiveID -> int64)
+	externalIncentiveIds           *avl.Tree // external incentive ids for this deposit (incentiveID -> bool)
+	lastExternalIncentiveUpdatedAt int64     // last time when external incentive ids were synced
+	tickLower                      int32     // tick lower
+	tickUpper                      int32     // tick upper
 }
 
 func (d *Deposit) Owner() address {
@@ -40,11 +40,15 @@ func (d *Deposit) SetTargetPoolPath(targetPoolPath string) {
 }
 
 func (d *Deposit) Liquidity() *u256.Uint {
-	return d.liquidity
+	return u256.MustFromDecimal(d.liquidity)
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
-	d.liquidity = liquidity
+	if liquidity == nil {
+		return
+	}
+
+	d.liquidity = liquidity.ToString()
 }
 
 func (d *Deposit) StakeTime() int64 {
@@ -238,7 +242,7 @@ func (d *Deposit) Clone() *Deposit {
 
 	return &Deposit{
 		warmups:                        cloneWarmups(d.warmups),
-		liquidity:                      d.liquidity.Clone(),
+		liquidity:                      d.liquidity,
 		targetPoolPath:                 d.targetPoolPath,
 		owner:                          d.owner,
 		stakeTime:                      d.stakeTime,
@@ -264,7 +268,7 @@ func NewDeposit(
 	return &Deposit{
 		owner:                          owner,
 		targetPoolPath:                 targetPoolPath,
-		liquidity:                      liquidity,
+		liquidity:                      liquidity.ToString(),
 		warmups:                        warmups,
 		stakeTime:                      currentTime,
 		tickLower:                      tickLower,

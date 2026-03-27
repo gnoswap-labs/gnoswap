@@ -2,7 +2,6 @@
 package mock
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	staker "gno.land/r/gnoswap/staker"
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
@@ -343,12 +342,12 @@ func (t *TestStaker) GetDepositCollectedExternalReward(lpTokenId uint64, incenti
 	).(int64)
 }
 
-func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+func (t *TestStaker) GetDepositLiquidity(lpTokenId uint64) string {
 	return t.ExecuteFn(
 		"GetDepositLiquidity",
 		func(args ...any) any { return t.instance.GetDepositLiquidity(args[0].(uint64)) },
 		lpTokenId,
-	).(*u256.Uint)
+	).(string)
 }
 
 func (t *TestStaker) GetDepositLiquidityAsString(lpTokenId uint64) string {
@@ -439,22 +438,12 @@ func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) a
 	).(address)
 }
 
-func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	return t.ExecuteFn(
 		"GetIncentiveRewardAmount",
 		func(args ...any) any { return t.instance.GetIncentiveRewardAmount(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
-	).(*u256.Uint)
-}
-
-func (t *TestStaker) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	return t.ExecuteFn(
-		"GetIncentiveRewardAmountAsString",
-		func(args ...any) any {
-			return t.instance.GetIncentiveRewardAmountAsString(args[0].(string), args[1].(string))
-		},
-		poolPath, incentiveId,
-	).(string)
+	).(int64)
 }
 
 func (t *TestStaker) GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
@@ -701,12 +690,12 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	).([]uint64)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	return t.ExecuteFn(
 		"GetPoolGlobalRewardRatioAccumulation",
 		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64)) },
 		poolPath, timestamp,
-	).(*u256.Uint)
+	).(string)
 }
 
 func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {

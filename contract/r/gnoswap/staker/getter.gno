@@ -1,7 +1,5 @@
 package staker
 
-import u256 "gno.land/p/gnoswap/uint256"
-
 // IStakerGetter functions
 
 // GetPool returns a copy of the pool for the given path.
@@ -107,8 +105,8 @@ func GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int
 }
 
 // GetDepositLiquidity returns the liquidity amount of a staked position.
-func GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
-	return getImplementation().GetDepositLiquidity(lpTokenId).Clone()
+func GetDepositLiquidity(lpTokenId uint64) string {
+	return getImplementation().GetDepositLiquidity(lpTokenId)
 }
 
 // GetDepositLiquidityAsString returns the liquidity amount of a staked position as string.
@@ -167,13 +165,8 @@ func GetIncentiveRefundee(poolPath string, incentiveId string) address {
 }
 
 // GetIncentiveRewardAmount returns the total reward amount of an incentive.
-func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	return getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId).Clone()
-}
-
-// GetIncentiveRewardAmountAsString returns the total reward amount of an incentive as string.
-func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	return getImplementation().GetIncentiveRewardAmountAsString(poolPath, incentiveId)
+func GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
+	return getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
 }
 
 // GetIncentiveRewardPerSecond returns the reward rate per second of an incentive.
@@ -322,8 +315,8 @@ func GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int)
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp).Clone()
+func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
+	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.

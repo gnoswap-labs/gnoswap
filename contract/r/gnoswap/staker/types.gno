@@ -1,7 +1,6 @@
 package staker
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 )
 
@@ -59,7 +58,7 @@ type IStakerGetter interface {
 	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
 	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
 	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
-	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint
+	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string
 	GetPoolHistoricalTickCount(poolPath string) uint64
 	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
 	GetPoolHistoricalTick(poolPath string, tick uint64) int32
@@ -80,7 +79,7 @@ type IStakerGetter interface {
 	GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64
 	GetDepositCollectedInternalReward(lpTokenId uint64) int64
 	GetDepositCollectedExternalReward(lpTokenId uint64, incentiveId string) int64
-	GetDepositLiquidity(lpTokenId uint64) *u256.Uint
+	GetDepositLiquidity(lpTokenId uint64) string
 	GetDepositLiquidityAsString(lpTokenId uint64) string
 	GetDepositOwner(lpTokenId uint64) address
 	GetDepositStakeTime(lpTokenId uint64) int64
@@ -92,8 +91,7 @@ type IStakerGetter interface {
 	GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive
 	GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64
 	GetIncentiveRefundee(poolPath string, incentiveId string) address
-	GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint
-	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string
+	GetIncentiveRewardAmount(poolPath string, incentiveId string) int64
 	GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64
 	GetIncentiveRewardToken(poolPath string, incentiveId string) string
 	GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64

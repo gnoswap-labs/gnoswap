@@ -161,17 +161,10 @@ func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) 
 }
 
 // GetIncentiveRewardAmount returns the reward amount of an incentive.
-func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
+func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) int64 {
 	incentive := s.getIncentive(poolPath, incentiveId)
 
-	return u256.NewUintFromInt64(incentive.RewardAmount())
-}
-
-// GetIncentiveRewardAmountAsString returns the reward amount of an incentive as string.
-func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	rewardAmount := s.GetIncentiveRewardAmount(poolPath, incentiveId)
-
-	return rewardAmount.ToString()
+	return incentive.RewardAmount()
 }
 
 // GetIncentiveRewardPerSecond returns the reward per second of an incentive.
@@ -261,18 +254,16 @@ func (s *stakerV1) GetDepositTickUpper(lpTokenId uint64) int32 {
 	return deposit.TickUpper()
 }
 
-// GetDepositLiquidity returns the liquidity of a deposit.
-func (s *stakerV1) GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
+// GetDepositLiquidity returns the liquidity of a deposit as string.
+func (s *stakerV1) GetDepositLiquidity(lpTokenId uint64) string {
 	deposit := s.getDeposit(lpTokenId)
 
-	return deposit.Liquidity()
+	return deposit.Liquidity().ToString()
 }
 
 // GetDepositLiquidityAsString returns the liquidity of a deposit as string.
 func (s *stakerV1) GetDepositLiquidityAsString(lpTokenId uint64) string {
-	liquidity := s.GetDepositLiquidity(lpTokenId)
-
-	return liquidity.ToString()
+	return s.GetDepositLiquidity(lpTokenId)
 }
 
 // GetDepositInternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
@@ -529,16 +520,16 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offs
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	pool := s.getPoolByPoolPath(poolPath)
 	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
 	if !ok {
-		return u256.Zero()
+		return "0"
 	}
 
-	accumulation, ok := value.(*u256.Uint)
+	accumulation, ok := value.(string)
 	if !ok {
-		panic("failed to cast global reward ratio accumulation to *u256.Uint")
+		panic("failed to cast global reward ratio accumulation to string")
 	}
 
 	return accumulation
