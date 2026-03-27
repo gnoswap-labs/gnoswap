@@ -46,7 +46,6 @@ func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmu
 		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
 		warmups = append(warmups, sr.Warmup{
-			Index:          warmup.Index,
 			TimeDuration:   warmup.TimeDuration,
 			NextWarmupTime: nextWarmupTime,
 			WarmupRatio:    warmup.WarmupRatio,

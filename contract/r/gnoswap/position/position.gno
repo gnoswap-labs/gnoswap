@@ -18,9 +18,6 @@ type Position struct {
 	tokensOwed0 int64
 	tokensOwed1 int64
 
-	token0Balance int64 // token0 balance of the position
-	token1Balance int64 // token1 balance of the position
-
 	burned bool // whether the position has been burned (we don't burn the NFT, just mark as burned)
 }
 
@@ -72,22 +69,6 @@ func (p *Position) SetTokensOwed1(tokensOwed1 int64) {
 	p.tokensOwed1 = tokensOwed1
 }
 
-func (p *Position) Token0Balance() int64 {
-	return p.token0Balance
-}
-
-func (p *Position) SetToken0Balance(token0Balance int64) {
-	p.token0Balance = token0Balance
-}
-
-func (p *Position) Token1Balance() int64 {
-	return p.token1Balance
-}
-
-func (p *Position) SetToken1Balance(token1Balance int64) {
-	p.token1Balance = token1Balance
-}
-
 func (p *Position) FeeGrowthInside0LastX128() string {
 	return p.feeGrowthInside0LastX128
 }
@@ -136,7 +117,6 @@ func NewPosition(
 	liquidity string,
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 string,
 	tokensOwed0, tokensOwed1 int64,
-	token0Balance, token1Balance int64,
 	burned bool,
 	operator address,
 ) *Position {
@@ -149,8 +129,6 @@ func NewPosition(
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 		tokensOwed0:              tokensOwed0,
 		tokensOwed1:              tokensOwed1,
-		token0Balance:            token0Balance,
-		token1Balance:            token1Balance,
 		burned:                   burned,
 		operator:                 operator,
 	}

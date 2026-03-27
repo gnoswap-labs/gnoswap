@@ -459,34 +459,6 @@ func TestGetTotalLockedAmount(t *testing.T) {
 	}
 }
 
-// TestGetLockedAmount tests the GetLockedAmount getter function
-func TestGetLockedAmount(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get locked amount is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			// Action
-			GetLockedAmount()
-
-			// Assert
-			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetLockedAmount") != 1 {
-				t.Error("GetLockedAmount was not called on the implementation")
-			}
-		})
-	}
-}
-
 // TestGetTotalDelegationAmountAtSnapshot tests the GetTotalDelegationAmountAtSnapshot getter function
 func TestGetTotalDelegationAmountAtSnapshot(t *testing.T) {
 	tests := []struct {

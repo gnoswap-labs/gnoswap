@@ -98,7 +98,7 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Given: Specific protocol fee state
 			pool := &pl.Pool{}
-			protocolFees := pl.ProtocolFees{}
+			protocolFees := pl.TokenPair{}
 			protocolFees.SetToken0(test.initialFees["token0"])
 			protocolFees.SetToken1(test.initialFees["token1"])
 			pool.SetProtocolFees(protocolFees)

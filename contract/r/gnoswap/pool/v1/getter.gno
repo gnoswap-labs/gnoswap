@@ -1,10 +1,8 @@
 package v1
 
 import (
-	"gno.land/p/nt/ufmt/v0"
-
 	u256 "gno.land/p/gnoswap/uint256"
-
+	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -58,8 +56,8 @@ func (i *poolV1) GetTickSpacing(poolPath string) int32 {
 	return i.mustGetPool(poolPath).TickSpacing()
 }
 
-func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
-	return i.mustGetPool(poolPath).MaxLiquidityPerTick()
+func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) string {
+	return calculateMaxLiquidityPerTick(i.mustGetPool(poolPath).TickSpacing()).ToString()
 }
 
 func (i *poolV1) GetSlot0FeeProtocol(poolPath string) uint8 {

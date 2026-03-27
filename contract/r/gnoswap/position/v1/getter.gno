@@ -91,6 +91,12 @@ func (p *positionV1) GetPositionLiquidity(positionId uint64) string {
 	return p.mustGetPosition(positionId).Liquidity()
 }
 
+func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+	position := p.mustGetPosition(positionId)
+
+	return calculatePositionBalances(position)
+}
+
 func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return p.mustGetPosition(positionId).FeeGrowthInside0LastX128()
 }

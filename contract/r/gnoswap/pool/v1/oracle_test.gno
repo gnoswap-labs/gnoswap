@@ -515,9 +515,8 @@ func createTestPool() *pl.Pool {
 		"gno.land/r/onbloc/bar",
 		500,
 		u256.MustFromDecimal("79228162514264337593543950336"),
-		10,                              // tickSpacing
-		0,                               // tick
-		0,                               // feeProtocol
-		u256.MustFromDecimal("1000000"), // maxLiquidityPerTick
+		10, // tickSpacing
+		0,  // tick
+		0,  // feeProtocol
 	)
 }

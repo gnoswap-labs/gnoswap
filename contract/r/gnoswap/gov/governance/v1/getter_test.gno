@@ -47,7 +47,6 @@ func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
 		address("g1proposer"),
 		1,
 		baseTime,
-		baseTime,
 		runtime.ChainHeight(),
 	)
 

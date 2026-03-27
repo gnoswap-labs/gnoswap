@@ -8,7 +8,7 @@ import (
 )
 
 func newPoolFixture() *Pool {
-	pool := NewPool("foo", "bar", 500, u256.MustFromDecimal("100"), 10, 5, 6, u256.MustFromDecimal("700"))
+	pool := NewPool("foo", "bar", 500, u256.MustFromDecimal("100"), 10, 5, 6)
 	pool.SetBalanceToken0(1000)
 	pool.SetBalanceToken1(2000)
 	pool.SetProtocolFeesToken0(3000)
@@ -16,7 +16,6 @@ func newPoolFixture() *Pool {
 	pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("5000"))
 	pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("6000"))
 	pool.SetLiquidity(u256.MustFromDecimal("7000"))
-	pool.SetMaxLiquidityPerTick(u256.MustFromDecimal("8000"))
 	pool.SetSlot0(newSlot0(u256.MustFromDecimal("9000"), 11, 12, true))
 	return pool
 }
@@ -85,8 +84,10 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name:  "GetFeeGrowthGlobalX128",
-			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000")) },
+			name: "GetFeeGrowthGlobalX128",
+			setup: func(m *MockPool) {
+				m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000"))
+			},
 			getter: func() any {
 				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
@@ -158,7 +159,6 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				pool.SetBalanceToken1(2020)
 				pool.SetProtocolFeesToken0(3030)
 				pool.SetProtocolFeesToken1(4040)
-				pool.SetMaxLiquidityPerTick(u256.MustFromDecimal("5050"))
 				pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("6060"))
 				pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("7070"))
 				pool.SetLiquidity(u256.MustFromDecimal("8080"))
@@ -179,7 +179,6 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(2000), pool.BalanceToken1())
 				uassert.Equal(t, int64(3000), pool.ProtocolFeesToken0())
 				uassert.Equal(t, int64(4000), pool.ProtocolFeesToken1())
-				uassert.Equal(t, "8000", pool.MaxLiquidityPerTick().ToString())
 				uassert.Equal(t, "5000", pool.FeeGrowthGlobal0X128().ToString())
 				uassert.Equal(t, "6000", pool.FeeGrowthGlobal1X128().ToString())
 				uassert.Equal(t, "7000", pool.Liquidity().ToString())

@@ -297,14 +297,6 @@ func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	).(*u256.Uint)
 }
 
-func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
-	return t.ExecuteFn(
-		"GetMaxLiquidityPerTick",
-		func(args ...any) any { return t.instance.GetMaxLiquidityPerTick(args[0].(string)) },
-		poolPath,
-	).(*u256.Uint)
-}
-
 func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
 	result := t.ExecuteFn(
 		"GetObservation",

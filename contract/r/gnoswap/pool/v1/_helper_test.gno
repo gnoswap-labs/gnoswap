@@ -476,7 +476,6 @@ type createMockPoolParams struct {
 	slot0                mockSlot0
 	balances             mockBalances
 	protocolFees         mockBalances
-	maxLiquidityPerTick  *u256.Uint
 	feeGrowthGlobal0X128 *u256.Uint
 	feeGrowthGlobal1X128 *u256.Uint
 	liquidity            *u256.Uint
@@ -493,11 +492,11 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	slot0.SetTick(params.slot0.tick)
 	slot0.SetUnlocked(params.slot0.unlocked)
 
-	balances := pl.Balances{}
+	balances := pl.TokenPair{}
 	balances.SetToken0(params.balances.token0)
 	balances.SetToken1(params.balances.token1)
 
-	protocolFees := pl.ProtocolFees{}
+	protocolFees := pl.TokenPair{}
 	protocolFees.SetToken0(params.protocolFees.token0)
 	protocolFees.SetToken1(params.protocolFees.token1)
 
@@ -513,7 +512,6 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	pool.SetSlot0(slot0)
 	pool.SetBalances(balances)
 	pool.SetProtocolFees(protocolFees)
-	pool.SetMaxLiquidityPerTick(params.maxLiquidityPerTick)
 	pool.SetFeeGrowthGlobal0X128(params.feeGrowthGlobal0X128)
 	pool.SetFeeGrowthGlobal1X128(params.feeGrowthGlobal1X128)
 	pool.SetLiquidity(params.liquidity)

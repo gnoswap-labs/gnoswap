@@ -91,8 +91,6 @@ func newDummyPosition(id uint64) position.Position {
 		"20",
 		30,
 		40,
-		1000,
-		1000,
 		false,
 		"user1",
 	)

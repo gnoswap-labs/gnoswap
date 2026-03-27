@@ -19,11 +19,6 @@ func GetTotalLockedAmount() int64 {
 	return getImplementation().GetTotalLockedAmount()
 }
 
-// GetLockedAmount returns the total locked GNS amount.
-func GetLockedAmount() int64 {
-	return getImplementation().GetLockedAmount()
-}
-
 // GetUnDelegationLockupPeriod returns the undelegation lockup period in seconds.
 func GetUnDelegationLockupPeriod() int64 {
 	return getImplementation().GetUnDelegationLockupPeriod()

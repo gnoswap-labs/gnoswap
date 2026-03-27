@@ -185,6 +185,13 @@ func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
 	return t.instance.GetPositionLiquidity(positionId)
 }
 
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+	if !t.isActive("GetPositionTokenBalances") {
+		panic("test implementation: GetPositionTokenBalances not supported")
+	}
+	return t.instance.GetPositionTokenBalances(positionId)
+}
+
 func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	if !t.isActive("GetPositionFeeGrowthInside0LastX128") {
 		panic("test implementation: GetPositionFeeGrowthInside0LastX128 not supported")

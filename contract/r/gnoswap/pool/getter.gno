@@ -66,11 +66,6 @@ func GetLiquidity(poolPath string) string {
 	return getImplementation().GetLiquidity(poolPath).ToString()
 }
 
-// GetMaxLiquidityPerTick returns the maximum liquidity per tick for the pool.
-func GetMaxLiquidityPerTick(poolPath string) string {
-	return getImplementation().GetMaxLiquidityPerTick(poolPath).ToString()
-}
-
 // GetObservation returns observation data for calculating time-weighted averages.
 func GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
 	return getImplementation().GetObservation(poolPath, secondsAgo)

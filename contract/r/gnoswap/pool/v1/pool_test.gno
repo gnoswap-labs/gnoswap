@@ -318,7 +318,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				testing.SetRealm(posRealm)
 
 				// Maximum allowed liquidity overflow attempt
-				maxLiquidity := pool.MaxLiquidityPerTick()
+				maxLiquidity := calculateMaxLiquidityPerTick(pool.TickSpacing())
 				overflowAmount := new(u256.Uint).Add(maxLiquidity, u256.One()).ToString()
 
 				expectedAbortMsg := ufmt.Sprintf(

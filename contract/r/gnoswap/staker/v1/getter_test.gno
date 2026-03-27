@@ -76,9 +76,9 @@ func setupBasicTestState(t *testing.T) *testState {
 
 	// Direct store access for complex state: Deposit
 	warmups := []sr.Warmup{
-		{Index: 0, TimeDuration: 86400 * 5, NextWarmupTime: state.fixedTimestamp + 86400*5, WarmupRatio: 30},
-		{Index: 1, TimeDuration: 86400 * 10, NextWarmupTime: state.fixedTimestamp + 86400*10, WarmupRatio: 50},
-		{Index: 2, TimeDuration: 86400 * 30, NextWarmupTime: state.fixedTimestamp + 86400*30, WarmupRatio: 70},
+		{TimeDuration: 86400 * 5, NextWarmupTime: state.fixedTimestamp + 86400*5, WarmupRatio: 30},
+		{TimeDuration: 86400 * 10, NextWarmupTime: state.fixedTimestamp + 86400*10, WarmupRatio: 50},
+		{TimeDuration: 86400 * 30, NextWarmupTime: state.fixedTimestamp + 86400*30, WarmupRatio: 70},
 	}
 	state.deposit = sr.NewDeposit(
 		state.owner,

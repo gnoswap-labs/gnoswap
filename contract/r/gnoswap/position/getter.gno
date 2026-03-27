@@ -36,30 +36,18 @@ func IsInRange(positionId uint64) bool {
 
 // GetPositionTokenBalances returns the token0 balance of a position.
 func GetPositionTokenBalances(positionId uint64) (int64, int64) {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return 0, 0
-	}
-
-	return position.Token0Balance(), position.Token1Balance()
+	balance0, balance1 := getImplementation().GetPositionTokenBalances(positionId)
+	return balance0, balance1
 }
 
 func GetPositionToken0Balance(positionId uint64) int64 {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return 0
-	}
-
-	return position.Token0Balance()
+	balance0, _ := GetPositionTokenBalances(positionId)
+	return balance0
 }
 
 func GetPositionToken1Balance(positionId uint64) int64 {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return 0
-	}
-
-	return position.Token1Balance()
+	_, balance1 := GetPositionTokenBalances(positionId)
+	return balance1
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.

@@ -127,14 +127,6 @@ func (m *MockGovStaker) GetTotalLockedAmount() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetLockedAmount() int64 {
-	res, ok := m.Response.Get("GetLockedAmount")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
 func (m *MockGovStaker) GetDelegationCount() int {
 	res, ok := m.Response.Get("GetDelegationCount")
 	if !ok {

@@ -208,14 +208,11 @@ func comparePositionBalances() {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")
-	pos1, _ := position.GetPosition(1)
-	pos2, _ := position.GetPosition(2)
-
-	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", pos1.Token0Balance())
-	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", pos1.Token1Balance())
-	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", pos2.Token0Balance())
-	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", pos2.Token1Balance())
-	ufmt.Printf("[EXPECTED] Sum of positions should match pool balances\n")
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", position.GetPositionToken0Balance(2))
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", position.GetPositionToken1Balance(2))
+	ufmt.Printf("[EXPECTED] Sum of positions should stay close to pool balances\n")
 }
 
 // Output:
@@ -250,8 +247,8 @@ func comparePositionBalances() {
 //
 // [SCENARIO] 5. Compare position balances
 // [INFO] Comparing position balances
-// [EXPECTED] Position 1 token0 balance should be 49982991
-// [EXPECTED] Position 1 token1 balance should be 50000000
-// [EXPECTED] Position 2 token0 balance should be 99939940
-// [EXPECTED] Position 2 token1 balance should be 23027406
-// [EXPECTED] Sum of positions should match pool balances
+// [EXPECTED] Position 1 token0 balance should be 49982990
+// [EXPECTED] Position 1 token1 balance should be 49999999
+// [EXPECTED] Position 2 token0 balance should be 99939939
+// [EXPECTED] Position 2 token1 balance should be 23027405
+// [EXPECTED] Sum of positions should stay close to pool balances

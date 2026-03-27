@@ -124,6 +124,10 @@ func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
 	return t.instance.GetPositionLiquidity(positionId)
 }
 
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+	return t.instance.GetPositionTokenBalances(positionId)
+}
+
 func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return t.instance.GetPositionFeeGrowthInside0LastX128(positionId)
 }

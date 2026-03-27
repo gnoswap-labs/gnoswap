@@ -1,9 +1,8 @@
 package position
 
 import (
-	avl "gno.land/p/nt/avl/v0"
-
 	u256 "gno.land/p/gnoswap/uint256"
+	avl "gno.land/p/nt/avl/v0"
 )
 
 type IPosition interface {
@@ -77,6 +76,7 @@ type IPositionGetter interface {
 	GetPositionTickLower(positionId uint64) int32
 	GetPositionTickUpper(positionId uint64) int32
 	GetPositionLiquidity(positionId uint64) string
+	GetPositionTokenBalances(positionId uint64) (int64, int64)
 	GetPositionFeeGrowthInside0LastX128(positionId uint64) string
 	GetPositionFeeGrowthInside1LastX128(positionId uint64) string
 	GetPositionTokensOwed0(positionId uint64) int64

@@ -91,42 +91,6 @@ func TestGetter_GetTotalLockedAmount(t *testing.T) {
 	}
 }
 
-// TestGetter_GetLockedAmount tests GetLockedAmount
-func TestGetter_GetLockedAmount(t *testing.T) {
-	tests := []struct {
-		name     string
-		amount   int64
-		expected int64
-	}{
-		{
-			name:     "Zero locked amount",
-			amount:   0,
-			expected: 0,
-		},
-		{
-			name:     "Positive locked amount",
-			amount:   1500,
-			expected: 1500,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Setup store
-			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.SetTotalLockedAmount(tt.amount)
-
-			gs := &govStakerV1{store: store}
-
-			// When: Get locked amount (should return same as GetTotalLockedAmount)
-			result := gs.GetLockedAmount()
-
-			// Then: Should return correct amount
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
 // TestGetter_GetUnDelegationLockupPeriod tests GetUnDelegationLockupPeriod
 func TestGetter_GetUnDelegationLockupPeriod(t *testing.T) {
 	tests := []struct {

@@ -13,7 +13,7 @@ func newProposalFixture() *Proposal {
 	status := NewProposalStatusBy(schedule, actionStatus, voteStatus)
 	metadata := NewProposalMetadata("title", "description")
 	data := NewProposalData(ParameterChange, NewCommunityPoolSpendInfo(adminAddr, "token", 70), NewExecutionInfo(2, []string{"msg1", "msg2"}))
-	return NewProposal(1, status, metadata, data, adminAddr, 2, 80, 90, 100)
+	return NewProposal(1, status, metadata, data, adminAddr, 2, 80, 100)
 }
 
 func newVotingInfoFixture() *VotingInfo {
@@ -35,8 +35,8 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovernance)
 	}{
 		{
-			name: "GetProposalIDs",
-			setup: func(m *MockGovernance) { m.Response.Set("GetProposalIDs", []int64{1, 2}) },
+			name:   "GetProposalIDs",
+			setup:  func(m *MockGovernance) { m.Response.Set("GetProposalIDs", []int64{1, 2}) },
 			getter: func(t *testing.T) any { return GetProposalIDs(0, 10) },
 			mutate: func(result any) {
 				values := result.([]int64)
@@ -50,7 +50,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProposal",
+			name:  "GetProposal",
 			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
 			getter: func(t *testing.T) any {
 				proposal, err := GetProposal(1)
@@ -87,8 +87,8 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetVotingInfoAddresses",
-			setup: func(m *MockGovernance) { m.Response.Set("GetVotingInfoAddresses", []address{adminAddr}) },
+			name:   "GetVotingInfoAddresses",
+			setup:  func(m *MockGovernance) { m.Response.Set("GetVotingInfoAddresses", []address{adminAddr}) },
 			getter: func(t *testing.T) any { return GetVotingInfoAddresses(1, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]address)
@@ -102,7 +102,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetVotingInfo",
+			name:  "GetVotingInfo",
 			setup: func(m *MockGovernance) { m.Response.Set("GetVotingInfo", newVotingInfoFixture(), nil) },
 			getter: func(t *testing.T) any {
 				votingInfo, err := GetVotingInfo(1, adminAddr)
@@ -129,7 +129,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProposalCommunityPoolSpendInfo",
+			name:  "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
 			getter: func(t *testing.T) any {
 				info, err := GetProposalCommunityPoolSpendInfo(1)
@@ -148,7 +148,7 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProposalExecutionInfo",
+			name:  "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) { m.Response.Set("GetProposal", newProposalFixture(), nil) },
 			getter: func(t *testing.T) any {
 				info, err := GetProposalExecutionInfo(1)
@@ -169,8 +169,8 @@ func TestMutableGovernanceGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetUserProposalIDs",
-			setup: func(m *MockGovernance) { m.Response.Set("GetUserProposalIDs", []int64{7, 8}) },
+			name:   "GetUserProposalIDs",
+			setup:  func(m *MockGovernance) { m.Response.Set("GetUserProposalIDs", []int64{7, 8}) },
 			getter: func(t *testing.T) any { return GetUserProposalIDs(adminAddr, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]int64)

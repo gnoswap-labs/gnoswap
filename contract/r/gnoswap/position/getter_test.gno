@@ -17,8 +17,6 @@ func newStoredPosition() *Position {
 		"3000",
 		4000,
 		5000,
-		6000,
-		7000,
 		false,
 		adminAddr,
 	)
@@ -34,8 +32,6 @@ func mutatePosition(position *Position) {
 	position.SetFeeGrowthInside1LastX128("3300")
 	position.SetTokensOwed0(4400)
 	position.SetTokensOwed1(5500)
-	position.SetToken0Balance(6600)
-	position.SetToken1Balance(7700)
 }
 
 func assertPositionUnchanged(t *testing.T, position *Position) {
@@ -50,8 +46,6 @@ func assertPositionUnchanged(t *testing.T, position *Position) {
 	uassert.Equal(t, "3000", position.FeeGrowthInside1LastX128())
 	uassert.Equal(t, int64(4000), position.TokensOwed0())
 	uassert.Equal(t, int64(5000), position.TokensOwed1())
-	uassert.Equal(t, int64(6000), position.Token0Balance())
-	uassert.Equal(t, int64(7000), position.Token1Balance())
 }
 
 func TestGetPositionIsolation(t *testing.T) {
@@ -78,16 +72,12 @@ func TestGetPositionIsolation(t *testing.T) {
 	uassert.Equal(t, "3300", result.FeeGrowthInside1LastX128())
 	uassert.Equal(t, int64(4400), result.TokensOwed0())
 	uassert.Equal(t, int64(5500), result.TokensOwed1())
-	uassert.Equal(t, int64(6600), result.Token0Balance())
-	uassert.Equal(t, int64(7700), result.Token1Balance())
 
 	if storedPosition.Liquidity() == result.Liquidity() ||
 		storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
 		storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
 		storedPosition.TokensOwed0() == result.TokensOwed0() ||
-		storedPosition.TokensOwed1() == result.TokensOwed1() ||
-		storedPosition.Token0Balance() == result.Token0Balance() ||
-		storedPosition.Token1Balance() == result.Token1Balance() {
+		storedPosition.TokensOwed1() == result.TokensOwed1() {
 		t.Fatal("GetPosition() returned aliased nested mutable state")
 	}
 }
@@ -110,6 +100,24 @@ func TestGetPositionIDsIsolation(t *testing.T) {
 	}
 }
 
+func TestPositionTokenBalanceGetterComposition(t *testing.T) {
+	resetTestState(t)
+	mockPosition := newMockPosition("v1")
+	implementation = mockPosition
+	mockPosition.Response.Set(
+		"GetPositionTokenBalances",
+		int64(6000),
+		int64(7000),
+	)
+
+	balance0, balance1 := GetPositionTokenBalances(1)
+	uassert.Equal(t, int64(6000), balance0)
+	uassert.Equal(t, int64(7000), balance1)
+	uassert.Equal(t, int64(6000), GetPositionToken0Balance(1))
+	uassert.Equal(t, int64(7000), GetPositionToken1Balance(1))
+	uassert.Equal(t, 3, mockPosition.Response.CallCount("GetPositionTokenBalances"))
+}
+
 func TestMutablePositionGetterIsolation(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -119,30 +127,6 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		assertSame func(t *testing.T, result any)
 		assertRaw  func(t *testing.T, raw *Position)
 	}{
-		{
-			name: "GetPositionToken0Balance",
-			setup: func(m *MockPosition) *Position {
-				stored := newStoredPosition()
-				m.Response.Set("GetPosition", *stored, true)
-				return stored
-			},
-			getter:     func() any { return GetPositionToken0Balance(1) },
-			mutate:     func(result any) { _ = result.(int64) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(6000), result.(int64)) },
-			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(6000), raw.Token0Balance()) },
-		},
-		{
-			name: "GetPositionToken1Balance",
-			setup: func(m *MockPosition) *Position {
-				stored := newStoredPosition()
-				m.Response.Set("GetPosition", *stored, true)
-				return stored
-			},
-			getter:     func() any { return GetPositionToken1Balance(1) },
-			mutate:     func(result any) { _ = result.(int64) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(7000), result.(int64)) },
-			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(7000), raw.Token1Balance()) },
-		},
 		{
 			name: "GetPositionFeeGrowthInside0LastX128",
 			setup: func(m *MockPosition) *Position {
@@ -309,8 +293,7 @@ func TestGetPositionTokenBalances(t *testing.T) {
 		mockPosition := newMockPosition("v1")
 		implementation = mockPosition
 
-		stored := newStoredPosition()
-		mockPosition.Response.Set("GetPosition", *stored, true)
+		mockPosition.Response.Set("GetPositionTokenBalances", int64(6000), int64(7000))
 
 		token0Balance, token1Balance := GetPositionTokenBalances(1)
 		uassert.Equal(t, int64(6000), token0Balance)

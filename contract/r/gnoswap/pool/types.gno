@@ -153,8 +153,6 @@ type IPoolGetter interface {
 
 	GetLiquidity(poolPath string) *u256.Uint
 
-	GetMaxLiquidityPerTick(poolPath string) *u256.Uint
-
 	GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
 
 	GetPoolCreationFee() int64

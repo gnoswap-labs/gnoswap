@@ -40,7 +40,6 @@ type IGovStakerGetter interface {
 	GetTotalxGnsSupply() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
-	GetLockedAmount() int64
 	GetDelegationCount() int
 	GetDelegationIDs(offset, count int) []int64
 	ExistsDelegation(delegationID int64) bool

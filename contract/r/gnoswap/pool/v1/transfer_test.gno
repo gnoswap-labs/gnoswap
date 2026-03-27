@@ -157,7 +157,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 	makeMockPoolWithBalance := func(token0 int64, token1 int64) *pl.Pool {
 		mockPool := &pl.Pool{}
 
-		balances := pl.Balances{}
+		balances := pl.TokenPair{}
 		balances.SetToken0(token0)
 		balances.SetToken1(token1)
 		mockPool.SetBalances(balances)

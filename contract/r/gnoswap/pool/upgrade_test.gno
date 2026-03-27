@@ -1587,51 +1587,6 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 	}
 }
 
-// TestGetMaxLiquidityPerTick tests the GetMaxLiquidityPerTick proxy function
-func TestGetMaxLiquidityPerTick(t *testing.T) {
-	tests := []struct {
-		name              string
-		setup             func(t *testing.T)
-		poolPath          string
-		expectedLiquidity string
-	}{
-		{
-			name: "get max liquidity per tick is success",
-			setup: func(t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
-				RegisterInitializer(cross, makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
-			},
-			poolPath:          "mock_pool_path",
-			expectedLiquidity: "1000000",
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(t)
-		}
-
-		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetMaxLiquidityPerTick", u256.MustFromDecimal(tt.expectedLiquidity))
-
-		// Action
-		liquidity := GetMaxLiquidityPerTick(tt.poolPath)
-
-		// Assert
-		if mockPool.Response.CallCount("GetMaxLiquidityPerTick") != 1 {
-			t.Error("GetMaxLiquidityPerTick was not called on the implementation")
-		}
-		if liquidity != tt.expectedLiquidity {
-			t.Errorf("GetMaxLiquidityPerTick() = %v, want %v", liquidity, tt.expectedLiquidity)
-		}
-	}
-}
-
 // TestGetSlot0FeeProtocol tests the GetSlot0FeeProtocol proxy function
 func TestGetSlot0FeeProtocol(t *testing.T) {
 	tests := []struct {

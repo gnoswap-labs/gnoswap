@@ -217,13 +217,6 @@ func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
-	if !t.isActive("GetMaxLiquidityPerTick") {
-		panic("test implementation: GetMaxLiquidityPerTick not supported")
-	}
-	return t.instance.GetMaxLiquidityPerTick(poolPath)
-}
-
 func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
 	if !t.isActive("GetObservation") {
 		panic("test implementation: GetObservation not supported")

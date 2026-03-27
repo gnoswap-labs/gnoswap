@@ -18,7 +18,6 @@ func newTickBitmapPool(t *testing.T) *pl.Pool {
 		10,
 		0,
 		0,
-		u256.MustFromDecimal("1000000"),
 	)
 }
 

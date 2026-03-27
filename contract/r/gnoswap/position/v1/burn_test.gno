@@ -124,8 +124,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"200",          // feeGrowthInside1LastX128
 					10,             // tokensOwed0
 					20,             // tokensOwed1
-					500,            // token0Balance
-					600,            // token1Balance
 					false,          // burned
 					"",             // operator
 				)
@@ -151,8 +149,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"200",
 					50,
 					75,
-					500,
-					600,
 					false, // burned
 					"",    // operator
 				)
@@ -176,8 +172,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"0",
 					"100",
 					"200",
-					0,
-					0,
 					0,
 					0,
 					false, // burned
@@ -205,8 +199,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"0",
 					9223372036854775807, // Already max tokens owed
 					0,
-					0,
-					0,
 					false, // burned
 					"",    // operator
 				)
@@ -231,8 +223,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"0",
 					0,
 					9223372036854775807, // Already max tokens owed
-					0,
-					0,
 					false, // burned
 					"",    // operator
 				)
@@ -257,8 +247,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"0",
 					1000,
 					2000,
-					50000000,
-					60000000,
 					false, // burned
 					"",    // operator
 				)
@@ -284,8 +272,6 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"200",
 					999999,
 					888888,
-					5000,
-					6000,
 					false, // burned
 					"",    // operator
 				)

@@ -125,8 +125,8 @@ func checkInitialPositionState() {
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Initial position tickUpper should be %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", pos.Token0Balance())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", pos.Token1Balance())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 }
 
 func increasePositionLiquidity() {
@@ -157,8 +157,8 @@ func checkDecreasedPositionState() {
 	ufmt.Printf("[EXPECTED] Decreased position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be unchanged at %d\n", pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", pos.Token0Balance())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", pos.Token1Balance())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
 }
 
 func executeSwap() {
@@ -255,8 +255,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Initial position liquidity should be 318704392
 // [EXPECTED] Initial position tickLower should be 8000
 // [EXPECTED] Initial position tickUpper should be 12000
-// [EXPECTED] Position token0 balance should be 18394892
-// [EXPECTED] Position token1 balance should be 50000000
+// [EXPECTED] Position token0 balance should be 18394891
+// [EXPECTED] Position token1 balance should be 49999999
 //
 // [SCENARIO] 4. Decrease position liquidity
 // [INFO] Collecting fees before decrease

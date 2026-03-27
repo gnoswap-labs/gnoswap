@@ -83,12 +83,6 @@ func (p *positionV1) Reposition(
 		},
 	)
 
-	// before update position, calculate token balances
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
-
-	token0Balance := safeAddInt64(calculatedToken0Balance, safeConvertToInt64(amount0))
-	token1Balance := safeAddInt64(calculatedToken1Balance, safeConvertToInt64(amount1))
-
 	// update position tickLower, tickUpper to new value
 	// because getCurrentFeeGrowth() uses tickLower, tickUpper
 	position.SetTickLower(tickLower)
@@ -102,8 +96,6 @@ func (p *positionV1) Reposition(
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
 	position.SetLiquidity(liquidity.ToString())
-	position.SetToken0Balance(token0Balance)
-	position.SetToken1Balance(token1Balance)
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
