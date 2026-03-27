@@ -1,8 +1,6 @@
 package position
 
 import (
-	"strconv"
-
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -43,13 +41,13 @@ func IsInRange(positionId uint64) bool {
 }
 
 // GetPositionTokenBalances returns the token0 balance of a position.
-func GetPositionTokenBalances(positionId uint64) (string, string) {
+func GetPositionTokenBalances(positionId uint64) (int64, int64) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-	return "", ""
+		return 0, 0
 	}
 
-	return strconv.FormatInt(position.Token0Balance(), 10), strconv.FormatInt(position.Token1Balance(), 10)
+	return position.Token0Balance(), position.Token1Balance()
 }
 
 func GetPositionToken0Balance(positionId uint64) int64 {

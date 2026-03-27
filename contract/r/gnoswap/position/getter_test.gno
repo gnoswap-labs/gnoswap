@@ -302,3 +302,28 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPositionTokenBalances(t *testing.T) {
+	t.Run("returns balances for existing position", func(t *testing.T) {
+		resetTestState(t)
+		mockPosition := newMockPosition("v1")
+		implementation = mockPosition
+
+		stored := newStoredPosition()
+		mockPosition.Response.Set("GetPosition", *stored, true)
+
+		token0Balance, token1Balance := GetPositionTokenBalances(1)
+		uassert.Equal(t, int64(6000), token0Balance)
+		uassert.Equal(t, int64(7000), token1Balance)
+	})
+
+	t.Run("returns zero balances for missing position", func(t *testing.T) {
+		resetTestState(t)
+		mockPosition := newMockPosition("v1")
+		implementation = mockPosition
+
+		token0Balance, token1Balance := GetPositionTokenBalances(999)
+		uassert.Equal(t, int64(0), token0Balance)
+		uassert.Equal(t, int64(0), token1Balance)
+	})
+}
