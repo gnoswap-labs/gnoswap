@@ -14,7 +14,7 @@ func makeTestPool() *Pool {
 		fee:         500,
 		tickSpacing: 10,
 		ticks:       avl.NewTree(),
-		tickBitmaps: avl.NewTree(),
+		tickBitmaps: make(map[int16]string),
 		positions:   avl.NewTree(),
 	}
 }

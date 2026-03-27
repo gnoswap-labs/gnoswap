@@ -24,18 +24,29 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 
 // EncodeTickKey encodes a tick to a string key for the tick tree.
 func EncodeTickKey(tick int32) string {
+	var buf [10]byte
+	encodeTickKeyToBuffer(buf[:], tick)
+	return string(buf[:])
+}
+
+// EncodePositionKey encodes a position range into a fixed-width 20-byte string.
+func EncodePositionKey(tickLower, tickUpper int32) string {
+	var buf [20]byte
+	encodeTickKeyToBuffer(buf[:10], tickLower)
+	encodeTickKeyToBuffer(buf[10:], tickUpper)
+	return string(buf[:])
+}
+
+func encodeTickKeyToBuffer(dst []byte, tick int32) {
 	adjustTick := tick + ENCODED_TICK_OFFSET
 	if adjustTick < 0 {
 		panic(ufmt.Sprintf("tick(%d) + ENCODED_TICK_OFFSET(%d) < 0", tick, ENCODED_TICK_OFFSET))
 	}
 
-	// Convert the value to a decimal string.
-	s := strconv.FormatInt(int64(adjustTick), 10)
-
-	// Zero-pad to a total length of 10 characters.
-	zerosNeeded := 10 - len(s)
-
-	return strings.Repeat("0", zerosNeeded) + s
+	for i := len(dst) - 1; i >= 0; i-- {
+		dst[i] = byte('0' + adjustTick%10)
+		adjustTick /= 10
+	}
 }
 
 // DecodeTickKey decodes a string key to a tick.

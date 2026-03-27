@@ -1,18 +1,12 @@
 package v1
 
 import (
-	"encoding/base64"
 	"math"
 	"strconv"
 	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
-
-// b64Encode encodes a string to base64.
-func b64Encode(data string) string {
-	return base64.StdEncoding.EncodeToString([]byte(data))
-}
 
 // formatInt formats an integer to a string.
 func formatInt(v any) string {
