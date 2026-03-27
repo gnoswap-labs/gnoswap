@@ -265,12 +265,14 @@ func observeSingle(
 	cardinality uint16,
 ) (int64, string, error) {
 	if secondsAgo == 0 {
+		// if secondsAgo is 0, return current values
 		last, err := observationAt(os, index)
 		if err != nil {
 			return 0, "", err
 		}
 
 		if last.BlockTimestamp() != currentTime {
+			// need to create virtual observation for current time
 			transformed, err := transform(last, currentTime, tick, liquidity)
 			if err != nil {
 				return 0, "", err
@@ -284,6 +286,7 @@ func observeSingle(
 
 	target := currentTime - int64(secondsAgo)
 
+	// find the observations before and after the target
 	beforeOrAt, atOrAfter, err := getSurroundingObservations(
 		os,
 		target,
@@ -305,15 +308,18 @@ func observeSingle(
 		return atOrAfter.TickCumulative(), atOrAfter.SecondsPerLiquidityCumulativeX128(), nil
 	}
 
+	// interpolate between the two observations
 	observationTimeDelta := atOrAfter.BlockTimestamp() - beforeOrAt.BlockTimestamp()
 	targetDelta := target - beforeOrAt.BlockTimestamp()
 
+	// tickCumulative += (tickCumulativeAfter - tickCumulativeBefore) / observationTimeDelta * targetDelta
 	tickCumulative := beforeOrAt.TickCumulative() +
 		((atOrAfter.TickCumulative()-beforeOrAt.TickCumulative())/observationTimeDelta)*targetDelta
 
 	beforeSecPerLiq := u256.MustFromDecimal(beforeOrAt.SecondsPerLiquidityCumulativeX128())
 	afterSecPerLiq := u256.MustFromDecimal(atOrAfter.SecondsPerLiquidityCumulativeX128())
 
+	// for secondsPerLiquidity, need to interpolate carefully
 	secondsPerLiquidityDelta := u256.Zero().Sub(afterSecPerLiq, beforeSecPerLiq)
 
 	secondsPerLiquidity := u256.Zero().Add(
