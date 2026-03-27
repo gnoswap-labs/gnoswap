@@ -87,29 +87,29 @@ func (p *positionV1) GetPositionTickUpper(positionId uint64) int32 {
 	return p.mustGetPosition(positionId).TickUpper()
 }
 
-func (p *positionV1) GetPositionLiquidity(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionLiquidity(positionId uint64) string {
 	return p.mustGetPosition(positionId).Liquidity()
 }
 
-func (p *positionV1) GetPositionTokenBalances(positionId uint64) (*u256.Uint, *u256.Uint) {
+func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64) {
 	position := p.mustGetPosition(positionId)
 
 	return calculatePositionBalances(position)
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return p.mustGetPosition(positionId).FeeGrowthInside0LastX128()
 }
 
-func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 	return p.mustGetPosition(positionId).FeeGrowthInside1LastX128()
 }
 
-func (p *positionV1) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed0(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed0()
 }
 
-func (p *positionV1) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (p *positionV1) GetPositionTokensOwed1(positionId uint64) int64 {
 	return p.mustGetPosition(positionId).TokensOwed1()
 }
 
@@ -127,7 +127,7 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 	position := p.mustGetPosition(positionId)
 
-	liquidity := position.Liquidity()
+	liquidity := u256.MustFromDecimal(position.Liquidity())
 	tickLower := position.TickLower()
 	tickUpper := position.TickUpper()
 
@@ -135,12 +135,20 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 
 	currentTick := pl.GetSlot0Tick(poolKey)
 
-	feeGrowthGlobal0X128, feeGrowthGlobal1X128 := pl.GetFeeGrowthGlobalX128(poolKey)
-	tickUpperFeeGrowthOutside0X128, tickUpperFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
-	tickLowerFeeGrowthOutside0X128, tickLowerFeeGrowthOutside1X128 := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	feeGrowthGlobal0X128Str, feeGrowthGlobal1X128Str := pl.GetFeeGrowthGlobalX128(poolKey)
+	feeGrowthGlobal0X128 := u256.MustFromDecimal(feeGrowthGlobal0X128Str)
+	feeGrowthGlobal1X128 := u256.MustFromDecimal(feeGrowthGlobal1X128Str)
 
-	feeGrowthInside0LastX128 := position.FeeGrowthInside0LastX128()
-	feeGrowthInside1LastX128 := position.FeeGrowthInside1LastX128()
+	tickUpperFeeGrowthOutside0X128Str, tickUpperFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickUpper)
+	tickUpperFeeGrowthOutside0X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside0X128Str)
+	tickUpperFeeGrowthOutside1X128 := u256.MustFromDecimal(tickUpperFeeGrowthOutside1X128Str)
+
+	tickLowerFeeGrowthOutside0X128Str, tickLowerFeeGrowthOutside1X128Str := pl.GetTickFeeGrowthOutsideX128(poolKey, tickLower)
+	tickLowerFeeGrowthOutside0X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside0X128Str)
+	tickLowerFeeGrowthOutside1X128 := u256.MustFromDecimal(tickLowerFeeGrowthOutside1X128Str)
+
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
 
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *u256.Uint
 
@@ -179,5 +187,6 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 		panic(errOverflow)
 	}
 
-	return unclaimedFee0, u256.Zero().Div(unclaimedFee1X128, q128)
+	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, q128)
+	return unclaimedFee0, unclaimedFee1
 }

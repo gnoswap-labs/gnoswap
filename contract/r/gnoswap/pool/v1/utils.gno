@@ -247,3 +247,12 @@ func safeSubInt64(a, b int64) int64 {
 	}
 	return a - b
 }
+
+func safeParseInt64(value string) int64 {
+	amountInt64, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return amountInt64
+}

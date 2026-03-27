@@ -199,8 +199,8 @@ func checkPoolBalances() {
 	ufmt.Println("[INFO] Checking pool balances")
 	poolInfo, _ := pool.GetPool(token0Path, token1Path, fee)
 
-	ufmt.Printf("[EXPECTED] Pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
-	ufmt.Printf("[EXPECTED] Pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
+	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
+	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 }
 
@@ -208,10 +208,10 @@ func comparePositionBalances() {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")
-	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %s\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %s\n", position.GetPositionToken1Balance(1))
-	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %s\n", position.GetPositionToken0Balance(2))
-	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %s\n", position.GetPositionToken1Balance(2))
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", position.GetPositionToken0Balance(1))
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", position.GetPositionToken0Balance(2))
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", position.GetPositionToken1Balance(2))
 	ufmt.Printf("[EXPECTED] Sum of positions should stay close to pool balances\n")
 }
 

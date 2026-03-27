@@ -144,15 +144,15 @@ func main() {
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
 	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago, recent price) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
 	println()
 
 	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago, after price change) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago, after price change) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h)
 	println()
 
 	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
-	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h.ToString())
+	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago, weighted average of both periods) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h)
 	println()
 
 	println("[INFO] Test completed successfully")

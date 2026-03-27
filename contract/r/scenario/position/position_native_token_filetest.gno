@@ -240,8 +240,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Liquidity should be 151645407
 //
 // [SCENARIO] 3. Check unclaimed fees before swap
-// [EXPECTED] Unclaimed fee0 should be %!s((unhandled))
-// [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
+// [EXPECTED] Unclaimed fee0 should be 0
+// [EXPECTED] Unclaimed fee1 should be 0
 //
 // [SCENARIO] 4. Execute swap with native token
 // [INFO] Executing swap
@@ -249,8 +249,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, 
 // [EXPECTED] Swap amount1 should be -1224110
 //
 // [SCENARIO] 5. Check unclaimed fees after swap
-// [EXPECTED] Unclaimed fee0 should be %!s((unhandled))
-// [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
+// [EXPECTED] Unclaimed fee0 should be 617
+// [EXPECTED] Unclaimed fee1 should be 0
 //
 // [SCENARIO] 6. Decrease liquidity without unwrapping
 // [INFO] Decreasing liquidity without unwrapping

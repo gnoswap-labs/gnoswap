@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -43,9 +42,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 )
 
-var (
-	fee500 = uint32(500)
-)
+var fee500 = uint32(500)
 
 func main() {
 	println("[SCENARIO] Tick Cross Oracle Field Update")
@@ -102,8 +99,8 @@ func main() {
 	println("[INFO] Initialized:", tickInfo.Initialized())
 	println("[INFO] TickCumulativeOutside:", tickInfo.TickCumulativeOutside())
 	println("[INFO] SecondsOutside:", tickInfo.SecondsOutside())
-	if tickInfo.SecondsPerLiquidityOutsideX128() != nil {
-		println("[INFO] SecondsPerLiquidityOutsideX128:", tickInfo.SecondsPerLiquidityOutsideX128().ToString())
+	if tickInfo.SecondsPerLiquidityOutsideX128() != "" {
+		println("[INFO] SecondsPerLiquidityOutsideX128:", tickInfo.SecondsPerLiquidityOutsideX128())
 	} else {
 		println("[INFO] SecondsPerLiquidityOutsideX128: nil")
 	}
@@ -132,9 +129,9 @@ func main() {
 		fooPath,
 		fee500,
 		adminAddr,
-		true, // zeroForOne - tick decreases (0 -> past testTick)
+		true,       // zeroForOne - tick decreases (0 -> past testTick)
 		"10000000", // large amount to ensure we cross testTick
-		common.TickMathGetSqrtRatioAtTick(testTick - 100).ToString(), // target past testTick
+		common.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
@@ -156,11 +153,11 @@ func main() {
 	println("[EXPECTED] SecondsOutside updated:", tickInfoAfter.SecondsOutside())
 
 	// The key validation: oracle fields should now be set and non-zero
-	if tickInfoAfter.SecondsPerLiquidityOutsideX128() != nil {
-		println("[EXPECTED] SecondsPerLiquidityOutsideX128 is set:", tickInfoAfter.SecondsPerLiquidityOutsideX128().ToString())
+	if tickInfoAfter.SecondsPerLiquidityOutsideX128() != "" {
+		println("[EXPECTED] SecondsPerLiquidityOutsideX128 is set:", tickInfoAfter.SecondsPerLiquidityOutsideX128())
 
 		// Verify it's different from initial state
-		if tickInfoAfter.SecondsPerLiquidityOutsideX128().Gt(u256.Zero()) {
+		if tickInfoAfter.SecondsPerLiquidityOutsideX128() != "0" {
 			println("[EXPECTED] Oracle field successfully updated (non-zero)")
 		}
 	} else {
@@ -206,7 +203,7 @@ func main() {
 		fooPath,
 		fee500,
 		adminAddr,
-		false, // oneForZero - tick increases (back above testTick)
+		false,      // oneForZero - tick increases (back above testTick)
 		"10000000", // large amount to ensure crossing back
 		common.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
 		adminAddr,
@@ -228,11 +225,11 @@ func main() {
 	println("[EXPECTED] TickCumulativeOutside changed:", tickInfoFinal.TickCumulativeOutside())
 	println("[EXPECTED] SecondsOutside changed:", tickInfoFinal.SecondsOutside())
 
-	if tickInfoFinal.SecondsPerLiquidityOutsideX128() != nil {
-		println("[EXPECTED] SecondsPerLiquidityOutsideX128 updated again:", tickInfoFinal.SecondsPerLiquidityOutsideX128().ToString())
+	if tickInfoFinal.SecondsPerLiquidityOutsideX128() != "" {
+		println("[EXPECTED] SecondsPerLiquidityOutsideX128 updated again:", tickInfoFinal.SecondsPerLiquidityOutsideX128())
 
 		// Values should be different from first cross
-		if tickInfoFinal.SecondsPerLiquidityOutsideX128().Neq(tickInfoAfter.SecondsPerLiquidityOutsideX128()) {
+		if tickInfoFinal.SecondsPerLiquidityOutsideX128() != tickInfoAfter.SecondsPerLiquidityOutsideX128() {
 			println("[EXPECTED] Oracle field values changed on second cross")
 		}
 	}

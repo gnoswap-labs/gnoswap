@@ -1,7 +1,6 @@
 package position
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -36,44 +35,44 @@ func IsInRange(positionId uint64) bool {
 }
 
 // GetPositionTokenBalances returns the token0 balance of a position.
-func GetPositionTokenBalances(positionId uint64) (string, string) {
+func GetPositionTokenBalances(positionId uint64) (int64, int64) {
 	balance0, balance1 := getImplementation().GetPositionTokenBalances(positionId)
-	return balance0.ToString(), balance1.ToString()
+	return balance0, balance1
 }
 
-func GetPositionToken0Balance(positionId uint64) string {
+func GetPositionToken0Balance(positionId uint64) int64 {
 	balance0, _ := GetPositionTokenBalances(positionId)
 	return balance0
 }
 
-func GetPositionToken1Balance(positionId uint64) string {
+func GetPositionToken1Balance(positionId uint64) int64 {
 	_, balance1 := GetPositionTokenBalances(positionId)
 	return balance1
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
-func GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId).Clone()
+func GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
+	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside for token1.
-func GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId).Clone()
+func GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
+	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLastX128(positionId uint64) (*u256.Uint, *u256.Uint) {
+func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero(), u256.Zero()
+		return "0", "0"
 	}
 
-	return position.FeeGrowthInside0LastX128().Clone(), position.FeeGrowthInside1LastX128().Clone()
+	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128()
 }
 
 // GetPositionLiquidity returns the liquidity amount of a position.
-func GetPositionLiquidity(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(positionId).Clone()
+func GetPositionLiquidity(positionId uint64) string {
+	return getImplementation().GetPositionLiquidity(positionId)
 }
 
 // GetPositionOperator returns the operator address of a position.
@@ -107,29 +106,29 @@ func GetPositionTicks(positionId uint64) (int32, int32) {
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
-func GetPositionTokensOwed0(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed0(positionId).Clone()
+func GetPositionTokensOwed0(positionId uint64) int64 {
+	return getImplementation().GetPositionTokensOwed0(positionId)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
-func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
-	return getImplementation().GetPositionTokensOwed1(positionId).Clone()
+func GetPositionTokensOwed1(positionId uint64) int64 {
+	return getImplementation().GetPositionTokensOwed1(positionId)
 }
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
-func GetPositionTokensOwed(positionId uint64) (*u256.Uint, *u256.Uint) {
+func GetPositionTokensOwed(positionId uint64) (int64, int64) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero(), u256.Zero()
+		return 0, 0
 	}
 
-	return position.TokensOwed0().Clone(), position.TokensOwed1().Clone()
+	return position.TokensOwed0(), position.TokensOwed1()
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
-func GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
-	unclaimedFee0, unclaimedFee1 := getImplementation().GetUnclaimedFee(positionId)
-	return unclaimedFee0.Clone(), unclaimedFee1.Clone()
+func GetUnclaimedFee(positionId uint64) (string, string) {
+	fee0, fee1 := getImplementation().GetUnclaimedFee(positionId)
+	return fee0.ToString(), fee1.ToString()
 }
 
 // GetPositionOwner returns the owner address of a position NFT.

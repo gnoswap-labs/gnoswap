@@ -43,8 +43,8 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 
 	tickCumulativesDelta := tickCumulatives[1] - tickCumulatives[0]
 	secondsPerLiquidityDelta := u256.Zero().Sub(
-		secondsPerLiquidityCumulativeX128s[1],
-		secondsPerLiquidityCumulativeX128s[0],
+		u256.MustFromDecimal(secondsPerLiquidityCumulativeX128s[1]),
+		u256.MustFromDecimal(secondsPerLiquidityCumulativeX128s[0]),
 	)
 
 	arithmeticMeanTick := int32(tickCumulativesDelta / int64(secondsAgo))
@@ -122,7 +122,8 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 		panic(errOverflow)
 	}
 
-	liquidityCumulative := u256.Zero().Add(lastObservation.LiquidityCumulative(), liquidityDelta)
+	prevLiqCum := u256.MustFromDecimal(lastObservation.LiquidityCumulative())
+	liquidityCumulative := u256.Zero().Add(prevLiqCum, liquidityDelta)
 
 	// calculate seconds per liquidity
 	liquidityForCalc := liquidity
@@ -137,17 +138,17 @@ func transform(lastObservation *pl.Observation, currentTime int64, tick int32, l
 		liquidityForCalc,
 	)
 
-	secondsPerLiquidityCumulativeX128 := lastObservation.SecondsPerLiquidityCumulativeX128().Clone()
-	secondsPerLiquidityCumulativeX128 = u256.Zero().Add(
-		secondsPerLiquidityCumulativeX128,
+	prevSecPerLiq := u256.MustFromDecimal(lastObservation.SecondsPerLiquidityCumulativeX128())
+	secondsPerLiquidityCumulativeX128 := u256.Zero().Add(
+		prevSecPerLiq,
 		secondsPerLiquidityDelta,
 	)
 
 	return pl.NewObservation(
 		currentTime,
 		tickCumulative,
-		liquidityCumulative,
-		secondsPerLiquidityCumulativeX128,
+		liquidityCumulative.ToString(),
+		secondsPerLiquidityCumulativeX128.ToString(),
 		true,
 	), nil
 }
@@ -262,19 +263,19 @@ func observeSingle(
 	index uint16,
 	liquidity *u256.Uint,
 	cardinality uint16,
-) (int64, *u256.Uint, error) {
+) (int64, string, error) {
 	if secondsAgo == 0 {
 		// if secondsAgo is 0, return current values
 		last, err := observationAt(os, index)
 		if err != nil {
-			return 0, nil, err
+			return 0, "", err
 		}
 
 		if last.BlockTimestamp() != currentTime {
 			// need to create virtual observation for current time
 			transformed, err := transform(last, currentTime, tick, liquidity)
 			if err != nil {
-				return 0, nil, err
+				return 0, "", err
 			}
 
 			return transformed.TickCumulative(), transformed.SecondsPerLiquidityCumulativeX128(), nil
@@ -296,7 +297,7 @@ func observeSingle(
 		cardinality,
 	)
 	if err != nil {
-		return 0, nil, err
+		return 0, "", err
 	}
 
 	if target == beforeOrAt.BlockTimestamp() {
@@ -315,14 +316,14 @@ func observeSingle(
 	tickCumulative := beforeOrAt.TickCumulative() +
 		((atOrAfter.TickCumulative()-beforeOrAt.TickCumulative())/observationTimeDelta)*targetDelta
 
+	beforeSecPerLiq := u256.MustFromDecimal(beforeOrAt.SecondsPerLiquidityCumulativeX128())
+	afterSecPerLiq := u256.MustFromDecimal(atOrAfter.SecondsPerLiquidityCumulativeX128())
+
 	// for secondsPerLiquidity, need to interpolate carefully
-	secondsPerLiquidityDelta := u256.Zero().Sub(
-		atOrAfter.SecondsPerLiquidityCumulativeX128(),
-		beforeOrAt.SecondsPerLiquidityCumulativeX128(),
-	)
+	secondsPerLiquidityDelta := u256.Zero().Sub(afterSecPerLiq, beforeSecPerLiq)
 
 	secondsPerLiquidity := u256.Zero().Add(
-		beforeOrAt.SecondsPerLiquidityCumulativeX128(),
+		beforeSecPerLiq,
 		u256.MulDiv(
 			secondsPerLiquidityDelta,
 			u256.NewUintFromInt64(targetDelta),
@@ -330,7 +331,7 @@ func observeSingle(
 		),
 	)
 
-	return tickCumulative, secondsPerLiquidity, nil
+	return tickCumulative, secondsPerLiquidity.ToString(), nil
 }
 
 // getSurroundingObservations finds the observations immediately before and after the target timestamp.
@@ -440,14 +441,14 @@ func observe(
 	index uint16,
 	liquidity *u256.Uint,
 	cardinality uint16,
-) ([]int64, []*u256.Uint, error) {
+) ([]int64, []string, error) {
 	if cardinality <= 0 {
 		return nil, nil, errors.New("observation cardinality must be greater than 0")
 	}
 
 	historyCount := len(secondsAgos)
 	tickCumulatives := make([]int64, historyCount)
-	secondsPerLiquidityCumulativeX128s := make([]*u256.Uint, historyCount)
+	secondsPerLiquidityCumulativeX128s := make([]string, historyCount)
 
 	for i, secondsAgo := range secondsAgos {
 		tickCumulative, secondsPerLiquidity, err := observeSingle(

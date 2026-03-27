@@ -4,20 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 
 func makeTickInfo(liquidityGross, feeGrowth0, feeGrowth1, secondsPerLiquidity, liquidityNet string, tickCumulative int64, secondsOutside uint32, initialized bool) pl.TickInfo {
 	info := pl.NewTickInfo()
-	info.SetLiquidityGross(u256.MustFromDecimal(liquidityGross))
-	info.SetLiquidityNet(i256.MustFromDecimal(liquidityNet))
-	info.SetFeeGrowthOutside0X128(u256.MustFromDecimal(feeGrowth0))
-	info.SetFeeGrowthOutside1X128(u256.MustFromDecimal(feeGrowth1))
+	info.SetLiquidityGross(liquidityGross)
+	info.SetLiquidityNet(liquidityNet)
+	info.SetFeeGrowthOutside0X128(feeGrowth0)
+	info.SetFeeGrowthOutside1X128(feeGrowth1)
 	info.SetTickCumulativeOutside(tickCumulative)
-	info.SetSecondsPerLiquidityOutsideX128(u256.MustFromDecimal(secondsPerLiquidity))
+	info.SetSecondsPerLiquidityOutsideX128(secondsPerLiquidity)
 	info.SetSecondsOutside(secondsOutside)
 	info.SetInitialized(initialized)
 	return info
@@ -87,5 +85,5 @@ func TestNewTickEventInfo(t *testing.T) {
 
 	uassert.NotNil(t, eventInfo)
 	uassert.Equal(t, tickID, eventInfo.tickID)
-	uassert.Equal(t, tickInfo.LiquidityGross().ToString(), eventInfo.tickInfo.LiquidityGross().ToString())
+	uassert.Equal(t, tickInfo.LiquidityGross(), eventInfo.tickInfo.LiquidityGross())
 }

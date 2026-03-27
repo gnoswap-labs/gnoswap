@@ -139,7 +139,7 @@ func testPriceImpactSmall() {
 
 	// Get initial price
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	// Execute swap
@@ -151,7 +151,7 @@ func testPriceImpactSmall() {
 	)
 
 	// Get final price
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	// Calculate actual price impact
@@ -169,7 +169,7 @@ func testPriceImpactMedium() {
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
@@ -177,7 +177,7 @@ func testPriceImpactMedium() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	priceImpact := calculatePriceImpact(initialPrice, finalPrice)
@@ -194,7 +194,7 @@ func testPriceImpactLarge() {
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
@@ -202,7 +202,7 @@ func testPriceImpactLarge() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	priceImpact := calculatePriceImpact(initialPrice, finalPrice)
@@ -219,8 +219,8 @@ func testPriceImpactFeeTiers() {
 
 	barFoo500Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	barFoo3000Path := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	initialPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path).ToString()
-	initialPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path).ToString()
+	initialPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
+	initialPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
 
 	// Test 0.05% fee pool
 	route500 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
@@ -238,8 +238,8 @@ func testPriceImpactFeeTiers() {
 	)
 	ufmt.Printf("[EXPECTED] 0.3%% fee pool output: %s\n", amountOut3000)
 
-	finalPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path).ToString()
-	finalPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path).ToString()
+	finalPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
+	finalPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
 
 	priceImpact500 := calculatePriceImpact(initialPrice500, finalPrice500)
 	priceImpact3000 := calculatePriceImpact(initialPrice3000, finalPrice3000)

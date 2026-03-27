@@ -41,7 +41,11 @@ func getTickBitmapFromPool(p *pl.Pool, wordPos int16) *u256.Uint {
 	if !exists {
 		return u256.Zero()
 	}
-	return val.(*u256.Uint)
+	bitmapStr, ok := val.(string)
+	if !ok {
+		return u256.Zero()
+	}
+	return u256.MustFromDecimal(bitmapStr)
 }
 
 func flipMany(t *testing.T, p *pl.Pool, spacing int32, ticks ...int32) {
