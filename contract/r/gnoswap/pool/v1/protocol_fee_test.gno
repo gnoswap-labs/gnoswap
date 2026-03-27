@@ -646,8 +646,8 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	// Verify that no protocol fees were collected since protocol fees are not enabled
 	thisPool := getMockInstance().mustGetPoolBy(barPath, fooPath, fee500)
-	uassert.Equal(t, thisPool.ProtocolFeesToken0().ToString(), "0")
-	uassert.Equal(t, thisPool.ProtocolFeesToken1().ToString(), "0")
+	uassert.Equal(t, thisPool.ProtocolFeesToken0(), int64(0))
+	uassert.Equal(t, thisPool.ProtocolFeesToken1(), int64(0))
 
 	resetObject(t)
 }

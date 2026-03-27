@@ -53,7 +53,7 @@ func testInitializeSetsFirstSlot(t *testing.T) {
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
-	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 }
 
 func TestOracleGrow(t *testing.T) {
@@ -95,7 +95,7 @@ func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 	uassert.NoError(t, err)
 
 	obs0 := os.Observations()[0]
-	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
 	uassert.True(t, obs0.Initialized())
@@ -123,7 +123,7 @@ func testGrowAddsDataToSlots(t *testing.T) {
 
 	for i := uint16(1); i < 5; i++ {
 		obs := os.Observations()[i]
-		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128().ToString())
+		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128())
 		uassert.Equal(t, int64(0), obs.TickCumulative())
 		uassert.False(t, obs.Initialized())
 	}
@@ -159,7 +159,7 @@ func testSingleElementOverwrite(t *testing.T) {
 
 	obs0 := os.Observations()[0]
 	uassert.True(t, obs0.Initialized())
-	uassert.Equal(t, "340282366920938463463374607431768211456", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "340282366920938463463374607431768211456", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+1, obs0.BlockTimestamp())
 
@@ -168,7 +168,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 = os.Observations()[0]
-	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(10), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+6, obs0.BlockTimestamp())
 
@@ -177,7 +177,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 = os.Observations()[0]
-	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(7), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+9, obs0.BlockTimestamp())
 }
@@ -219,7 +219,7 @@ func testWritesIndexOnTimeChange(t *testing.T) {
 
 	obs1 := os.Observations()[1]
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
-	uassert.Equal(t, "2041694201525630780780247644590609268736", obs1.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "2041694201525630780780247644590609268736", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.True(t, obs1.Initialized())
 	uassert.Equal(t, currentTime+6, obs1.BlockTimestamp())
 }
@@ -248,7 +248,7 @@ func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 	uassert.Equal(t, uint16(2), os.Index())
 
 	obs2 := os.Observations()[2]
-	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(20), obs2.TickCumulative())
 	uassert.True(t, obs2.Initialized())
 	uassert.Equal(t, currentTime+7, obs2.BlockTimestamp())
@@ -275,7 +275,7 @@ func testWrapsAround(t *testing.T) {
 	uassert.Equal(t, uint16(0), os.Index())
 
 	obs0 := os.Observations()[0]
-	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(14), obs0.TickCumulative())
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime+12, obs0.BlockTimestamp())
@@ -304,19 +304,19 @@ func testAccumulatesLiquidity(t *testing.T) {
 	obs1 := os.Observations()[1]
 	uassert.True(t, obs1.Initialized())
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
-	uassert.Equal(t, "1020847100762815390390123822295304634368", obs1.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1020847100762815390390123822295304634368", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+3, obs1.BlockTimestamp())
 
 	obs2 := os.Observations()[2]
 	uassert.True(t, obs2.Initialized())
 	uassert.Equal(t, int64(12), obs2.TickCumulative())
-	uassert.Equal(t, "1701411834604692317316873037158841057280", obs2.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1701411834604692317316873037158841057280", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+7, obs2.BlockTimestamp())
 
 	obs3 := os.Observations()[3]
 	uassert.True(t, obs3.Initialized())
 	uassert.Equal(t, int64(-23), obs3.TickCumulative())
-	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128().ToString())
+	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+12, obs3.BlockTimestamp())
 
 	obs4, ok := os.Observations()[4]
@@ -375,8 +375,8 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	os.Observations()[0] = pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
-		u256.Zero(), // liquidityCumulative
-		u256.Zero(), // secondsPerLiquidityCumulativeX128
+		"0", // liquidityCumulative
+		"0", // secondsPerLiquidityCumulativeX128
 		true,
 	)
 
@@ -395,7 +395,7 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	// 13 seconds * 2^128 / MaxUint128 = 13
-	uassert.Equal(t, "13", secondsPerLiq.ToString())
+	uassert.Equal(t, "13", secondsPerLiq)
 }
 
 func testObserveInterpolatesMinLiquidity(t *testing.T) {
@@ -421,7 +421,7 @@ func testObserveInterpolatesMinLiquidity(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected := u256.NewUint(13).Lsh(u256.NewUint(13), 128) // 13 << 128
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(6) - 6 seconds ago = time 7
 	// 7 seconds * 2^128 / 1 = 7 << 128
@@ -429,7 +429,7 @@ func testObserveInterpolatesMinLiquidity(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected = u256.NewUint(7).Lsh(u256.NewUint(7), 128) // 7 << 128
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(12) - 12 seconds ago = time 1
 	// 1 second * 2^128 / 1 = 1 << 128
@@ -437,14 +437,14 @@ func testObserveInterpolatesMinLiquidity(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected = u256.NewUint(1).Lsh(u256.NewUint(1), 128) // 1 << 128
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(13) - 13 seconds ago = time 0
 	// 0 seconds = 0
 	tickCum, secondsPerLiq, err = observeSingle(os, currentTime+13, 13, 0, 1, maxLiquidity, 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
-	uassert.Equal(t, "0", secondsPerLiq.ToString())
+	uassert.Equal(t, "0", secondsPerLiq)
 }
 
 func testObserveInterpolatesSameAs0For1(t *testing.T) {
@@ -470,27 +470,27 @@ func testObserveInterpolatesSameAs0For1(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected := u256.NewUint(13).Lsh(u256.NewUint(13), 128)
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(6) - 7 << 128
 	tickCum, secondsPerLiq, err = observeSingle(os, currentTime+13, 6, 0, 1, maxLiquidity, 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected = u256.NewUint(7).Lsh(u256.NewUint(7), 128)
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(12) - 1 << 128
 	tickCum, secondsPerLiq, err = observeSingle(os, currentTime+13, 12, 0, 1, maxLiquidity, 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
 	expected = u256.NewUint(1).Lsh(u256.NewUint(1), 128)
-	uassert.Equal(t, expected.ToString(), secondsPerLiq.ToString())
+	uassert.Equal(t, expected.ToString(), secondsPerLiq)
 
 	// observeSingle(13) - 0
 	tickCum, secondsPerLiq, err = observeSingle(os, currentTime+13, 13, 0, 1, maxLiquidity, 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
-	uassert.Equal(t, "0", secondsPerLiq.ToString())
+	uassert.Equal(t, "0", secondsPerLiq)
 }
 
 func testObserveSingleAtCurrentTime(t *testing.T) {
@@ -500,7 +500,7 @@ func testObserveSingleAtCurrentTime(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+5, 0, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
-	uassert.Equal(t, "0", secondsPerLiq.ToString())
+	uassert.Equal(t, "0", secondsPerLiq)
 }
 
 func testObserveSinglePastExact(t *testing.T) {
@@ -516,7 +516,7 @@ func testObserveSinglePastExact(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+8, 3, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
-	uassert.Equal(t, "0", secondsPerLiq.ToString())
+	uassert.Equal(t, "0", secondsPerLiq)
 }
 
 func testObserveSinglePastCounterfactualPast(t *testing.T) {
@@ -534,7 +534,7 @@ func testObserveSinglePastCounterfactualPast(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+8, 1, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(4), tickCum)
-	uassert.Equal(t, "170141183460469231731687303715884105728", secondsPerLiq.ToString())
+	uassert.Equal(t, "170141183460469231731687303715884105728", secondsPerLiq)
 }
 
 func testObserveSinglePastCounterfactualNow(t *testing.T) {
@@ -552,7 +552,7 @@ func testObserveSinglePastCounterfactualNow(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+8, 0, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(6), tickCum)
-	uassert.Equal(t, "255211775190703847597530955573826158592", secondsPerLiq.ToString())
+	uassert.Equal(t, "255211775190703847597530955573826158592", secondsPerLiq)
 }
 
 func testObserveTwoChronological0Exact(t *testing.T) {
@@ -570,7 +570,7 @@ func testObserveTwoChronological0Exact(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+9, 0, 1, 1, u256.NewUint(2), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-20), tickCum)
-	uassert.Equal(t, "272225893536750770770699685945414569164", secondsPerLiq.ToString())
+	uassert.Equal(t, "272225893536750770770699685945414569164", secondsPerLiq)
 }
 
 func testObserveTwoChronological0Counterfactual(t *testing.T) {
@@ -588,7 +588,7 @@ func testObserveTwoChronological0Counterfactual(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 0, 1, 1, u256.NewUint(2), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
-	uassert.Equal(t, "1463214177760035392892510811956603309260", secondsPerLiq.ToString())
+	uassert.Equal(t, "1463214177760035392892510811956603309260", secondsPerLiq)
 }
 
 func testObserveTwoChronologicalExactFirst(t *testing.T) {
@@ -606,7 +606,7 @@ func testObserveTwoChronologicalExactFirst(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 11, 1, 1, u256.NewUint(2), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
-	uassert.Equal(t, "0", secondsPerLiq.ToString())
+	uassert.Equal(t, "0", secondsPerLiq)
 }
 
 func testObserveTwoChronologicalBetween(t *testing.T) {
@@ -624,7 +624,7 @@ func testObserveTwoChronologicalBetween(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 9, 1, 1, u256.NewUint(2), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-10), tickCum)
-	uassert.Equal(t, "136112946768375385385349842972707284582", secondsPerLiq.ToString())
+	uassert.Equal(t, "136112946768375385385349842972707284582", secondsPerLiq)
 }
 
 func testObserveTwoReverse0Exact(t *testing.T) {
@@ -654,7 +654,7 @@ func testObserveTwoReverse0Exact(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+12, 0, -5, 0, u256.NewUint(4), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-17), tickCum)
-	uassert.Equal(t, "782649443918158465965761597093066886348", secondsPerLiq.ToString())
+	uassert.Equal(t, "782649443918158465965761597093066886348", secondsPerLiq)
 }
 
 func testObserveTwoReverse0Counterfactual(t *testing.T) {
@@ -682,7 +682,7 @@ func testObserveTwoReverse0Counterfactual(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+19, 0, -5, 0, u256.NewUint(4), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-52), tickCum)
-	uassert.Equal(t, "1378143586029800777026667160098661256396", secondsPerLiq.ToString())
+	uassert.Equal(t, "1378143586029800777026667160098661256396", secondsPerLiq)
 }
 
 func testObserveTwoReverseExactFirst(t *testing.T) {
@@ -710,7 +710,7 @@ func testObserveTwoReverseExactFirst(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+19, 10, -5, 0, u256.NewUint(4), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-20), tickCum)
-	uassert.Equal(t, "272225893536750770770699685945414569164", secondsPerLiq.ToString())
+	uassert.Equal(t, "272225893536750770770699685945414569164", secondsPerLiq)
 }
 
 func testObserveTwoReverseBetween(t *testing.T) {
@@ -738,7 +738,7 @@ func testObserveTwoReverseBetween(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+19, 9, -5, 0, u256.NewUint(4), 2)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-19), tickCum)
-	uassert.Equal(t, "442367076997220002502386989661298674892", secondsPerLiq.ToString())
+	uassert.Equal(t, "442367076997220002502386989661298674892", secondsPerLiq)
 }
 
 func testObserveFetchMultiple(t *testing.T) {
@@ -778,12 +778,12 @@ func testObserveFetchMultiple(t *testing.T) {
 	uassert.Equal(t, int64(0), tickCumulatives[5])
 
 	uassert.Equal(t, 6, len(secondsPerLiquidityX128s))
-	uassert.Equal(t, "550383467004691728624232610897330176", secondsPerLiquidityX128s[0].ToString())
-	uassert.Equal(t, "301153217795020002454768787094765568", secondsPerLiquidityX128s[1].ToString())
-	uassert.Equal(t, "103845937170696552570609926584401920", secondsPerLiquidityX128s[2].ToString())
-	uassert.Equal(t, "51922968585348276285304963292200960", secondsPerLiquidityX128s[3].ToString())
-	uassert.Equal(t, "31153781151208965771182977975320576", secondsPerLiquidityX128s[4].ToString())
-	uassert.Equal(t, "0", secondsPerLiquidityX128s[5].ToString())
+	uassert.Equal(t, "550383467004691728624232610897330176", secondsPerLiquidityX128s[0])
+	uassert.Equal(t, "301153217795020002454768787094765568", secondsPerLiquidityX128s[1])
+	uassert.Equal(t, "103845937170696552570609926584401920", secondsPerLiquidityX128s[2])
+	uassert.Equal(t, "51922968585348276285304963292200960", secondsPerLiquidityX128s[3])
+	uassert.Equal(t, "31153781151208965771182977975320576", secondsPerLiquidityX128s[4])
+	uassert.Equal(t, "0", secondsPerLiquidityX128s[5])
 }
 
 func TestOracleFiveObservations(t *testing.T) {
@@ -841,7 +841,7 @@ func testFiveObservationsLatestSameTime(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 0, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
-	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq.ToString())
+	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq)
 }
 
 func testFiveObservationsLatest5SecondsAfter(t *testing.T) {
@@ -851,7 +851,7 @@ func testFiveObservationsLatest5SecondsAfter(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 5, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
-	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq.ToString())
+	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq)
 }
 
 func testFiveObservationsCurrent5SecondsAfter(t *testing.T) {
@@ -861,7 +861,7 @@ func testFiveObservationsCurrent5SecondsAfter(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 0, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(9), tickCum)
-	uassert.Equal(t, "2347138135642758877746181518404363115684", secondsPerLiq.ToString())
+	uassert.Equal(t, "2347138135642758877746181518404363115684", secondsPerLiq)
 }
 
 func testFiveObservationsBetweenLatestSameTime(t *testing.T) {
@@ -871,7 +871,7 @@ func testFiveObservationsBetweenLatestSameTime(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 3, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
-	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq.ToString())
+	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq)
 }
 
 func testFiveObservationsBetweenLatestAfter(t *testing.T) {
@@ -881,7 +881,7 @@ func testFiveObservationsBetweenLatestAfter(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 8, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
-	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq.ToString())
+	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq)
 }
 
 func testFiveObservationsOldest(t *testing.T) {
@@ -891,7 +891,7 @@ func testFiveObservationsOldest(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 14, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
-	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq.ToString())
+	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq)
 }
 
 func testFiveObservationsOldestAfterTime(t *testing.T) {
@@ -901,5 +901,5 @@ func testFiveObservationsOldestAfterTime(t *testing.T) {
 	tickCum, secondsPerLiq, err := observeSingle(os, startTime+25, 20, 6, 1, u256.NewUint(7), 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
-	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq.ToString())
+	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq)
 }
