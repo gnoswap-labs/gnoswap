@@ -96,17 +96,17 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 		}
 	}
 
-	bitmap, ok := value.(*u256.Uint)
+	bitmap, ok := value.(string)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast tickBitmap to *u256.Uint: %T", value))
 	}
-	return bitmap
+	return u256.MustFromDecimal(bitmap)
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
 	wordPosStr := strconv.Itoa(int(wordPos))
-	p.TickBitmaps().Set(wordPosStr, tickBitmap)
+	p.TickBitmaps().Set(wordPosStr, tickBitmap.ToString())
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick
