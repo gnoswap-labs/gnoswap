@@ -74,7 +74,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.lan
 # stdout OK!
 
 ## Baseline checks before generating fees
-gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionLiquidity(1).ToString()"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionLiquidity(1)"
 # stdout "50000000"
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionTokensOwed1(1)"
 # stdout 'data: \(0 int64\)'
@@ -122,5 +122,5 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionTokensOwed1(1)"
 # stdout 'data: \(0 int64\)'
-gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionLiquidity(1).ToString()"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionLiquidity(1)"
 # stdout "50000000"

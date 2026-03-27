@@ -145,7 +145,7 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// Get current total liquidity before increase
-		prevTotalLiquidity := position.GetPositionLiquidity(tokenId)
+		prevTotalLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(tokenId))
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
@@ -164,7 +164,7 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 		}
 
 		// Get new total liquidity after increase
-		newTotalLiquidity := position.GetPositionLiquidity(tokenId)
+		newTotalLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(tokenId))
 
 		// Verify total liquidity increased
 		if newTotalLiquidity.Lte(prevTotalLiquidity) {
@@ -209,7 +209,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 		// when - increase liquidity (may panic with invalid params)
 		//
 		// Get current total liquidity before increase
-		prevTotalLiquidity := position.GetPositionLiquidity(tokenId)
+		prevTotalLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(tokenId))
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
@@ -231,7 +231,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 		}
 
 		// Get new total liquidity after increase
-		newTotalLiquidity := position.GetPositionLiquidity(tokenId)
+		newTotalLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(tokenId))
 
 		// Verify total liquidity increased
 		if newTotalLiquidity.Lte(prevTotalLiquidity) {
