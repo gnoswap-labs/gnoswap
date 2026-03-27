@@ -116,18 +116,18 @@ func TestBurn_CalculateFees(t *testing.T) {
 			name: "Normal case - fees accrued on both tokens",
 			setupPosition: func() *position.Position {
 				pos := position.NewPosition(
-					"pool:key",                      // poolKey
-					int32(-887220),                  // tickLower
-					int32(887220),                   // tickUpper
-					"1000000", // liquidity
-					"100",     // feeGrowthInside0LastX128
-					"200",     // feeGrowthInside1LastX128
-					10,                               // tokensOwed0
-					20,                               // tokensOwed1
-					500,                              // token0Balance
-					600,                              // token1Balance
-					false,                           // burned
-					"",                              // operator
+					"pool:key",     // poolKey
+					int32(-887220), // tickLower
+					int32(887220),  // tickUpper
+					"1000000",      // liquidity
+					"100",          // feeGrowthInside0LastX128
+					"200",          // feeGrowthInside1LastX128
+					10,             // tokensOwed0
+					20,             // tokensOwed1
+					500,            // token0Balance
+					600,            // token1Balance
+					false,          // burned
+					"",             // operator
 				)
 				return pos
 			},

@@ -200,8 +200,8 @@ func TestSetPosition(t *testing.T) {
 			uassert.Equal(t, tt.inputPosition.Liquidity(), storedPosition.Liquidity())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128(), storedPosition.FeeGrowthInside0LastX128())
 			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128(), storedPosition.FeeGrowthInside1LastX128())
-				uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
-				uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
+			uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
+			uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
 			uassert.Equal(t, tt.inputPosition.Burned(), storedPosition.Burned())
 		})
 	}

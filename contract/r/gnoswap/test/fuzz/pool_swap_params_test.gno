@@ -136,7 +136,7 @@ func (p *poolSwapParams) isValidPoolExists() bool {
 	return pool.ExistsPoolPath(poolPath)
 }
 
-	// isValidPriceLimitDirection checks if price limit direction is correct
+// isValidPriceLimitDirection checks if price limit direction is correct
 func (p *poolSwapParams) isValidPriceLimitDirection() bool {
 	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 	currentPrice := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))

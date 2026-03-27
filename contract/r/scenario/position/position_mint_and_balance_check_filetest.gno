@@ -211,10 +211,10 @@ func comparePositionBalances() {
 	pos1, _ := position.GetPosition(1)
 	pos2, _ := position.GetPosition(2)
 
-ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", pos1.Token0Balance())
-ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", pos1.Token1Balance())
-ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", pos2.Token0Balance())
-ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", pos2.Token1Balance())
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", pos1.Token0Balance())
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", pos1.Token1Balance())
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", pos2.Token0Balance())
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", pos2.Token1Balance())
 	ufmt.Printf("[EXPECTED] Sum of positions should match pool balances\n")
 }
 

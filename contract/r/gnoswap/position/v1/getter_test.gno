@@ -532,11 +532,11 @@ func TestGetPositionOperator(t *testing.T) {
 
 func TestGetUnclaimedFee(t *testing.T) {
 	testCases := []struct {
-		name          string
-		setup         func(t *testing.T)
-		positionId    uint64
-		expectedFee0  string
-		expectedFee1  string
+		name         string
+		setup        func(t *testing.T)
+		positionId   uint64
+		expectedFee0 string
+		expectedFee1 string
 	}{
 		{
 			name: "newly minted position has zero unclaimed fees",

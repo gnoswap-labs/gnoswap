@@ -1,7 +1,5 @@
 package pool
 
-
-
 // GetPoolCount returns the total number of pools.
 func GetPoolCount() int {
 	return getImplementation().GetPoolCount()

@@ -102,8 +102,7 @@ func (p *positionV1) Mint(
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(processedInput.poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(processedInput.poolPath, 0)
 
 	chain.Emit(
 		"Mint",
@@ -204,8 +203,7 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -286,8 +284,7 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

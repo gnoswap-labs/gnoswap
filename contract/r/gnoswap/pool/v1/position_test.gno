@@ -501,32 +501,32 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				position := pl.PositionInfo{}
-				position.SetLiquidity(tt.initialLiquidity)
-				position.SetFeeGrowthInside0LastX128(tt.initialFeeGrowth0Last)
-				position.SetFeeGrowthInside1LastX128(tt.initialFeeGrowth1Last)
-				position.SetTokensOwed0(0)
-				position.SetTokensOwed1(0)
+		t.Run(tt.name, func(t *testing.T) {
+			position := pl.PositionInfo{}
+			position.SetLiquidity(tt.initialLiquidity)
+			position.SetFeeGrowthInside0LastX128(tt.initialFeeGrowth0Last)
+			position.SetFeeGrowthInside1LastX128(tt.initialFeeGrowth1Last)
+			position.SetTokensOwed0(0)
+			position.SetTokensOwed1(0)
 
-				if tt.shouldPanic {
-					uassert.PanicsContains(t, tt.panicMsg, func() {
-						positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
-					})
-					return
-				}
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
+				})
+				return
+			}
 
-				result, err := positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
-				if err != nil {
-					uassert.Equal(t, tt.errorMsg, err.Error())
-				} else {
-					if result.TokensOwed0() < 0 || result.TokensOwed1() < 0 {
-						t.Errorf("result contains negative values: tokensOwed0=%v, tokensOwed1=%v",
-							result.TokensOwed0(), result.TokensOwed1())
-					}
+			result, err := positionUpdate(position, tt.liquidityDelta, tt.feeGrowthInside0X128, tt.feeGrowthInside1X128)
+			if err != nil {
+				uassert.Equal(t, tt.errorMsg, err.Error())
+			} else {
+				if result.TokensOwed0() < 0 || result.TokensOwed1() < 0 {
+					t.Errorf("result contains negative values: tokensOwed0=%v, tokensOwed1=%v",
+						result.TokensOwed0(), result.TokensOwed1())
 				}
-			})
-		}
+			}
+		})
+	}
 }
 
 func TestModifyPosition_WithDifferentPrice(t *testing.T) {

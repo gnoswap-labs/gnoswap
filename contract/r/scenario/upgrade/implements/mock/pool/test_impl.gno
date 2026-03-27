@@ -287,7 +287,6 @@ func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 	return result[0].(string), result[1].(string)
 }
 
-
 func (t *TestPool) GetLiquidity(poolPath string) string {
 	return t.ExecuteFn(
 		"GetLiquidity",

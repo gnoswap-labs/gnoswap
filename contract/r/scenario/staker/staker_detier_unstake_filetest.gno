@@ -117,8 +117,8 @@ func initAndSetup() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	testing.SetRealm(stakerRealm)

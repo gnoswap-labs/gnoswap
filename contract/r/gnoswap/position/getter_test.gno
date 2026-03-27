@@ -81,15 +81,15 @@ func TestGetPositionIsolation(t *testing.T) {
 	uassert.Equal(t, int64(6600), result.Token0Balance())
 	uassert.Equal(t, int64(7700), result.Token1Balance())
 
-			if storedPosition.Liquidity() == result.Liquidity() ||
-				storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
-				storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
-				storedPosition.TokensOwed0() == result.TokensOwed0() ||
-				storedPosition.TokensOwed1() == result.TokensOwed1() ||
-				storedPosition.Token0Balance() == result.Token0Balance() ||
-				storedPosition.Token1Balance() == result.Token1Balance() {
-				t.Fatal("GetPosition() returned aliased nested mutable state")
-			}
+	if storedPosition.Liquidity() == result.Liquidity() ||
+		storedPosition.FeeGrowthInside0LastX128() == result.FeeGrowthInside0LastX128() ||
+		storedPosition.FeeGrowthInside1LastX128() == result.FeeGrowthInside1LastX128() ||
+		storedPosition.TokensOwed0() == result.TokensOwed0() ||
+		storedPosition.TokensOwed1() == result.TokensOwed1() ||
+		storedPosition.Token0Balance() == result.Token0Balance() ||
+		storedPosition.Token1Balance() == result.Token1Balance() {
+		t.Fatal("GetPosition() returned aliased nested mutable state")
+	}
 }
 
 func TestGetPositionIDsIsolation(t *testing.T) {
@@ -126,8 +126,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPosition", *stored, true)
 				return stored
 			},
-			getter: func() any { return GetPositionToken0Balance(1) },
-			mutate: func(result any) { _ = result.(int64) },
+			getter:     func() any { return GetPositionToken0Balance(1) },
+			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(6000), result.(int64)) },
 			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(6000), raw.Token0Balance()) },
 		},
@@ -138,8 +138,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPosition", *stored, true)
 				return stored
 			},
-			getter: func() any { return GetPositionToken1Balance(1) },
-			mutate: func(result any) { _ = result.(int64) },
+			getter:     func() any { return GetPositionToken1Balance(1) },
+			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(7000), result.(int64)) },
 			assertRaw:  func(t *testing.T, raw *Position) { uassert.Equal(t, int64(7000), raw.Token1Balance()) },
 		},
@@ -149,8 +149,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionFeeGrowthInside0LastX128", "2000")
 				return nil
 			},
-			getter: func() any { return GetPositionFeeGrowthInside0LastX128(1) },
-			mutate: func(result any) { _ = result.(string) },
+			getter:     func() any { return GetPositionFeeGrowthInside0LastX128(1) },
+			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "2000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "2000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside0LastX128"][0].(string))
@@ -162,8 +162,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionFeeGrowthInside1LastX128", "3000")
 				return nil
 			},
-			getter: func() any { return GetPositionFeeGrowthInside1LastX128(1) },
-			mutate: func(result any) { _ = result.(string) },
+			getter:     func() any { return GetPositionFeeGrowthInside1LastX128(1) },
+			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "3000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "3000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside1LastX128"][0].(string))
@@ -201,8 +201,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionLiquidity", "1000")
 				return nil
 			},
-			getter: func() any { return GetPositionLiquidity(1) },
-			mutate: func(result any) { _ = result.(string) },
+			getter:     func() any { return GetPositionLiquidity(1) },
+			mutate:     func(result any) { _ = result.(string) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "1000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "1000", implementation.(*MockPosition).Response.data["GetPositionLiquidity"][0].(string))
@@ -214,8 +214,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionTokensOwed0", int64(4000))
 				return nil
 			},
-			getter: func() any { return GetPositionTokensOwed0(1) },
-			mutate: func(result any) { _ = result.(int64) },
+			getter:     func() any { return GetPositionTokensOwed0(1) },
+			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(4000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, int64(4000), implementation.(*MockPosition).Response.data["GetPositionTokensOwed0"][0].(int64))
@@ -227,8 +227,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				m.Response.Set("GetPositionTokensOwed1", int64(5000))
 				return nil
 			},
-			getter: func() any { return GetPositionTokensOwed1(1) },
-			mutate: func(result any) { _ = result.(int64) },
+			getter:     func() any { return GetPositionTokensOwed1(1) },
+			mutate:     func(result any) { _ = result.(int64) },
 			assertSame: func(t *testing.T, result any) { uassert.Equal(t, int64(5000), result.(int64)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, int64(5000), implementation.(*MockPosition).Response.data["GetPositionTokensOwed1"][0].(int64))
