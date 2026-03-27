@@ -642,7 +642,7 @@ func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) 
 	return result[0].(pool.PositionInfo), result[1].(error)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
+func (t *TestPool) GetObservationState(poolPath string) (pool.ObservationState, error) {
 	result := t.ExecuteFn(
 		"GetObservationState",
 		func(args ...any) any {
@@ -651,5 +651,5 @@ func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState,
 		},
 		poolPath,
 	).([]any)
-	return result[0].(*pool.ObservationState), result[1].(error)
+	return result[0].(pool.ObservationState), result[1].(error)
 }

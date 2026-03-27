@@ -486,7 +486,7 @@ func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) 
 	return t.instance.GetPosition(poolPath, key)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
+func (t *TestPool) GetObservationState(poolPath string) (pool.ObservationState, error) {
 	if !t.isActive("GetObservationState") {
 		panic("test implementation: GetObservationState not supported")
 	}
