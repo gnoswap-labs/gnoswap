@@ -5,11 +5,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// u256FromStr is a convenience wrapper for u256.MustFromDecimal.
-func u256FromStr(s string) *u256.Uint {
-	return u256.MustFromDecimal(s)
-}
-
 // GetPositionCount returns the total number of positions.
 func GetPositionCount() int {
 	return getImplementation().GetPositionCount()
@@ -69,28 +64,28 @@ func GetPositionToken1Balance(positionId uint64) int64 {
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
-func GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
-	return u256FromStr(getImplementation().GetPositionFeeGrowthInside0LastX128(positionId))
+func GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
+	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside for token1.
-func GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
-	return u256FromStr(getImplementation().GetPositionFeeGrowthInside1LastX128(positionId))
+func GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
+	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLastX128(positionId uint64) (*u256.Uint, *u256.Uint) {
+func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string) {
 	position, err := GetPosition(positionId)
 	if err != nil {
-		return u256.Zero(), u256.Zero()
+		return "0", "0"
 	}
 
-	return u256FromStr(position.FeeGrowthInside0LastX128()), u256FromStr(position.FeeGrowthInside1LastX128())
+	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128()
 }
 
 // GetPositionLiquidity returns the liquidity amount of a position.
-func GetPositionLiquidity(positionId uint64) *u256.Uint {
-	return u256FromStr(getImplementation().GetPositionLiquidity(positionId))
+func GetPositionLiquidity(positionId uint64) string {
+	return getImplementation().GetPositionLiquidity(positionId)
 }
 
 // GetPositionOperator returns the operator address of a position.

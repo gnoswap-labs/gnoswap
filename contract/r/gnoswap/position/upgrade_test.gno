@@ -697,11 +697,8 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside0LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside0LastX128 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionFeeGrowthInside0LastX128() returned nil")
-		}
-		if result.ToString() != tt.expected {
-			t.Errorf("GetPositionFeeGrowthInside0LastX128() = %s, want %s", result.ToString(), tt.expected)
+		if result != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside0LastX128() = %s, want %s", result, tt.expected)
 		}
 	}
 }
@@ -749,11 +746,8 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside1LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside1LastX128 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionFeeGrowthInside1LastX128() returned nil")
-		}
-		if result.ToString() != tt.expected {
-			t.Errorf("GetPositionFeeGrowthInside1LastX128() = %s, want %s", result.ToString(), tt.expected)
+		if result != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside1LastX128() = %s, want %s", result, tt.expected)
 		}
 	}
 }
@@ -801,11 +795,8 @@ func TestGetPositionLiquidity(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionLiquidity() returned nil")
-		}
-		if result.ToString() != tt.expected {
-			t.Errorf("GetPositionLiquidity() = %s, want %s", result.ToString(), tt.expected)
+		if result != tt.expected {
+			t.Errorf("GetPositionLiquidity() = %s, want %s", result, tt.expected)
 		}
 	}
 }

@@ -317,7 +317,7 @@ func getPositionFeeGrowthInside0LastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth := pn.GetPositionFeeGrowthInside0LastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth.ToString())
+	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth)
 }
 
 func getPositionFeeGrowthInside1LastX128() {
@@ -325,7 +325,7 @@ func getPositionFeeGrowthInside1LastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth := pn.GetPositionFeeGrowthInside1LastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth.ToString())
+	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth)
 }
 
 func getPositionFeeGrowthInsideLastX128() {
@@ -333,8 +333,8 @@ func getPositionFeeGrowthInsideLastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pn.GetPositionFeeGrowthInsideLastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth0.ToString())
-	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1.ToString())
+	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth0)
+	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1)
 }
 
 func getPositionLiquidity() {
@@ -342,7 +342,7 @@ func getPositionLiquidity() {
 	testing.SetRealm(adminRealm)
 
 	liquidity := pn.GetPositionLiquidity(positionId)
-	println("[EXPECTED] position liquidity:", liquidity.ToString())
+	println("[EXPECTED] position liquidity:", liquidity)
 }
 
 func getPositionOperator() {

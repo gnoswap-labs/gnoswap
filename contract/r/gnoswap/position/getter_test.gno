@@ -150,8 +150,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return nil
 			},
 			getter: func() any { return GetPositionFeeGrowthInside0LastX128(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9200")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9200", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "2000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "2000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside0LastX128"][0].(string))
 			},
@@ -163,8 +163,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return nil
 			},
 			getter: func() any { return GetPositionFeeGrowthInside1LastX128(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9300")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9300", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "3000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "3000", implementation.(*MockPosition).Response.data["GetPositionFeeGrowthInside1LastX128"][0].(string))
 			},
@@ -182,13 +182,13 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				values := result.([]any)
-				values[0].(*u256.Uint).Set(u256.MustFromDecimal("9400"))
-				values[1].(*u256.Uint).Set(u256.MustFromDecimal("9500"))
+				_ = values[0].(string)
+				_ = values[1].(string)
 			},
 			assertSame: func(t *testing.T, result any) {
 				values := result.([]any)
-				uassert.Equal(t, "9400", values[0].(*u256.Uint).ToString())
-				uassert.Equal(t, "9500", values[1].(*u256.Uint).ToString())
+				uassert.Equal(t, "2000", values[0].(string))
+				uassert.Equal(t, "3000", values[1].(string))
 			},
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "2000", raw.FeeGrowthInside0LastX128())
@@ -202,8 +202,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 				return nil
 			},
 			getter: func() any { return GetPositionLiquidity(1) },
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("9600")) },
-			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "9600", result.(*u256.Uint).ToString()) },
+			mutate: func(result any) { _ = result.(string) },
+			assertSame: func(t *testing.T, result any) { uassert.Equal(t, "1000", result.(string)) },
 			assertRaw: func(t *testing.T, raw *Position) {
 				uassert.Equal(t, "1000", implementation.(*MockPosition).Response.data["GetPositionLiquidity"][0].(string))
 			},
