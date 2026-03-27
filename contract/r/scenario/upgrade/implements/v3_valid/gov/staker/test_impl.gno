@@ -148,7 +148,7 @@ func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
 	return t.instance.GetDelegationWithdrawCount(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
 	return t.instance.GetDelegationWithdraws(delegationID, offset, count)
 }
 

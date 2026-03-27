@@ -138,7 +138,7 @@ func GetDelegationWithdrawCount(delegationID int64) int {
 }
 
 // GetDelegationWithdraws returns a paginated list of delegation withdraws for a specific delegation.
-func GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error) {
+func GetDelegationWithdraws(delegationID int64, offset, count int) ([]DelegationWithdraw, error) {
 	withdraws, err := getImplementation().GetDelegationWithdraws(delegationID, offset, count)
 	if err != nil {
 		return nil, err

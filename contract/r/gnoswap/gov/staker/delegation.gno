@@ -22,7 +22,7 @@ type Delegation struct {
 	delegateTo       address
 	createdHeight    int64
 	createdAt        int64
-	withdraws        []*DelegationWithdraw
+	withdraws        []DelegationWithdraw
 }
 
 // NewDelegation creates a new delegation
@@ -40,7 +40,7 @@ func NewDelegation(
 		createdAt:        createdAt,
 		unDelegateAmount: 0,
 		collectedAmount:  0,
-		withdraws:        make([]*DelegationWithdraw, 0),
+		withdraws:        make([]DelegationWithdraw, 0),
 	}
 }
 
@@ -56,7 +56,7 @@ func (d *Delegation) UnDelegatedAmount() int64    { return d.unDelegateAmount }
 func (d *Delegation) CollectedAmount() int64      { return d.collectedAmount }
 
 // Withdraws getters
-func (d *Delegation) Withdraws() []*DelegationWithdraw { return d.withdraws }
+func (d *Delegation) Withdraws() []DelegationWithdraw { return d.withdraws }
 
 // Setters
 func (d *Delegation) SetUnDelegateAmount(amount int64) {
@@ -67,11 +67,11 @@ func (d *Delegation) SetCollectedAmount(amount int64) {
 	d.collectedAmount = amount
 }
 
-func (d *Delegation) AddWithdraw(withdraw *DelegationWithdraw) {
+func (d *Delegation) AddWithdraw(withdraw DelegationWithdraw) {
 	d.withdraws = append(d.withdraws, withdraw)
 }
 
-func (d *Delegation) SetWithdraws(withdraws []*DelegationWithdraw) {
+func (d *Delegation) SetWithdraws(withdraws []DelegationWithdraw) {
 	d.withdraws = withdraws
 }
 
@@ -81,12 +81,8 @@ func (d *Delegation) Clone() *Delegation {
 		return nil
 	}
 
-	clonedWithdraws := make([]*DelegationWithdraw, len(d.withdraws))
-	for i, w := range d.withdraws {
-		if w != nil {
-			clonedWithdraws[i] = w.Clone()
-		}
-	}
+	clonedWithdraws := make([]DelegationWithdraw, len(d.withdraws))
+	copy(clonedWithdraws, d.withdraws)
 
 	return &Delegation{
 		id:               d.id,
