@@ -4,6 +4,7 @@ package mock
 import (
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/position/v1"
@@ -219,44 +220,56 @@ func (t *TestPosition) GetPositionTickUpper(positionId uint64) int32 {
 	).(int32)
 }
 
-func (t *TestPosition) GetPositionLiquidity(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionLiquidity(positionId uint64) string {
 	return t.ExecuteFn(
 		"GetPositionLiquidity",
 		func(args ...any) any { return t.instance.GetPositionLiquidity(args[0].(uint64)) },
 		positionId,
-	).(*u256.Uint)
+	).(string)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionTokenBalances(positionId uint64) (int64, int64) {
+	result := t.ExecuteFn(
+		"GetPositionTokenBalances",
+		func(args ...any) any {
+			r1, r2 := t.instance.GetPositionTokenBalances(args[0].(uint64))
+			return []any{r1, r2}
+		},
+		positionId,
+	).([]any)
+	return result[0].(int64), result[1].(int64)
+}
+
+func (t *TestPosition) GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
 	return t.ExecuteFn(
 		"GetPositionFeeGrowthInside0LastX128",
 		func(args ...any) any { return t.instance.GetPositionFeeGrowthInside0LastX128(args[0].(uint64)) },
 		positionId,
-	).(*u256.Uint)
+	).(string)
 }
 
-func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
 	return t.ExecuteFn(
 		"GetPositionFeeGrowthInside1LastX128",
 		func(args ...any) any { return t.instance.GetPositionFeeGrowthInside1LastX128(args[0].(uint64)) },
 		positionId,
-	).(*u256.Uint)
+	).(string)
 }
 
-func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionTokensOwed0(positionId uint64) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed0",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed0(args[0].(uint64)) },
 		positionId,
-	).(*u256.Uint)
+	).(int64)
 }
 
-func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
+func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	return t.ExecuteFn(
 		"GetPositionTokensOwed1",
 		func(args ...any) any { return t.instance.GetPositionTokensOwed1(args[0].(uint64)) },
 		positionId,
-	).(*u256.Uint)
+	).(int64)
 }
 
 func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {

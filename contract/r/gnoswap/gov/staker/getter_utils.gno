@@ -29,15 +29,11 @@ func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	return cloned
 }
 
-func cloneDelegationWithdraws(src []*DelegationWithdraw) []*DelegationWithdraw {
+func cloneDelegationWithdraws(src []DelegationWithdraw) []DelegationWithdraw {
 	if src == nil {
 		return nil
 	}
-	cloned := make([]*DelegationWithdraw, len(src))
-	for i, withdraw := range src {
-		if withdraw != nil {
-			cloned[i] = withdraw.Clone()
-		}
-	}
+	cloned := make([]DelegationWithdraw, len(src))
+	copy(cloned, src)
 	return cloned
 }

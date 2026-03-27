@@ -51,13 +51,11 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		poolKey,
 		params.tickLower,
 		params.tickUpper,
-		liquidity,
+		liquidity.ToString(),
 		feeGrowthInside0LastX128,
 		feeGrowthInside1LastX128,
-		u256.Zero(),
-		u256.Zero(),
-		amount0,
-		amount1,
+		0,
+		0,
 		false,
 		zeroAddress,
 	)
@@ -126,25 +124,16 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
-
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	feeGrowth := FeeGrowthInside{
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128Str),
+		feeGrowthInside1LastX128: u256.MustFromDecimal(feeGrowthInside1LastX128Str),
 	}
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
-	liquidityAmount, overflow := u256.Zero().AddOverflow(position.Liquidity(), liquidity)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
-	if overflow {
-		return 0, nil, nil, nil, "", errOverflow
-	}
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
+	posLiquidity := u256.MustFromDecimal(position.Liquidity())
+	liquidityAmount, overflow := u256.Zero().AddOverflow(posLiquidity, liquidity)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
@@ -152,12 +141,10 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
 
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128Str)
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
 
-	position.SetLiquidity(liquidityAmount)
-	position.SetToken0Balance(token0Balance)
-	position.SetToken1Balance(token1Balance)
+	position.SetLiquidity(liquidityAmount.ToString())
 	position.SetBurned(false)
 
 	err := p.setPosition(params.positionId, *position)

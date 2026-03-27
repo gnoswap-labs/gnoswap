@@ -67,10 +67,6 @@ func (t *TestGovStaker) GetTotalLockedAmount() int64 {
 	return t.instance.GetTotalLockedAmount()
 }
 
-func (t *TestGovStaker) GetLockedAmount() int64 {
-	return t.instance.GetLockedAmount()
-}
-
 func (t *TestGovStaker) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	return t.instance.GetTotalDelegationAmountAtSnapshot(snapshotTime)
 }
@@ -152,7 +148,7 @@ func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
 	return t.instance.GetDelegationWithdrawCount(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
 	return t.instance.GetDelegationWithdraws(delegationID, offset, count)
 }
 

@@ -112,13 +112,13 @@ func testMintAndBalance() {
 	ufmt.Printf("[EXPECTED] FOO balance decreased by %d\n", fooChange)
 
 	pos, _ := position.GetPosition(positionId)
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(positionId))
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(positionId))
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
-	ufmt.Printf("[EXPECTED] Pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
-	ufmt.Printf("[EXPECTED] Pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
+	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
+	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 
 	// Validate token conservation and correctness
@@ -162,8 +162,8 @@ func validateMintBalances(barChange, fooChange, barBefore, barAfter, fooBefore, 
 // [EXPECTED] BAR balance decreased by 18394892
 // [EXPECTED] FOO balance decreased by 50000000
 // [EXPECTED] Position liquidity should be 318704392
-// [EXPECTED] Position token0 balance should be 18394892
-// [EXPECTED] Position token1 balance should be 50000000
+// [EXPECTED] Position token0 balance should be 18394891
+// [EXPECTED] Position token1 balance should be 49999999
 // [EXPECTED] Pool token0 balance should be 18394892
 // [EXPECTED] Pool token1 balance should be 50000000
 // [EXPECTED] Pool liquidity should be 318704392

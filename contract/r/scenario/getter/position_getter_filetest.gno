@@ -263,11 +263,11 @@ func getPosition() {
 		println("[EXPECTED] position poolKey:", position.PoolKey())
 		ufmt.Printf("[EXPECTED] position tickLower: %d\n", position.TickLower())
 		ufmt.Printf("[EXPECTED] position tickUpper: %d\n", position.TickUpper())
-		println("[EXPECTED] position liquidity:", position.Liquidity().ToString())
-		println("[EXPECTED] position feeGrowthInside0LastX128:", position.FeeGrowthInside0LastX128().ToString())
-		println("[EXPECTED] position feeGrowthInside1LastX128:", position.FeeGrowthInside1LastX128().ToString())
-		println("[EXPECTED] position tokensOwed0:", position.TokensOwed0().ToString())
-		println("[EXPECTED] position tokensOwed1:", position.TokensOwed1().ToString())
+		println("[EXPECTED] position liquidity:", position.Liquidity())
+		println("[EXPECTED] position feeGrowthInside0LastX128:", position.FeeGrowthInside0LastX128())
+		println("[EXPECTED] position feeGrowthInside1LastX128:", position.FeeGrowthInside1LastX128())
+		println("[EXPECTED] position tokensOwed0:", position.TokensOwed0())
+		println("[EXPECTED] position tokensOwed1:", position.TokensOwed1())
 	}
 }
 
@@ -292,8 +292,13 @@ func getPositionTokenBalances() {
 	testing.SetRealm(adminRealm)
 
 	balance0, balance1 := pn.GetPositionTokenBalances(positionId)
+	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
 	println("[EXPECTED] position token0 balance:", balance0)
 	println("[EXPECTED] position token1 balance:", balance1)
+	println("[EXPECTED] pool token0 balance:", bar.BalanceOf(poolAddr))
+	println("[EXPECTED] pool token1 balance:", foo.BalanceOf(poolAddr))
+	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
+	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
 func getPositionToken0Balance() {
@@ -301,7 +306,7 @@ func getPositionToken0Balance() {
 	testing.SetRealm(adminRealm)
 
 	balance0 := pn.GetPositionToken0Balance(positionId)
-	println("[EXPECTED] position token0 balance:", balance0.ToString())
+	println("[EXPECTED] position token0 balance:", balance0)
 }
 
 func getPositionToken1Balance() {
@@ -309,7 +314,7 @@ func getPositionToken1Balance() {
 	testing.SetRealm(adminRealm)
 
 	balance1 := pn.GetPositionToken1Balance(positionId)
-	println("[EXPECTED] position token1 balance:", balance1.ToString())
+	println("[EXPECTED] position token1 balance:", balance1)
 }
 
 func getPositionFeeGrowthInside0LastX128() {
@@ -317,7 +322,7 @@ func getPositionFeeGrowthInside0LastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth := pn.GetPositionFeeGrowthInside0LastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth.ToString())
+	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth)
 }
 
 func getPositionFeeGrowthInside1LastX128() {
@@ -325,7 +330,7 @@ func getPositionFeeGrowthInside1LastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth := pn.GetPositionFeeGrowthInside1LastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth.ToString())
+	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth)
 }
 
 func getPositionFeeGrowthInsideLastX128() {
@@ -333,8 +338,8 @@ func getPositionFeeGrowthInsideLastX128() {
 	testing.SetRealm(adminRealm)
 
 	feeGrowth0, feeGrowth1 := pn.GetPositionFeeGrowthInsideLastX128(positionId)
-	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth0.ToString())
-	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1.ToString())
+	println("[EXPECTED] position feeGrowthInside0LastX128:", feeGrowth0)
+	println("[EXPECTED] position feeGrowthInside1LastX128:", feeGrowth1)
 }
 
 func getPositionLiquidity() {
@@ -342,7 +347,7 @@ func getPositionLiquidity() {
 	testing.SetRealm(adminRealm)
 
 	liquidity := pn.GetPositionLiquidity(positionId)
-	println("[EXPECTED] position liquidity:", liquidity.ToString())
+	println("[EXPECTED] position liquidity:", liquidity)
 }
 
 func getPositionOperator() {
@@ -391,7 +396,7 @@ func getPositionTokensOwed0() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
-	println("[EXPECTED] position tokensOwed0:", tokensOwed0.ToString())
+	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 }
 
 func getPositionTokensOwed1() {
@@ -399,7 +404,7 @@ func getPositionTokensOwed1() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
-	println("[EXPECTED] position tokensOwed1:", tokensOwed1.ToString())
+	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
 func getPositionTokensOwed() {
@@ -407,8 +412,8 @@ func getPositionTokensOwed() {
 	testing.SetRealm(adminRealm)
 
 	tokensOwed0, tokensOwed1 := pn.GetPositionTokensOwed(positionId)
-	println("[EXPECTED] position tokensOwed0:", tokensOwed0.ToString())
-	println("[EXPECTED] position tokensOwed1:", tokensOwed1.ToString())
+	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
+	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
 func getUnclaimedFee() {
@@ -416,8 +421,8 @@ func getUnclaimedFee() {
 	testing.SetRealm(adminRealm)
 
 	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
-	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0.ToString())
-	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1.ToString())
+	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0)
+	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1)
 }
 
 func getPositionOwner() {
@@ -486,16 +491,20 @@ func getPositionOwner() {
 //
 // [SCENARIO] 2.6. GetPositionTokenBalances
 // [INFO] Check GetPositionTokenBalances method
-// [EXPECTED] position token0 balance: 100000000
-// [EXPECTED] position token1 balance: 100000000
+// [EXPECTED] position token0 balance: 99012841
+// [EXPECTED] position token1 balance: 100996999
+// [EXPECTED] pool token0 balance: 99012842
+// [EXPECTED] pool token1 balance: 101000000
+// [EXPECTED] position unclaimedFee0: 0
+// [EXPECTED] position unclaimedFee1: 2999
 //
 // [SCENARIO] 2.7. GetPositionToken0Balance
 // [INFO] Check GetPositionToken0Balance method
-// [EXPECTED] position token0 balance: 100000000
+// [EXPECTED] position token0 balance: 99012841
 //
 // [SCENARIO] 2.8. GetPositionToken1Balance
 // [INFO] Check GetPositionToken1Balance method
-// [EXPECTED] position token1 balance: 100000000
+// [EXPECTED] position token1 balance: 100996999
 //
 // [SCENARIO] 2.9. GetPositionFeeGrowthInside0LastX128
 // [INFO] Check GetPositionFeeGrowthInside0LastX128 method

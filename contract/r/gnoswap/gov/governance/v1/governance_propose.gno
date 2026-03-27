@@ -397,7 +397,6 @@ func (gv *governanceV1) createProposal(
 		proposerAddress,
 		configVersion,
 		snapshotTime,
-		createdAt,
 		createdHeight,
 	)
 

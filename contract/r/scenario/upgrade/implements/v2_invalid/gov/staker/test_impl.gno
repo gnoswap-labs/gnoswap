@@ -124,13 +124,6 @@ func (t *TestGovStaker) GetTotalLockedAmount() int64 {
 	return t.instance.GetTotalLockedAmount()
 }
 
-func (t *TestGovStaker) GetLockedAmount() int64 {
-	if !t.isActive("GetLockedAmount") {
-		panic("test implementation: GetLockedAmount not supported")
-	}
-	return t.instance.GetLockedAmount()
-}
-
 func (t *TestGovStaker) GetDelegationCount() int {
 	if !t.isActive("GetDelegationCount") {
 		panic("test implementation: GetDelegationCount not supported")
@@ -243,7 +236,7 @@ func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
 	return t.instance.GetDelegationWithdrawCount(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
 	if !t.isActive("GetDelegationWithdraws") {
 		panic("test implementation: GetDelegationWithdraws not supported")
 	}

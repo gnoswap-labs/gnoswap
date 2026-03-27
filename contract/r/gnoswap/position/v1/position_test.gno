@@ -86,13 +86,11 @@ func newDummyPosition(id uint64) position.Position {
 		"poolKey1",
 		-500,
 		500,
-		u256.NewUint(1000),
-		u256.NewUint(10),
-		u256.NewUint(20),
-		u256.NewUint(30),
-		u256.NewUint(40),
-		u256.NewUint(1000),
-		u256.NewUint(1000),
+		"1000",
+		"10",
+		"20",
+		30,
+		40,
 		false,
 		"user1",
 	)
@@ -145,11 +143,11 @@ func TestMustGetPosition(t *testing.T) {
 				uassert.Equal(t, tt.expectedPosition.PoolKey(), result.PoolKey())
 				uassert.Equal(t, tt.expectedPosition.TickLower(), result.TickLower())
 				uassert.Equal(t, tt.expectedPosition.TickUpper(), result.TickUpper())
-				uassert.Equal(t, tt.expectedPosition.Liquidity().ToString(), result.Liquidity().ToString())
-				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside0LastX128().ToString(), result.FeeGrowthInside0LastX128().ToString())
-				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside1LastX128().ToString(), result.FeeGrowthInside1LastX128().ToString())
-				uassert.Equal(t, tt.expectedPosition.TokensOwed0().ToString(), result.TokensOwed0().ToString())
-				uassert.Equal(t, tt.expectedPosition.TokensOwed1().ToString(), result.TokensOwed1().ToString())
+				uassert.Equal(t, tt.expectedPosition.Liquidity(), result.Liquidity())
+				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside0LastX128(), result.FeeGrowthInside0LastX128())
+				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside1LastX128(), result.FeeGrowthInside1LastX128())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed0(), result.TokensOwed0())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed1(), result.TokensOwed1())
 				uassert.Equal(t, tt.expectedPosition.Burned(), result.Burned())
 			}
 		})
@@ -163,11 +161,11 @@ func TestSetPosition(t *testing.T) {
 	changedPosition.SetPoolKey("poolKey2")
 	changedPosition.SetTickLower(-2000)
 	changedPosition.SetTickUpper(2000)
-	changedPosition.SetLiquidity(u256.NewUint(2000))
-	changedPosition.SetFeeGrowthInside0LastX128(u256.NewUint(20))
-	changedPosition.SetFeeGrowthInside1LastX128(u256.NewUint(40))
-	changedPosition.SetTokensOwed0(u256.NewUint(60))
-	changedPosition.SetTokensOwed1(u256.NewUint(80))
+	changedPosition.SetLiquidity("2000")
+	changedPosition.SetFeeGrowthInside0LastX128("20")
+	changedPosition.SetFeeGrowthInside1LastX128("40")
+	changedPosition.SetTokensOwed0(60)
+	changedPosition.SetTokensOwed1(80)
 	changedPosition.SetBurned(true)
 
 	tests := []struct {
@@ -197,11 +195,11 @@ func TestSetPosition(t *testing.T) {
 			uassert.Equal(t, tt.inputPosition.PoolKey(), storedPosition.PoolKey())
 			uassert.Equal(t, tt.inputPosition.TickLower(), storedPosition.TickLower())
 			uassert.Equal(t, tt.inputPosition.TickUpper(), storedPosition.TickUpper())
-			uassert.Equal(t, tt.inputPosition.Liquidity().ToString(), storedPosition.Liquidity().ToString())
-			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128().ToString(), storedPosition.FeeGrowthInside0LastX128().ToString())
-			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128().ToString(), storedPosition.FeeGrowthInside1LastX128().ToString())
-			uassert.Equal(t, tt.inputPosition.TokensOwed0().ToString(), storedPosition.TokensOwed0().ToString())
-			uassert.Equal(t, tt.inputPosition.TokensOwed1().ToString(), storedPosition.TokensOwed1().ToString())
+			uassert.Equal(t, tt.inputPosition.Liquidity(), storedPosition.Liquidity())
+			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128(), storedPosition.FeeGrowthInside0LastX128())
+			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128(), storedPosition.FeeGrowthInside1LastX128())
+			uassert.Equal(t, tt.inputPosition.TokensOwed0(), storedPosition.TokensOwed0())
+			uassert.Equal(t, tt.inputPosition.TokensOwed1(), storedPosition.TokensOwed1())
 			uassert.Equal(t, tt.inputPosition.Burned(), storedPosition.Burned())
 		})
 	}
@@ -281,98 +279,98 @@ func TestComputePositionKey(t *testing.T) {
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/position__-100__200"
+			expected:  "00008871720000887472",
 		},
 		{
 			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/position__0__0"
+			expected:  "00008872720000887272",
 		},
 		{
 			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/position__-50__150"
+			expected:  "00008872220000887422",
 		},
 		{
 			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/position__300__300"
+			expected:  "00008875720000887572",
 		},
 		{
 			name:      "Normal tick range",
 			owner:     alice,
 			tickLower: -600,
 			tickUpper: 600,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjAwX182MDA=", // Base64 of "gno.land/r/gnoswap/position__300__300"
+			expected:  "00008866720000887872",
 		},
 		{
 			name:      "Wide tick range",
 			owner:     alice,
 			tickLower: -887220,
 			tickUpper: 887220,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjIwX184ODcyMjA=", // Base64 of "gno.land/r/gnoswap/position__-887220__887220"
+			expected:  "00000000520001774492",
 		},
 		{
 			name:      "Narrow tick range",
 			owner:     alice,
 			tickLower: -60,
 			tickUpper: 60,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjBfXzYw", // Base64 of "gno.land/r/gnoswap/position__-60__60"
+			expected:  "00008872120000887332",
 		},
 		{
 			name:      "Asymmetric range",
 			owner:     alice,
 			tickLower: -1000,
 			tickUpper: 500,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fNTAw", // Base64 of "gno.land/r/gnoswap/position__-1000__500"
+			expected:  "00008862720000887772",
 		},
 		{
 			name:      "Positive range",
 			owner:     alice,
 			tickLower: 100,
 			tickUpper: 1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18xMDBfXzEwMDA=", // Base64 of "gno.land/r/gnoswap/position__100__1000"
+			expected:  "00008873720000888272",
 		},
 		{
 			name:      "Negative range",
 			owner:     alice,
 			tickLower: -2000,
 			tickUpper: -1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMjAwMF9fLTEwMDA=", // Base64 of "gno.land/r/gnoswap/position__-2000__-1000"
+			expected:  "00008852720000886272",
 		},
 		{
 			name:      "Zero lower bound",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 1000,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18xMDAw", // Base64 of "gno.land/r/gnoswap/position__0__1000"
+			expected:  "00008872720000888272",
 		},
 		{
 			name:      "Zero upper bound",
 			owner:     alice,
 			tickLower: -1000,
 			tickUpper: 0,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fMA==", // Base64 of "gno.land/r/gnoswap/position__-1000__0"
+			expected:  "00008862720000887272",
 		},
 		{
 			name:      "Minimum values",
 			owner:     alice,
 			tickLower: -887272,
 			tickUpper: -887272 + 60,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjcyX18tODg3MjEy", // Base64 of "gno.land/r/gnoswap/position__-887272__-887212"
+			expected:  "00000000000000000060",
 		},
 		{
 			name:      "Maximum values",
 			owner:     alice,
 			tickLower: 887272 - 60,
 			tickUpper: 887272,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX184ODcyMTJfXzg4NzI3Mg==", // Base64 of "gno.land/r/gnoswap/position__887272__887272"
+			expected:  "00017744840001774544",
 		},
 	}
 
@@ -1500,8 +1498,9 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	currentBalance1 := pool.BalanceToken1()
 
 	// Reduce pool balance to 50% to create burn > collect scenario
-	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
-	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	reducedBalance0 := currentBalance0 / 2
+	reducedBalance1 := currentBalance1 / 2
+
 	pool.SetBalanceToken0(reducedBalance0)
 	pool.SetBalanceToken1(reducedBalance1)
 
@@ -1593,7 +1592,7 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 
 			// Step 2: Get position liquidity and decrease 100% to clear for reposition
 			position, _ := mockInstance.GetPosition(1)
-			liquidity := position.Liquidity().ToString()
+			liquidity := position.Liquidity()
 
 			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
 				1,

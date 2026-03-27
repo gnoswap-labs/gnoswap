@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func newDelegationWithdraw() *DelegationWithdraw {
+func newDelegationWithdraw() DelegationWithdraw {
 	return NewDelegationWithdraw(1, 100, 10, 20, 30)
 }
 
@@ -15,7 +15,7 @@ func newDelegation() *Delegation {
 	delegation := NewDelegation(1, adminAddr, adminAddr, 1000, 10, 20)
 	delegation.SetUnDelegateAmount(200)
 	delegation.SetCollectedAmount(300)
-	delegation.SetWithdraws([]*DelegationWithdraw{newDelegationWithdraw()})
+	delegation.SetWithdraws([]DelegationWithdraw{newDelegationWithdraw()})
 	return delegation
 }
 
@@ -177,20 +177,20 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetDelegationWithdraws",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationWithdraws", []*DelegationWithdraw{newDelegationWithdraw()}, nil) },
+			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationWithdraws", []DelegationWithdraw{newDelegationWithdraw()}, nil) },
 			getter: func(t *testing.T) any {
 				withdraws, err := GetDelegationWithdraws(1, 0, 10)
 				uassert.NoError(t, err)
 				return withdraws
 			},
 			mutate: func(result any) {
-				withdraws := result.([]*DelegationWithdraw)
+				withdraws := result.([]DelegationWithdraw)
 				withdraws[0].SetCollected(true)
 				withdraws[0].SetCollectedAt(999)
 				withdraws[0].SetCollectedAmount(888)
 			},
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
-				withdraws := m.Response.data["GetDelegationWithdraws"][0].([]*DelegationWithdraw)
+				withdraws := m.Response.data["GetDelegationWithdraws"][0].([]DelegationWithdraw)
 				uassert.Equal(t, false, withdraws[0].IsCollected())
 				uassert.Equal(t, int64(0), withdraws[0].CollectedAt())
 				uassert.Equal(t, int64(0), withdraws[0].CollectedAmount())

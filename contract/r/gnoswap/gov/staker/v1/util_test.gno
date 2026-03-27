@@ -89,41 +89,6 @@ func TestFormatInt(t *testing.T) {
 	}
 }
 
-// TestB64Encode tests base64 encoding
-func TestB64Encode(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "Encode simple string",
-			input:    "hello",
-			expected: "aGVsbG8=",
-		},
-		{
-			name:     "Encode empty string",
-			input:    "",
-			expected: "",
-		},
-		{
-			name:     "Encode complex string",
-			input:    "Hello, World!",
-			expected: "SGVsbG8sIFdvcmxkIQ==",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := b64Encode(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
 // TestUtil_marshal tests JSON marshalling
 func TestUtil_marshal(t *testing.T) {
 	tests := []struct {

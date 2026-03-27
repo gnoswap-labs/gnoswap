@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -294,7 +293,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: "0",
 				}
 
 				err = ps.SetPosition(1, position)
@@ -321,7 +320,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: "0",
 				}
 
 				err = ps.SetPosition(1, position)
@@ -344,7 +343,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: "0",
 				}
 
 				err := ps.SetPosition(1, position)
@@ -366,7 +365,7 @@ func TestStorePosition(t *testing.T) {
 					operator:  "g1test",
 					tickLower: -100,
 					tickUpper: 100,
-					liquidity: u256.Zero(),
+					liquidity: "0",
 				}
 
 				err = ps.SetPosition(1, position)
@@ -411,7 +410,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test1",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: "0",
 	}
 
 	position2 := Position{
@@ -419,7 +418,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test2",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: "0",
 	}
 
 	position3 := Position{
@@ -427,7 +426,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 		operator:  "g1test3",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: "0",
 	}
 
 	err = ps.SetPosition(1, position1)
@@ -464,7 +463,7 @@ func TestStoreUpdatePosition(t *testing.T) {
 		operator:  "g1test",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: "0",
 	}
 
 	err = ps.SetPosition(1, position)
@@ -478,7 +477,7 @@ func TestStoreUpdatePosition(t *testing.T) {
 		operator:  "g1test",
 		tickLower: -100,
 		tickUpper: 100,
-		liquidity: u256.Zero(),
+		liquidity: "0",
 	}
 
 	err = ps.SetPosition(1, updatedPosition)

@@ -45,7 +45,6 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
@@ -70,7 +69,6 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
@@ -105,7 +103,6 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
@@ -132,7 +129,6 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*8).Unix()-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Add(-time.Hour*24*8).Unix()-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
 			setupVotingInfos: map[string]*governance.VotingInfo{
@@ -158,7 +154,6 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
@@ -257,7 +252,6 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
 			setupVotingInfo:   governance.NewVotingInfo(5_000_000_000),
@@ -283,7 +277,6 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
@@ -321,7 +314,6 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
 			expectedHasError: true,
@@ -346,7 +338,6 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
@@ -373,7 +364,6 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
@@ -468,9 +458,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
-					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
-					100,
-				)
+					100)
 			},
 			setupHalt:     true,
 			expectedError: "halted: governance",
@@ -489,9 +477,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
-					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
-					100,
-				)
+					100)
 
 				resolver := NewProposalStatusResolver(proposal.Status())
 				resolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
@@ -513,9 +499,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
-					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
-					100,
-				)
+					100)
 
 				resolver := NewProposalStatusResolver(proposal.Status())
 				resolver.vote(true, 6_000_000_000)
@@ -538,9 +522,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
-					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
-					100,
-				)
+					100)
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
@@ -635,9 +617,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime-testConfig.VotingWeightSmoothingDuration,
-				tt.proposalTime-testConfig.VotingWeightSmoothingDuration,
-				100,
-			)
+				100)
 			setupTestProposal(t, gov, proposal)
 			voter := testutils.TestAddress("voter")
 			setupTestVotingInfo(t, gov, 1, voter.String(), governance.NewVotingInfo(5_000_000_000))
@@ -719,9 +699,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay,
-				time.Now().Unix()-testConfig.VotingStartDelay,
-				100,
-			)
+				100)
 			setupTestProposal(t, gov, proposal)
 
 			voter := testutils.TestAddress("voter")
@@ -806,9 +784,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
-				time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
-				100,
-			)
+				100)
 
 			resolver := NewProposalStatusResolver(proposal.Status())
 			// Simulate voting

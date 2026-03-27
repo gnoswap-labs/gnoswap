@@ -93,7 +93,7 @@ type SwapResult struct {
 	NewSqrtPrice         *u256.Uint
 	NewTick              int32
 	NewLiquidity         *u256.Uint
-	NewProtocolFees      pl.ProtocolFees
+	NewProtocolFees      pl.TokenPair
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
 }
@@ -270,20 +270,20 @@ func (i *poolV1) Swap(
 		"recipient", recipient.String(),
 		"token0Amount", token0Amount,
 		"token1Amount", token1Amount,
-		"protocolFee0", pool.ProtocolFeesToken0().ToString(),
-		"protocolFee1", pool.ProtocolFeesToken1().ToString(),
+		"protocolFee0", formatInt(pool.ProtocolFeesToken0()),
+		"protocolFee1", formatInt(pool.ProtocolFeesToken1()),
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
 		"exactIn", strconv.FormatBool(comp.ExactInput),
 		"currentTick", strconv.FormatInt(int64(pool.Slot0Tick()), 10),
 		"liquidity", pool.Liquidity().ToString(),
 		"feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128().ToString(),
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
-		"balanceToken0", pool.BalanceToken0().ToString(),
-		"balanceToken1", pool.BalanceToken1().ToString(),
+		"balanceToken0", formatInt(pool.BalanceToken0()),
+		"balanceToken1", formatInt(pool.BalanceToken1()),
 		"ticks", ticksToString(pool, startTick, pool.Slot0Tick()),
 		"tickCumulative", formatInt(lastObservation.TickCumulative()),
-		"liquidityCumulative", lastObservation.LiquidityCumulative().ToString(),
-		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128().ToString(),
+		"liquidityCumulative", lastObservation.LiquidityCumulative(),
+		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
 		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
 	)
 
@@ -337,11 +337,11 @@ func (i *poolV1) DrySwap(
 	}
 
 	if zeroForOne {
-		if pool.BalanceToken1().Lt(result.Amount1.Abs()) {
+		if pool.BalanceToken1() < safeConvertToInt64(result.Amount1.Abs()) {
 			return "0", "0", false
 		}
 	} else {
-		if pool.BalanceToken0().Lt(result.Amount0.Abs()) {
+		if pool.BalanceToken0() < safeConvertToInt64(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
 	}
@@ -391,12 +391,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.Token0().Add(result.NewProtocolFees.Token0(), state.protocolFee)
+			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.Token1().Add(result.NewProtocolFees.Token1(), state.protocolFee)
+			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}
@@ -680,7 +680,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		if !cache.computedLatestObservation {
 			observationState := pool.ObservationState()
 			if observationState != nil {
-				tickCumulative, secondsPerLiquidity, err := observeSingle(
+				tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 					observationState,
 					cache.blockTimestamp,
 					0,
@@ -691,13 +691,12 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 				)
 				if err == nil {
 					cache.tickCumulative = tickCumulative
-					cache.secondsPerLiquidityCumulativeX128 = secondsPerLiquidity
+					cache.secondsPerLiquidityCumulativeX128 = u256.MustFromDecimal(secondsPerLiquidityStr)
 					cache.computedLatestObservation = true
 				}
 			}
 		}
 
-		// Ensure cache has valid values even if oracle computation fails
 		if cache.secondsPerLiquidityCumulativeX128 == nil {
 			cache.secondsPerLiquidityCumulativeX128 = u256.Zero()
 		}

@@ -3,8 +3,6 @@ package pool
 import (
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -16,17 +14,17 @@ func makeTestPool() *Pool {
 		fee:         500,
 		tickSpacing: 10,
 		ticks:       avl.NewTree(),
-		tickBitmaps: avl.NewTree(),
+		tickBitmaps: make(map[int16]string),
 		positions:   avl.NewTree(),
 	}
 }
 
 func makeTestTickInfo(liquidityGross, feeGrowth0, feeGrowth1, liquidityNet string, initialized bool) TickInfo {
 	info := NewTickInfo()
-	info.SetLiquidityGross(u256.MustFromDecimal(liquidityGross))
-	info.SetLiquidityNet(i256.MustFromDecimal(liquidityNet))
-	info.SetFeeGrowthOutside0X128(u256.MustFromDecimal(feeGrowth0))
-	info.SetFeeGrowthOutside1X128(u256.MustFromDecimal(feeGrowth1))
+	info.SetLiquidityGross(liquidityGross)
+	info.SetLiquidityNet(liquidityNet)
+	info.SetFeeGrowthOutside0X128(feeGrowth0)
+	info.SetFeeGrowthOutside1X128(feeGrowth1)
 	info.SetInitialized(initialized)
 	return info
 }
@@ -56,8 +54,8 @@ func TestPool_GetTick(t *testing.T) {
 
 	got, err := pool.GetTick(tick)
 	uassert.Nil(t, err)
-	uassert.Equal(t, expected.LiquidityGross().ToString(), got.LiquidityGross().ToString())
-	uassert.Equal(t, expected.LiquidityNet().ToString(), got.LiquidityNet().ToString())
+	uassert.Equal(t, expected.LiquidityGross(), got.LiquidityGross())
+	uassert.Equal(t, expected.LiquidityNet(), got.LiquidityNet())
 	uassert.Equal(t, expected.Initialized(), got.Initialized())
 }
 
@@ -69,13 +67,13 @@ func TestPool_SetTick(t *testing.T) {
 	pool.SetTick(tick, info1)
 
 	got1, _ := pool.GetTick(tick)
-	uassert.Equal(t, "1000", got1.LiquidityGross().ToString())
+	uassert.Equal(t, "1000", got1.LiquidityGross())
 
 	info2 := makeTestTickInfo("2000", "300", "400", "1000", true)
 	pool.SetTick(tick, info2)
 
 	got2, _ := pool.GetTick(tick)
-	uassert.Equal(t, "2000", got2.LiquidityGross().ToString())
+	uassert.Equal(t, "2000", got2.LiquidityGross())
 }
 
 func TestPool_DeleteTick(t *testing.T) {
@@ -152,7 +150,7 @@ func TestPool_TickMethods_NegativeTicks(t *testing.T) {
 
 		got, err := pool.GetTick(tick)
 		uassert.Nil(t, err)
-		uassert.Equal(t, info.LiquidityGross().ToString(), got.LiquidityGross().ToString())
+		uassert.Equal(t, info.LiquidityGross(), got.LiquidityGross())
 
 		pool.DeleteTick(tick)
 		uassert.False(t, pool.HasTick(tick))
@@ -171,6 +169,6 @@ func TestPool_TickMethods_BoundaryTicks(t *testing.T) {
 
 		got, err := pool.GetTick(tick)
 		uassert.Nil(t, err)
-		uassert.Equal(t, info.LiquidityGross().ToString(), got.LiquidityGross().ToString())
+		uassert.Equal(t, info.LiquidityGross(), got.LiquidityGross())
 	}
 }

@@ -40,7 +40,6 @@ type IGovStakerGetter interface {
 	GetTotalxGnsSupply() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
-	GetLockedAmount() int64
 	GetDelegationCount() int
 	GetDelegationIDs(offset, count int) []int64
 	ExistsDelegation(delegationID int64) bool
@@ -63,7 +62,7 @@ type IGovStakerGetter interface {
 
 	// Withdraw getters
 	GetDelegationWithdrawCount(delegationID int64) int
-	GetDelegationWithdraws(delegationID int64, offset, count int) ([]*DelegationWithdraw, error)
+	GetDelegationWithdraws(delegationID int64, offset, count int) ([]DelegationWithdraw, error)
 	GetCollectableWithdrawAmount(delegationID int64) int64
 
 	// Protocol fee reward getters

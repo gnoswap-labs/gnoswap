@@ -3,8 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"encoding/base64"
-	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -102,8 +100,7 @@ func (p *positionV1) Mint(
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(processedInput.poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(processedInput.poolPath, 0)
 
 	chain.Emit(
 		"Mint",
@@ -118,11 +115,11 @@ func (p *positionV1) Mint(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(id).ToString(),
+		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", p.GetPositionLiquidity(id),
 		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
-		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
-		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
+		"token0Balance", formatInt(pl.GetBalanceToken0(processedInput.poolPath)),
+		"token1Balance", formatInt(pl.GetBalanceToken1(processedInput.poolPath)),
 		"tickCumulative", formatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
@@ -204,8 +201,7 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -218,11 +214,11 @@ func (p *positionV1) IncreaseLiquidity(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", pl.GetBalanceToken0(poolPath),
-		"token1Balance", pl.GetBalanceToken1(poolPath),
+		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
+		"token1Balance", formatInt(pl.GetBalanceToken1(poolPath)),
 		"tickCumulative", formatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
@@ -286,8 +282,7 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -301,11 +296,11 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", pl.GetBalanceToken0(poolPath),
-		"token1Balance", pl.GetBalanceToken1(poolPath),
+		"token0Balance", formatInt(pl.GetBalanceToken0(poolPath)),
+		"token1Balance", formatInt(pl.GetBalanceToken1(poolPath)),
 		"tickCumulative", formatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
@@ -371,8 +366,8 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, currentFeeGrowth)
 
-	position.SetFeeGrowthInside0LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128))
-	position.SetFeeGrowthInside1LastX128(u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128))
+	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
+	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
@@ -380,24 +375,24 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		token0, token1, fee,
 		caller,
 		position.TickLower(), position.TickUpper(),
-		tokensOwed0.ToString(), tokensOwed1.ToString(),
+		formatInt(tokensOwed0), formatInt(tokensOwed1),
 	)
 	amount0Uint256 := u256.MustFromDecimal(amount0)
 	amount1Uint256 := u256.MustFromDecimal(amount1)
+	amount0Int64 := safeConvertToInt64(amount0Uint256)
+	amount1Int64 := safeConvertToInt64(amount1Uint256)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
-	if underflow {
+	if tokensOwed0 < amount0Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
-	position.SetTokensOwed0(tokensOwed0Updated)
+	position.SetTokensOwed0(safeSubInt64(tokensOwed0, amount0Int64))
 
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
-	if underflow {
+	if tokensOwed1 < amount1Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
-	position.SetTokensOwed1(tokensOwed1Updated)
+	position.SetTokensOwed1(safeSubInt64(tokensOwed1, amount1Int64))
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
@@ -416,8 +411,8 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.PoolKey(),
-		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128().ToString(),
-		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128().ToString(),
+		"feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128(),
+		"feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128(),
 	)
 
 	chain.Emit(
@@ -467,33 +462,32 @@ func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner addr
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	feeGrowthInside := FeeGrowthInside{
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128),
+		feeGrowthInside1LastX128: u256.MustFromDecimal(feeGrowthInside1LastX128),
 	}
 
 	return feeGrowthInside, nil
 }
 
-// computePositionKey generates a unique base64-encoded key for a liquidity position.
+// computePositionKey generates a compact deterministic key for a liquidity position.
 func computePositionKey(tickLower, tickUpper int32) string {
-	currentRealmPath := runtime.CurrentRealm().PkgPath()
-	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
-	return encoded
+	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
-func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.Uint) {
-	liquidity := position.Liquidity()
+func calculatePositionBalances(position *position.Position) (int64, int64) {
+	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {
-		return u256.Zero(), u256.Zero()
+		return 0, 0
 	}
 
-	return common.GetAmountsForLiquidity(
-		pl.GetSlot0SqrtPriceX96(position.PoolKey()), // currentSqrtPriceX96
+	token0Balance, token1Balance := common.GetAmountsForLiquidity(
+		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
 		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,
 	)
+
+	return safeConvertToInt64(token0Balance), safeConvertToInt64(token1Balance)
 }

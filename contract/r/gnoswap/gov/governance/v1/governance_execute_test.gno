@@ -8,9 +8,9 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/onbloc/bar"
 )
 
 var testConfig = governance.Config{
@@ -53,7 +53,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				// Mark as passed
@@ -87,7 +86,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -120,7 +118,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*10).Unix(),
-				time.Now().Add(-time.Hour*24*10).Unix(),
 				100,
 			),
 			expectedHasAbort: true,
@@ -143,7 +140,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -171,7 +167,6 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Second*86400).Unix(),
 					time.Now().Add(-time.Second*86400).Unix(),
 					100,
 				)
@@ -254,7 +249,6 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -287,7 +281,6 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 					),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
@@ -325,7 +318,6 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix(),
-				time.Now().Unix(),
 				100,
 			),
 			expectedHasError:     true,
@@ -350,7 +342,6 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -435,7 +426,6 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-executableDelay,
-				time.Now().Unix()-executableDelay,
 				100,
 			),
 			expectedProposalId: 1,
@@ -461,7 +451,6 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Unix()-executableDelay,
 				time.Now().Unix()-executableDelay,
 				100,
 			),
@@ -493,7 +482,6 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				// Mark as executed
@@ -521,7 +509,6 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -609,7 +596,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 
@@ -632,7 +618,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
-					time.Now().Unix(),
 					100,
 				)
 			},
@@ -651,7 +636,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*25).Unix(),
-					time.Now().Add(-time.Hour*25).Unix(),
 					100,
 				)
 			},
@@ -669,7 +653,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*10).Unix(),
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
@@ -691,7 +674,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Add(-time.Hour*24*15).Unix(),
 					time.Now().Add(-time.Hour*24*15).Unix(),
 					100,
 				)
@@ -715,7 +697,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*40).Unix(),
-					time.Now().Add(-time.Hour*24*40).Unix(),
 					100,
 				)
 			},
@@ -733,7 +714,6 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -842,7 +822,6 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime.Unix(),
-				tt.proposalTime.Unix(),
 				100,
 			)
 			statusResolver := NewProposalStatusResolver(proposal.Status())
@@ -948,7 +927,6 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 				),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Add(-time.Hour*24*15).Unix(),
 				time.Now().Add(-time.Hour*24*15).Unix(),
 				100,
 			)
@@ -1063,7 +1041,6 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 				NewProposalExecutionData(tt.numToExecute, tt.executions),
 				testutils.TestAddress("proposer"),
 				1,
-				time.Now().Add(-time.Hour*24*15).Unix(),
 				time.Now().Add(-time.Hour*24*15).Unix(),
 				100,
 			)
@@ -1182,7 +1159,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 					tt.proposer,
 					1,
 					tt.cancellationTime.Unix(),
-					tt.cancellationTime.Unix(),
 					100,
 				)
 				setupExecuteTestProposal(t, gov, proposal)
@@ -1230,7 +1206,6 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 			NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"),
 			testutils.TestAddress("proposer"),
 			1,
-			time.Now().Add(-time.Hour*24*15).Unix(),
 			time.Now().Add(-time.Hour*24*15).Unix(),
 			100,
 		)
@@ -1289,7 +1264,6 @@ func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
 					),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)
@@ -1358,7 +1332,6 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
-					time.Now().Unix(),
 					100,
 				)
 			},
@@ -1381,7 +1354,6 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
-					time.Now().Unix(),
 					100,
 				)
 			},
@@ -1403,7 +1375,6 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					NewProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
 					testutils.TestAddress("proposer"),
 					1,
-					time.Now().Unix(),
 					time.Now().Unix(),
 					100,
 				)

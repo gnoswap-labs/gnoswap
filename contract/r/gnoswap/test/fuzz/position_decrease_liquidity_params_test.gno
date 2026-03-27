@@ -51,7 +51,7 @@ func (p *positionDecreaseLiquidityParams) IsValid() bool {
 	}
 
 	// Liquidity must not exceed current position liquidity
-	currentLiquidity := position.GetPositionLiquidity(p.positionId)
+	currentLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(p.positionId))
 	if liq.Gt(currentLiquidity) {
 		return false
 	}
@@ -118,7 +118,7 @@ func NewRandomizedPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId 
 }
 
 func newValidPositionDecreaseLiquidityParams(t *fuzz.T, positionId uint64) *positionDecreaseLiquidityParams {
-	currentLiquidity := position.GetPositionLiquidity(positionId)
+	currentLiquidity := u256.MustFromDecimal(position.GetPositionLiquidity(positionId))
 	if currentLiquidity.IsZero() {
 		panic("position liquidity must be positive for valid decrease fuzz case")
 	}

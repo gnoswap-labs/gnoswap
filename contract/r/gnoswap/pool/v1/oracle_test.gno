@@ -288,7 +288,7 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 
 			lastObs, err := lastObservation(os)
 			uassert.NoError(t, err, "Last observation should succeed")
-			uassert.Equal(t, tt.expectedLiquidityCumulative, lastObs.LiquidityCumulative().ToString(), "Liquidity cumulative mismatch")
+			uassert.Equal(t, tt.expectedLiquidityCumulative, lastObs.LiquidityCumulative(), "Liquidity cumulative mismatch")
 		})
 	}
 }
@@ -474,8 +474,8 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 	os.Observations()[1] = pl.NewObservation(
 		now,
 		tickDelta,
-		u256.Zero(),
-		u256.Zero(),
+		"0",
+		"0",
 		true,
 	)
 	return os
@@ -494,8 +494,8 @@ func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, second
 	os.Observations()[1] = pl.NewObservation(
 		now,
 		tickDelta,
-		u256.Zero(),
-		secondsPerLiquidityDelta,
+		"0",
+		secondsPerLiquidityDelta.ToString(),
 		true,
 	)
 	return os
@@ -515,9 +515,8 @@ func createTestPool() *pl.Pool {
 		"gno.land/r/onbloc/bar",
 		500,
 		u256.MustFromDecimal("79228162514264337593543950336"),
-		10,                              // tickSpacing
-		0,                               // tick
-		0,                               // feeProtocol
-		u256.MustFromDecimal("1000000"), // maxLiquidityPerTick
+		10, // tickSpacing
+		0,  // tick
+		0,  // feeProtocol
 	)
 }

@@ -131,7 +131,7 @@ func checkInitialPositionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be %d\n", pos.TickUpper())
 }
@@ -212,7 +212,7 @@ func checkRepositionedState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Position tickUpper should be %d\n", pos.TickUpper())
 }
@@ -252,7 +252,7 @@ func checkFinalPositionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tickLower should be %d\n", pos.TickLower())
 	ufmt.Printf("[EXPECTED] Final position tickUpper should be %d\n", pos.TickUpper())
 

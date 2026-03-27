@@ -109,7 +109,7 @@ func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
 	if err0 != nil || err1 != nil {
 		return false
 	}
-	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(p.poolPath))
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(p.tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(p.tickUpper)
 

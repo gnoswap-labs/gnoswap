@@ -5,7 +5,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"testing"
 	"time"
 
@@ -116,7 +115,7 @@ func mintUser1Position() {
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", positionLiquidity.ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", positionLiquidity)
 }
 
 func mintUser2Position() {
@@ -150,18 +149,15 @@ func mintUser2Position() {
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", positionLiquidity.ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", positionLiquidity)
 }
 
-// computePositionKey generates a unique base64-encoded key for a liquidity position.
+// computePositionKey generates a compact deterministic key for a liquidity position.
 func computePositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	positionPackagePath := "gno.land/r/gnoswap/position"
-	key := ufmt.Sprintf("%s__%d__%d", positionPackagePath, tickLower, tickUpper)
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
-	return encoded
+	return pool.EncodePositionKey(tickLower, tickUpper)
 }
 
 // Output:

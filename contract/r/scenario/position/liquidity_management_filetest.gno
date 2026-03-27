@@ -176,7 +176,7 @@ func testAddLiquiditySuccess() {
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
 	println("[EXPECTED] Pool path:", poolPath)
-	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId).ToString())
+	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId))
 }
 
 func testAddLiquidityWithInvalidSlippage() {
@@ -401,7 +401,7 @@ func testDecreaseLiquiditySuccess() {
 	println("[EXPECTED] Collected fee1:", fee1)
 	println("[EXPECTED] Collected amount0:", amount0)
 	println("[EXPECTED] Collected amount1:", amount1)
-	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId).ToString())
+	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId))
 }
 
 func testDecreaseLiquidityWithOverRemoval() {

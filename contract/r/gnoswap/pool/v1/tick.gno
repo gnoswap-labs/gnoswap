@@ -11,27 +11,38 @@ import (
 )
 
 const (
-	MIN_TICK int32 = -887272
-	MAX_TICK int32 = 887272
+	MAX_LIQUIDITY_PER_TICK_SPACING_1         = "191757530477355301479181766273477"
+	MAX_LIQUIDITY_PER_TICK_SPACING_10        = "1917569901783203986719870431555990"
+	MAX_LIQUIDITY_PER_TICK_SPACING_60        = "11505743598341114571880798222544994"
+	MAX_LIQUIDITY_PER_TICK_SPACING_200       = "38350317471085141830651933667504588"
+	MIN_TICK                           int32 = -887272
+	MAX_TICK                           int32 = 887272
+)
+
+var (
+	maxLiquidityPerTickSpacing1FromDec   = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_1)
+	maxLiquidityPerTickSpacing10FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_10)
+	maxLiquidityPerTickSpacing60FromDec  = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_60)
+	maxLiquidityPerTickSpacing200FromDec = u256.MustFromDecimal(MAX_LIQUIDITY_PER_TICK_SPACING_200)
 )
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
-func GetTickLiquidityGross(p *pl.Pool, tick int32) *u256.Uint {
+func GetTickLiquidityGross(p *pl.Pool, tick int32) string {
 	return mustGetTick(p, tick).LiquidityGross()
 }
 
 // GetTickLiquidityNet returns the net liquidity for the specified tick.
-func GetTickLiquidityNet(p *pl.Pool, tick int32) *i256.Int {
+func GetTickLiquidityNet(p *pl.Pool, tick int32) string {
 	return mustGetTick(p, tick).LiquidityNet()
 }
 
 // GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
-func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) *u256.Uint {
+func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) string {
 	return mustGetTick(p, tick).FeeGrowthOutside0X128()
 }
 
 // GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
-func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) *u256.Uint {
+func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) string {
 	return mustGetTick(p, tick).FeeGrowthOutside1X128()
 }
 
@@ -41,7 +52,7 @@ func GetTickCumulativeOutside(p *pl.Pool, tick int32) int64 {
 }
 
 // GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
-func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) *u256.Uint {
+func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) string {
 	return mustGetTick(p, tick).SecondsPerLiquidityOutsideX128()
 }
 
@@ -176,7 +187,7 @@ func tickUpdate(
 ) (flipped bool) {
 	tickInfo := getTick(p, tick)
 
-	liquidityGrossBefore := tickInfo.LiquidityGross().Clone()
+	liquidityGrossBefore := u256.MustFromDecimal(tickInfo.LiquidityGross())
 	liquidityGrossAfter := common.LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !liquidityGrossAfter.Lte(maxLiquidity) {
@@ -190,20 +201,23 @@ func tickUpdate(
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
-			tickInfo.SetFeeGrowthOutside0X128(feeGrowthGlobal0X128.Clone())
-			tickInfo.SetFeeGrowthOutside1X128(feeGrowthGlobal1X128.Clone())
+			tickInfo.SetFeeGrowthOutside0X128(feeGrowthGlobal0X128.ToString())
+			tickInfo.SetFeeGrowthOutside1X128(feeGrowthGlobal1X128.ToString())
 		}
 		tickInfo.SetInitialized(true)
 	}
 
-	tickInfo.SetLiquidityGross(liquidityGrossAfter.Clone())
+	tickInfo.SetLiquidityGross(liquidityGrossAfter.ToString())
 
+	liquidityNet := i256.MustFromDecimal(tickInfo.LiquidityNet())
 	if upper {
-		tickInfo.SetLiquidityNet(i256.Zero().Sub(tickInfo.LiquidityNet(), liquidityDelta))
-		checkOverFlowInt128(tickInfo.LiquidityNet())
+		newLiquidityNet := i256.Zero().Sub(liquidityNet, liquidityDelta)
+		checkOverFlowInt128(newLiquidityNet)
+		tickInfo.SetLiquidityNet(newLiquidityNet.ToString())
 	} else {
-		tickInfo.SetLiquidityNet(i256.Zero().Add(tickInfo.LiquidityNet(), liquidityDelta))
-		checkOverFlowInt128(tickInfo.LiquidityNet())
+		newLiquidityNet := i256.Zero().Add(liquidityNet, liquidityDelta)
+		checkOverFlowInt128(newLiquidityNet)
+		tickInfo.SetLiquidityNet(newLiquidityNet.ToString())
 	}
 
 	setTick(p, tick, tickInfo)
@@ -224,21 +238,19 @@ func tickCross(
 ) *i256.Int {
 	thisTick := getTick(p, tick)
 
-	thisTick.SetFeeGrowthOutside0X128(u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.FeeGrowthOutside0X128()))
-	thisTick.SetFeeGrowthOutside1X128(u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.FeeGrowthOutside1X128()))
+	feeOutside0 := u256.MustFromDecimal(thisTick.FeeGrowthOutside0X128())
+	feeOutside1 := u256.MustFromDecimal(thisTick.FeeGrowthOutside1X128())
+	thisTick.SetFeeGrowthOutside0X128(u256.Zero().Sub(feeGrowthGlobal0X128, feeOutside0).ToString())
+	thisTick.SetFeeGrowthOutside1X128(u256.Zero().Sub(feeGrowthGlobal1X128, feeOutside1).ToString())
 
-	// Handle oracle fields - use zero values if nil
-	tickSecondsPerLiquidity := thisTick.SecondsPerLiquidityOutsideX128()
-	if tickSecondsPerLiquidity == nil {
-		tickSecondsPerLiquidity = u256.Zero()
-	}
-	thisTick.SetSecondsPerLiquidityOutsideX128(u256.Zero().Sub(secondsPerLiquidityCumulativeX128, tickSecondsPerLiquidity))
+	tickSecondsPerLiquidity := u256.MustFromDecimal(thisTick.SecondsPerLiquidityOutsideX128())
+	thisTick.SetSecondsPerLiquidityOutsideX128(u256.Zero().Sub(secondsPerLiquidityCumulativeX128, tickSecondsPerLiquidity).ToString())
 	thisTick.SetTickCumulativeOutside(tickCumulative - thisTick.TickCumulativeOutside())
 	thisTick.SetSecondsOutside(uint32(blockTimestamp) - thisTick.SecondsOutside())
 
 	setTick(p, tick, thisTick)
 
-	return thisTick.LiquidityNet().Clone()
+	return i256.MustFromDecimal(thisTick.LiquidityNet())
 }
 
 // setTick updates the tick data for the specified tick index in the pool.
@@ -316,15 +328,22 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 // calculateMaxLiquidityPerTick calculates the maximum liquidity
 // per tick for a given tick spacing.
 func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
-	// Floor MIN_TICK and MAX_TICK to the nearest multiple of tickSpacing
-	// This ensures that the tick range is properly aligned with the tickSpacing
-	// For example, if tickSpacing is 60 and MIN_TICK is -887272:
-	// -887272 / 60 = -14787.866... -> -14787 * 60 = -887220
-	minTick := (MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
-	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
+	switch tickSpacing {
+	case 1:
+		return maxLiquidityPerTickSpacing1FromDec
+	case 10:
+		return maxLiquidityPerTickSpacing10FromDec
+	case 60:
+		return maxLiquidityPerTickSpacing60FromDec
+	case 200:
+		return maxLiquidityPerTickSpacing200FromDec
+	default:
+		minTick := (MIN_TICK / tickSpacing) * tickSpacing
+		maxTick := (MAX_TICK / tickSpacing) * tickSpacing
+		numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
+		return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
+	}
 }
 
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
@@ -370,12 +389,15 @@ func getFeeGrowthBelowX128(
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
 	lowerTick pl.TickInfo,
 ) (*u256.Uint, *u256.Uint) {
+	feeOutside0 := u256.MustFromDecimal(lowerTick.FeeGrowthOutside0X128())
+	feeOutside1 := u256.MustFromDecimal(lowerTick.FeeGrowthOutside1X128())
+
 	if tickCurrent >= tickLower {
-		return lowerTick.FeeGrowthOutside0X128(), lowerTick.FeeGrowthOutside1X128()
+		return feeOutside0, feeOutside1
 	}
 
-	feeGrowthBelow0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, lowerTick.FeeGrowthOutside0X128())
-	feeGrowthBelow1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, lowerTick.FeeGrowthOutside1X128())
+	feeGrowthBelow0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, feeOutside0)
+	feeGrowthBelow1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, feeOutside1)
 
 	return feeGrowthBelow0X128, feeGrowthBelow1X128
 }
@@ -423,12 +445,15 @@ func getFeeGrowthAboveX128(
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
 	upperTick pl.TickInfo,
 ) (*u256.Uint, *u256.Uint) {
+	feeOutside0 := u256.MustFromDecimal(upperTick.FeeGrowthOutside0X128())
+	feeOutside1 := u256.MustFromDecimal(upperTick.FeeGrowthOutside1X128())
+
 	if tickCurrent < tickUpper {
-		return upperTick.FeeGrowthOutside0X128(), upperTick.FeeGrowthOutside1X128()
+		return feeOutside0, feeOutside1
 	}
 
-	feeGrowthAbove0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, upperTick.FeeGrowthOutside0X128())
-	feeGrowthAbove1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, upperTick.FeeGrowthOutside1X128())
+	feeGrowthAbove0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, feeOutside0)
+	feeGrowthAbove1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, feeOutside1)
 
 	return feeGrowthAbove0X128, feeGrowthAbove1X128
 }

@@ -250,7 +250,6 @@ func createTestProposal(id int64) *governance.Proposal {
 		address("g1proposer"),
 		1,
 		createdAt-config.VotingWeightSmoothingDuration,
-		createdAt-config.VotingWeightSmoothingDuration,
 		100,
 	)
 }

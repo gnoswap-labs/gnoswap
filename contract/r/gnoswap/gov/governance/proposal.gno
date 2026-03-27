@@ -10,7 +10,6 @@ type Proposal struct {
 	metadata      *ProposalMetadata // Title and description
 	data          *ProposalData     // Type-specific proposal data
 	snapshotTime  int64             // Timestamp for voting weight snapshot lookup
-	createdAt     int64             // Creation timestamp
 	createdHeight int64             // Block height at creation
 }
 
@@ -89,7 +88,6 @@ func (p *Proposal) Metadata() *ProposalMetadata {
 	return p.metadata
 }
 
-
 // IsTextType checks if this is a text proposal.
 func (p *Proposal) IsTextType() bool {
 	return p.Type() == Text
@@ -117,7 +115,6 @@ func (p *Proposal) IsProposer(addr address) bool {
 //   - proposerAddress: address of the proposal creator
 //   - configVersion: governance configuration version
 //   - snapshotTime: timestamp for voting weight snapshot lookup
-//   - createdAt: creation timestamp
 //   - createdHeight: creation block height
 //
 // Returns:
@@ -130,7 +127,6 @@ func NewProposal(
 	proposerAddress address,
 	configVersion int64,
 	snapshotTime int64,
-	createdAt int64,
 	createdHeight int64,
 ) *Proposal {
 	return &Proposal{
@@ -141,7 +137,6 @@ func NewProposal(
 		data:          data,
 		configVersion: configVersion,
 		snapshotTime:  snapshotTime,
-		createdAt:     createdAt,
 		createdHeight: createdHeight,
 	}
 }
@@ -160,7 +155,6 @@ func (p *Proposal) Clone() *Proposal {
 		metadata:      p.metadata.Clone(),
 		data:          p.data.Clone(),
 		snapshotTime:  p.snapshotTime,
-		createdAt:     p.createdAt,
 		createdHeight: p.createdHeight,
 	}
 }

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strconv"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -19,7 +18,6 @@ func newTickBitmapPool(t *testing.T) *pl.Pool {
 		10,
 		0,
 		0,
-		u256.MustFromDecimal("1000000"),
 	)
 }
 
@@ -37,12 +35,11 @@ func getTickBitmapFromPool(p *pl.Pool, wordPos int16) *u256.Uint {
 		return u256.Zero()
 	}
 
-	wordPosStr := strconv.Itoa(int(wordPos))
-	val, exists := tickBitmaps.Get(wordPosStr)
-	if !exists {
+	val, exists := tickBitmaps[wordPos]
+	if !exists || val == "" {
 		return u256.Zero()
 	}
-	return val.(*u256.Uint)
+	return u256.MustFromDecimal(val)
 }
 
 func flipMany(t *testing.T, p *pl.Pool, spacing int32, ticks ...int32) {

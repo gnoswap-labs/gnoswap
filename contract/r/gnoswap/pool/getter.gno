@@ -1,9 +1,5 @@
 package pool
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
 // GetPoolCount returns the total number of pools.
 func GetPoolCount() int {
 	return getImplementation().GetPoolCount()
@@ -20,17 +16,17 @@ func ExistsPoolPath(poolPath string) bool {
 }
 
 // GetBalances returns the balances of the pool.
-func GetBalances(poolPath string) (string, string) {
+func GetBalances(poolPath string) (int64, int64) {
 	return getImplementation().GetBalanceToken0(poolPath), getImplementation().GetBalanceToken1(poolPath)
 }
 
 // GetBalanceToken0 returns the balance of token0 in the pool.
-func GetBalanceToken0(poolPath string) string {
+func GetBalanceToken0(poolPath string) int64 {
 	return getImplementation().GetBalanceToken0(poolPath)
 }
 
 // GetBalanceToken1 returns the balance of token1 in the pool.
-func GetBalanceToken1(poolPath string) string {
+func GetBalanceToken1(poolPath string) int64 {
 	return getImplementation().GetBalanceToken1(poolPath)
 }
 
@@ -51,34 +47,23 @@ func GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 
 // GetFeeGrowthGlobal0X128 returns the global fee growth for token0.
 func GetFeeGrowthGlobal0X128(poolPath string) string {
-	return getImplementation().GetFeeGrowthGlobal0X128(poolPath)
+	return getImplementation().GetFeeGrowthGlobal0X128(poolPath).ToString()
 }
 
 // GetFeeGrowthGlobal1X128 returns the global fee growth for token1.
 func GetFeeGrowthGlobal1X128(poolPath string) string {
-	return getImplementation().GetFeeGrowthGlobal1X128(poolPath)
+	return getImplementation().GetFeeGrowthGlobal1X128(poolPath).ToString()
 }
 
 // GetFeeGrowthGlobalX128 returns the global fee growth for both tokens.
-func GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
-	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
-	return feeGrowthGlobal0.Clone(), feeGrowthGlobal1.Clone()
-}
-
-// GetFeeGrowthGlobals returns the global fee growth for both tokens.
-func GetFeeGrowthGlobals(poolPath string) (string, string) {
-	feeGrowthGlobal0, feeGrowthGlobal1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
-	return feeGrowthGlobal0.ToString(), feeGrowthGlobal1.ToString()
+func GetFeeGrowthGlobalX128(poolPath string) (string, string) {
+	fg0, fg1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	return fg0.ToString(), fg1.ToString()
 }
 
 // GetLiquidity returns the current liquidity in the pool.
 func GetLiquidity(poolPath string) string {
-	return getImplementation().GetLiquidity(poolPath)
-}
-
-// GetMaxLiquidityPerTick returns the maximum liquidity per tick for the pool.
-func GetMaxLiquidityPerTick(poolPath string) string {
-	return getImplementation().GetMaxLiquidityPerTick(poolPath)
+	return getImplementation().GetLiquidity(poolPath).ToString()
 }
 
 // GetObservation returns observation data for calculating time-weighted averages.
@@ -102,15 +87,8 @@ func GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
-	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
-	return feeGrowthInside0.Clone(), feeGrowthInside1.Clone()
-}
-
-// GetPositionFeeGrowthInsideLasts returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLasts(poolPath, key string) (string, string) {
-	feeGrowthInside0, feeGrowthInside1 := getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
-	return feeGrowthInside0.ToString(), feeGrowthInside1.ToString()
+func GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+	return getImplementation().GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
 // GetPoolPositionCount returns the number of positions in a pool.
@@ -124,37 +102,37 @@ func GetPoolPositionKeys(poolPath string, offset, count int) []string {
 }
 
 // GetPositionLiquidity returns the liquidity of a position.
-func GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	return getImplementation().GetPositionLiquidity(poolPath, key).Clone()
+func GetPositionLiquidity(poolPath, key string) string {
+	return getImplementation().GetPositionLiquidity(poolPath, key)
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
-func GetPositionTokensOwed0(poolPath, key string) string {
+func GetPositionTokensOwed0(poolPath, key string) int64 {
 	return getImplementation().GetPositionTokensOwed0(poolPath, key)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
-func GetPositionTokensOwed1(poolPath, key string) string {
+func GetPositionTokensOwed1(poolPath, key string) int64 {
 	return getImplementation().GetPositionTokensOwed1(poolPath, key)
 }
 
 // GetPositionTokensOwedInfos returns the amount of tokens owed for both tokens.
-func GetPositionTokensOwed(poolPath, key string) (string, string) {
+func GetPositionTokensOwed(poolPath, key string) (int64, int64) {
 	return getImplementation().GetPositionTokensOwed0(poolPath, key), getImplementation().GetPositionTokensOwed1(poolPath, key)
 }
 
 // GetProtocolFeesToken0 returns accumulated protocol fees for token0.
-func GetProtocolFeesToken0(poolPath string) string {
+func GetProtocolFeesToken0(poolPath string) int64 {
 	return getImplementation().GetProtocolFeesToken0(poolPath)
 }
 
 // GetProtocolFeesToken1 returns accumulated protocol fees for token1.
-func GetProtocolFeesToken1(poolPath string) string {
+func GetProtocolFeesToken1(poolPath string) int64 {
 	return getImplementation().GetProtocolFeesToken1(poolPath)
 }
 
 // GetProtocolFeesTokens returns the accumulated protocol fees for both tokens.
-func GetProtocolFeesTokens(poolPath string) (string, string) {
+func GetProtocolFeesTokens(poolPath string) (int64, int64) {
 	return getImplementation().GetProtocolFeesToken0(poolPath), getImplementation().GetProtocolFeesToken1(poolPath)
 }
 
@@ -164,8 +142,8 @@ func GetSlot0FeeProtocol(poolPath string) uint8 {
 }
 
 // GetSlot0SqrtPriceX96 returns the current sqrt price from slot0.
-func GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
-	return getImplementation().GetSlot0SqrtPriceX96(poolPath).Clone()
+func GetSlot0SqrtPriceX96(poolPath string) string {
+	return getImplementation().GetSlot0SqrtPriceX96(poolPath).ToString()
 }
 
 // GetSlot0Tick returns the current tick from slot0.
@@ -194,15 +172,8 @@ func GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
 }
 
 // GetTickFeeGrowthOutsideX128 returns fee growth outside for both tokens at a tick.
-func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
-	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
-	return feeGrowthOutside0.Clone(), feeGrowthOutside1.Clone()
-}
-
-// GetTickFeeGrowthOutsides returns fee growth outside for both tokens at a tick.
-func GetTickFeeGrowthOutsides(poolPath string, tick int32) (string, string) {
-	feeGrowthOutside0, feeGrowthOutside1 := getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
-	return feeGrowthOutside0.ToString(), feeGrowthOutside1.ToString()
+func GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+	return getImplementation().GetTickFeeGrowthOutsideX128(poolPath, tick)
 }
 
 // GetTickInitialized returns whether a tick is initialized.
@@ -257,12 +228,12 @@ func GetWithdrawalFee() uint64 {
 
 // GetTWAP returns the time-weighted average price for a pool.
 // Returns arithmetic mean tick and harmonic mean liquidity over the time period.
-func GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
 	tick, liquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
 	if err != nil {
-		return tick, nil, err
+		return 0, "", err
 	}
-	return tick, liquidity.Clone(), nil
+	return tick, liquidity.ToString(), nil
 }
 
 // Structure getters
@@ -288,13 +259,8 @@ func GetTickInfo(poolPath string, tick int32) (TickInfo, error) {
 }
 
 // GetTickBitmaps returns the tick bitmap for a given word position.
-func GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error) {
-	tickBitmap, err := getImplementation().GetTickBitmaps(poolPath, wordPos)
-	if err != nil {
-		return nil, err
-	}
-
-	return tickBitmap.Clone(), nil
+func GetTickBitmaps(poolPath string, wordPos int16) (string, error) {
+	return getImplementation().GetTickBitmaps(poolPath, wordPos)
 }
 
 // GetPosition returns the position info for a given key.

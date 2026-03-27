@@ -12,7 +12,7 @@ func newExternalIncentive() ExternalIncentive {
 }
 
 func newStakerDeposit() *Deposit {
-	deposit := NewDeposit(adminAddr, "foo:bar:500", u256.MustFromDecimal("1000"), 10, -100, 100, []Warmup{{Index: 0, TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}})
+	deposit := NewDeposit(adminAddr, "foo:bar:500", u256.MustFromDecimal("1000"), 10, -100, 100, []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}})
 	deposit.SetCollectedInternalReward(40)
 	deposit.SetLastExternalIncentiveUpdatedAt(50)
 	return deposit
@@ -112,18 +112,16 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetDepositWarmUp",
-			setup: func(m *MockStaker) { m.Response.Set("GetDepositWarmUp", []Warmup{{Index: 0, TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
+			setup: func(m *MockStaker) { m.Response.Set("GetDepositWarmUp", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
 			getter: func() any { return GetDepositWarmUp(1) },
 			mutate: func(result any) {
 				warmups := result.([]Warmup)
-				warmups[0].Index = 1
 				warmups[0].TimeDuration = 99
 				warmups[0].NextWarmupTime = 88
 				warmups[0].WarmupRatio = 77
 			},
 			assertRaw: func(t *testing.T, m *MockStaker) {
 				warmups := m.Response.data["GetDepositWarmUp"][0].([]Warmup)
-				uassert.Equal(t, 0, warmups[0].Index)
 				uassert.Equal(t, int64(10), warmups[0].TimeDuration)
 				uassert.Equal(t, int64(20), warmups[0].NextWarmupTime)
 				uassert.Equal(t, uint64(30), warmups[0].WarmupRatio)
@@ -222,18 +220,16 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetWarmupTemplate",
-			setup: func(m *MockStaker) { m.Response.Set("GetWarmupTemplate", []Warmup{{Index: 0, TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
+			setup: func(m *MockStaker) { m.Response.Set("GetWarmupTemplate", []Warmup{{TimeDuration: 10, NextWarmupTime: 20, WarmupRatio: 30}}) },
 			getter: func() any { return GetWarmupTemplate() },
 			mutate: func(result any) {
 				warmups := result.([]Warmup)
-				warmups[0].Index = 1
 				warmups[0].TimeDuration = 99
 				warmups[0].NextWarmupTime = 88
 				warmups[0].WarmupRatio = 77
 			},
 			assertRaw: func(t *testing.T, m *MockStaker) {
 				warmups := m.Response.data["GetWarmupTemplate"][0].([]Warmup)
-				uassert.Equal(t, 0, warmups[0].Index)
 				uassert.Equal(t, int64(10), warmups[0].TimeDuration)
 				uassert.Equal(t, int64(20), warmups[0].NextWarmupTime)
 				uassert.Equal(t, uint64(30), warmups[0].WarmupRatio)
