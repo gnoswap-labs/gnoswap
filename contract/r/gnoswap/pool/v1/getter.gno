@@ -3,8 +3,9 @@ package v1
 import (
 	"strconv"
 
+	"gno.land/p/nt/ufmt/v0"
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt/v0"
+
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -352,12 +353,12 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 		return "", ufmt.Errorf("tick bitmap %d not found", wordPos)
 	}
 
-	tickBitmap, ok := iTickBitmap.(*u256.Uint)
+	tickBitmap, ok := iTickBitmap.(string)
 	if !ok {
-		return "", ufmt.Errorf("failed to cast tick bitmap: %T", iTickBitmap)
+		return "", ufmt.Errorf("failed to cast tick bitmap to string: %T", iTickBitmap)
 	}
 
-	return tickBitmap.ToString(), nil
+	return tickBitmap, nil
 }
 
 // GetPosition returns the position info for a given key.
