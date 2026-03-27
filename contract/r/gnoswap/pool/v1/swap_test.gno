@@ -59,37 +59,37 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 	feeManagementTests := []struct {
 		name              string
 		description       string
-		initialFees       map[string]string // token0, token1
-		deductionAmount   map[string]string
-		expectedRemaining map[string]string
-		expectedDeducted  map[string]string
+		initialFees       map[string]int64
+		deductionAmount   map[string]int64
+		expectedRemaining map[string]int64
+		expectedDeducted  map[string]int64
 		businessImpact    string
 	}{
 		{
 			name:              "normal_fee_deduction_scenario",
 			description:       "Normal protocol fee deduction",
-			initialFees:       map[string]string{"token0": "1000", "token1": "2000"},
-			deductionAmount:   map[string]string{"token0": "500", "token1": "1000"},
-			expectedRemaining: map[string]string{"token0": "500", "token1": "1000"},
-			expectedDeducted:  map[string]string{"token0": "500", "token1": "1000"},
+			initialFees:       map[string]int64{"token0": 1000, "token1": 2000},
+			deductionAmount:   map[string]int64{"token0": 500, "token1": 1000},
+			expectedRemaining: map[string]int64{"token0": 500, "token1": 1000},
+			expectedDeducted:  map[string]int64{"token0": 500, "token1": 1000},
 			businessImpact:    "Realize part of protocol revenue",
 		},
 		{
 			name:              "near_complete_fee_extraction",
 			description:       "Almost all fees extracted (1 left)",
-			initialFees:       map[string]string{"token0": "1000", "token1": "2000"},
-			deductionAmount:   map[string]string{"token0": "999", "token1": "1999"},
-			expectedRemaining: map[string]string{"token0": "1", "token1": "1"},
-			expectedDeducted:  map[string]string{"token0": "999", "token1": "1999"},
+			initialFees:       map[string]int64{"token0": 1000, "token1": 2000},
+			deductionAmount:   map[string]int64{"token0": 999, "token1": 1999},
+			expectedRemaining: map[string]int64{"token0": 1, "token1": 1},
+			expectedDeducted:  map[string]int64{"token0": 999, "token1": 1999},
 			businessImpact:    "Maximize protocol revenue while maintaining system stability",
 		},
 		{
 			name:              "zero_deduction_preservation",
 			description:       "Preserve fees without deduction",
-			initialFees:       map[string]string{"token0": "1000", "token1": "2000"},
-			deductionAmount:   map[string]string{"token0": "0", "token1": "0"},
-			expectedRemaining: map[string]string{"token0": "1000", "token1": "2000"},
-			expectedDeducted:  map[string]string{"token0": "0", "token1": "0"},
+			initialFees:       map[string]int64{"token0": 1000, "token1": 2000},
+			deductionAmount:   map[string]int64{"token0": 0, "token1": 0},
+			expectedRemaining: map[string]int64{"token0": 1000, "token1": 2000},
+			expectedDeducted:  map[string]int64{"token0": 0, "token1": 0},
 			businessImpact:    "Preserve fees for future protocol development",
 		},
 	}
@@ -99,29 +99,21 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 			// Given: Specific protocol fee state
 			pool := &pl.Pool{}
 			protocolFees := pl.ProtocolFees{}
-			protocolFees.SetToken0(u256.MustFromDecimal(test.initialFees["token0"]).Int64())
-			protocolFees.SetToken1(u256.MustFromDecimal(test.initialFees["token1"]).Int64())
+			protocolFees.SetToken0(test.initialFees["token0"])
+			protocolFees.SetToken1(test.initialFees["token1"])
 			pool.SetProtocolFees(protocolFees)
 
-			deductAmount0 := u256.MustFromDecimal(test.deductionAmount["token0"]).Int64()
-			deductAmount1 := u256.MustFromDecimal(test.deductionAmount["token1"]).Int64()
-
 			// When: Execute protocol fee deduction
-			actualDeducted0, actualDeducted1 := getMockInstance().saveProtocolFees(pool, deductAmount0, deductAmount1)
+			actualDeducted0, actualDeducted1 := getMockInstance().saveProtocolFees(pool, test.deductionAmount["token0"], test.deductionAmount["token1"])
 
 			// Then: Verify expected deduction and remaining balance
-			expectedDeducted0 := u256.MustFromDecimal(test.expectedDeducted["token0"]).Int64()
-			expectedDeducted1 := u256.MustFromDecimal(test.expectedDeducted["token1"]).Int64()
-			expectedRemaining0 := u256.MustFromDecimal(test.expectedRemaining["token0"]).Int64()
-			expectedRemaining1 := u256.MustFromDecimal(test.expectedRemaining["token1"]).Int64()
-
-			uassert.Equal(t, expectedDeducted0, actualDeducted0,
+			uassert.Equal(t, test.expectedDeducted["token0"], actualDeducted0,
 				"Token0 deduction amount is different from expected")
-			uassert.Equal(t, expectedDeducted1, actualDeducted1,
+			uassert.Equal(t, test.expectedDeducted["token1"], actualDeducted1,
 				"Token1 deduction amount is different from expected")
-			uassert.Equal(t, expectedRemaining0, pool.ProtocolFeesToken0(),
+			uassert.Equal(t, test.expectedRemaining["token0"], pool.ProtocolFeesToken0(),
 				"Token0 remaining fee is different from expected")
-			uassert.Equal(t, expectedRemaining1, pool.ProtocolFeesToken1(),
+			uassert.Equal(t, test.expectedRemaining["token1"], pool.ProtocolFeesToken1(),
 				"Token1 remaining fee is different from expected")
 
 			t.Logf("✓ %s: %s", test.description, test.businessImpact)
