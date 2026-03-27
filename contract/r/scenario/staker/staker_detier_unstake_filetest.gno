@@ -117,8 +117,8 @@ func initAndSetup() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	testing.SetRealm(stakerRealm)
@@ -289,7 +289,7 @@ func verifyOwnership() {
 	if err != nil {
 		panic("position should still exist")
 	}
-	ufmt.Printf("[EXPECTED] position still accessible - liquidity: %s\n", position.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] position still accessible - liquidity: %s\n", position.Liquidity())
 }
 
 func positionIdFrom(positionId uint64) grc721.TokenID {

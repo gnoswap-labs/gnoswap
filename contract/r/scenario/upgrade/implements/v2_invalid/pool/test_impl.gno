@@ -3,6 +3,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
 )
@@ -188,14 +189,14 @@ func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
 	return t.instance.GetFeeAmountTickSpacing(fee)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	if !t.isActive("GetFeeGrowthGlobal0X128") {
 		panic("test implementation: GetFeeGrowthGlobal0X128 not supported")
 	}
 	return t.instance.GetFeeGrowthGlobal0X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
 	if !t.isActive("GetFeeGrowthGlobal1X128") {
 		panic("test implementation: GetFeeGrowthGlobal1X128 not supported")
 	}
@@ -209,14 +210,14 @@ func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Ui
 	return t.instance.GetFeeGrowthGlobalX128(poolPath)
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) string {
+func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	if !t.isActive("GetLiquidity") {
 		panic("test implementation: GetLiquidity not supported")
 	}
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) string {
+func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
 	if !t.isActive("GetMaxLiquidityPerTick") {
 		panic("test implementation: GetMaxLiquidityPerTick not supported")
 	}
@@ -251,14 +252,14 @@ func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) str
 	return t.instance.GetPositionFeeGrowthInside1LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	if !t.isActive("GetPositionFeeGrowthInsideLastX128") {
 		panic("test implementation: GetPositionFeeGrowthInsideLastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) *u256.Uint {
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
 	if !t.isActive("GetPositionLiquidity") {
 		panic("test implementation: GetPositionLiquidity not supported")
 	}
@@ -342,7 +343,7 @@ func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) str
 	return t.instance.GetTickFeeGrowthOutside1X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	if !t.isActive("GetTickFeeGrowthOutsideX128") {
 		panic("test implementation: GetTickFeeGrowthOutsideX128 not supported")
 	}
@@ -412,7 +413,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if !t.isActive("GetTWAP") {
 		panic("test implementation: GetTWAP not supported")
 	}
