@@ -25,7 +25,7 @@ type Pool struct {
 	feeGrowthGlobal1X128 *u256.Uint // uint256
 	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
-	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
+	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
@@ -53,7 +53,7 @@ func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.toke
 func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
-func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
+func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
 func (p *Pool) Positions() *avl.Tree                { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
@@ -122,7 +122,7 @@ func (p *Pool) SetTicks(ticks *avl.Tree) {
 	p.ticks = ticks
 }
 
-func (p *Pool) SetTickBitmaps(tickBitmaps *avl.Tree) {
+func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]string) {
 	p.tickBitmaps = tickBitmaps
 }
 
@@ -200,7 +200,7 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
 		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
+		tickBitmaps:          make(map[int16]string),
 		positions:            avl.NewTree(),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
@@ -231,7 +231,7 @@ func NewPool(
 		protocolFees:         newProtocolFees(),
 		liquidity:            u256.Zero(),
 		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
+		tickBitmaps:          make(map[int16]string),
 		positions:            avl.NewTree(),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}

@@ -481,7 +481,7 @@ type createMockPoolParams struct {
 	feeGrowthGlobal1X128 *u256.Uint
 	liquidity            *u256.Uint
 	ticks                *avl.Tree
-	tickBitmaps          *avl.Tree
+	tickBitmaps          map[int16]string
 	positions            *avl.Tree
 	observationState     *pl.ObservationState
 }
@@ -500,6 +500,10 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	protocolFees := pl.ProtocolFees{}
 	protocolFees.SetToken0(params.protocolFees.token0)
 	protocolFees.SetToken1(params.protocolFees.token1)
+
+	if params.tickBitmaps == nil {
+		params.tickBitmaps = make(map[int16]string)
+	}
 
 	pool := &pl.Pool{}
 	pool.SetToken0Path(params.token0Path)
