@@ -136,9 +136,9 @@ type IPoolSwap interface {
 type IPoolGetter interface {
 	ExistsPoolPath(poolPath string) bool
 
-	GetBalanceToken0(poolPath string) string
+	GetBalanceToken0(poolPath string) int64
 
-	GetBalanceToken1(poolPath string) string
+	GetBalanceToken1(poolPath string) int64
 
 	GetFee(poolPath string) uint32
 
@@ -166,13 +166,13 @@ type IPoolGetter interface {
 
 	GetPositionLiquidity(poolPath, key string) *u256.Uint
 
-	GetPositionTokensOwed0(poolPath, key string) string
+	GetPositionTokensOwed0(poolPath, key string) int64
 
-	GetPositionTokensOwed1(poolPath, key string) string
+	GetPositionTokensOwed1(poolPath, key string) int64
 
-	GetProtocolFeesToken0(poolPath string) string
+	GetProtocolFeesToken0(poolPath string) int64
 
-	GetProtocolFeesToken1(poolPath string) string
+	GetProtocolFeesToken1(poolPath string) int64
 
 	GetSlot0FeeProtocol(poolPath string) uint8
 
@@ -208,7 +208,7 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+	GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error)
 
 	GetPoolCount() int
 	GetPoolPaths(offset, count int) []string
@@ -222,7 +222,7 @@ type IPoolGetter interface {
 	// Structure getters
 	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
-	GetTickBitmaps(poolPath string, wordPos int16) (*u256.Uint, error)
+	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
 	GetPosition(poolPath, key string) (PositionInfo, error)
 	GetObservationState(poolPath string) (*ObservationState, error)
 }

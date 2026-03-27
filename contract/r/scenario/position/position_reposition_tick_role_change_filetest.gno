@@ -128,8 +128,8 @@ func checkTick9000AsLower() {
 		panic(ufmt.Sprintf("Failed to get tick info: %s", err.Error()))
 	}
 
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross().ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (positive for lower tick)\n", tickInfo.LiquidityNet().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (positive for lower tick)\n", tickInfo.LiquidityNet())
 	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
@@ -211,8 +211,8 @@ func checkTick9000AsUpper() {
 		panic(ufmt.Sprintf("Failed to get tick info: %s", err.Error()))
 	}
 
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross().ToString())
-	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (negative for upper tick)\n", tickInfo.LiquidityNet().ToString())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityGross should be %s\n", tickInfo.LiquidityGross())
+	ufmt.Printf("[EXPECTED] Tick 9000 liquidityNet should be %s (negative for upper tick)\n", tickInfo.LiquidityNet())
 	ufmt.Printf("[EXPECTED] Tick 9000 initialized should be %t\n", tickInfo.Initialized())
 }
 
