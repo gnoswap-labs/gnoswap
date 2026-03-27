@@ -5,7 +5,6 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 )
 
-
 type IPosition interface {
 	IPositionManager
 	IPositionGetter
