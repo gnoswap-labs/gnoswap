@@ -464,8 +464,8 @@ type mockSlot0 struct {
 }
 
 type mockBalances struct {
-	token0 *u256.Uint
-	token1 *u256.Uint
+	token0 int64
+	token1 int64
 }
 
 type createMockPoolParams struct {

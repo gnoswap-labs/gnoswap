@@ -52,7 +52,8 @@ func positionUpdate(
 ) (pl.PositionInfo, error) {
 	isZeroLiquidityDelta := liquidityDelta.IsZero()
 
-	if position.Liquidity().IsZero() && isZeroLiquidityDelta {
+	posLiquidity := u256.MustFromDecimal(position.Liquidity())
+	if posLiquidity.IsZero() && isZeroLiquidityDelta {
 		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
 			"both liquidityDelta and current position's liquidity are zero",
@@ -60,57 +61,49 @@ func positionUpdate(
 	}
 
 	if liquidityDelta.IsNeg() {
-		// absolute value of negative liquidity delta must be less than current liquidity
 		absDelta := i256.Zero().Set(liquidityDelta).Abs()
-		currentLiquidity := position.Liquidity()
-		if absDelta.Gt(currentLiquidity) {
+		if absDelta.Gt(posLiquidity) {
 			return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 				errZeroLiquidity,
 				ufmt.Sprintf("liquidity delta(%s) is greater than current liquidity(%s)",
-					liquidityDelta.ToString(), position.Liquidity().ToString()),
+					liquidityDelta.ToString(), posLiquidity.ToString()),
 			)
 		}
 	}
 
 	var liquidityNext *u256.Uint
 	if isZeroLiquidityDelta {
-		liquidityNext = position.Liquidity()
+		liquidityNext = posLiquidity
 	} else {
-		liquidityNext = common.LiquidityMathAddDelta(position.Liquidity(), liquidityDelta)
+		liquidityNext = common.LiquidityMathAddDelta(posLiquidity, liquidityDelta)
 	}
 
-	// validate negative feeGrowth before calculation
-	diff0 := u256.Zero().Sub(feeGrowthInside0X128, position.FeeGrowthInside0LastX128())
-	diff1 := u256.Zero().Sub(feeGrowthInside1X128, position.FeeGrowthInside1LastX128())
+	feeGrowthLast0 := u256.MustFromDecimal(position.FeeGrowthInside0LastX128())
+	feeGrowthLast1 := u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
 
-	// calculate tokensOwed
+	diff0 := u256.Zero().Sub(feeGrowthInside0X128, feeGrowthLast0)
+	diff1 := u256.Zero().Sub(feeGrowthInside1X128, feeGrowthLast1)
+
 	tokensOwed0 := u256.Zero()
 	if !diff0.IsZero() {
-		tokensOwed0 = u256.MulDiv(diff0, position.Liquidity(), q128FromDecimal)
+		tokensOwed0 = u256.MulDiv(diff0, posLiquidity, q128FromDecimal)
 	}
 
 	tokensOwed1 := u256.Zero()
 	if !diff1.IsZero() {
-		tokensOwed1 = u256.MulDiv(diff1, position.Liquidity(), q128FromDecimal)
+		tokensOwed1 = u256.MulDiv(diff1, posLiquidity, q128FromDecimal)
 	}
 
 	if !isZeroLiquidityDelta {
-		position.SetLiquidity(liquidityNext)
+		position.SetLiquidity(liquidityNext.ToString())
 	}
 
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0X128)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128)
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0X128.ToString())
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1X128.ToString())
 
-	// add tokensOwed only when it's greater than 0
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		owed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), tokensOwed0)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
-		owed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), tokensOwed1)
-		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverflow
-		}
+		owed0 := safeAddInt64(position.TokensOwed0(), safeConvertToInt64(tokensOwed0))
+		owed1 := safeAddInt64(position.TokensOwed1(), safeConvertToInt64(tokensOwed1))
 
 		position.SetTokensOwed0(owed0)
 		position.SetTokensOwed1(owed1)
@@ -130,27 +123,27 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 }
 
 // PositionLiquidity returns the liquidity of a position.
-func PositionLiquidity(p *pl.Pool, key string) *u256.Uint {
+func PositionLiquidity(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).Liquidity()
 }
 
 // PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
-func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) *u256.Uint {
+func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).FeeGrowthInside0LastX128()
 }
 
 // PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
-func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) *u256.Uint {
+func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
 	return mustGetPositionByPool(p, key).FeeGrowthInside1LastX128()
 }
 
 // PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed0(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed0()
 }
 
 // PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) *u256.Uint {
+func PositionTokensOwed1(p *pl.Pool, key string) int64 {
 	return mustGetPositionByPool(p, key).TokensOwed1()
 }
 
