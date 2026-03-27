@@ -870,7 +870,7 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	return u256.Zero().Set(pn.GetPositionLiquidity(positionId))
+	return u256.MustFromDecimal(pn.GetPositionLiquidity(positionId))
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
@@ -884,7 +884,7 @@ func getTickOf(positionId uint64) (int32, int32) {
 
 // calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
 func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
-	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96 := u256.MustFromDecimal(s.poolAccessor.GetSlot0SqrtPriceX96(poolPath))
 	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 

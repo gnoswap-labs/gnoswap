@@ -42,9 +42,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 )
 
-var (
-	fee500 = uint32(500)
-)
+var fee500 = uint32(500)
 
 func main() {
 	println("[SCENARIO] Tick Cross Oracle Field Update")
@@ -131,9 +129,9 @@ func main() {
 		fooPath,
 		fee500,
 		adminAddr,
-		true, // zeroForOne - tick decreases (0 -> past testTick)
+		true,       // zeroForOne - tick decreases (0 -> past testTick)
 		"10000000", // large amount to ensure we cross testTick
-		common.TickMathGetSqrtRatioAtTick(testTick - 100).ToString(), // target past testTick
+		common.TickMathGetSqrtRatioAtTick(testTick-100).ToString(), // target past testTick
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
@@ -205,7 +203,7 @@ func main() {
 		fooPath,
 		fee500,
 		adminAddr,
-		false, // oneForZero - tick increases (back above testTick)
+		false,      // oneForZero - tick increases (back above testTick)
 		"10000000", // large amount to ensure crossing back
 		common.TickMathGetSqrtRatioAtTick(1000).ToString(), // back to upper bound
 		adminAddr,

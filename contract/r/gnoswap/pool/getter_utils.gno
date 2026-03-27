@@ -1,6 +1,5 @@
 package pool
 
-
 func cloneStringSlice(src []string) []string {
 	if src == nil {
 		return nil

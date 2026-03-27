@@ -145,9 +145,9 @@ func checkInitialState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Initial liquidity should be %s\n", pos.Liquidity().ToString())
-	ufmt.Printf("[EXPECTED] Initial token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Initial token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Initial liquidity should be %s\n", pos.Liquidity())
+	ufmt.Printf("[EXPECTED] Initial token0 balance should be %d\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Initial token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func executeSwaps() {
@@ -234,9 +234,9 @@ func verifyFinalState() {
 	pos, _ := position.GetPosition(1)
 
 	ufmt.Printf("[EXPECTED] Position should be burned\n")
-	ufmt.Printf("[EXPECTED] Final liquidity should be %s\n", pos.Liquidity().ToString())
-	ufmt.Printf("[EXPECTED] Final token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Final token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Final liquidity should be %s\n", pos.Liquidity())
+	ufmt.Printf("[EXPECTED] Final token0 balance should be %d\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Final token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {

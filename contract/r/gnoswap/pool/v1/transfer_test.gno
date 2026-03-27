@@ -164,51 +164,51 @@ func TestTransferFromAndVerify(t *testing.T) {
 		return mockPool
 	}
 
-		tests := []struct {
-			name         string
-			pool         *pl.Pool
+	tests := []struct {
+		name         string
+		pool         *pl.Pool
 		from         address
 		to           address
 		tokenPath    string
 		amount       *i256.Int
 		isToken0     bool
-			expectedBal0 int64
-			expectedBal1 int64
-		}{
-			{
-				name:         "normal token0 transfer",
-				pool:         makeMockPoolWithBalance(1000, 2000),
+		expectedBal0 int64
+		expectedBal1 int64
+	}{
+		{
+			name:         "normal token0 transfer",
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(500),
 			isToken0:     true,
-				expectedBal0: 1500, // 1000 + 500
-				expectedBal1: 2000, // unchanged
-			},
-			{
-				name:         "normal token1 transfer",
-				pool:         makeMockPoolWithBalance(1000, 2000),
+			expectedBal0: 1500, // 1000 + 500
+			expectedBal1: 2000, // unchanged
+		},
+		{
+			name:         "normal token1 transfer",
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(800),
 			isToken0:     false,
-				expectedBal0: 1000, // unchanged
-				expectedBal1: 2800, // 2000 + 800
-			},
-			{
-				name:         "zero value transfer",
-				pool:         makeMockPoolWithBalance(1000, 2000),
+			expectedBal0: 1000, // unchanged
+			expectedBal1: 2800, // 2000 + 800
+		},
+		{
+			name:         "zero value transfer",
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(0),
 			isToken0:     true,
-				expectedBal0: 1000, // unchanged
-				expectedBal1: 2000, // unchanged
-			},
-		}
+			expectedBal0: 1000, // unchanged
+			expectedBal1: 2000, // unchanged
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
