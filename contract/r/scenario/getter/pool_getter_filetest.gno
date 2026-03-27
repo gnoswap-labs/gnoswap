@@ -803,7 +803,7 @@ func getTWAP() {
 		println("[EXPECTED] GetTWAP error:", err.Error())
 	} else {
 		ufmt.Printf("[EXPECTED] arithmeticMeanTick: %d\n", arithmeticMeanTick)
-		println("[EXPECTED] harmonicMeanLiquidity:", harmonicMeanLiquidity.ToString())
+		println("[EXPECTED] harmonicMeanLiquidity:", harmonicMeanLiquidity)
 	}
 }
 
@@ -849,7 +849,7 @@ func getTickBitmaps() {
 	if err != nil {
 		println("[EXPECTED] GetTickBitmaps error:", err.Error())
 	} else {
-		println("[EXPECTED] tickBitmap at wordPos:", tickBitmap.ToString())
+		println("[EXPECTED] tickBitmap at wordPos:", tickBitmap)
 	}
 }
 
