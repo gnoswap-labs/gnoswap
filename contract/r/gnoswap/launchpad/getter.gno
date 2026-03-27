@@ -1,9 +1,5 @@
 package launchpad
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
 // GetProjectCount returns the total number of projects.
 func GetProjectCount() int {
 	return getImplementation().GetProjectCount()
@@ -93,15 +89,15 @@ func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
 }
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
-func GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
+func GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (string, error) {
 	amount, err := getImplementation().GetProjectTierDistributeAmountPerSecondX128(projectId, tier)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if amount == nil {
-		return nil, nil
+		return "", nil
 	}
-	return amount.Clone(), nil
+	return amount.ToString(), nil
 }
 
 // GetProjectTierTotalDistributeAmount returns the total distribute amount of a project tier.
@@ -241,27 +237,27 @@ func GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {
 }
 
 // GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
-func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
+func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (string, error) {
 	amount, err := getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if amount == nil {
-		return nil, nil
+		return "", nil
 	}
-	return amount.Clone(), nil
+	return amount.ToString(), nil
 }
 
 // GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
-func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
+func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (string, error) {
 	amount, err := getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if amount == nil {
-		return nil, nil
+		return "", nil
 	}
-	return amount.Clone(), nil
+	return amount.ToString(), nil
 }
 
 // GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.

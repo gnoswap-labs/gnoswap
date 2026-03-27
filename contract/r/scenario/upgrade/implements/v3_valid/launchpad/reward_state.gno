@@ -16,11 +16,13 @@ func isRewardStateClaimable(r *launchpad.RewardState, currentTime int64) bool {
 // the accumulated reward per deposit.
 // Returns the total reward amount.
 func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.Uint) int64 {
-	if accumRewardPerDepositX128 == nil || r.PriceDebtX128() == nil {
+	priceDebt := r.PriceDebtX128()
+	if accumRewardPerDepositX128 == nil || priceDebt == "" {
 		return 0
 	}
+	priceDebtX128 := u256.MustFromDecimal(priceDebt)
 
-	actualRewardPerDepositX128 := u256.Zero().Sub(accumRewardPerDepositX128, r.PriceDebtX128())
+	actualRewardPerDepositX128 := u256.Zero().Sub(accumRewardPerDepositX128, priceDebtX128)
 	if actualRewardPerDepositX128.IsZero() {
 		return 0
 	}
@@ -43,7 +45,12 @@ func calculateClaimableReward(r *launchpad.RewardState, accumRewardPerDepositX12
 	}
 
 	// Return 0 if accumulated reward is less than price debt
-	if accumRewardPerDepositX128.Lt(r.PriceDebtX128()) {
+	priceDebt := r.PriceDebtX128()
+	if priceDebt == "" {
+		return 0
+	}
+
+	if accumRewardPerDepositX128.Lt(u256.MustFromDecimal(priceDebt)) {
 		return 0
 	}
 
@@ -65,8 +72,13 @@ func newRewardState(
 	distributeEndTime int64,
 	claimableTime int64,
 ) *launchpad.RewardState {
+	priceDebtX128 := ""
+	if accumulatedRewardPerDepositX128 != nil {
+		priceDebtX128 = accumulatedRewardPerDepositX128.ToString()
+	}
+
 	return launchpad.NewRewardState(
-		accumulatedRewardPerDepositX128,
+		priceDebtX128,
 		depositAmount,
 		distributeStartTime,
 		distributeEndTime,

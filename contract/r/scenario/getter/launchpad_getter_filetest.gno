@@ -272,7 +272,7 @@ func testProjectTierGetters(projectId, projectTier30Id, projectTier90Id, project
 		if err != nil {
 			panic(err)
 		}
-		ufmt.Printf("[EXPECTED] Tier %d distribute amount per second X128: %s\n", tier, distributeAmountX128.ToString())
+		ufmt.Printf("[EXPECTED] Tier %d distribute amount per second X128: %s\n", tier, distributeAmountX128)
 
 		// GetProjectTierTotalDistributeAmount
 		totalDistribute, err := launchpad.GetProjectTierTotalDistributeAmount(projectId, tier)
@@ -456,14 +456,14 @@ func testRewardManagerGetters(projectTier30Id, projectTier90Id, projectTier180Id
 	if err != nil {
 		panic(err)
 	}
-	println("[EXPECTED] Distribute amount per second X128:", distributeAmountX128.ToString())
+	println("[EXPECTED] Distribute amount per second X128:", distributeAmountX128)
 
 	// GetProjectTierRewardAccumulatedRewardPerDepositX128
 	accRewardPerDepositX128, err := launchpad.GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTier30Id)
 	if err != nil {
 		panic(err)
 	}
-	println("[EXPECTED] Accumulated reward per deposit X128:", accRewardPerDepositX128.ToString())
+	println("[EXPECTED] Accumulated reward per deposit X128:", accRewardPerDepositX128)
 
 	// GetProjectTierRewardTotalDistributeAmount
 	totalDistribute, err := launchpad.GetProjectTierRewardTotalDistributeAmount(projectTier30Id)

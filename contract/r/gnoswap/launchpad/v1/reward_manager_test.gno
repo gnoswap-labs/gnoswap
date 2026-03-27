@@ -1031,7 +1031,7 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			// Using priceDebtX128 for precise calculation
-			priceDebtX128 := rewardState.PriceDebtX128()
+			priceDebtX128 := u256.MustFromDecimal(rewardState.PriceDebtX128())
 			totalReward := tt.initialClaimed + tt.claimableReward
 			depositAmount := deposit.DepositAmount()
 
@@ -1119,7 +1119,7 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 			rewardState := addRewardStateByDeposit(manager, deposit)
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
-			priceDebtX128 := rewardState.PriceDebtX128()
+			priceDebtX128 := u256.MustFromDecimal(rewardState.PriceDebtX128())
 			totalReward := tt.claimableReward
 			depositAmount := deposit.DepositAmount()
 

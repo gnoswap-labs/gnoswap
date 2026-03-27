@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -996,7 +997,7 @@ func TestDepositGns_RewardDistributionOrder(t *testing.T) {
 		user2Debt, err := getDepositRewardState(rewardManager2, deposit2ID)
 		uassert.NoError(t, err)
 
-		uassert.True(t, user2Debt.PriceDebtX128().Gt(user1InitialDebt.PriceDebtX128()),
+		uassert.True(t, u256.MustFromDecimal(user2Debt.PriceDebtX128()).Gt(u256.MustFromDecimal(user1InitialDebt.PriceDebtX128())),
 			"User2's price debt should be greater than User1's initial debt")
 	})
 

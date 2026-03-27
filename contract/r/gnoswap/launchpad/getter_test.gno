@@ -23,7 +23,7 @@ func newLaunchpadRewardManager() *RewardManager {
 	manager.SetAccumulatedHeight(500)
 	manager.SetAccumulatedTime(600)
 	rewards := avl.NewTree()
-	rewards.Set("deposit-1", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100))
+	rewards.Set("deposit-1", NewRewardState("700", 800, 900, 1000, 1100))
 	manager.SetRewards(rewards)
 	return manager
 }
@@ -189,8 +189,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.NoError(t, err)
 				return value
 			},
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("200")) },
+			mutate: func(result any) { _ = result.(string) },
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
+				uassert.Equal(t, "100", m.Response.data["GetProjectTierDistributeAmountPerSecondX128"][0].(*u256.Uint).ToString())
 				value := m.Response.data["GetProjectTierDistributeAmountPerSecondX128"][0].(*u256.Uint)
 				uassert.Equal(t, "100", value.ToString())
 			},
@@ -245,7 +246,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetRewardState",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetRewardState", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil) },
+			setup: func(m *MockLaunchpad) { m.Response.Set("GetRewardState", NewRewardState("700", 800, 900, 1000, 1100), nil) },
 			getter: func(t *testing.T) any {
 				value, err := GetRewardState("project-1:30", "deposit-1")
 				uassert.NoError(t, err)
@@ -253,7 +254,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {
 				rewardState := result.(*RewardState)
-				rewardState.SetPriceDebtX128(u256.MustFromDecimal("303"))
+				rewardState.SetPriceDebtX128("303")
 				rewardState.SetClaimableTime(1009)
 				rewardState.SetDepositAmount(1010)
 				rewardState.SetDistributeStartTime(1011)
@@ -265,7 +266,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
 				rewardState := m.Response.data["GetRewardState"][0].(*RewardState)
-				uassert.Equal(t, "700", rewardState.PriceDebtX128().ToString())
+				uassert.Equal(t, "700", rewardState.PriceDebtX128())
 				uassert.Equal(t, int64(1100), rewardState.ClaimableTime())
 				uassert.Equal(t, int64(800), rewardState.DepositAmount())
 				uassert.Equal(t, int64(900), rewardState.DistributeStartTime())
@@ -297,7 +298,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				manager.SetAccumulatedTime(1007)
 				manager.SetRewardClaimableDuration(1008)
 				rewardState := firstRewardState(t, manager.Rewards())
-				rewardState.SetPriceDebtX128(u256.MustFromDecimal("303"))
+				rewardState.SetPriceDebtX128("303")
 				rewardState.SetClaimableTime(1009)
 				rewardState.SetDepositAmount(1010)
 				rewardState.SetDistributeStartTime(1011)
@@ -320,7 +321,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(600), manager.AccumulatedTime())
 				uassert.Equal(t, int64(30), manager.RewardClaimableDuration())
 				rewardState := firstRewardState(t, manager.Rewards())
-				uassert.Equal(t, "700", rewardState.PriceDebtX128().ToString())
+				uassert.Equal(t, "700", rewardState.PriceDebtX128())
 				uassert.Equal(t, int64(1100), rewardState.ClaimableTime())
 				uassert.Equal(t, int64(800), rewardState.DepositAmount())
 				uassert.Equal(t, int64(900), rewardState.DistributeStartTime())
@@ -339,8 +340,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.NoError(t, err)
 				return value
 			},
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("400")) },
+			mutate: func(result any) { _ = result.(string) },
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
+				uassert.Equal(t, "300", m.Response.data["GetProjectTierRewardDistributeAmountPerSecondX128"][0].(*u256.Uint).ToString())
 				value := m.Response.data["GetProjectTierRewardDistributeAmountPerSecondX128"][0].(*u256.Uint)
 				uassert.Equal(t, "300", value.ToString())
 			},
@@ -353,8 +355,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.NoError(t, err)
 				return value
 			},
-			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("600")) },
+			mutate: func(result any) { _ = result.(string) },
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
+				uassert.Equal(t, "500", m.Response.data["GetProjectTierRewardAccumulatedRewardPerDepositX128"][0].(*u256.Uint).ToString())
 				value := m.Response.data["GetProjectTierRewardAccumulatedRewardPerDepositX128"][0].(*u256.Uint)
 				uassert.Equal(t, "500", value.ToString())
 			},

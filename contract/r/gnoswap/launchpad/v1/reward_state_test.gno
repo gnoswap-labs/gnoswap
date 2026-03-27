@@ -171,7 +171,7 @@ func TestRewardState_newRewardState(t *testing.T) {
 			)
 
 			// Verify
-			statePriceDebt := u256.Zero().Rsh(state.PriceDebtX128(), 128).Int64()
+			statePriceDebt := u256.Zero().Rsh(u256.MustFromDecimal(state.PriceDebtX128()), 128).Int64()
 			uassert.Equal(t, tt.priceDebt.Int64(), statePriceDebt)
 			uassert.Equal(t, tt.depositAmount, state.DepositAmount())
 			uassert.Equal(t, tt.distributeStartTime, state.DistributeStartTime())

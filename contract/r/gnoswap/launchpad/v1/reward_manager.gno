@@ -95,7 +95,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 		rewardState.SetDistributeStartTime(r.DistributeStartTime())
 		rewardState.SetDistributeEndTime(r.DistributeEndTime())
 		rewardState.SetAccumulatedTime(r.DistributeStartTime())
-		rewardState.SetPriceDebtX128(u256.Zero())
+		rewardState.SetPriceDebtX128(u256.Zero().ToString())
 	}
 
 	return addRewardState(r, deposit, rewardState)
