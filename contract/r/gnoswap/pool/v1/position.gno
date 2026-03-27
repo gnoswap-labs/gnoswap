@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"encoding/base64"
-	"strconv"
 	"time"
 
 	plp "gno.land/p/gnoswap/gnsmath"
@@ -14,12 +12,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-const positionPackagePath = "gno.land/r/gnoswap/position"
-
-// getPositionKey generates a unique base64-encoded key for a liquidity position.
+// getPositionKey generates a compact deterministic key for a liquidity position.
 //
 // Creates deterministic identifier for position tracking.
-// Ensures unique positions per (position package path, price range) combination.
+// Ensures unique positions per price range while preserving lexical ordering.
 //
 // Used internally for position state management.
 //
@@ -27,19 +23,12 @@ const positionPackagePath = "gno.land/r/gnoswap/position"
 //   - tickLower: Lower boundary tick of position range
 //   - tickUpper: Upper boundary tick of position range
 //
-// Key Format:
-//
-//	base64(position_package_path + "__" + tickLower + "__" + tickUpper)
-//
-// Returns base64-encoded position key or error.
-// Combines position package path, tickLower, and tickUpper.
+// Key Format: EncodePositionKey(tickLower, tickUpper)
 func getPositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	positionKey := positionPackagePath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
-	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
-	return encodedPositionKey
+	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
 // positionUpdate updates a position's liquidity and calculates fees owed.
