@@ -165,12 +165,13 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	return int64(res)
 }
 
-func safeConvertToUint256(value int64) *u256.Uint {
-	if value < 0 {
-		panic(ufmt.Sprintf("amount(%d) cannot be negative", value))
+func safeParseInt64(value string) int64 {
+	amountInt64, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		panic(err)
 	}
 
-	return u256.NewUint(uint64(value))
+	return amountInt64
 }
 
 // safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow.

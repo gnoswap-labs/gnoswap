@@ -34,16 +34,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			)
 	}
 
-	liquidityToRemove, err := u256.FromDecimal(params.liquidity)
-	if err != nil {
-		return params.positionId,
-			"",
-			fee0Str,
-			fee1Str,
-			"", "",
-			position.PoolKey(),
-			makeErrorWithDetails(errInvalidLiquidity, ufmt.Sprintf("liquidity(%s)", params.liquidity))
-	}
+	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
 
 	if liquidityToRemove.Gt(positionLiquidity) {
 		return params.positionId,
@@ -61,10 +52,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	pToken0, pToken1, pFee := splitOf(position.PoolKey())
 	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
-	burnedAmount0 := u256.MustFromDecimal(burn0)
-	burnedAmount1 := u256.MustFromDecimal(burn1)
-	burnedAmount0Int64 := safeConvertToInt64(burnedAmount0)
-	burnedAmount1Int64 := safeConvertToInt64(burnedAmount1)
+	burnedAmount0 := safeParseInt64(burn0)
+	burnedAmount1 := safeParseInt64(burn1)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
@@ -72,15 +61,15 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	tokensOwed0 := safeAddInt64(position.TokensOwed0(), burnedAmount0Int64)
-	tokensOwed1 := safeAddInt64(position.TokensOwed1(), burnedAmount1Int64)
+	tokensOwed0 := safeAddInt64(position.TokensOwed0(), burnedAmount0)
+	tokensOwed1 := safeAddInt64(position.TokensOwed1(), burnedAmount1)
 
 	newLiquidity, underflow := u256.Zero().SubOverflow(positionLiquidity, liquidityToRemove)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
-	newToken0Balance := safeSubInt64(calculatedToken0Balance, burnedAmount0Int64)
-	newToken1Balance := safeSubInt64(calculatedToken1Balance, burnedAmount1Int64)
+	newToken0Balance := safeSubInt64(calculatedToken0Balance, burnedAmount0)
+	newToken1Balance := safeSubInt64(calculatedToken1Balance, burnedAmount1)
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
@@ -129,12 +118,12 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
-	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
-	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
-
 	// Check for underflow when subtracting collected amounts from tokens owed
 	collectAmount0Int64 := safeConvertToInt64(collectAmount0)
 	collectAmount1Int64 := safeConvertToInt64(collectAmount1)
+
+	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0Int64)
+	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1Int64)
 
 	if position.TokensOwed0() < collectAmount0Int64 {
 		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%d) < collectAmount0(%d)", position.TokensOwed0(), collectAmount0Int64))
