@@ -2,6 +2,8 @@ package position
 
 import (
 	avl "gno.land/p/nt/avl/v0"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 type IPosition interface {
@@ -79,7 +81,7 @@ type IPositionGetter interface {
 	GetPositionFeeGrowthInside1LastX128(positionId uint64) string
 	GetPositionTokensOwed0(positionId uint64) int64
 	GetPositionTokensOwed1(positionId uint64) int64
-	GetUnclaimedFee(positionId uint64) (string, string)
+	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	GetPositionOwner(positionId uint64) address
 }
 

@@ -2,6 +2,8 @@
 package mock
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
+
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
 )
@@ -259,23 +261,23 @@ func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
 	).(int32)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetFeeGrowthGlobal0X128",
 		func(args ...any) any { return t.instance.GetFeeGrowthGlobal0X128(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(*u256.Uint)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetFeeGrowthGlobal1X128",
 		func(args ...any) any { return t.instance.GetFeeGrowthGlobal1X128(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(*u256.Uint)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
 	result := t.ExecuteFn(
 		"GetFeeGrowthGlobalX128",
 		func(args ...any) any {
@@ -284,23 +286,23 @@ func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
 		},
 		poolPath,
 	).([]any)
-	return result[0].(string), result[1].(string)
+	return result[0].(*u256.Uint), result[1].(*u256.Uint)
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) string {
+func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetLiquidity",
 		func(args ...any) any { return t.instance.GetLiquidity(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(*u256.Uint)
 }
 
-func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) string {
+func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetMaxLiquidityPerTick",
 		func(args ...any) any { return t.instance.GetMaxLiquidityPerTick(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(*u256.Uint)
 }
 
 func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
@@ -402,12 +404,12 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	).(uint8)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) string {
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	return t.ExecuteFn(
 		"GetSlot0SqrtPriceX96",
 		func(args ...any) any { return t.instance.GetSlot0SqrtPriceX96(args[0].(string)) },
 		poolPath,
-	).(string)
+	).(*u256.Uint)
 }
 
 func (t *TestPool) GetSlot0Tick(poolPath string) int32 {
@@ -539,7 +541,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	result := t.ExecuteFn(
 		"GetTWAP",
 		func(args ...any) any {
@@ -548,7 +550,7 @@ func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, e
 		},
 		poolPath, secondsAgo,
 	).([]any)
-	return result[0].(int32), result[1].(string), result[2].(error)
+	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
 }
 
 // Pool enumeration

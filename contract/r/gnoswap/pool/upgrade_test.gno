@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert/v0"
 )
 
@@ -675,7 +676,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 			tt.setup(t)
 		}
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetSlot0SqrtPriceX96", tt.expectedSqrt)
+		mockPool.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal(tt.expectedSqrt))
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
@@ -771,7 +772,7 @@ func TestGetLiquidity(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetLiquidity", tt.expectedLiquidity)
+		mockPool.Response.Set("GetLiquidity", u256.MustFromDecimal(tt.expectedLiquidity))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -920,7 +921,7 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetFeeGrowthGlobalX128", tt.expectedFee0, tt.expectedFee1)
+		mockPool.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal(tt.expectedFee0), u256.MustFromDecimal(tt.expectedFee1))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -1139,7 +1140,7 @@ func TestGetTWAP(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, "0", errors.New(""))
+		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -1616,7 +1617,7 @@ func TestGetMaxLiquidityPerTick(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetMaxLiquidityPerTick", tt.expectedLiquidity)
+		mockPool.Response.Set("GetMaxLiquidityPerTick", u256.MustFromDecimal(tt.expectedLiquidity))
 
 		// Action
 		liquidity := GetMaxLiquidityPerTick(tt.poolPath)

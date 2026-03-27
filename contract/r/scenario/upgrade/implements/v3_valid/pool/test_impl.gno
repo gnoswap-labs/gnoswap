@@ -2,6 +2,8 @@
 package v3_valid
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
+
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
 )
@@ -111,23 +113,23 @@ func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
 	return t.instance.GetFeeAmountTickSpacing(fee)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	return t.instance.GetFeeGrowthGlobal0X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) string {
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
 	return t.instance.GetFeeGrowthGlobal1X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
 	return t.instance.GetFeeGrowthGlobalX128(poolPath)
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) string {
+func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) string {
+func (t *TestPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
 	return t.instance.GetMaxLiquidityPerTick(poolPath)
 }
 
@@ -175,7 +177,7 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) string {
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	return t.instance.GetSlot0SqrtPriceX96(poolPath)
 }
 
@@ -239,7 +241,7 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	return t.instance.GetTWAP(poolPath, secondsAgo)
 }
 

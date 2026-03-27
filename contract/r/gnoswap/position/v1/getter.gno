@@ -117,7 +117,7 @@ func (p *positionV1) GetPositionOwner(positionId uint64) address {
 	return owner
 }
 
-func (p *positionV1) GetUnclaimedFee(positionId uint64) (string, string) {
+func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 	position := p.mustGetPosition(positionId)
 
@@ -182,5 +182,5 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (string, string) {
 	}
 
 	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, q128)
-	return unclaimedFee0.ToString(), unclaimedFee1.ToString()
+	return unclaimedFee0, unclaimedFee1
 }

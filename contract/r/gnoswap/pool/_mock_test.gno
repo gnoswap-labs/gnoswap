@@ -2,6 +2,8 @@ package pool
 
 import (
 	"errors"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // MockResponse tracks method calls for testing purposes
@@ -266,49 +268,49 @@ func (m *MockPool) GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 	return res[0].(int32)
 }
 
-func (m *MockPool) GetFeeGrowthGlobal0X128(poolPath string) string {
+func (m *MockPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
 	res, ok := m.Response.Get("GetFeeGrowthGlobal0X128")
 	if !ok {
-		return ""
+		return u256.Zero()
 	}
 
-	return res[0].(string)
+	return res[0].(*u256.Uint)
 }
 
-func (m *MockPool) GetFeeGrowthGlobal1X128(poolPath string) string {
+func (m *MockPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
 	res, ok := m.Response.Get("GetFeeGrowthGlobal1X128")
 	if !ok {
-		return ""
+		return u256.Zero()
 	}
 
-	return res[0].(string)
+	return res[0].(*u256.Uint)
 }
 
-func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (string, string) {
+func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
 	res, ok := m.Response.Get("GetFeeGrowthGlobalX128")
 	if !ok {
-		return "", ""
+		return u256.Zero(), u256.Zero()
 	}
 
-	return res[0].(string), res[1].(string)
+	return res[0].(*u256.Uint), res[1].(*u256.Uint)
 }
 
-func (m *MockPool) GetLiquidity(poolPath string) string {
+func (m *MockPool) GetLiquidity(poolPath string) *u256.Uint {
 	res, ok := m.Response.Get("GetLiquidity")
 	if !ok {
-		return ""
+		return u256.Zero()
 	}
 
-	return res[0].(string)
+	return res[0].(*u256.Uint)
 }
 
-func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) string {
+func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
 	res, ok := m.Response.Get("GetMaxLiquidityPerTick")
 	if !ok {
-		return ""
+		return u256.Zero()
 	}
 
-	return res[0].(string)
+	return res[0].(*u256.Uint)
 }
 
 func (m *MockPool) GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
@@ -419,13 +421,13 @@ func (m *MockPool) GetSlot0FeeProtocol(poolPath string) uint8 {
 	return res[0].(uint8)
 }
 
-func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) string {
+func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	res, ok := m.Response.Get("GetSlot0SqrtPriceX96")
 	if !ok {
-		return ""
+		return u256.Zero()
 	}
 
-	return res[0].(string)
+	return res[0].(*u256.Uint)
 }
 
 func (m *MockPool) GetSlot0Tick(poolPath string) int32 {
@@ -563,17 +565,17 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	res, ok := m.Response.Get("GetTWAP")
 	if !ok {
-		return 0, "", errors.New("not found")
+		return 0, nil, errors.New("not found")
 	}
 
 	if len(res) < 3 || res[2] == nil {
-		return res[0].(int32), res[1].(string), nil
+		return res[0].(int32), res[1].(*u256.Uint), nil
 	}
 
-	return res[0].(int32), res[1].(string), res[2].(error)
+	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
 // Pool enumeration

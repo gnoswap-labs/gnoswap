@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -1128,7 +1129,7 @@ func TestGetUnclaimedFee(t *testing.T) {
 		}
 
 		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("GetUnclaimedFee", tt.expectedFee0, tt.expectedFee1)
+		mockPosition.Response.Set("GetUnclaimedFee", u256.MustFromDecimal(tt.expectedFee0), u256.MustFromDecimal(tt.expectedFee1))
 
 		testing.SetRealm(tt.callerRealm)
 

@@ -139,7 +139,8 @@ func GetPositionTokensOwed(positionId uint64) (int64, int64) {
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
 func GetUnclaimedFee(positionId uint64) (string, string) {
-	return getImplementation().GetUnclaimedFee(positionId)
+	fee0, fee1 := getImplementation().GetUnclaimedFee(positionId)
+	return fee0.ToString(), fee1.ToString()
 }
 
 // GetPositionOwner returns the owner address of a position NFT.

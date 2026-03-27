@@ -47,27 +47,28 @@ func GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 
 // GetFeeGrowthGlobal0X128 returns the global fee growth for token0.
 func GetFeeGrowthGlobal0X128(poolPath string) string {
-	return getImplementation().GetFeeGrowthGlobal0X128(poolPath)
+	return getImplementation().GetFeeGrowthGlobal0X128(poolPath).ToString()
 }
 
 // GetFeeGrowthGlobal1X128 returns the global fee growth for token1.
 func GetFeeGrowthGlobal1X128(poolPath string) string {
-	return getImplementation().GetFeeGrowthGlobal1X128(poolPath)
+	return getImplementation().GetFeeGrowthGlobal1X128(poolPath).ToString()
 }
 
 // GetFeeGrowthGlobalX128 returns the global fee growth for both tokens.
 func GetFeeGrowthGlobalX128(poolPath string) (string, string) {
-	return getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	fg0, fg1 := getImplementation().GetFeeGrowthGlobalX128(poolPath)
+	return fg0.ToString(), fg1.ToString()
 }
 
 // GetLiquidity returns the current liquidity in the pool.
 func GetLiquidity(poolPath string) string {
-	return getImplementation().GetLiquidity(poolPath)
+	return getImplementation().GetLiquidity(poolPath).ToString()
 }
 
 // GetMaxLiquidityPerTick returns the maximum liquidity per tick for the pool.
 func GetMaxLiquidityPerTick(poolPath string) string {
-	return getImplementation().GetMaxLiquidityPerTick(poolPath)
+	return getImplementation().GetMaxLiquidityPerTick(poolPath).ToString()
 }
 
 // GetObservation returns observation data for calculating time-weighted averages.
@@ -147,7 +148,7 @@ func GetSlot0FeeProtocol(poolPath string) uint8 {
 
 // GetSlot0SqrtPriceX96 returns the current sqrt price from slot0.
 func GetSlot0SqrtPriceX96(poolPath string) string {
-	return getImplementation().GetSlot0SqrtPriceX96(poolPath)
+	return getImplementation().GetSlot0SqrtPriceX96(poolPath).ToString()
 }
 
 // GetSlot0Tick returns the current tick from slot0.
@@ -233,7 +234,11 @@ func GetWithdrawalFee() uint64 {
 // GetTWAP returns the time-weighted average price for a pool.
 // Returns arithmetic mean tick and harmonic mean liquidity over the time period.
 func GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
-	return getImplementation().GetTWAP(poolPath, secondsAgo)
+	tick, liquidity, err := getImplementation().GetTWAP(poolPath, secondsAgo)
+	if err != nil {
+		return 0, "", err
+	}
+	return tick, liquidity.ToString(), nil
 }
 
 // Structure getters

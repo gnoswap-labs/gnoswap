@@ -3,6 +3,7 @@ package position
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -262,7 +263,7 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 		{
 			name: "GetUnclaimedFee",
 			setup: func(m *MockPosition) *Position {
-				m.Response.Set("GetUnclaimedFee", "1111", "2222")
+				m.Response.Set("GetUnclaimedFee", u256.MustFromDecimal("1111"), u256.MustFromDecimal("2222"))
 				return nil
 			},
 			getter: func() any {
@@ -281,8 +282,8 @@ func TestMutablePositionGetterIsolation(t *testing.T) {
 			},
 			assertRaw: func(t *testing.T, raw *Position) {
 				values := implementation.(*MockPosition).Response.data["GetUnclaimedFee"]
-				uassert.Equal(t, "1111", values[0].(string))
-				uassert.Equal(t, "2222", values[1].(string))
+				uassert.Equal(t, "1111", values[0].(*u256.Uint).ToString())
+				uassert.Equal(t, "2222", values[1].(*u256.Uint).ToString())
 			},
 		},
 	}

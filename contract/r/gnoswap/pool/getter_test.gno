@@ -86,7 +86,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name:  "GetFeeGrowthGlobalX128",
-			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", "1000", "2000") },
+			setup: func(m *MockPool) { m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000")) },
 			getter: func() any {
 				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
@@ -98,8 +98,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			assertRaw: func(t *testing.T) {
 				values := implementation.(*MockPool).Response.responses["GetFeeGrowthGlobalX128"]
-				uassert.Equal(t, "1000", values[0].(string))
-				uassert.Equal(t, "2000", values[1].(string))
+				uassert.Equal(t, "1000", values[0].(*u256.Uint).ToString())
+				uassert.Equal(t, "2000", values[1].(*u256.Uint).ToString())
 			},
 		},
 		{
@@ -132,12 +132,12 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name:   "GetSlot0SqrtPriceX96",
-			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", "3000") },
+			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
 			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
 			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(string)
-				uassert.Equal(t, "3000", value)
+				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(*u256.Uint)
+				uassert.Equal(t, "3000", value.ToString())
 			},
 		},
 		{
@@ -291,7 +291,7 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 		},
 		{
 			name:  "GetTWAP",
-			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), "5000", error(nil)) },
+			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
 			getter: func() any {
 				_, liquidity, err := GetTWAP("foo:bar:500", 10)
 				uassert.NoError(t, err)
@@ -299,8 +299,8 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			mutate: func(result any) {},
 			assertRaw: func(t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(string)
-				uassert.Equal(t, "5000", value)
+				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
+				uassert.Equal(t, "5000", value.ToString())
 			},
 		},
 		{

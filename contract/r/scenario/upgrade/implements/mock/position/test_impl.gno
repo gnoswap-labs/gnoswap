@@ -3,6 +3,8 @@ package mock
 
 import (
 	"gno.land/p/demo/tokens/grc721"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/position/v1"
@@ -258,7 +260,7 @@ func (t *TestPosition) GetPositionTokensOwed1(positionId uint64) int64 {
 	).(int64)
 }
 
-func (t *TestPosition) GetUnclaimedFee(positionId uint64) (string, string) {
+func (t *TestPosition) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	result := t.ExecuteFn(
 		"GetUnclaimedFee",
 		func(args ...any) any {
@@ -267,7 +269,7 @@ func (t *TestPosition) GetUnclaimedFee(positionId uint64) (string, string) {
 		},
 		positionId,
 	).([]any)
-	return result[0].(string), result[1].(string)
+	return result[0].(*u256.Uint), result[1].(*u256.Uint)
 }
 
 func (t *TestPosition) GetPositionOwner(positionId uint64) address {
