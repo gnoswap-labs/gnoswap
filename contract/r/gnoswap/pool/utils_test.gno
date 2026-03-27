@@ -94,6 +94,37 @@ func TestEncodePositionKey(t *testing.T) {
 	}
 }
 
+func TestEncodePositionKey_ComposesTickKeys(t *testing.T) {
+	tests := []struct {
+		name      string
+		tickLower int32
+		tickUpper int32
+	}{
+		{"zero range", 0, 0},
+		{"mixed range", -120, 240},
+		{"extreme range", -MAX_TICK, MAX_TICK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			want := EncodeTickKey(tt.tickLower) + EncodeTickKey(tt.tickUpper)
+			got := EncodePositionKey(tt.tickLower, tt.tickUpper)
+
+			uassert.Equal(t, want, got)
+		})
+	}
+}
+
+func TestEncodePositionKey_Ordering(t *testing.T) {
+	left := EncodePositionKey(-120, 60)
+	middle := EncodePositionKey(-60, 60)
+	right := EncodePositionKey(-60, 120)
+
+	uassert.True(t, left < middle)
+	uassert.True(t, middle < right)
+	uassert.True(t, left < right)
+}
+
 func TestGetPoolPath(t *testing.T) {
 	tests := []struct {
 		name       string
