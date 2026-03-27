@@ -43,7 +43,7 @@ func setupGetterTestWithProposal(t *testing.T) *governanceV1 {
 		1,
 		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
 		governance.NewProposalMetadata("Test Proposal", "Test Description"),
-		governance.NewProposalData(governance.Text, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
+		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),
 		1,
 		baseTime,

@@ -246,7 +246,7 @@ func createTestProposal(id int64) *governance.Proposal {
 		id,
 		NewProposalStatus(config, 10000, true, createdAt),
 		governance.NewProposalMetadata("Test", "Test proposal"),
-		governance.NewProposalData(governance.Text, governance.CommunityPoolSpendInfo{}, governance.ExecutionInfo{}),
+		governance.NewProposalData(governance.Text, nil, nil),
 		address("g1proposer"),
 		1,
 		createdAt-config.VotingWeightSmoothingDuration,

@@ -7,8 +7,8 @@ type Proposal struct {
 	proposer      address           // The address of the proposer
 	configVersion int64             // The version of the governance config used
 	status        *ProposalStatus   // Current status and voting information
-	metadata      ProposalMetadata  // Title and description
-	data          ProposalData      // Type-specific proposal data
+	metadata      *ProposalMetadata // Title and description
+	data          *ProposalData     // Type-specific proposal data
 	snapshotTime  int64             // Timestamp for voting weight snapshot lookup
 	createdAt     int64             // Creation timestamp
 	createdHeight int64             // Block height at creation
@@ -75,7 +75,7 @@ func (p *Proposal) SnapshotTime() int64 {
 }
 
 // Data returns the proposal data.
-func (p *Proposal) Data() ProposalData {
+func (p *Proposal) Data() *ProposalData {
 	return p.data
 }
 
@@ -85,7 +85,7 @@ func (p *Proposal) Status() *ProposalStatus {
 }
 
 // Metadata returns the proposal metadata.
-func (p *Proposal) Metadata() ProposalMetadata {
+func (p *Proposal) Metadata() *ProposalMetadata {
 	return p.metadata
 }
 
@@ -125,8 +125,8 @@ func (p *Proposal) IsProposer(addr address) bool {
 func NewProposal(
 	proposalID int64,
 	status *ProposalStatus,
-	metadata ProposalMetadata,
-	data ProposalData,
+	metadata *ProposalMetadata,
+	data *ProposalData,
 	proposerAddress address,
 	configVersion int64,
 	snapshotTime int64,
@@ -157,7 +157,7 @@ func (p *Proposal) Clone() *Proposal {
 		proposer:      p.proposer,
 		configVersion: p.configVersion,
 		status:        p.status.Clone(),
-		metadata:      p.metadata,
+		metadata:      p.metadata.Clone(),
 		data:          p.data.Clone(),
 		snapshotTime:  p.snapshotTime,
 		createdAt:     p.createdAt,

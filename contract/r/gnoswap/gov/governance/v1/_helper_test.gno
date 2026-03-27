@@ -77,8 +77,8 @@ func createMockGovernanceStore() *mockGovernanceStore {
 func newTestProposal(
 	id int64,
 	status *governance.ProposalStatus,
-	metadata governance.ProposalMetadata,
-	data governance.ProposalData,
+	metadata *governance.ProposalMetadata,
+	data *governance.ProposalData,
 	proposer address,
 	configVersion int64,
 	snapshotTime int64,
