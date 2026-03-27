@@ -1,8 +1,6 @@
 package staker
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
+import u256 "gno.land/p/gnoswap/uint256"
 
 // ProtocolFeeRewardState tracks protocol fee reward information for an individual staker across multiple tokens.
 // Unlike emission rewards which are single-token, protocol fees can come from various trading pairs,
@@ -10,7 +8,7 @@ import (
 type ProtocolFeeRewardState struct {
 	// rewardDebtX128 maps token path to reward debt with 128-bit precision scaling
 	// Used to calculate rewards earned since the last update for each token
-	rewardDebtX128 map[string]*u256.Uint
+	rewardDebtX128 map[string]string
 	// accumulatedRewards maps token path to total rewards accumulated but not yet claimed
 	accumulatedRewards map[string]int64
 	// claimedRewards maps token path to total amount of rewards that have been claimed
@@ -23,7 +21,7 @@ type ProtocolFeeRewardState struct {
 	stakedAmount int64
 }
 
-func (p *ProtocolFeeRewardState) GetRewardDebtX128() map[string]*u256.Uint {
+func (p *ProtocolFeeRewardState) GetRewardDebtX128() map[string]string {
 	return p.rewardDebtX128
 }
 
@@ -50,7 +48,12 @@ func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
 /* Setters */
 
 func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
-	p.rewardDebtX128 = rewardDebtX128
+	rewardDebtX128Map := make(map[string]string)
+	for token, value := range rewardDebtX128 {
+		rewardDebtX128Map[token] = value.ToString()
+	}
+
+	p.rewardDebtX128 = rewardDebtX128Map
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewards(accumulatedRewards map[string]int64) {
@@ -77,9 +80,13 @@ func (p *ProtocolFeeRewardState) SetStakedAmount(stakedAmount int64) {
 
 func (p *ProtocolFeeRewardState) GetRewardDebtX128ForToken(token string) *u256.Uint {
 	if p.rewardDebtX128 == nil {
-		return nil
+		return u256.Zero()
 	}
-	return p.rewardDebtX128[token]
+	v, ok := p.rewardDebtX128[token]
+	if !ok {
+		return u256.Zero()
+	}
+	return u256.MustFromDecimal(v)
 }
 
 func (p *ProtocolFeeRewardState) GetAccumulatedRewardForToken(token string) int64 {
@@ -100,9 +107,9 @@ func (p *ProtocolFeeRewardState) GetClaimedRewardForToken(token string) int64 {
 
 func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *u256.Uint) {
 	if p.rewardDebtX128 == nil {
-		p.rewardDebtX128 = make(map[string]*u256.Uint)
+		p.rewardDebtX128 = make(map[string]string)
 	}
-	p.rewardDebtX128[token] = value
+	p.rewardDebtX128[token] = value.ToString()
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {
@@ -122,11 +129,11 @@ func (p *ProtocolFeeRewardState) SetClaimedRewardForToken(token string, value in
 // NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
 // This factory function initializes the state with the current system reward debt for all tokens.
 func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) *ProtocolFeeRewardState {
-	rewardDebtX128 := make(map[string]*u256.Uint)
+	rewardDebtX128 := make(map[string]string)
 
 	// Clone reward debt for each token to avoid reference issues
 	for token, accumulatedFee := range accumulatedProtocolFeeX128PerStake {
-		rewardDebtX128[token] = accumulatedFee.Clone()
+		rewardDebtX128[token] = accumulatedFee.ToString()
 	}
 
 	return &ProtocolFeeRewardState{

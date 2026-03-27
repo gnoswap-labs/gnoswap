@@ -1,8 +1,6 @@
 package staker
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
+import u256 "gno.land/p/gnoswap/uint256"
 
 // EmissionRewardState tracks emission reward information for an individual staker.
 // This struct maintains reward debt, accumulated rewards, and claiming history
@@ -10,7 +8,7 @@ import (
 type EmissionRewardState struct {
 	// rewardDebtX128 represents the reward debt with 128-bit precision scaling
 	// Used to calculate rewards earned since the last update
-	rewardDebtX128 *u256.Uint
+	rewardDebtX128 string
 	// accumulatedRewardAmount is the total rewards accumulated but not yet claimed
 	accumulatedRewardAmount int64
 	// accumulatedTimestamp is the last timestamp when rewards were accumulated
@@ -33,8 +31,7 @@ type EmissionRewardState struct {
 //   - *EmissionRewardState: new emission reward state instance
 func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionRewardState {
 	return &EmissionRewardState{
-		// Deep copy the input to snapshot the current accumulator value.
-		rewardDebtX128:          accumulatedRewardX128PerStake.Clone(),
+		rewardDebtX128:          accumulatedRewardX128PerStake.ToString(),
 		accumulatedRewardAmount: 0,
 		accumulatedTimestamp:    0,
 		claimedRewardAmount:     0,
@@ -45,7 +42,9 @@ func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionR
 
 /* Getters */
 
-func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint     { return e.rewardDebtX128 }
+func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint {
+	return u256.MustFromDecimal(e.rewardDebtX128)
+}
 func (e *EmissionRewardState) GetAccumulatedRewardAmount() int64 { return e.accumulatedRewardAmount }
 func (e *EmissionRewardState) GetAccumulatedTimestamp() int64    { return e.accumulatedTimestamp }
 func (e *EmissionRewardState) GetClaimedRewardAmount() int64     { return e.claimedRewardAmount }
@@ -54,7 +53,7 @@ func (e *EmissionRewardState) GetStakedAmount() int64            { return e.stak
 
 /* Setters */
 func (e *EmissionRewardState) SetRewardDebtX128(rewardDebtX128 *u256.Uint) {
-	e.rewardDebtX128 = rewardDebtX128
+	e.rewardDebtX128 = rewardDebtX128.ToString()
 }
 
 func (e *EmissionRewardState) SetAccumulatedRewardAmount(accumulatedRewardAmount int64) {

@@ -20,7 +20,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 	}{
 		{
 			name:                            "Create with zero accumulated reward",
-			accumulatedRewardX128PerStake:   u256.NewUint(0),
+			accumulatedRewardX128PerStake:   u256.Zero(),
 			expectedRewardDebt:              "0",
 			expectedAccumulatedRewardAmount: 0,
 			expectedClaimedRewardAmount:     0,
@@ -28,7 +28,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 		},
 		{
 			name:                            "Create with non-zero accumulated reward",
-			accumulatedRewardX128PerStake:   u256.NewUintFromInt64(1000),
+			accumulatedRewardX128PerStake:   u256.NewUint(1000),
 			expectedRewardDebt:              "1000",
 			expectedAccumulatedRewardAmount: 0,
 			expectedClaimedRewardAmount:     0,
@@ -89,7 +89,7 @@ func TestEmissionRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with claimed height
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			resolver.SetClaimedTimestamp(tt.claimedHeight)
 
@@ -116,7 +116,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedRewardAmount(0)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 			},
 			accumulatedRewardX128PerStake: u256.NewUint(0),
 			currentHeight:                 100,
@@ -127,7 +127,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedRewardAmount(500)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 			},
 			accumulatedRewardX128PerStake: u256.NewUint(0),
 			currentHeight:                 100,
@@ -138,7 +138,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedRewardAmount(0)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 				s.SetAccumulatedTimestamp(50)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128), // 1000 << 128
@@ -150,7 +150,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -187,7 +187,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 			currentHeight:                 100,
@@ -198,7 +198,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(0)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 			currentHeight:                 100,
@@ -220,7 +220,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -258,7 +258,7 @@ func TestEmissionRewardState_addStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with initial stake
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -296,7 +296,7 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with initial stake
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -346,7 +346,7 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -382,7 +382,7 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetAccumulatedRewardAmount(200)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetRewardDebtX128(u256.Zero())
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(800).Lsh(u256.NewUintFromInt64(800), 128),
 			currentHeight:                 100,
@@ -405,7 +405,7 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -446,7 +446,7 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -491,7 +491,7 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -549,7 +549,7 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			state := staker.NewEmissionRewardState(u256.Zero())
 			resolver := NewEmissionRewardStateResolver(state)
 			tt.setupState(resolver)
 

@@ -223,11 +223,10 @@ func TestProtocolFeeRewardState_NilMapHandling(t *testing.T) {
 			}
 
 			// when & then
-			// GetRewardDebtX128ForToken returns nil for non-existent token when map is nil
+			// GetRewardDebtX128ForToken returns zero for non-existent token when map is nil
 			debt := state.GetRewardDebtX128ForToken(tc.token)
-			if debt != nil {
-				t.Errorf("expected nil debt for non-existent token")
-			}
+			uassert.NotNil(t, debt)
+			uassert.Equal(t, debt.IsZero(), true)
 			uassert.Equal(t, state.GetAccumulatedRewardForToken(tc.token), int64(0))
 			uassert.Equal(t, state.GetClaimedRewardForToken(tc.token), int64(0))
 		})

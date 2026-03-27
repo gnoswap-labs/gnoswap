@@ -24,16 +24,16 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 		{
 			name: "Create with single token",
 			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
+				"token1": u256.NewUint(1000),
 			},
 			expectedTokenCount: 1,
 		},
 		{
 			name: "Create with multiple tokens",
 			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-				"token2": u256.NewUintFromInt64(2000),
-				"token3": u256.NewUintFromInt64(3000),
+				"token1": u256.NewUint(1000),
+				"token2": u256.NewUint(2000),
+				"token3": u256.NewUint(3000),
 			},
 			expectedTokenCount: 3,
 		},
@@ -52,11 +52,10 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 			uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, resolver.GetStakedAmount(), int64(0))
 
-			// Verify reward debt is properly cloned
-			for token, originalAmount := range tt.accumulatedProtocolFeeX128PerStake {
+			// Verify reward debt values
+			for token, expectedValue := range tt.accumulatedProtocolFeeX128PerStake {
 				debtAmount := resolver.GetRewardDebtX128ForToken(token)
-				uassert.NotEqual(t, debtAmount, nil)
-				uassert.Equal(t, debtAmount.Cmp(originalAmount), 0)
+				uassert.Equal(t, debtAmount.ToString(), expectedValue.ToString())
 			}
 		})
 	}
@@ -140,7 +139,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", u256.Zero())
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
@@ -153,9 +152,9 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token2", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token3", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", u256.Zero())
+				s.SetRewardDebtX128ForToken("token2", u256.Zero())
+				s.SetRewardDebtX128ForToken("token3", u256.Zero())
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(100).Lsh(u256.NewUintFromInt64(100), 128),
@@ -388,7 +387,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", u256.Zero())
 				s.SetAccumulatedRewards(map[string]int64{
 					"token1": 200,
 				})
