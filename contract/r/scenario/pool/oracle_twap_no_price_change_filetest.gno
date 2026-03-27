@@ -50,9 +50,7 @@ const (
 	hourSeconds  uint32 = 3600
 )
 
-var (
-	fee500 = uint32(500)
-)
+var fee500 = uint32(500)
 
 func main() {
 	println("[SCENARIO] Pool Oracle - Basic TWAP Test")

@@ -315,8 +315,8 @@ func verifyPositionsRecovered() {
 		panic("position 2 should still exist")
 	}
 
-	ufmt.Printf("[EXPECTED] position 1 still accessible - liquidity: %s\n", position1.Liquidity().ToString())
-	ufmt.Printf("[EXPECTED] position 2 still accessible - liquidity: %s\n", position2.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] position 1 still accessible - liquidity: %s\n", position1.Liquidity())
+	ufmt.Printf("[EXPECTED] position 2 still accessible - liquidity: %s\n", position2.Liquidity())
 }
 
 func positionIdFrom(positionId uint64) grc721.TokenID {

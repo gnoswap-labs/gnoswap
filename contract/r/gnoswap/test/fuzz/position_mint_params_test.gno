@@ -169,7 +169,7 @@ func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string, 
 		}
 	}()
 
-	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 

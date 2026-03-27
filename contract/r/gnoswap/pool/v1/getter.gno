@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/nt/ufmt/v0"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/pool"
@@ -59,8 +60,8 @@ func (i *poolV1) GetTickSpacing(poolPath string) int32 {
 	return i.mustGetPool(poolPath).TickSpacing()
 }
 
-func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) string {
-	return i.mustGetPool(poolPath).MaxLiquidityPerTick().ToString()
+func (i *poolV1) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
+	return i.mustGetPool(poolPath).MaxLiquidityPerTick()
 }
 
 func (i *poolV1) GetSlot0FeeProtocol(poolPath string) uint8 {
@@ -71,12 +72,12 @@ func (i *poolV1) GetSlot0Unlocked(poolPath string) bool {
 	return i.mustGetPool(poolPath).Slot0Unlocked()
 }
 
-func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) string {
-	return i.mustGetPool(poolPath).FeeGrowthGlobal0X128().ToString()
+func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
+	return i.mustGetPool(poolPath).FeeGrowthGlobal0X128()
 }
 
-func (i *poolV1) GetFeeGrowthGlobal1X128(poolPath string) string {
-	return i.mustGetPool(poolPath).FeeGrowthGlobal1X128().ToString()
+func (i *poolV1) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
+	return i.mustGetPool(poolPath).FeeGrowthGlobal1X128()
 }
 
 func (i *poolV1) GetProtocolFeesToken0(poolPath string) int64 {
@@ -87,8 +88,8 @@ func (i *poolV1) GetProtocolFeesToken1(poolPath string) int64 {
 	return i.mustGetPool(poolPath).ProtocolFeesToken1()
 }
 
-func (i *poolV1) GetLiquidity(poolPath string) string {
-	return i.mustGetPool(poolPath).Liquidity().ToString()
+func (i *poolV1) GetLiquidity(poolPath string) *u256.Uint {
+	return i.mustGetPool(poolPath).Liquidity()
 }
 
 func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
@@ -181,20 +182,20 @@ func (i *poolV1) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint
 	return pool.FeeGrowthGlobal0X128(), pool.FeeGrowthGlobal1X128()
 }
 
-func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint) {
+func (i *poolV1) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
 	pool := i.mustGetPool(poolPath)
-	return u256.MustFromDecimal(GetTickFeeGrowthOutside0X128(pool, tick)),
-		u256.MustFromDecimal(GetTickFeeGrowthOutside1X128(pool, tick))
+	return GetTickFeeGrowthOutside0X128(pool, tick),
+		GetTickFeeGrowthOutside1X128(pool, tick)
 }
 
-func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint) {
+func (i *poolV1) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
 	position := i.MustGetPosition(poolPath, key)
-	return u256.MustFromDecimal(position.FeeGrowthInside0LastX128()),
-		u256.MustFromDecimal(position.FeeGrowthInside1LastX128())
+	return position.FeeGrowthInside0LastX128(),
+		position.FeeGrowthInside1LastX128()
 }
 
-func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
-	return u256.MustFromDecimal(i.MustGetPosition(poolPath, key).Liquidity())
+func (i *poolV1) GetPositionLiquidity(poolPath, key string) string {
+	return i.MustGetPosition(poolPath, key).Liquidity()
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
@@ -243,18 +244,18 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 //   - secondsAgo: Number of seconds ago to calculate TWAP from
 //
 // Returns TWAP tick and error
-func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, string, error) {
+func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
 	}
 
 	tick, liquidity, err := getTWAP(pool, secondsAgo)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
 	}
 
-	return tick, liquidity.ToString(), nil
+	return tick, liquidity, nil
 }
 
 // GetPoolCount returns the total number of pools.

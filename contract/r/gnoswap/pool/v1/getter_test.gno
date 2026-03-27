@@ -126,8 +126,8 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get max liquidity per tick", func(t *testing.T) {
 			maxLiquidityPerTick := getMockInstance().GetMaxLiquidityPerTick(validPoolPath)
-			if maxLiquidityPerTick != "1000000" {
-				t.Errorf("Expected max liquidity per tick [%s], got %s", "1000000", maxLiquidityPerTick)
+			if maxLiquidityPerTick.ToString() != "1000000" {
+				t.Errorf("Expected max liquidity per tick [%s], got %s", "1000000", maxLiquidityPerTick.ToString())
 			}
 		})
 
@@ -161,15 +161,15 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get fee growth global0x128", func(t *testing.T) {
 			feeGrowthGlobal0X128 := getMockInstance().GetFeeGrowthGlobal0X128(validPoolPath)
-			if feeGrowthGlobal0X128 != "1000000000000000000" {
-				t.Errorf("Expected fee growth global 0 x128 [%s], got %s", "1000000000000000000", feeGrowthGlobal0X128)
+			if feeGrowthGlobal0X128.ToString() != "1000000000000000000" {
+				t.Errorf("Expected fee growth global 0 x128 [%s], got %s", "1000000000000000000", feeGrowthGlobal0X128.ToString())
 			}
 		})
 
 		t.Run("get fee growth global1x128", func(t *testing.T) {
 			feeGrowthGlobal1X128 := getMockInstance().GetFeeGrowthGlobal1X128(validPoolPath)
-			if feeGrowthGlobal1X128 != "2000000000000000000" {
-				t.Errorf("Expected fee growth global 1 x128 [%s], got %s", "2000000000000000000", feeGrowthGlobal1X128)
+			if feeGrowthGlobal1X128.ToString() != "2000000000000000000" {
+				t.Errorf("Expected fee growth global 1 x128 [%s], got %s", "2000000000000000000", feeGrowthGlobal1X128.ToString())
 			}
 		})
 
@@ -189,8 +189,8 @@ func TestGetters(t *testing.T) {
 
 		t.Run("get liquidity", func(t *testing.T) {
 			liquidity := getMockInstance().GetLiquidity(validPoolPath)
-			if liquidity != "1000000" {
-				t.Errorf("Expected liquidity [%s], got %s", "1000000", liquidity)
+			if liquidity.ToString() != "1000000" {
+				t.Errorf("Expected liquidity [%s], got %s", "1000000", liquidity.ToString())
 			}
 		})
 	})
@@ -369,7 +369,7 @@ func TestPositionGetters(t *testing.T) {
 
 				return
 			} else {
-				liquidity = getMockInstance().GetPositionLiquidity(tt.poolPath, tt.positionKey).ToString()
+				liquidity = getMockInstance().GetPositionLiquidity(tt.poolPath, tt.positionKey)
 				feeGrowthInside0LastX128 = getMockInstance().GetPositionFeeGrowthInside0LastX128(tt.poolPath, tt.positionKey)
 				feeGrowthInside1LastX128 = getMockInstance().GetPositionFeeGrowthInside1LastX128(tt.poolPath, tt.positionKey)
 				tokensOwed0 = getMockInstance().GetPositionTokensOwed0(tt.poolPath, tt.positionKey)
@@ -390,7 +390,7 @@ func TestPositionGetters(t *testing.T) {
 
 		t.Run("get position liquidity", func(t *testing.T) {
 			shouldPanic(t, func() {
-				getMockInstance().GetPositionLiquidity(validPoolPath, invalidPositionKey).ToString()
+				getMockInstance().GetPositionLiquidity(validPoolPath, invalidPositionKey)
 			})
 		})
 
@@ -998,8 +998,8 @@ func TestGetTickFeeGrowthOutsideX128(t *testing.T) {
 
 	t.Run("returns both fee growth outside values", func(t *testing.T) {
 		feeGrowth0, feeGrowth1 := getMockInstance().GetTickFeeGrowthOutsideX128("token0:token1:3000", 0)
-		uassert.Equal(t, "3000000", feeGrowth0.ToString())
-		uassert.Equal(t, "4000000", feeGrowth1.ToString())
+		uassert.Equal(t, "3000000", feeGrowth0)
+		uassert.Equal(t, "4000000", feeGrowth1)
 	})
 }
 
@@ -1008,8 +1008,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 
 	t.Run("returns both fee growth inside values", func(t *testing.T) {
 		feeGrowth0, feeGrowth1 := getMockInstance().GetPositionFeeGrowthInsideLastX128("token0:token1:3000", "test_position")
-		uassert.Equal(t, "2000000", feeGrowth0.ToString())
-		uassert.Equal(t, "3000000", feeGrowth1.ToString())
+		uassert.Equal(t, "2000000", feeGrowth0)
+		uassert.Equal(t, "3000000", feeGrowth1)
 	})
 }
 

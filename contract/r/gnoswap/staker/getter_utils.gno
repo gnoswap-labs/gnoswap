@@ -83,4 +83,3 @@ func cloneWarmups(warmups []Warmup) []Warmup {
 	copy(copied, warmups)
 	return copied
 }
-

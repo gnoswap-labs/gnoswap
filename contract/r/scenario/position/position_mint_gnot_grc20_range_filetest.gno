@@ -170,10 +170,10 @@ func checkInRangePosition() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be in range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func mintOutRangePosition() {
@@ -209,10 +209,10 @@ func checkOutRangePosition() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(2)
 
-	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be out of range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %s\n", pos.Token0Balance().ToString())
-	ufmt.Printf("[EXPECTED] Token1 balance should be %s\n", pos.Token1Balance().ToString())
+	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", pos.Token0Balance())
+	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", pos.Token1Balance())
 }
 
 func executeSwap() {
@@ -250,11 +250,11 @@ func verifyFinalPositions() {
 
 	ufmt.Println("[INFO] Checking final position states")
 	ufmt.Printf("[EXPECTED] Position 1 should still be in range\n")
-	ufmt.Printf("[EXPECTED] Position 1 should have fee0: %s\n", pos1fee0.ToString())
-	ufmt.Printf("[EXPECTED] Position 1 should have fee1: %s\n", pos1fee1.ToString())
+	ufmt.Printf("[EXPECTED] Position 1 should have fee0: %s\n", pos1fee0)
+	ufmt.Printf("[EXPECTED] Position 1 should have fee1: %s\n", pos1fee1)
 	ufmt.Printf("[EXPECTED] Position 2 should remain out of range\n")
-	ufmt.Printf("[EXPECTED] Position 2 should have no fee0: %s\n", pos2fee0.ToString())
-	ufmt.Printf("[EXPECTED] Position 2 should have no fee1: %s\n", pos2fee1.ToString())
+	ufmt.Printf("[EXPECTED] Position 2 should have no fee0: %s\n", pos2fee0)
+	ufmt.Printf("[EXPECTED] Position 2 should have no fee1: %s\n", pos2fee1)
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {

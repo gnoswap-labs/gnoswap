@@ -180,7 +180,7 @@ func checkInitialEmissionState() {
 	testing.SetRealm(adminRealm)
 	pos, _ := position.GetPosition(1)
 
-	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity().ToString())
+	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial emission rewards should be 0\n")
 }
 
