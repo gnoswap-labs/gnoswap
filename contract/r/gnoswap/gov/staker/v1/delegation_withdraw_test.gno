@@ -53,7 +53,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 				tc.unDelegationLockupPeriod,
 			)
 
-			resolver := NewDelegationWithdrawResolver(withdraw)
+			resolver := NewDelegationWithdrawResolver(&withdraw)
 
 			// then
 			uassert.Equal(t, resolver.Get().DelegationID(), tc.delegationID)
@@ -94,7 +94,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 				tc.createdAt,
 			)
 
-			resolver := NewDelegationWithdrawResolver(withdraw)
+			resolver := NewDelegationWithdrawResolver(&withdraw)
 
 			// then
 			uassert.Equal(t, resolver.Get().DelegationID(), tc.delegationID)
@@ -111,7 +111,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 	tests := []struct {
 		name                string
-		withdraw            *staker.DelegationWithdraw
+		withdraw            staker.DelegationWithdraw
 		currentTime         int64
 		expectedCollectable bool
 	}{
@@ -167,7 +167,7 @@ func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			resolver := NewDelegationWithdrawResolver(tc.withdraw)
+			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
 
 			// when
 			result := resolver.IsCollectable(tc.currentTime)
@@ -182,7 +182,7 @@ func TestDelegationWithdrawResolver_IsCollectable(t *testing.T) {
 func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
 	tests := []struct {
 		name           string
-		withdraw       *staker.DelegationWithdraw
+		withdraw       staker.DelegationWithdraw
 		currentTime    int64
 		expectedAmount int64
 	}{
@@ -226,7 +226,7 @@ func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			resolver := NewDelegationWithdrawResolver(tc.withdraw)
+			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
 
 			// when
 			result := resolver.CollectableAmount(tc.currentTime)
@@ -241,7 +241,7 @@ func TestDelegationWithdrawResolver_CollectableAmount(t *testing.T) {
 func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 	tests := []struct {
 		name                    string
-		withdraw                *staker.DelegationWithdraw
+		withdraw                staker.DelegationWithdraw
 		collectAmount           int64
 		currentTime             int64
 		expectedError           error
@@ -306,7 +306,7 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			resolver := NewDelegationWithdrawResolver(tc.withdraw)
+			resolver := NewDelegationWithdrawResolver(&tc.withdraw)
 
 			// when
 			err := resolver.Collect(tc.collectAmount, tc.currentTime)
@@ -335,7 +335,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when - try to collect negative amount after lockup
 		currentTime := int64(2000)
@@ -357,7 +357,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			createdAt,
 			lockupPeriod,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when - collect exactly when lockup expires
 		collectableTime := createdAt + lockupPeriod
@@ -380,7 +380,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			createdAt,
 			lockupPeriod,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when - try to collect one second before lockup expires
 		collectableTime := createdAt + lockupPeriod
@@ -401,7 +401,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when - collect large amount
 		currentTime := int64(2000)
@@ -422,7 +422,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when
 		result := resolver.IsCollectable(2000)
@@ -440,7 +440,7 @@ func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when - collect partial amount first
 		currentTime := int64(2000)
@@ -463,7 +463,7 @@ func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when: calculate collectable amount
 		collectable := resolver.CollectableAmount(2000)
@@ -481,7 +481,7 @@ func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when: try to collect amount that would overflow
 		didPanic := false
@@ -511,7 +511,7 @@ func TestDelegationWithdraw_BoundaryConditions(t *testing.T) {
 			1000,
 			500,
 		)
-		resolver := NewDelegationWithdrawResolver(withdraw)
+		resolver := NewDelegationWithdrawResolver(&withdraw)
 
 		// when: collect exactly the undelegate amount
 		_ = resolver.Collect(undelegateAmount, 2000)

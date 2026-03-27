@@ -243,7 +243,7 @@ func (t *TestGovStaker) GetDelegationWithdrawCount(delegationID int64) int {
 	return t.instance.GetDelegationWithdrawCount(delegationID)
 }
 
-func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]*staker.DelegationWithdraw, error) {
+func (t *TestGovStaker) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
 	if !t.isActive("GetDelegationWithdraws") {
 		panic("test implementation: GetDelegationWithdraws not supported")
 	}
