@@ -72,7 +72,7 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 	// Using modular arithmetic for accumulator values - underflow is allowed and handled correctly
 	rewardDebtDeltaX128 := u256.Zero().Sub(
 		accumulatedRewardX128PerStake,
-		self.GetRewardDebtX128(),
+		u256.MustFromDecimal(self.GetRewardDebtX128()),
 	)
 
 	// Calculate reward amount by multiplying reward debt delta by staked amount and dividing by Q128
@@ -160,8 +160,7 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 		self.SetAccumulatedRewardAmount(safeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount))
 	}
 
-	// Deep copy to avoid aliasing with external state
-	self.SetRewardDebtX128(accumulatedRewardX128PerStake.Clone())
+	self.SetRewardDebtX128(accumulatedRewardX128PerStake.ToString())
 	self.SetAccumulatedTimestamp(currentTimestamp)
 	return nil
 }

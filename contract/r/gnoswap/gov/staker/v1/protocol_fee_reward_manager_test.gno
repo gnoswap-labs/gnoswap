@@ -42,8 +42,8 @@ func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testi
 		{
 			name: "Get existing token",
 			setup: func(m *ProtocolFeeRewardManagerResolver) {
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUintFromInt64(1000)
+				accumulatedMap := make(map[string]string)
+				accumulatedMap["token1"] = "1000"
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 			},
 			token:    "token1",
@@ -61,15 +61,8 @@ func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(t *testi
 			// When: Get accumulated protocol fee X128 per stake
 			result := resolver.GetAccumulatedProtocolFeeX128PerStake(tt.token)
 
-			// Then: Should return expected value or nil
-			if tt.expected == "0" {
-				if result != nil {
-					uassert.Equal(t, result.ToString(), tt.expected)
-				}
-			} else {
-				uassert.NotEqual(t, result, nil)
-				uassert.Equal(t, result.ToString(), tt.expected)
-			}
+			// Then: Should return expected value
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
@@ -330,8 +323,8 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
 				m.addStake("user1", 1000, 50)
 				// Simulate some protocol fees
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128)
+				accumulatedMap := make(map[string]string)
+				accumulatedMap["token1"] = u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128).ToString()
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 			},
 			address:          "user1",
@@ -422,8 +415,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 500
 				m.SetProtocolFeeAmounts(protocolFeeMap)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUint(0)
+				accumulatedMap := make(map[string]string)
+				accumulatedMap["token1"] = "0"
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 			},
 			protocolFeeAmounts: map[string]int64{
@@ -442,8 +435,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				protocolFeeMap := make(map[string]int64)
 				protocolFeeMap["token1"] = 1000
 				m.SetProtocolFeeAmounts(protocolFeeMap)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUint(500)
+				accumulatedMap := make(map[string]string)
+				accumulatedMap["token1"] = "500"
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 			},
 			protocolFeeAmounts: map[string]int64{
@@ -523,8 +516,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			}
 
 			initialRewards := make(map[string]*u256.Uint)
-			for token, reward := range resolver.GetAllAccumulatedProtocolFeeX128PerStake() {
-				initialRewards[token] = reward.Clone()
+			for token, rewardStr := range resolver.GetAllAccumulatedProtocolFeeX128PerStake() {
+				initialRewards[token] = u256.MustFromDecimal(rewardStr)
 			}
 
 			// When: Calculate accumulated reward X128 per stake
@@ -708,8 +701,8 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 				protocolFeeMap["token1"] = 1000
 				m.SetProtocolFeeAmounts(protocolFeeMap)
 				existingAccumulated := u256.NewUintFromInt64(500)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = existingAccumulated
+				accumulatedMap := make(map[string]string)
+				accumulatedMap["token1"] = existingAccumulated.ToString()
 				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
 
 				// Try with smaller amount (negative delta)

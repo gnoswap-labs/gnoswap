@@ -5,7 +5,6 @@ import (
 
 	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
@@ -27,16 +26,16 @@ func TestNewProtocolFeeRewardManager(t *testing.T) {
 func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 	tests := []struct {
 		name                               string
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
+		accumulatedProtocolFeeX128PerStake map[string]string
 		protocolFeeAmounts                 map[string]int64
 		accumulatedTimestamp               int64
 		totalStakedAmount                  int64
 	}{
 		{
 			name: "Set and get all values",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
-				"token2": u256.NewUint(2000),
+			accumulatedProtocolFeeX128PerStake: map[string]string{
+				"token1": "1000",
+				"token2": "2000",
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 100,
@@ -47,7 +46,7 @@ func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 		},
 		{
 			name:                               "Set empty maps",
-			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
+			accumulatedProtocolFeeX128PerStake: make(map[string]string),
 			protocolFeeAmounts:                 make(map[string]int64),
 			accumulatedTimestamp:               0,
 			totalStakedAmount:                  0,
@@ -74,7 +73,7 @@ func TestProtocolFeeRewardManager_SettersAndGetters(t *testing.T) {
 			// Verify individual token values
 			for token, expectedValue := range tc.accumulatedProtocolFeeX128PerStake {
 				actualValue := manager.GetAccumulatedProtocolFeeX128PerStake(token)
-				uassert.Equal(t, actualValue.ToString(), expectedValue.ToString())
+				uassert.Equal(t, actualValue, expectedValue)
 			}
 
 			for token, expectedAmount := range tc.protocolFeeAmounts {
@@ -101,7 +100,7 @@ func TestProtocolFeeRewardManager_RewardState(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
-			rewardState := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			rewardState := NewProtocolFeeRewardState(make(map[string]string))
 
 			// when
 			manager.SetRewardState(tc.address, rewardState)
@@ -160,7 +159,7 @@ func TestProtocolFeeRewardManager_SetRewardStates(t *testing.T) {
 			manager := NewProtocolFeeRewardManager()
 			newTree := avl.NewTree()
 			for _, addr := range tc.addresses {
-				newTree.Set(addr, NewProtocolFeeRewardState(make(map[string]*u256.Uint)))
+				newTree.Set(addr, NewProtocolFeeRewardState(make(map[string]string)))
 			}
 
 			// when

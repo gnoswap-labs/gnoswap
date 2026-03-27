@@ -89,6 +89,24 @@ func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 	return v
 }
 
+// decodeUint256Map converts a map[string]string to map[string]*u256.Uint
+func decodeUint256Map(m map[string]string) map[string]*u256.Uint {
+	result := make(map[string]*u256.Uint, len(m))
+	for k, v := range m {
+		result[k] = u256.MustFromDecimal(v)
+	}
+	return result
+}
+
+// encodeUint256Map converts a map[string]*u256.Uint to map[string]string
+func encodeUint256Map(m map[string]*u256.Uint) map[string]string {
+	result := make(map[string]string, len(m))
+	for k, v := range m {
+		result[k] = v.ToString()
+	}
+	return result
+}
+
 // milliToSec converts milliseconds to seconds
 func milliToSec(ms int64) int64 {
 	var msPerSec int64 = 1000

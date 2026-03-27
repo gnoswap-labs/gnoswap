@@ -66,13 +66,18 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 	protocolFeeAmounts map[string]int64,
 	currentTimestamp int64,
 ) (map[string]*u256.Uint, map[string]int64, error) {
+	// Decode all accumulated fees once upfront
+	existing := decodeUint256Map(self.GetAllAccumulatedProtocolFeeX128PerStake())
+
 	// If we're looking at a past timestamp, return current state
 	if self.GetAccumulatedTimestamp() > currentTimestamp {
-		return self.GetAllAccumulatedProtocolFeeX128PerStake(), self.GetProtocolFeeAmounts(), nil
+		return existing, self.GetProtocolFeeAmounts(), nil
 	}
 
-	accumulatedProtocolFeesX128PerStake := make(map[string]*u256.Uint)
-	changedProtocolFeeAmounts := make(map[string]int64)
+	accumulatedProtocolFeesX128PerStake := make(map[string]*u256.Uint, len(protocolFeeAmounts))
+	changedProtocolFeeAmounts := make(map[string]int64, len(protocolFeeAmounts))
+
+	totalStakedAmount := self.GetTotalStakedAmount()
 
 	// Process each token's protocol fees
 	for token, protocolFeeAmount := range protocolFeeAmounts {
@@ -82,36 +87,33 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
-			accumulatedProtocolFeesX128PerStake[token] = self.GetAccumulatedProtocolFeeX128PerStake(token)
-			if accumulatedProtocolFeesX128PerStake[token] == nil {
-				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
+			existingVal := existing[token]
+			if existingVal == nil {
+				existingVal = u256.Zero()
 			}
+			accumulatedProtocolFeesX128PerStake[token] = existingVal
 			changedProtocolFeeAmounts[token] = protocolFeeAmount
 			continue
 		}
 
 		// Scale the fee delta by 2^128 for precision
-		protocolFeeDeltaX128 := u256.NewUintFromInt64(protocolFeeDelta)
-		protocolFeeDeltaX128 = u256.Zero().Lsh(protocolFeeDeltaX128, 128)
+		protocolFeeDeltaX128 := u256.Zero().Lsh(u256.NewUintFromInt64(protocolFeeDelta), 128)
 
 		protocolFeeDeltaX128PerStake := u256.Zero()
 
 		// Calculate fee per stake if there are staked tokens
-		if self.GetTotalStakedAmount() > 0 {
-			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
-			protocolFeeDeltaX128PerStake = feePerStake
+		if totalStakedAmount > 0 {
+			protocolFeeDeltaX128PerStake = u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(totalStakedAmount))
 		}
 
 		// Get current accumulated fee per stake for this token
-		accumulatedProtocolFeeX128PerStake := u256.Zero()
-		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
-		if existingAccumulatedFee != nil {
-			accumulatedProtocolFeeX128PerStake = existingAccumulatedFee
+		accumulatedProtocolFeeX128PerStake := existing[token]
+		if accumulatedProtocolFeeX128PerStake == nil {
+			accumulatedProtocolFeeX128PerStake = u256.Zero()
 		}
 
 		// Add the new fee per stake to the accumulated amount
-		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
-		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
+		accumulatedProtocolFeesX128PerStake[token] = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
 
 		changedProtocolFeeAmounts[token] = protocolFeeAmount
 	}
@@ -142,7 +144,7 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 		return err
 	}
 
-	self.SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
+	self.SetAccumulatedProtocolFeeX128PerStake(encodeUint256Map(accumulatedProtocolFeeX128PerStake))
 	self.SetProtocolFeeAmounts(changedProtocolFeeAmounts)
 	self.SetAccumulatedTimestamp(currentTimestamp)
 
@@ -161,16 +163,19 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 		return errors.New("amount must be non-negative")
 	}
 
+	allAccumulatedStr := self.GetAllAccumulatedProtocolFeeX128PerStake()
+	allAccumulated := decodeUint256Map(allAccumulatedStr)
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
+		rewardState = staker.NewProtocolFeeRewardState(allAccumulatedStr)
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
+	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, allAccumulated, currentTimestamp)
 	if err != nil {
 		return err
 	}
@@ -198,16 +203,19 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 		return errors.New("amount must be non-negative")
 	}
 
+	allAccumulatedStr := self.GetAllAccumulatedProtocolFeeX128PerStake()
+	allAccumulated := decodeUint256Map(allAccumulatedStr)
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
+		rewardState = staker.NewProtocolFeeRewardState(allAccumulatedStr)
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
+	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, allAccumulated, currentTimestamp)
 	if err != nil {
 		return err
 	}
@@ -244,7 +252,7 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewards(address string, curre
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 	claimedRewards, err := resolvedState.claimRewardsWithUpdateRewardDebtX128(
-		self.GetAllAccumulatedProtocolFeeX128PerStake(),
+		decodeUint256Map(self.GetAllAccumulatedProtocolFeeX128PerStake()),
 		currentTimestamp,
 	)
 	if err != nil {

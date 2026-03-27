@@ -44,22 +44,24 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 	currentDistributedAmount int64,
 	currentTimestamp int64,
 ) (*u256.Uint, error) {
+	currentAccumulated := u256.MustFromDecimal(self.GetAccumulatedRewardX128PerStake())
+
 	// If we're looking at a past timestamp, return current state
 	if currentTimestamp < self.GetAccumulatedTimestamp() {
-		return self.GetAccumulatedRewardX128PerStake(), nil
+		return currentAccumulated, nil
 	}
 
 	// If no tokens are staked, no rewards to distribute
 	totalStakedAmount := self.GetTotalStakedAmount()
 	if totalStakedAmount == 0 {
-		return self.GetAccumulatedRewardX128PerStake(), nil
+		return currentAccumulated, nil
 	}
 
 	// Newly distributed rewards since last update
 	distributedAmountDelta := safeSubInt64(currentDistributedAmount, self.GetDistributedAmount())
 	if distributedAmountDelta <= 0 {
 		// Non-positive delta. nothing to do more.
-		return self.GetAccumulatedRewardX128PerStake(), nil
+		return currentAccumulated, nil
 	}
 
 	// Reward per stake for the new distribution
@@ -69,7 +71,7 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 	)
 
 	// Add to accumulated reward per stake
-	accumulatedReward := u256.Zero().Add(self.GetAccumulatedRewardX128PerStake(), distributedAmountDeltaX128PerStake)
+	accumulatedReward := u256.Zero().Add(currentAccumulated, distributedAmountDeltaX128PerStake)
 	return accumulatedReward, nil
 }
 
@@ -90,6 +92,14 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 		return nil
 	}
 
+	// Skip decode→encode round-trip when there is no new distribution
+	distributedAmountDelta := safeSubInt64(currentDistributedAmount, self.GetDistributedAmount())
+	if distributedAmountDelta <= 0 {
+		self.setDistributedAmount(currentDistributedAmount)
+		self.setAccumulatedTimestamp(currentTimestamp)
+		return nil
+	}
+
 	// Update accumulated reward state
 	accumulatedRewardX128PerStake, err := self.calculateAccumulatedRewardX128PerStake(
 		currentDistributedAmount,
@@ -99,7 +109,7 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 		return err
 	}
 
-	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake.Clone())
+	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake.ToString())
 	self.setDistributedAmount(currentDistributedAmount)
 	self.setAccumulatedTimestamp(currentTimestamp)
 
@@ -114,14 +124,15 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 		return errors.New("amount must be non-negative")
 	}
 
-	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
+	accumulatedRewardStr := self.GetAccumulatedRewardX128PerStake()
+	accumulatedReward := u256.MustFromDecimal(accumulatedRewardStr)
 
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewEmissionRewardState(accumulatedReward)
+		rewardState = staker.NewEmissionRewardState(accumulatedRewardStr)
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
@@ -148,14 +159,15 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 		return errors.New("amount must be non-negative")
 	}
 
-	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
+	accumulatedRewardStr := self.GetAccumulatedRewardX128PerStake()
+	accumulatedReward := u256.MustFromDecimal(accumulatedRewardStr)
 
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewEmissionRewardState(accumulatedReward)
+		rewardState = staker.NewEmissionRewardState(accumulatedRewardStr)
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
@@ -186,7 +198,7 @@ func (self *EmissionRewardManagerResolver) claimRewards(address string, currentT
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-	claimedRewardAmount, cErr := resolvedState.claimRewardsWithUpdateRewardDebtX128(self.GetAccumulatedRewardX128PerStake(), currentTimestamp)
+	claimedRewardAmount, cErr := resolvedState.claimRewardsWithUpdateRewardDebtX128(u256.MustFromDecimal(self.GetAccumulatedRewardX128PerStake()), currentTimestamp)
 	if cErr != nil {
 		return 0, cErr
 	}
@@ -199,7 +211,7 @@ func (self *EmissionRewardManagerResolver) setRewardStates(address string, rewar
 	self.SetRewardState(address, rewardState)
 }
 
-func (self *EmissionRewardManagerResolver) setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
+func (self *EmissionRewardManagerResolver) setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake string) {
 	self.SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake)
 }
 

@@ -4,34 +4,33 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
 func TestNewProtocolFeeRewardState(t *testing.T) {
 	tests := []struct {
 		name                              string
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
+		accumulatedProtocolFeeX128PerStake map[string]string
 		expectedMapSize                   int
 	}{
 		{
 			name: "Create with empty map",
-			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
+			accumulatedProtocolFeeX128PerStake: make(map[string]string),
 			expectedMapSize:                   0,
 		},
 		{
 			name: "Create with single token",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
+			accumulatedProtocolFeeX128PerStake: map[string]string{
+				"token1": "1000",
 			},
 			expectedMapSize: 1,
 		},
 		{
 			name: "Create with multiple tokens",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
-				"token2": u256.NewUint(2000),
-				"token3": u256.NewUint(3000),
+			accumulatedProtocolFeeX128PerStake: map[string]string{
+				"token1": "1000",
+				"token2": "2000",
+				"token3": "3000",
 			},
 			expectedMapSize: 3,
 		},
@@ -52,11 +51,10 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 			uassert.Equal(t, state.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetStakedAmount(), int64(0))
 
-			// Verify cloned values
+			// Verify values
 			for token, expectedValue := range tc.accumulatedProtocolFeeX128PerStake {
 				actualValue := state.GetRewardDebtX128ForToken(token)
-				uassert.NotNil(t, actualValue)
-				uassert.Equal(t, actualValue.ToString(), expectedValue.ToString())
+				uassert.Equal(t, actualValue, expectedValue)
 			}
 		})
 	}
@@ -66,7 +64,7 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	tests := []struct {
 		name                 string
-		rewardDebtX128       map[string]*u256.Uint
+		rewardDebtX128       map[string]string
 		accumulatedRewards   map[string]int64
 		claimedRewards       map[string]int64
 		accumulatedTimestamp int64
@@ -75,9 +73,9 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	}{
 		{
 			name: "Set and get all values",
-			rewardDebtX128: map[string]*u256.Uint{
-				"token1": u256.NewUint(1000),
-				"token2": u256.NewUint(2000),
+			rewardDebtX128: map[string]string{
+				"token1": "1000",
+				"token2": "2000",
 			},
 			accumulatedRewards: map[string]int64{
 				"token1": 100,
@@ -93,7 +91,7 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 		},
 		{
 			name:                 "Set empty maps",
-			rewardDebtX128:       make(map[string]*u256.Uint),
+			rewardDebtX128:       make(map[string]string),
 			accumulatedRewards:   make(map[string]int64),
 			claimedRewards:       make(map[string]int64),
 			accumulatedTimestamp: 0,
@@ -105,7 +103,7 @@ func TestProtocolFeeRewardState_SettersAndGetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(make(map[string]string))
 
 			// when
 			state.SetRewardDebtX128(tc.rewardDebtX128)
@@ -131,14 +129,14 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 	tests := []struct {
 		name               string
 		token              string
-		rewardDebtX128     *u256.Uint
+		rewardDebtX128     string
 		accumulatedReward  int64
 		claimedReward      int64
 	}{
 		{
 			name:              "Get values for existing token",
 			token:             "token1",
-			rewardDebtX128:    u256.NewUint(1000),
+			rewardDebtX128:    "1000",
 			accumulatedReward: 100,
 			claimedReward:     50,
 		},
@@ -147,7 +145,7 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(map[string]*u256.Uint{
+			state := NewProtocolFeeRewardState(map[string]string{
 				tc.token: tc.rewardDebtX128,
 			})
 			state.SetAccumulatedRewardForToken(tc.token, tc.accumulatedReward)
@@ -155,8 +153,7 @@ func TestProtocolFeeRewardState_TokenSpecificGetters(t *testing.T) {
 
 			// when & then
 			actualDebt := state.GetRewardDebtX128ForToken(tc.token)
-			uassert.NotNil(t, actualDebt)
-			uassert.Equal(t, actualDebt.ToString(), tc.rewardDebtX128.ToString())
+			uassert.Equal(t, actualDebt, tc.rewardDebtX128)
 			uassert.Equal(t, state.GetAccumulatedRewardForToken(tc.token), tc.accumulatedReward)
 			uassert.Equal(t, state.GetClaimedRewardForToken(tc.token), tc.claimedReward)
 		})
@@ -168,14 +165,14 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 	tests := []struct {
 		name              string
 		token             string
-		rewardDebtX128    *u256.Uint
+		rewardDebtX128    string
 		accumulatedReward int64
 		claimedReward     int64
 	}{
 		{
 			name:              "Set values for new token",
 			token:             "token1",
-			rewardDebtX128:    u256.NewUint(5000),
+			rewardDebtX128:    "5000",
 			accumulatedReward: 200,
 			claimedReward:     100,
 		},
@@ -184,7 +181,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := NewProtocolFeeRewardState(make(map[string]string))
 
 			// when
 			state.SetRewardDebtX128ForToken(tc.token, tc.rewardDebtX128)
@@ -193,8 +190,7 @@ func TestProtocolFeeRewardState_TokenSpecificSetters(t *testing.T) {
 
 			// then
 			actualDebt := state.GetRewardDebtX128ForToken(tc.token)
-			uassert.NotNil(t, actualDebt)
-			uassert.Equal(t, actualDebt.ToString(), tc.rewardDebtX128.ToString())
+			uassert.Equal(t, actualDebt, tc.rewardDebtX128)
 			uassert.Equal(t, state.GetAccumulatedRewardForToken(tc.token), tc.accumulatedReward)
 			uassert.Equal(t, state.GetClaimedRewardForToken(tc.token), tc.claimedReward)
 		})
@@ -223,37 +219,35 @@ func TestProtocolFeeRewardState_NilMapHandling(t *testing.T) {
 			}
 
 			// when & then
-			// GetRewardDebtX128ForToken returns nil for non-existent token when map is nil
+			// GetRewardDebtX128ForToken returns "0" for non-existent token when map is nil
 			debt := state.GetRewardDebtX128ForToken(tc.token)
-			if debt != nil {
-				t.Errorf("expected nil debt for non-existent token")
-			}
+			uassert.Equal(t, debt, "0")
 			uassert.Equal(t, state.GetAccumulatedRewardForToken(tc.token), int64(0))
 			uassert.Equal(t, state.GetClaimedRewardForToken(tc.token), int64(0))
 		})
 	}
 }
 
-// TestProtocolFeeRewardState_Clone tests that reward debt is cloned
-func TestProtocolFeeRewardState_Clone(t *testing.T) {
+// TestProtocolFeeRewardState_StringImmutability tests that string values are immutable
+func TestProtocolFeeRewardState_StringImmutability(t *testing.T) {
 	tests := []struct {
 		name          string
 		token         string
-		originalValue *u256.Uint
-		modifiedValue *u256.Uint
+		originalValue string
+		modifiedValue string
 	}{
 		{
 			name:          "Modifying original should not affect state",
 			token:         "token1",
-			originalValue: u256.NewUint(1000),
-			modifiedValue: u256.NewUint(9999),
+			originalValue: "1000",
+			modifiedValue: "9999",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			original := map[string]*u256.Uint{
+			original := map[string]string{
 				tc.token: tc.originalValue,
 			}
 
@@ -263,8 +257,8 @@ func TestProtocolFeeRewardState_Clone(t *testing.T) {
 
 			// then - state should still have the original value
 			actualValue := state.GetRewardDebtX128ForToken(tc.token)
-			uassert.Equal(t, actualValue.ToString(), tc.originalValue.ToString())
-			uassert.NotEqual(t, actualValue.ToString(), tc.modifiedValue.ToString())
+			uassert.Equal(t, actualValue, tc.originalValue)
+			uassert.NotEqual(t, actualValue, tc.modifiedValue)
 		})
 	}
 }

@@ -73,10 +73,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 	// Calculate rewards for each token type
 	for token, accumulatedRewardX128PerStake := range accumulatedRewardsX128PerStake {
 		// Get reward debt for this token
-		rewardDebtX128 := p.GetRewardDebtX128ForToken(token)
-		if rewardDebtX128 == nil {
-			rewardDebtX128 = u256.Zero()
-		}
+		rewardDebtX128 := u256.MustFromDecimal(p.GetRewardDebtX128ForToken(token))
 
 		// Calculate the difference in accumulated rewards per stake since last update
 		// Using modular arithmetic for accumulator values - underflow is allowed and handled correctly
@@ -176,7 +173,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	// Update reward debt for all tokens
-	p.SetRewardDebtX128(accumulatedProtocolFeeX128PerStake)
+	p.SetRewardDebtX128(encodeUint256Map(accumulatedProtocolFeeX128PerStake))
 
 	// Add newly calculated rewards to accumulated amounts
 	accumulatedRewards := p.GetAccumulatedRewards()

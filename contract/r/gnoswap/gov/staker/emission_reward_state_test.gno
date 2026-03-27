@@ -4,26 +4,25 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewEmissionRewardState tests creating a new emission reward state
 func TestNewEmissionRewardState(t *testing.T) {
 	tests := []struct {
 		name                            string
-		accumulatedRewardX128PerStake   *u256.Uint
+		accumulatedRewardX128PerStake   string
 		expectedAccumulatedRewardAmount int64
 		expectedStakedAmount            int64
 	}{
 		{
 			name:                            "Create with zero accumulated reward",
-			accumulatedRewardX128PerStake:   u256.Zero(),
+			accumulatedRewardX128PerStake:   "0",
 			expectedAccumulatedRewardAmount: 0,
 			expectedStakedAmount:            0,
 		},
 		{
 			name:                            "Create with non-zero accumulated reward",
-			accumulatedRewardX128PerStake:   u256.NewUint(1000),
+			accumulatedRewardX128PerStake:   "1000",
 			expectedAccumulatedRewardAmount: 0,
 			expectedStakedAmount:            0,
 		},
@@ -36,8 +35,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 
 			// then
 			uassert.NotNil(t, state)
-			uassert.NotNil(t, state.GetRewardDebtX128())
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.accumulatedRewardX128PerStake.ToString())
+			uassert.Equal(t, state.GetRewardDebtX128(), tc.accumulatedRewardX128PerStake)
 			uassert.Equal(t, state.GetAccumulatedRewardAmount(), tc.expectedAccumulatedRewardAmount)
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetClaimedRewardAmount(), int64(0))
@@ -51,7 +49,7 @@ func TestNewEmissionRewardState(t *testing.T) {
 func TestEmissionRewardState_Setters(t *testing.T) {
 	tests := []struct {
 		name                     string
-		newRewardDebtX128        *u256.Uint
+		newRewardDebtX128        string
 		newAccumulatedAmount     int64
 		newAccumulatedTimestamp  int64
 		newClaimedAmount         int64
@@ -60,7 +58,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 	}{
 		{
 			name:                    "Set all values to non-zero",
-			newRewardDebtX128:       u256.NewUint(5000),
+			newRewardDebtX128:       "5000",
 			newAccumulatedAmount:    1000,
 			newAccumulatedTimestamp: 1000000,
 			newClaimedAmount:        500,
@@ -69,7 +67,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 		},
 		{
 			name:                    "Set all values to zero",
-			newRewardDebtX128:       u256.Zero(),
+			newRewardDebtX128:       "0",
 			newAccumulatedAmount:    0,
 			newAccumulatedTimestamp: 0,
 			newClaimedAmount:        0,
@@ -81,7 +79,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			state := NewEmissionRewardState(u256.NewUint(100))
+			state := NewEmissionRewardState("100")
 
 			// when
 			state.SetRewardDebtX128(tc.newRewardDebtX128)
@@ -92,7 +90,7 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 			state.SetStakedAmount(tc.newStakedAmount)
 
 			// then
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.newRewardDebtX128.ToString())
+			uassert.Equal(t, state.GetRewardDebtX128(), tc.newRewardDebtX128)
 			uassert.Equal(t, state.GetAccumulatedRewardAmount(), tc.newAccumulatedAmount)
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), tc.newAccumulatedTimestamp)
 			uassert.Equal(t, state.GetClaimedRewardAmount(), tc.newClaimedAmount)
@@ -106,11 +104,11 @@ func TestEmissionRewardState_Setters(t *testing.T) {
 func TestEmissionRewardState_Getters(t *testing.T) {
 	tests := []struct {
 		name                  string
-		initialRewardDebtX128 *u256.Uint
+		initialRewardDebtX128 string
 	}{
 		{
 			name:                  "Get initial values",
-			initialRewardDebtX128: u256.NewUint(12345),
+			initialRewardDebtX128: "12345",
 		},
 	}
 
@@ -120,7 +118,7 @@ func TestEmissionRewardState_Getters(t *testing.T) {
 			state := NewEmissionRewardState(tc.initialRewardDebtX128)
 
 			// when & then
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.initialRewardDebtX128.ToString())
+			uassert.Equal(t, state.GetRewardDebtX128(), tc.initialRewardDebtX128)
 			uassert.Equal(t, state.GetAccumulatedRewardAmount(), int64(0))
 			uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, state.GetClaimedRewardAmount(), int64(0))
@@ -130,17 +128,17 @@ func TestEmissionRewardState_Getters(t *testing.T) {
 	}
 }
 
-// TestEmissionRewardState_Clone tests that rewardDebtX128 is cloned
-func TestEmissionRewardState_Clone(t *testing.T) {
+// TestEmissionRewardState_StringImmutability tests that string values are immutable
+func TestEmissionRewardState_StringImmutability(t *testing.T) {
 	tests := []struct {
 		name                  string
-		initialRewardDebtX128 *u256.Uint
-		modifiedValue         *u256.Uint
+		initialRewardDebtX128 string
+		modifiedValue         string
 	}{
 		{
 			name:                  "Modifying original should not affect state",
-			initialRewardDebtX128: u256.NewUint(1000),
-			modifiedValue:         u256.NewUint(9999),
+			initialRewardDebtX128: "1000",
+			modifiedValue:         "9999",
 		},
 	}
 
@@ -151,11 +149,11 @@ func TestEmissionRewardState_Clone(t *testing.T) {
 
 			// when
 			state := NewEmissionRewardState(original)
-			original = tc.modifiedValue // Try to modify original
+			original = tc.modifiedValue // Try to modify original (string is immutable, this creates a new variable)
 
 			// then - state should still have the original value
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.initialRewardDebtX128.ToString())
-			uassert.NotEqual(t, state.GetRewardDebtX128().ToString(), tc.modifiedValue.ToString())
+			uassert.Equal(t, state.GetRewardDebtX128(), tc.initialRewardDebtX128)
+			uassert.NotEqual(t, state.GetRewardDebtX128(), tc.modifiedValue)
 		})
 	}
 }

@@ -13,27 +13,27 @@ import (
 func TestNewProtocolFeeRewardState(t *testing.T) {
 	tests := []struct {
 		name                               string
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
+		accumulatedProtocolFeeX128PerStake map[string]string
 		expectedTokenCount                 int
 	}{
 		{
 			name:                               "Create with empty protocol fee map",
-			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
+			accumulatedProtocolFeeX128PerStake: make(map[string]string),
 			expectedTokenCount:                 0,
 		},
 		{
 			name: "Create with single token",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
+			accumulatedProtocolFeeX128PerStake: map[string]string{
+				"token1": "1000",
 			},
 			expectedTokenCount: 1,
 		},
 		{
 			name: "Create with multiple tokens",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-				"token2": u256.NewUintFromInt64(2000),
-				"token3": u256.NewUintFromInt64(3000),
+			accumulatedProtocolFeeX128PerStake: map[string]string{
+				"token1": "1000",
+				"token2": "2000",
+				"token3": "3000",
 			},
 			expectedTokenCount: 3,
 		},
@@ -52,11 +52,10 @@ func TestNewProtocolFeeRewardState(t *testing.T) {
 			uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(0))
 			uassert.Equal(t, resolver.GetStakedAmount(), int64(0))
 
-			// Verify reward debt is properly cloned
-			for token, originalAmount := range tt.accumulatedProtocolFeeX128PerStake {
+			// Verify reward debt values
+			for token, expectedValue := range tt.accumulatedProtocolFeeX128PerStake {
 				debtAmount := resolver.GetRewardDebtX128ForToken(token)
-				uassert.NotEqual(t, debtAmount, nil)
-				uassert.Equal(t, debtAmount.Cmp(originalAmount), 0)
+				uassert.Equal(t, debtAmount, expectedValue)
 			}
 		})
 	}
@@ -99,7 +98,7 @@ func TestProtocolFeeRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with claimed height
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetClaimedTimestamp(tt.claimedTimestamp)
 
@@ -140,7 +139,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", "0")
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
@@ -153,9 +152,9 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token2", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token3", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", "0")
+				s.SetRewardDebtX128ForToken("token2", "0")
+				s.SetRewardDebtX128ForToken("token3", "0")
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(100).Lsh(u256.NewUintFromInt64(100), 128),
@@ -170,7 +169,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -219,7 +218,7 @@ func TestProtocolFeeRewardState_addStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -263,7 +262,7 @@ func TestProtocolFeeRewardState_removeStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			resolver.SetStakedAmount(tt.initialStake)
 
@@ -331,7 +330,7 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 
@@ -388,7 +387,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetAccumulatedTimestamp(50)
 				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
+				s.SetRewardDebtX128ForToken("token1", "0")
 				s.SetAccumulatedRewards(map[string]int64{
 					"token1": 200,
 				})
@@ -404,7 +403,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupState(resolver)
 			startedAt := resolver.GetAccumulatedTimestamp()
@@ -480,7 +479,7 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.operations(resolver)
 		})
@@ -554,7 +553,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			state := staker.NewProtocolFeeRewardState(make(map[string]string))
 			resolver := NewProtocolFeeRewardStateResolver(state)
 			tt.setupTest(resolver)
 		})
@@ -565,7 +564,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 	t.Run("AddStake boundary - large staked amount", func(t *testing.T) {
 		// given: protocol fee reward state with large staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		state := staker.NewProtocolFeeRewardState(make(map[string]string))
 		resolver := NewProtocolFeeRewardStateResolver(state)
 
 		// Set initial large staked amount
@@ -583,7 +582,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 
 	t.Run("AddStake boundary - overflow", func(t *testing.T) {
 		// given: protocol fee reward state near max staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		state := staker.NewProtocolFeeRewardState(make(map[string]string))
 		resolver := NewProtocolFeeRewardStateResolver(state)
 
 		state.SetStakedAmount(math.MaxInt64 - 1000)
@@ -606,7 +605,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 
 	t.Run("RemoveStake boundary - clamping to zero", func(t *testing.T) {
 		// given: protocol fee reward state with some staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		state := staker.NewProtocolFeeRewardState(make(map[string]string))
 		resolver := NewProtocolFeeRewardStateResolver(state)
 
 		state.SetStakedAmount(1000)
@@ -622,7 +621,7 @@ func TestProtocolFeeRewardState_BoundaryConditions(t *testing.T) {
 
 	t.Run("ClaimRewards boundary - exact subtraction", func(t *testing.T) {
 		// given: protocol fee reward state with accumulated and claimed equal
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+		state := staker.NewProtocolFeeRewardState(make(map[string]string))
 		resolver := NewProtocolFeeRewardStateResolver(state)
 		token := "gno.land/r/demo/foo"
 

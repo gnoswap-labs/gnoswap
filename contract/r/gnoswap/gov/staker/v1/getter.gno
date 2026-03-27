@@ -333,12 +333,7 @@ func (gs *govStakerV1) GetCollectableWithdrawAmount(delegationID int64) int64 {
 // GetProtocolFeeAccumulatedX128PerStake returns the accumulated protocol fee per stake (Q128) for a token path.
 func (gs *govStakerV1) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
-	accumulatedFee := protocolFeeRewardManager.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
-	if accumulatedFee == nil {
-		return uint256.NewUint(0)
-	}
-
-	return accumulatedFee
+	return uint256.MustFromDecimal(protocolFeeRewardManager.GetAccumulatedProtocolFeeX128PerStake(tokenPath))
 }
 
 // GetProtocolFeeAmount returns the protocol fee amounts for a token path.
@@ -356,7 +351,7 @@ func (gs *govStakerV1) GetProtocolFeeAccumulatedTimestamp() int64 {
 // GetEmissionAccumulatedX128PerStake returns the accumulated emission per stake (Q128).
 func (gs *govStakerV1) GetEmissionAccumulatedX128PerStake() *uint256.Uint {
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
-	return emissionRewardManager.GetAccumulatedRewardX128PerStake()
+	return uint256.MustFromDecimal(emissionRewardManager.GetAccumulatedRewardX128PerStake())
 }
 
 // GetEmissionDistributedAmount returns the total distributed emission amount.

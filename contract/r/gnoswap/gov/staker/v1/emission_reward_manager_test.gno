@@ -28,7 +28,7 @@ func TestNewEmissionRewardManager(t *testing.T) {
 
 			// Then: Should initialize with zero values
 			uassert.NotEqual(t, resolver, nil)
-			uassert.Equal(t, resolver.GetAccumulatedRewardX128PerStake().ToString(), "0")
+			uassert.Equal(t, resolver.GetAccumulatedRewardX128PerStake(), "0")
 			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 			uassert.Equal(t, resolver.GetDistributedAmount(), int64(0))
@@ -51,7 +51,7 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 		{
 			name: "After setting accumulated reward",
 			setup: func(m *EmissionRewardManagerResolver) {
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(1000))
+				m.SetAccumulatedRewardX128PerStake("1000")
 			},
 			expected: "1000",
 		},
@@ -68,7 +68,7 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 			result := resolver.GetAccumulatedRewardX128PerStake()
 
 			// Then: Should return expected value
-			uassert.Equal(t, result.ToString(), tt.expected)
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
@@ -383,7 +383,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			name: "Current height less than accumulated height",
 			setupManager: func(m *EmissionRewardManagerResolver) {
 				m.SetAccumulatedTimestamp(200)
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(1000))
+				m.SetAccumulatedRewardX128PerStake("1000")
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -394,7 +394,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			setupManager: func(m *EmissionRewardManagerResolver) {
 				m.SetTotalStakedAmount(0)
 				m.SetAccumulatedTimestamp(50)
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(500))
+				m.SetAccumulatedRewardX128PerStake("500")
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -406,7 +406,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 				m.SetTotalStakedAmount(1000)
 				m.SetDistributedAmount(500)
 				m.SetAccumulatedTimestamp(50)
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+				m.SetAccumulatedRewardX128PerStake("0")
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -418,7 +418,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 				m.SetTotalStakedAmount(1000)
 				m.SetDistributedAmount(1500)
 				m.SetAccumulatedTimestamp(50)
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+				m.SetAccumulatedRewardX128PerStake("0")
 			},
 			currentDistributedAmount: 1000, // less than previous
 			currentHeight:            100,
@@ -430,7 +430,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 				m.SetTotalStakedAmount(1)
 				m.SetDistributedAmount(0)
 				m.SetAccumulatedTimestamp(50)
-				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+				m.SetAccumulatedRewardX128PerStake("0")
 			},
 			currentDistributedAmount: int64(9223372036854775807), // Max int64
 			currentHeight:            100,
@@ -446,10 +446,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			tt.setupManager(resolver)
 
 			// Capture initial reward state after setup
-			initialReward := u256.NewUintFromInt64(0)
-			if resolver.GetAccumulatedRewardX128PerStake() != nil {
-				initialReward = resolver.GetAccumulatedRewardX128PerStake().Clone()
-			}
+			initialReward := u256.MustFromDecimal(resolver.GetAccumulatedRewardX128PerStake())
 
 			// When: Calculate accumulated reward X128 per stake
 			result, _ := resolver.calculateAccumulatedRewardX128PerStake(
@@ -558,7 +555,7 @@ func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing
 	resolver := NewEmissionRewardManagerResolver(manager)
 
 	// Prepare: advance global accumulator once for safety
-	resolver.SetAccumulatedRewardX128PerStake(u256.NewUint(0))
+	resolver.SetAccumulatedRewardX128PerStake("0")
 	resolver.updateAccumulatedRewardX128PerStake(0, 10)
 
 	// When: calling removeStake on an address that does not exist yet
@@ -576,8 +573,8 @@ func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing
 
 	uassert.NotEqual(t, rs, nil)
 	uassert.Equal(t, rs.GetStakedAmount(), int64(0)) // clamped to 0, no negative values
-	// rewardDebtX128 should be a cloned snapshot
-	uassert.NotEqual(t, rs.GetRewardDebtX128(), nil)
+	// rewardDebtX128 should be set
+	uassert.NotEqual(t, rs.GetRewardDebtX128(), "")
 }
 
 // removeStake bug reproduction 2 (defensive check):

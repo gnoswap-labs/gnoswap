@@ -3,8 +3,6 @@ package staker
 import (
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // ProtocolFeeRewardManager manages the distribution of protocol fee rewards to stakers.
@@ -15,7 +13,7 @@ type ProtocolFeeRewardManager struct {
 	rewardStates *avl.Tree // address -> ProtocolFeeRewardState
 
 	// accumulatedProtocolFeeX128PerStake maps token path to accumulated fee per stake with 128-bit precision
-	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
+	accumulatedProtocolFeeX128PerStake map[string]string
 	// protocolFeeAmounts maps token path to total distributed protocol fee amounts
 	protocolFeeAmounts map[string]int64
 	// accumulatedTimestamp tracks the last timestamp when fees were accumulated
@@ -33,7 +31,7 @@ func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 	return &ProtocolFeeRewardManager{
 		rewardStates:                       avl.NewTree(),
 		protocolFeeAmounts:                 make(map[string]int64),
-		accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
+		accumulatedProtocolFeeX128PerStake: make(map[string]string),
 		accumulatedTimestamp:               0,
 		totalStakedAmount:                  0,
 	}
@@ -59,9 +57,13 @@ func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewa
 //   - token: token path to get accumulated fee for
 //
 // Returns:
-//   - *u256.Uint: accumulated protocol fee per stake for the token (scaled by 2^128)
-func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(token string) *u256.Uint {
-	return p.accumulatedProtocolFeeX128PerStake[token]
+//   - string: accumulated protocol fee per stake for the token (scaled by 2^128)
+func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(token string) string {
+	v, ok := p.accumulatedProtocolFeeX128PerStake[token]
+	if !ok {
+		return "0"
+	}
+	return v
 }
 
 func (p *ProtocolFeeRewardManager) GetProtocolFeeAmounts() map[string]int64 {
@@ -86,7 +88,7 @@ func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *avl.Tree) {
 	p.rewardStates = rewardStates
 }
 
-func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) {
+func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]string) {
 	p.accumulatedProtocolFeeX128PerStake = accumulatedProtocolFeeX128PerStake
 }
 
@@ -103,7 +105,7 @@ func (p *ProtocolFeeRewardManager) SetTotalStakedAmount(totalStakedAmount int64)
 }
 
 // GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake
-func (p *ProtocolFeeRewardManager) GetAllAccumulatedProtocolFeeX128PerStake() map[string]*u256.Uint {
+func (p *ProtocolFeeRewardManager) GetAllAccumulatedProtocolFeeX128PerStake() map[string]string {
 	return p.accumulatedProtocolFeeX128PerStake
 }
 

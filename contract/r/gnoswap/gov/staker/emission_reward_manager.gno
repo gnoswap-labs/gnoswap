@@ -3,8 +3,6 @@ package staker
 import (
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 var errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
@@ -15,7 +13,7 @@ type EmissionRewardManager struct {
 	rewardStates *avl.Tree // address -> EmissionRewardState
 
 	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision
-	accumulatedRewardX128PerStake *u256.Uint
+	accumulatedRewardX128PerStake string
 	// distributedAmount tracks the total amount of rewards distributed
 	distributedAmount int64
 	// accumulatedTimestamp tracks the last timestamp when rewards were accumulated
@@ -29,7 +27,7 @@ type EmissionRewardManager struct {
 // NewEmissionRewardManager creates new emission reward manager instance.
 func NewEmissionRewardManager() *EmissionRewardManager {
 	return &EmissionRewardManager{
-		accumulatedRewardX128PerStake: u256.NewUint(0),
+		accumulatedRewardX128PerStake: "0",
 		accumulatedTimestamp:          0,
 		totalStakedAmount:             0,
 		distributedAmount:             0,
@@ -38,7 +36,7 @@ func NewEmissionRewardManager() *EmissionRewardManager {
 }
 
 // GetAccumulatedRewardX128PerStake returns the accumulated reward per stake with 128-bit precision.
-func (e *EmissionRewardManager) GetAccumulatedRewardX128PerStake() *u256.Uint {
+func (e *EmissionRewardManager) GetAccumulatedRewardX128PerStake() string {
 	return e.accumulatedRewardX128PerStake
 }
 
@@ -75,7 +73,7 @@ func (e *EmissionRewardManager) SetRewardStates(rewardStates *avl.Tree) {
 	e.rewardStates = rewardStates
 }
 
-func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
+func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake string) {
 	e.accumulatedRewardX128PerStake = accumulatedRewardX128PerStake
 }
 
