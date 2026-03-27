@@ -12,65 +12,49 @@ import (
 func TestValidatePoolBalance(t *testing.T) {
 	tests := []struct {
 		name          string
-		token0        *u256.Uint
-		token1        *u256.Uint
-		amount        *u256.Uint
+		token0        int64
+		token1        int64
+		amount        int64
 		isToken0      bool
 		expectedError bool
 	}{
 		{
 			name:          "successful token0 transfer",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        1000,
+			amount:        500,
 			isToken0:      true,
 			expectedError: false,
 		},
 		{
 			name:          "successful token1 transfer",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        1000,
+			amount:        500,
 			isToken0:      false,
 			expectedError: false,
 		},
 		{
 			name:          "insufficient token0 balance",
-			token0:        u256.NewUint(100),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        100,
+			token1:        1000,
+			amount:        500,
 			isToken0:      true,
 			expectedError: true,
 		},
 		{
 			name:          "insufficient token1 balance",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(100),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        100,
+			amount:        500,
 			isToken0:      false,
 			expectedError: true,
 		},
 		{
-			name:          "nil token0",
-			token0:        nil,
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
-			isToken0:      true,
-			expectedError: true,
-		},
-		{
-			name:          "nil token1",
-			token0:        u256.NewUint(1000),
-			token1:        nil,
-			amount:        u256.NewUint(500),
-			isToken0:      false,
-			expectedError: true,
-		},
-		{
-			name:          "nil amount",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        nil,
+			name:          "negative amount",
+			token0:        1000,
+			token1:        1000,
+			amount:        -1,
 			isToken0:      true,
 			expectedError: true,
 		},
@@ -95,56 +79,56 @@ func TestValidatePoolBalance(t *testing.T) {
 func TestUpdatePoolBalance(t *testing.T) {
 	tests := []struct {
 		name          string
-		token0        *u256.Uint
-		token1        *u256.Uint
-		amount        *u256.Uint
+		token0        int64
+		token1        int64
+		amount        int64
 		isToken0      bool
-		expectedBal   *u256.Uint
+		expectedBal   int64
 		expectedError bool
 	}{
 		{
 			name:          "successful token0 decrease",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        1000,
+			amount:        500,
 			isToken0:      true,
-			expectedBal:   u256.NewUint(500),
+			expectedBal:   500,
 			expectedError: false,
 		},
 		{
 			name:          "successful token1 decrease",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        1000,
+			amount:        500,
 			isToken0:      false,
-			expectedBal:   u256.NewUint(500),
+			expectedBal:   500,
 			expectedError: false,
 		},
 		{
 			name:          "insufficient token0 balance",
-			token0:        u256.NewUint(100),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(500),
+			token0:        100,
+			token1:        1000,
+			amount:        500,
 			isToken0:      true,
-			expectedBal:   nil,
+			expectedBal:   0,
 			expectedError: true,
 		},
 		{
 			name:          "insufficient token1 balance",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(100),
-			amount:        u256.NewUint(500),
+			token0:        1000,
+			token1:        100,
+			amount:        500,
 			isToken0:      false,
-			expectedBal:   nil,
+			expectedBal:   0,
 			expectedError: true,
 		},
 		{
 			name:          "zero amount",
-			token0:        u256.NewUint(1000),
-			token1:        u256.NewUint(1000),
-			amount:        u256.NewUint(0),
+			token0:        1000,
+			token1:        1000,
+			amount:        0,
 			isToken0:      true,
-			expectedBal:   u256.NewUint(1000),
+			expectedBal:   1000,
 			expectedError: false,
 		},
 	}
@@ -162,17 +146,15 @@ func TestUpdatePoolBalance(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
-			if !newBal.Eq(tt.expectedBal) {
-				t.Errorf("balance mismatch: expected %s, got %s",
-					tt.expectedBal.ToString(),
-					newBal.ToString())
+			if newBal != tt.expectedBal {
+				t.Errorf("balance mismatch: expected %d, got %d", tt.expectedBal, newBal)
 			}
 		})
 	}
 }
 
 func TestTransferFromAndVerify(t *testing.T) {
-	makeMockPoolWithBalance := func(token0 *u256.Uint, token1 *u256.Uint) *pl.Pool {
+	makeMockPoolWithBalance := func(token0 int64, token1 int64) *pl.Pool {
 		mockPool := &pl.Pool{}
 
 		balances := pl.Balances{}
@@ -190,41 +172,41 @@ func TestTransferFromAndVerify(t *testing.T) {
 		tokenPath    string
 		amount       *i256.Int
 		isToken0     bool
-		expectedBal0 *u256.Uint
-		expectedBal1 *u256.Uint
+		expectedBal0 int64
+		expectedBal1 int64
 	}{
 		{
 			name:         "normal token0 transfer",
-			pool:         makeMockPoolWithBalance(u256.NewUint(1000), u256.NewUint(2000)),
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(500),
 			isToken0:     true,
-			expectedBal0: u256.NewUint(1500), // 1000 + 500
-			expectedBal1: u256.NewUint(2000), // unchanged
+			expectedBal0: 1500, // 1000 + 500
+			expectedBal1: 2000, // unchanged
 		},
 		{
 			name:         "normal token1 transfer",
-			pool:         makeMockPoolWithBalance(u256.NewUint(1000), u256.NewUint(2000)),
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(800),
 			isToken0:     false,
-			expectedBal0: u256.NewUint(1000), // unchanged
-			expectedBal1: u256.NewUint(2800), // 2000 + 800
+			expectedBal0: 1000, // unchanged
+			expectedBal1: 2800, // 2000 + 800
 		},
 		{
 			name:         "zero value transfer",
-			pool:         makeMockPoolWithBalance(u256.NewUint(1000), u256.NewUint(2000)),
+			pool:         makeMockPoolWithBalance(1000, 2000),
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    fooPath,
 			amount:       i256.NewInt(0),
 			isToken0:     true,
-			expectedBal0: u256.NewUint(1000), // unchanged
-			expectedBal1: u256.NewUint(2000), // unchanged
+			expectedBal0: 1000, // unchanged
+			expectedBal1: 2000, // unchanged
 		},
 	}
 
@@ -235,22 +217,22 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 			mockInstanceSafeTransferFrom(tt.pool, tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
-			if !tt.pool.BalanceToken0().Eq(tt.expectedBal0) {
-				t.Errorf("token0 balance mismatch: expected %s, got %s",
-					tt.expectedBal0.ToString(),
-					tt.pool.BalanceToken0().ToString())
+			if tt.pool.BalanceToken0() != tt.expectedBal0 {
+				t.Errorf("token0 balance mismatch: expected %d, got %d",
+					tt.expectedBal0,
+					tt.pool.BalanceToken0())
 			}
 
-			if !tt.pool.BalanceToken1().Eq(tt.expectedBal1) {
-				t.Errorf("token1 balance mismatch: expected %s, got %s",
-					tt.expectedBal1.ToString(),
-					tt.pool.BalanceToken1().ToString())
+			if tt.pool.BalanceToken1() != tt.expectedBal1 {
+				t.Errorf("token1 balance mismatch: expected %d, got %d",
+					tt.expectedBal1,
+					tt.pool.BalanceToken1())
 			}
 		})
 	}
 
 	t.Run("negative value handling", func(t *testing.T) {
-		pool := makeMockPoolWithBalance(u256.NewUint(1000), u256.NewUint(2000))
+		pool := makeMockPoolWithBalance(1000, 2000)
 
 		negativeAmount := i256.NewInt(-500)
 
@@ -258,11 +240,9 @@ func TestTransferFromAndVerify(t *testing.T) {
 		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
 		mockInstanceSafeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
 
-		expectedBal := u256.NewUint(1500) // 1000 + 500 (absolute value)
-		if !pool.BalanceToken0().Eq(expectedBal) {
-			t.Errorf("negative amount handling failed: expected %s, got %s",
-				expectedBal.ToString(),
-				pool.BalanceToken0().ToString())
+		expectedBal := int64(1500) // 1000 + 500 (absolute value)
+		if pool.BalanceToken0() != expectedBal {
+			t.Errorf("negative amount handling failed: expected %d, got %d", expectedBal, pool.BalanceToken0())
 		}
 	})
 }

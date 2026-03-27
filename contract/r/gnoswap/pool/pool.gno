@@ -6,7 +6,6 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -26,7 +25,7 @@ type Pool struct {
 	feeGrowthGlobal1X128 *u256.Uint // uint256
 	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
-	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
+	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
@@ -38,8 +37,8 @@ func (p *Pool) Token0Path() string                  { return p.token0Path }
 func (p *Pool) Token1Path() string                  { return p.token1Path }
 func (p *Pool) Fee() uint32                         { return p.fee }
 func (p *Pool) Balances() Balances                  { return p.balances }
-func (p *Pool) BalanceToken0() *u256.Uint           { return p.balances.token0 }
-func (p *Pool) BalanceToken1() *u256.Uint           { return p.balances.token1 }
+func (p *Pool) BalanceToken0() int64                { return p.balances.token0 }
+func (p *Pool) BalanceToken1() int64                { return p.balances.token1 }
 func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
 func (p *Pool) MaxLiquidityPerTick() *u256.Uint     { return p.maxLiquidityPerTick }
 func (p *Pool) Slot0() Slot0                        { return p.slot0 }
@@ -50,8 +49,8 @@ func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
 func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
 func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
+func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
 func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
 func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
@@ -75,11 +74,11 @@ func (p *Pool) SetBalances(balances Balances) {
 	p.balances = balances
 }
 
-func (p *Pool) SetBalanceToken0(token0 *u256.Uint) {
+func (p *Pool) SetBalanceToken0(token0 int64) {
 	p.balances.token0 = token0
 }
 
-func (p *Pool) SetBalanceToken1(token1 *u256.Uint) {
+func (p *Pool) SetBalanceToken1(token1 int64) {
 	p.balances.token1 = token1
 }
 
@@ -107,11 +106,11 @@ func (p *Pool) SetProtocolFees(protocolFees ProtocolFees) {
 	p.protocolFees = protocolFees
 }
 
-func (p *Pool) SetProtocolFeesToken0(token0 *u256.Uint) {
+func (p *Pool) SetProtocolFeesToken0(token0 int64) {
 	p.protocolFees.token0 = token0
 }
 
-func (p *Pool) SetProtocolFeesToken1(token1 *u256.Uint) {
+func (p *Pool) SetProtocolFeesToken1(token1 int64) {
 	p.protocolFees.token1 = token1
 }
 
@@ -242,7 +241,7 @@ type Balances struct{ TokenPair }
 
 func newBalances() Balances {
 	return Balances{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
+		TokenPair: NewTokenPair(0, 0),
 	}
 }
 
@@ -250,32 +249,29 @@ type ProtocolFees struct{ TokenPair }
 
 func newProtocolFees() ProtocolFees {
 	return ProtocolFees{
-		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
+		TokenPair: NewTokenPair(0, 0),
 	}
 }
 
 type TokenPair struct {
-	token0, token1 *u256.Uint
+	token0, token1 int64
 }
 
-func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
+func NewTokenPair(token0, token1 int64) TokenPair {
 	return TokenPair{
 		token0: token0,
 		token1: token1,
 	}
 }
 
-func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
-func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
+func (t *TokenPair) Token0() int64 { return t.token0 }
+func (t *TokenPair) Token1() int64 { return t.token1 }
 
-func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
-func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
+func (t *TokenPair) SetToken0(token0 int64) { t.token0 = token0 }
+func (t *TokenPair) SetToken1(token1 int64) { t.token1 = token1 }
 
 func (t *TokenPair) Clone() TokenPair {
-	return NewTokenPair(
-		t.token0.Clone(),
-		t.token1.Clone(),
-	)
+	return NewTokenPair(t.token0, t.token1)
 }
 
 type Slot0 struct {
@@ -312,19 +308,19 @@ func newSlot0(
 // TickInfo stores information about a specific tick in the pool.
 // TIcks represent discrete price points that can be used as boundaries for positions.
 type TickInfo struct {
-	liquidityGross *u256.Uint // total position liquidity that references this tick
-	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
+	liquidityGross string // total position liquidity that references this tick
+	liquidityNet   string // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
 
 	// fee growth per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	feeGrowthOutside0X128 *u256.Uint
-	feeGrowthOutside1X128 *u256.Uint
+	feeGrowthOutside0X128 string
+	feeGrowthOutside1X128 string
 
 	tickCumulativeOutside int64 // cumulative tick value on the other side of the tick
 
 	// the seconds per unit of liquidity on the _other_ side of this tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	secondsPerLiquidityOutsideX128 *u256.Uint
+	secondsPerLiquidityOutsideX128 string
 
 	// the seconds spent on the other side of the tick (relative to the current tick)
 	// only has relative meaning, not absolute — the value depends on when the tick is initialized
@@ -334,11 +330,11 @@ type TickInfo struct {
 }
 
 // TickInfo Getters methods
-func (t *TickInfo) LiquidityGross() *u256.Uint        { return t.liquidityGross }
-func (t *TickInfo) LiquidityNet() *i256.Int           { return t.liquidityNet }
-func (t *TickInfo) FeeGrowthOutside0X128() *u256.Uint { return t.feeGrowthOutside0X128 }
-func (t *TickInfo) FeeGrowthOutside1X128() *u256.Uint { return t.feeGrowthOutside1X128 }
-func (t *TickInfo) SecondsPerLiquidityOutsideX128() *u256.Uint {
+func (t *TickInfo) LiquidityGross() string        { return t.liquidityGross }
+func (t *TickInfo) LiquidityNet() string          { return t.liquidityNet }
+func (t *TickInfo) FeeGrowthOutside0X128() string { return t.feeGrowthOutside0X128 }
+func (t *TickInfo) FeeGrowthOutside1X128() string { return t.feeGrowthOutside1X128 }
+func (t *TickInfo) SecondsPerLiquidityOutsideX128() string {
 	return t.secondsPerLiquidityOutsideX128
 }
 func (t *TickInfo) SecondsOutside() uint32       { return t.secondsOutside }
@@ -346,23 +342,23 @@ func (t *TickInfo) Initialized() bool            { return t.initialized }
 func (t *TickInfo) TickCumulativeOutside() int64 { return t.tickCumulativeOutside }
 
 // TickInfo Setters methods
-func (t *TickInfo) SetLiquidityGross(liquidityGross *u256.Uint) {
+func (t *TickInfo) SetLiquidityGross(liquidityGross string) {
 	t.liquidityGross = liquidityGross
 }
 
-func (t *TickInfo) SetLiquidityNet(liquidityNet *i256.Int) {
+func (t *TickInfo) SetLiquidityNet(liquidityNet string) {
 	t.liquidityNet = liquidityNet
 }
 
-func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 *u256.Uint) {
+func (t *TickInfo) SetFeeGrowthOutside0X128(feeGrowthOutside0X128 string) {
 	t.feeGrowthOutside0X128 = feeGrowthOutside0X128
 }
 
-func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 *u256.Uint) {
+func (t *TickInfo) SetFeeGrowthOutside1X128(feeGrowthOutside1X128 string) {
 	t.feeGrowthOutside1X128 = feeGrowthOutside1X128
 }
 
-func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 *u256.Uint) {
+func (t *TickInfo) SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityOutsideX128 string) {
 	t.secondsPerLiquidityOutsideX128 = secondsPerLiquidityOutsideX128
 }
 
@@ -380,12 +376,12 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 
 func (t *TickInfo) Clone() TickInfo {
 	return TickInfo{
-		feeGrowthOutside0X128:          t.feeGrowthOutside0X128.Clone(),
-		feeGrowthOutside1X128:          t.feeGrowthOutside1X128.Clone(),
-		liquidityGross:                 t.liquidityGross.Clone(),
-		liquidityNet:                   t.liquidityNet.Clone(),
+		feeGrowthOutside0X128:          t.feeGrowthOutside0X128,
+		feeGrowthOutside1X128:          t.feeGrowthOutside1X128,
+		liquidityGross:                 t.liquidityGross,
+		liquidityNet:                   t.liquidityNet,
 		tickCumulativeOutside:          t.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128.Clone(),
+		secondsPerLiquidityOutsideX128: t.secondsPerLiquidityOutsideX128,
 		secondsOutside:                 t.secondsOutside,
 		initialized:                    t.initialized,
 	}
@@ -393,57 +389,54 @@ func (t *TickInfo) Clone() TickInfo {
 
 func NewTickInfo() TickInfo {
 	return TickInfo{
-		liquidityGross:                 u256.Zero(),
-		liquidityNet:                   i256.Zero(),
-		feeGrowthOutside0X128:          u256.Zero(),
-		feeGrowthOutside1X128:          u256.Zero(),
-		secondsPerLiquidityOutsideX128: u256.Zero(),
+		liquidityGross:                 "0",
+		liquidityNet:                   "0",
+		feeGrowthOutside0X128:          "0",
+		feeGrowthOutside1X128:          "0",
+		secondsPerLiquidityOutsideX128: "0",
 		secondsOutside:                 0,
 		initialized:                    false,
 		tickCumulativeOutside:          0,
 	}
 }
 
+// PositionInfo stores liquidity and fee state for a position.
+// Liquidity and fee-growth fields are stored as decimal strings to reduce storage cost,
+// while transferable owed amounts stay as int64 for token transfer boundaries.
 type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
+	liquidity                string // amount of liquidity owned by this position
+	feeGrowthInside0LastX128 string // fee growth per unit of liquidity for token0 as of last update
+	feeGrowthInside1LastX128 string // fee growth per unit of liquidity for token1 as of last update
 
 	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
+	tokensOwed0 int64
 
 	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
+	tokensOwed1 int64
 }
 
-func (p *PositionInfo) Liquidity() *u256.Uint                { return p.liquidity }
-func (p *PositionInfo) FeeGrowthInside0LastX128() *u256.Uint { return p.feeGrowthInside0LastX128 }
-func (p *PositionInfo) FeeGrowthInside1LastX128() *u256.Uint { return p.feeGrowthInside1LastX128 }
-func (p *PositionInfo) TokensOwed0() *u256.Uint              { return p.tokensOwed0 }
-func (p *PositionInfo) TokensOwed1() *u256.Uint              { return p.tokensOwed1 }
+func (p *PositionInfo) Liquidity() string                { return p.liquidity }
+func (p *PositionInfo) FeeGrowthInside0LastX128() string { return p.feeGrowthInside0LastX128 }
+func (p *PositionInfo) FeeGrowthInside1LastX128() string { return p.feeGrowthInside1LastX128 }
+func (p *PositionInfo) TokensOwed0() int64               { return p.tokensOwed0 }
+func (p *PositionInfo) TokensOwed1() int64               { return p.tokensOwed1 }
 
-func (p *PositionInfo) SetLiquidity(liquidity *u256.Uint) {
+func (p *PositionInfo) SetLiquidity(liquidity string) {
 	p.liquidity = liquidity
 }
 
-func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128 string) {
 	p.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 }
 
-func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 *u256.Uint) {
+func (p *PositionInfo) SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128 string) {
 	p.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 }
 
-func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed0(tokensOwed0 int64) {
 	p.tokensOwed0 = tokensOwed0
 }
 
-func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
+func (p *PositionInfo) SetTokensOwed1(tokensOwed1 int64) {
 	p.tokensOwed1 = tokensOwed1
 }

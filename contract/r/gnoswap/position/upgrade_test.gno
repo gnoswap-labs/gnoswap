@@ -660,7 +660,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -672,7 +672,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -697,8 +697,8 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside0LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside0LastX128 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionFeeGrowthInside0LastX128() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside0LastX128() = %s, want %s", result, tt.expected)
 		}
 	}
 }
@@ -709,7 +709,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -721,7 +721,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    "1000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -746,8 +746,8 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside1LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside1LastX128 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionFeeGrowthInside1LastX128() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionFeeGrowthInside1LastX128() = %s, want %s", result, tt.expected)
 		}
 	}
 }
@@ -758,7 +758,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    string
 		callerRealm runtime.Realm
 	}{
 		{
@@ -770,7 +770,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000000),
+			expected:    "1000000",
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -795,8 +795,8 @@ func TestGetPositionLiquidity(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionLiquidity() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionLiquidity() = %s, want %s", result, tt.expected)
 		}
 	}
 }
@@ -1003,7 +1003,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1015,7 +1015,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    1000,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1040,8 +1040,8 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionTokensOwed0") != 1 {
 			t.Error("GetPositionTokensOwed0 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionTokensOwed0() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionTokensOwed0() = %d, want %d", result, tt.expected)
 		}
 	}
 }
@@ -1052,7 +1052,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		positionId  uint64
-		expected    *u256.Uint
+		expected    int64
 		callerRealm runtime.Realm
 	}{
 		{
@@ -1064,7 +1064,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:  1,
-			expected:    u256.NewUint(1000),
+			expected:    1000,
 			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1089,8 +1089,8 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		if mockPosition.Response.CallCount("GetPositionTokensOwed1") != 1 {
 			t.Error("GetPositionTokensOwed1 was not called on the implementation")
 		}
-		if result == nil {
-			t.Error("GetPositionTokensOwed1() returned nil")
+		if result != tt.expected {
+			t.Errorf("GetPositionTokensOwed1() = %d, want %d", result, tt.expected)
 		}
 	}
 }
@@ -1101,8 +1101,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 		name         string
 		setup        func(t *testing.T)
 		positionId   uint64
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 		callerRealm  runtime.Realm
 	}{
 		{
@@ -1114,8 +1114,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/position/v1")
 			},
 			positionId:   1,
-			expectedFee0: u256.NewUint(1000),
-			expectedFee1: u256.NewUint(2000),
+			expectedFee0: "1000",
+			expectedFee1: "2000",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -1129,7 +1129,7 @@ func TestGetUnclaimedFee(t *testing.T) {
 		}
 
 		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("GetUnclaimedFee", tt.expectedFee0, tt.expectedFee1)
+		mockPosition.Response.Set("GetUnclaimedFee", u256.MustFromDecimal(tt.expectedFee0), u256.MustFromDecimal(tt.expectedFee1))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -1140,8 +1140,8 @@ func TestGetUnclaimedFee(t *testing.T) {
 		if mockPosition.Response.CallCount("GetUnclaimedFee") != 1 {
 			t.Error("GetUnclaimedFee was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetUnclaimedFee() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetUnclaimedFee() returned empty string")
 		}
 	}
 }

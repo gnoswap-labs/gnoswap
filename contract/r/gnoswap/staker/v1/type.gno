@@ -1,7 +1,6 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -97,7 +96,7 @@ func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int
 // It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
 func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID string, currentTime int64) error {
 	if self.ExternalRewardLastCollectTimes() == nil {
-		self.SetExternalRewardLastCollectTimes(avl.NewTree())
+		self.SetExternalRewardLastCollectTimes(make(map[string]int64))
 	}
 
 	externalLastCollectTime, exists := self.Deposit.GetExternalRewardLastCollectTime(incentiveID)

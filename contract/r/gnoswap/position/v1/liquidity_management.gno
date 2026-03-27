@@ -21,7 +21,7 @@ type AddLiquidityParams struct {
 
 // addLiquidity calculates liquidity amounts and mints position tokens to a pool.
 func (p *positionV1) addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
-	sqrtPriceX96 := pl.GetSlot0SqrtPriceX96(params.poolKey)
+	sqrtPriceX96 := u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(params.poolKey))
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
 

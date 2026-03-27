@@ -55,11 +55,11 @@ func (p *positionV1) Reposition(
 		panic(newErrorWithDetail(
 			errNotClear,
 			ufmt.Sprintf(
-				"position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)",
+				"position(%d) isn't clear(liquidity:%s, tokensOwed0:%d, tokensOwed1:%d)",
 				positionId,
-				position.Liquidity().ToString(),
-				position.TokensOwed0().ToString(),
-				position.TokensOwed1().ToString(),
+				position.Liquidity(),
+				position.TokensOwed0(),
+				position.TokensOwed1(),
 			),
 		))
 	}
@@ -86,15 +86,8 @@ func (p *positionV1) Reposition(
 	// before update position, calculate token balances
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
-	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
-	if overflow {
-		panic(newErrorWithDetail(errOverflow, "token0Balance + amount0 overflow"))
-	}
-
-	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
-	if overflow {
-		panic(newErrorWithDetail(errOverflow, "token1Balance + amount1 overflow"))
-	}
+	token0Balance := safeAddInt64(calculatedToken0Balance, safeConvertToInt64(amount0))
+	token1Balance := safeAddInt64(calculatedToken1Balance, safeConvertToInt64(amount1))
 
 	// update position tickLower, tickUpper to new value
 	// because getCurrentFeeGrowth() uses tickLower, tickUpper
@@ -105,18 +98,18 @@ func (p *positionV1) Reposition(
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
-	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128)
-	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128)
+	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
+	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
-	position.SetLiquidity(liquidity)
+	position.SetLiquidity(liquidity.ToString())
 	position.SetToken0Balance(token0Balance)
 	position.SetToken1Balance(token1Balance)
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
 	// > at this point, that position will have unclaimedFee which isn't intended
-	position.SetTokensOwed0(u256.Zero())
-	position.SetTokensOwed1(u256.Zero())
+	position.SetTokensOwed0(0)
+	position.SetTokensOwed1(0)
 	position.SetBurned(false)
 	p.mustUpdatePosition(positionId, *position)
 
@@ -124,8 +117,7 @@ func (p *positionV1) Reposition(
 	poolToken0Balance := pl.GetBalanceToken0(poolKey)
 	poolToken1Balance := pl.GetBalanceToken1(poolKey)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolKey, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolKey, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -141,11 +133,11 @@ func (p *positionV1) Reposition(
 		"prevTickLower", formatInt(oldTickLower),
 		"prevTickUpper", formatInt(oldTickUpper),
 		"poolPath", poolKey,
-		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
-		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
+		"sqrtPriceX96", poolSqrtPriceX96,
+		"positionLiquidity", p.GetPositionLiquidity(positionId),
 		"poolLiquidity", pl.GetLiquidity(poolKey),
-		"token0Balance", poolToken0Balance,
-		"token1Balance", poolToken1Balance,
+		"token0Balance", formatInt(poolToken0Balance),
+		"token1Balance", formatInt(poolToken1Balance),
 		"tickCumulative", formatInt(tickCumulative),
 		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,

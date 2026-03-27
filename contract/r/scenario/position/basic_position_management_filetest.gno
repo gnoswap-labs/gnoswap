@@ -193,7 +193,7 @@ func testPositionCreationAndRetrieval() {
 	println("[EXPECTED] Position pool key:", poolKey)
 	println("[EXPECTED] Position tick lower:", tickLower)
 	println("[EXPECTED] Position tick upper:", tickUpper)
-	println("[EXPECTED] Position liquidity:", positionLiquidity.ToString())
+	println("[EXPECTED] Position liquidity:", positionLiquidity)
 	println("[EXPECTED] Position operator: zero address", operator)
 	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
 	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
@@ -243,11 +243,11 @@ func testPositionModification() {
 	println("[EXPECTED] Position modified successfully")
 	println("[EXPECTED] Original position ID:", positionId)
 	println("[EXPECTED] New liquidity added:", newLiquidity)
-	println("[EXPECTED] Total liquidity after modification:", modifiedLiquidity.ToString())
+	println("[EXPECTED] Total liquidity after modification:", modifiedLiquidity)
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
-	println("[EXPECTED] Tokens owed 0:", tokensOwed0.ToString())
-	println("[EXPECTED] Tokens owed 1:", tokensOwed1.ToString())
+	println("[EXPECTED] Tokens owed 0:", tokensOwed0)
+	println("[EXPECTED] Tokens owed 1:", tokensOwed1)
 }
 
 func testPositionDeletion() {

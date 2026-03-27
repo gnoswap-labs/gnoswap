@@ -1,7 +1,5 @@
 package staker
 
-import avl "gno.land/p/nt/avl/v0"
-
 func cloneStringSlice(src []string) []string {
 	if src == nil {
 		return nil
@@ -50,14 +48,29 @@ func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	return copied
 }
 
+func cloneStringBoolMap(src map[string]bool) map[string]bool {
+	if src == nil {
+		return nil
+	}
+
+	copied := make(map[string]bool, len(src))
+	for key, value := range src {
+		copied[key] = value
+	}
+
+	return copied
+}
+
 func cloneExternalIncentives(src []ExternalIncentive) []ExternalIncentive {
 	if src == nil {
 		return nil
 	}
+
 	copied := make([]ExternalIncentive, len(src))
 	for i := range src {
 		copied[i] = *src[i].Clone()
 	}
+
 	return copied
 }
 
@@ -69,17 +82,4 @@ func cloneWarmups(warmups []Warmup) []Warmup {
 	copied := make([]Warmup, len(warmups))
 	copy(copied, warmups)
 	return copied
-}
-
-func cloneAvlTree(tree *avl.Tree) *avl.Tree {
-	if tree == nil {
-		return nil
-	}
-
-	cloned := avl.NewTree()
-	tree.Iterate("", "", func(key string, value any) bool {
-		cloned.Set(key, value)
-		return false
-	})
-	return cloned
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // TestRegisterInitializer tests the pool upgrade system with table-driven approach
@@ -652,7 +652,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		setup        func(t *testing.T)
 		poolPath     string
 		callerRealm  runtime.Realm
-		expectedSqrt *u256.Uint
+		expectedSqrt string
 	}{
 		{
 			name: "get slot0 sqrt price x96 is success",
@@ -664,7 +664,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 			},
 			poolPath:     "mock_pool_path",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedSqrt: u256.NewUint(0),
+			expectedSqrt: "0",
 		},
 	}
 
@@ -676,7 +676,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 			tt.setup(t)
 		}
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetSlot0SqrtPriceX96", tt.expectedSqrt)
+		mockPool.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal(tt.expectedSqrt))
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
@@ -686,8 +686,8 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") != 1 {
 			t.Error("GetSlot0SqrtPriceX96 was not called on the implementation")
 		}
-		if sqrtPrice == nil {
-			t.Error("GetSlot0SqrtPriceX96() returned nil")
+		if sqrtPrice == "" {
+			t.Error("GetSlot0SqrtPriceX96() returned empty string")
 		}
 	}
 }
@@ -772,7 +772,7 @@ func TestGetLiquidity(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetLiquidity", tt.expectedLiquidity)
+		mockPool.Response.Set("GetLiquidity", u256.MustFromDecimal(tt.expectedLiquidity))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -796,7 +796,7 @@ func TestGetBalanceToken0(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token0 is success",
@@ -808,7 +808,7 @@ func TestGetBalanceToken0(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 
@@ -845,7 +845,7 @@ func TestGetBalanceToken1(t *testing.T) {
 		setup           func(t *testing.T)
 		poolPath        string
 		callerRealm     runtime.Realm
-		expectedBalance string
+		expectedBalance int64
 	}{
 		{
 			name: "get balance token1 is success",
@@ -857,7 +857,7 @@ func TestGetBalanceToken1(t *testing.T) {
 			},
 			poolPath:        "mock_pool_path",
 			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedBalance: "0",
+			expectedBalance: 0,
 		},
 	}
 
@@ -894,8 +894,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		setup        func(t *testing.T)
 		poolPath     string
 		callerRealm  runtime.Realm
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 	}{
 		{
 			name: "get fee growth global x128 is success",
@@ -907,8 +907,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 			},
 			poolPath:     "mock_pool_path",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedFee0: u256.NewUint(0),
-			expectedFee1: u256.NewUint(0),
+			expectedFee0: "0",
+			expectedFee1: "0",
 		},
 	}
 
@@ -921,7 +921,7 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetFeeGrowthGlobalX128", tt.expectedFee0, tt.expectedFee1)
+		mockPool.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal(tt.expectedFee0), u256.MustFromDecimal(tt.expectedFee1))
 
 		testing.SetRealm(tt.callerRealm)
 
@@ -932,8 +932,8 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") != 1 {
 			t.Error("GetFeeGrowthGlobalX128 was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetFeeGrowthGlobalX128() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetFeeGrowthGlobalX128() returned empty string")
 		}
 	}
 }
@@ -946,8 +946,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 		poolPath     string
 		key          string
 		callerRealm  runtime.Realm
-		expectedFee0 *u256.Uint
-		expectedFee1 *u256.Uint
+		expectedFee0 string
+		expectedFee1 string
 	}{
 		{
 			name: "get position fee growth inside last x128 is success",
@@ -960,8 +960,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 			poolPath:     "mock_pool_path",
 			key:          "mock_key",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedFee0: u256.NewUint(0),
-			expectedFee1: u256.NewUint(0),
+			expectedFee0: "0",
+			expectedFee1: "0",
 		},
 	}
 
@@ -985,8 +985,8 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInsideLastX128 was not called on the implementation")
 		}
-		if fee0 == nil || fee1 == nil {
-			t.Error("GetPositionFeeGrowthInsideLastX128() returned nil")
+		if fee0 == "" || fee1 == "" {
+			t.Error("GetPositionFeeGrowthInsideLastX128() returned empty string")
 		}
 	}
 }
@@ -1617,7 +1617,7 @@ func TestGetMaxLiquidityPerTick(t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetMaxLiquidityPerTick", tt.expectedLiquidity)
+		mockPool.Response.Set("GetMaxLiquidityPerTick", u256.MustFromDecimal(tt.expectedLiquidity))
 
 		// Action
 		liquidity := GetMaxLiquidityPerTick(tt.poolPath)
@@ -1863,7 +1863,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		poolPath    string
-		expectedFee string
+		expectedFee int64
 	}{
 		{
 			name: "get protocol fees token0 is success",
@@ -1874,7 +1874,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
-			expectedFee: "1000",
+			expectedFee: 1000,
 		},
 	}
 
@@ -1908,7 +1908,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 		name        string
 		setup       func(t *testing.T)
 		poolPath    string
-		expectedFee string
+		expectedFee int64
 	}{
 		{
 			name: "get protocol fees token1 is success",
@@ -1919,7 +1919,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
 			},
 			poolPath:    "mock_pool_path",
-			expectedFee: "1000",
+			expectedFee: 1000,
 		},
 	}
 
@@ -1954,7 +1954,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		setup             func(t *testing.T)
 		poolPath          string
 		key               string
-		expectedLiquidity *u256.Uint
+		expectedLiquidity string
 	}{
 		{
 			name: "get position liquidity is success",
@@ -1966,7 +1966,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 			},
 			poolPath:          "mock_pool_path",
 			key:               "mock_key",
-			expectedLiquidity: u256.NewUint(1000000),
+			expectedLiquidity: "1000000",
 		},
 	}
 
@@ -1988,8 +1988,8 @@ func TestGetPositionLiquidity(t *testing.T) {
 		if mockPool.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
-		if liquidity == nil {
-			t.Error("GetPositionLiquidity() returned nil")
+		if liquidity == "" {
+			t.Error("GetPositionLiquidity() returned empty string")
 		}
 	}
 }

@@ -271,7 +271,7 @@ func testRoundingConsistency() {
 		_, _, _, _, amt0, amt1, _ := pn.DecreaseLiquidity(
 			cross,
 			posId,
-			pos.Liquidity().ToString(),
+			pos.Liquidity(),
 			"0", "0",
 			9999999999,
 		)
