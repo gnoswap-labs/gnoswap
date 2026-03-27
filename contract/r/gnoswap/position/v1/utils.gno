@@ -165,10 +165,14 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	return int64(res)
 }
 
-func safeParseInt64(value string) int64 {
+func safeParseRequestAmount(value string) int64 {
 	amountInt64, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		panic(err)
+	}
+
+	if amountInt64 < 0 {
+		panic(ufmt.Sprintf("amount(%d) cannot be negative", amountInt64))
 	}
 
 	return amountInt64

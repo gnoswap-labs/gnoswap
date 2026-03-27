@@ -52,8 +52,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	pToken0, pToken1, pFee := splitOf(position.PoolKey())
 	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
-	burnedAmount0 := safeParseInt64(burn0)
-	burnedAmount1 := safeParseInt64(burn1)
+	burnedAmount0 := safeParseRequestAmount(burn0)
+	burnedAmount1 := safeParseRequestAmount(burn1)
 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
