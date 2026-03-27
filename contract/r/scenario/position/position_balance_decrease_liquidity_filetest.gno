@@ -198,8 +198,8 @@ ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", pos.Token0Balan
 ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", pos.Token1Balance())
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
-	ufmt.Printf("[EXPECTED] Pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
-	ufmt.Printf("[EXPECTED] Pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
+	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
+	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 
 	// Validate token conservation and correctness

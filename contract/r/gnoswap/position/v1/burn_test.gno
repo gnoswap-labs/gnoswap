@@ -329,21 +329,21 @@ func TestDecreaseLiquidity_TokensOwedOverflow(t *testing.T) {
 	}{
 		{
 			name:             "overflow on tokensOwed0 + burnedAmount0",
-			tokensOwed0:      9223372036854775807,
-			tokensOwed1:      0,
-			expectedPanicMsg: "int64 addition overflow",
+			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed1:      u256.Zero(),
+			expectedPanicMsg: "strconv.ParseInt",
 		},
 		{
 			name:             "overflow on tokensOwed1 + burnedAmount1",
-			tokensOwed0:      0,
-			tokensOwed1:      9223372036854775807,
-			expectedPanicMsg: "int64 addition overflow",
+			tokensOwed0:      u256.Zero(),
+			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			expectedPanicMsg: "strconv.ParseInt",
 		},
 		{
 			name:             "overflow on both tokensOwed0 and tokensOwed1",
-			tokensOwed0:      9223372036854775807,
-			tokensOwed1:      9223372036854775807,
-			expectedPanicMsg: "int64 addition overflow",
+			tokensOwed0:      u256.MustFromDecimal(MAX_UINT256),
+			tokensOwed1:      u256.MustFromDecimal(MAX_UINT256),
+			expectedPanicMsg: "strconv.ParseInt",
 		},
 	}
 

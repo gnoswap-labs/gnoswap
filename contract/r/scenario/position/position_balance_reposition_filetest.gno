@@ -244,8 +244,8 @@ ufmt.Printf("[EXPECTED] Final position token1 balance should be %d\n", pos.Token
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken1PoolBalance-beforeToken1PoolBalance)
 
 	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
-	ufmt.Printf("[EXPECTED] Final pool token0 balance should be %s\n", poolInfo.BalanceToken0().ToString())
-	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %s\n", poolInfo.BalanceToken1().ToString())
+	ufmt.Printf("[EXPECTED] Final pool token0 balance should be %d\n", poolInfo.BalanceToken0())
+	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Final pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] Final pool tick should be %d\n", poolInfo.Slot0Tick())
 
