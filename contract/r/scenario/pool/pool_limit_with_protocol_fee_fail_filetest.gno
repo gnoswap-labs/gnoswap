@@ -34,7 +34,7 @@ const (
 const (
 	maxApprove int64 = 9223372036854775806
 
-	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_INT64 string = "9223372036854775807"
 )
 
 // Variables for test addresses and realms
@@ -153,8 +153,8 @@ func main() {
 		adminAddr,
 		-120,
 		0,
-		MAX_UINT128,
-		MAX_UINT128,
+		MAX_INT64,
+		MAX_INT64,
 	)
 	println("[EXPECTED] collect0:", collect0, "expected: 60199732")
 	println("[EXPECTED] collect1:", collect1, "expected: 0")

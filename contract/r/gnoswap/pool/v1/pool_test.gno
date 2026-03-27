@@ -1030,6 +1030,8 @@ func TestCollect(t *testing.T) {
 		expectedCollected1 string
 		expectedOwed0After string
 		expectedOwed1After string
+		expectedPanic      bool
+		expectedPanicMsg   string
 	}{
 		{
 			name:               "request_less_than_owed",
@@ -1044,12 +1046,36 @@ func TestCollect(t *testing.T) {
 		{
 			name:               "request_more_than_owed",
 			burnAmount:         MEDIUM_LIQUIDITY,
-			request0:           MAX_UINT128,
-			request1:           MAX_UINT128,
-			expectedCollected0: "119276", // min(MAX_UINT128, 119276)
-			expectedCollected1: "119276", // min(MAX_UINT128, 119276)
+			request0:           MAX_INT64,
+			request1:           MAX_INT64,
+			expectedCollected0: "119276", // min(MAX_INT64, 119276)
+			expectedCollected1: "119276", // min(MAX_INT64, 119276)
 			expectedOwed0After: "0",      // 119276 - 119276
 			expectedOwed1After: "0",      // 119276 - 119276
+		},
+		{
+			name:               "expected_overflow",
+			burnAmount:         MEDIUM_LIQUIDITY,
+			request0:           "9223372036854775808", // max int64 + 1
+			request1:           "9223372036854775808", // max int64 + 1
+			expectedCollected0: "0",                   // min(MAX_INT64, 119276)
+			expectedCollected1: "0",                   // min(MAX_INT64, 119276)
+			expectedOwed0After: "0",                   // 119276 - 119276
+			expectedOwed1After: "0",                   // 119276 - 119276
+			expectedPanic:      true,
+			expectedPanicMsg:   "strconv.ParseInt: parsing \"9223372036854775808\": value out of range",
+		},
+		{
+			name:               "expected_underflow_negative",
+			burnAmount:         MEDIUM_LIQUIDITY,
+			request0:           "-1", // negative int64
+			request1:           "-1", // negative int64
+			expectedCollected0: "0",  // min(negative int64, 119276)
+			expectedCollected1: "0",  // min(negative int64, 119276)
+			expectedOwed0After: "0",  // 119276 - 119276
+			expectedOwed1After: "0",  // 119276 - 119276
+			expectedPanic:      true,
+			expectedPanicMsg:   "[GNOSWAP-POOL-004] invalid input data",
 		},
 	}
 
@@ -1070,6 +1096,18 @@ func TestCollect(t *testing.T) {
 
 			// When: Collect with specific request amounts
 			testing.SetRealm(posRealm)
+			if tt.expectedPanic {
+				uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
+					mockInstanceCollect(
+						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+						adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+						tt.request0, tt.request1,
+					)
+				})
+
+				return
+			}
+
 			amount0, amount1 := mockInstanceCollect(
 				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,

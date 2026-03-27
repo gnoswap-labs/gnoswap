@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"strconv"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -196,6 +195,13 @@ func (i *poolV1) Collect(
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
+	amount0Req := safeParseInt64(amount0Requested)
+	amount1Req := safeParseInt64(amount1Requested)
+
+	if amount0Req < 0 || amount1Req < 0 {
+		panic(errInvalidInput)
+	}
+
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	// Generate position key by combining position contract path with tick range
 	// The key is composed of the position contract's address and the tick boundaries,
@@ -203,8 +209,8 @@ func (i *poolV1) Collect(
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position := mustGetPositionByPool(pool, positionKey)
 
-	amount0 := minRequestedAmount(amount0Requested, position.TokensOwed0())
-	amount1 := minRequestedAmount(amount1Requested, position.TokensOwed1())
+	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
+	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
 
 	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
@@ -291,14 +297,15 @@ func (i *poolV1) collectProtocol(
 ) (string, string) {
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
-	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount1Req := u256.MustFromDecimal(amount1Requested)
-	if amount0Req.IsZero() && amount1Req.IsZero() {
-		return "0", "0"
+	amount0Req := safeParseInt64(amount0Requested)
+	amount1Req := safeParseInt64(amount1Requested)
+
+	if amount0Req < 0 || amount1Req < 0 {
+		panic(errInvalidInput)
 	}
 
-	amount0 := minRequestedAmount(amount0Requested, pool.ProtocolFeesToken0())
-	amount1 := minRequestedAmount(amount1Requested, pool.ProtocolFeesToken1())
+	amount0 := minRequestedAmount(amount0Req, pool.ProtocolFeesToken0())
+	amount1 := minRequestedAmount(amount1Req, pool.ProtocolFeesToken1())
 
 	amount0, amount1 = i.saveProtocolFees(pool, amount0, amount1)
 
@@ -340,13 +347,12 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64,
 	return amount0, amount1
 }
 
-func minRequestedAmount(request string, available int64) int64 {
-	requested, err := strconv.ParseInt(request, 10, 64)
-	if err != nil || requested > available {
+func minRequestedAmount(request, available int64) int64 {
+	if request > available {
 		return available
 	}
 
-	return requested
+	return request
 }
 
 func (i *poolV1) IncreaseObservationCardinalityNext(
