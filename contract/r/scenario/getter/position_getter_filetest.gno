@@ -292,8 +292,13 @@ func getPositionTokenBalances() {
 	testing.SetRealm(adminRealm)
 
 	balance0, balance1 := pn.GetPositionTokenBalances(positionId)
+	unclaimedFee0, unclaimedFee1 := pn.GetUnclaimedFee(positionId)
 	println("[EXPECTED] position token0 balance:", balance0)
 	println("[EXPECTED] position token1 balance:", balance1)
+	println("[EXPECTED] pool token0 balance:", bar.BalanceOf(poolAddr))
+	println("[EXPECTED] pool token1 balance:", foo.BalanceOf(poolAddr))
+	println("[EXPECTED] position unclaimedFee0:", unclaimedFee0.ToString())
+	println("[EXPECTED] position unclaimedFee1:", unclaimedFee1.ToString())
 }
 
 func getPositionToken0Balance() {
@@ -488,6 +493,10 @@ func getPositionOwner() {
 // [INFO] Check GetPositionTokenBalances method
 // [EXPECTED] position token0 balance: 99012841
 // [EXPECTED] position token1 balance: 100996999
+// [EXPECTED] pool token0 balance: 99012842
+// [EXPECTED] pool token1 balance: 101000000
+// [EXPECTED] position unclaimedFee0: 0
+// [EXPECTED] position unclaimedFee1: 2999
 //
 // [SCENARIO] 2.7. GetPositionToken0Balance
 // [INFO] Check GetPositionToken0Balance method
