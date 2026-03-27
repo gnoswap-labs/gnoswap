@@ -69,7 +69,13 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
 	newToken0Balance := safeSubInt64(calculatedToken0Balance, burnedAmount0)
+	if newToken0Balance < 0 {
+		panic(newErrorWithDetail(errUnderflow, ufmt.Sprintf("calculatedToken0Balance(%d) - burnedAmount0(%d) underflow", calculatedToken0Balance, burnedAmount0)))
+	}
 	newToken1Balance := safeSubInt64(calculatedToken1Balance, burnedAmount1)
+	if newToken1Balance < 0 {
+		panic(newErrorWithDetail(errUnderflow, ufmt.Sprintf("calculatedToken1Balance(%d) - burnedAmount1(%d) underflow", calculatedToken1Balance, burnedAmount1)))
+	}
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
