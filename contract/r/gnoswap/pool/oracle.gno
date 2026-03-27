@@ -40,11 +40,12 @@ type Observation struct {
 }
 
 // Observation Getters methods (value receivers for non-addressable access)
-func (o Observation) BlockTimestamp() int64  { return o.blockTimestamp }
-func (o Observation) TickCumulative() int64  { return o.tickCumulative }
+func (o Observation) BlockTimestamp() int64 { return o.blockTimestamp }
+func (o Observation) TickCumulative() int64 { return o.tickCumulative }
 func (o Observation) LiquidityCumulative() string {
 	return o.liquidityCumulative
 }
+
 func (o Observation) SecondsPerLiquidityCumulativeX128() string {
 	return o.secondsPerLiquidityCumulativeX128
 }
