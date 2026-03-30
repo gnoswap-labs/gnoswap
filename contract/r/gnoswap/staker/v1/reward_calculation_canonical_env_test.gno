@@ -106,7 +106,7 @@ func NewCanonicalRewardState(
 	currentTime := time.Now().Unix()
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	result.global.poolTier = NewPoolTier(pools, 123, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
+	result.global.poolTier = NewPoolTier(pools, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
@@ -273,9 +273,8 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	currentTimestamp := self.CurrentTime()
-	currentHeight := runtime.ChainHeight()
 	// cache per-tier and per-pool rewards
-	self.global.poolTier.cacheReward(currentHeight, currentTimestamp, self.global.pools)
+	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
 
 	deposit := self.global.deposits.get(positionId)
 
@@ -375,7 +374,6 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 
 // Emulation of staker.gno public entrypoints
 func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath string, owner address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
-	currentHeight := runtime.ChainHeight()
 	currentTimestamp := self.CurrentTime()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
@@ -422,7 +420,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	// update global state
 	self.global.deposits.set(positionId, deposit)
 
-	self.global.poolTier.cacheReward(currentHeight, currentTimestamp, self.global.pools)
+	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
 	getMockInstance().updatePoolTier(self.global.poolTier)
 
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
@@ -567,7 +565,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.set(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
 	}
-	self.global.poolTier.changeTier(runtime.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, tier)
+	self.global.poolTier.changeTier(self.CurrentTime(), self.global.pools, poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -579,7 +577,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tickCrossHook: self.tickCrossHook,
 	}
 	self.global.pools.set(poolPath, sr.NewPool(poolPath, self.CurrentTime()))
-	self.global.poolTier.changeTier(runtime.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, initialTier)
+	self.global.poolTier.changeTier(self.CurrentTime(), self.global.pools, poolPath, initialTier)
 }
 
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {

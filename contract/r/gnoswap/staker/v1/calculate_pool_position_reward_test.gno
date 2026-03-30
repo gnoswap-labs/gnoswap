@@ -520,7 +520,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
@@ -576,7 +576,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, stakeTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(stakeTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
@@ -773,7 +773,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state with tick at 500 (out of range)
 				poolResolver := NewPoolResolver(pool)
@@ -818,7 +818,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
@@ -972,7 +972,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime-100, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime-100, s.getPools(), poolPath, 1)
 
 				// Create external incentive
 				incentiveStartTime := baseTime - 50
@@ -1046,7 +1046,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, stakeTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(stakeTime, s.getPools(), poolPath, 1)
 
 				// Create deposit
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), stakeTime)
@@ -1099,7 +1099,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, stakeTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(stakeTime, s.getPools(), poolPath, 1)
 
 				// Create deposit
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), stakeTime)
@@ -1150,7 +1150,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 				// Create deposit at same timestamp as query
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime)
@@ -1195,7 +1195,7 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Setup pool tier
 				poolTier := s.getPoolTier()
-				poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+				poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 				// Create deposit with very large liquidity
 				largeLiquidity := u256.MustFromDecimal("340282366920938463463374607431768211455") // Near max u256
@@ -1369,7 +1369,7 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 
 			// Setup pool tier
 			poolTier := s.getPoolTier()
-			poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+			poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 			// Create deposit with specified tick range
 			warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime)
@@ -1427,7 +1427,7 @@ func TestCalcPositionReward_RewardAggregation(t *testing.T) {
 
 	// Setup pool tier
 	poolTier := s.getPoolTier()
-	poolTier.changeTier(baseHeight, baseTime, s.getPools(), poolPath, 1)
+	poolTier.changeTier(baseTime, s.getPools(), poolPath, 1)
 
 	// Create deposit
 	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime)
