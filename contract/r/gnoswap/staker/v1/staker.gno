@@ -214,11 +214,10 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
-		currentHeight := runtime.ChainHeight()
 		pools := s.getPools()
 
 		// First cache the current rewards before updating emission
-		poolTier.cacheReward(currentHeight, currentTime, pools)
+		poolTier.cacheReward(currentTime, pools)
 
 		// Update the current emission cache with the latest value
 		poolTier.currentEmission = emissionAmountPerSecond
@@ -340,7 +339,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	pn.SetPositionOperator(cross, positionId, caller)
 
 	poolTier := s.getPoolTier()
-	poolTier.cacheReward(runtime.ChainHeight(), currentTime, pools)
+	poolTier.cacheReward(currentTime, pools)
 	s.updatePoolTier(poolTier)
 
 	signedLiquidity := i256.FromUint256(liquidity)
@@ -354,7 +353,9 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	poolResolver.HistoricalTick().Set(currentTime, currentTick)
+	if poolResolver.isChangedTick(currentTime, currentTick) {
+		poolResolver.HistoricalTick().Set(currentTime, currentTick)
+	}
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
