@@ -966,62 +966,6 @@ func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetPoolTierLastRewardCacheHeight(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get pool tier last reward cache height successfully",
-			setupFn: func(ss IStakerStore) {
-				ss.SetPoolTierLastRewardCacheHeight(1000)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasPoolTierLastRewardCacheHeightStoreKey(), "should have pool tier last reward cache height after setting")
-				retrieved := ss.GetPoolTierLastRewardCacheHeight()
-				uassert.Equal(t, int64(1000), retrieved)
-			},
-		},
-		{
-			name: "should not have pool tier last reward cache height initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasPoolTierLastRewardCacheHeightStoreKey(), "should not have pool tier last reward cache height initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized pool tier last reward cache height",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetPoolTierLastRewardCacheHeight()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized pool tier last reward cache height",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
 func TestStoreSetAndGetPoolTierCurrentEmission(t *testing.T) {
 	tests := []struct {
 		name         string

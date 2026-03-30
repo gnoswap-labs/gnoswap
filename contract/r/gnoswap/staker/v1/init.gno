@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"time"
 
 	avl "gno.land/p/nt/avl/v0"
@@ -163,13 +162,6 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
-	if !stakerStore.HasPoolTierLastRewardCacheHeightStoreKey() {
-		err := stakerStore.SetPoolTierLastRewardCacheHeight(initializedPoolTier.lastRewardCacheHeight)
-		if err != nil {
-			return err
-		}
-	}
-
 	if !stakerStore.HasPoolTierCurrentEmissionStoreKey() {
 		err := stakerStore.SetPoolTierCurrentEmission(initializedPoolTier.currentEmission)
 		if err != nil {
@@ -221,7 +213,6 @@ func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
 
 	poolTier := NewPoolTier(
 		pools,
-		runtime.ChainHeight(),
 		time.Now().Unix(),
 		basicPoolPath,
 		emission.GetStakerEmissionAmountPerSecond,

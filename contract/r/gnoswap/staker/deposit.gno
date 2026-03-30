@@ -43,6 +43,10 @@ func (d *Deposit) Liquidity() *u256.Uint {
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
+	if liquidity == nil {
+		return
+	}
+
 	d.liquidity = liquidity
 }
 

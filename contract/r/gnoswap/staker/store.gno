@@ -30,7 +30,6 @@ const (
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
 	StoreKeyPoolTierCounts                   StoreKey = "poolTierCounts"
 	StoreKeyPoolTierLastRewardCacheTimestamp StoreKey = "poolTierLastRewardCacheTimestamp"
-	StoreKeyPoolTierLastRewardCacheHeight    StoreKey = "poolTierLastRewardCacheHeight"
 	StoreKeyPoolTierCurrentEmission          StoreKey = "poolTierCurrentEmission"
 	StoreKeyPoolTierGetEmission              StoreKey = "poolTierGetEmission"
 	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
@@ -391,29 +390,6 @@ func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
 
 func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(timestamp int64) error {
 	return s.kvStore.Set(StoreKeyPoolTierLastRewardCacheTimestamp.String(), timestamp)
-}
-
-// PoolTierLastRewardCacheHeight
-func (s *stakerStore) HasPoolTierLastRewardCacheHeightStoreKey() bool {
-	return s.kvStore.Has(StoreKeyPoolTierLastRewardCacheHeight.String())
-}
-
-func (s *stakerStore) GetPoolTierLastRewardCacheHeight() int64 {
-	result, err := s.kvStore.Get(StoreKeyPoolTierLastRewardCacheHeight.String())
-	if err != nil {
-		panic(err)
-	}
-
-	height, ok := result.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
-	}
-
-	return height
-}
-
-func (s *stakerStore) SetPoolTierLastRewardCacheHeight(height int64) error {
-	return s.kvStore.Set(StoreKeyPoolTierLastRewardCacheHeight.String(), height)
 }
 
 // PoolTierCurrentEmission
