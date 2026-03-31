@@ -989,7 +989,7 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
 		// Calculate claimable rewards
-		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
+		claimableRewards, err := lp.calculateTierClaimableRewards(tier, int64(1000), int64(2001))
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(50_000), claimableRewards)
 	})
@@ -1122,9 +1122,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1241,8 +1242,9 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1327,8 +1329,9 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)
