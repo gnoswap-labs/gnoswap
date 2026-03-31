@@ -446,7 +446,7 @@ func TestGetterGlobalConfigValues(t *testing.T) {
 		{
 			name:     "GetUnstakingFee",
 			getter:   func() any { return state.instance.GetUnstakingFee() },
-			expected: int64(100),
+			expected: uint64(100),
 		},
 		{
 			name:     "GetTotalEmissionSent",

@@ -127,7 +127,7 @@ func (m *MockStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	m.Response.Get("SetTokenMinimumRewardAmount")
 }
 
-func (m *MockStaker) SetUnStakingFee(fee int64) {
+func (m *MockStaker) SetUnStakingFee(fee uint64) {
 	m.Response.Get("SetUnStakingFee")
 }
 
@@ -500,12 +500,12 @@ func (m *MockStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	return res[0].(string)
 }
 
-func (m *MockStaker) GetUnstakingFee() int64 {
+func (m *MockStaker) GetUnstakingFee() uint64 {
 	res, ok := m.Response.Get("GetUnstakingFee")
 	if !ok {
 		return 0
 	}
-	return res[0].(int64)
+	return res[0].(uint64)
 }
 
 func (m *MockStaker) IsStaked(positionId uint64) bool {
