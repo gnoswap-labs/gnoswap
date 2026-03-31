@@ -16,7 +16,7 @@ const (
 
 	// unstakingFee is the fee charged when unstaking positions.
 	// This parameter can be modified through governance.
-	defaultUnstakingFee = int64(100) // 1%
+	defaultUnstakingFee = uint64(100) // 1%
 )
 
 var defaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}

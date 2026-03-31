@@ -128,11 +128,11 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 	))
 }
 
-const maxUnstakingFee = int64(1000) // 10%
+const maxUnstakingFee = uint64(1000) // 10%
 
 // assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
-func assertIsValidFeeRate(fee int64) {
-	if fee < 0 || fee > maxUnstakingFee {
+func assertIsValidFeeRate(fee uint64) {
+	if fee > maxUnstakingFee {
 		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
 			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, maxUnstakingFee),

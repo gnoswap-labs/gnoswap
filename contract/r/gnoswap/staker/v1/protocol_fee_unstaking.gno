@@ -14,7 +14,7 @@ import (
 )
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
-func (s *stakerV1) GetUnstakingFee() int64 { return s.store.GetUnstakingFee() }
+func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
 func (s *stakerV1) handleStakingRewardFee(
@@ -28,7 +28,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := safeMulDivInt64(amount, unstakingFee, 10000)
+	feeAmount := safeMulDivInt64(amount, int64(unstakingFee), 10000)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}
@@ -51,7 +51,7 @@ func (s *stakerV1) handleStakingRewardFee(
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
-func (s *stakerV1) SetUnStakingFee(fee int64) {
+func (s *stakerV1) SetUnStakingFee(fee uint64) {
 	halt.AssertIsNotHaltedStaker()
 
 	previousRealm := runtime.PreviousRealm()
@@ -71,12 +71,12 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 		"SetUnStakingFee",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatAnyInt(prevUnStakingFee),
-		"newFee", formatAnyInt(fee),
+		"prevFee", formatUint(prevUnStakingFee),
+		"newFee", formatUint(fee),
 	)
 }
 
 // setUnStakingFee internally updates the unstaking fee.
-func (s *stakerV1) setUnStakingFee(fee int64) error {
+func (s *stakerV1) setUnStakingFee(fee uint64) error {
 	return s.store.SetUnstakingFee(fee)
 }
