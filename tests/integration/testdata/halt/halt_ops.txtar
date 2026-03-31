@@ -1,0 +1,201 @@
+# Halt bitmask operations
+#
+# Tests core halt package operations for gas measurement:
+#   1. Query initial state (all unhalted)
+#   2. SetHaltLevel transitions (SafeMode, Emergency, Complete, None)
+#   3. SetOperationStatus individual toggle
+#   4. Query halt config JSON
+#   5. Non-admin call should fail
+
+loadpkg gno.land/p/nt/avl/v0
+loadpkg gno.land/p/nt/ufmt/v0
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable/v0
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/rbac
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/halt
+
+adduser non_admin
+
+## start a new node
+gnoland start
+
+## ============================================================
+## STEP 1: Query initial halt state (all should be unhalted)
+## ============================================================
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedWithdraw()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedGovernance()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedEmission()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.GetHaltConfigJson()"
+stdout 'pool.*false.*router.*false.*withdraw.*false'
+
+## ============================================================
+## STEP 2: SetHaltLevel to SafeMode (only withdraw halted)
+## ============================================================
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "SAFE_MODE" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedWithdraw()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedGovernance()"
+stdout 'false'
+
+## ============================================================
+## STEP 3: SetHaltLevel to Emergency (all halted except governance, withdraw)
+## ============================================================
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "EMERGENCY" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedGovernance()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedWithdraw()"
+stdout 'false'
+
+## ============================================================
+## STEP 4: SetHaltLevel to Complete (all halted)
+## ============================================================
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "COMPLETE" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedGovernance()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedWithdraw()"
+stdout 'true'
+
+## ============================================================
+## STEP 5: SetHaltLevel back to None (all unhalted)
+## ============================================================
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "NONE" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedWithdraw()"
+stdout 'false'
+
+## ============================================================
+## STEP 6: SetOperationStatus - individual operation toggle
+## ============================================================
+
+### Halt pool only (OpTypePool = 1)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "1" -args "true" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'false'
+
+### Halt router too (OpTypeRouter = 8)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "8" -args "true" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'true'
+
+### Resume pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "1" -args "false" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'false'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedRouter()"
+stdout 'true'
+
+### Resume router (cleanup)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "8" -args "false" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+
+## ============================================================
+## STEP 7: Query full halt config JSON
+## ============================================================
+
+### Halt emission (OpTypeEmission = 1024) + staker (OpTypeStaker = 16)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "1024" -args "true" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetOperationStatus -args "16" -args "true" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedEmission()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedStaker()"
+stdout 'true'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/halt.IsHaltedPool()"
+stdout 'false'
+
+### Cleanup
+gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "NONE" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'OK!'
+
+## ============================================================
+## STEP 8: Non-admin should fail to set halt level
+## ============================================================
+
+gnokey maketx send -send 100000000ugnot -to $non_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+stdout 'OK!'
+
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/halt -func SetHaltLevel -args "COMPLETE" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" non_admin
+stderr 'unauthorized'
