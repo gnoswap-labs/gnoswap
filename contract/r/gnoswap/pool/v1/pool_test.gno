@@ -8,6 +8,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -1139,6 +1140,40 @@ func TestCollect(t *testing.T) {
 			resetObject(t)
 		})
 	}
+}
+
+func TestCollectAllowedDuringEmergencyHalt(t *testing.T) {
+	pool := setupStablecoinPool(t)
+	approveTokensForPool(t, pool)
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(
+		pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr,
+	)
+	mockInstanceBurn(
+		pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr,
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedPool(), "emergency should halt pool operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+
+	testing.SetRealm(posRealm)
+	uassert.NotPanics(t, func() {
+		mockInstanceCollect(
+			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+			"1", "1",
+		)
+	})
 }
 
 // validateCollectInvariant validates pool balance >= tokensOwed invariant

@@ -527,20 +527,6 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-012] not exist deposit",
 		},
 		{
-			name: "FAIL: emergency halt",
-			env:  testEnvConfig{initialTime: 9000000},
-			project: testProjectConfig{
-				rewardAmount:    10000000,
-				recipientSuffix: "recv8",
-				tier30Pct:       100,
-			},
-			setupDeposit:     true,
-			depositOwner:     "haltOwner1",
-			caller:           "haltOwner1",
-			haltLevel:        halt.HaltLevelEmergency,
-			expectedErrorMsg: "halted: launchpad",
-		},
-		{
 			name: "FAIL: complete halt",
 			env:  testEnvConfig{initialTime: 10000000},
 			project: testProjectConfig{
@@ -604,6 +590,42 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmergencyHaltAllowsCollectRewardByDepositId(t *testing.T) {
+	env := testEnvConfig{initialTime: 9000000}
+	project := testProjectConfig{
+		rewardAmount:    10000000,
+		recipientSuffix: "recv8",
+		tier30Pct:       100,
+	}
+	depositor := testDepositConfig{userSuffix: "haltOwner1", depositAmount: 1000000, tier: 30}
+
+	launchpadAddr, adminRealm := setupTestEnvironment(t, env)
+	lp := getTestImplementation()
+
+	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, project)
+	userAddr, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, depositor)
+	testing.SkipHeights(testSkipTier30Claimable)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+			rewardAmount := lp.CollectRewardByDepositId(depositID)
+			uassert.True(t, rewardAmount > 0, "reward amount should be > 0 during emergency")
+		}(cross)
+	})
 }
 
 // TestCollectRewardByDepositId_ConsecutiveCollections tests multiple collections

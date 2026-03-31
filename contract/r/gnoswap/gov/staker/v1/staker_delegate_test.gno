@@ -16,6 +16,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 
@@ -706,6 +707,34 @@ func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmergencyHaltAllowsCollectUndelegatedGns(t *testing.T) {
+	gs := createTestGovStaker()
+	caller := testutils.TestAddress("alice")
+
+	cleanupStakerDelegateTest(t, gs)
+	setupStakerDelegateTestCollectableAmount(t, gs, caller, minimumAmount)
+	defer cleanupStakerDelegateTest(t, gs)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov staker operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+
+	testing.SetRealm(testing.NewUserRealm(caller))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.CollectUndelegatedGns()
+			uassert.Equal(t, minimumAmount, result)
+		}(cross)
+	})
 }
 
 // Test comprehensive delegation validation including edge cases

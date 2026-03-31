@@ -10,6 +10,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
@@ -109,6 +110,45 @@ func TestLaunchpadWithdraw_CollectDepositGnsUnauthorized(t *testing.T) {
 			lp.CollectDepositGns("1")
 		}(cross)
 	})
+}
+
+func TestEmergencyHaltAllowsCollectDepositGns(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	userAddr := testutils.TestAddress("emg_user")
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t, userAddr)
+	lp := getTestImplementation()
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	testing.SkipHeights(60*60*24*180/5 + 2)
+	defer testing.SkipHeights(-(60*60*24*180/5 + 2))
+
+	var amount int64
+	var err error
+	testing.SetOriginCaller(userAddr)
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+			amount, err = lp.CollectDepositGns("1")
+		}(cross)
+	})
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000000000), amount)
 }
 
 // TestLaunchpadWithdraw_WithdrawDeposit tests the withdrawDeposit function

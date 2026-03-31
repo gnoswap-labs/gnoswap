@@ -5,6 +5,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
 )
@@ -122,6 +123,33 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmergencyHaltAllowsGovStakerCollectReward(t *testing.T) {
+	gs := createTestGovStaker()
+	caller := testutils.TestAddress("alice")
+
+	cleanupStakerRewardTest(t)
+	setupStakerRewardTestEmissionRewards(t, gs, caller, 1000, 100, 1000)
+	defer cleanupStakerRewardTest(t)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov staker operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+
+	testing.SetRealm(testing.NewUserRealm(caller))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.CollectReward()
+		}(cross)
+	})
 }
 
 // Test CollectRewardFromLaunchPad function
