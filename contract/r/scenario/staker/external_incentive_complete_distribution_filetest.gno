@@ -7,13 +7,11 @@
 // 1. in-range position
 
 // SCENARIO:
-// This test verifies that when rewardAmount is perfectly divisible by duration,
-// all rewards are fully distributed with no dust remaining.
-// The test creates an external incentive where rewardAmount % duration = 0,
-// stakes a position to earn rewards, and then verifies that:
-// 1. All rewards are distributed to stakers
-// 2. No dust is refunded when the incentive ends
-// 3. The refundee receives only the deposit fee back
+// This test verifies external incentive refund behavior after CollectReward changes.
+// It validates that:
+// 1. External reward penalty is NOT sent to community pool during CollectReward
+// 2. EndExternalIncentive refunds all undistributed reward (including penalty share) to refundee
+// 3. Reward accounting remains consistent (distributed + refunded = total reward)
 
 package main
 
@@ -56,14 +54,13 @@ var (
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
 
-	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
+	stakerAddr, _        = access.GetAddress(prabc.ROLE_STAKER.String())
+	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
+	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	barPath = "gno.land/r/onbloc/bar"
-	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/gns"
-
-	fee100 uint32 = 100
+	barPath        = "gno.land/r/onbloc/bar"
+	quxPath        = "gno.land/r/onbloc/qux"
+	fee100  uint32 = 100
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
@@ -146,8 +143,9 @@ func initAccountAndSettings() {
 	println("[INFO] set pool tier for rewards")
 	testing.SkipHeights(1)
 
-	println("[INFO] transfer GNS to external creator for incentive creation")
-	gns.Transfer(cross, externalCreatorUser, REWARD_AMOUNT+depositGnsAmount)
+	println("[INFO] transfer QUX reward and GNS deposit to external creator")
+	qux.Transfer(cross, externalCreatorUser, REWARD_AMOUNT)
+	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
 }
 
 func createPool() {
@@ -200,7 +198,8 @@ func mintPosition() {
 func createExternalIncentiveNoDust() {
 	testing.SetRealm(externalCreatorRealm)
 
-	println("[INFO] approve GNS for external incentive creation")
+	println("[INFO] approve QUX and GNS for external incentive creation")
+	qux.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, maxInt64)
 
 	// Calculate expected values
@@ -208,7 +207,7 @@ func createExternalIncentiveNoDust() {
 	expectedDust := REWARD_AMOUNT - (expectedRewardPerSecond * INCENTIVE_DURATION)
 
 	ufmt.Printf("[INFO] creating incentive with:\n")
-	ufmt.Printf("  - Reward amount: %d GNS\n", REWARD_AMOUNT)
+	ufmt.Printf("  - Reward amount: %d QUX\n", REWARD_AMOUNT)
 	ufmt.Printf("  - Duration: %d seconds\n", INCENTIVE_DURATION)
 	ufmt.Printf("  - Expected reward per second: %d\n", expectedRewardPerSecond)
 	ufmt.Printf("  - Expected dust (should be 0): %d\n", expectedDust)
@@ -218,11 +217,13 @@ func createExternalIncentiveNoDust() {
 	ufmt.Printf("[INFO] incentive ID: %s\n", actualIncentiveID)
 
 	// Record balances before creation
+	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
+	stakerQuxBefore := qux.BalanceOf(stakerAddr)
 	creatorGnsBefore := gns.BalanceOf(externalCreatorUser)
-	stakerGnsBefore := gns.BalanceOf(stakerAddr)
 
+	ufmt.Printf("[INFO] creator QUX balance before: %d\n", creatorQuxBefore)
+	ufmt.Printf("[INFO] staker QUX balance before: %d\n", stakerQuxBefore)
 	ufmt.Printf("[INFO] creator GNS balance before: %d\n", creatorGnsBefore)
-	ufmt.Printf("[INFO] staker GNS balance before: %d\n", stakerGnsBefore)
 
 	// External incentive must start at least +1 day midnight
 	// Using fixed timestamp for consistent testing
@@ -232,20 +233,22 @@ func createExternalIncentiveNoDust() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		gnsPath,
+		quxPath,
 		REWARD_AMOUNT,
 		startTime,
 		endTime,
 	)
 
+	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
+	stakerQuxAfter := qux.BalanceOf(stakerAddr)
 	creatorGnsAfter := gns.BalanceOf(externalCreatorUser)
-	stakerGnsAfter := gns.BalanceOf(stakerAddr)
 
+	ufmt.Printf("[INFO] creator QUX balance after: %d\n", creatorQuxAfter)
+	ufmt.Printf("[INFO] staker QUX balance after: %d\n", stakerQuxAfter)
 	ufmt.Printf("[INFO] creator GNS balance after: %d\n", creatorGnsAfter)
-	ufmt.Printf("[INFO] staker GNS balance after: %d\n", stakerGnsAfter)
 
-	totalDeposited := creatorGnsBefore - creatorGnsAfter
-	ufmt.Printf("[INFO] total GNS deposited (reward + fee): %d\n", totalDeposited)
+	totalQuxDeposited := creatorQuxBefore - creatorQuxAfter
+	ufmt.Printf("[INFO] total QUX deposited as reward: %d\n", totalQuxDeposited)
 }
 
 func startExternalIncentive() {
@@ -284,18 +287,21 @@ func skipToMiddle() {
 func collectRewardsMidway() {
 	testing.SetRealm(adminRealm)
 
-	adminGnsBefore := gns.BalanceOf(adminUser)
+	adminQuxBefore := qux.BalanceOf(adminUser)
+	communityQuxBefore := qux.BalanceOf(communityPoolAddr)
 	println("[INFO] collecting rewards at midway point")
 
 	// Collect rewards without unwrap
 	sr.CollectReward(cross, 1)
 
-	adminGnsAfter := gns.BalanceOf(adminUser)
-	midwayRewards := adminGnsAfter - adminGnsBefore
+	adminQuxAfter := qux.BalanceOf(adminUser)
+	communityQuxAfter := qux.BalanceOf(communityPoolAddr)
+	midwayRewards := adminQuxAfter - adminQuxBefore
 	totalRewardsCollected += midwayRewards
 
-	ufmt.Printf("[INFO] rewards collected at midway: %d GNS\n", midwayRewards)
-	ufmt.Printf("[INFO] expected midway rewards (approx): %d GNS\n", REWARD_AMOUNT/2)
+	ufmt.Printf("[INFO] rewards collected at midway: %d QUX\n", midwayRewards)
+	ufmt.Printf("[INFO] expected midway rewards (approx): %d QUX\n", REWARD_AMOUNT/2)
+	ufmt.Printf("[EXPECTED] community pool QUX unchanged on collect: %d -> %d\n", communityQuxBefore, communityQuxAfter)
 }
 
 func waitUntilEnd() {
@@ -308,34 +314,37 @@ func waitUntilEnd() {
 func collectFinalRewards() {
 	testing.SetRealm(adminRealm)
 
-	adminGnsBefore := gns.BalanceOf(adminUser)
+	adminQuxBefore := qux.BalanceOf(adminUser)
+	communityQuxBefore := qux.BalanceOf(communityPoolAddr)
 	println("[INFO] collecting final rewards")
 
 	// Collect remaining rewards
 	sr.CollectReward(cross, 1)
 
-	adminGnsAfter := gns.BalanceOf(adminUser)
-	finalRewards := adminGnsAfter - adminGnsBefore
+	adminQuxAfter := qux.BalanceOf(adminUser)
+	communityQuxAfter := qux.BalanceOf(communityPoolAddr)
+	finalRewards := adminQuxAfter - adminQuxBefore
 	totalRewardsCollected += finalRewards
 
-	ufmt.Printf("[INFO] final rewards collected: %d GNS\n", finalRewards)
+	ufmt.Printf("[INFO] final rewards collected: %d QUX\n", finalRewards)
+	ufmt.Printf("[EXPECTED] community pool QUX unchanged on collect: %d -> %d\n", communityQuxBefore, communityQuxAfter)
 }
 
 func unstakePosition() {
 	testing.SetRealm(adminRealm)
 
-	adminGnsBefore := gns.BalanceOf(adminUser)
+	adminQuxBefore := qux.BalanceOf(adminUser)
 	println("[INFO] unstaking position to collect remaining rewards")
 
 	// Unstake position (this will collect any remaining rewards)
 	sr.UnStakeToken(cross, 1)
 
-	adminGnsAfter := gns.BalanceOf(adminUser)
-	unstakeRewards := adminGnsAfter - adminGnsBefore
+	adminQuxAfter := qux.BalanceOf(adminUser)
+	unstakeRewards := adminQuxAfter - adminQuxBefore
 	totalRewardsCollected += unstakeRewards
 
-	ufmt.Printf("[INFO] rewards collected from unstaking: %d GNS\n", unstakeRewards)
-	ufmt.Printf("[INFO] total rewards collected so far: %d GNS\n", totalRewardsCollected)
+	ufmt.Printf("[INFO] rewards collected from unstaking: %d QUX\n", unstakeRewards)
+	ufmt.Printf("[INFO] total rewards collected so far: %d QUX\n", totalRewardsCollected)
 
 	// Verify NFT ownership returned
 	owner := gnft.MustOwnerOf(positionIdFrom(1))
@@ -348,13 +357,15 @@ func endExternalIncentiveAndVerifyNoDust() {
 	println("[INFO] ending external incentive")
 
 	// Record balances before ending
+	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
+	stakerQuxBefore := qux.BalanceOf(stakerAddr)
 	creatorGnsBefore := gns.BalanceOf(externalCreatorUser)
-	stakerGnsBefore := gns.BalanceOf(stakerAddr)
 
 	ufmt.Printf("[INFO] before ending incentive:\n")
-	ufmt.Printf("  - Creator GNS: %d\n", creatorGnsBefore)
-	ufmt.Printf("  - Staker contract GNS: %d\n", stakerGnsBefore)
-	ufmt.Printf("  - Admin total rewards collected: %d\n", totalRewardsCollected)
+	ufmt.Printf("  - Creator QUX: %d\n", creatorQuxBefore)
+	ufmt.Printf("  - Staker contract QUX: %d\n", stakerQuxBefore)
+	ufmt.Printf("  - Creator GNS (deposit): %d\n", creatorGnsBefore)
+	ufmt.Printf("  - Admin total rewards collected (QUX): %d\n", totalRewardsCollected)
 
 	// End the external incentive
 	sr.EndExternalIncentive(
@@ -364,42 +375,40 @@ func endExternalIncentiveAndVerifyNoDust() {
 	)
 
 	// Check balances after ending
+	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
+	stakerQuxAfter := qux.BalanceOf(stakerAddr)
 	creatorGnsAfter := gns.BalanceOf(externalCreatorUser)
-	stakerGnsAfter := gns.BalanceOf(stakerAddr)
 
-	refundAmount := creatorGnsAfter - creatorGnsBefore
-	stakerReduction := stakerGnsBefore - stakerGnsAfter
+	refundQuxAmount := creatorQuxAfter - creatorQuxBefore
+	stakerQuxReduction := stakerQuxBefore - stakerQuxAfter
+	refundGnsAmount := creatorGnsAfter - creatorGnsBefore
 
 	ufmt.Printf("[INFO] after ending incentive:\n")
-	ufmt.Printf("  - Creator GNS: %d\n", creatorGnsAfter)
-	ufmt.Printf("  - Staker contract GNS: %d\n", stakerGnsAfter)
+	ufmt.Printf("  - Creator QUX: %d\n", creatorQuxAfter)
+	ufmt.Printf("  - Staker contract QUX: %d\n", stakerQuxAfter)
+	ufmt.Printf("  - Creator GNS (deposit): %d\n", creatorGnsAfter)
+	ufmt.Printf("  - Admin QUX balances: %d\n", qux.BalanceOf(adminUser))
 
 	ufmt.Printf("[RESULT] refund breakdown:\n")
-	ufmt.Printf("  - Total refunded to creator: %d GNS\n", refundAmount)
-	ufmt.Printf("  - Total reduced from staker: %d GNS\n", stakerReduction)
+	ufmt.Printf("  - Total refunded reward token (QUX): %d\n", refundQuxAmount)
+	ufmt.Printf("  - Total reduced from staker QUX: %d\n", stakerQuxReduction)
+	ufmt.Printf("  - Refunded GNS deposit: %d\n", refundGnsAmount)
 
-	// Verify the refund is only the deposit fee (no dust)
-	if refundAmount == depositGnsAmount {
-		println("[VERIFIED] Only deposit fee was refunded - NO DUST!")
-		println("[VERIFIED] All rewards were fully distributed to stakers")
-	} else if refundAmount > depositGnsAmount {
-		dustAmount := refundAmount - depositGnsAmount
-		ufmt.Printf("[WARNING] Unexpected dust amount: %d GNS\n", dustAmount)
-	} else {
-		ufmt.Printf("[ERROR] Refund less than deposit fee: %d GNS\n", refundAmount)
-	}
+	ufmt.Printf("[EXPECTED] refundee receives all remaining reward token: %d\n", stakerQuxBefore)
+	ufmt.Printf("[EXPECTED] refundee receives fixed GNS deposit: %d\n", depositGnsAmount)
 
 	// Verify total distribution
-	ufmt.Printf("[SUMMARY] Total reward distribution:\n")
-	ufmt.Printf("  - Initial reward amount: %d GNS\n", REWARD_AMOUNT)
-	ufmt.Printf("  - Rewards collected by staker: %d GNS\n", totalRewardsCollected)
-	ufmt.Printf("  - Dust refunded: %d GNS\n", refundAmount-depositGnsAmount)
+	ufmt.Printf("[EXPECTED] Total reward distribution:\n")
+	ufmt.Printf("  - Initial reward amount: %d QUX\n", REWARD_AMOUNT)
+	ufmt.Printf("  - Rewards collected by staker: %d QUX\n", totalRewardsCollected)
+	undistributedRewardRefunded := refundQuxAmount
+	ufmt.Printf("  - Undistributed reward refunded: %d QUX\n", undistributedRewardRefunded)
 
-	totalDistributed := totalRewardsCollected + (refundAmount - depositGnsAmount)
-	ufmt.Printf("  - Total accounted for: %d GNS\n", totalDistributed)
+	totalDistributed := totalRewardsCollected + undistributedRewardRefunded
+	ufmt.Printf("  - Total accounted for: %d QUX\n", totalDistributed)
 
 	if totalDistributed == REWARD_AMOUNT {
-		println("[PERFECT] All rewards accounted for with no loss!")
+		println("[EXPECTED] all rewards accounted for with no loss")
 	}
 }
 
@@ -414,7 +423,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] set pool creation fee to 0
 // [INFO] set pool tier for rewards
-// [INFO] transfer GNS to external creator for incentive creation
+// [INFO] transfer QUX reward and GNS deposit to external creator
 //
 // [SCENARIO] 2. Create pool
 // [INFO] create pool bar:qux:100 at tick 0
@@ -427,18 +436,20 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] amounts used - token0: 1000, token1: 1000
 //
 // [SCENARIO] 4. Create external incentive with perfectly divisible rewards
-// [INFO] approve GNS for external incentive creation
+// [INFO] approve QUX and GNS for external incentive creation
 // [INFO] creating incentive with:
-//   - Reward amount: 7776000000 GNS
+//   - Reward amount: 7776000000 QUX
 //   - Duration: 7776000 seconds
 //   - Expected reward per second: 1000
 //   - Expected dust (should be 0): 0
 // [INFO] incentive ID: g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
-// [INFO] creator GNS balance before: 8776000000
-// [INFO] staker GNS balance before: 0
+// [INFO] creator QUX balance before: 7776000000
+// [INFO] staker QUX balance before: 0
+// [INFO] creator GNS balance before: 1000000000
+// [INFO] creator QUX balance after: 0
+// [INFO] staker QUX balance after: 7776000000
 // [INFO] creator GNS balance after: 0
-// [INFO] staker GNS balance after: 8776000000
-// [INFO] total GNS deposited (reward + fee): 8776000000
+// [INFO] total QUX deposited as reward: 7776000000
 //
 // [SCENARIO] 5. Start external incentive
 // [INFO] skipping blocks until external incentive starts
@@ -454,37 +465,45 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect rewards mid-way
 // [INFO] collecting rewards at midway point
-// [INFO] rewards collected at midway: 2375999998 GNS
-// [INFO] expected midway rewards (approx): 3888000000 GNS
+// [INFO] rewards collected at midway: 2375999998 QUX
+// [INFO] expected midway rewards (approx): 3888000000 QUX
+// [EXPECTED] community pool QUX unchanged on collect: 0 -> 0
 //
 // [SCENARIO] 9. Wait until incentive ends
 // [INFO] incentive period has ended
 //
 // [SCENARIO] 10. Collect final rewards
 // [INFO] collecting final rewards
-// [INFO] final rewards collected: 3887999999 GNS
+// [INFO] final rewards collected: 3887999999 QUX
+// [EXPECTED] community pool QUX unchanged on collect: 0 -> 0
 //
 // [SCENARIO] 11. Unstake position to collect all remaining rewards
 // [INFO] unstaking position to collect remaining rewards
-// [INFO] rewards collected from unstaking: 0 GNS
-// [INFO] total rewards collected so far: 6263999997 GNS
+// [INFO] rewards collected from unstaking: 0 QUX
+// [INFO] total rewards collected so far: 6263999997 QUX
 // [INFO] position owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive
 // [INFO] before ending incentive:
-//   - Creator GNS: 0
-//   - Staker contract GNS: 1000000003
-//   - Admin total rewards collected: 6263999997
+//   - Creator QUX: 0
+//   - Staker contract QUX: 1512000003
+//   - Creator GNS (deposit): 0
+//   - Admin total rewards collected (QUX): 6263999997
 // [INFO] after ending incentive:
-//   - Creator GNS: 1000000003
-//   - Staker contract GNS: 0
+//   - Creator QUX: 1512000003
+//   - Staker contract QUX: 0
+//   - Creator GNS (deposit): 1000000000
+//   - Admin QUX balances: 99998487998997
 // [RESULT] refund breakdown:
-//   - Total refunded to creator: 1000000003 GNS
-//   - Total reduced from staker: 1000000003 GNS
-// [WARNING] Unexpected dust amount: 3 GNS
-// [SUMMARY] Total reward distribution:
-//   - Initial reward amount: 7776000000 GNS
-//   - Rewards collected by staker: 6263999997 GNS
-//   - Dust refunded: 3 GNS
-//   - Total accounted for: 6264000000 GNS
+//   - Total refunded reward token (QUX): 1512000003
+//   - Total reduced from staker QUX: 1512000003
+//   - Refunded GNS deposit: 1000000000
+// [EXPECTED] refundee receives all remaining reward token: 1512000003
+// [EXPECTED] refundee receives fixed GNS deposit: 1000000000
+// [EXPECTED] Total reward distribution:
+//   - Initial reward amount: 7776000000 QUX
+//   - Rewards collected by staker: 6263999997 QUX
+//   - Undistributed reward refunded: 1512000003 QUX
+//   - Total accounted for: 7776000000 QUX
+// [EXPECTED] all rewards accounted for with no loss

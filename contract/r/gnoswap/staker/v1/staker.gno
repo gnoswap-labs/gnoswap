@@ -523,28 +523,20 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			continue
 		}
 
-		// process external reward to user
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), rewardAmount))
+		// process reward states
 		rewardToken := incentive.RewardToken()
+		externalPenalty := reward.ExternalPenalty[incentiveId]
+		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
-		if err != nil {
-			panic(err.Error())
-		}
 
-		// process external penalty
-		externalPenalty := reward.ExternalPenalty[incentiveId]
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), externalPenalty))
-
-		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
-		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
-		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
-		incentiveResolver.addDistributedRewardAmount(totalDistributedRewardAmount)
+		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
+		incentiveResolver.addDistributedRewardAmount(rewardAmount)
+		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
-		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		err := depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
 		if err != nil {
 			panic(err)
 		}
@@ -558,8 +550,9 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		// update
 		s.getExternalIncentives().set(incentiveId, incentive)
 
-		if externalPenalty > 0 {
-			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
+		if err != nil {
+			panic(err.Error())
 		}
 
 		if toUser > 0 {

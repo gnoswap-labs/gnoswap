@@ -349,9 +349,9 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 
 	resolver = getMockInstance().getDepositResolver(positionId)
 	communityPoolAfter := TokenBalance(t, barPath, communityPoolAddr)
-	penaltyDelta := communityPoolAfter - communityPoolBefore
-	if penaltyDelta <= 0 {
-		t.Fatalf("expected external penalty to be applied once, got %d", penaltyDelta)
+	communityPoolChanges := communityPoolAfter - communityPoolBefore
+	if communityPoolChanges != 0 {
+		t.Fatalf("expected external penalty to be zero, got %d", communityPoolChanges)
 	}
 	collectedAfter := resolver.CollectedExternalReward(incentiveId)
 	if collectedAfter == 0 {
