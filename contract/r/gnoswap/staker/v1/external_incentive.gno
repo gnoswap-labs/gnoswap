@@ -191,7 +191,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
-	incentive.SetCreator(refundAddress)
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Creator(), incentive)
