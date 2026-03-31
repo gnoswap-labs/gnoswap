@@ -275,6 +275,14 @@ func TestCurrentReward(t *testing.T) {
 			expectedReward: 100000,
 			shouldBeZero:   false,
 		},
+		{
+			name:           "tier 1 max int64 emission uses calculatePoolReward arithmetic",
+			tier:           1,
+			tierCounts:     [AllTierCount]uint64{0, 1, 0, 0},
+			emission:       9223372036854775807,
+			expectedReward: 9223372036854775807,
+			shouldBeZero:   false,
+		},
 	}
 
 	for _, tt := range tests {
