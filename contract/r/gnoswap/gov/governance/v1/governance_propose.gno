@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"strings"
 	"time"
 
 	avl "gno.land/p/nt/avl/v0"
@@ -435,12 +434,4 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 	}
 
 	return totalVotingWeight, snapshotTime, nil
-}
-
-func splitExecutionsRaw(executions string) []string {
-	if executions == "" {
-		return []string{}
-	}
-
-	return strings.Split(executions, messageSeparator)
 }
