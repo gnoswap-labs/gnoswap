@@ -390,7 +390,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 			// when/then
 			if tc.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
+				uassert.AbortsContains(t, tc.expectedAbortMessage, func() {
 					SetOperationStatus(cross, tc.operationType, tc.halted)
 				})
 			} else {

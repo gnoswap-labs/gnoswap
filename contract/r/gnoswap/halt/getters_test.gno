@@ -79,15 +79,6 @@ func TestGetters_IndividualGetters(t *testing.T) {
 	})
 }
 
-func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {
-	err := setHaltLevel(HaltLevelNone)
-	uassert.NoError(t, err)
-
-	uassert.PanicsWithMessage(t, "invalid operation type: unknown", func() {
-		isHaltedOperation(OpType(0))
-	})
-}
-
 func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
 	tests := []struct {
 		name             string

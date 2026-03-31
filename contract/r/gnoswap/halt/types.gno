@@ -1,5 +1,7 @@
 package halt
 
+import "strconv"
+
 // Halt levels define different states of system operation restriction.
 const (
 	HaltLevelNone      HaltLevel = "NONE"
@@ -111,7 +113,7 @@ var opTypeFromName = map[string]OpType{
 func (o OpType) String() string {
 	name, ok := opTypeNames[o]
 	if !ok {
-		return "unknown"
+		return "unknown(0x" + strconv.FormatUint(uint64(o), 16) + ")"
 	}
 	return name
 }

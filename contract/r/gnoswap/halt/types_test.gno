@@ -237,12 +237,12 @@ func TestTypes_OpTypeString(t *testing.T) {
 		{
 			name:     "Unknown operation string",
 			op:       OpType(1 << 20),
-			expected: "unknown",
+			expected: "unknown(0x100000)",
 		},
 		{
 			name:     "Zero operation string",
 			op:       OpType(0),
-			expected: "unknown",
+			expected: "unknown(0x0)",
 		},
 	}
 
@@ -412,3 +412,24 @@ func TestTypes_OpTypeFromString(t *testing.T) {
 	}
 }
 
+func TestTypes_OpTypeConsistency(t *testing.T) {
+	ops := OpTypes()
+
+	var combined OpType
+	for _, op := range ops {
+		name := op.String()
+		roundTripped, ok := OpTypeFromString(name)
+		if !ok {
+			t.Errorf("OpTypeFromString(%q) failed for %d", name, uint64(op))
+		}
+		uassert.Equal(t, uint64(roundTripped), uint64(op))
+
+		if op&OpTypeAll != op {
+			t.Errorf("OpType %s (0x%x) is not included in OpTypeAll", name, uint64(op))
+		}
+
+		combined |= op
+	}
+
+	uassert.Equal(t, uint64(combined), uint64(OpTypeAll))
+}
