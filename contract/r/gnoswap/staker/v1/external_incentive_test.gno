@@ -92,8 +92,8 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 				t.Errorf("expected reward token %s, got %s", token, ictv.RewardToken())
 			}
 
-			if ictv.Refundee() != creator {
-				t.Errorf("expected refundee %s, got %s", creator, ictv.Refundee())
+			if ictv.Creator() != creator {
+				t.Errorf("expected creator %s, got %s", creator, ictv.Creator())
 			}
 		})
 	}
@@ -117,7 +117,7 @@ func TestEndExternalIncentive(t *testing.T) {
 		expectedErrorMsg string
 	}{
 		{
-			name:             "end incentive refund to refundee",
+			name:             "end incentive refund to creator",
 			caller:           creator,
 			refundAddress:    refundee,
 			endTimeOffset:    86400, // end time in the future
@@ -143,7 +143,7 @@ func TestEndExternalIncentive(t *testing.T) {
 		{
 			name:             "end incentive by non-creator non-admin",
 			caller:           stranger,
-			refundAddress:    refundee,
+			refundAddress:    creator,
 			endTimeOffset:    0, // already ended
 			expectError:      true,
 			expectedErrorMsg: "caller has no permission",
@@ -200,8 +200,8 @@ func TestEndExternalIncentive(t *testing.T) {
 			skipBlocks := (endTime-startTime)/5 + tt.endTimeOffset
 			testing.SkipHeights(skipBlocks)
 
-			refundeeGnsBalanceBefore := gns.BalanceOf(tt.refundAddress)
-			refundeeBarBalanceBefore := bar.BalanceOf(tt.refundAddress)
+			creatorGnsBalanceBefore := gns.BalanceOf(tt.refundAddress)
+			creatorBarBalanceBefore := bar.BalanceOf(tt.refundAddress)
 
 			if tt.expectError {
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
@@ -221,15 +221,15 @@ func TestEndExternalIncentive(t *testing.T) {
 				mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
 			})
 
-			refundeeGnsBalanceAfter := gns.BalanceOf(tt.refundAddress)
-			refundeeBarBalanceAfter := bar.BalanceOf(tt.refundAddress)
+			creatorGnsBalanceAfter := gns.BalanceOf(tt.refundAddress)
+			creatorBarBalanceAfter := bar.BalanceOf(tt.refundAddress)
 
 			updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
 			uassert.True(t, exists)
 			uassert.True(t, updatedIncentive.Refunded())
-			uassert.Equal(t, tt.refundAddress, updatedIncentive.Refundee())
-			uassert.Equal(t, refundeeGnsBalanceAfter-refundeeGnsBalanceBefore, depositGnsAmount)
-			uassert.Equal(t, refundeeBarBalanceAfter-refundeeBarBalanceBefore, rewardAmount)
+			uassert.Equal(t, tt.refundAddress, updatedIncentive.Creator())
+			uassert.Equal(t, creatorGnsBalanceAfter-creatorGnsBalanceBefore, depositGnsAmount)
+			uassert.Equal(t, creatorBarBalanceAfter-creatorBarBalanceBefore, rewardAmount)
 		})
 	}
 }
@@ -256,7 +256,7 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 			expectedErrorMsg: "cannot end incentive before endTime",
 		},
 		{
-			name:             "end incentive at exact end time by refundee",
+			name:             "end incentive at exact end time by creator",
 			caller:           creator,
 			currentTime:      endTime,
 			expectError:      false,
@@ -267,7 +267,7 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 			caller:           testutils.TestAddress("stranger"),
 			currentTime:      endTime + 1,
 			expectError:      true,
-			expectedErrorMsg: "only refundee",
+			expectedErrorMsg: "only creator",
 		},
 	}
 
@@ -328,7 +328,7 @@ func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
 	}{
 		{
 			name:        "valid refund address",
-			refundAddr:  testutils.TestAddress("refundee"),
+			refundAddr:  testutils.TestAddress("creator"),
 			shouldPanic: false,
 		},
 		{

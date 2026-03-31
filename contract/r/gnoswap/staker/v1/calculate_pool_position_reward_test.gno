@@ -627,7 +627,7 @@ func TestCalcPositionReward(t *testing.T) {
 					rewardAmount,
 					incentiveStartTime,
 					incentiveEndTime,
-					testutils.TestAddress("refundee"),
+					testutils.TestAddress("creator"),
 					0,
 					baseHeight,
 					baseTime-100,
@@ -635,7 +635,7 @@ func TestCalcPositionReward(t *testing.T) {
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+				poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 
 				// Create deposit
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
@@ -708,13 +708,13 @@ func TestCalcPositionReward(t *testing.T) {
 						rewardAmount,
 						incentiveStartTime,
 						incentiveEndTime,
-						testutils.TestAddress("refundee"),
+						testutils.TestAddress("creator"),
 						0,
 						baseHeight,
 						baseTime-100,
 					)
 					incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
-					poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+					poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 
 					// Add incentive ID to deposit (required for reward calculation)
 					deposit.AddExternalIncentiveId(incentiveId)
@@ -861,7 +861,7 @@ func TestCalcPositionReward(t *testing.T) {
 					rewardAmount,
 					incentiveStartTime,
 					incentiveEndTime,
-					testutils.TestAddress("refundee"),
+					testutils.TestAddress("creator"),
 					0,
 					baseHeight,
 					baseTime,
@@ -869,7 +869,7 @@ func TestCalcPositionReward(t *testing.T) {
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+				poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 
 				// Create deposit
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime)
@@ -922,7 +922,7 @@ func TestCalcPositionReward(t *testing.T) {
 					rewardAmount,
 					incentiveStartTime,
 					incentiveEndTime,
-					testutils.TestAddress("refundee"),
+					testutils.TestAddress("creator"),
 					0,
 					baseHeight,
 					baseTime-2000,
@@ -930,7 +930,7 @@ func TestCalcPositionReward(t *testing.T) {
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+				poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 
 				// Create deposit (staked after incentive ended)
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-500)
@@ -987,7 +987,7 @@ func TestCalcPositionReward(t *testing.T) {
 					rewardAmount,
 					incentiveStartTime,
 					incentiveEndTime,
-					testutils.TestAddress("refundee"),
+					testutils.TestAddress("creator"),
 					0,
 					baseHeight,
 					baseTime-100,
@@ -995,7 +995,7 @@ func TestCalcPositionReward(t *testing.T) {
 				incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+				poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 
 				// Create deposit
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
@@ -1492,13 +1492,13 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 			int64(1000*(i+1)),
 			baseTime-50,
 			baseTime+1000,
-			testutils.TestAddress("refundee"),
+			testutils.TestAddress("creator"),
 			0,
 			baseHeight,
 			baseTime-100,
 		)
 		incentive.SetRewardPerSecond(int64(1000 * (i + 1) / 1050))
-		poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+		poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
 	}
 
 	// Create deposit

@@ -206,8 +206,8 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
-	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
+	return t.instance.GetIncentiveCreator(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {

@@ -10,7 +10,7 @@
 // This test verifies external incentive refund behavior after CollectReward changes.
 // It validates that:
 // 1. External reward penalty is NOT sent to community pool during CollectReward
-// 2. EndExternalIncentive refunds all undistributed reward (including penalty share) to refundee
+// 2. EndExternalIncentive refunds all undistributed reward (including penalty share) to creator
 // 3. Reward accounting remains consistent (distributed + refunded = total reward)
 
 package main
@@ -395,8 +395,8 @@ func endExternalIncentiveAndVerifyNoDust() {
 	ufmt.Printf("  - Total reduced from staker QUX: %d\n", stakerQuxReduction)
 	ufmt.Printf("  - Refunded GNS deposit: %d\n", refundGnsAmount)
 
-	ufmt.Printf("[EXPECTED] refundee receives all remaining reward token: %d\n", stakerQuxBefore)
-	ufmt.Printf("[EXPECTED] refundee receives fixed GNS deposit: %d\n", depositGnsAmount)
+	ufmt.Printf("[EXPECTED] creator receives all remaining reward token: %d\n", stakerQuxBefore)
+	ufmt.Printf("[EXPECTED] creator receives fixed GNS deposit: %d\n", depositGnsAmount)
 
 	// Verify total distribution
 	ufmt.Printf("[EXPECTED] Total reward distribution:\n")
@@ -500,8 +500,8 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Total refunded reward token (QUX): 1512000003
 //   - Total reduced from staker QUX: 1512000003
 //   - Refunded GNS deposit: 1000000000
-// [EXPECTED] refundee receives all remaining reward token: 1512000003
-// [EXPECTED] refundee receives fixed GNS deposit: 1000000000
+// [EXPECTED] creator receives all remaining reward token: 1512000003
+// [EXPECTED] creator receives fixed GNS deposit: 1000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
 //   - Rewards collected by staker: 6263999997 QUX

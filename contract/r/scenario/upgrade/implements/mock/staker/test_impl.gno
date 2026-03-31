@@ -434,10 +434,10 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	).(int64)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
 	return t.ExecuteFn(
-		"GetIncentiveRefundee",
-		func(args ...any) any { return t.instance.GetIncentiveRefundee(args[0].(string), args[1].(string)) },
+		"GetIncentiveCreator",
+		func(args ...any) any { return t.instance.GetIncentiveCreator(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
 	).(address)
 }
