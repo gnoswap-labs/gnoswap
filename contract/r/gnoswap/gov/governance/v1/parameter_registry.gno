@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strings"
-
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -728,16 +726,16 @@ func CreateParameterHandlers() *ParameterRegistry {
 				// Create a new launchpad project
 				lp.CreateProject(
 					cross,
-					params[0],                                     // name
-					params[1],                                     // tokenPath
-					address(params[2]),                            // recipient
-					parseNumber(params[3], kindInt64).(int64),     // depositAmount
-					params[4],                                     // conditionTokens
-					params[5],                                     // conditionAmounts
-					parseNumber(params[6], kindInt64).(int64),     // tier30Ratio
-					parseNumber(params[7], kindInt64).(int64),     // tier90Ratio
-					parseNumber(params[8], kindInt64).(int64),     // tier180Ratio
-					parseNumber(params[9], kindInt64).(int64),     // startTime
+					params[0],          // name
+					params[1],          // tokenPath
+					address(params[2]), // recipient
+					parseNumber(params[3], kindInt64).(int64), // depositAmount
+					params[4], // conditionTokens
+					params[5], // conditionAmounts
+					parseNumber(params[6], kindInt64).(int64), // tier30Ratio
+					parseNumber(params[7], kindInt64).(int64), // tier90Ratio
+					parseNumber(params[8], kindInt64).(int64), // tier180Ratio
+					parseNumber(params[9], kindInt64).(int64), // startTime
 				)
 				return nil
 			},
@@ -940,7 +938,8 @@ func uint8RangeValidator(name string) paramValidator {
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
-//   - executions: encoded execution string with parameter changes
+//   - executions: raw execution string containing messages separated by *GOV*,
+//     where each message is formatted as <pkgPath>*EXE*<function>*EXE*<params>
 //
 // Returns:
 //   - error: validation error if any execution is invalid
@@ -953,18 +952,6 @@ func validateExecutions(numToExecute int64, executions string) error {
 		)
 	}
 
-	// Check if executions string is empty
-	if executions == "" {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"executions is empty",
-		)
-	}
-
-	// Split execution string into individual messages
-	msgs := strings.Split(executions, messageSeparator)
-	msgCount := len(msgs)
-
 	// Validate execution count doesn't exceed maximum
 	if numToExecute > maxNumberOfExecution {
 		return makeErrorWithDetails(
@@ -973,30 +960,37 @@ func validateExecutions(numToExecute int64, executions string) error {
 		)
 	}
 
-	// Validate execution count matches message count
-	if msgCount != int(numToExecute) {
+	// Split execution string into individual messages
+	executionSlice := splitExecutionsRaw(executions)
+	exeCount := len(executionSlice)
+
+	// Check if executions string is empty
+	if exeCount == 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", len(msgs), numToExecute),
+			"executions is empty",
+		)
+	}
+
+	// Validate execution count matches message count
+	if exeCount != int(numToExecute) {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", exeCount, numToExecute),
 		)
 	}
 
 	// Parse and validate each execution message
-	for i, msg := range msgs {
-		// Split message into components: pkgPath, function, params
-		parts := strings.Split(msg, parameterSeparator)
-		if len(parts) != 3 {
+	for i, execution := range executionSlice {
+		pkgPath, function, params, partCount := parseExecutionMessage(execution)
+		if partCount != 3 {
 			// Provide more helpful error message based on what's wrong
-			detail := ufmt.Sprintf("execution[%d]: expected 3 parts (pkgPath, function, params), got %d", i, len(parts))
+			detail := ufmt.Sprintf("execution[%d]: expected 3 parts (pkgPath, function, params), got %d", i, partCount)
 			return makeErrorWithDetails(
 				errInvalidMessageFormat,
 				detail,
 			)
 		}
-
-		pkgPath := parts[0]
-		function := parts[1]
-		paramStr := parts[2]
 
 		// Validate package path and function are not empty
 		if pkgPath == "" {
@@ -1021,12 +1015,6 @@ func validateExecutions(numToExecute int64, executions string) error {
 				errInvalidExecution,
 				ufmt.Sprintf("execution[%d]: %s (key: %s)", i, err.Error(), key),
 			)
-		}
-
-		// Validate parameter count matches handler's expected count
-		params := []string{}
-		if paramStr != "" {
-			params = strings.Split(paramStr, ",")
 		}
 
 		// Get expected parameter count from handler

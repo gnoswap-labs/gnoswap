@@ -6,6 +6,30 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
+func splitExecutionsRaw(executions string) []string {
+	if executions == "" {
+		return []string{}
+	}
+
+	return strings.Split(executions, messageSeparator)
+}
+
+func parseExecutionMessage(msg string) (pkgPath string, function string, params []string, partCount int) {
+	parts := strings.Split(msg, parameterSeparator)
+	partCount = len(parts)
+	if partCount != 3 {
+		return "", "", nil, partCount
+	}
+
+	pkgPath = parts[0]
+	function = parts[1]
+	if parts[2] == "" {
+		return pkgPath, function, []string{}, partCount
+	}
+
+	return pkgPath, function, strings.Split(parts[2], ","), partCount
+}
+
 type ProposalMetadataResolver struct {
 	*governance.ProposalMetadata
 }
@@ -219,19 +243,14 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 
 	// Parse each execution message
 	for _, msg := range execution.Msgs() {
-		// Split message into components: pkgPath, function, params
-		params := strings.Split(msg, parameterSeparator)
-		if len(params) != 3 {
+		pkgPath, function, params, partCount := parseExecutionMessage(msg)
+		if partCount != 3 {
 			// validation rejects mismatched counts upstream.
 			continue
 		}
 
-		pkgPath := params[0]
-		function := params[1]
-		param := strings.Split(params[2], ",")
-
 		// Create parameter change info structure
-		info := governance.NewParameterChangeInfo(pkgPath, function, param)
+		info := governance.NewParameterChangeInfo(pkgPath, function, params)
 		infos = append(infos, info)
 	}
 
@@ -279,7 +298,8 @@ func NewProposalCommunityPoolSpendData(
 }
 
 // NewProposalExecutionData creates proposal data for a parameter change proposal.
-// Parses the execution string to create the execution structure.
+// The executions string is encoded as messages separated by *GOV*, where each message
+// is formatted as <pkgPath>*EXE*<function>*EXE*<params>.
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
@@ -288,13 +308,10 @@ func NewProposalCommunityPoolSpendData(
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
 func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
-	// Split execution string into individual messages
-	msgs := strings.Split(executions, messageSeparator)
-
 	return governance.NewProposalData(
 		governance.ParameterChange,
 		nil,
-		governance.NewExecutionInfo(numToExecute, msgs),
+		governance.NewExecutionInfo(numToExecute, splitExecutionsRaw(executions)),
 	)
 }
 
