@@ -124,6 +124,13 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
+		{
+			name:                 "Failure - ParameterChange max execution count takes precedence over mismatch",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(11, []string{"pkg1*EXE*func1*EXE*param1"}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is greater than 10",
+		},
 	}
 
 	for _, tc := range tests {

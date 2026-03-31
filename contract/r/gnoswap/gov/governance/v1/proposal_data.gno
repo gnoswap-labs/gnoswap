@@ -184,14 +184,14 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 		)
 	}
 
-	// Validate execution count matches message count
-	if len(msgs) != int(num) {
-		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
-	}
-
 	// Validate execution count doesn't exceed maximum
 	if num > maxNumberOfExecution {
 		return makeErrorWithDetails(errInvalidInput, "numToExecute is greater than 10")
+	}
+
+	// Validate execution count matches message count
+	if len(msgs) != int(num) {
+		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
 	}
 
 	// Validate parameter change message format
