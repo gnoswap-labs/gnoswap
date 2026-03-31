@@ -305,6 +305,30 @@ func TestValidateRoutePath(t *testing.T) {
 			outputToken: "tokenA",
 			wantError:   false,
 		},
+		{
+			name:        "disconnected multi-hop - 2 hops",
+			routePath:   "tokenA:tokenB:500*POOL*tokenX:tokenC:3000",
+			inputToken:  "tokenA",
+			outputToken: "tokenC",
+			wantError:   true,
+			errorMsg:    "route hop disconnected",
+		},
+		{
+			name:        "disconnected multi-hop - 3 hops first gap",
+			routePath:   "tokenA:tokenB:500*POOL*tokenX:tokenC:3000*POOL*tokenC:tokenD:10000",
+			inputToken:  "tokenA",
+			outputToken: "tokenD",
+			wantError:   true,
+			errorMsg:    "route hop disconnected",
+		},
+		{
+			name:        "disconnected multi-hop - 3 hops second gap",
+			routePath:   "tokenA:tokenB:500*POOL*tokenB:tokenC:3000*POOL*tokenX:tokenD:10000",
+			inputToken:  "tokenA",
+			outputToken: "tokenD",
+			wantError:   true,
+			errorMsg:    "route hop disconnected",
+		},
 	}
 
 	for _, tt := range tests {
@@ -430,7 +454,16 @@ func TestValidateRoutePaths(t *testing.T) {
 			routePathArrString: "tokenA:tokenB:500*POOL*tokenX:tokenC:3000*POOL*tokenC:tokenD:10000",
 			inputToken:         "tokenA",
 			outputToken:        "tokenD",
-			wantError:          false, // This should pass validation as we only check first and last tokens
+			wantError:          true,
+			errorMsg:           "route hop disconnected",
+		},
+		{
+			name:               "disconnected multi-hop in second route",
+			routePathArrString: "tokenA:tokenB:500,tokenA:tokenC:3000*POOL*tokenX:tokenB:500",
+			inputToken:         "tokenA",
+			outputToken:        "tokenB",
+			wantError:          true,
+			errorMsg:           "route hop disconnected",
 		},
 	}
 
