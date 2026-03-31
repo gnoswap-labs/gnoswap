@@ -57,8 +57,8 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId)
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
 func (t *TestStaker) AddToken(tokenPath string) {

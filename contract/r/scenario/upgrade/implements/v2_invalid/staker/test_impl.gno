@@ -94,11 +94,11 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	if !t.isActive("EndExternalIncentive") {
 		panic("test implementation: EndExternalIncentive not supported")
 	}
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId)
+	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
 func (t *TestStaker) AddToken(tokenPath string) {

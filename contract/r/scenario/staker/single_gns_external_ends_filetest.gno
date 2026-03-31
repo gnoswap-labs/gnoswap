@@ -283,6 +283,7 @@ func endExternalQuxIncentive() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		incentiveID,
+		externalCreatorUser,
 	)
 
 	quxBalanceAfterEnds := qux.BalanceOf(externalCreatorUser)

@@ -372,6 +372,7 @@ func endExternalIncentiveAndVerifyNoDust() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		actualIncentiveID,
+		externalCreatorUser,
 	)
 
 	// Check balances after ending
