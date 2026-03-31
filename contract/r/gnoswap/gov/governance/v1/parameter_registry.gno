@@ -965,19 +965,19 @@ func validateExecutions(numToExecute int64, executions string) error {
 	msgs := strings.Split(executions, messageSeparator)
 	msgCount := len(msgs)
 
-	// Validate execution count matches message count
-	if msgCount != int(numToExecute) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", len(msgs), numToExecute),
-		)
-	}
-
 	// Validate execution count doesn't exceed maximum
 	if numToExecute > maxNumberOfExecution {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("numToExecute is greater than %d", maxNumberOfExecution),
+		)
+	}
+
+	// Validate execution count matches message count
+	if msgCount != int(numToExecute) {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", len(msgs), numToExecute),
 		)
 	}
 

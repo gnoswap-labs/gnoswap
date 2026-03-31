@@ -493,6 +493,13 @@ func TestValidateExecutions(t *testing.T) {
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
+		{
+			name:                  "Failure - exceeds max executions takes precedence over count mismatch",
+			numToExecute:          11,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is greater than 10",
+		},
 
 		/* Failure cases - Handler is not exists */
 		{
