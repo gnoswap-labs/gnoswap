@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"strings"
 	"time"
 
 	avl "gno.land/p/nt/avl/v0"
@@ -287,8 +288,10 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(err)
 	}
 
+	msgs := splitExecutionsRaw(executions)
+
 	// Validate executions before creating proposal to fail fast on invalid handlers
-	if err := validateExecutions(numToExecute, executions); err != nil {
+	if err := validateExecutions(numToExecute, msgs); err != nil {
 		panic(err)
 	}
 
@@ -299,7 +302,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		maxVotingWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
-		NewProposalExecutionData(numToExecute, executions),
+		NewProposalExecutionData(numToExecute, msgs),
 		callerAddress,
 		gnsBalance,
 		createdAt,
@@ -432,4 +435,12 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 	}
 
 	return totalVotingWeight, snapshotTime, nil
+}
+
+func splitExecutionsRaw(executions string) []string {
+	if executions == "" {
+		return []string{}
+	}
+
+	return strings.Split(executions, messageSeparator)
 }

@@ -943,12 +943,20 @@ func uint8RangeValidator(name string) paramValidator {
 //
 // Returns:
 //   - error: validation error if any execution is invalid
-func validateExecutions(numToExecute int64, executions string) error {
+func validateExecutions(numToExecute int64, msgs []string) error {
 	// Validate execution count is positive
 	if numToExecute <= 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			"numToExecute is less than or equal to 0",
+		)
+	}
+
+	// Check if executions are empty
+	if len(msgs) == 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			"executions is empty",
 		)
 	}
 
@@ -960,28 +968,17 @@ func validateExecutions(numToExecute int64, executions string) error {
 		)
 	}
 
-	// Split execution string into individual messages
-	executionSlice := splitExecutionsRaw(executions)
-	exeCount := len(executionSlice)
-
-	// Check if executions string is empty
-	if exeCount == 0 {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"executions is empty",
-		)
-	}
-
+	msgCount := len(msgs)
 	// Validate execution count matches message count
-	if exeCount != int(numToExecute) {
+	if msgCount != int(numToExecute) {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", exeCount, numToExecute),
+			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", len(msgs), numToExecute),
 		)
 	}
 
 	// Parse and validate each execution message
-	for i, execution := range executionSlice {
+	for i, execution := range msgs {
 		pkgPath, function, params, partCount := parseExecutionMessage(execution)
 		if partCount != 3 {
 			// Provide more helpful error message based on what's wrong

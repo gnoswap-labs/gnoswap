@@ -307,11 +307,11 @@ func NewProposalCommunityPoolSpendData(
 //
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
-func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
+func NewProposalExecutionData(numToExecute int64, msgs []string) *governance.ProposalData {
 	return governance.NewProposalData(
 		governance.ParameterChange,
 		nil,
-		governance.NewExecutionInfo(numToExecute, splitExecutionsRaw(executions)),
+		governance.NewExecutionInfo(numToExecute, msgs),
 	)
 }
 

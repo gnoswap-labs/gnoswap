@@ -580,7 +580,7 @@ func TestValidateExecutions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateExecutions(tc.numToExecute, tc.executions)
+			err := validateExecutions(tc.numToExecute, splitExecutionsRaw(tc.executions))
 
 			if tc.expectedError {
 				uassert.NotNil(t, err)
