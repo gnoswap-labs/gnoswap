@@ -12,7 +12,9 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/gns"
 	sr "gno.land/r/gnoswap/staker"
+	"gno.land/r/onbloc/bar"
 )
 
 func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
@@ -100,40 +102,144 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 	pools.tree.Remove(poolPath)
 }
 
-// Test endExternalIncentive logic
+// Test EndExternalIncentive through the public entrypoint with full preconditions.
 func TestEndExternalIncentive(t *testing.T) {
-	initStakerTest(t)
-	instance := getMockInstance()
-
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 	creator := testutils.TestAddress("creator")
+	refundee := testutils.TestAddress("refundee")
+	stranger := testutils.TestAddress("stranger")
+
+	tests := []struct {
+		name             string
+		caller           address
+		refundAddress    address
+		endTimeOffset    int64
+		expectError      bool
+		expectedErrorMsg string
+	}{
+		{
+			name:             "end incentive refund to refundee",
+			caller:           creator,
+			refundAddress:    refundee,
+			endTimeOffset:    86400, // end time in the future
+			expectError:      false,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "end incentive before end time",
+			caller:           creator,
+			refundAddress:    refundee,
+			endTimeOffset:    -1, // end time in the past
+			expectError:      true,
+			expectedErrorMsg: "cannot end incentive before endTime",
+		},
+		{
+			name:             "end incentive by non-creator non-admin",
+			caller:           refundee,
+			refundAddress:    refundee,
+			endTimeOffset:    0, // already ended
+			expectError:      true,
+			expectedErrorMsg: "caller has no permission",
+		},
+		{
+			name:             "end incentive by non-creator non-admin",
+			caller:           stranger,
+			refundAddress:    refundee,
+			endTimeOffset:    0, // already ended
+			expectError:      true,
+			expectedErrorMsg: "caller has no permission",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			currentTime := time.Now().Unix()
+			startTime := currentTime
+			endTime := currentTime + 86400*30
+
+			// Setup real pool registry for poolAccessor.ExistsPoolPath().
+			testing.SetRealm(adminRealm)
+			gns.Approve(cross, poolAddr, math.MaxInt)
+			CreatePool(
+				barPath,
+				fooPath,
+				fee3000,
+				"79228162514264337593543950336",
+				adminAddr,
+			)
+
+			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+			rewardAmount := int64(10_000_000_000)
+			depositGnsAmount := int64(100_000_000)
+
+			// Setup staker pool storage.
+			pool := sr.NewPool(poolPath, currentTime)
+			instance.getPools().set(poolPath, pool)
+
+			// Create ended or active incentive based on the test case.
+			incentiveId := "test-incentive-1"
+			incentive := sr.NewExternalIncentive(
+				incentiveId,
+				poolPath,
+				barPath,
+				rewardAmount,
+				startTime,
+				endTime,
+				creator,
+				depositGnsAmount,
+				runtime.ChainHeight(),
+				currentTime,
+			)
+
+			// Add incentive to pool
+			poolResolver := NewPoolResolver(pool)
+			poolResolver.IncentivesResolver().create(creator, incentive)
+
+			skipBlocks := (endTime-startTime)/5 + tt.endTimeOffset
+			testing.SkipHeights(skipBlocks)
+
+			refundeeGnsBalanceBefore := gns.BalanceOf(tt.refundAddress)
+			refundeeBarBalanceBefore := bar.BalanceOf(tt.refundAddress)
+
+			if tt.expectError {
+				testing.SetRealm(testing.NewUserRealm(tt.caller))
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
+				})
+				return
+			}
+
+			uassert.NotPanics(t, func() {
+				// Fund staker so transfers during successful end do not fail.
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, stakerAddr, depositGnsAmount)
+				bar.Transfer(cross, stakerAddr, rewardAmount)
+
+				testing.SetRealm(testing.NewUserRealm(tt.caller))
+				mockInstanceEndExternalIncentive(poolPath, incentiveId, tt.refundAddress)
+			})
+
+			refundeeGnsBalanceAfter := gns.BalanceOf(tt.refundAddress)
+			refundeeBarBalanceAfter := bar.BalanceOf(tt.refundAddress)
+
+			updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+			uassert.True(t, exists)
+			uassert.True(t, updatedIncentive.Refunded())
+			uassert.Equal(t, tt.refundAddress, updatedIncentive.Refundee())
+			uassert.Equal(t, refundeeGnsBalanceAfter-refundeeGnsBalanceBefore, depositGnsAmount)
+			uassert.Equal(t, refundeeBarBalanceAfter-refundeeBarBalanceBefore, rewardAmount)
+		})
+	}
+}
+
+// Test endExternalIncentive internal logic.
+func TestEndExternalIncentiveInternal(t *testing.T) {
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10 // 10 days ago
 	endTime := currentTime - 1          // ended 1 second ago
-	rewardAmount := int64(10_000_000_000)
-
-	// Create pool
-	pool := sr.NewPool(poolPath, currentTime)
-	instance.getPools().set(poolPath, pool)
-
-	// Create incentive
-	incentiveId := "test-incentive-1"
-	incentive := sr.NewExternalIncentive(
-		incentiveId,
-		poolPath,
-		WUGNOT_PATH,
-		rewardAmount,
-		startTime,
-		endTime,
-		creator,
-		100_000_000, // depositGnsAmount
-		runtime.ChainHeight(),
-		currentTime,
-	)
-
-	// Add incentive to pool
-	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	creator := testutils.TestAddress("creator")
 
 	tests := []struct {
 		name             string
@@ -150,7 +256,7 @@ func TestEndExternalIncentive(t *testing.T) {
 			expectedErrorMsg: "cannot end incentive before endTime",
 		},
 		{
-			name:             "end incentive at exact end time by creator",
+			name:             "end incentive at exact end time by refundee",
 			caller:           creator,
 			currentTime:      endTime,
 			expectError:      false,
@@ -167,6 +273,35 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+			rewardAmount := int64(10_000_000_000)
+
+			// Create pool
+			pool := sr.NewPool(poolPath, currentTime)
+			instance.getPools().set(poolPath, pool)
+
+			// Create incentive
+			incentiveId := "test-incentive-1"
+			incentive := sr.NewExternalIncentive(
+				incentiveId,
+				poolPath,
+				WUGNOT_PATH,
+				rewardAmount,
+				startTime,
+				endTime,
+				creator,
+				100_000_000, // depositGnsAmount
+				runtime.ChainHeight(),
+				currentTime,
+			)
+
+			// Add incentive to pool
+			poolResolver := NewPoolResolver(pool)
+			poolResolver.IncentivesResolver().create(creator, incentive)
+
 			// Reset incentive for each test
 			incentive.SetRefunded(false)
 			poolResolver.IncentivesResolver().update(creator, incentive)
@@ -181,6 +316,45 @@ func TestEndExternalIncentive(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestEndExternalIncentiveRefundAddressValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		refundAddr  address
+		shouldPanic bool
+	}{
+		{
+			name:        "valid refund address",
+			refundAddr:  testutils.TestAddress("refundee"),
+			shouldPanic: false,
+		},
+		{
+			name:        "empty refund address",
+			refundAddr:  address(""),
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid format refund address",
+			refundAddr:  address("invalid"),
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "invalid address", func() {
+					assertIsValidAddress(tt.refundAddr)
+				})
+				return
+			}
+
+			uassert.NotPanics(t, func() {
+				assertIsValidAddress(tt.refundAddr)
+			})
 		})
 	}
 }

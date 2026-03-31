@@ -99,7 +99,7 @@ func (m *MockStaker) CreateExternalIncentive(
 	m.Response.Get("CreateExternalIncentive")
 }
 
-func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	m.Response.Get("EndExternalIncentive")
 }
 

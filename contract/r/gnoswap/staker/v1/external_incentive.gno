@@ -134,12 +134,13 @@ func (s *stakerV1) CreateExternalIncentive(
 //  5. Removes incentive from active list
 //
 // Only callable by Refundee or Admin.
-func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	// checks pool registry
 	assertIsPoolExists(s, targetPoolPath)
+	assertIsValidAddress(refundAddress)
 
 	// checks if the pool has been incentivized
 	pool, exists := s.getPools().Get(targetPoolPath)
@@ -187,18 +188,19 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// refund reward token to refundee
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), incentiveResolver.Refundee(), refund)
-
-	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross, incentiveResolver.Refundee(), incentiveResolver.DepositGnsAmount())
-
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
+	incentive.SetRefundee(refundAddress)
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
+
+	// refund reward token to refundee
+	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, refund)
+
+	// Transfer GNS deposit back to refundee
+	gns.Transfer(cross, refundAddress, incentiveResolver.DepositGnsAmount())
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
