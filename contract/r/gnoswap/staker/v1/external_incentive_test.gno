@@ -227,7 +227,7 @@ func TestEndExternalIncentive(t *testing.T) {
 			updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
 			uassert.True(t, exists)
 			uassert.True(t, updatedIncentive.Refunded())
-			uassert.Equal(t, tt.refundAddress, updatedIncentive.Creator())
+			uassert.Equal(t, creator, updatedIncentive.Creator())
 			uassert.Equal(t, creatorGnsBalanceAfter-creatorGnsBalanceBefore, depositGnsAmount)
 			uassert.Equal(t, creatorBarBalanceAfter-creatorBarBalanceBefore, rewardAmount)
 		})
