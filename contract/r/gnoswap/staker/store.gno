@@ -260,21 +260,21 @@ func (s *stakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUnstakingFee.String())
 }
 
-func (s *stakerStore) GetUnstakingFee() int64 {
+func (s *stakerStore) GetUnstakingFee() uint64 {
 	result, err := s.kvStore.Get(StoreKeyUnstakingFee.String())
 	if err != nil {
 		panic(err)
 	}
 
-	fee, ok := result.(int64)
+	fee, ok := result.(uint64)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to uint64: %T", result))
 	}
 
 	return fee
 }
 
-func (s *stakerStore) SetUnstakingFee(fee int64) error {
+func (s *stakerStore) SetUnstakingFee(fee uint64) error {
 	return s.kvStore.Set(StoreKeyUnstakingFee.String(), fee)
 }
 
