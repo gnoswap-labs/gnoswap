@@ -104,5 +104,5 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncent
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetExternalIncentiveByPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\")"
 
 ## End external incentive (not enough time -> should fail)
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func EndExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:2773180800:1" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func EndExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:2773180800:1" -args "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr 'cannot end non existent incentive'
