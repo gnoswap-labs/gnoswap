@@ -93,7 +93,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:          "Success - Valid ParameterChange proposal",
 			proposalType:  governance.ParameterChange,
-			execution:     governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1*EXE*param1,param2"}),
+			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
 			expectedError: false,
 		},
 		{

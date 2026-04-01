@@ -238,19 +238,20 @@ func NewProposalCommunityPoolSpendData(
 }
 
 // NewProposalExecutionData creates proposal data for a parameter change proposal.
-// Each message in msgs should be formatted as <pkgPath>*EXE*<function>*EXE*<params>.
+// Each message in executions should be formatted as <pkgPath>*EXE*<function>*EXE*<params>,
+// separated by *GOV* when there are multiple messages.
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
-//   - msgs: slice of execution messages, each containing parameter change info
+//   - executions: raw encoded execution string with parameter changes
 //
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
-func NewProposalExecutionData(numToExecute int64, msgs []string) *governance.ProposalData {
+func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
 	return governance.NewProposalData(
 		governance.ParameterChange,
 		nil,
-		governance.NewExecutionInfo(numToExecute, msgs),
+		governance.NewExecutionInfo(numToExecute, splitExecutionsRaw(executions)),
 	)
 }
 

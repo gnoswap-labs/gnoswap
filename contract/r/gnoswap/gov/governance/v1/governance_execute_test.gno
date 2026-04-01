@@ -48,7 +48,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 						time.Now().Add(-time.Hour*24*10).Unix(), // 10 days ago
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
@@ -136,7 +136,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 						time.Now().Unix(), // Just created
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -163,7 +163,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 						time.Now().Add(-time.Second*86400).Unix(),
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Second*86400).Unix(),
@@ -244,7 +244,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 						time.Now().Add(-time.Hour*24*10).Unix(),
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
@@ -338,7 +338,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 						time.Now().Unix(), // Just created, not in execution period
 					),
 					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -477,7 +477,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 						time.Now().Add(-time.Hour*24*10).Unix(),
 					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
@@ -613,7 +613,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -631,7 +631,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*25).Unix(),
@@ -649,7 +649,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
@@ -670,7 +670,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*15).Unix(),
@@ -692,7 +692,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*40).Unix(),
@@ -710,7 +710,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, []string{"test*EXE*function*EXE*param"}),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -969,7 +969,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 	tests := []struct {
 		name             string
 		numToExecute     int64
-		executions       []string
+		executions       string
 		expectedError    string
 		expectedHasAbort bool
 		description      string
@@ -977,53 +977,49 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 		{
 			name:             "success - single parameter change",
 			numToExecute:     1,
-			executions:       []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"},
+			executions:       "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
 			expectedHasAbort: false,
 		},
 		{
 			name:         "success - multiple parameter changes",
 			numToExecute: 2,
-			executions: []string{
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
+			executions: "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
 				"gno.land/r/gnoswap/pool*EXE*SetWithdrawalFee*EXE*0",
-			},
 			expectedHasAbort: false,
 		},
 		{
 			name:         "success - maximum executions",
 			numToExecute: 10,
-			executions: []string{
+			executions: "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
 				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-			},
 			expectedHasAbort: false,
 		},
 		{
 			name:             "fail - nonexistent function",
 			numToExecute:     1,
-			executions:       []string{"gno.land/r/demo/config*EXE*nonexistentFunction*EXE*value"},
+			executions:       "gno.land/r/demo/config*EXE*nonexistentFunction*EXE*value",
 			expectedError:    "handler not found for gno.land/r/demo/config:nonexistentFunction",
 			expectedHasAbort: true,
 		},
 		{
 			name:             "fail - invalid parameter type",
 			numToExecute:     1,
-			executions:       []string{"gno.land/r/demo/config*EXE*setParam*EXE*invalidType"},
+			executions:       "gno.land/r/demo/config*EXE*setParam*EXE*invalidType",
 			expectedError:    "handler not found for gno.land/r/demo/config:setParam",
 			expectedHasAbort: true,
 		},
 		{
 			name:             "fail - unauthorized contract",
 			numToExecute:     1,
-			executions:       []string{"gno.land/r/unauthorized/contract*EXE*setParam*EXE*value"},
+			executions:       "gno.land/r/unauthorized/contract*EXE*setParam*EXE*value",
 			expectedError:    "handler not found for gno.land/r/unauthorized/contract:setParam",
 			expectedHasAbort: true,
 		},
@@ -1204,7 +1200,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 			1,
 			NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
 			governance.NewProposalMetadata("Parameter Change", "Description"),
-			NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"}),
+			NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"),
 			testutils.TestAddress("proposer"),
 			1,
 			time.Now().Add(-time.Hour*24*15).Unix(),
@@ -1329,7 +1325,7 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"}),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -1351,7 +1347,7 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(0, []string{}),
+					NewProposalExecutionData(0, ""),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -1373,7 +1369,7 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 					1,
 					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(1, []string{"gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"}),
+					NewProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),

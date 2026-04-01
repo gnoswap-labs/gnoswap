@@ -592,7 +592,7 @@ func TestValidateExecutions(t *testing.T) {
 	}
 }
 
-func TestSplitExecutionsByMessageSeparator(t *testing.T) {
+func TestSplitExecutionsRaw(t *testing.T) {
 	tests := []struct {
 		name     string
 		raw      string

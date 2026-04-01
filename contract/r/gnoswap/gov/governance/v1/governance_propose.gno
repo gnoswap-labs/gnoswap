@@ -287,8 +287,6 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(err)
 	}
 
-	msgs := splitExecutionsRaw(executions)
-
 	// Create the parameter change proposal with execution data
 	proposal, err := gv.createProposal(
 		governance.ParameterChange,
@@ -296,7 +294,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		maxVotingWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
-		NewProposalExecutionData(numToExecute, msgs),
+		NewProposalExecutionData(numToExecute, executions),
 		callerAddress,
 		gnsBalance,
 		createdAt,
