@@ -235,13 +235,7 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
-	oldAccTime, oldAcc := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
-
-	// skip write if the accumulation hasn't changed at this timestamp
-	if oldAccTime == currentTime && oldAcc.Eq(newAcc) {
-		return newAcc
-	}
 
 	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc)
 	return newAcc
