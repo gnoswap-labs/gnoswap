@@ -13,8 +13,10 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/protocol_fee"
 
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
@@ -90,6 +92,8 @@ func getClaimableRewardByAddress(addr address) {
 
 	// admin can get claimable reward
 	testing.SetRealm(adminRealm)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 
 	previousGovStakerGNSBalance := gns.BalanceOf(govStakerAddr)
 
