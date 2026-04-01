@@ -181,23 +181,9 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 		}
 
 		// Validate hop-to-hop continuity: output token of hop N must equal input token of hop N+1
-		for i := 0; i < len(pools)-1; i++ {
-			_, prevOut, _, pErr := getDataForSinglePathWithError(pools[i])
-			if pErr != nil {
-				return pErr
-			}
-
-			nextIn, _, _, nErr := getDataForSinglePathWithError(pools[i+1])
-			if nErr != nil {
-				return nErr
-			}
-
-			if prevOut != nextIn {
-				return makeErrorWithDetails(
-					errRouteHopDisconnected,
-					ufmt.Sprintf("hop %d output(%s) != hop %d input(%s)", i, prevOut, i+1, nextIn),
-				)
-			}
+		err = validatePoolPathHopContinuity(pools)
+		if err != nil {
+			return err
 		}
 
 		// Get last token from last pool
@@ -225,6 +211,35 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 
 	if lastToken != outputToken {
 		return makeErrorWithDetails(errInvalidRouteLastToken, ufmt.Sprintf("lastToken: %s, outputToken: %s", lastToken, outputToken))
+	}
+
+	return nil
+}
+
+func validatePoolPathHopContinuity(routePoolPaths []string) error {
+	if len(routePoolPaths) < 2 {
+		return nil
+	}
+
+	_, previousOut, _, pErr := getDataForSinglePathWithError(routePoolPaths[0])
+	if pErr != nil {
+		return pErr
+	}
+
+	for i := 1; i < len(routePoolPaths); i++ {
+		nextIn, nextOut, _, nErr := getDataForSinglePathWithError(routePoolPaths[i])
+		if nErr != nil {
+			return nErr
+		}
+
+		if previousOut != nextIn {
+			return makeErrorWithDetails(
+				errRouteHopDisconnected,
+				ufmt.Sprintf("hop %d output(%s) != hop %d input(%s)", i-1, previousOut, i, nextIn),
+			)
+		}
+
+		previousOut = nextOut
 	}
 
 	return nil

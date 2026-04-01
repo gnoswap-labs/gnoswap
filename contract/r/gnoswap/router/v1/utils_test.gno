@@ -483,6 +483,92 @@ func TestValidateRoutePaths(t *testing.T) {
 	}
 }
 
+func TestValidatePoolPathHopContinuity(t *testing.T) {
+	tests := []struct {
+		name        string
+		pools       []string
+		wantError   bool
+		errorSubstr string
+	}{
+		{
+			name:      "nil slice",
+			pools:     nil,
+			wantError: false,
+		},
+		{
+			name:      "empty slice",
+			pools:     []string{},
+			wantError: false,
+		},
+		{
+			name:      "single hop",
+			pools:     []string{"tokenA:tokenB:500"},
+			wantError: false,
+		},
+		{
+			name:      "two hops connected",
+			pools:     []string{"tokenA:tokenB:500", "tokenB:tokenC:3000"},
+			wantError: false,
+		},
+		{
+			name:      "three hops connected",
+			pools:     []string{"tokenA:tokenB:500", "tokenB:tokenC:3000", "tokenC:tokenD:10000"},
+			wantError: false,
+		},
+		{
+			name:        "two hops disconnected",
+			pools:       []string{"tokenA:tokenB:500", "tokenX:tokenC:3000"},
+			wantError:   true,
+			errorSubstr: "route hop disconnected",
+		},
+		{
+			name:        "three hops first gap",
+			pools:       []string{"tokenA:tokenB:500", "tokenX:tokenC:3000", "tokenC:tokenD:10000"},
+			wantError:   true,
+			errorSubstr: "hop 0 output(tokenB) != hop 1 input(tokenX)",
+		},
+		{
+			name:        "three hops second gap",
+			pools:       []string{"tokenA:tokenB:500", "tokenB:tokenC:3000", "tokenX:tokenD:10000"},
+			wantError:   true,
+			errorSubstr: "hop 1 output(tokenC) != hop 2 input(tokenX)",
+		},
+		{
+			name:        "invalid first pool path",
+			pools:       []string{"tokenA:tokenB", "tokenB:tokenC:3000"},
+			wantError:   true,
+			errorSubstr: "invalid pool path",
+		},
+		{
+			name:        "invalid second pool path",
+			pools:       []string{"tokenA:tokenB:500", "tokenB:tokenC"},
+			wantError:   true,
+			errorSubstr: "invalid pool path",
+		},
+		{
+			name:      "tokens with surrounding spaces still connect",
+			pools:     []string{" tokenA : tokenB :500", " tokenB : tokenC :3000"},
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePoolPathHopContinuity(tt.pools)
+
+			if tt.wantError {
+				uassert.True(t, err != nil, "expected error but got none")
+				if tt.errorSubstr != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.errorSubstr),
+						"error should contain: "+tt.errorSubstr+", got: "+err.Error())
+				}
+			} else {
+				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestSafeAddInt64(t *testing.T) {
 	tests := []struct {
 		name        string
