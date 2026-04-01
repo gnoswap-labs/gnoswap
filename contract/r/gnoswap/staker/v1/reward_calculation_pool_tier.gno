@@ -314,7 +314,7 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 
 	if len(halvingTimestamps) == 0 {
 		// No emission change within the range => use current emission.
-		self.applyCache(poolResolver, tierNum, currentTimestamp, self.currentEmission)
+		self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, self.currentEmission)
 		return
 	}
 
@@ -322,15 +322,15 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 	currentEmission := int64(0)
 	for i, hvTimestamp := range halvingTimestamps {
 		currentEmission = halvingEmissions[i]
-		self.applyCache(poolResolver, tierNum, hvTimestamp, currentEmission)
+		self.applyCacheToPool(poolResolver, tierNum, hvTimestamp, currentEmission)
 	}
 
 	// Remaining range [lastTimestamp, currentTimestamp).
-	self.applyCache(poolResolver, tierNum, currentTimestamp, currentEmission)
+	self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, currentEmission)
 }
 
-// applyCache applies the cached reward to all tiered pool.
-func (self *PoolTier) applyCache(poolResolver *PoolResolver, tierNum uint64, currentTimestamp, emissionInThisInterval int64) {
+// applyCacheToPool applies the cached reward to all tiered pool.
+func (self *PoolTier) applyCacheToPool(poolResolver *PoolResolver, tierNum uint64, currentTimestamp, emissionInThisInterval int64) {
 	tierRewards := self.computeTierRewards(emissionInThisInterval)
 	poolReward, ok := tierRewards[tierNum]
 	if !ok {
