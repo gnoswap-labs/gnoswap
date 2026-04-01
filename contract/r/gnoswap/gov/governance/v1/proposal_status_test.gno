@@ -100,13 +100,13 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			expectedStatus:  governance.StatusPassed,
 		},
 		{
-			name:            "Status Passed - tie with quorum reached",
+			name:            "Status Rejected - tie with quorum reached",
 			currentTime:     baseTime.Add(time.Duration(350) * time.Second),
 			maxVotingWeight: 1000,
 			executable:      true,
 			voteYes:         500,
 			voteNo:          500,
-			expectedStatus:  governance.StatusPassed,
+			expectedStatus:  governance.StatusRejected,
 		},
 		{
 			name:            "Status Passed - non-executable proposal",
