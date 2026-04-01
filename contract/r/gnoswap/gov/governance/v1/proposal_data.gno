@@ -6,30 +6,6 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-func splitExecutionsRaw(executions string) []string {
-	if executions == "" {
-		return []string{}
-	}
-
-	return strings.Split(executions, messageSeparator)
-}
-
-func parseExecutionMessage(msg string) (pkgPath string, function string, params []string, partCount int) {
-	parts := strings.Split(msg, parameterSeparator)
-	partCount = len(parts)
-	if partCount != 3 {
-		return "", "", nil, partCount
-	}
-
-	pkgPath = parts[0]
-	function = parts[1]
-	if parts[2] == "" {
-		return pkgPath, function, []string{}, partCount
-	}
-
-	return pkgPath, function, strings.Split(parts[2], ","), partCount
-}
-
 type ProposalMetadataResolver struct {
 	*governance.ProposalMetadata
 }
