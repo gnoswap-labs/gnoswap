@@ -209,15 +209,17 @@ func TestTransferToTarget(t *testing.T) {
 				tt.setup()
 			}
 
+			targets := map[int]int64{tt.target: tt.amount}
 			if tt.shouldAbort {
 				uassert.AbortsWithMessage(t, tt.abortMessage, func() {
-					transferToTarget(tt.target, tt.amount)
+					transferToTarget(targets)
 				})
 
 				return
 			}
 
-			err := transferToTarget(tt.target, tt.amount)
+			applyDistribution(targets)
+			err := transferToTarget(targets)
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
@@ -328,194 +330,6 @@ func setupTestEnv(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 	gns.Transfer(cross, emissionAddr, 1000000)
-}
-
-func TestDistributeToTarget(t *testing.T) {
-	// Initialize test environment
-	resetObject(t)
-
-	// Test case 1: Basic distribution test
-	t.Run("Basic distribution test", func(t *testing.T) {
-		setupTestEnv(t)
-		amount := int64(10000)
-		totalSent, _ := distributeToTarget(amount)
-
-		// Expected distribution amounts
-		expectedStaker := int64(7500)   // 75%
-		expectedDevOps := int64(2000)   // 20%
-		expectedCommunity := int64(500) // 5%
-		expectedGov := int64(0)         // 0%
-
-		// Verify actual distribution amounts
-		if distributedToStaker != expectedStaker {
-			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
-		}
-		if distributedToDevOps != expectedDevOps {
-			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
-		}
-		if distributedToCommunityPool != expectedCommunity {
-			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
-		}
-		if distributedToGovStaker != expectedGov {
-			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
-		}
-
-		// Verify total distribution amount
-		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
-		if totalSent != expectedTotal {
-			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
-		}
-
-		// Verify accumulated distribution amounts
-		if accuDistributedToStaker != expectedStaker {
-			t.Errorf("Staker accumulated distribution amount mismatch: expected %d, got %d", expectedStaker, accuDistributedToStaker)
-		}
-		if accuDistributedToDevOps != expectedDevOps {
-			t.Errorf("DevOps accumulated distribution amount mismatch: expected %d, got %d", expectedDevOps, accuDistributedToDevOps)
-		}
-		if accuDistributedToCommunityPool != expectedCommunity {
-			t.Errorf("Community pool accumulated distribution amount mismatch: expected %d, got %d", expectedCommunity, accuDistributedToCommunityPool)
-		}
-		if accuDistributedToGovStaker != expectedGov {
-			t.Errorf("Governance staker accumulated distribution amount mismatch: expected %d, got %d", expectedGov, accuDistributedToGovStaker)
-		}
-	})
-
-	// Test case 2: Zero amount distribution test
-	t.Run("Zero amount distribution test", func(t *testing.T) {
-		resetObject(t)
-		amount := int64(0)
-		totalSent, _ := distributeToTarget(amount)
-
-		if totalSent != 0 {
-			t.Errorf("Total distribution amount is not 0 for zero amount: %d", totalSent)
-		}
-
-		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 ||
-			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
-			t.Error("All distribution amounts should be 0 for zero amount")
-		}
-	})
-
-	// Test case 3: Large amount distribution test
-	t.Run("Large amount distribution test", func(t *testing.T) {
-		resetObject(t)
-		setupTestEnv(t)
-		amount := int64(1000000)
-
-		totalSent, _ := distributeToTarget(amount)
-
-		// Expected distribution amounts
-		expectedStaker := int64(750000)   // 75%
-		expectedDevOps := int64(200000)   // 20%
-		expectedCommunity := int64(50000) // 5%
-		expectedGov := int64(0)           // 0%
-
-		// Verify actual distribution amounts
-		if distributedToStaker != expectedStaker {
-			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
-		}
-		if distributedToDevOps != expectedDevOps {
-			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
-		}
-		if distributedToCommunityPool != expectedCommunity {
-			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
-		}
-		if distributedToGovStaker != expectedGov {
-			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
-		}
-
-		// Verify total distribution amount
-		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
-		if totalSent != expectedTotal {
-			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
-		}
-
-		// Verify accumulated distribution amounts
-		if accuDistributedToStaker != expectedStaker {
-			t.Errorf("Staker accumulated distribution amount mismatch: expected %d, got %d", expectedStaker, accuDistributedToStaker)
-		}
-		if accuDistributedToDevOps != expectedDevOps {
-			t.Errorf("DevOps accumulated distribution amount mismatch: expected %d, got %d", expectedDevOps, accuDistributedToDevOps)
-		}
-		if accuDistributedToCommunityPool != expectedCommunity {
-			t.Errorf("Community pool accumulated distribution amount mismatch: expected %d, got %d", expectedCommunity, accuDistributedToCommunityPool)
-		}
-		if accuDistributedToGovStaker != expectedGov {
-			t.Errorf("Governance staker accumulated distribution amount mismatch: expected %d, got %d", expectedGov, accuDistributedToGovStaker)
-		}
-	})
-
-	// Test case 4: Negative amount distribution test
-	t.Run("Negative amount distribution test", func(t *testing.T) {
-		resetObject(t)
-		setupTestEnv(t)
-		amount := int64(-10000)
-
-		// Negative amount should cause panic
-		uassert.PanicsWithMessage(t, "invalid amount or bptPct", func() {
-			distributeToTarget(amount)
-		})
-
-		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 ||
-			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
-			t.Error("All distribution amounts should be 0 for negative amount")
-		}
-	})
-
-	// Test case 5: Maximum value distribution test
-	t.Run("Maximum value distribution test", func(t *testing.T) {
-		resetObject(t)
-		setupTestEnv(t)
-		amount := int64(9223372036854775807) // int64 maximum value
-
-		// Maximum value should cause panic
-		uassert.PanicsWithMessage(t, "amount too large, would cause overflow", func() {
-			distributeToTarget(amount)
-		})
-
-		// Verify all distribution amounts are 0
-		if distributedToStaker != 0 || distributedToDevOps != 0 ||
-			distributedToCommunityPool != 0 || distributedToGovStaker != 0 {
-			t.Error("All distribution amounts should be 0 for maximum value")
-		}
-	})
-
-	// Test case 6: Decimal amount distribution test
-	t.Run("Decimal amount distribution test", func(t *testing.T) {
-		resetObject(t)
-		setupTestEnv(t)
-		amount := int64(10001) // Amount with decimal point (e.g., 10000.1)
-		totalSent, _ := distributeToTarget(amount)
-
-		// Expected distribution amounts (decimal part is truncated)
-		expectedStaker := int64(7500)   // 75%
-		expectedDevOps := int64(2000)   // 20%
-		expectedCommunity := int64(500) // 5%
-		expectedGov := int64(0)         // 0%
-
-		// Verify actual distribution amounts
-		if distributedToStaker != expectedStaker {
-			t.Errorf("Staker distribution amount mismatch: expected %d, got %d", expectedStaker, distributedToStaker)
-		}
-		if distributedToDevOps != expectedDevOps {
-			t.Errorf("DevOps distribution amount mismatch: expected %d, got %d", expectedDevOps, distributedToDevOps)
-		}
-		if distributedToCommunityPool != expectedCommunity {
-			t.Errorf("Community pool distribution amount mismatch: expected %d, got %d", expectedCommunity, distributedToCommunityPool)
-		}
-		if distributedToGovStaker != expectedGov {
-			t.Errorf("Governance staker distribution amount mismatch: expected %d, got %d", expectedGov, distributedToGovStaker)
-		}
-
-		// Verify total distribution amount
-		expectedTotal := expectedStaker + expectedDevOps + expectedCommunity + expectedGov
-		if totalSent != expectedTotal {
-			t.Errorf("Total distribution amount mismatch: expected %d, got %d", expectedTotal, totalSent)
-		}
-	})
 }
 
 func TestCalculateAmount_Panic(t *testing.T) {
@@ -860,7 +674,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 				setup: func() {
 					resetObject(t)
 					setupTestEnv(t)
-					distributeToTarget(10000)
+					distributable, _ := calculateDistributableAmounts(10000)
+					applyDistribution(distributable)
+					transferToTarget(distributable)
 				},
 				want: 7500,
 			},
@@ -869,7 +685,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 				setup: func() {
 					resetObject(t)
 					setupTestEnv(t)
-					distributeToTarget(10000)
+					distributable, _ := calculateDistributableAmounts(10000)
+					applyDistribution(distributable)
+					transferToTarget(distributable)
 					testing.SetRealm(stakerRealm)
 					ClearDistributedToStaker(cross)
 				},
@@ -907,7 +725,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 				setup: func() {
 					resetObject(t)
 					setupTestEnv(t)
-					distributeToTarget(10000)
+					distributable, _ := calculateDistributableAmounts(10000)
+					applyDistribution(distributable)
+					transferToTarget(distributable)
 				},
 				want: 2000,
 			},
@@ -943,7 +763,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 				setup: func() {
 					resetObject(t)
 					setupTestEnv(t)
-					distributeToTarget(10000)
+					distributable, _ := calculateDistributableAmounts(10000)
+					applyDistribution(distributable)
+					transferToTarget(distributable)
 				},
 				want: 500,
 			},
@@ -981,7 +803,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					setupTestEnv(t)
 					testing.SetRealm(adminRealm)
 					ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
-					distributeToTarget(10000)
+					distributable, _ := calculateDistributableAmounts(10000)
+					applyDistribution(distributable)
+					transferToTarget(distributable)
 					testing.SetRealm(govStakerRealm)
 					ClearDistributedToGovStaker(cross)
 				},
@@ -1008,7 +832,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		setupTestEnv(t)
 
 		// First distribution
-		distributeToTarget(10000)
+		distributable, _ := calculateDistributableAmounts(10000)
+		applyDistribution(distributable)
+		transferToTarget(distributable)
 
 		// Verify accumulated amounts
 		uassert.Equal(t, int64(7500), GetAccuDistributedToStaker())
@@ -1023,7 +849,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		// Second distribution
 		testing.SetRealm(adminRealm)
 		gns.Transfer(cross, emissionAddr, 1000000)
-		distributeToTarget(10000)
+		distributable2, _ := calculateDistributableAmounts(10000)
+		applyDistribution(distributable2)
+		transferToTarget(distributable2)
 
 		// Verify accumulated amounts increased
 		uassert.Equal(t, int64(15000), GetAccuDistributedToStaker())
@@ -1185,7 +1013,10 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 					distributionBpsPct[GOV_STAKER] = tt.pctGovStaker
 				}
 
-				totalSent, err := distributeToTarget(tt.amountToDistribute)
+				distributable, leftAmt := calculateDistributableAmounts(tt.amountToDistribute)
+				totalSent := tt.amountToDistribute - leftAmt
+				applyDistribution(distributable)
+				err := transferToTarget(distributable)
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedTotalSent, totalSent)
 				uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)
@@ -1362,7 +1193,10 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 
-					totalSent, err := distributeToTarget(tt.amountToDistribute)
+					distributable, leftAmt := calculateDistributableAmounts(tt.amountToDistribute)
+					totalSent := tt.amountToDistribute - leftAmt
+					applyDistribution(distributable)
+					err := transferToTarget(distributable)
 					uassert.NoError(t, err)
 					uassert.Equal(t, tt.expectedTotalSent, totalSent)
 					uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)

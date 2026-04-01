@@ -478,118 +478,6 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 	}
 }
 
-// TestDistributeToTarget_SafeMath tests safe math in distributeToTarget function
-func TestDistributeToTarget_SafeMath(t *testing.T) {
-	tests := []struct {
-		name                 string
-		description          string
-		initialDistribution  int64
-		amountToDistribute   int64
-		pct01                int64
-		pct02                int64
-		pct03                int64
-		pct04                int64
-		expectedTotalSent    int64
-		expectedShouldPanic  bool
-		expectedPanicMessage string
-		skipDueToSetupLimit  bool
-	}{
-		{
-			name:                "normal distribution with standard percentages",
-			description:         "75% staker, 20% devops, 5% community pool, 0% gov staker",
-			initialDistribution: 0,
-			amountToDistribute:  1000,
-			pct01:               7500,
-			pct02:               2000,
-			pct03:               500,
-			pct04:               0,
-			expectedTotalSent:   1000,
-			expectedShouldPanic: false,
-		},
-		{
-			name:                "distribution with all equal percentages",
-			description:         "25% each for all four targets",
-			initialDistribution: 0,
-			amountToDistribute:  1000,
-			pct01:               2500,
-			pct02:               2500,
-			pct03:               2500,
-			pct04:               2500,
-			expectedTotalSent:   1000,
-			expectedShouldPanic: false,
-		},
-		{
-			name:                "zero amount distribution",
-			description:         "distributing zero should result in zero sent",
-			initialDistribution: 0,
-			amountToDistribute:  0,
-			pct01:               7500,
-			pct02:               2000,
-			pct03:               500,
-			pct04:               0,
-			expectedTotalSent:   0,
-			expectedShouldPanic: false,
-		},
-		{
-			name:                "small amount with rounding",
-			description:         "small amount results in truncation: 10*75%=7, 10*20%=2, 10*5%=0, total=9",
-			initialDistribution: 0,
-			amountToDistribute:  10,
-			pct01:               7500,
-			pct02:               2000,
-			pct03:               500,
-			pct04:               0,
-			expectedTotalSent:   9, // 7+2+0+0=9 due to integer division truncation
-			expectedShouldPanic: false,
-		},
-		{
-			name:                 "large amount near int64 boundary - overflow protection",
-			description:          "test that overflow is caught for extremely large amounts",
-			initialDistribution:  0,
-			amountToDistribute:   math.MaxInt64,
-			pct01:                10000,
-			pct02:                0,
-			pct03:                0,
-			pct04:                0,
-			expectedTotalSent:    0,
-			expectedShouldPanic:  true,
-			expectedPanicMessage: "amount too large, would cause overflow",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.skipDueToSetupLimit {
-				t.Skip("Skipping due to setup limitations")
-				return
-			}
-
-			resetObject(t)
-
-			// Setup balance for emission address (reasonable test amount)
-			emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
-			testing.SetRealm(adminRealm)
-			gns.Transfer(cross, emissionAddr, 1000000) // 1M GNS for tests
-
-			// Setup distribution percentages
-			distributionBpsPct[1] = tt.pct01
-			distributionBpsPct[2] = tt.pct02
-			distributionBpsPct[3] = tt.pct03
-			distributionBpsPct[4] = tt.pct04
-
-			if tt.expectedShouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					distributeToTarget(tt.amountToDistribute)
-				})
-			} else {
-				totalSent, err := distributeToTarget(tt.amountToDistribute)
-				uassert.NoError(t, err)
-				uassert.Equal(t, tt.expectedTotalSent, totalSent)
-			}
-		})
-	}
-}
-
 // TestTransferToTarget_CEIPattern tests the Checks-Effects-Interactions pattern
 // This verifies that state is updated BEFORE external calls (gns.Transfer)
 func TestTransferToTarget_CEIPattern(t *testing.T) {
@@ -727,7 +615,9 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 
 			transferToTargetFunc := func(cur realm) error {
 				testing.SetRealm(testing.NewUserRealm(emissionAddr))
-				return transferToTarget(tt.target, tt.amount)
+				targets := map[int]int64{tt.target: tt.amount}
+				applyDistribution(targets)
+				return transferToTarget(targets)
 			}
 
 			if !tt.setupBalance {
@@ -869,11 +759,10 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMessage, func() {
-					transferToTarget(tt.target, tt.amountToAdd)
+					applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
 				})
 			} else {
-				err := transferToTarget(tt.target, tt.amountToAdd)
-				uassert.NoError(t, err)
+				applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
 
 				// Verify final state
 				switch tt.target {

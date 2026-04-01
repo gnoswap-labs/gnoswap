@@ -68,5 +68,5 @@ func GetDistributableAmount(amount, timestamp int64) (map[int]int64, int64) {
 		return make(map[int]int64), amount
 	}
 
-	return calculateDistributableAmounts(amount, distributionBpsPct)
+	return calculateDistributableAmounts(amount)
 }
