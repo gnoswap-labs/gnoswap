@@ -432,6 +432,224 @@ func TestApplyCacheToAllPools(t *testing.T) {
 	}
 }
 
+func TestApplyCacheToPool(t *testing.T) {
+	tests := []struct {
+		name                  string
+		tierRatio             sr.TierRatio
+		counts                [AllTierCount]uint64
+		tierNum               uint64
+		currentTimestamp      int64
+		emission              int64
+		expectedRewardAtQuery int64
+	}{
+		{
+			// case: tier has active members
+			// expect: reward cache updated with computed per-pool emission.
+			name:                  "tier with count caches reward",
+			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			counts:                [AllTierCount]uint64{0, 1, 0, 0},
+			tierNum:               1,
+			currentTimestamp:      1010,
+			emission:              700,
+			expectedRewardAtQuery: 700,
+		},
+		{
+			// case: requested tier has zero pool count
+			// expect: no reward cache write.
+			name:                  "tier without count is no-op",
+			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			counts:                [AllTierCount]uint64{0, 1, 0, 0},
+			tierNum:               2,
+			currentTimestamp:      1020,
+			emission:              999,
+			expectedRewardAtQuery: 0,
+		},
+		{
+			// case: emission is zero
+			// expect: cached reward becomes zero without panic.
+			name:                  "zero emission still caches zero",
+			tierRatio:             sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+			counts:                [AllTierCount]uint64{0, 1, 0, 0},
+			tierNum:               1,
+			currentTimestamp:      1030,
+			emission:              0,
+			expectedRewardAtQuery: 0,
+		},
+		{
+			// case: non-trivial ratio/count on tier 3
+			// expect: reward follows ratio/count division.
+			name:                  "tier 3 reward uses tier ratio and count",
+			tierRatio:             sr.TierRatio{Tier1: 50, Tier2: 30, Tier3: 20},
+			counts:                [AllTierCount]uint64{0, 1, 1, 2},
+			tierNum:               3,
+			currentTimestamp:      1040,
+			emission:              1000,
+			expectedRewardAtQuery: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			currentTime := int64(1000)
+			poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
+			pool := sr.NewPool(poolPath, currentTime)
+			poolResolver := NewPoolResolver(pool)
+
+			poolTier := &PoolTier{
+				tierRatio: tt.tierRatio,
+				counts:    tt.counts,
+			}
+
+			poolTier.applyCacheToPool(poolResolver, tt.tierNum, tt.currentTimestamp, tt.emission)
+			uassert.Equal(t, tt.expectedRewardAtQuery, poolResolver.CurrentReward(tt.currentTimestamp))
+		})
+	}
+}
+
+func TestCacheRewardForPool(t *testing.T) {
+	tests := []struct {
+		name               string
+		addPool            bool
+		addMembership      bool
+		lastCacheTs        int64
+		initialEmission    int64
+		prewarmPoolCacheAt []int64
+		halvingTimestamps  []int64
+		halvingEmissions   []int64
+		currentTimestamp   int64
+		expectedLastReward int64
+		expectedHasTs1010  *bool
+		expectedHasTs1020  *bool
+		expectedHasFinalTs *bool
+	}{
+		{
+			// case: multiple halving points in range
+			// expect: boundary caches created and final reward equals last halving emission.
+			name:               "cache across halving boundaries",
+			addPool:            true,
+			addMembership:      true,
+			lastCacheTs:        1000,
+			initialEmission:    1000,
+			halvingTimestamps:  []int64{1010, 1020},
+			halvingEmissions:   []int64{900, 800},
+			currentTimestamp:   1030,
+			expectedLastReward: 800,
+			expectedHasTs1010:  boolPtr(true),
+			expectedHasTs1020:  boolPtr(true),
+			expectedHasFinalTs: boolPtr(false),
+		},
+		{
+			// case: target pool missing from storage
+			// expect: function exits silently with no mutation.
+			name:               "pool not found no-op",
+			addPool:            false,
+			addMembership:      true,
+			lastCacheTs:        1000,
+			initialEmission:    1000,
+			halvingTimestamps:  []int64{1010},
+			halvingEmissions:   []int64{900},
+			currentTimestamp:   1030,
+			expectedLastReward: 0,
+		},
+		{
+			// case: pool exists but has no tier membership
+			// expect: no internal reward cache updates.
+			name:               "pool not in tier no-op",
+			addPool:            true,
+			addMembership:      false,
+			lastCacheTs:        1000,
+			initialEmission:    1000,
+			halvingTimestamps:  []int64{1010},
+			halvingEmissions:   []int64{900},
+			currentTimestamp:   1030,
+			expectedLastReward: 0,
+			expectedHasTs1010:  boolPtr(false),
+		},
+		{
+			// case: no forward time progress
+			// expect: skip caching and preserve existing entries.
+			name:               "current timestamp equals last cache no-op",
+			addPool:            true,
+			addMembership:      true,
+			lastCacheTs:        1000,
+			initialEmission:    1000,
+			prewarmPoolCacheAt: []int64{1030},
+			halvingTimestamps:  []int64{1010},
+			halvingEmissions:   []int64{900},
+			currentTimestamp:   1030,
+			expectedLastReward: 0,
+			expectedHasTs1010:  boolPtr(false),
+			expectedHasFinalTs: boolPtr(true),
+		},
+		{
+			// case: interval without halving events
+			// expect: single cache application with current emission.
+			name:               "no halving uses current emission once",
+			addPool:            true,
+			addMembership:      true,
+			lastCacheTs:        1000,
+			initialEmission:    555,
+			halvingTimestamps:  nil,
+			halvingEmissions:   nil,
+			currentTimestamp:   1030,
+			expectedLastReward: 555,
+			expectedHasFinalTs: boolPtr(true),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			currentTime := int64(1000)
+			poolPath := pl.GetPoolPath("gno.land/r/test/token1", "gno.land/r/test/token2", 3000)
+			pools := NewPools()
+			var pool *sr.Pool
+			if tt.addPool {
+				pool = sr.NewPool(poolPath, currentTime)
+				pools.set(poolPath, pool)
+				for _, ts := range tt.prewarmPoolCacheAt {
+					pool.RewardCache().Set(ts, int64(0))
+				}
+			}
+
+			poolTier := NewPoolTierBy(
+				avl.NewTree(),
+				sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+				[AllTierCount]uint64{0, 1, 0, 0},
+				tt.lastCacheTs,
+				tt.initialEmission,
+				func() int64 { return tt.initialEmission },
+				func(start, end int64) ([]int64, []int64) {
+					return tt.halvingTimestamps, tt.halvingEmissions
+				},
+			)
+			if tt.addMembership {
+				poolTier.membership.Set(poolPath, uint64(1))
+			}
+
+			poolTier.cacheRewardForPool(tt.currentTimestamp, pools, poolPath)
+
+			if !tt.addPool {
+				return
+			}
+			poolResolver := NewPoolResolver(pool)
+			uassert.Equal(t, tt.expectedLastReward, poolResolver.CurrentReward(tt.currentTimestamp))
+			if tt.expectedHasTs1010 != nil {
+				uassert.Equal(t, *tt.expectedHasTs1010, pool.RewardCache().Has(1010))
+			}
+			if tt.expectedHasTs1020 != nil {
+				uassert.Equal(t, *tt.expectedHasTs1020, pool.RewardCache().Has(1020))
+			}
+			if tt.expectedHasFinalTs != nil {
+				uassert.Equal(t, *tt.expectedHasFinalTs, pool.RewardCache().Has(tt.currentTimestamp))
+			}
+		})
+	}
+}
+
+func boolPtr(v bool) *bool {
+	return &v
+}
+
 // Test calculatePoolReward function with various edge cases
 func TestCalculatePoolReward(t *testing.T) {
 	tests := []struct {
