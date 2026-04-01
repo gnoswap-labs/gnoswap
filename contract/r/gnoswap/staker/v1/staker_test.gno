@@ -600,7 +600,7 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 	)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	// Create deposit (simulating StakeToken)
 	warmups := sr.DefaultWarmupTemplate()

@@ -543,7 +543,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 		self.global.pools.set(targetPoolPath, pl)
 	}
 	plResolver := NewPoolResolver(pl)
-	plResolver.IncentivesResolver().create(creator, incentive)
+	plResolver.IncentivesResolver().create(incentive)
 
 	return incentive.IncentiveId()
 }

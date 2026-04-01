@@ -76,7 +76,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 
 			// add incentive
 			poolResolver := NewPoolResolver(pool)
-			poolResolver.IncentivesResolver().create(creator, incentive)
+			poolResolver.IncentivesResolver().create(incentive)
 
 			// verify incentive was created
 			ictv, exists := poolResolver.IncentivesResolver().Get(incentive.IncentiveId())
@@ -195,7 +195,7 @@ func TestEndExternalIncentive(t *testing.T) {
 
 			// Add incentive to pool
 			poolResolver := NewPoolResolver(pool)
-			poolResolver.IncentivesResolver().create(creator, incentive)
+			poolResolver.IncentivesResolver().create(incentive)
 
 			skipBlocks := (endTime-startTime)/5 + tt.endTimeOffset
 			testing.SkipHeights(skipBlocks)
@@ -300,11 +300,11 @@ func TestEndExternalIncentiveInternal(t *testing.T) {
 
 			// Add incentive to pool
 			poolResolver := NewPoolResolver(pool)
-			poolResolver.IncentivesResolver().create(creator, incentive)
+			poolResolver.IncentivesResolver().create(incentive)
 
 			// Reset incentive for each test
 			incentive.SetRefunded(false)
-			poolResolver.IncentivesResolver().update(creator, incentive)
+			poolResolver.IncentivesResolver().update(incentive)
 
 			// Get incentiveResolver for the test
 			incentiveResolver, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
@@ -631,7 +631,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 
 		// Add to pool
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.IncentivesResolver().create(creator, incentive)
+		poolResolver.IncentivesResolver().create(incentive)
 
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
@@ -760,7 +760,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		externalIncentives.Set(incentiveId, incentive)
 
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.IncentivesResolver().create(creator, incentive)
+		poolResolver.IncentivesResolver().create(incentive)
 
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
@@ -895,7 +895,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		externalIncentives.Set(incentiveId, incentive)
 
 		poolResolver := NewPoolResolver(pools[i])
-		poolResolver.IncentivesResolver().create(creator, incentive)
+		poolResolver.IncentivesResolver().create(incentive)
 
 		// Add to time-based index (2-level structure)
 		var incentivesByTime *sr.UintTree
@@ -1068,7 +1068,7 @@ func TestLazySync_MultipleConcurrentIncentives(t *testing.T) {
 		externalIncentives.Set(incentiveId, incentive)
 
 		// Add to pool
-		poolResolver.IncentivesResolver().create(creator, incentive)
+		poolResolver.IncentivesResolver().create(incentive)
 	}
 
 	// Create deposit
@@ -1219,7 +1219,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	warmups := []sr.Warmup{
 		{
@@ -1338,7 +1338,7 @@ func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
 	)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
 	s.getDeposits().set(1, deposit)
@@ -1412,7 +1412,7 @@ func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
 	)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	// Create deposit
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -887220, 887220, []sr.Warmup{})
@@ -1478,7 +1478,7 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
 	)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(creator, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
 	s.getDeposits().set(1, deposit)
