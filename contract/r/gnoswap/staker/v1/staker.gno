@@ -529,6 +529,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
+		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
 		incentiveResolver.addDistributedRewardAmount(rewardAmount)
