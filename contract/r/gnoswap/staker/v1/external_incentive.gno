@@ -95,7 +95,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	externalIncentives.Set(incentiveId, incentive)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(caller, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	// add incentive to time-based index for lazy discovery during CollectReward
 	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
