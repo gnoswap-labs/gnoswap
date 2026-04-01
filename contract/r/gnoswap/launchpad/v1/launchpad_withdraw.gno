@@ -39,11 +39,20 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	// Collect reward before withdrawal
+	// Collect reward state before any transfers (CEI: Effects before Interactions)
 	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
+
+	// Mark deposit as withdrawn before any external calls (CEI: Effects before Interactions)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// Cross-realm governance update before token transfers
+	unStakeGovernance(recipient, withdrawalAmount)
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
@@ -57,13 +66,6 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 			"amount", formatInt(rewardAmount),
 		)
 	}
-
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	unStakeGovernance(recipient, withdrawalAmount)
 
 	// Transfer the original GNS deposit back to the depositor
 	common.SafeGRC20Transfer(cross, GNS_PATH, deposit.Depositor(), withdrawalAmount)
