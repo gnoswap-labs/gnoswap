@@ -16,9 +16,9 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
+	"gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -1292,11 +1292,11 @@ func TestStakerDelegate_registerReferrer(t *testing.T) {
 func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	tests := []struct {
 		name             string
-		delegationCounts []int          // number of delegations to create
-		amounts          [][]int64      // amounts for each delegation's withdrawals
-		lockupPeriods    []int64        // lockup period for each delegation
-		waitTime         int64          // time to wait before collecting
-		expectedTotal    int64          // expected total collected amount
+		delegationCounts []int     // number of delegations to create
+		amounts          [][]int64 // amounts for each delegation's withdrawals
+		lockupPeriods    []int64   // lockup period for each delegation
+		waitTime         int64     // time to wait before collecting
+		expectedTotal    int64     // expected total collected amount
 		description      string
 	}{
 		{

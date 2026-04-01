@@ -66,6 +66,7 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			gns.Transfer(cross, launchpadAddr, 1000000000)
+			obl.Transfer(cross, launchpadAddr, 1000000000)
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 			testing.SkipHeights(60*60*24*180/5 + 2)
@@ -124,6 +125,7 @@ func TestEmergencyHaltAllowsCollectDepositGns(t *testing.T) {
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, launchpadAddr, 1000000000)
+	obl.Transfer(cross, launchpadAddr, 1000000000)
 	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
 	defer func() {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))

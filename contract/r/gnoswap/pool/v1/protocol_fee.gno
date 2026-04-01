@@ -39,7 +39,6 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 
 	// only position contract can call this function
