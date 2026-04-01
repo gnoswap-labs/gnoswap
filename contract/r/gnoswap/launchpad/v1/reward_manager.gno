@@ -82,7 +82,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 		claimableTime = r.DistributeEndTime()
 	}
 
-	rewardState := newRewardState(
+	rewardState := launchpad.NewRewardState(
 		r.AccumulatedRewardPerDepositX128(),
 		deposit.DepositAmount(),
 		deposit.CreatedAt(),

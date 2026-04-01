@@ -58,7 +58,7 @@ func calculateClaimableReward(r *launchpad.RewardState, accumRewardPerDepositX12
 }
 
 // NewRewardState returns a pointer to a new RewardState with the given values.
-func newRewardState(
+func launchpad.NewRewardState(
 	accumulatedRewardPerDepositX128 *u256.Uint,
 	depositAmount,
 	distributeStartTime,
