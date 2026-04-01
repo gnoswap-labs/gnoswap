@@ -175,12 +175,11 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 }
 
 // validateParameterChange validates parameter change proposal data.
-// Performs basic structural validation of the parameter change data.
-// Note: Handler existence validation is performed separately by validateExecutions
-// during proposal creation to ensure the target functions are registered.
+// Delegates to validateExecutions for full validation including count checks,
+// message format, handler existence, and parameter type validation.
 //
 // Returns:
-//   - error: validation error if parameter change data structure is invalid
+//   - error: validation error if parameter change data is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
 	if execution == nil {
@@ -189,42 +188,7 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 			"execution info is missing",
 		)
 	}
-	num := execution.Num()
-	msgs := execution.Msgs()
-
-	// Validate execution count is positive
-	if num <= 0 {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"numToExecute is less than or equal to 0",
-		)
-	}
-
-	// Validate execution messages are provided
-	if len(msgs) == 0 {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"executions is empty",
-		)
-	}
-
-	// Validate execution count doesn't exceed maximum
-	if num > maxNumberOfExecution {
-		return makeErrorWithDetails(errInvalidInput, "numToExecute is greater than 10")
-	}
-
-	// Validate execution count matches message count
-	if len(msgs) != int(num) {
-		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
-	}
-
-	// Validate parameter change message format
-	parameterChangesInfos := r.ParameterChangesInfos()
-	if len(parameterChangesInfos) != int(num) {
-		return makeErrorWithDetails(errInvalidInput, "invalid parameter change info")
-	}
-
-	return nil
+	return validateExecutions(execution.Num(), execution.Msgs())
 }
 
 // ParameterChangesInfos parses the execution messages and returns structured parameter change information.

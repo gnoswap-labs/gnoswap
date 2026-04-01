@@ -289,11 +289,6 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	msgs := splitExecutionsRaw(executions)
 
-	// Validate executions before creating proposal to fail fast on invalid handlers
-	if err := validateExecutions(numToExecute, msgs); err != nil {
-		panic(err)
-	}
-
 	// Create the parameter change proposal with execution data
 	proposal, err := gv.createProposal(
 		governance.ParameterChange,
