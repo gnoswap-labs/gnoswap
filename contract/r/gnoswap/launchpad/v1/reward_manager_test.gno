@@ -30,7 +30,7 @@ func TestRewardManager_IsInitialized(t *testing.T) {
 		{
 			name: "is initialized return true when rewards exist",
 			rewardStates: map[string]*launchpad.RewardState{
-				"test": newRewardState(u256.Zero(), 1000, 100, 200, 0),
+				"test": launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, 0),
 			},
 			expectedResult:   true,
 			expectedHasError: false,
@@ -2069,7 +2069,7 @@ func TestRewardManager_addRewardState(t *testing.T) {
 				2000,
 			)
 
-			rewardState := newRewardState(
+			rewardState := launchpad.NewRewardState(
 				u256.NewUint(1000),
 				tt.rewardAmount,
 				1000,

@@ -18,8 +18,6 @@ const (
 	defaultUnstakingFee = int64(100) // 1%
 )
 
-var defaultAllowedTokens = []string{GNS_PATH, WUGNOT_PATH}
-
 func init() {
 	registerStakerV1()
 }
@@ -84,6 +82,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasAllowedTokensStoreKey() {
+		defaultAllowedTokens := []string{GNS_PATH, WUGNOT_PATH}
+
 		err := stakerStore.SetAllowedTokens(defaultAllowedTokens)
 		if err != nil {
 			return err

@@ -53,10 +53,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddD
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   7101677'
 
-# ExistsUserSendCoins
-gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func ExistsUserSendCoins -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1589188'
-
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/commongas"
 gno = "0.9"
@@ -128,10 +124,6 @@ func LiquidityMathAddDelta(cur realm) {
 	y := i256.MustFromDecimal("500000")
 
 	common.LiquidityMathAddDelta(x, y)
-}
-
-func ExistsUserSendCoins(cur realm) {
-	common.ExistsUserSendCoins()
 }
 
 func Empty(cur realm) {
