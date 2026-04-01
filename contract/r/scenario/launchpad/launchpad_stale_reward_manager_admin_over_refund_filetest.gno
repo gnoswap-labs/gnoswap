@@ -107,6 +107,11 @@ func main() {
 	println("[EXPECTED] Admin refunds ~900,000,000 OBL (tiers 90+180 with no depositors)")
 	ufmt.Printf("[EXPECTED] Admin refunded %d OBL, launchpad retains %d OBL for Alice\n", adminRefunded, launchpadBalanceAfter)
 	println("[EXPECTED] Depositor rewards are correctly preserved in the launchpad")
+	println()
+
+	println("[SCENARIO] 8. Collect reward for Alice")
+	collectReward(aliceAddr)
+	println()
 }
 
 func createOBLProject() {
@@ -118,9 +123,9 @@ func createOBLProject() {
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)  // 100,000,000 OBL
-	tier90Ratio := int64(20)  // 200,000,000 OBL
-	tier180Ratio := int64(70) // 700,000,000 OBL
+	tier30Ratio := int64(10)                       // 100,000,000 OBL
+	tier90Ratio := int64(20)                       // 200,000,000 OBL
+	tier180Ratio := int64(70)                      // 700,000,000 OBL
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")
@@ -188,6 +193,21 @@ func transferRemainingRewards(projectId string) {
 	ufmt.Printf("[INFO] OBL transferred to recipient: %d\n", recipientBalanceAfter-recipientBalanceBefore)
 }
 
+func collectReward(addr address) {
+	println("[INFO] Collecting reward for address:", addr)
+	testing.SetRealm(testing.NewUserRealm(addr))
+
+	depositId := "1"
+
+	beforeOblBalance := obl.BalanceOf(addr)
+	ufmt.Printf("[INFO] OBL balance before: %d\n", beforeOblBalance)
+
+	rewardAmount := launchpad.CollectRewardByDepositId(cross, depositId)
+	afterOblBalance := obl.BalanceOf(addr)
+	ufmt.Printf("[INFO] OBL balance after: %d\n", afterOblBalance)
+	ufmt.Printf("[INFO] Reward collected: %d\n", rewardAmount)
+}
+
 // Output:
 // [SCENARIO] Reward manager update before admin refund
 // [INFO] When TransferLeftFromProjectByAdmin is called,
@@ -242,3 +262,9 @@ func transferRemainingRewards(projectId string) {
 // [EXPECTED] Admin refunds ~900,000,000 OBL (tiers 90+180 with no depositors)
 // [EXPECTED] Admin refunded 900000001 OBL, launchpad retains 99999999 OBL for Alice
 // [EXPECTED] Depositor rewards are correctly preserved in the launchpad
+//
+// [SCENARIO] 8. Collect reward for Alice
+// [INFO] Collecting reward for address: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
+// [INFO] OBL balance before: 0
+// [INFO] OBL balance after: 99999999
+// [INFO] Reward collected: 99999999
