@@ -938,8 +938,8 @@ func uint8RangeValidator(name string) paramValidator {
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
-//   - executions: raw execution string containing messages separated by *GOV*,
-//     where each message is formatted as <pkgPath>*EXE*<function>*EXE*<params>
+//   - msgs: pre-split slice of execution messages, where each message
+//     is formatted as <pkgPath>*EXE*<function>*EXE*<params>
 //
 // Returns:
 //   - error: validation error if any execution is invalid
