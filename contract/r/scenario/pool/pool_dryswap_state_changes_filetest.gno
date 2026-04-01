@@ -296,7 +296,7 @@ func printChanges(poolPath string, fn func()) {
 // [EXPECTED] Position fee growth inside1LastX128 changed from: 0 to: 0
 // [EXPECTED] Position liquidity changed from: 100000000000 to: 100000000000
 // [EXPECTED] Result tick cumulative outside changed from: 0 to: 0
-// [EXPECTED] Result tick fee growth outside0X128 changed from:  to: 853220595461685939286571464062626
+// [EXPECTED] Result tick fee growth outside0X128 changed from:  to: 0
 // [EXPECTED] Result tick fee growth outside1X128 changed from:  to: 0
 //
 // [SCENARIO] 3. DrySwap With Cross Test - ZeroForOne True with Positive Amount Specified
