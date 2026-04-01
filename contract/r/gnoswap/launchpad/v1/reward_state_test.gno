@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	"gno.land/r/gnoswap/launchpad"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -42,7 +44,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			state := newRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
+			state := launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
 
 			// Execute
 			result := isRewardStateClaimable(state, tt.currentHeight)
@@ -120,7 +122,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			state := newRewardState(u256.Zero().Lsh(tt.priceDebt, 128), tt.depositAmount, 100, 200, 100)
+			state := launchpad.NewRewardState(u256.Zero().Lsh(tt.priceDebt, 128), tt.depositAmount, 100, 200, 100)
 			state.SetClaimedAmount(tt.claimedAmount)
 
 			// Execute
@@ -162,7 +164,7 @@ func TestRewardState_newRewardState(t *testing.T) {
 			// Setup
 			accumulatedRewardPerDepositX128 := u256.Zero().Lsh(tt.priceDebt, 128)
 			// Execute
-			state := newRewardState(
+			state := launchpad.NewRewardState(
 				accumulatedRewardPerDepositX128,
 				tt.depositAmount,
 				tt.distributeStartTime,
