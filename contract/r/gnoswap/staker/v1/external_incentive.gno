@@ -193,12 +193,12 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	// through the `endExternalIncentive` function will be blocked.
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
-	incentivesResolver.update(incentive.Creator(), incentive)
+	incentivesResolver.update(incentive)
 
-	// refund reward token to creator
+	// refund reward token to refundee
 	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, refund)
 
-	// Transfer GNS deposit back to creator
+	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, refundAddress, incentiveResolver.DepositGnsAmount())
 
 	previousRealm := runtime.PreviousRealm()
