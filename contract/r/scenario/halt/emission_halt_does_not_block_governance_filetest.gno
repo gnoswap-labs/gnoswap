@@ -211,8 +211,8 @@ func voteOnProposalWithEmissionHalted() {
 
 	// Bob votes
 	testing.SetRealm(bobRealm)
-	governance.Vote(cross, proposalId, false)
-	println("[EXPECTED] Bob voted NO successfully despite emission halt")
+	governance.Vote(cross, proposalId, true)
+	println("[EXPECTED] Bob voted YES successfully despite emission halt")
 
 	// Check voting results
 	yea, _ := governance.GetYeaByProposalId(proposalId)
@@ -305,8 +305,8 @@ func resetProposalVotesWithEmissionHalted() {
 // [SCENARIO] 6. Vote on proposal with emission halted
 // [INFO] Voting on proposal with emission HALTED...
 // [EXPECTED] Alice voted YES successfully despite emission halt
-// [EXPECTED] Bob voted NO successfully despite emission halt
-// [INFO] Vote status - Yea: 500000000, Nay: 500000000
+// [EXPECTED] Bob voted YES successfully despite emission halt
+// [INFO] Vote status - Yea: 1000000000, Nay: 0
 // [SUCCESS] Governance voting not blocked by emission halt
 //
 // [SCENARIO] 7. Execute proposal with emission halted
