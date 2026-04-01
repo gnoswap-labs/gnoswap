@@ -43,12 +43,12 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			expectedPassed:  false,
 		},
 		{
-			name:            "Equal votes with quorum passes",
+			name:            "Equal votes with quorum are rejected",
 			maxVotingWeight: 1000,
 			quorum:          60,
 			yesVotes:        300,
 			noVotes:         300,
-			expectedPassed:  true,
+			expectedPassed:  false,
 		},
 		{
 			name:            "Equal votes but quorum not reached",
