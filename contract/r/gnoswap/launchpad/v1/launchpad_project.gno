@@ -314,7 +314,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 		currentDepositCount := getTierCurrentDepositCount(tier)
 
 		if currentDepositCount > 0 {
-			claimableReward, err := lp.calculateTierClaimableRewards(tier, currentHeight, currentTime)
+			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentHeight, currentTime)
 			if err != nil {
 				return 0, err
 			}
@@ -352,9 +352,9 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	return refundableAmount, nil
 }
 
-// calculateTierClaimableRewards calculates the total claimable rewards
+// applyTierRewardGrowthWithRewards calculates the total claimable rewards
 // for all active deposits in a specific tier.
-func (lp *launchpadV1) calculateTierClaimableRewards(tier *launchpad.ProjectTier, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentHeight, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
 		return 0, err
