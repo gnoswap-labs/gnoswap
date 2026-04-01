@@ -382,6 +382,25 @@ func TestProposal_IsActive_StatusTypeCaching(t *testing.T) {
 			expectedActive:     false,
 			expectedStatusType: governance.StatusRejected,
 		},
+		{
+			name:              "StatusRejected: tie after quorum is reached",
+			description:       "Proposal becomes inactive when yes and no votes tie after quorum",
+			proposalType:      governance.CommunityPoolSpend,
+			votingStartDelay:  100,
+			votingPeriod:      200,
+			executionDelay:    100,
+			executionWindow:   200,
+			quorum:            50,
+			maxVotingWeight:   1000,
+			currentTimeOffset: 350,
+			setupFunc: func(proposal *governance.Proposal, current int64) {
+				resolver := NewProposalResolver(proposal)
+				resolver.Vote(true, 500)
+				resolver.Vote(false, 500)
+			},
+			expectedActive:     false,
+			expectedStatusType: governance.StatusRejected,
+		},
 		// Executed status tests
 		{
 			name:              "StatusExecuted: proposal has been executed",
