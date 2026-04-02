@@ -247,15 +247,21 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	consumed := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.RewardAmount())
 	collectedPenalties := safeSubInt64(consumed, incentiveResolver.DistributedRewardAmount())
+	if collectedPenalties < 0 {
+		return nil, 0, makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf(
+				"invalid incentive accounting: consumed(%d) < distributed(%d)",
+				consumed, incentiveResolver.DistributedRewardAmount(),
+			),
+		)
+	}
 
 	refund := safeAddInt64(safeAddInt64(unclaimableReward, remainder), collectedPenalties)
 
 	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
 	if refund > maxRefund {
 		refund = maxRefund
-	}
-	if refund < 0 {
-		refund = 0
 	}
 
 	return incentiveResolver.ExternalIncentive, refund, nil
