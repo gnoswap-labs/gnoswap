@@ -466,11 +466,9 @@ func (z *Int) Not(x *Int) *Int {
 }
 
 // Lsh sets z to x left-shifted by n bits and returns z.
-// Panics if the shift would cause signed overflow (result outside int256 range).
+// Like Add and Mul, Lsh does NOT detect overflow — the result silently wraps.
+// Use LshOverflow to detect whether the shift caused signed overflow.
 func (z *Int) Lsh(x *Int, n uint) *Int {
-	if lshOverflows(x, n) {
-		panic("int256: Lsh overflow")
-	}
 	return z.lsh(x, n)
 }
 

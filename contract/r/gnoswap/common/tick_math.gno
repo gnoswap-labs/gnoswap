@@ -247,7 +247,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 	// Calculate log_2 using fixed-point arithmetic
 	log2 := i256.NewInt(int64(msb) - 128)
-	log2 = i256.Zero().Lsh(log2, 64)
+	log2, overflow := i256.Zero().LshOverflow(log2, 64)
+	if overflow {
+		panic(errOverflow)
+	}
 
 	// Define temporary variables for optimization
 	tempR := u256.Zero()
@@ -265,7 +268,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 		tempI256 = i256.FromUint256(tempF)
 		f := tempF
 
-		tempI256 = tempI256.Lsh(tempI256, uint(63-i))
+		tempI256, lshOv := tempI256.LshOverflow(tempI256, uint(63-i))
+		if lshOv {
+			panic(errOverflow)
+		}
 		log2 = log2.Or(log2, tempI256)
 		r = r.Rsh(r, uint(f.Uint64()))
 	}
