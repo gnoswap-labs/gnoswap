@@ -461,7 +461,7 @@ func mockInstanceRemoveToken(tokenPath string) {
 	}(cross)
 }
 
-func mockInstanceSetUnstakingFee(fee int64) {
+func mockInstanceSetUnstakingFee(fee uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 		getMockInstance().SetUnStakingFee(fee)

@@ -145,6 +145,17 @@ func safeSubInt64(a, b int64) int64 {
 	return a - b
 }
 
+// safeUint64ToInt64 safely converts a uint64 value to int64, panicking on overflow.
+func safeUint64ToInt64(value uint64) int64 {
+	if value > uint64(math.MaxInt64) {
+		panic(ufmt.Sprintf(
+			"amount(%d) overflows int64 range (max: 9223372036854775807)",
+			value,
+		))
+	}
+	return int64(value)
+}
+
 func safeMulDivInt64(a, b, c int64) int64 {
 	if c == 0 {
 		panic("division by zero in safeMulDivInt64")

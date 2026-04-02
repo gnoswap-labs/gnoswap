@@ -143,7 +143,7 @@ func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	t.instance.SetTokenMinimumRewardAmount(paramsStr)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee int64) {
+func (t *TestStaker) SetUnStakingFee(fee uint64) {
 	if !t.isActive("SetUnStakingFee") {
 		panic("test implementation: SetUnStakingFee not supported")
 	}
@@ -473,7 +473,7 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	return t.instance.GetTargetPoolPathByIncentiveId(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetUnstakingFee() int64 {
+func (t *TestStaker) GetUnstakingFee() uint64 {
 	if !t.isActive("GetUnstakingFee") {
 		panic("test implementation: GetUnstakingFee not supported")
 	}

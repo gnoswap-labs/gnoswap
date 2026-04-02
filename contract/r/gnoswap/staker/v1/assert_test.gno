@@ -196,7 +196,7 @@ func TestAssertIsValidPoolTier(t *testing.T) {
 func TestAssertIsValidFeeRate(t *testing.T) {
 	tests := []struct {
 		name        string
-		fee         int64
+		fee         uint64
 		expectPanic bool
 	}{
 		{
@@ -213,11 +213,6 @@ func TestAssertIsValidFeeRate(t *testing.T) {
 			name:        "valid fee 1000 (10% - max)",
 			fee:         1000,
 			expectPanic: false,
-		},
-		{
-			name:        "invalid fee -1",
-			fee:         -1,
-			expectPanic: true,
 		},
 		{
 			name:        "invalid fee 1001 (exceeds max)",
@@ -544,7 +539,7 @@ func TestAssertIsValidAmount_Boundaries(t *testing.T) {
 func TestAssertIsValidFeeRate_Boundaries(t *testing.T) {
 	tests := []struct {
 		name        string
-		fee         int64
+		fee         uint64
 		expectPanic bool
 	}{
 		{
@@ -556,11 +551,6 @@ func TestAssertIsValidFeeRate_Boundaries(t *testing.T) {
 			name:        "boundary - maximum valid (1000)",
 			fee:         1000,
 			expectPanic: false,
-		},
-		{
-			name:        "boundary - just below minimum",
-			fee:         -1,
-			expectPanic: true,
 		},
 		{
 			name:        "boundary - just above maximum",

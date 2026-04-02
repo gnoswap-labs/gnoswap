@@ -170,10 +170,10 @@ func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee int64) {
+func (t *TestStaker) SetUnStakingFee(fee uint64) {
 	t.ExecuteFn(
 		"SetUnStakingFee",
-		func(args ...any) any { t.instance.SetUnStakingFee(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetUnStakingFee(args[0].(uint64)); return nil },
 		fee,
 	)
 }
@@ -581,11 +581,11 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	).(string)
 }
 
-func (t *TestStaker) GetUnstakingFee() int64 {
+func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.ExecuteFn(
 		"GetUnstakingFee",
 		func(args ...any) any { return t.instance.GetUnstakingFee() },
-	).(int64)
+	).(uint64)
 }
 
 func (t *TestStaker) IsStaked(positionId uint64) bool {

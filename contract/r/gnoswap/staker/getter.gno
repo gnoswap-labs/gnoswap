@@ -247,7 +247,7 @@ func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string 
 }
 
 // GetUnstakingFee returns the unstaking fee percentage.
-func GetUnstakingFee() int64 {
+func GetUnstakingFee() uint64 {
 	return getImplementation().GetUnstakingFee()
 }
 
