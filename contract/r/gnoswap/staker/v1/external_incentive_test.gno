@@ -1263,21 +1263,22 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeB, 0)
 	poolResolver.HistoricalTick().Set(stakeTimeB, int32(0))
 
-	// User A collects 300
+	// Simulate CollectReward for User A (raw earned = 300)
+	// Production flow: rewardAmount -= raw, distributedRewardAmount += reward only
 	collectedA := int64(300)
 	depositResolverA.addCollectedExternalReward(incentiveId, collectedA)
 	depositResolverA.updateExternalRewardLastCollectTime(incentiveId, endTime-1000)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	incentive.SetRewardAmount(incentive.RewardAmount() - collectedA)
 	incentiveResolver.addDistributedRewardAmount(collectedA)
 
-	// User B collects 200
+	// Simulate CollectReward for User B (raw earned = 200)
 	collectedB := int64(200)
 	depositResolverB.addCollectedExternalReward(incentiveId, collectedB)
 	depositResolverB.updateExternalRewardLastCollectTime(incentiveId, endTime-500)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
+	incentive.SetRewardAmount(incentive.RewardAmount() - collectedB)
 	incentiveResolver.addDistributedRewardAmount(collectedB)
 
 	// Verify DistributedRewardAmount = 500

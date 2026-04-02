@@ -492,8 +492,8 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Creator GNS (deposit): 0
 //   - Admin total rewards collected (QUX): 6263999997
 // [INFO] after ending incentive:
-//   - Creator QUX: 1512000003
-//   - Staker contract QUX: 0
+//   - Creator QUX: 1512000000
+//   - Staker contract QUX: 3
 //   - Creator GNS (deposit): 1000000000
 //   - Admin QUX balances: 99998487998997
 // [RESULT] refund breakdown:

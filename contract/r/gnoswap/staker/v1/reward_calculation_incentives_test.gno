@@ -183,7 +183,7 @@ func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T)
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	stakeTimeA := startTime + 20
 	zeroTime := startTime + 60

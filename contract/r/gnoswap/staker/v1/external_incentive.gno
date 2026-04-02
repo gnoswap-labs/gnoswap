@@ -237,7 +237,17 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	// O(1) refund: unclaimable reward during zero-liquidity periods plus division remainder.
+	// O(1) refund calculation:
+	//   refund = unclaimableReward + remainder + collectedPenalties
+	//
+	// - unclaimableReward: rewards for zero-liquidity periods (no depositors to earn them)
+	// - remainder: integer division truncation from rewardPerSecond (L-14 dust)
+	// - collectedPenalties: warmup penalties retained in staker during CollectReward,
+	//   routed back to creator on incentive end (PR #1221).
+	//   Derived from accounting fields:
+	//     rewardAmount decreases by (reward + penalty) on each collect,
+	//     distributedRewardAmount increases by reward only,
+	//     so collectedPenalties = (totalRewardAmount - rewardAmount) - distributedRewardAmount
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
@@ -245,7 +255,10 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	distributable := safeMulInt64(incentiveResolver.RewardPerSecond(), duration)
 	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
-	refund := safeAddInt64(unclaimableReward, remainder)
+	consumed := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.RewardAmount())
+	collectedPenalties := safeSubInt64(consumed, incentiveResolver.DistributedRewardAmount())
+
+	refund := safeAddInt64(safeAddInt64(unclaimableReward, remainder), collectedPenalties)
 
 	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
 	if refund > maxRefund {
