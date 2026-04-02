@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -238,27 +237,23 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	totalReward := int64(0)
+	// O(1) refund: unclaimable reward during zero-liquidity periods plus division remainder.
+	incentivesResolver := resolver.IncentivesResolver()
+	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
-	// calculate total external reward for the incentive
-	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
-		depositResolver := NewDepositResolver(deposit)
-		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
+	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
+	distributable := safeMulInt64(incentiveResolver.RewardPerSecond(), duration)
+	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
-		if lastCollectTime > incentiveResolver.EndTimestamp() {
-			return false
-		}
+	refund := safeAddInt64(unclaimableReward, remainder)
 
-		rewardState := resolver.RewardStateOf(deposit)
-		calculatedTotalReward := rewardState.calculateCollectableExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
-		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
-
-		return false
-	})
-
-	// calculate refund amount is the difference between the incentive reward amount and the total external reward
-	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
-	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
+	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
+	if refund > maxRefund {
+		refund = maxRefund
+	}
+	if refund < 0 {
+		refund = 0
+	}
 
 	return incentiveResolver.ExternalIncentive, refund, nil
 }
