@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	i256 "gno.land/p/gnoswap/int256"
 	testutils "gno.land/p/nt/testutils/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -153,6 +154,54 @@ func TestIncentivesUpdate(t *testing.T) {
 			}
 			tt.verifyFunc(t, retrieved)
 		})
+	}
+}
+
+// Test that zero-liquidity windows are tracked via modifyDeposit and reflected in calculateUnclaimableReward.
+func TestCalculateUnclaimableReward_TracksZeroLiquidityTransitions(t *testing.T) {
+	poolPath := "test_pool_unclaimable_tracking"
+	creator := testutils.TestAddress("creator")
+
+	currentTime := time.Now().Unix()
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	startTime := currentTime + 10
+	endTime := startTime + 100
+	rewardAmount := int64(1000) // rewardPerSecond = 10
+
+	incentive := sr.NewExternalIncentive(
+		"test_incentive_tracking",
+		poolPath,
+		GNS_PATH,
+		rewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+	)
+	incentives.create(creator, incentive)
+
+	stakeTimeA := startTime + 20
+	zeroTime := startTime + 60
+	stakeTimeB := startTime + 80
+
+	// zero -> positive: end unclaimable
+	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeA, 0)
+	// positive -> zero: start unclaimable
+	poolResolver.modifyDeposit(i256.NewInt(-1000), zeroTime, 0)
+	// zero -> positive: end unclaimable
+	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeB, 0)
+
+	expectedDuration := (stakeTimeA - startTime) + (stakeTimeB - zeroTime)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+	if got != expected {
+		t.Fatalf("unclaimable reward mismatch: got %d, want %d", got, expected)
 	}
 }
 
