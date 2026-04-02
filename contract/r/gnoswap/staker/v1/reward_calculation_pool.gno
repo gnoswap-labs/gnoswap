@@ -408,9 +408,8 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 				self.deposit.Deposit,
 			)
 
-			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
-			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+			scaled := self.scaleReward(rewardAcc, rewardPerSecond)
+			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(scaled))
 
 			break
 		}
@@ -423,14 +422,23 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			self.deposit.Deposit,
 		)
 
-		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
-		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+		scaled := self.scaleReward(rewardAcc, rewardPerSecond)
+		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(scaled))
 
 		startTime = warmup.NextWarmupTime
 	}
 
 	return nil
+}
+
+// scaleReward scales the raw reward accumulation by the deposit's liquidity
+// and rewardPerSecond, returning the descaled result.
+//
+// Uses MulDiv with a 512-bit intermediate to avoid silent wrapping that would
+// occur if rewardAcc were multiplied by liquidity in a plain 256-bit Mul.
+func (self *RewardState) scaleReward(rewardAcc *u256.Uint, rewardPerSecond int64) *u256.Uint {
+	rewardScaler := u256.Zero().Mul(self.deposit.Liquidity(), u256.NewUintFromInt64(rewardPerSecond))
+	return u256.MulDiv(rewardAcc, rewardScaler, q128)
 }
 
 // modifyDeposit updates the pool's staked liquidity and returns the new staked liquidity.
