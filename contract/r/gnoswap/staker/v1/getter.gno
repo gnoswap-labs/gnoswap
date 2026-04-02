@@ -181,11 +181,11 @@ func (s *stakerV1) GetIncentiveRewardPerSecond(poolPath string, incentiveId stri
 	return incentive.RewardPerSecond()
 }
 
-// GetIncentiveRefundee returns the refundee address of an incentive.
-func (s *stakerV1) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+// GetIncentiveCreator returns the creator address of an incentive.
+func (s *stakerV1) GetIncentiveCreator(poolPath string, incentiveId string) address {
 	incentive := s.getIncentive(poolPath, incentiveId)
 
-	return incentive.Refundee()
+	return incentive.Creator()
 }
 
 // getDeposit retrieves a deposit by LP token ID.

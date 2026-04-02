@@ -95,7 +95,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	externalIncentives.Set(incentiveId, incentive)
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(caller, incentive)
+	poolResolver.IncentivesResolver().create(incentive)
 
 	// add incentive to time-based index for lazy discovery during CollectReward
 	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
@@ -133,13 +133,14 @@ func (s *stakerV1) CreateExternalIncentive(
 //  4. Returns 100 GNS deposit
 //  5. Removes incentive from active list
 //
-// Only callable by Refundee or Admin.
-func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
+// Only callable by Creator or Admin.
+func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	// checks pool registry
 	assertIsPoolExists(s, targetPoolPath)
+	assertIsValidAddress(refundAddress)
 
 	// checks if the pool has been incentivized
 	pool, exists := s.getPools().Get(targetPoolPath)
@@ -187,18 +188,18 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// refund reward token to refundee
-	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), incentiveResolver.Refundee(), refund)
-
-	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross, incentiveResolver.Refundee(), incentiveResolver.DepositGnsAmount())
-
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
-	incentivesResolver.update(incentive.Refundee(), incentive)
+	incentivesResolver.update(incentive)
+
+	// refund reward token to refundee
+	common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), refundAddress, refund)
+
+	// Transfer GNS deposit back to refundee
+	gns.Transfer(cross, refundAddress, incentiveResolver.DepositGnsAmount())
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -207,11 +208,12 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		"prevRealm", previousRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
-		"refundee", incentiveResolver.Refundee().String(),
+		"refundee", refundAddress.String(),
 		"refundToken", incentiveResolver.RewardToken(),
 		"refundAmount", formatAnyInt(refund),
 		"refundGnsAmount", formatAnyInt(incentiveResolver.DepositGnsAmount()),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
+		"creator", incentiveResolver.Creator().String(),
 	)
 }
 
@@ -224,14 +226,14 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	// only refundee or admin can end incentive
-	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Refundee() {
+	// only creator or admin can end incentive
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Creator() {
 		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		return nil, 0, makeErrorWithDetails(
 			errNoPermission,
 			ufmt.Sprintf(
-				"only refundee(%s) or admin(%s) can end incentive, but called from %s",
-				incentiveResolver.Refundee(), adminAddr.String(), caller,
+				"only creator(%s) or admin(%s) can end incentive, but called from %s",
+				incentiveResolver.Creator(), adminAddr.String(), caller,
 			),
 		)
 	}

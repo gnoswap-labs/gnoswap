@@ -449,6 +449,7 @@ func endExternalIncentive() {
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
 		incentiveID,
+		adminUser,
 	)
 	testing.SkipHeights(1)
 

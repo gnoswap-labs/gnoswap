@@ -39,7 +39,7 @@ type IStakerManager interface {
 		startTimestamp int64,
 		endTimestamp int64,
 	)
-	EndExternalIncentive(targetPoolPath, incentiveId string)
+	EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address)
 	AddToken(tokenPath string)
 	RemoveToken(tokenPath string)
 
@@ -91,7 +91,7 @@ type IStakerGetter interface {
 	GetDepositExternalIncentiveIdList(lpTokenId uint64) []string
 	GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive
 	GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64
-	GetIncentiveRefundee(poolPath string, incentiveId string) address
+	GetIncentiveCreator(poolPath string, incentiveId string) address
 	GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint
 	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string
 	GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64
