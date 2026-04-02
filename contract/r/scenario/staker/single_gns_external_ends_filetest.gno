@@ -291,7 +291,7 @@ func endExternalQuxIncentive() {
 
 	ufmt.Printf("[INFO] QUX balance before ending: %d\n", quxBalanceBeforeEnds)
 	ufmt.Printf("[INFO] QUX balance after ending: %d\n", quxBalanceAfterEnds)
-	ufmt.Printf("[INFO] staker QUX before ending: %d\n", stakerQuxBeforeEnds)
+	ufmt.Printf("[INFO] staker QUX residual: %d\n", qux.BalanceOf(stakerAddr))
 
 	refundedQuxAmount := quxBalanceAfterEnds - quxBalanceBeforeEnds
 	refundedGnsDeposit := gnsBalanceAfterEnds - gnsBalanceBeforeEnds
@@ -364,7 +364,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] end external incentive and collect remaining QUX
 // [INFO] QUX balance before ending: 0
 // [INFO] QUX balance after ending: 3181889
-// [INFO] staker QUX before ending: 8999996530
+// [INFO] staker QUX residual: 5
 // [EXPECTED] creator receives remaining reward token: 3181889
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 //

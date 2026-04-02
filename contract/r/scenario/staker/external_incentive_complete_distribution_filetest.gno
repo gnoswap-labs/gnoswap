@@ -398,17 +398,17 @@ func endExternalIncentiveAndVerifyNoDust() {
 	ufmt.Printf("[EXPECTED] creator receives all remaining reward token: %d\n", stakerQuxBefore)
 	ufmt.Printf("[EXPECTED] creator receives fixed GNS deposit: %d\n", depositGnsAmount)
 
-	// Verify total distribution
+	// Total accounting: collected + refunded + staker residual = initial reward
 	ufmt.Printf("[EXPECTED] Total reward distribution:\n")
 	ufmt.Printf("  - Initial reward amount: %d QUX\n", REWARD_AMOUNT)
 	ufmt.Printf("  - Rewards collected by staker: %d QUX\n", totalRewardsCollected)
-	undistributedRewardRefunded := refundQuxAmount
-	ufmt.Printf("  - Undistributed reward refunded: %d QUX\n", undistributedRewardRefunded)
+	ufmt.Printf("  - Reward refunded to creator: %d QUX\n", refundQuxAmount)
+	ufmt.Printf("  - Residual in staker: %d QUX\n", stakerQuxAfter)
 
-	totalDistributed := totalRewardsCollected + undistributedRewardRefunded
-	ufmt.Printf("  - Total accounted for: %d QUX\n", totalDistributed)
+	totalAccounted := totalRewardsCollected + refundQuxAmount + stakerQuxAfter
+	ufmt.Printf("  - Total accounted for: %d QUX\n", totalAccounted)
 
-	if totalDistributed == REWARD_AMOUNT {
+	if totalAccounted == REWARD_AMOUNT {
 		println("[EXPECTED] all rewards accounted for with no loss")
 	}
 }
@@ -497,14 +497,15 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Creator GNS (deposit): 1000000000
 //   - Admin QUX balances: 99998487998997
 // [RESULT] refund breakdown:
-//   - Total refunded reward token (QUX): 1512000003
-//   - Total reduced from staker QUX: 1512000003
+//   - Total refunded reward token (QUX): 1512000000
+//   - Total reduced from staker QUX: 1512000000
 //   - Refunded GNS deposit: 1000000000
 // [EXPECTED] creator receives all remaining reward token: 1512000003
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
 //   - Rewards collected by staker: 6263999997 QUX
-//   - Undistributed reward refunded: 1512000003 QUX
+//   - Reward refunded to creator: 1512000000 QUX
+//   - Residual in staker: 3 QUX
 //   - Total accounted for: 7776000000 QUX
 // [EXPECTED] all rewards accounted for with no loss
