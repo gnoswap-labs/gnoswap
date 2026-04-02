@@ -395,7 +395,8 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 			routePaths:  "tokenA:tokenB:500*POOL*tokenX:tokenC:3000",
 			inputToken:  "tokenA",
 			outputToken: "tokenC",
-			shouldPanic: false, // validateRoutePaths only checks first and last tokens
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-ROUTER-017]",
 		},
 	}
 

@@ -248,7 +248,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 		panic(err)
 	}
 
-	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentTime)
+	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -293,7 +293,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
+func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentHeight, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
@@ -314,7 +314,7 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 		currentDepositCount := getTierCurrentDepositCount(tier)
 
 		if currentDepositCount > 0 {
-			claimableReward, err := lp.calculateTierClaimableRewards(tier)
+			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentHeight, currentTime)
 			if err != nil {
 				return 0, err
 			}
@@ -352,10 +352,16 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	return refundableAmount, nil
 }
 
-// calculateTierClaimableRewards calculates the total claimable rewards
+// applyTierRewardGrowthWithRewards calculates the total claimable rewards
 // for all active deposits in a specific tier.
-func (lp *launchpadV1) calculateTierClaimableRewards(tier *launchpad.ProjectTier) (int64, error) {
+func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentHeight, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
+	if err != nil {
+		return 0, err
+	}
+
+	// Update reward accumulation to current time before calculating claimable.
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentHeight, currentTime)
 	if err != nil {
 		return 0, err
 	}
