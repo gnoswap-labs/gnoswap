@@ -781,9 +781,9 @@ func TestGetterPoolHistoricalTick(t *testing.T) {
 	state := setupBasicTestState(t)
 
 	// Add some historical tick entries
-	state.pool.HistoricalTick().Set(state.fixedTimestamp, int32(-100))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+100, int32(50))
-	state.pool.HistoricalTick().Set(state.fixedTimestamp+200, int32(200))
+	state.pool.HistoricalTick().Set(uint64(state.fixedTimestamp), int32(-100))
+	state.pool.HistoricalTick().Set(uint64(state.fixedTimestamp+100), int32(50))
+	state.pool.HistoricalTick().Set(uint64(state.fixedTimestamp+200), int32(200))
 
 	// Test count
 	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)

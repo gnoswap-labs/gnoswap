@@ -186,7 +186,7 @@ func TestStartUnclaimablePeriod(t *testing.T) {
 			incentives.startUnclaimablePeriod(tt.startTime)
 
 			// Verify period was started (value should be 0, meaning ongoing)
-			value, exists := incentives.Incentives.UnclaimablePeriods().Get(tt.startTime)
+			value, exists := incentives.Incentives.UnclaimablePeriods().Get(uint64(tt.startTime))
 			if !exists {
 				t.Fatal("unclaimable period should exist after start")
 			}
@@ -247,7 +247,7 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 			incentives.endUnclaimablePeriod(tt.endTime)
 
 			// Verify period state
-			value, exists := incentives.Incentives.UnclaimablePeriods().Get(tt.startTime)
+			value, exists := incentives.Incentives.UnclaimablePeriods().Get(uint64(tt.startTime))
 			if exists != tt.shouldExist {
 				t.Fatalf("expected period existence %v, got %v", tt.shouldExist, exists)
 			}

@@ -5,17 +5,15 @@ import (
 	"strings"
 
 	avl "gno.land/p/nt/avl/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// UintTree is a wrapper around an AVL tree for storing block timestamps as strings.
-// Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
+// UintTree is a wrapper around an AVL tree for storing uint64 keys as strings.
 //
 // Methods:
 // - Get: Retrieves a value associated with a uint64 key.
-// - set: Stores a value with a uint64 key.
+// - Set: Stores a value with a uint64 key.
 // - Has: Checks if a uint64 key exists in the tree.
-// - remove: Removes a uint64 key and its associated value.
+// - Remove: Removes a uint64 key and its associated value.
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
@@ -29,35 +27,35 @@ func NewUintTree() *UintTree {
 	}
 }
 
-func (self *UintTree) Get(key int64) (any, bool) {
-	v, ok := self.tree.Get(EncodeInt64(key))
+func (self *UintTree) Get(key uint64) (any, bool) {
+	v, ok := self.tree.Get(EncodeUint(key))
 	if !ok {
 		return nil, false
 	}
 	return v, true
 }
 
-func (self *UintTree) Set(key int64, value any) {
-	self.tree.Set(EncodeInt64(key), value)
+func (self *UintTree) Set(key uint64, value any) {
+	self.tree.Set(EncodeUint(key), value)
 }
 
-func (self *UintTree) Has(key int64) bool {
-	return self.tree.Has(EncodeInt64(key))
+func (self *UintTree) Has(key uint64) bool {
+	return self.tree.Has(EncodeUint(key))
 }
 
-func (self *UintTree) Remove(key int64) {
-	self.tree.Remove(EncodeInt64(key))
+func (self *UintTree) Remove(key uint64) {
+	self.tree.Remove(EncodeUint(key))
 }
 
-func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.Iterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value any) bool) {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(key string, value any) bool {
+		return fn(DecodeUint(key), value)
 	})
 }
 
-func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.ReverseIterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, value any) bool) {
+	self.tree.ReverseIterate(EncodeUint(start), EncodeUint(end), func(key string, value any) bool {
+		return fn(DecodeUint(key), value)
 	})
 }
 
@@ -65,9 +63,9 @@ func (self *UintTree) Size() int {
 	return self.tree.Size()
 }
 
-func (self *UintTree) IterateByOffset(offset, count int, fn func(key int64, value any) bool) {
+func (self *UintTree) IterateByOffset(offset, count int, fn func(key uint64, value any) bool) {
 	self.tree.IterateByOffset(offset, count, func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+		return fn(DecodeUint(key), value)
 	})
 }
 
@@ -105,13 +103,6 @@ func EncodeUint(num uint64) string {
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
-func EncodeInt64(num int64) string {
-	if num < 0 {
-		panic(ufmt.Sprintf("negative value not supported: %d", num))
-	}
-	return EncodeUint(uint64(num))
-}
-
 // DecodeUint converts a zero-padded string back into a uint64 number.
 //
 // Parameters:
@@ -128,14 +119,6 @@ func EncodeInt64(num int64) string {
 // Output: 12345
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return num
-}
-
-func DecodeInt64(s string) int64 {
-	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		panic(err)
 	}

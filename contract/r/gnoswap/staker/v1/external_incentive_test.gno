@@ -468,7 +468,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		}
 
 		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
+		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(currentTime))
 		if !exists {
 			currentPoolIncentiveIdsValue = avl.NewTree()
 		}
@@ -492,7 +492,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		// Append new incentive ID
 		ids = append(ids, incentiveId)
 		currentPoolIncentiveIds.Set(poolPath, ids)
-		incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
+		incentivesByTime.Set(uint64(currentTime), currentPoolIncentiveIds)
 
 		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 	}
@@ -500,7 +500,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 	// Verify all 3 incentives are stored at the same timestamp for the same pool
 	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
-	poolMapValue, exists := incentivesByTime.Get(currentTime)
+	poolMapValue, exists := incentivesByTime.Get(uint64(currentTime))
 	if !exists {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
@@ -597,7 +597,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		}
 
 		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(ts)
+		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(ts))
 		if !exists {
 			currentPoolIncentiveIdsValue = avl.NewTree()
 		}
@@ -621,7 +621,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		// Append new incentive ID
 		ids = append(ids, incentiveId)
 		currentPoolIncentiveIds.Set(poolPath, ids)
-		incentivesByTime.Set(ts, currentPoolIncentiveIds)
+		incentivesByTime.Set(uint64(ts), currentPoolIncentiveIds)
 
 		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 	}
@@ -644,7 +644,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 			incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
 			found := make([]string, 0)
-			incentivesByTime.Iterate(tc.startTime, tc.endTime, func(key int64, value any) bool {
+			incentivesByTime.Iterate(uint64(tc.startTime), uint64(tc.endTime), func(key uint64, value any) bool {
 				// value is *avl.Tree (poolPath -> []string)
 				poolMap, ok := value.(*avl.Tree)
 				if !ok {
@@ -732,7 +732,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		}
 
 		// Get or create pool map at this timestamp
-		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
+		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(currentTime))
 		if !exists {
 			currentPoolIncentiveIdsValue = avl.NewTree()
 		}
@@ -756,7 +756,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		// Append new incentive ID
 		ids = append(ids, incentiveId)
 		currentPoolIncentiveIds.Set(poolPath, ids)
-		incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
+		incentivesByTime.Set(uint64(currentTime), currentPoolIncentiveIds)
 
 		instance.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 	}
@@ -764,7 +764,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 	// Verify all 3 pools have their incentives stored at the same timestamp
 	incentivesByTime := instance.store.GetExternalIncentivesByCreationTime()
 
-	poolMapValue, exists := incentivesByTime.Get(currentTime)
+	poolMapValue, exists := incentivesByTime.Get(uint64(currentTime))
 	if !exists {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
@@ -1081,9 +1081,9 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	depositResolverB := NewDepositResolver(depositB)
 
 	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
-	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+	poolResolver.HistoricalTick().Set(uint64(startTime+100), int32(0))
 	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
-	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
+	poolResolver.HistoricalTick().Set(uint64(startTime+200), int32(0))
 
 	// User A collects 300
 	collectedA := int64(300)
@@ -1603,7 +1603,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 
 			for _, exp := range tt.expected {
 				// Get time entry
-				value, exists := incentivesByTime.Get(exp.creationTime)
+				value, exists := incentivesByTime.Get(uint64(exp.creationTime))
 				uassert.True(t, exists, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
 
 				poolIncentives, ok := value.(*avl.Tree)
@@ -1728,7 +1728,7 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 			incentivesByTime := instance.getExternalIncentivesByCreationTime()
 			found := make([]string, 0)
 
-			incentivesByTime.Iterate(tt.rangeStart, tt.rangeEnd, func(key int64, value any) bool {
+			incentivesByTime.Iterate(uint64(tt.rangeStart), uint64(tt.rangeEnd), func(key uint64, value any) bool {
 				poolTree := value.(*avl.Tree)
 				idsValue, exists := poolTree.Get(tt.queryPoolPath)
 				if exists {
@@ -2242,7 +2242,7 @@ func TestRemoveIncentiveIdByCreationTime(t *testing.T) {
 			incentivesByTime := instance.getExternalIncentivesByCreationTime()
 
 			for _, exp := range tt.expected {
-				timeValue, timeExists := incentivesByTime.Get(exp.creationTime)
+				timeValue, timeExists := incentivesByTime.Get(uint64(exp.creationTime))
 
 				if !exp.timeShouldExist {
 					uassert.False(t, timeExists,
