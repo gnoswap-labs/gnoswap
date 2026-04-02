@@ -237,17 +237,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	// O(1) refund calculation:
-	//   refund = unclaimableReward + remainder + collectedPenalties
-	//
-	// - unclaimableReward: rewards for zero-liquidity periods (no depositors to earn them)
-	// - remainder: integer division truncation from rewardPerSecond (L-14 dust)
-	// - collectedPenalties: warmup penalties retained in staker during CollectReward,
-	//   routed back to creator on incentive end (PR #1221).
-	//   Derived from accounting fields:
-	//     rewardAmount decreases by (reward + penalty) on each collect,
-	//     distributedRewardAmount increases by reward only,
-	//     so collectedPenalties = (totalRewardAmount - rewardAmount) - distributedRewardAmount
+	// refund = unclaimableReward + remainder + collectedPenalties
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
