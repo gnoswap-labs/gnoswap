@@ -27,44 +27,6 @@ func TestEncodeUint(t *testing.T) {
 	}
 }
 
-func TestEncodeInt64(t *testing.T) {
-	t.Run("positive values", func(t *testing.T) {
-		tests := []struct {
-			name     string
-			input    int64
-			expected string
-		}{
-			{"zero", 0, "00000000000000000000"},
-			{"normal value", 12345, "00000000000000012345"},
-			{"large value", 9223372036854775807, "09223372036854775807"}, // int64 max
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				result := EncodeInt64(tt.input)
-				if result != tt.expected {
-					t.Errorf("EncodeInt64(%d) = %s; want %s", tt.input, result, tt.expected)
-				}
-			})
-		}
-	})
-
-	t.Run("negative values should panic", func(t *testing.T) {
-		negativeValues := []int64{-1, -123, -9223372036854775808} // int64 min
-
-		for _, val := range negativeValues {
-			t.Run(ufmt.Sprintf("value_%d", val), func(t *testing.T) {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("EncodeInt64(%d) should have panicked", val)
-					}
-				}()
-				EncodeInt64(val)
-			})
-		}
-	})
-}
-
 func TestDecodeUint(t *testing.T) {
 	t.Run("valid inputs", func(t *testing.T) {
 		tests := []struct {
@@ -137,8 +99,8 @@ func TestUintTree(t *testing.T) {
 	var keys []uint64
 	var values []any
 
-	tree.Iterate(100, 300, func(key int64, value any) bool {
-		keys = append(keys, uint64(key))
+	tree.Iterate(100, 300, func(key uint64, value any) bool {
+		keys = append(keys, key)
 		values = append(values, value)
 		return false
 	})

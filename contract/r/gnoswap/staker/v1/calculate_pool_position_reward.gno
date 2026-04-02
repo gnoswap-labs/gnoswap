@@ -169,11 +169,17 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 
 // update deposit's incentive list with new incentives created since last update
 func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
+	if startTime < 0 {
+		panic("startTime must be non-negative")
+	}
+	if endTime < 0 {
+		panic("endTime must be non-negative")
+	}
 	currentIncentiveIds := make([]string, 0)
 
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
+	incentivesByTime.Iterate(uint64(startTime), uint64(endTime), func(_ uint64, value any) bool {
 		// Value is a slice of incentive IDs (handles timestamp collisions)
 		poolIncentiveIds, ok := value.(*avl.Tree)
 		if !ok {

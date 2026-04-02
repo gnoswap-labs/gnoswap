@@ -172,7 +172,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 			name: "add to existing total",
 			initialHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(50), int64(500))
+				h.Set(uint64(50), int64(500))
 				return h
 			},
 			amount:        300,
@@ -183,7 +183,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 			name: "subtract from existing total",
 			initialHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(50), int64(500))
+				h.Set(uint64(50), int64(500))
 				return h
 			},
 			amount:        -200,
@@ -194,7 +194,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 			name: "negative result clamps to zero",
 			initialHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(50), int64(500))
+				h.Set(uint64(50), int64(500))
 				return h
 			},
 			amount:        -1000,
@@ -205,7 +205,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 			name: "zero amount no change",
 			initialHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(50), int64(500))
+				h.Set(uint64(50), int64(500))
 				return h
 			},
 			amount:        0,
@@ -256,7 +256,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
+				userHistory.Set(uint64(50), int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},
@@ -270,7 +270,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
+				userHistory.Set(uint64(50), int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},
@@ -284,7 +284,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
+				userHistory.Set(uint64(50), int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},
@@ -328,7 +328,7 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 			name: "single entry returns that value",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(100), int64(1000))
+				h.Set(uint64(100), int64(1000))
 				return h
 			},
 			expectedAmount: 1000,
@@ -337,9 +337,9 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 			name: "multiple entries returns latest",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(100), int64(1000))
-				h.Set(int64(200), int64(2000))
-				h.Set(int64(300), int64(3000))
+				h.Set(uint64(100), int64(1000))
+				h.Set(uint64(200), int64(2000))
+				h.Set(uint64(300), int64(3000))
 				return h
 			},
 			expectedAmount: 3000,
@@ -348,9 +348,9 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 			name: "non-chronological insertion still returns max timestamp",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(300), int64(3000))
-				h.Set(int64(100), int64(1000))
-				h.Set(int64(200), int64(2000))
+				h.Set(uint64(300), int64(3000))
+				h.Set(uint64(100), int64(1000))
+				h.Set(uint64(200), int64(2000))
 				return h
 			},
 			expectedAmount: 3000,
@@ -386,7 +386,7 @@ func TestGetLatestUserDelegation(t *testing.T) {
 			name: "single entry returns that value",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(100), int64(500))
+				h.Set(uint64(100), int64(500))
 				return h
 			},
 			expectedAmount: 500,
@@ -395,9 +395,9 @@ func TestGetLatestUserDelegation(t *testing.T) {
 			name: "multiple entries returns latest",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(int64(100), int64(500))
-				h.Set(int64(200), int64(1000))
-				h.Set(int64(300), int64(1500))
+				h.Set(uint64(100), int64(500))
+				h.Set(uint64(200), int64(1000))
+				h.Set(uint64(300), int64(1500))
 				return h
 			},
 			expectedAmount: 1500,

@@ -464,8 +464,8 @@ func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []i
 	rewardCache := pool.RewardCache()
 
 	ids := make([]int64, 0)
-	rewardCache.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, key)
+	rewardCache.IterateByOffset(offset, count, func(key uint64, _ any) bool {
+		ids = append(ids, int64(key))
 		return false
 	})
 
@@ -475,7 +475,7 @@ func (s *stakerV1) GetPoolRewardCacheIDs(poolPath string, offset, count int) []i
 // GetPoolRewardCache returns the reward cache value at a specific timestamp for a pool.
 func (s *stakerV1) GetPoolRewardCache(poolPath string, timestamp uint64) int64 {
 	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.RewardCache().Get(int64(timestamp))
+	value, ok := pool.RewardCache().Get(timestamp)
 	if !ok {
 		return 0
 	}
@@ -520,8 +520,8 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offs
 	accumulation := pool.GlobalRewardRatioAccumulation()
 
 	ids := make([]uint64, 0)
-	accumulation.IterateByOffset(offset, count, func(key int64, _ any) bool {
-		ids = append(ids, uint64(key))
+	accumulation.IterateByOffset(offset, count, func(key uint64, _ any) bool {
+		ids = append(ids, key)
 		return false
 	})
 
@@ -531,7 +531,7 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offs
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
 func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
 	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.GlobalRewardRatioAccumulation().Get(int64(timestamp))
+	value, ok := pool.GlobalRewardRatioAccumulation().Get(timestamp)
 	if !ok {
 		return u256.Zero()
 	}
@@ -556,7 +556,7 @@ func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) 
 	historicalTick := pool.HistoricalTick()
 
 	ticks := make([]int32, 0)
-	historicalTick.IterateByOffset(offset, count, func(_ int64, value any) bool {
+	historicalTick.IterateByOffset(offset, count, func(_ uint64, value any) bool {
 		tickId, ok := value.(int32)
 		if !ok {
 			return false
@@ -571,7 +571,7 @@ func (s *stakerV1) GetPoolHistoricalTickIDs(poolPath string, offset, count int) 
 // GetPoolHistoricalTick returns the historical tick at a specific timestamp for a pool.
 func (s *stakerV1) GetPoolHistoricalTick(poolPath string, tick uint64) int32 {
 	pool := s.getPoolByPoolPath(poolPath)
-	value, ok := pool.HistoricalTick().Get(int64(tick))
+	value, ok := pool.HistoricalTick().Get(tick)
 	if !ok {
 		return 0
 	}

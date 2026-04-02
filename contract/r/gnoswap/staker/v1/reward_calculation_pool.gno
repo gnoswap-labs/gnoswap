@@ -79,10 +79,13 @@ func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
 func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
 	acc = u256.Zero()
 
-	self.GlobalRewardRatioAccumulation().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		time = key
+	self.GlobalRewardRatioAccumulation().ReverseIterate(0, uint64(currentTime), func(key uint64, value any) bool {
+		time = int64(key)
 		v, ok := value.(*u256.Uint)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
@@ -99,7 +102,10 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
-	self.HistoricalTick().ReverseIterate(0, currentTime, func(key int64, value any) bool {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
+	self.HistoricalTick().ReverseIterate(0, uint64(currentTime), func(key uint64, value any) bool {
 		res, ok := value.(int32)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to int32: %T", value))
@@ -111,9 +117,12 @@ func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
 }
 
 func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
 	liquidity = u256.Zero()
 
-	self.StakedLiquidity().ReverseIterate(0, currentTime, func(key int64, value any) bool {
+	self.StakedLiquidity().ReverseIterate(0, uint64(currentTime), func(key uint64, value any) bool {
 		res, ok := value.(*u256.Uint)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
@@ -153,7 +162,10 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 // Get the latest reward in [0, currentTime] range.
 // Returns the reward.
 func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
-	self.RewardCache().ReverseIterate(0, currentTime, func(key int64, value any) bool {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
+	self.RewardCache().ReverseIterate(0, uint64(currentTime), func(key uint64, value any) bool {
 		res, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
@@ -172,6 +184,9 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 // - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
 // - This ensures unclaimable period tracking begins from the moment rewards start emitting
 func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64) {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
 	oldTierReward := self.CurrentReward(currentTime)
 	if oldTierReward == currentTierReward {
 		return
@@ -184,7 +199,7 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
-	self.RewardCache().Set(currentTime, currentTierReward)
+	self.RewardCache().Set(uint64(currentTime), currentTierReward)
 
 	if isInUnclaimable {
 		// Start/restart unclaimable period tracking
@@ -227,7 +242,7 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
-	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc)
+	self.GlobalRewardRatioAccumulation().Set(uint64(currentTime), newAcc)
 	return newAcc
 }
 
@@ -277,21 +292,27 @@ type RewardState struct {
 // calculateInternalReward calculates the internal reward for the deposit.
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
 func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
+	if startTime < 0 {
+		panic("startTime must be non-negative")
+	}
+	if endTime < 0 {
+		panic("endTime must be non-negative")
+	}
 	currentReward := self.pool.CurrentReward(startTime)
 
-	self.pool.RewardCache().Iterate(startTime, endTime, func(key int64, value any) bool {
+	self.pool.RewardCache().Iterate(uint64(startTime), uint64(endTime), func(key uint64, value any) bool {
 		reward, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
 		}
 
 		// Calculate reward for the period before this cache entry
-		err := self.rewardPerWarmup(startTime, key, currentReward)
+		err := self.rewardPerWarmup(startTime, int64(key), currentReward)
 		if err != nil {
 			panic(err)
 		}
 
-		startTime = key
+		startTime = int64(key)
 		currentReward = reward
 		return false
 	})
@@ -436,6 +457,9 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 // modifyDeposit updates the pool's staked liquidity and returns the new staked liquidity.
 // updates when there is a change in the staked liquidity(tick cross, stake, unstake)
 func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
+	if currentTime < 0 {
+		panic("currentTime must be non-negative")
+	}
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
 	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
@@ -443,7 +467,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
 	// because TickCrossHook is assured to be called for the staked-initialized ticks
-	self.HistoricalTick().Set(currentTime, nextTick)
+	self.HistoricalTick().Set(uint64(currentTime), nextTick)
 
 	switch deltaApplied.Sign() {
 	case -1:
@@ -462,7 +486,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
+	self.Pool.StakedLiquidity().Set(uint64(currentTime), deltaApplied)
 
 	return result
 }

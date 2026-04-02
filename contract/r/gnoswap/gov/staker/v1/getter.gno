@@ -149,6 +149,9 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 		return 0, false
 	}
 
+	if snapshotTime < 0 {
+		panic("snapshotTime must be non-negative")
+	}
 	toTimestamp := snapshotTime
 	if toTimestamp < math.MaxInt64 {
 		toTimestamp = toTimestamp + 1
@@ -160,7 +163,7 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	history.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
+	history.ReverseIterate(0, uint64(toTimestamp), func(key uint64, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))
@@ -200,6 +203,9 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 		return 0, false
 	}
 
+	if snapshotTime < 0 {
+		panic("snapshotTime must be non-negative")
+	}
 	toTimestamp := snapshotTime
 	if toTimestamp < math.MaxInt64 {
 		toTimestamp = toTimestamp + 1
@@ -211,7 +217,7 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	userHistory.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
+	userHistory.ReverseIterate(0, uint64(toTimestamp), func(key uint64, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))

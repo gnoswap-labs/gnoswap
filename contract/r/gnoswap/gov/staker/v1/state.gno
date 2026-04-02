@@ -192,6 +192,9 @@ func (g *govStakerV1) addDelegationRecord(delegateeAddr address, amount int64, t
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
 func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64) {
+	if timestamp < 0 {
+		panic("timestamp must be non-negative")
+	}
 	history := g.store.GetTotalDelegationHistory()
 
 	// Get current total from the most recent entry
@@ -202,7 +205,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 		newTotal = 0
 	}
 
-	history.Set(timestamp, newTotal)
+	history.Set(uint64(timestamp), newTotal)
 
 	if err := g.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
@@ -217,6 +220,9 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
 func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount int64, timestamp int64) {
+	if timestamp < 0 {
+		panic("timestamp must be non-negative")
+	}
 	history := g.store.GetUserDelegationHistory()
 	addrStr := delegateeAddr.String()
 
@@ -242,7 +248,7 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	}
 
 	// Store new cumulative value at this timestamp
-	userHistory.Set(timestamp, newAmount)
+	userHistory.Set(uint64(timestamp), newAmount)
 	history.Set(addrStr, userHistory)
 
 	if err := g.store.SetUserDelegationHistory(history); err != nil {
@@ -258,7 +264,7 @@ func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
 
 	latestTotal := int64(0)
 
-	history.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
+	history.ReverseIterate(0, math.MaxUint64, func(key uint64, value any) bool {
 		totalInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid total type: %T", value))
@@ -280,7 +286,7 @@ func (g *govStakerV1) getLatestUserDelegation(userHistory *staker.UintTree) int6
 
 	latestAmount := int64(0)
 
-	userHistory.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
+	userHistory.ReverseIterate(0, math.MaxUint64, func(key uint64, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))

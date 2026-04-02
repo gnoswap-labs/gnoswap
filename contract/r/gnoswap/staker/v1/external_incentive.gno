@@ -266,9 +266,12 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveIds
 func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	if creationTime < 0 {
+		panic("creationTime must be non-negative")
+	}
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(creationTime))
 	if !exists {
 		currentPoolIncentiveIdsValue = avl.NewTree()
 	}
@@ -290,7 +293,7 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 
 	incentiveIds = append(incentiveIds, incentiveId)
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
-	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+	incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
 
 	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }
@@ -301,10 +304,13 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveId
 func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	if creationTime < 0 {
+		panic("creationTime must be non-negative")
+	}
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
 	// check if creation time exists
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(creationTime))
 	if !exists {
 		return
 	}
@@ -331,9 +337,9 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 
 		// if no pools remain at this time, remove the time entry
 		if currentPoolIncentiveIds.Size() == 0 {
-			incentivesByTime.Remove(creationTime)
+			incentivesByTime.Remove(uint64(creationTime))
 		} else {
-			incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+			incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
 		}
 
 		s.updateExternalIncentivesByCreationTime(incentivesByTime)
@@ -350,7 +356,7 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 	}
 
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
-	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+	incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
 
 	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }
