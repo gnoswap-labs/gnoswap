@@ -109,8 +109,8 @@ func NewCanonicalRewardState(
 	result.global.poolTier = NewPoolTier(pools, 123, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
-		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
-			heights = append(heights, key)
+		result.emissionUpdates.Iterate(uint64(start), uint64(end), func(key uint64, value any) bool {
+			heights = append(heights, int64(key))
 			v, ok := value.(uint64)
 			if !ok {
 				panic("failed to cast value to uint64")
@@ -140,7 +140,7 @@ func (self *canonicalRewardState) isInRange(deposit *sr.Deposit) bool {
 }
 
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
-	self.emissionUpdates.set(time.Now().Unix(), emission)
+	self.emissionUpdates.set(uint64(time.Now().Unix()), emission)
 	self.PerBlockEmission = emission
 	self.PerSecondEmission = emission // Since 1 block = 1 second in tests
 }

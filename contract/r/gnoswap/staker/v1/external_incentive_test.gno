@@ -272,9 +272,9 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 	incentiveIds := []string{incentiveId1}
 	poolIncentives.Set(poolPath, incentiveIds)
 
-	tree.Set(timestamp, poolIncentives)
+	tree.Set(uint64(timestamp), poolIncentives)
 
-	value, exists := tree.Get(timestamp)
+	value, exists := tree.Get(uint64(timestamp))
 	if !exists {
 		t.Fatal("Expected timestamp entry to exist")
 	}
@@ -298,9 +298,9 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 	existingIds := idsValue.([]string)
 	incentiveIds = append(existingIds, incentiveId2)
 	poolTree.Set(poolPath, incentiveIds)
-	tree.Set(timestamp, poolTree)
+	tree.Set(uint64(timestamp), poolTree)
 
-	value2, _ := tree.Get(timestamp)
+	value2, _ := tree.Get(uint64(timestamp))
 	poolTree2 := value2.(*avl.Tree)
 	idsValue2, _ := poolTree2.Get(poolPath)
 	stored2 := idsValue2.([]string)
@@ -316,9 +316,9 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 	incentiveId3 := "addr3:1000:2"
 	incentiveIds3 := []string{incentiveId3}
 	poolTree2.Set(poolPath2, incentiveIds3)
-	tree.Set(timestamp, poolTree2)
+	tree.Set(uint64(timestamp), poolTree2)
 
-	value3, _ := tree.Get(timestamp)
+	value3, _ := tree.Get(uint64(timestamp))
 	poolTree3 := value3.(*avl.Tree)
 	idsValue3, exists := poolTree3.Get(poolPath2)
 	if !exists {
@@ -1491,7 +1491,7 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 				},
 			},
 			expectedHasPanic:     true,
-			expectedPanicMessage: "negative value not supported",
+			expectedPanicMessage: "creationTime must be non-negative",
 		},
 		{
 			name: "large creation time",

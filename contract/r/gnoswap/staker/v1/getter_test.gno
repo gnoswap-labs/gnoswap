@@ -685,9 +685,9 @@ func TestGetterPoolRewardCache(t *testing.T) {
 	state := setupBasicTestState(t)
 
 	// Add some reward cache entries
-	state.pool.RewardCache().Set(state.fixedTimestamp, int64(1000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+100, int64(2000))
-	state.pool.RewardCache().Set(state.fixedTimestamp+200, int64(3000))
+	state.pool.RewardCache().Set(uint64(state.fixedTimestamp), int64(1000))
+	state.pool.RewardCache().Set(uint64(state.fixedTimestamp+100), int64(2000))
+	state.pool.RewardCache().Set(uint64(state.fixedTimestamp+200), int64(3000))
 
 	// Test count
 	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
@@ -753,9 +753,9 @@ func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 	acc2 := u256.MustFromDecimal("2000000000000000000")
 	acc3 := u256.MustFromDecimal("3000000000000000000")
 
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
-	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+300, acc3)
+	state.pool.GlobalRewardRatioAccumulation().Set(uint64(state.fixedTimestamp+100), acc1)
+	state.pool.GlobalRewardRatioAccumulation().Set(uint64(state.fixedTimestamp+200), acc2)
+	state.pool.GlobalRewardRatioAccumulation().Set(uint64(state.fixedTimestamp+300), acc3)
 
 	// Test count
 	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
