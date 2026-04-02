@@ -200,6 +200,7 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
 		createdIncentiveID,
+		adminUser,
 	)
 
 	newUgnotBal := ugnotBalanceOf(adminAddr)

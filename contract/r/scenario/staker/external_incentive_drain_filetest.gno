@@ -236,6 +236,7 @@ func endExternalGnsIncentive() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		actualIncentiveID,
+		externalCreatorUser,
 	)
 
 	stakerGnsAfterFirstEnd := gns.BalanceOf(stakerAddr)
@@ -259,6 +260,7 @@ func demonstrateVulnerability() {
 			cross,
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 			actualIncentiveID,
+			externalCreatorUser,
 		)
 	})
 }
