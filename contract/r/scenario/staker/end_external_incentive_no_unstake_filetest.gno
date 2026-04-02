@@ -224,6 +224,7 @@ func endExternalIncentive() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		actualIncentiveID,
+		externalCreatorUser,
 	)
 
 	println("[INFO] external incentive ended via refund path")

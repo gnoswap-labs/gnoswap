@@ -42,18 +42,12 @@ func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) 
 
 // Create a new external incentive
 // Panics if the incentive already exists.
-func (self *IncentivesResolver) create(
-	creator address,
-	incentive *sr.ExternalIncentive,
-) {
+func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
 	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
 }
 
 // update updates an existing incentive with new information
-func (self *IncentivesResolver) update(
-	creator address,
-	incentive *sr.ExternalIncentive,
-) {
+func (self *IncentivesResolver) update(incentive *sr.ExternalIncentive) {
 	self.IncentiveTrees().Set(incentive.IncentiveId(), incentive)
 }
 

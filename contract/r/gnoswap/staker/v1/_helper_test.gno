@@ -500,6 +500,13 @@ func mockInstanceUnStakeToken(positionId uint64) string {
 	return poolPath
 }
 
+func mockInstanceEndExternalIncentive(poolPath string, incentiveId string, refundAddress address) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().EndExternalIncentive(poolPath, incentiveId, refundAddress)
+	}(cross)
+}
+
 func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
 	return pn.GetPositionOperator(positionId)
