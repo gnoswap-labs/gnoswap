@@ -9,13 +9,14 @@ const (
 	projectTier90  = int64(90)
 	projectTier180 = int64(180)
 
-	dayTime = int64(24 * 60 * 60) // 86400
+	dayTime    = int64(24 * 60 * 60) // 86400
+	minuteTime = int64(60)           // 60
 
 	minimumDepositAmount = int64(1_000_000)
 
 	stringSplitterPad = "*PAD*"
 
-	projectMinimumStartDelayTime = int64(dayTime * 3) // 3 days
+	projectMinimumStartDelayTime = int64(minuteTime * 3) // 3 minutes
 )
 
 // contract paths
