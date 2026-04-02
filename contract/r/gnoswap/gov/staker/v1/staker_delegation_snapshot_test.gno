@@ -120,7 +120,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			history := gs.store.GetTotalDelegationHistory()
 			history.Set(100, int64(1000))
 			history.Set(200, int64(2000))
-			history.Set(math.MaxInt64-1, int64(3000))
+			history.Set(uint64(math.MaxInt64-1), int64(3000))
 			err := gs.store.SetTotalDelegationHistory(history)
 			if err != nil {
 				panic(err)
@@ -150,7 +150,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			userHistory := staker.NewUintTree()
 			userHistory.Set(100, int64(1000))
 			userHistory.Set(200, int64(2000))
-			userHistory.Set(math.MaxInt64-1, int64(3000))
+			userHistory.Set(uint64(math.MaxInt64-1), int64(3000))
 
 			history := avl.NewTree()
 			history.Set(aliceAddr, userHistory)
@@ -180,8 +180,8 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		func(cur realm) {
 			history := gs.store.GetTotalDelegationHistory()
 			history.Set(100, int64(1000))
-			history.Set(math.MaxInt64-1000, int64(2000))
-			history.Set(math.MaxInt64-500, int64(3000))
+			history.Set(uint64(math.MaxInt64-1000), int64(2000))
+			history.Set(uint64(math.MaxInt64-500), int64(3000))
 			err := gs.store.SetTotalDelegationHistory(history)
 			if err != nil {
 				panic(err)
@@ -197,7 +197,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// then: should preserve continuity and clean old entries
 		history := gs.store.GetTotalDelegationHistory()
 		// Should have at least the cutoff entry
-		val, exists := history.Get(cutoff)
+		val, exists := history.Get(uint64(cutoff))
 		uassert.True(t, exists || history.Size() > 0)
 		_ = val
 	})
@@ -213,8 +213,8 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		func(cur realm) {
 			userHistory := staker.NewUintTree()
 			userHistory.Set(100, int64(1000))
-			userHistory.Set(math.MaxInt64-1000, int64(2000))
-			userHistory.Set(math.MaxInt64-500, int64(3000))
+			userHistory.Set(uint64(math.MaxInt64-1000), int64(2000))
+			userHistory.Set(uint64(math.MaxInt64-500), int64(3000))
 
 			history := avl.NewTree()
 			history.Set(aliceAddr, userHistory)

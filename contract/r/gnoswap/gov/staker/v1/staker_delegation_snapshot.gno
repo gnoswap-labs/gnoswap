@@ -94,6 +94,9 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 // cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.
 // Keeps the most recent entry before cutoff to preserve state continuity.
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
+	if cutoffTimestamp < 0 {
+		panic("cutoffTimestamp must be non-negative")
+	}
 	history := gs.store.GetTotalDelegationHistory()
 
 	toTimestamp := cutoffTimestamp
@@ -106,7 +109,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 
 	hasLastValue := false
 
-	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
+	history.ReverseIterate(0, uint64(toTimestamp), func(timestamp uint64, value any) bool {
 		lastValue = value
 		hasLastValue = true
 
@@ -115,10 +118,10 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 
 	// If there was a value before cutoff, set it at cutoff time to preserve continuity
 	if hasLastValue {
-		history.Set(cutoffTimestamp, lastValue)
+		history.Set(uint64(cutoffTimestamp), lastValue)
 	}
 
-	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
+	history.Iterate(0, uint64(cutoffTimestamp), func(timestamp uint64, _ any) bool {
 		history.Remove(timestamp)
 
 		return false // continue
@@ -133,6 +136,9 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 // Structure: address -> *UintTree[timestamp -> int64]
 // Keeps the most recent entry before cutoff for each user to preserve state continuity.
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
+	if cutoffTimestamp < 0 {
+		panic("cutoffTimestamp must be non-negative")
+	}
 	history := gs.store.GetUserDelegationHistory()
 
 	// Iterate over all users and clean each user's history
@@ -149,7 +155,7 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 
 		hasLastValue := false
 
-		userHistory.ReverseIterate(0, toTimestamp, func(_ int64, val any) bool {
+		userHistory.ReverseIterate(0, uint64(toTimestamp), func(_ uint64, val any) bool {
 			lastValue = val
 			hasLastValue = true
 
@@ -158,11 +164,11 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 
 		// If there was a value before cutoff, set it at cutoff time to preserve continuity
 		if hasLastValue {
-			userHistory.Set(cutoffTimestamp, lastValue)
+			userHistory.Set(uint64(cutoffTimestamp), lastValue)
 		}
 
 		// Copy all entries at or after cutoff time
-		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
+		userHistory.Iterate(0, uint64(cutoffTimestamp), func(key uint64, val any) bool {
 			userHistory.Remove(key)
 
 			return false // continue
