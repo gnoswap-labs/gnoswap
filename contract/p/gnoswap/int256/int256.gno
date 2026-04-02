@@ -479,6 +479,16 @@ func (z *Int) LshOverflow(x *Int, n uint) (*Int, bool) {
 	return z.lsh(x, n), lshOverflows(x, n)
 }
 
+// topLimb returns the index of the highest non-zero limb in x.
+func topLimb(x *Int) int {
+	for i := 3; i >= 0; i-- {
+		if x[i] != 0 {
+			return i
+		}
+	}
+	return 0
+}
+
 // lshOverflows reports whether left-shifting x by n overflows int256.
 //
 // For positive x: the highest set bit after shift must not reach the sign bit (bit 255).
@@ -496,21 +506,13 @@ func lshOverflows(x *Int, n uint) bool {
 			return true
 		}
 		abs := new(Int).Neg(x)
-		top := 0
-		for i := 3; i >= 0; i-- {
-			if abs[i] != 0 {
-				top = i
-				break
-			}
-		}
+		top := topLimb(abs)
 		msbIndex := top*64 + (bits.Len64(abs[top]) - 1)
 		headroom := 255 - msbIndex
 		if int(n) > headroom {
 			return true
 		}
 		if int(n) == headroom {
-			// Boundary: |x| << n == 2^255 only if |x| is exactly a power of 2.
-			// Otherwise |x| << n > 2^255, which overflows.
 			popcount := bits.OnesCount64(abs[0]) + bits.OnesCount64(abs[1]) +
 				bits.OnesCount64(abs[2]) + bits.OnesCount64(abs[3])
 			return popcount != 1
@@ -518,14 +520,7 @@ func lshOverflows(x *Int, n uint) bool {
 		return false
 	}
 
-	// Positive: sign bit (255) must remain 0
-	top := 0
-	for i := 3; i >= 0; i-- {
-		if x[i] != 0 {
-			top = i
-			break
-		}
-	}
+	top := topLimb(x)
 	msbIndex := top*64 + (bits.Len64(x[top]) - 1)
 	return int(n) > 254-msbIndex
 }
