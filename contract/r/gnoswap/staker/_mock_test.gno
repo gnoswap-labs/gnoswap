@@ -99,7 +99,7 @@ func (m *MockStaker) CreateExternalIncentive(
 	m.Response.Get("CreateExternalIncentive")
 }
 
-func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	m.Response.Get("EndExternalIncentive")
 }
 
@@ -364,8 +364,8 @@ func (m *MockStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	return res[0].(int64)
 }
 
-func (m *MockStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
-	res, ok := m.Response.Get("GetIncentiveRefundee")
+func (m *MockStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
+	res, ok := m.Response.Get("GetIncentiveCreator")
 	if !ok {
 		return address("")
 	}

@@ -476,7 +476,7 @@ func newExternalIncentiveBy(
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
-	refundee address,
+	creator address,
 	currentHeight int64,
 	currentTimestamp int64,
 ) *sr.ExternalIncentive {
@@ -492,7 +492,7 @@ func newExternalIncentiveBy(
 		rewardAmount,
 		startTimestamp,
 		endTimestamp,
-		refundee,
+		creator,
 		0,
 		currentHeight,
 		currentTimestamp,
@@ -509,7 +509,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
-	refundee address,
+	creator address,
 	currentHeight int64,
 ) string {
 	incentive := newExternalIncentiveBy(
@@ -518,7 +518,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 		rewardAmount,
 		startTimestamp,
 		endTimestamp,
-		refundee,
+		creator,
 		currentHeight,
 		self.CurrentTime(),
 	)
@@ -543,7 +543,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 		self.global.pools.set(targetPoolPath, pl)
 	}
 	plResolver := NewPoolResolver(pl)
-	plResolver.IncentivesResolver().create(refundee, incentive)
+	plResolver.IncentivesResolver().create(incentive)
 
 	return incentive.IncentiveId()
 }

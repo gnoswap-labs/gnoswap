@@ -161,9 +161,9 @@ func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveEndTimestamp(poolPath, incentiveId)
 }
 
-// GetIncentiveRefundee returns the refundee address of an incentive.
-func GetIncentiveRefundee(poolPath string, incentiveId string) address {
-	return getImplementation().GetIncentiveRefundee(poolPath, incentiveId)
+// GetIncentiveCreator returns the creator address of an incentive.
+func GetIncentiveCreator(poolPath string, incentiveId string) address {
+	return getImplementation().GetIncentiveCreator(poolPath, incentiveId)
 }
 
 // GetIncentiveRewardAmount returns the total reward amount of an incentive.

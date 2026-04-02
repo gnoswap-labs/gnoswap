@@ -602,9 +602,9 @@ func TestAssertIsValidPoolTier_AllValues(t *testing.T) {
 
 func TestIncentiveDuration_Constants(t *testing.T) {
 	// Verify the duration constants are correct
-	uassert.Equal(t, int64(7776000), TIMESTAMP_90DAYS)    // 90 * 24 * 60 * 60
-	uassert.Equal(t, int64(15552000), TIMESTAMP_180DAYS)  // 180 * 24 * 60 * 60
-	uassert.Equal(t, int64(31536000), TIMESTAMP_365DAYS)  // 365 * 24 * 60 * 60
+	uassert.Equal(t, int64(7776000), TIMESTAMP_90DAYS)   // 90 * 24 * 60 * 60
+	uassert.Equal(t, int64(15552000), TIMESTAMP_180DAYS) // 180 * 24 * 60 * 60
+	uassert.Equal(t, int64(31536000), TIMESTAMP_365DAYS) // 365 * 24 * 60 * 60
 
 	// Test that all three constants work
 	uassert.NotPanics(t, func() {
@@ -616,4 +616,45 @@ func TestIncentiveDuration_Constants(t *testing.T) {
 	uassert.NotPanics(t, func() {
 		assertIsValidIncentiveDuration(TIMESTAMP_365DAYS)
 	})
+}
+
+func TestAssertIsValidAddress(t *testing.T) {
+	tests := []struct {
+		name        string
+		addr        address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "valid address",
+			addr:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			shouldPanic: false,
+		},
+		{
+			name:        "empty address",
+			addr:        address(""),
+			shouldPanic: true,
+			expectedMsg: "invalid address",
+		},
+		{
+			name:        "invalid address format",
+			addr:        address("invalid"),
+			shouldPanic: true,
+			expectedMsg: "invalid address",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.expectedMsg, func() {
+					assertIsValidAddress(tt.addr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidAddress(tt.addr)
+				})
+			}
+		})
+	}
 }

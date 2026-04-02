@@ -111,11 +111,14 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	t.ExecuteFn(
 		"EndExternalIncentive",
-		func(args ...any) any { t.instance.EndExternalIncentive(args[0].(string), args[1].(string)); return nil },
-		targetPoolPath, incentiveId,
+		func(args ...any) any {
+			t.instance.EndExternalIncentive(args[0].(string), args[1].(string), args[2].(address))
+			return nil
+		},
+		targetPoolPath, incentiveId, refundAddress,
 	)
 }
 
@@ -431,10 +434,10 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	).(int64)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
 	return t.ExecuteFn(
-		"GetIncentiveRefundee",
-		func(args ...any) any { return t.instance.GetIncentiveRefundee(args[0].(string), args[1].(string)) },
+		"GetIncentiveCreator",
+		func(args ...any) any { return t.instance.GetIncentiveCreator(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
 	).(address)
 }
@@ -704,7 +707,9 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
 	return t.ExecuteFn(
 		"GetPoolGlobalRewardRatioAccumulation",
-		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64)) },
+		func(args ...any) any {
+			return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64))
+		},
 		poolPath, timestamp,
 	).(*u256.Uint)
 }

@@ -195,6 +195,16 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 	))
 }
 
+// AssertIsValidAddress panics if the provided address is invalid.
+func assertIsValidAddress(addr address) {
+	if addr == "" || !addr.IsValid() {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("address(%s) is invalid", addr.String()),
+		))
+	}
+}
+
 // isMidnight checks if a time represents midnight (00:00:00).
 func isMidnight(startTime time.Time) bool {
 	hour := startTime.Hour()
