@@ -3,6 +3,7 @@ package v1
 import (
 	"strings"
 
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -172,21 +173,24 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 //
 // Returns:
 //   - []ParameterChangeInfo: slice of parsed parameter change information
-func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterChangeInfo {
+//   - error: validation error if any execution message is malformed
+func (r *ProposalDataResolver) ParameterChangesInfos() ([]governance.ParameterChangeInfo, error) {
 	infos := make([]governance.ParameterChangeInfo, 0)
 
 	// Return empty slice if no executions
 	execution := r.Execution()
 	if execution == nil || execution.Num() <= 0 {
-		return infos
+		return infos, nil
 	}
 
 	// Parse each execution message
 	for _, msg := range execution.Msgs() {
 		pkgPath, function, params, partCount := parseExecutionMessage(msg)
 		if partCount != 3 {
-			// validation rejects mismatched counts upstream.
-			continue
+			return nil, makeErrorWithDetails(
+				errInvalidMessageFormat,
+				ufmt.Sprintf("malformed execution message: expected 3 parts (pkgPath, function, params), got %d", partCount),
+			)
 		}
 
 		// Create parameter change info structure
@@ -194,7 +198,7 @@ func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterCha
 		infos = append(infos, info)
 	}
 
-	return infos
+	return infos, nil
 }
 
 // NewProposalTextData creates proposal data for a text proposal.

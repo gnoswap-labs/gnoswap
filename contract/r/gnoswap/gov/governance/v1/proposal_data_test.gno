@@ -200,9 +200,10 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 			info := governance.NewExecutionInfo(tc.num, tc.msgs)
 
 			// when
-			infos := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
+			infos, err := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
 
 			// then
+			uassert.NoError(t, err)
 			uassert.Equal(t, len(infos), len(tc.expectedInfos))
 			for i, expectedInfo := range tc.expectedInfos {
 				uassert.Equal(t, infos[i].PkgPath(), expectedInfo.PkgPath())
@@ -211,6 +212,18 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestProposalData_ParameterChangesInfos_MalformedMessage(t *testing.T) {
+	// given
+	info := governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1"})
+
+	// when
+	infos, err := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
+
+	// then
+	uassert.Equal(t, len(infos), 0)
+	uassert.ErrorContains(t, err, "malformed execution message")
 }
 
 // TestMakeExecuteMessage tests message creation

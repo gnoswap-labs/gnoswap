@@ -1385,6 +1385,33 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 			expectedError:    "handler not found",
 			expectedHasError: true,
 		},
+		{
+			name: "fail - malformed execution message",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
+					governance.NewProposalData(
+						governance.ParameterChange,
+						nil,
+						governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee"}),
+					),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return CreateParameterHandlers()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedError:    "malformed execution message",
+			expectedHasError: true,
+		},
 	}
 
 	for _, tt := range tests {
