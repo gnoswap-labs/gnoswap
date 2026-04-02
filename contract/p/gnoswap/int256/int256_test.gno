@@ -881,34 +881,10 @@ func TestLsh(t *testing.T) {
 			expected: "100",
 		},
 		{
-			name:     "n is greater than or equal 256",
-			x:        "-4125871947195612497219427349",
-			n:        256,
+			name:     "zero shifted",
+			x:        "0",
+			n:        128,
 			expected: "0",
-		},
-		{
-			name:     "x is non-neg & n is smaller than 256 and greater than or equal 192",
-			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
-			n:        200,
-			expected: "-1606938044258990275541962092341162602522202993782792835301376",
-		},
-		{
-			name:     "x is non-neg & n is smaller than 192 and greater than or equal 128",
-			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
-			n:        150,
-			expected: "-1427247692705959881058285969449495136382746624",
-		},
-		{
-			name:     "x is non-neg & n is smaller than 128 and greater than or equal 64",
-			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
-			n:        100,
-			expected: "-1267650600228229401496703205376",
-		},
-		{
-			name:     "x is non-neg & n is smaller than 64",
-			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
-			n:        32,
-			expected: "-4294967296",
 		},
 		{
 			name:     "x is non-neg & n is 64",
@@ -927,6 +903,12 @@ func TestLsh(t *testing.T) {
 			x:        "1",
 			n:        192,
 			expected: "6277101735386680763835789423207666416102355444464034512896",
+		},
+		{
+			name:     "1 shifted to max positive",
+			x:        "1",
+			n:        254,
+			expected: "28948022309329048855892746252171976963317496166410141009864396001978282409984",
 		},
 		{
 			name:     "x is neg & n is smaller than 256 and greater than or equal 192",
@@ -952,6 +934,12 @@ func TestLsh(t *testing.T) {
 			n:        32,
 			expected: "-47721381625856",
 		},
+		{
+			name:     "-1 shifted to min int256",
+			x:        "-1",
+			n:        255,
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
 	}
 
 	for _, tt := range tests {
@@ -959,6 +947,64 @@ func TestLsh(t *testing.T) {
 			x := MustFromDecimal(tt.x)
 			z := new(Int).Lsh(x, tt.n)
 			uassert.Equal(t, tt.expected, z.ToString())
+		})
+	}
+}
+
+func TestLsh_Overflow(t *testing.T) {
+	tests := []struct {
+		name string
+		x    string
+		n    uint
+	}{
+		{
+			name: "non-zero shifted by 256",
+			x:    "-4125871947195612497219427349",
+			n:    256,
+		},
+		{
+			name: "max int256 shifted by 1",
+			x:    "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:    1,
+		},
+		{
+			name: "positive overflow into sign bit",
+			x:    "1",
+			n:    255,
+		},
+		{
+			name: "min int256 shifted by 1",
+			x:    "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			n:    1,
+		},
+		{
+			name: "negative overflow large shift",
+			x:    "-11111",
+			n:    252,
+		},
+		{
+			name: "positive overflow large value small shift",
+			x:    "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:    32,
+		},
+		{
+			name: "negative non-power-of-2 at boundary",
+			x:    "-3",
+			n:    254,
+		},
+		{
+			name: "negative non-power-of-2 at boundary 2",
+			x:    "-5",
+			n:    253,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.PanicsWithMessage(t, "int256: Lsh overflow", func() {
+				new(Int).Lsh(x, tt.n)
+			})
 		})
 	}
 }
@@ -1125,12 +1171,92 @@ func TestRsh(t *testing.T) {
 	}
 }
 
-func TestLsh_NoPanic(t *testing.T) {
-	x := MustFromDecimal("-12345678901234567890")
+func TestLshOverflow(t *testing.T) {
+	tests := []struct {
+		name           string
+		x              string
+		n              uint
+		expected       string
+		expectOverflow bool
+	}{
+		{
+			name:           "no overflow: zero",
+			x:              "0",
+			n:              255,
+			expected:       "0",
+			expectOverflow: false,
+		},
+		{
+			name:           "no overflow: n is 0",
+			x:              "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:              0,
+			expected:       "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectOverflow: false,
+		},
+		{
+			name:           "no overflow: 1 << 254",
+			x:              "1",
+			n:              254,
+			expected:       "28948022309329048855892746252171976963317496166410141009864396001978282409984",
+			expectOverflow: false,
+		},
+		{
+			name:           "no overflow: -1 << 255",
+			x:              "-1",
+			n:              255,
+			expected:       "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectOverflow: false,
+		},
+		{
+			name:           "overflow: 1 << 255",
+			x:              "1",
+			n:              255,
+			expected:       "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectOverflow: true,
+		},
+		{
+			name:           "overflow: max int256 << 1",
+			x:              "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:              1,
+			expected:       "-2",
+			expectOverflow: true,
+		},
+		{
+			name:           "overflow: n >= 256",
+			x:              "1",
+			n:              256,
+			expected:       "0",
+			expectOverflow: true,
+		},
+		{
+			name:           "overflow: min int256 << 1",
+			x:              "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			n:              1,
+			expected:       "0",
+			expectOverflow: true,
+		},
+		{
+			name:           "no overflow: -2 << 254 (power of 2, exactly MinInt256)",
+			x:              "-2",
+			n:              254,
+			expected:       "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectOverflow: false,
+		},
+		{
+			name:           "overflow: -3 << 254 (non-power-of-2 boundary)",
+			x:              "-3",
+			n:              254,
+			expected:       "28948022309329048855892746252171976963317496166410141009864396001978282409984",
+			expectOverflow: true,
+		},
+	}
 
-	for n := uint(0); n < 300; n++ {
-		uassert.NotPanics(t, func() {
-			_ = new(Int).Lsh(x, n)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			z, overflow := new(Int).LshOverflow(x, tt.n)
+			uassert.Equal(t, tt.expected, z.ToString())
+			uassert.Equal(t, tt.expectOverflow, overflow)
 		})
 	}
 }

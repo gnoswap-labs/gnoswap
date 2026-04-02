@@ -12,7 +12,7 @@ type Int [4]uint64
 
 var (
 	MAX_UINT64 = ^uint64(0)
-	MIN_I256    = &Int{0, 0, 0, 0x8000000000000000}
+	MIN_I256   = &Int{0, 0, 0, 0x8000000000000000}
 )
 
 func Zero() *Int {
@@ -465,7 +465,75 @@ func (z *Int) Not(x *Int) *Int {
 	return z
 }
 
+// Lsh sets z to x left-shifted by n bits and returns z.
+// Panics if the shift would cause signed overflow (result outside int256 range).
 func (z *Int) Lsh(x *Int, n uint) *Int {
+	if lshOverflows(x, n) {
+		panic("int256: Lsh overflow")
+	}
+	return z.lsh(x, n)
+}
+
+// LshOverflow sets z to x left-shifted by n bits.
+// Returns z and a boolean indicating whether the shift caused signed overflow.
+// When overflow is true, z contains the truncated (wrapped) result.
+func (z *Int) LshOverflow(x *Int, n uint) (*Int, bool) {
+	return z.lsh(x, n), lshOverflows(x, n)
+}
+
+// lshOverflows reports whether left-shifting x by n overflows int256.
+//
+// For positive x: the highest set bit after shift must not reach the sign bit (bit 255).
+// For negative x: the magnitude |x| shifted left must not exceed 2^255.
+func lshOverflows(x *Int, n uint) bool {
+	if x.IsZero() || n == 0 {
+		return false
+	}
+	if n >= 256 {
+		return true
+	}
+
+	if x.IsNeg() {
+		if x.IsMinI256() {
+			return true
+		}
+		abs := new(Int).Neg(x)
+		top := 0
+		for i := 3; i >= 0; i-- {
+			if abs[i] != 0 {
+				top = i
+				break
+			}
+		}
+		msbIndex := top*64 + (bits.Len64(abs[top]) - 1)
+		headroom := 255 - msbIndex
+		if int(n) > headroom {
+			return true
+		}
+		if int(n) == headroom {
+			// Boundary: |x| << n == 2^255 only if |x| is exactly a power of 2.
+			// Otherwise |x| << n > 2^255, which overflows.
+			popcount := bits.OnesCount64(abs[0]) + bits.OnesCount64(abs[1]) +
+				bits.OnesCount64(abs[2]) + bits.OnesCount64(abs[3])
+			return popcount != 1
+		}
+		return false
+	}
+
+	// Positive: sign bit (255) must remain 0
+	top := 0
+	for i := 3; i >= 0; i-- {
+		if x[i] != 0 {
+			top = i
+			break
+		}
+	}
+	msbIndex := top*64 + (bits.Len64(x[top]) - 1)
+	return int(n) > 254-msbIndex
+}
+
+// lsh performs the left shift without overflow checking.
+func (z *Int) lsh(x *Int, n uint) *Int {
 	if n == 0 {
 		return z.Set(x)
 	}

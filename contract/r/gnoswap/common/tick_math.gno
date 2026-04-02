@@ -102,7 +102,6 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 
 	temp := u256.Zero()
 
-	// Apply bit masks using optimized loop - maintains exact same logic
 	for i := 1; i < 20; i++ {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
@@ -255,7 +254,6 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	tempF := u256.Zero()
 	tempI256 := i256.Zero()
 
-	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
 		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
