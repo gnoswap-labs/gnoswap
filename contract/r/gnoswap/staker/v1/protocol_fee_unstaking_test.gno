@@ -61,7 +61,7 @@ func TestHandleStakingRewardFee(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initStakerTest(t)
 
-			getMockInstance().store.SetUnstakingFee(tc.expectedFee) // Set the fee globally for the test
+			getMockInstance().store.SetUnstakingFee(uint64(tc.expectedFee)) // Set the fee globally for the test
 
 			if tc.stakerBalance > 0 {
 				testing.SetRealm(adminRealm)
@@ -97,8 +97,8 @@ func TestSetUnStakingFee(t *testing.T) {
 	tests := []struct {
 		name           string
 		caller         address
-		fee            int64
-		expectedFee    int64
+		fee            uint64
+		expectedFee    uint64
 		shouldAbort    bool
 		expectedErrMsg string
 	}{
@@ -126,14 +126,6 @@ func TestSetUnStakingFee(t *testing.T) {
 			expectedErrMsg: ufmt.Sprintf("unauthorized: caller %s is not admin or governance", testutils.TestAddress("unauthorized")),
 		},
 		// Fee validation tests
-		{
-			name:           "admin cannot set negative fee",
-			caller:         adminAddr,
-			fee:            -100,
-			expectedFee:    0,
-			shouldAbort:    true,
-			expectedErrMsg: ufmt.Sprintf("invalid unstaking fee || fee(%d) must be in range 0 ~ %d", -100, maxUnstakingFee),
-		},
 		{
 			name:        "admin cannot set zero fee",
 			caller:      adminAddr,
@@ -196,8 +188,8 @@ func TestSetUnStakingFee(t *testing.T) {
 func TestGetUnstakingFee(t *testing.T) {
 	tests := []struct {
 		name        string
-		setFee      int64
-		expectedFee int64
+		setFee      uint64
+		expectedFee uint64
 	}{
 		{
 			name:        "get default fee (zero)",
@@ -240,8 +232,8 @@ func TestGetUnstakingFee(t *testing.T) {
 func TestSetUnStakingFeeInternal(t *testing.T) {
 	tests := []struct {
 		name    string
-		fee     int64
-		wantFee int64
+		fee     uint64
+		wantFee uint64
 	}{
 		{
 			name:    "set fee to 0",
@@ -281,7 +273,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 		name         string
 		tokenPath    string
 		amount       int64
-		unstakingFee int64
+		unstakingFee uint64
 		internal     bool
 		expectedNet  int64
 		expectedFee  int64
@@ -349,7 +341,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 
 			// Prepare token balance
 			if tt.unstakingFee > 0 {
-				calculatedFee := (tt.amount * tt.unstakingFee) / 10000
+				calculatedFee := (tt.amount * int64(tt.unstakingFee)) / 10000
 				if calculatedFee > 0 {
 					testing.SetRealm(adminRealm)
 					_ = tt.tokenPath
@@ -379,7 +371,7 @@ func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
 	tests := []struct {
 		name        string
 		amount      int64
-		fee         int64
+		fee         uint64
 		expectedFee int64
 		expectedNet int64
 	}{
@@ -416,7 +408,7 @@ func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify calculation: feeAmount = (amount * fee) / FEE_PRECISION
-			calculatedFee := (tt.amount * tt.fee) / 10000
+			calculatedFee := (tt.amount * int64(tt.fee)) / 10000
 			uassert.Equal(t, tt.expectedFee, calculatedFee)
 			uassert.Equal(t, tt.expectedNet, tt.amount-calculatedFee)
 		})

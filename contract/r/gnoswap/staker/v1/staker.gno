@@ -527,9 +527,10 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 			continue
 		}
 
-		// process external reward to user
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), rewardAmount))
+		// process reward states
 		rewardToken := incentive.RewardToken()
+		externalPenalty := reward.ExternalPenalty[incentiveId]
+		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
 		var toUser int64
@@ -544,14 +545,11 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 			panic(err.Error())
 		}
 
-		// process external penalty
-		externalPenalty := reward.ExternalPenalty[incentiveId]
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), externalPenalty))
-
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
-		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
-		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
-		incentiveResolver.addDistributedRewardAmount(totalDistributedRewardAmount)
+
+		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
+		incentiveResolver.addDistributedRewardAmount(rewardAmount)
+		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
@@ -568,10 +566,6 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 
 		// update
 		s.getExternalIncentives().set(incentiveId, incentive)
-
-		if externalPenalty > 0 {
-			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
-		}
 
 		if toUser > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)

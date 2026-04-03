@@ -315,7 +315,7 @@ type ExternalIncentive struct {
 	rewardAmount            int64   // to be distributed reward amount
 	rewardPerSecond         int64   // reward per second
 	distributedRewardAmount int64   // distributed reward amount, when un-staked and refunded
-	refundee                address // refundee address
+	creator                 address // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
@@ -442,14 +442,14 @@ func (e *ExternalIncentive) SetDistributedRewardAmount(distributedRewardAmount i
 	e.distributedRewardAmount = distributedRewardAmount
 }
 
-// Refundee returns the refundee address
-func (e *ExternalIncentive) Refundee() address {
-	return e.refundee
+// Creator returns the creator address
+func (e *ExternalIncentive) Creator() address {
+	return e.creator
 }
 
-// SetRefundee sets the refundee address
-func (e *ExternalIncentive) SetRefundee(refundee address) {
-	e.refundee = refundee
+// SetCreator sets the creator address
+func (e *ExternalIncentive) SetCreator(creator address) {
+	e.creator = creator
 }
 
 // Refunded returns the refunded status
@@ -475,7 +475,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		totalRewardAmount:       e.totalRewardAmount,
 		rewardAmount:            e.rewardAmount,
 		rewardPerSecond:         e.rewardPerSecond,
-		refundee:                e.refundee,
+		creator:                 e.creator,
 		refunded:                e.refunded,
 		distributedRewardAmount: e.distributedRewardAmount,
 	}
@@ -489,7 +489,7 @@ func NewExternalIncentive(
 	rewardAmount int64,
 	startTimestamp int64, // timestamp is in unix time(seconds)
 	endTimestamp int64,
-	refundee address,
+	creator address,
 	depositGnsAmount int64,
 	createdHeight int64,
 	currentTime int64, // current time in unix time(seconds)
@@ -507,11 +507,11 @@ func NewExternalIncentive(
 		endTimestamp:            endTimestamp,
 		rewardPerSecond:         rewardPerSecond,
 		distributedRewardAmount: 0,
-		refundee:                refundee,
+		creator:                 creator,
 		createdHeight:           createdHeight,
 		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
-		refunded: false,
+		refunded:                false,
 	}
 }
 

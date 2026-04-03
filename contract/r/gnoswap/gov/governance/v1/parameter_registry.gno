@@ -549,11 +549,11 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "SetUnStakingFee",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				numberValidator(kindInt64), // fee
+				numberValidator(kindUint64), // fee
 			},
 			handlerFunc: func(params []string) error {
 				// Set fee charged for unstaking operations
-				fee := parseInt64(params[0])
+				fee := parseUint64(params[0])
 				sr.SetUnStakingFee(cross, fee)
 				return nil
 			},

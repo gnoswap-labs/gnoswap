@@ -128,11 +128,11 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 	))
 }
 
-const maxUnstakingFee = int64(1000) // 10%
+const maxUnstakingFee = uint64(1000) // 10%
 
 // assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
-func assertIsValidFeeRate(fee int64) {
-	if fee < 0 || fee > maxUnstakingFee {
+func assertIsValidFeeRate(fee uint64) {
+	if fee > maxUnstakingFee {
 		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
 			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, maxUnstakingFee),
@@ -193,6 +193,16 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 		errInvalidIncentiveDuration,
 		ufmt.Sprintf("externalDuration(%d) must be 90, 180, 365 days", externalDuration),
 	))
+}
+
+// AssertIsValidAddress panics if the provided address is invalid.
+func assertIsValidAddress(addr address) {
+	if addr == "" || !addr.IsValid() {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("address(%s) is invalid", addr.String()),
+		))
+	}
 }
 
 // isMidnight checks if a time represents midnight (00:00:00).

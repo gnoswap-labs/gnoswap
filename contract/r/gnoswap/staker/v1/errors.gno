@@ -27,6 +27,7 @@ var (
 	errIncentiveAlreadyExists        = errors.New("[GNOSWAP-STAKER-018] incentive already exists")
 	errOverflow                      = errors.New("[GNOSWAP-STAKER-019] overflow")
 	errAddExistingToken              = errors.New("[GNOSWAP-STAKER-020] cannot add existing token")
+	errInvalidAddress                = errors.New("[GNOSWAP-STAKER-021] invalid address")
 )
 
 func makeErrorWithDetails(err error, details string) error {
