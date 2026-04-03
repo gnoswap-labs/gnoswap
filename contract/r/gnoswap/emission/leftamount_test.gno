@@ -118,7 +118,11 @@ func TestLeftAmountFix(t *testing.T) {
 			}
 
 			// Execute distribution
-			totalSent, err := distributeToTarget(tt.distributionAmount)
+			distributable, leftAmt := calculateDistributableAmounts(tt.distributionAmount)
+			totalSent := tt.distributionAmount - leftAmt
+			amountByAddress, err := applyDistribution(distributable)
+			uassert.NoError(t, err)
+			err = transferToTarget(amountByAddress)
 
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMessage, err.Error())

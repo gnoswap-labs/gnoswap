@@ -120,9 +120,6 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	collectAmount0Int64 := safeConvertToInt64(collectAmount0)
 	collectAmount1Int64 := safeConvertToInt64(collectAmount1)
 
-	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0Int64)
-	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1Int64)
-
 	if position.TokensOwed0() < collectAmount0Int64 {
 		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%d) < collectAmount0(%d)", position.TokensOwed0(), collectAmount0Int64))
 	}
@@ -138,6 +135,9 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	p.mustUpdatePosition(params.positionId, *position)
+
+	common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0Int64)
+	common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1Int64)
 
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }

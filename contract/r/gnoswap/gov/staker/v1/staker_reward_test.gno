@@ -264,12 +264,13 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			},
 		},
 		{
-			name:        "Zero amount should work",
+			name:        "Zero amount should panic",
 			caller:      launchpadAddr,
 			addr:        testutils.TestAddress("project1"),
 			amount:      0,
 			add:         true,
-			expectPanic: false,
+			expectPanic: true,
+			expectedError: "amount must be positive",
 			setupMocks: func(_ *govStakerV1) {
 				cleanupStakerRewardTest(t)
 			},

@@ -309,14 +309,12 @@ func (i *poolV1) collectProtocol(
 
 	amount0, amount1 = i.saveProtocolFees(pool, amount0, amount1)
 
-	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, amount0)
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.SetBalanceToken0(newBalanceToken0)
 
-	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, amount1)
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)
@@ -327,6 +325,9 @@ func (i *poolV1) collectProtocol(
 	if err != nil {
 		panic(err)
 	}
+
+	common.SafeGRC20Transfer(cross, pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(cross, pool.Token1Path(), recipient, amount1)
 
 	return formatInt(amount0), formatInt(amount1)
 }

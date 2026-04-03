@@ -131,53 +131,22 @@ func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, gov
 	setDistributionBpsPct(GOV_STAKER, govStakerPct)
 }
 
-// distributeToTarget distributes tokens according to configured percentages.
-//
-// Returns total amount distributed and any error.
-func distributeToTarget(amount int64) (int64, error) {
+func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
+	distributable := make(map[int]int64, 0)
 	totalSent := int64(0)
 
 	for target, pct := range distributionBpsPct {
 		distAmount := calculateAmount(amount, pct)
-
-		// Skip zero amounts to avoid unnecessary transfers
 		if distAmount == 0 {
 			continue
 		}
 
-		totalSent = safeAddInt64(totalSent, distAmount)
-
-		err := transferToTarget(target, distAmount)
-		if err != nil {
-			return totalSent, err
-		}
-	}
-
-	return totalSent, nil
-}
-
-func calculateDistributableAmounts(amount int64, bps map[int]int64) (map[int]int64, int64) {
-	distributed := make(map[int]int64, 0)
-	if bps == nil {
-		return distributed, amount
-	}
-
-	targets := []int{LIQUIDITY_STAKER, DEVOPS, COMMUNITY_POOL, GOV_STAKER}
-	totalSent := int64(0)
-
-	for _, target := range targets {
-		pct := bps[target]
-		distAmount := calculateAmount(amount, pct)
-		if distAmount == 0 {
-			continue
-		}
-
-		distributed[target] = distAmount
+		distributable[target] = distAmount
 		totalSent = safeAddInt64(totalSent, distAmount)
 	}
 
 	leftAmount := safeSubInt64(amount, totalSent)
-	return distributed, leftAmount
+	return distributable, leftAmount
 }
 
 // calculateAmount converts basis points to actual token amount.
@@ -200,68 +169,50 @@ func calculateAmount(amount, bptPct int64) int64 {
 	return amount * bptPct / 10000
 }
 
-// transferToTarget sends tokens to the appropriate target address.
-//
-// Returns error if target address not found.
-func transferToTarget(target int, amount int64) error {
-	switch target {
-	case LIQUIDITY_STAKER:
-		stakerAddr, ok := access.GetAddress(prbac.ROLE_STAKER.String())
-		if !ok {
-			return makeErrorWithDetails(
-				errDistributionAddressNotFound,
-				ufmt.Sprintf("%s not found", prbac.ROLE_STAKER.String()),
+func applyDistribution(targets map[int]int64) (map[address]int64, error) {
+	amountByAddress := make(map[address]int64, 0)
+
+	for target, amount := range targets {
+		var addr address
+
+		switch target {
+		case LIQUIDITY_STAKER:
+			distributedToStaker = safeAddInt64(distributedToStaker, amount)
+			accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
+			addr = access.MustGetAddress(prbac.ROLE_STAKER.String())
+
+		case DEVOPS:
+			distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
+			accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
+			addr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+
+		case COMMUNITY_POOL:
+			distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
+			accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
+			addr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+
+		case GOV_STAKER:
+			distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
+			accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
+			addr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+
+		default:
+			return nil, makeErrorWithDetails(
+				errInvalidEmissionTarget,
+				ufmt.Sprintf("invalid target(%d)", target),
 			)
 		}
 
-		distributedToStaker = safeAddInt64(distributedToStaker, amount)
-		accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
-		gns.Transfer(cross, stakerAddr, amount)
+		amountByAddress[addr] = safeAddInt64(amountByAddress[addr], amount)
+	}
 
-	case DEVOPS:
-		devOpsAddr, ok := access.GetAddress(prbac.ROLE_DEVOPS.String())
-		if !ok {
-			return makeErrorWithDetails(
-				errDistributionAddressNotFound,
-				ufmt.Sprintf("%s not found", prbac.ROLE_DEVOPS.String()),
-			)
-		}
+	return amountByAddress, nil
+}
 
-		distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
-		accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
-		gns.Transfer(cross, devOpsAddr, amount)
 
-	case COMMUNITY_POOL:
-		communityPoolAddr, ok := access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-		if !ok {
-			return makeErrorWithDetails(
-				errDistributionAddressNotFound,
-				ufmt.Sprintf("%s not found", prbac.ROLE_COMMUNITY_POOL.String()),
-			)
-		}
-
-		distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
-		accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
-		gns.Transfer(cross, communityPoolAddr, amount)
-
-	case GOV_STAKER:
-		govStakerAddr, ok := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-		if !ok {
-			return makeErrorWithDetails(
-				errDistributionAddressNotFound,
-				ufmt.Sprintf("%s not found", prbac.ROLE_GOV_STAKER.String()),
-			)
-		}
-
-		distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
-		accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
-		gns.Transfer(cross, govStakerAddr, amount)
-
-	default:
-		return makeErrorWithDetails(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("invalid target(%d)", target),
-		)
+func transferToTarget(targets map[address]int64) error {
+	for address, amount := range targets {
+		gns.Transfer(cross, address, amount)
 	}
 
 	return nil
@@ -306,11 +257,11 @@ func GetDistributedToGovStaker() int64 {
 }
 
 func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
-    toStaker = GetDistributedToStaker()
-    toDevOps = GetDistributedToDevOps()
-    toCommunityPool = GetDistributedToCommunityPool()
-    toGovStaker = GetDistributedToGovStaker()
-    return
+	toStaker = GetDistributedToStaker()
+	toDevOps = GetDistributedToDevOps()
+	toCommunityPool = GetDistributedToCommunityPool()
+	toGovStaker = GetDistributedToGovStaker()
+	return
 }
 
 // GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.

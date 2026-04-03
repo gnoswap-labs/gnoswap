@@ -109,30 +109,21 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		setLeftGNSAmount(0)
 	}
 
-	// Distribute tokens and track any undistributed amount
-	distributedGNSAmount, err := distributeToTarget(distributableAmount)
+	distributable, leftAmount := calculateDistributableAmounts(distributableAmount)
+	totalDistAmount := safeSubInt64(distributableAmount, leftAmount)
+	if leftAmount > 0 {
+		setLeftGNSAmount(leftAmount)
+	}
+	setLastExecutedTimestamp(currentTimestamp)
+
+	amountByAddress, err := applyDistribution(distributable)
 	if err != nil {
 		panic(err)
 	}
 
-	// Validate distribution arithmetic
-	if distributedGNSAmount < 0 {
-		panic("distributed amount cannot be negative")
+	if err := transferToTarget(amountByAddress); err != nil {
+		panic(err)
 	}
-
-	if distributedGNSAmount > distributableAmount {
-		panic("distributed amount cannot exceed distributable amount")
-	}
-
-	if distributableAmount != distributedGNSAmount {
-		remainder := safeSubInt64(distributableAmount, distributedGNSAmount)
-		if remainder < 0 {
-			panic("remainder calculation error")
-		}
-		setLeftGNSAmount(remainder)
-	}
-
-	setLastExecutedTimestamp(currentTimestamp)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -144,12 +135,12 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 		"currentHeight", formatInt(currentHeight),
 		"mintedAmount", formatInt(mintedEmissionRewardAmount),
 		"prevLeftAmount", formatInt(prevLeftAmount),
-		"distributedAmount", formatInt(distributedGNSAmount),
+		"distributedAmount", formatInt(totalDistAmount),
 		"currentLeftAmount", formatInt(GetLeftGNSAmount()),
 		"gnsTotalSupply", formatInt(gns.TotalSupply()),
 	)
 
-	return distributedGNSAmount, true
+	return totalDistAmount, true
 }
 
 // SetDistributionStartTime sets the timestamp when emission distribution starts.
