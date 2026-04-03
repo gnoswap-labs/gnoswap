@@ -175,10 +175,10 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 //   - amount: fee amount to add
 //
 // Only callable by pool, router or staker contracts.
-// Note: Accumulated fees are distributed when DistributeProtocolFee is called.
+// Note: This function only records accrual. Callers are responsible for applying
+// the appropriate halt policy before sending or recording protocol fees.
+// Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFee()
-
 	caller := runtime.PreviousRealm().Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
 

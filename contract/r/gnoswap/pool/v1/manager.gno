@@ -104,6 +104,9 @@ func (i *poolV1) CreatePool(
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
+		// Pool creation is an operating path, not a recovery path, so protocol
+		// fee accrual stays blocked while protocol_fee is halted.
+		halt.AssertIsNotHaltedProtocolFee()
 		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 		previousRealm := runtime.PreviousRealm()

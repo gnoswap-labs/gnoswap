@@ -84,6 +84,9 @@ func (r *routerV1) handleSwapFee(
 	currentTokenPath := outputToken
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
+	// Swap-triggered protocol-fee accrual is an operating path, not a recovery
+	// path, so it remains blocked while protocol_fee is halted.
+	halt.AssertIsNotHaltedProtocolFee()
 
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)

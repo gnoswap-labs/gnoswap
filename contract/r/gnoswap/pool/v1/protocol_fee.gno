@@ -55,6 +55,8 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0Int64 := safeConvertToInt64(fee0)
 	fee1Int64 := safeConvertToInt64(fee1)
 
+	// Withdrawal is part of the Emergency recovery surface, so we still record
+	// protocol-fee accrual here even while protocol_fee claims/distribution stay halted.
 	pf.AddToProtocolFee(cross, token0Path, fee0Int64)
 	pf.AddToProtocolFee(cross, token1Path, fee1Int64)
 

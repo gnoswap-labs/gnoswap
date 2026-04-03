@@ -750,7 +750,7 @@ func TestSetDevOpsPct_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - add accrual while protocol fee is halted",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -760,8 +760,7 @@ func TestSetDevOpsPct_HaltScenario(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 			pct:         5000,
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
 		},
 	}
 
@@ -965,7 +964,7 @@ func TestClearTokenListWithAmount_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - add accrual while protocol fee is halted",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -974,8 +973,7 @@ func TestClearTokenListWithAmount_HaltScenario(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
 		},
 	}
 
@@ -1018,7 +1016,7 @@ func TestClearAccuTransferToGovStaker_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - add accrual while protocol fee is halted",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -1027,8 +1025,7 @@ func TestClearAccuTransferToGovStaker_HaltScenario(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
 		},
 	}
 
@@ -1119,7 +1116,7 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - add accrual while protocol fee is halted",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -1128,8 +1125,7 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
 		},
 	}
 
@@ -1155,7 +1151,16 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 						pf.AddToProtocolFee("gno.land/r/foo", 100)
 					}(cross)
 				})
+				return
 			}
+
+			func(cur realm) {
+				pf.AddToProtocolFee("gno.land/r/foo", 100)
+			}(cross)
+
+			item, exists := pf.store.GetTokenListWithAmountItem("gno.land/r/foo")
+			uassert.True(t, exists)
+			uassert.Equal(t, int64(100), item)
 		})
 	}
 }
