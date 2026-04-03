@@ -250,6 +250,7 @@ func endExternalIncentiveAndVerifyDustRefund() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		incentiveID,
+		externalCreatorUser,
 	)
 
 	// Get balance after ending incentive

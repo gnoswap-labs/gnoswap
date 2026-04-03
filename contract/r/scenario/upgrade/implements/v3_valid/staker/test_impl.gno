@@ -57,8 +57,8 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId)
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
+	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
 func (t *TestStaker) AddToken(tokenPath string) {
@@ -85,7 +85,7 @@ func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	t.instance.SetTokenMinimumRewardAmount(paramsStr)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee int64) {
+func (t *TestStaker) SetUnStakingFee(fee uint64) {
 	t.instance.SetUnStakingFee(fee)
 }
 
@@ -206,8 +206,8 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
-	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
+	return t.instance.GetIncentiveCreator(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
@@ -274,7 +274,7 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	return t.instance.GetTargetPoolPathByIncentiveId(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetUnstakingFee() int64 {
+func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 

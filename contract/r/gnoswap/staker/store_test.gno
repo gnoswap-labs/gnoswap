@@ -581,7 +581,7 @@ func TestStoreSetAndGetUnstakingFee(t *testing.T) {
 			testFn: func(t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasUnstakingFeeStoreKey(), "should have unstaking fee after setting")
 				retrieved := ss.GetUnstakingFee()
-				uassert.Equal(t, int64(25), retrieved)
+				uassert.Equal(t, uint64(25), retrieved)
 			},
 		},
 		{
@@ -1415,7 +1415,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	uassert.Equal(t, int64(1000000), ss.GetDepositGnsAmount())
 	uassert.Equal(t, int64(100), ss.GetMinimumRewardAmount())
 	uassert.Equal(t, int64(50000), ss.GetTotalEmissionSent())
-	uassert.Equal(t, int64(25), ss.GetUnstakingFee())
+	uassert.Equal(t, uint64(25), ss.GetUnstakingFee())
 
 	retrievedTokens := ss.GetAllowedTokens()
 	uassert.Equal(t, 2, len(retrievedTokens))
