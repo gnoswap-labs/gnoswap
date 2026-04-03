@@ -4,9 +4,9 @@ import (
 	"chain/runtime"
 	"testing"
 
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -163,7 +163,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 			beforeDevOpsBalances := make(map[string]int64)
 			beforeGovStakerBalances := make(map[string]int64)
 
-			for token, _ := range test.depositedBalances {
+			for token := range test.depositedBalances {
 				beforeDevOpsBalances[token] = common.BalanceOf(token, devOpsAddr)
 				beforeGovStakerBalances[token] = common.BalanceOf(token, govStakerAddr)
 			}
@@ -740,53 +740,57 @@ func TestProtocolFee_AssertIsValidPercent(t *testing.T) {
 	}
 }
 
-func TestSetDevOpsPct_HaltScenario(t *testing.T) {
+func TestProtocolFeeOperationsBlockedDuringEmergency(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		pct         int64
-		shouldPanic bool
-		panicMsg    string
+		name string
+		fn   func(*protocolFeeV1)
 	}{
 		{
-			name: "success - add accrual while protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+			name: "SetDevOpsPct",
+			fn: func(pf *protocolFeeV1) {
+				testing.SetRealm(adminRealm)
+				func(cur realm) { pf.SetDevOpsPct(5000) }(cross)
 			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		},
+		{
+			name: "SetGovStakerPct",
+			fn: func(pf *protocolFeeV1) {
+				testing.SetRealm(adminRealm)
+				func(cur realm) { pf.SetGovStakerPct(5000) }(cross)
 			},
-			pct:         5000,
-			shouldPanic: false,
+		},
+		{
+			name: "ClearTokenListWithAmount",
+			fn: func(pf *protocolFeeV1) {
+				pf.store.SetTokenListWithAmounts(map[string]int64{"gno.land/r/foo": 100})
+				testing.SetRealm(govStakerRealm)
+				func(cur realm) { pf.ClearTokenListWithAmount() }(cross)
+			},
+		},
+		{
+			name: "ClearAccuTransferToGovStaker",
+			fn: func(pf *protocolFeeV1) {
+				pf.store.SetAccuToGovStakerItem("gno.land/r/foo", int64(1000))
+				testing.SetRealm(govStakerRealm)
+				func(cur realm) { pf.ClearAccuTransferToGovStaker() }(cross)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given
 			pf := createTestProtocolFee(t)
-			if tt.setup != nil {
-				tt.setup()
-			}
+
+			testing.SetOriginCaller(adminAddr)
+			halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
 			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}()
 
-			testing.SetRealm(adminRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.SetDevOpsPct(tt.pct)
-					}(cross)
-				})
-			}
+			uassert.AbortsWithMessage(t, "halted: protocol_fee", func() {
+				tt.fn(pf)
+			})
 		})
 	}
 }
@@ -847,58 +851,6 @@ func TestSetDevOpsPct_UnauthorizedCaller(t *testing.T) {
 	}
 }
 
-func TestSetGovStakerPct_HaltScenario(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		pct         int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "panic - protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
-			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			},
-			pct:         5000,
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			if tt.setup != nil {
-				tt.setup()
-			}
-			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
-			}()
-
-			testing.SetRealm(adminRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.SetGovStakerPct(tt.pct)
-					}(cross)
-				})
-			}
-		})
-	}
-}
-
 func TestSetGovStakerPct_UnauthorizedCaller(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -948,108 +900,6 @@ func TestSetGovStakerPct_UnauthorizedCaller(t *testing.T) {
 				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						pf.SetGovStakerPct(5000)
-					}(cross)
-				})
-			}
-		})
-	}
-}
-
-func TestClearTokenListWithAmount_HaltScenario(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "success - add accrual while protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
-			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			},
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pf.store.SetTokenListWithAmounts(map[string]int64{
-				"gno.land/r/foo": 100,
-			})
-			if tt.setup != nil {
-				tt.setup()
-			}
-			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
-			}()
-
-			testing.SetRealm(govStakerRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearTokenListWithAmount()
-					}(cross)
-				})
-			}
-		})
-	}
-}
-
-func TestClearAccuTransferToGovStaker_HaltScenario(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "success - add accrual while protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
-			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			},
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pf.store.SetAccuToGovStakerItem("gno.land/r/foo", int64(1000))
-			if tt.setup != nil {
-				tt.setup()
-			}
-			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
-			}()
-
-			testing.SetRealm(govStakerRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearAccuTransferToGovStaker()
 					}(cross)
 				})
 			}
