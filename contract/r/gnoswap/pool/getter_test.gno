@@ -320,7 +320,9 @@ func TestMutablePoolGetterIsolation(t *testing.T) {
 			},
 			assertGot: func(t *testing.T, result any) {
 				state := result.(*ObservationState)
-				uassert.Equal(t, 0, len(state.Observations()))
+				uassert.Equal(t, 2, len(state.Observations()))
+				uassert.Equal(t, int64(100), state.Observations()[0].BlockTimestamp())
+				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
 			},
 			mutate: func(result any) {
 				state := result.(*ObservationState)

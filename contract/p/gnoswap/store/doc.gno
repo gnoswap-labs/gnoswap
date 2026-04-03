@@ -85,12 +85,6 @@
 //	        panic(err)
 //	    }
 //
-//	    // Add an authorized caller with read-only permission
-//	    routerAddr := std.Address("g1router...")
-//	    if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
-//	        panic(err)
-//	    }
-//
 //	    // Update permission to write access
 //	    if err := kvStore.UpdateAuthorizedCaller(routerAddr, store.Write); err != nil {
 //	        panic(err)

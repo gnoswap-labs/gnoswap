@@ -73,7 +73,7 @@ func TestIsDomainAddress(t *testing.T) {
 	}
 }
 
-func TestIsReadAuthorized(t *testing.T) {
+func TestIsAuthorized(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -85,19 +85,7 @@ func TestIsReadAuthorized(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
 
-				uassert.True(t, store.IsReadAuthorized(domainAddr), "domain address should have read access")
-			},
-		},
-		{
-			name: "readonly_caller_authorized",
-			verifyFn: func(t *testing.T) {
-				domainAddr := testutils.TestAddress("domain")
-				caller := testutils.TestAddress("caller")
-				testing.SetRealm(testing.NewUserRealm(domainAddr))
-				store := NewKVStore(domainAddr)
-				store.AddAuthorizedCaller(caller, ReadOnly)
-
-				uassert.True(t, store.IsReadAuthorized(caller), "ReadOnly caller should have read access")
+				uassert.True(t, store.IsWriteAuthorized(domainAddr), "domain address should have write access")
 			},
 		},
 		{
@@ -109,7 +97,7 @@ func TestIsReadAuthorized(t *testing.T) {
 				store := NewKVStore(domainAddr)
 				store.AddAuthorizedCaller(caller, Write)
 
-				uassert.True(t, store.IsReadAuthorized(caller), "Write caller should have read access")
+				uassert.True(t, store.IsWriteAuthorized(caller), "Write caller should have write access")
 			},
 		},
 		{
@@ -120,7 +108,7 @@ func TestIsReadAuthorized(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(domainAddr))
 				store := NewKVStore(domainAddr)
 
-				uassert.False(t, store.IsReadAuthorized(unregistered), "unregistered caller should not have read access")
+				uassert.False(t, store.IsWriteAuthorized(unregistered), "unregistered caller should not have write access")
 			},
 		},
 	}
@@ -160,18 +148,6 @@ func TestIsWriteAuthorized(t *testing.T) {
 			},
 		},
 		{
-			name: "readonly_caller_unauthorized",
-			verifyFn: func(t *testing.T) {
-				domainAddr := testutils.TestAddress("domain")
-				caller := testutils.TestAddress("caller")
-				testing.SetRealm(testing.NewUserRealm(domainAddr))
-				store := NewKVStore(domainAddr)
-				store.AddAuthorizedCaller(caller, ReadOnly)
-
-				uassert.False(t, store.IsWriteAuthorized(caller), "ReadOnly caller should not have write access")
-			},
-		},
-		{
 			name: "unregistered_caller_unauthorized",
 			verifyFn: func(t *testing.T) {
 				domainAddr := testutils.TestAddress("domain")
@@ -200,40 +176,33 @@ func TestPermissionUpdateVsRemove(t *testing.T) {
 
 	store := NewKVStore(domainAddr)
 	caller1 := testutils.TestAddress("caller1")
-	caller2 := testutils.TestAddress("caller2")
 
 	// Add callers with different permissions
 	err := store.AddAuthorizedCaller(caller1, Write)
 	uassert.NoError(t, err)
-	err = store.AddAuthorizedCaller(caller2, ReadOnly)
-	uassert.NoError(t, err)
-
-	// Test downgrading Write to ReadOnly (version manager hot-swap scenario)
-	err = store.UpdateAuthorizedCaller(caller1, ReadOnly)
-	uassert.NoError(t, err)
 
 	authorized, _ := store.GetAuthorizedCallers()
-	if authorized[caller1] != ReadOnly {
-		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], ReadOnly)
+	if authorized[caller1] != Write {
+		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], Write)
 	}
 
 	// Test that zero value Permission cannot be used
 	var zeroPermission Permission
-	err = store.UpdateAuthorizedCaller(caller2, zeroPermission)
+	err = store.UpdateAuthorizedCaller(caller1, zeroPermission)
 	uassert.ErrorIs(t, ErrInvalidPermission, err)
 
 	// Test removing caller completely (different from setting to ReadOnly)
-	err = store.RemoveAuthorizedCaller(caller2)
+	err = store.RemoveAuthorizedCaller(caller1)
 	uassert.NoError(t, err)
 
 	// Verify caller2 is completely removed, not just set to a lower permission
 	authorized, _ = store.GetAuthorizedCallers()
-	_, exists := authorized[caller2]
+	_, exists := authorized[caller1]
 	uassert.False(t, exists, "Removed caller should not exist in authorized map")
 
 	// Verify caller1 still has ReadOnly permission
-	if authorized[caller1] != ReadOnly {
-		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], ReadOnly)
+	if authorized[caller1] != 0 {
+		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], Write)
 	}
 }
 
@@ -251,7 +220,7 @@ func TestAddAuthorizedCaller_Errors(t *testing.T) {
 				caller := testutils.TestAddress("caller")
 				store.AddAuthorizedCaller(caller, Write)
 
-				err := store.AddAuthorizedCaller(caller, ReadOnly)
+				err := store.AddAuthorizedCaller(caller, Write)
 				uassert.ErrorIs(t, err, ErrAuthorizedCallerAlreadyRegistered)
 			},
 		},
@@ -303,7 +272,7 @@ func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 				store := NewKVStore(domainAddr)
 				caller := testutils.TestAddress("caller")
 
-				err := store.UpdateAuthorizedCaller(caller, ReadOnly)
+				err := store.UpdateAuthorizedCaller(caller, Write)
 				uassert.ErrorIs(t, err, ErrAuthorizedCallerNotFound)
 			},
 		},
@@ -333,7 +302,7 @@ func TestUpdateAuthorizedCaller_Errors(t *testing.T) {
 				store.AddAuthorizedCaller(caller, Write)
 
 				testing.SetRealm(testing.NewUserRealm(otherAddr))
-				err := store.UpdateAuthorizedCaller(caller, ReadOnly)
+				err := store.UpdateAuthorizedCaller(caller, Write)
 				uassert.ErrorIs(t, err, ErrUpdatePermissionDenied)
 			},
 		},

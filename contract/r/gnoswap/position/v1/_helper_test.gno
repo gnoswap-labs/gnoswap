@@ -87,6 +87,7 @@ var (
 	addrUsedInTest = []address{addr01, addr02}
 
 	mockInstance        *positionV1
+	mockPoolStore       *mock.MockPoolStore
 	registeredTestStore = false
 
 	initializedPool = false
@@ -433,18 +434,34 @@ func burnUsdc(addr address) {
 func initPoolTest(t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
+	mockPoolStore = mock.NewMockPoolStore()
 
 	if !initializedPool {
 		initializedPool = true
 
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
 		pool.RegisterInitializer(cross, func(_ pool.IPoolStore) pool.IPool {
-			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
+			return pool_v1.NewPoolV1(mockPoolStore)
 		})
 	}
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	pool.UpgradeImpl(cross, mockPoolPath)
+}
+
+func mustGetStoredTestPool(poolPath string) *pl.Pool {
+	pools := mockPoolStore.GetPools()
+	poolValue, ok := pools.Get(poolPath)
+	if !ok {
+		panic("test pool not found")
+	}
+
+	storedPool, ok := poolValue.(*pl.Pool)
+	if !ok {
+		panic("failed to cast test pool")
+	}
+
+	return storedPool
 }
 
 func initPositionTest(t *testing.T) {

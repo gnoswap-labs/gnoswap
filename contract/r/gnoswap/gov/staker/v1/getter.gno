@@ -11,7 +11,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/protocol_fee"
 )
 
 // GetTotalxGnsSupply returns the total amount of xGNS supply.
@@ -250,9 +249,6 @@ func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) (int64, map[s
 //   - int64: emission reward amount
 //   - map[string]int64: protocol fee rewards by token path
 func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
-	emission.MintAndDistributeGns(cross)
-	protocol_fee.DistributeProtocolFee(cross)
-
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
 	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)

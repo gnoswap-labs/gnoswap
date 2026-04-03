@@ -10,6 +10,8 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/rbac"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
@@ -132,6 +134,8 @@ func formatProtocolFees(fees map[string]int64) string {
 
 func protocolFeeRewardProjectRecipient() {
 	testing.SetRealm(govStakerRealm)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 

@@ -6,7 +6,6 @@ type Permission uint8
 
 const (
 	_ Permission = iota
-	ReadOnly
 	Write
 )
 
@@ -48,9 +47,6 @@ type KVStore interface {
 
 	// Delete removes a key
 	Delete(key string) error
-
-	// IsReadAuthorized checks if the caller has read permission
-	IsReadAuthorized(caller address) bool
 
 	// IsWriteAuthorized checks if the caller has write permission
 	IsWriteAuthorized(caller address) bool
