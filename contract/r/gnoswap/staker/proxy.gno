@@ -129,8 +129,8 @@ func CreateExternalIncentive(
 }
 
 // EndExternalIncentive terminates an external incentive early.
-func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
-	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId)
+func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundAddress address) {
+	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
 // AddToken adds a token to the reward token whitelist.
@@ -164,6 +164,6 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 }
 
 // SetUnStakingFee sets the unstaking fee percentage.
-func SetUnStakingFee(cur realm, fee int64) {
+func SetUnStakingFee(cur realm, fee uint64) {
 	getImplementation().SetUnStakingFee(fee)
 }

@@ -66,20 +66,6 @@ func TestAssert_IsNotHandleNativeCoin(t *testing.T) {
 			description:      "Empty coins map - should not panic",
 		},
 		{
-			name:             "valid_zero_amount",
-			sendCoins:        map[string]int64{"test_denom": 0},
-			shouldPanic:      false,
-			expectedPanicMsg: "",
-			description:      "Coin with zero amount - should not panic (filtered out by getUserSendCoins)",
-		},
-		{
-			name:             "valid_negative_amount",
-			sendCoins:        map[string]int64{"test_denom": -100},
-			shouldPanic:      false,
-			expectedPanicMsg: "",
-			description:      "Coin with negative amount - should not panic (filtered out by getUserSendCoins)",
-		},
-		{
 			name:             "invalid_multiple_different_coins",
 			sendCoins:        map[string]int64{"atom": 50, "osmo": 30},
 			shouldPanic:      true,

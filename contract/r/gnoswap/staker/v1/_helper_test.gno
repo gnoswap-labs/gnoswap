@@ -461,7 +461,7 @@ func mockInstanceRemoveToken(tokenPath string) {
 	}(cross)
 }
 
-func mockInstanceSetUnstakingFee(fee int64) {
+func mockInstanceSetUnstakingFee(fee uint64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 		getMockInstance().SetUnStakingFee(fee)
@@ -498,6 +498,13 @@ func mockInstanceUnStakeToken(positionId uint64) string {
 		poolPath = getMockInstance().UnStakeToken(positionId)
 	}(cross)
 	return poolPath
+}
+
+func mockInstanceEndExternalIncentive(poolPath string, incentiveId string, refundAddress address) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().EndExternalIncentive(poolPath, incentiveId, refundAddress)
+	}(cross)
 }
 
 func getPositionOperator(positionId uint64) address {

@@ -64,7 +64,7 @@ func TestIncentivesCreate(t *testing.T) {
 			)
 
 			// Create incentive
-			incentives.create(creator, incentive)
+			incentives.create(incentive)
 
 			// Verify incentive was created
 			retrieved, exists := incentives.Get(incentive.IncentiveId())
@@ -138,13 +138,13 @@ func TestIncentivesUpdate(t *testing.T) {
 			)
 
 			// Create incentive
-			incentives.create(creator, incentive)
+			incentives.create(incentive)
 
 			// Modify incentive
 			tt.updateFunc(incentive)
 
 			// Update incentive
-			incentives.update(creator, incentive)
+			incentives.update(incentive)
 
 			// Verify update
 			retrieved, exists := incentives.Get(incentive.IncentiveId())
@@ -289,7 +289,7 @@ func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	// Two separate unclaimable windows inside the incentive duration
 	incentives.startUnclaimablePeriod(currentTime + 10)
@@ -425,7 +425,7 @@ func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	// Start an unclaimable period at currentTime+30 that is still ongoing (end = 0)
 	incentives.startUnclaimablePeriod(currentTime + 30)
@@ -468,7 +468,7 @@ func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	// Create overlapping unclaimable periods: [10,30] and [20,40]
 	// These should merge to effectively [10,40] = 30 seconds total
@@ -516,7 +516,7 @@ func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	// Create adjacent unclaimable periods: [10,20] and [20,30]
 	// These are back-to-back and should not overlap or have gaps
@@ -564,7 +564,7 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 		runtime.ChainHeight(),
 		currentTime,
 	)
-	incentives.create(creator, incentive)
+	incentives.create(incentive)
 
 	// Create unclaimable periods fully outside the incentive range
 	// Period before incentive starts: [10,30]

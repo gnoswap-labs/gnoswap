@@ -240,6 +240,62 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 }
 
+func TestSafeUint64ToInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       uint64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:     "zero",
+			input:    0,
+			expected: 0,
+		},
+		{
+			name:     "one",
+			input:    1,
+			expected: 1,
+		},
+		{
+			name:     "max int64 minus one",
+			input:    math.MaxInt64 - 1,
+			expected: math.MaxInt64 - 1,
+		},
+		{
+			name:     "max int64 boundary",
+			input:    math.MaxInt64,
+			expected: math.MaxInt64,
+		},
+		{
+			name:        "max int64 plus one overflows",
+			input:       uint64(math.MaxInt64) + 1,
+			shouldPanic: true,
+			panicMsg:    "overflows int64 range",
+		},
+		{
+			name:        "max uint64 overflows",
+			input:       math.MaxUint64,
+			shouldPanic: true,
+			panicMsg:    "overflows int64 range",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					safeUint64ToInt64(tt.input)
+				})
+			} else {
+				result := safeUint64ToInt64(tt.input)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestSafeMulInt64(t *testing.T) {
 	overflowMsg := "int64 multiplication overflow"
 	underflowMsg := "int64 multiplication underflow"

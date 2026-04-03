@@ -135,7 +135,7 @@ func mintPositionAndStake() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting and staking position")
-	testing.SetOriginSend(chain.Coins{{}})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
 		wugnotPath,
@@ -230,4 +230,3 @@ func checkEmissionDistributionChangesFn(fn func()) {
 // [INFO] Emission distribution balance changed: 53510273
 // [EXPECTED] total staker balance changes: 53510273
 // [EXPECTED] total reward: 15892550
-

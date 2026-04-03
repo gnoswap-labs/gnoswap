@@ -58,6 +58,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 A proposal is considered valid and executable when:
 - The voting period has ended
 - Total votes meet the quorum threshold (50% of xGNS total supply)
+- `YES` votes strictly exceed `NO` votes (ties do not pass)
 - The execution delay period (configured via `ExecutionDelay` default: 24 hours) has passed after voting ends
 - Within the execution window period (configured via `ExecutionWindow` default: 30 days)
   - `ExecutionDelay` and `ExecutionWindow` are configured through the `governance.Config` type.
@@ -81,7 +82,7 @@ activeXGNS = totalXGNS - launchpadXGNS
 quorumAmount = activeXGNS * quorumPercent / 100  // quorumPercent defaults to 50
 ```
 
-The quorum threshold is calculated based on the `Quorum` percentage (default: 50%) of the active xGNS supply at the time of proposal creation. A proposal passes when either the accumulated `YES` or `NO` votes reach or exceed this quorum amount.
+The quorum threshold is calculated based on the `Quorum` percentage (default: 50%) of the active xGNS supply at the time of proposal creation. A proposal passes only when total votes reach quorum and the accumulated `YES` votes strictly exceed the accumulated `NO` votes.
 
 ### Rewards Distribution
 

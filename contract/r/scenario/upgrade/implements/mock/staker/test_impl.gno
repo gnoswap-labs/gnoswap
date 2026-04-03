@@ -111,11 +111,14 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	t.ExecuteFn(
 		"EndExternalIncentive",
-		func(args ...any) any { t.instance.EndExternalIncentive(args[0].(string), args[1].(string)); return nil },
-		targetPoolPath, incentiveId,
+		func(args ...any) any {
+			t.instance.EndExternalIncentive(args[0].(string), args[1].(string), args[2].(address))
+			return nil
+		},
+		targetPoolPath, incentiveId, refundAddress,
 	)
 }
 
@@ -167,10 +170,10 @@ func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee int64) {
+func (t *TestStaker) SetUnStakingFee(fee uint64) {
 	t.ExecuteFn(
 		"SetUnStakingFee",
-		func(args ...any) any { t.instance.SetUnStakingFee(args[0].(int64)); return nil },
+		func(args ...any) any { t.instance.SetUnStakingFee(args[0].(uint64)); return nil },
 		fee,
 	)
 }
@@ -431,10 +434,10 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	).(int64)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
 	return t.ExecuteFn(
-		"GetIncentiveRefundee",
-		func(args ...any) any { return t.instance.GetIncentiveRefundee(args[0].(string), args[1].(string)) },
+		"GetIncentiveCreator",
+		func(args ...any) any { return t.instance.GetIncentiveCreator(args[0].(string), args[1].(string)) },
 		poolPath, incentiveId,
 	).(address)
 }
@@ -578,11 +581,11 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	).(string)
 }
 
-func (t *TestStaker) GetUnstakingFee() int64 {
+func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.ExecuteFn(
 		"GetUnstakingFee",
 		func(args ...any) any { return t.instance.GetUnstakingFee() },
-	).(int64)
+	).(uint64)
 }
 
 func (t *TestStaker) IsStaked(positionId uint64) bool {
@@ -704,7 +707,9 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
 	return t.ExecuteFn(
 		"GetPoolGlobalRewardRatioAccumulation",
-		func(args ...any) any { return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64)) },
+		func(args ...any) any {
+			return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64))
+		},
 		poolPath, timestamp,
 	).(*u256.Uint)
 }

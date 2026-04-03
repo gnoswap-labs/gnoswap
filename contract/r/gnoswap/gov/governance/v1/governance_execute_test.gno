@@ -663,6 +663,28 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 			shouldFail:    true,
 		},
 		{
+			name:       "fail - tied proposal execution after quorum",
+			proposalId: 1,
+			setupProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Description"),
+					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Add(-time.Hour*24*10).Unix(),
+					100,
+				)
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.vote(true, 5_000_000_000)
+				statusResolver.vote(false, 5_000_000_000)
+				return proposal
+			},
+			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
+			shouldFail:    true,
+		},
+		{
 			name:       "fail - already executed proposal",
 			proposalId: 1,
 			setupProposal: func() *governance.Proposal {
@@ -1213,7 +1235,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 		// when - first execution
-		errInvalidRangeMsg := "[GNOSWAP-STAKER-005] invalid unstaking fee || fee(-1) must be in range 0 ~ 1000"
+		errInvalidRangeMsg := "invalid uint64 value: -1"
 		uassert.AbortsContains(t, errInvalidRangeMsg, func() {
 			func(cur realm) {
 				testing.SetRealm(govRealm)

@@ -66,7 +66,7 @@ func setupBasicTestState(t *testing.T) *testState {
 		10_000_000,                // rewardAmount
 		state.fixedTimestamp,      // startTimestamp
 		state.fixedTimestamp+3600, // endTimestamp (1 hour)
-		state.owner,               // refundee
+		state.owner,               // creator
 		1_000_000_000,             // depositGnsAmount
 		state.fixedBlockHeight,    // createdHeight
 		state.fixedTimestamp,      // currentTime
@@ -163,8 +163,8 @@ func TestGetterIncentiveBasicProperties(t *testing.T) {
 			expected: barPath,
 		},
 		{
-			name:     "GetIncentiveRefundee",
-			getter:   func() any { return state.instance.GetIncentiveRefundee(state.poolPath, state.incentiveId) },
+			name:     "GetIncentiveCreator",
+			getter:   func() any { return state.instance.GetIncentiveCreator(state.poolPath, state.incentiveId) },
 			expected: state.owner,
 		},
 	}
@@ -446,7 +446,7 @@ func TestGetterGlobalConfigValues(t *testing.T) {
 		{
 			name:     "GetUnstakingFee",
 			getter:   func() any { return state.instance.GetUnstakingFee() },
-			expected: int64(100),
+			expected: uint64(100),
 		},
 		{
 			name:     "GetTotalEmissionSent",

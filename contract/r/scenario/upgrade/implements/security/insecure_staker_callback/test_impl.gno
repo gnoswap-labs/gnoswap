@@ -99,11 +99,11 @@ func (t *TestStaker) CreateExternalIncentive(targetPoolPath string, rewardToken 
 	t.instance.CreateExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
 }
 
-func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string) {
+func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
 	if !t.isActive("EndExternalIncentive") {
 		panic("test implementation: EndExternalIncentive not supported")
 	}
-	t.instance.EndExternalIncentive(targetPoolPath, incentiveId)
+	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
 func (t *TestStaker) AddToken(tokenPath string) {
@@ -148,7 +148,7 @@ func (t *TestStaker) SetTokenMinimumRewardAmount(paramsStr string) {
 	t.instance.SetTokenMinimumRewardAmount(paramsStr)
 }
 
-func (t *TestStaker) SetUnStakingFee(fee int64) {
+func (t *TestStaker) SetUnStakingFee(fee uint64) {
 	if !t.isActive("SetUnStakingFee") {
 		panic("test implementation: SetUnStakingFee not supported")
 	}
@@ -359,11 +359,11 @@ func (t *TestStaker) GetIncentiveEndTimestamp(poolPath string, incentiveId strin
 	return t.instance.GetIncentiveEndTimestamp(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetIncentiveRefundee(poolPath string, incentiveId string) address {
-	if !t.isActive("GetIncentiveRefundee") {
-		panic("test implementation: GetIncentiveRefundee not supported")
+func (t *TestStaker) GetIncentiveCreator(poolPath string, incentiveId string) address {
+	if !t.isActive("GetIncentiveCreator") {
+		panic("test implementation: GetIncentiveCreator not supported")
 	}
-	return t.instance.GetIncentiveRefundee(poolPath, incentiveId)
+	return t.instance.GetIncentiveCreator(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
@@ -478,7 +478,7 @@ func (t *TestStaker) GetTargetPoolPathByIncentiveId(poolPath string, incentiveId
 	return t.instance.GetTargetPoolPathByIncentiveId(poolPath, incentiveId)
 }
 
-func (t *TestStaker) GetUnstakingFee() int64 {
+func (t *TestStaker) GetUnstakingFee() uint64 {
 	if !t.isActive("GetUnstakingFee") {
 		panic("test implementation: GetUnstakingFee not supported")
 	}

@@ -909,7 +909,7 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 
 		// Add reward state for deposit with priceDebt = 0.5
 		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
-		rewardState := newRewardState(
+		rewardState := launchpad.NewRewardState(
 			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, // deposit amount
 			1000,    // start time
@@ -941,14 +941,14 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone()) // 1.0 reward per deposit
 
 		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
-		rewardState1 := newRewardState(
+		rewardState1 := launchpad.NewRewardState(
 			u256.Zero().Div(q128.Clone(), u256.NewUint(2)), // priceDebt = 0.5
 			100_000, 1000, 2000, 1100,
 		)
 		rm.Rewards().Set("deposit1", rewardState1)
 
 		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
-		rewardState2 := newRewardState(
+		rewardState2 := launchpad.NewRewardState(
 			u256.Zero().Div(q128.Clone(), u256.NewUint(4)), // priceDebt = 0.25
 			200_000, 1000, 2000, 1100,
 		)
@@ -961,9 +961,9 @@ func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(t *testing.
 	})
 }
 
-// TestLaunchpadProject_calculateTierClaimableRewards tests that tier claimable rewards
+// TestLaunchpadProject_applyTierRewardGrowthWithRewards tests that tier claimable rewards
 // are correctly calculated.
-func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
+func TestLaunchpadProject_applyTierRewardGrowthWithRewards(t *testing.T) {
 	t.Run("calculate tier claimable rewards", func(t *testing.T) {
 		initLaunchpadProjectTest(t)
 		lp := getTestImplementation()
@@ -980,7 +980,7 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		rm := newRewardManager(100_000, 1000, 2000, 0, 100, 1000)
 		rm.SetAccumulatedRewardPerDepositX128(q128.Clone())
 
-		rewardState := newRewardState(
+		rewardState := launchpad.NewRewardState(
 			u256.Zero().Div(q128.Clone(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
@@ -989,7 +989,7 @@ func TestLaunchpadProject_calculateTierClaimableRewards(t *testing.T) {
 		lp.store.SetProjectTierRewardManagers(projectTierRewardManagers)
 
 		// Calculate claimable rewards
-		claimableRewards, err := lp.calculateTierClaimableRewards(tier)
+		claimableRewards, err := lp.applyTierRewardGrowthWithRewards(tier, int64(1000), int64(2001))
 		uassert.NoError(t, err)
 		uassert.Equal(t, int64(50_000), claimableRewards)
 	})
@@ -1110,7 +1110,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 
 			// Set price debt: Q128 / priceDebtRatio
 			priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(tt.priceDebtRatio)))
-			rewardState := newRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
+			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
 			rm.Rewards().Set("deposit1", rewardState)
 
 			projectTierRewardManagers.Set(tierID, rm)
@@ -1122,9 +1122,10 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(t *testi
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001) // After tier end
 			beforeOblBalance := obl.BalanceOf(recipient)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 			afterOblBalance := obl.BalanceOf(recipient)
 			balanceChange := afterOblBalance - beforeOblBalance
 
@@ -1228,7 +1229,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 
 			for i, dep := range tt.deposits {
 				priceDebt := u256.Zero().Div(q128.Clone(), u256.NewUint(uint64(dep.priceDebtRatio)))
-				rewardState := newRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
+				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
 				rm.Rewards().Set("deposit"+formatInt(int64(i)), rewardState)
 			}
 
@@ -1241,8 +1242,9 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(t *
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 
 			uassert.NoError(t, err)
 
@@ -1327,8 +1329,9 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(t *testing.T) {
 			obl.Transfer(cross, launchpadAddr, tt.totalDistributeAmount)
 
 			// Execute transfer
+			currentHeight := int64(1000)
 			currentTime := int64(2001)
-			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentTime)
+			refundedAmount, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)
