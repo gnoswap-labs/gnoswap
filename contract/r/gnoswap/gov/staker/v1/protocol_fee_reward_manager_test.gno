@@ -177,7 +177,7 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 			amount:           0,
 			currentTimestamp: 400,
 			expectedTotal:    0,
-			expectedHasError: false,
+			expectedHasError: true,
 		},
 		{
 			name:             "Add stake causing overflow",
