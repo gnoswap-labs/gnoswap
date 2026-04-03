@@ -18,6 +18,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/router"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -49,6 +50,7 @@ var (
 	user2Realm = testing.NewUserRealm(user2Addr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
@@ -70,10 +72,11 @@ var (
 	position1 uint64
 	position2 uint64
 	position3 uint64
-
-	reward1 int64
-	reward2 int64
-	reward3 int64
+	position4 uint64
+	reward1   int64
+	reward2   int64
+	reward3   int64
+	reward4   int64
 )
 
 func main() {
@@ -99,6 +102,47 @@ func main() {
 
 	println("[SCENARIO] 6. Verify reward behavior remains correct")
 	verifyScenario()
+	testing.SkipHeights(1)
+	println()
+
+	println("[SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range")
+	exactInSingleSwapRouteBy(
+		poolPath1,
+		barPath,
+		bazPath,
+		"2000",
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+		"100",
+		"1",
+	)
+	testing.SkipHeights(1)
+	println()
+
+	println("[SCENARIO] 8. Collect rewards from one position", position1)
+	collectRewardByTokenID(position1)
+	testing.SkipHeights(1)
+	println()
+
+	println("[SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range", position2)
+	exactInSingleSwapRouteBy(
+		poolPath1,
+		bazPath,
+		barPath,
+		"2000",
+		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"100",
+		"1",
+	)
+	testing.SkipHeights(1)
+	println()
+
+	println("[SCENARIO] 10. Collect rewards from all positions")
+	collectRewards()
+	println()
+
+	println("[SCENARIO] 11. Verify reward behavior remains correct")
+	verifyScenario()
+	println()
 }
 
 func initAndSetup() {
@@ -224,7 +268,26 @@ func mintAndStakePerPool() {
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position3))
 	sr.StakeToken(cross, position3, "")
 
-	ufmt.Printf("[EXPECTED] position IDs: %d,%d,%d\n", position1, position2, position3)
+	println("[INFO] admin only mint on fee100 pool")
+	p4, _, _, _ := pn.Mint(
+		cross,
+		barPath,
+		bazPath,
+		fee100,
+		int32(-200),
+		int32(200),
+		"1000",
+		"1000",
+		"1",
+		"1",
+		maxTimeout,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	position4 = uint64(p4)
+
+	ufmt.Printf("[EXPECTED] position IDs: %d,%d,%d,%d\n", position1, position2, position3, position4)
 }
 
 func accumulateRewards() {
@@ -262,6 +325,16 @@ func collectRewards() {
 	ufmt.Printf("[EXPECTED] rewards: %d,%d,%d (all should be > 0)\n", reward1, reward2, reward3)
 }
 
+func collectRewardByTokenID(tokenID uint64) {
+	testing.SetRealm(user1Realm)
+
+	ufmt.Println("[INFO] collect reward by tokenID:", tokenID)
+	before := gns.BalanceOf(user1Addr)
+	sr.CollectReward(cross, tokenID)
+	after := gns.BalanceOf(user1Addr)
+	ufmt.Printf("[EXPECTED] reward: %d (should be > 0)\n", after-before)
+}
+
 func verifyScenario() {
 	testing.SetRealm(adminRealm)
 
@@ -278,6 +351,61 @@ func verifyScenario() {
 	println("[INFO] scenario completed successfully")
 	println("[INFO] confirmed: cacheRewardForPool path works with 3 pools in same tier")
 	println("[INFO] confirmed: rewards are computed correctly without tier change/removal")
+}
+
+func exactInSingleSwapRouteBy(
+	poolPath string,
+	inputToken string,
+	outputToken string,
+	specifiedAmount string,
+	routeQueryString string,
+	queryRatios string,
+	minAmountOut string,
+) {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] ExactInSwapRoute")
+	ufmt.Println("[INFO] inputToken:", inputToken)
+	ufmt.Println("[INFO] outputToken:", outputToken)
+	ufmt.Println("[INFO] specifiedAmount:", specifiedAmount)
+	ufmt.Println("[INFO] routeQueryString:", routeQueryString)
+	ufmt.Println("[INFO] queryRatios:", queryRatios)
+	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
+
+	beforeBARBalance := bar.BalanceOf(adminAddr)
+	beforeBAZBalance := baz.BalanceOf(adminAddr)
+
+	bar.Approve(cross, poolAddr, maxInt64)
+	baz.Approve(cross, poolAddr, maxInt64)
+
+	bar.Approve(cross, routerAddr, maxInt64)
+	baz.Approve(cross, routerAddr, maxInt64)
+
+	beforePoolTick := pl.GetSlot0Tick(poolPath)
+
+	// current sqrtPriceX96 is 76228162514264337593543950336
+	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
+		cross,
+		inputToken,
+		outputToken,
+		specifiedAmount,
+		routeQueryString,
+		minAmountOut,
+		"0",
+		int64(9999999999),
+		"",
+	)
+
+	afterBARBalance := bar.BalanceOf(adminAddr)
+	afterBAZBalance := baz.BalanceOf(adminAddr)
+
+	afterPoolTick := pl.GetSlot0Tick(poolPath)
+
+	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
+	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
+	ufmt.Printf("[EXPECTED] BAR balance changed: %d\n", afterBARBalance-beforeBARBalance)
+	ufmt.Printf("[EXPECTED] BAZ balance changed: %d\n", afterBAZBalance-beforeBAZBalance)
+	ufmt.Printf("[EXPECTED] pool tick changed: %d to %d\n", beforePoolTick, afterPoolTick)
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -318,7 +446,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] user2 mint+stake on fee500 pool
 // [INFO] admin approve tokens
 // [INFO] admin mint+stake on fee3000 pool
-// [EXPECTED] position IDs: 1,2,3
+// [INFO] admin only mint on fee100 pool
+// [EXPECTED] position IDs: 1,2,3,4
 //
 // [SCENARIO] 4. Accumulate rewards
 // [INFO] skip 20 blocks to accumulate rewards for all 3 pools
@@ -328,6 +457,47 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Verify reward behavior remains correct
 // [EXPECTED] total reward across 3 tier2 pools: 48159177
+// [INFO] scenario completed successfully
+// [INFO] confirmed: cacheRewardForPool path works with 3 pools in same tier
+// [INFO] confirmed: rewards are computed correctly without tier change/removal
+//
+// [SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range
+// [INFO] ExactInSwapRoute
+// [INFO] inputToken: gno.land/r/onbloc/bar
+// [INFO] outputToken: gno.land/r/onbloc/baz
+// [INFO] specifiedAmount: 2000
+// [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100
+// [INFO] queryRatios: 100
+// [INFO] minAmountOut: 1
+// [EXPECTED] inputTokenAmount: 2000
+// [EXPECTED] outputTokenAmount: -1980
+// [EXPECTED] BAR balance changed: -2000
+// [EXPECTED] BAZ balance changed: 1980
+// [EXPECTED] pool tick changed: 0 to -197
+//
+// [SCENARIO] 8. Collect rewards from one position 1
+// [INFO] collect reward by tokenID: 1
+// [EXPECTED] reward: 802652 (should be > 0)
+//
+// [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
+// [INFO] ExactInSwapRoute
+// [INFO] inputToken: gno.land/r/onbloc/baz
+// [INFO] outputToken: gno.land/r/onbloc/bar
+// [INFO] specifiedAmount: 2000
+// [INFO] routeQueryString: gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100
+// [INFO] queryRatios: 100
+// [INFO] minAmountOut: 1
+// [EXPECTED] inputTokenAmount: 2000
+// [EXPECTED] outputTokenAmount: -2006
+// [EXPECTED] BAR balance changed: 2006
+// [EXPECTED] BAZ balance changed: -2000
+// [EXPECTED] pool tick changed: -197 to 0
+//
+// [SCENARIO] 10. Collect rewards from all positions
+// [EXPECTED] rewards: 802652,3210611,3210611 (all should be > 0)
+//
+// [SCENARIO] 11. Verify reward behavior remains correct
+// [EXPECTED] total reward across 3 tier2 pools: 7223874
 // [INFO] scenario completed successfully
 // [INFO] confirmed: cacheRewardForPool path works with 3 pools in same tier
 // [INFO] confirmed: rewards are computed correctly without tier change/removal
