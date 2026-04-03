@@ -2,6 +2,15 @@
 ENV ?= default
 include scripts/config/$(ENV).mk
 
+# Token Paths
+GNS_PATH := gno.land/r/gnoswap/gns
+USDC_PATH := gno.land/r/gnoswap/test_token/usdc
+BAZ_PATH := gno.land/r/gnoswap/test_token/baz
+BAR_PATH := gno.land/r/gnoswap/test_token/bar
+OBL_PATH := gno.land/r/gnoswap/test_token/obl
+QUX_PATH := gno.land/r/gnoswap/test_token/qux
+FOO_PATH := gno.land/r/gnoswap/test_token/foo
+
 .PHONY: send-ugnot-must
 send-ugnot-must:
 	$(info ************ send ugnot to necessary accounts ************)
