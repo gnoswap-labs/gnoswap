@@ -5,8 +5,8 @@ import (
 	"math"
 	"testing"
 
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -58,17 +58,16 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 			panicMsg:    "halted: community_pool",
 		},
 		{
-			name: "panic if halted with safe mode (withdraw blocked)",
+			name: "safe mode does not block admin transfer (only community_pool halt matters)",
 			setup: func() {
 				testing.SetRealm(adminRealm)
 				halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+				gns.Transfer(cross, communityPoolAddr, 10_000)
 			},
-			caller:      adminRealm,
-			tokenPath:   gnsPath,
-			to:          dummyReceiver,
-			amount:      1000,
-			shouldPanic: true,
-			panicMsg:    "halted: withdraw",
+			caller:    adminRealm,
+			tokenPath: gnsPath,
+			to:        dummyReceiver,
+			amount:    1000,
 		},
 		{
 			name: "panic if caller is not admin or governance",

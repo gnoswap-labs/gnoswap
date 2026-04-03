@@ -3,11 +3,13 @@ package v1
 import (
 	"testing"
 
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
+
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/gnoswap/gns"
 )
 
 // Test CollectReward function
@@ -881,6 +883,12 @@ func setupStakerRewardTestLaunchpadStake(t *testing.T, gs *govStakerV1, addr add
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 		gs.addStakeFromLaunchpad(addr.String(), amount, 100)
+	}(cross)
+
+	// Mint xGNS to launchpad so Burn during removal has sufficient balance
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		xgns.Mint(cross, launchpadAddr, amount)
 	}(cross)
 }
 

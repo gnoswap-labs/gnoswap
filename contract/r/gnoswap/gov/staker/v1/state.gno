@@ -3,11 +3,12 @@ package v1
 import (
 	"math"
 
-	avl "gno.land/p/nt/avl/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/halt"
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
 
@@ -422,7 +423,9 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross)
+	if !halt.IsHaltedProtocolFee() {
+		pf.DistributeProtocolFee(cross)
+	}
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
@@ -451,7 +454,9 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
 func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
-	pf.DistributeProtocolFee(cross)
+	if !halt.IsHaltedProtocolFee() {
+		pf.DistributeProtocolFee(cross)
+	}
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
