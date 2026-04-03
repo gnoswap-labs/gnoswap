@@ -305,10 +305,6 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	accumCollectableReward := int64(0)
 
 	for _, tier := range project.Tiers() {
-		if !tier.IsEnded(currentTime) {
-			return 0, ufmt.Errorf("tier(%s) is not ended", tier.ID())
-		}
-
 		// Calculate pending rewards for remaining depositors
 		currentDepositCount := getTierCurrentDepositCount(tier)
 
