@@ -212,17 +212,20 @@ func TestTransferToTarget(t *testing.T) {
 			targets := map[int]int64{tt.target: tt.amount}
 			if tt.shouldAbort {
 				uassert.AbortsWithMessage(t, tt.abortMessage, func() {
-					transferToTarget(targets)
+					amountByAddress, err := applyDistribution(targets)
+					uassert.NoError(t, err)
+					transferToTarget(amountByAddress)
 				})
 
 				return
 			}
 
-			applyDistribution(targets)
-			err := transferToTarget(targets)
+			amountByAddress, err := applyDistribution(targets)
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMsg, err.Error())
 			} else {
+				uassert.NoError(t, err)
+				err = transferToTarget(amountByAddress)
 				uassert.NoError(t, err)
 				tt.verify()
 			}
@@ -675,8 +678,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 					distributable, _ := calculateDistributableAmounts(10000)
-					applyDistribution(distributable)
-					transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					uassert.NoError(t, transferToTarget(amountByAddress))
 				},
 				want: 7500,
 			},
@@ -686,8 +690,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 					distributable, _ := calculateDistributableAmounts(10000)
-					applyDistribution(distributable)
-					transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					uassert.NoError(t, transferToTarget(amountByAddress))
 					testing.SetRealm(stakerRealm)
 					ClearDistributedToStaker(cross)
 				},
@@ -726,8 +731,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 					distributable, _ := calculateDistributableAmounts(10000)
-					applyDistribution(distributable)
-					transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					uassert.NoError(t, transferToTarget(amountByAddress))
 				},
 				want: 2000,
 			},
@@ -764,8 +770,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					resetObject(t)
 					setupTestEnv(t)
 					distributable, _ := calculateDistributableAmounts(10000)
-					applyDistribution(distributable)
-					transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					uassert.NoError(t, transferToTarget(amountByAddress))
 				},
 				want: 500,
 			},
@@ -804,8 +811,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 					testing.SetRealm(adminRealm)
 					ChangeDistributionPct(cross, 5000, 2000, 1000, 2000)
 					distributable, _ := calculateDistributableAmounts(10000)
-					applyDistribution(distributable)
-					transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					uassert.NoError(t, transferToTarget(amountByAddress))
 					testing.SetRealm(govStakerRealm)
 					ClearDistributedToGovStaker(cross)
 				},
@@ -833,8 +841,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 
 		// First distribution
 		distributable, _ := calculateDistributableAmounts(10000)
-		applyDistribution(distributable)
-		transferToTarget(distributable)
+		amountByAddress, err := applyDistribution(distributable)
+		uassert.NoError(t, err)
+		uassert.NoError(t, transferToTarget(amountByAddress))
 
 		// Verify accumulated amounts
 		uassert.Equal(t, int64(7500), GetAccuDistributedToStaker())
@@ -850,8 +859,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		gns.Transfer(cross, emissionAddr, 1000000)
 		distributable2, _ := calculateDistributableAmounts(10000)
-		applyDistribution(distributable2)
-		transferToTarget(distributable2)
+		amountByAddress, err = applyDistribution(distributable2)
+		uassert.NoError(t, err)
+		uassert.NoError(t, transferToTarget(amountByAddress))
 
 		// Verify accumulated amounts increased
 		uassert.Equal(t, int64(15000), GetAccuDistributedToStaker())
@@ -1015,8 +1025,9 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 				distributable, leftAmt := calculateDistributableAmounts(tt.amountToDistribute)
 				totalSent := tt.amountToDistribute - leftAmt
-				applyDistribution(distributable)
-				err := transferToTarget(distributable)
+				amountByAddress, err := applyDistribution(distributable)
+				uassert.NoError(t, err)
+				err = transferToTarget(amountByAddress)
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedTotalSent, totalSent)
 				uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)
@@ -1195,8 +1206,9 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 
 					distributable, leftAmt := calculateDistributableAmounts(tt.amountToDistribute)
 					totalSent := tt.amountToDistribute - leftAmt
-					applyDistribution(distributable)
-					err := transferToTarget(distributable)
+					amountByAddress, err := applyDistribution(distributable)
+					uassert.NoError(t, err)
+					err = transferToTarget(amountByAddress)
 					uassert.NoError(t, err)
 					uassert.Equal(t, tt.expectedTotalSent, totalSent)
 					uassert.Equal(t, tt.expectedDistributedStaker, distributedToStaker)
@@ -1246,5 +1258,38 @@ func TestMapBasedDistribution_EdgeCases(t *testing.T) {
 				uassert.Equal(t, tt.newValue, pct)
 			})
 		}
+	})
+
+	t.Run("duplicate target addresses are accumulated before transfer", func(t *testing.T) {
+		resetObject(t)
+		emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
+		originalDevOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
+
+		testing.SetRealm(adminRealm)
+		gns.Transfer(cross, emissionAddr, 100000)
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+		access.SetRoleAddress(cross, prbac.ROLE_DEVOPS.String(), stakerAddr)
+		testing.SetRealm(adminRealm)
+		defer func() {
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+			access.SetRoleAddress(cross, prbac.ROLE_DEVOPS.String(), originalDevOpsAddr)
+		}()
+
+		targets := map[int]int64{
+			LIQUIDITY_STAKER: 700,
+			DEVOPS:           300,
+		}
+
+		stakerBalanceBefore := gns.BalanceOf(stakerAddr)
+
+		amountByAddress, err := applyDistribution(targets)
+		uassert.NoError(t, err)
+		uassert.Equal(t, 1, len(amountByAddress))
+		uassert.Equal(t, int64(1000), amountByAddress[stakerAddr])
+		uassert.NoError(t, transferToTarget(amountByAddress))
+
+		uassert.Equal(t, stakerBalanceBefore+1000, gns.BalanceOf(stakerAddr))
+		uassert.Equal(t, int64(700), distributedToStaker)
+		uassert.Equal(t, int64(300), distributedToDevOps)
 	})
 }

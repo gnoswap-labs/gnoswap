@@ -120,8 +120,9 @@ func TestLeftAmountFix(t *testing.T) {
 			// Execute distribution
 			distributable, leftAmt := calculateDistributableAmounts(tt.distributionAmount)
 			totalSent := tt.distributionAmount - leftAmt
-			applyDistribution(distributable)
-			err := transferToTarget(distributable)
+			amountByAddress, err := applyDistribution(distributable)
+			uassert.NoError(t, err)
+			err = transferToTarget(amountByAddress)
 
 			if tt.shouldError {
 				uassert.Equal(t, tt.errorMessage, err.Error())

@@ -616,8 +616,12 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			transferToTargetFunc := func(cur realm) error {
 				testing.SetRealm(testing.NewUserRealm(emissionAddr))
 				targets := map[int]int64{tt.target: tt.amount}
-				applyDistribution(targets)
-				return transferToTarget(targets)
+				amountByAddress, err := applyDistribution(targets)
+				if err != nil {
+					return err
+				}
+
+				return transferToTarget(amountByAddress)
 			}
 
 			if !tt.setupBalance {
@@ -759,10 +763,11 @@ func TestAccumulatedDistribution_SafeMath(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMessage, func() {
-					applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
+					_, _ = applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
 				})
 			} else {
-				applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
+				_, err := applyDistribution(map[int]int64{tt.target: tt.amountToAdd})
+				uassert.NoError(t, err)
 
 				// Verify final state
 				switch tt.target {

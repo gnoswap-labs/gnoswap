@@ -116,8 +116,12 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 	setLastExecutedTimestamp(currentTimestamp)
 
-	applyDistribution(distributable)
-	if err := transferToTarget(distributable); err != nil {
+	amountByAddress, err := applyDistribution(distributable)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := transferToTarget(amountByAddress); err != nil {
 		panic(err)
 	}
 

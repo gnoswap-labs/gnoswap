@@ -169,55 +169,50 @@ func calculateAmount(amount, bptPct int64) int64 {
 	return amount * bptPct / 10000
 }
 
-func applyDistribution(targets map[int]int64) {
+func applyDistribution(targets map[int]int64) (map[address]int64, error) {
+	amountByAddress := make(map[address]int64, 0)
 
 	for target, amount := range targets {
+		var addr address
+
 		switch target {
 		case LIQUIDITY_STAKER:
 			distributedToStaker = safeAddInt64(distributedToStaker, amount)
 			accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
+			addr = access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 		case DEVOPS:
 			distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
 			accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
+			addr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 		case COMMUNITY_POOL:
 			distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
 			accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
+			addr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 		case GOV_STAKER:
 			distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
 			accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
-		}
-	}
-}
-
-func transferToTarget(targets map[int]int64) error {
-
-	for target, amount := range targets {
-		switch target {
-		case LIQUIDITY_STAKER:
-			stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-			gns.Transfer(cross, stakerAddr, amount)
-
-		case DEVOPS:
-			devOpsAddr := access.MustGetAddress(prbac.ROLE_DEVOPS.String())
-			gns.Transfer(cross, devOpsAddr, amount)
-
-		case COMMUNITY_POOL:
-			communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-			gns.Transfer(cross, communityPoolAddr, amount)
-
-		case GOV_STAKER:
-			govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-			gns.Transfer(cross, govStakerAddr, amount)
+			addr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 		default:
-			return makeErrorWithDetails(
+			return nil, makeErrorWithDetails(
 				errInvalidEmissionTarget,
 				ufmt.Sprintf("invalid target(%d)", target),
 			)
 		}
+
+		amountByAddress[addr] = safeAddInt64(amountByAddress[addr], amount)
+	}
+
+	return amountByAddress, nil
+}
+
+
+func transferToTarget(targets map[address]int64) error {
+	for address, amount := range targets {
+		gns.Transfer(cross, address, amount)
 	}
 
 	return nil
