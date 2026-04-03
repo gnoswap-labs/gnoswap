@@ -732,7 +732,7 @@ func TestEmergencyHaltAllowsCollectUndelegatedGns(t *testing.T) {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			result := gs.CollectUndelegatedGns()
-			uassert.Equal(t, minimumAmount, result)
+			uassert.Equal(t, int64(minimumAmount), result)
 		}(cross)
 	})
 }

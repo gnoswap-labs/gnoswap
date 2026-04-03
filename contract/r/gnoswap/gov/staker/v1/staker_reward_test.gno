@@ -125,7 +125,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 	}
 }
 
-func TestEmergencyHaltAllowsGovStakerCollectReward(t *testing.T) {
+func TestEmergencyHaltBlocksGovStakerCollectReward(t *testing.T) {
+	// Reward claims stay blocked during emergency; only recovery paths remain open.
 	gs := createTestGovStaker()
 	caller := testutils.TestAddress("alice")
 
@@ -144,7 +145,7 @@ func TestEmergencyHaltAllowsGovStakerCollectReward(t *testing.T) {
 	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	uassert.NotPanics(t, func() {
+	uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			gs.CollectReward()
@@ -757,6 +758,60 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestEmergencyHaltSetAmountByProjectWallet verifies the conditional halt logic:
+// - add=true  (stake)   → blocked by govStaker halt in emergency
+// - add=false (unstake) → allowed because only withdraw halt is checked
+func TestEmergencyHaltSetAmountByProjectWallet(t *testing.T) {
+	t.Run("add=true is blocked by govStaker halt during emergency", func(t *testing.T) {
+		gs := createTestGovStaker()
+		cleanupStakerRewardTest(t)
+		defer cleanupStakerRewardTest(t)
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
+
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				gs.SetAmountByProjectWallet(testutils.TestAddress("project1"), 1000, true)
+			}(cross)
+		})
+	})
+
+	t.Run("add=false is allowed during emergency because only withdraw halt is checked", func(t *testing.T) {
+		gs := createTestGovStaker()
+		proj := testutils.TestAddress("project1")
+		cleanupStakerRewardTest(t)
+		setupStakerRewardTestLaunchpadStake(t, gs, proj, 1000)
+		defer cleanupStakerRewardTest(t)
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
+		uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw enabled")
+
+		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+		uassert.NotPanics(t, func() {
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				gs.SetAmountByProjectWallet(proj, 500, false)
+			}(cross)
+		})
+	})
 }
 
 // Helper functions for test setup

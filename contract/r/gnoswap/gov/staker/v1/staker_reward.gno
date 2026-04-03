@@ -41,7 +41,7 @@ import (
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
 func (gs *govStakerV1) CollectReward() {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
 	from := runtime.CurrentRealm().Address()
@@ -96,7 +96,7 @@ func (gs *govStakerV1) CollectReward() {
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsLaunchpad(caller)
