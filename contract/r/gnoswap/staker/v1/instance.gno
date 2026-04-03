@@ -21,7 +21,6 @@ func (s *stakerV1) getPoolTier() *PoolTier {
 		s.store.GetPoolTierRatio(),
 		s.store.GetPoolTierCounts(),
 		s.store.GetPoolTierLastRewardCacheTimestamp(),
-		s.store.GetPoolTierLastRewardCacheHeight(),
 		s.store.GetPoolTierCurrentEmission(),
 		s.store.GetPoolTierGetEmission(),
 		s.store.GetPoolTierGetHalvingBlocksInRange(),
@@ -45,11 +44,6 @@ func (s *stakerV1) updatePoolTier(poolTier *PoolTier) {
 	}
 
 	err = s.store.SetPoolTierLastRewardCacheTimestamp(poolTier.lastRewardCacheTimestamp)
-	if err != nil {
-		panic(err)
-	}
-
-	err = s.store.SetPoolTierLastRewardCacheHeight(poolTier.lastRewardCacheHeight)
 	if err != nil {
 		panic(err)
 	}

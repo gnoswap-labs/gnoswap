@@ -68,10 +68,6 @@ type CalcPositionRewardParam struct {
 }
 
 func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Reward {
-	// cache per-pool rewards in the internal incentive(tiers)
-	param.PoolTier.cacheReward(param.CurrentHeight, param.CurrentTime, param.Pools)
-	s.updatePoolTier(param.PoolTier)
-
 	deposit := param.Deposits.get(param.PositionId)
 	depositResolver := NewDepositResolver(deposit)
 	poolPath := deposit.TargetPoolPath()
@@ -82,6 +78,9 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		param.Pools.set(poolPath, pool)
 	}
 	poolResolver := NewPoolResolver(pool)
+
+	// Cache reward/accumulators only for the pool we are currently calculating.
+	param.PoolTier.cacheRewardForPool(param.CurrentTime, param.Pools, poolPath)
 
 	lastCollectTime := depositResolver.InternalRewardLastCollectTime()
 

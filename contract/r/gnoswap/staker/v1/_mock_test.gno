@@ -27,7 +27,6 @@ type MockStakerStore struct {
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
 	poolTierLastRewardCacheTimestamp int64
-	poolTierLastRewardCacheHeight    int64
 	poolTierCurrentEmission          int64
 	poolTierGetEmission              func() int64
 	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
@@ -251,20 +250,6 @@ func (s *MockStakerStore) SetPoolTierLastRewardCacheTimestamp(timestamp int64) e
 	return nil
 }
 
-// PoolTierLastRewardCacheHeight
-func (s *MockStakerStore) HasPoolTierLastRewardCacheHeightStoreKey() bool {
-	return s.poolTierLastRewardCacheHeight != 0
-}
-
-func (s *MockStakerStore) GetPoolTierLastRewardCacheHeight() int64 {
-	return s.poolTierLastRewardCacheHeight
-}
-
-func (s *MockStakerStore) SetPoolTierLastRewardCacheHeight(height int64) error {
-	s.poolTierLastRewardCacheHeight = height
-	return nil
-}
-
 // PoolTierCurrentEmission
 func (s *MockStakerStore) HasPoolTierCurrentEmissionStoreKey() bool {
 	return s.poolTierCurrentEmission != 0
@@ -370,7 +355,6 @@ func newMockStakerStore() *MockStakerStore {
 		},
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,
-		poolTierLastRewardCacheHeight:    0,
 		poolTierCurrentEmission:          0,
 		poolTierGetEmission:              func() int64 { return 0 },
 		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64) { return nil, nil },

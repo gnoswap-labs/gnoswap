@@ -164,6 +164,16 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 	return reward
 }
 
+func (self *PoolResolver) isChangedTick(currentTime int64, currentTick int32) bool {
+	if self.HistoricalTick().Size() == 0 {
+		return true
+	}
+
+	previousTick := self.CurrentTick(currentTime)
+
+	return previousTick != currentTick
+}
+
 // cacheReward sets the current reward for the pool
 // If the pool is in unclaimable period, it will end the unclaimable period, updates the reward, and start the unclaimable period again.
 //
@@ -443,7 +453,9 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
 	// because TickCrossHook is assured to be called for the staked-initialized ticks
-	self.HistoricalTick().Set(currentTime, nextTick)
+	if self.isChangedTick(currentTime, nextTick) {
+		self.HistoricalTick().Set(currentTime, nextTick)
+	}
 
 	switch deltaApplied.Sign() {
 	case -1:
