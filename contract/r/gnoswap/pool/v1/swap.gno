@@ -306,20 +306,21 @@ func (i *poolV1) DrySwap(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	poolSnapshot := pool.Clone()
 
 	// no liquidity -> simulation fails
-	if pool.Liquidity().IsZero() {
+	if poolSnapshot.Liquidity().IsZero() {
 		return "0", "0", false
 	}
 
-	slot0Start := pool.Slot0()
+	slot0Start := poolSnapshot.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
 	amounts := i256.MustFromDecimal(amountSpecified)
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
+	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone())
+	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone())
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
@@ -331,17 +332,17 @@ func (i *poolV1) DrySwap(
 		Cache:             cache,
 	}
 
-	result, err := i.computeSwap(pool, comp)
+	result, err := i.computeSwap(poolSnapshot, comp)
 	if err != nil {
 		return "0", "0", false
 	}
 
 	if zeroForOne {
-		if pool.BalanceToken1() < safeConvertToInt64(result.Amount1.Abs()) {
+		if poolSnapshot.BalanceToken1() < safeConvertToInt64(result.Amount1.Abs()) {
 			return "0", "0", false
 		}
 	} else {
-		if pool.BalanceToken0() < safeConvertToInt64(result.Amount0.Abs()) {
+		if poolSnapshot.BalanceToken0() < safeConvertToInt64(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
 	}

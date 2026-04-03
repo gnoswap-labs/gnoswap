@@ -493,6 +493,13 @@ func TestValidateExecutions(t *testing.T) {
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
+		{
+			name:                  "Failure - exceeds max executions takes precedence over count mismatch",
+			numToExecute:          11,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is greater than 10",
+		},
 
 		/* Failure cases - Handler is not exists */
 		{
@@ -573,13 +580,47 @@ func TestValidateExecutions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateExecutions(tc.numToExecute, tc.executions)
+			err := validateExecutions(tc.numToExecute, splitExecutionsRaw(tc.executions))
 
 			if tc.expectedError {
 				uassert.NotNil(t, err)
 				uassert.ErrorContains(t, err, tc.expectedErrorContains)
 			} else {
 				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestSplitExecutionsRaw(t *testing.T) {
+	tests := []struct {
+		name     string
+		raw      string
+		expected []string
+	}{
+		{
+			name:     "empty string returns empty slice",
+			raw:      "",
+			expected: []string{},
+		},
+		{
+			name:     "single execution returns one message",
+			raw:      "pkg1*EXE*func1*EXE*param1",
+			expected: []string{"pkg1*EXE*func1*EXE*param1"},
+		},
+		{
+			name:     "multiple executions split by message separator",
+			raw:      "pkg1*EXE*func1*EXE*param1*GOV*pkg2*EXE*func2*EXE*param2",
+			expected: []string{"pkg1*EXE*func1*EXE*param1", "pkg2*EXE*func2*EXE*param2"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := splitExecutionsRaw(tc.raw)
+			uassert.Equal(t, len(actual), len(tc.expected))
+			for i := range tc.expected {
+				uassert.Equal(t, actual[i], tc.expected[i])
 			}
 		})
 	}

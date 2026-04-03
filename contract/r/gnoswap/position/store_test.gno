@@ -53,9 +53,9 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 		{
 			name:                          "domain implementation has no permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/position/v2"),
-			expectedErrorWithRead:         true,
+			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithRead:  "",
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
@@ -69,9 +69,9 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 		{
 			name:                          "panic with no permission realm",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"),
-			expectedErrorWithRead:         true,
+			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithRead:  "",
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
@@ -87,7 +87,6 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 			resetTestState(t)
 
 			ps := NewPositionStore(kvStore)
-			initRegisterReadableContract()
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
 			if !ps.HasPositionNextIDStoreKey() {

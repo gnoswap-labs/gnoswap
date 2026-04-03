@@ -93,7 +93,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:          "Success - Valid ParameterChange proposal",
 			proposalType:  governance.ParameterChange,
-			execution:     governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1*EXE*param1,param2"}),
+			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"}),
 			expectedError: false,
 		},
 		{
@@ -123,6 +123,13 @@ func TestProposalData_Validation(t *testing.T) {
 			execution:            governance.NewExecutionInfo(0, []string{}),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
+		},
+		{
+			name:                 "Failure - ParameterChange max execution count takes precedence over mismatch",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(11, []string{"pkg1*EXE*func1*EXE*param1"}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is greater than 10",
 		},
 	}
 
@@ -193,9 +200,10 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 			info := governance.NewExecutionInfo(tc.num, tc.msgs)
 
 			// when
-			infos := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
+			infos, err := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
 
 			// then
+			uassert.NoError(t, err)
 			uassert.Equal(t, len(infos), len(tc.expectedInfos))
 			for i, expectedInfo := range tc.expectedInfos {
 				uassert.Equal(t, infos[i].PkgPath(), expectedInfo.PkgPath())
@@ -204,6 +212,18 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestProposalData_ParameterChangesInfos_MalformedMessage(t *testing.T) {
+	// given
+	info := governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1"})
+
+	// when
+	infos, err := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
+
+	// then
+	uassert.Equal(t, len(infos), 0)
+	uassert.ErrorContains(t, err, "malformed execution message")
 }
 
 // TestMakeExecuteMessage tests message creation

@@ -139,14 +139,7 @@ func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	tierRatioInt64 := int64(tierRatio)
 	count := int64(self.CurrentCount(tier))
 
-	// Check for zero count to prevent division by zero
-	if count == 0 {
-		return 0
-	}
-
-	tierEmission := safeMulInt64(currentEmission, tierRatioInt64)
-
-	return tierEmission / count / 100
+	return calculatePoolReward(currentEmission, tierRatioInt64, count)
 }
 
 // CurrentCount returns the current count of pools in the given tier.

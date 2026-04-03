@@ -12,8 +12,10 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/protocol_fee"
 
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
@@ -66,8 +68,8 @@ func changeEmissionDistribution() {
 		cross,
 		7000, // liquidityStakerPct
 		2000, // devOpsPct
-		500, // communityPoolPct
-		500, // govStakerPct
+		500,  // communityPoolPct
+		500,  // govStakerPct
 	)
 	println("[INFO] emission distribution ratio changed: staker 70%, devops 20%, community 5%, govstaker 5%")
 }
@@ -119,6 +121,8 @@ func formatProtocolFees(fees map[string]int64) string {
 // check and collect emission reward for dummy
 func emissionRewardScenario() {
 	testing.SetRealm(govStakerRealm)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(dummyAddr)
 	ufmt.Printf("[INFO] claimable reward (dummy): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 

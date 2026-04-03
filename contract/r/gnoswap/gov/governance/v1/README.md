@@ -101,7 +101,7 @@ Delegate(amount, delegateTo)
 // Create proposal
 ProposeText(title, description, body)
 ProposeCommunityPoolSpend(recipient, amount)
-ProposeParameterChange(params)
+ProposeParameterChange(title, description, numToExecute, executions)
 
 // Vote on proposal
 Vote(proposalId, true)  // YES
