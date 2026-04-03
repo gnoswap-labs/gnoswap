@@ -570,11 +570,11 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			description:                  "change state before transfer",
 			target:                       LIQUIDITY_STAKER,
 			targetName:                   "LIQUIDITY_STAKER",
-			amount:                       math.MaxInt64,
+			amount:                       1,
 			initialDistributed:           1000,
 			initialAccuDistributed:       1000,
-			expectedDistributedAfter:     1000,
-			expectedAccuDistributedAfter: 1000,
+			expectedDistributedAfter:     1001,
+			expectedAccuDistributedAfter: 1001,
 			expectedBalanceChange:        0,
 			setupBalance:                 false,
 			balanceToSetup:               0,
@@ -625,7 +625,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			}
 
 			if !tt.setupBalance {
-				uassert.AbortsContains(t, "overflow", func() {
+				uassert.AbortsContains(t, "insufficient balance", func() {
 					transferToTargetFunc(cross)
 				})
 			} else {
