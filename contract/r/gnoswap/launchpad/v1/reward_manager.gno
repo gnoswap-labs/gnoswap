@@ -252,12 +252,10 @@ func newRewardManager(
 	distributeStartTime int64,
 	distributeEndTime int64,
 	rewardCollectableDuration int64,
-	currentTime int64,
 ) *launchpad.RewardManager {
 	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, rewardCollectableDuration)
 
 	updateDistributeAmountPerSecondX128(manager, totalDistributeAmount, distributeStartTime, distributeEndTime)
-	updateRewardPerDepositX128(manager, 0, currentTime)
 
 	return manager
 }

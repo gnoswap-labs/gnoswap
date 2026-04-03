@@ -43,7 +43,7 @@ func TestRewardManager_IsInitialized(t *testing.T) {
 			for k, v := range tt.rewardStates {
 				tree.Set(k, v)
 			}
-			manager := newRewardManager(1000000, 100, 200, 0, 100)
+			manager := newRewardManager(1000000, 100, 200, 0)
 			manager.SetRewards(tree)
 
 			// Execute
@@ -101,7 +101,6 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 				distributeStartTime,
 				distributeEndTime,
 				0,
-				distributeStartTime,
 			)
 
 			// Execute
@@ -197,7 +196,6 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 				tt.distributeStart,
 				tt.distributeEnd,
 				0,
-				tt.distributeStart,
 			)
 
 			totalDepositAmount := int64(0)
@@ -295,7 +293,6 @@ func TestRewardManager_CollectReward(t *testing.T) {
 				tt.distributeStartTime,
 				tt.distributeEndTime,
 				0,
-				tt.distributeStartTime,
 			)
 
 			for _, deposit := range tt.existingDeposits {
@@ -358,7 +355,6 @@ func TestnewRewardManager(t *testing.T) {
 				distributeStartTime,
 				distributeEndTime,
 				0,
-				distributeStartTime,
 			)
 
 			// Verify
@@ -382,7 +378,6 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Create two deposits to test reward distribution
@@ -465,7 +460,6 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Create first deposit at start
@@ -546,7 +540,6 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Add deposit at start
@@ -593,7 +586,6 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Add deposit at start
@@ -640,7 +632,6 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Add deposit at start
@@ -683,7 +674,6 @@ func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Should have zero distribute amount per second
@@ -703,7 +693,6 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Add deposit
@@ -743,7 +732,6 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Add deposit
@@ -784,7 +772,6 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 		0,
-		distributeStartTime,
 	)
 
 	// Deposit 1: Joins at start
@@ -908,7 +895,6 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 				now,
 				tt.distributeEndTime,
 				0,
-				now,
 			)
 			manager.SetRewardClaimableDuration(tt.claimableDuration)
 
@@ -974,7 +960,6 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 				distributeStart,
 				distributeEnd,
 				0,
-				distributeStart,
 			)
 			manager.SetRewardClaimableDuration(100)
 
@@ -1065,7 +1050,6 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 				distributeStart,
 				distributeEnd,
 				0,
-				distributeStart,
 			)
 			manager.SetRewardClaimableDuration(100)
 			manager.SetTotalClaimedAmount(tt.initialTotal)
@@ -1130,7 +1114,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				return manager
 			},
@@ -1159,7 +1142,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 
 				manager.SetAccumulatedTime(800)
@@ -1192,7 +1174,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1213,7 +1194,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1238,7 +1218,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(2100)
 				manager.SetDistributeStartTime(1000)
@@ -1259,7 +1238,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(2000)
 				manager.SetDistributeStartTime(1000)
@@ -1280,7 +1258,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1311,7 +1288,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1341,7 +1317,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1362,7 +1337,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1383,7 +1357,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1413,7 +1386,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1444,7 +1416,6 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 					1000,
 					2000,
 					0,
-					1000,
 				)
 				manager.SetAccumulatedTime(1000)
 				manager.SetDistributeStartTime(900)
@@ -1675,7 +1646,6 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 				tt.distributeStartTime,
 				tt.distributeEndTime,
 				0,
-				tt.distributeStartTime,
 			)
 
 			// Store initial state
@@ -1964,7 +1934,6 @@ func TestRewardManager_addRewardState(t *testing.T) {
 				900,
 				2000,
 				0,
-				900,
 			)
 
 			deposit := launchpad.NewDeposit(
