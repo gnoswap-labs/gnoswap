@@ -245,7 +245,7 @@ func GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
 		return nil, err
 	}
 
-	return pool.Clone(), nil
+	return clonePool(pool), nil
 }
 
 // GetTickInfo returns the tick info for a given tick.

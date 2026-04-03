@@ -73,10 +73,12 @@ func TestMutableGovStakerGetterIsolation(t *testing.T) {
 			getter: func(t *testing.T) any { return GetDelegatorDelegateeAddresses(adminAddr, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]address)
+				values[0] = address("g1test")
 				values = append(values, adminAddr)
 			},
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
 				values := m.Response.data["GetDelegatorDelegateeAddresses"][0].([]address)
+				uassert.Equal(t, adminAddr, values[0])
 				uassert.Equal(t, 1, len(values))
 			},
 		},

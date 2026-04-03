@@ -20,12 +20,12 @@ type Pool struct {
 	slot0                Slot0
 	balances             TokenPair // balances of the pool
 	protocolFees         TokenPair
-	feeGrowthGlobal0X128 *u256.Uint // uint256
-	feeGrowthGlobal1X128 *u256.Uint // uint256
-	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
-	ticks                *avl.Tree  // tick(int32) -> TickInfo
+	feeGrowthGlobal0X128 *u256.Uint       // uint256
+	feeGrowthGlobal1X128 *u256.Uint       // uint256
+	liquidity            *u256.Uint       // total amount of active liquidity in the pool (within current tick range)
+	ticks                *avl.Tree        // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
-	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+	positions            *avl.Tree        // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
 }
@@ -192,8 +192,8 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          make(map[int16]string),
+		ticks:                clonePoolTicks(p.ticks),
+		tickBitmaps:          clonePoolTickBitmaps(p.tickBitmaps),
 		positions:            avl.NewTree(),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}

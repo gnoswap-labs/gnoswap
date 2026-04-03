@@ -1,5 +1,11 @@
 package pool
 
+import (
+	"time"
+
+	avl "gno.land/p/nt/avl/v0"
+)
+
 func cloneStringSlice(src []string) []string {
 	if src == nil {
 		return nil
@@ -48,12 +54,73 @@ func cloneObservationState(src *ObservationState) *ObservationState {
 		return nil
 	}
 
+	observations := make(map[uint16]*Observation)
+	for index, observation := range src.observations {
+		observations[index] = observation.Clone()
+	}
+
 	return &ObservationState{
-		observations:    make(map[uint16]*Observation),
+		observations:    observations,
 		index:           src.index,
 		cardinality:     src.cardinality,
 		cardinalityNext: src.cardinalityNext,
 	}
+}
+
+func clonePool(src *Pool) *Pool {
+	if src == nil {
+		return nil
+	}
+
+	return &Pool{
+		token0Path:  src.token0Path,
+		token1Path:  src.token1Path,
+		fee:         src.fee,
+		tickSpacing: src.tickSpacing,
+		slot0: Slot0{
+			sqrtPriceX96: src.slot0.sqrtPriceX96.Clone(),
+			tick:         src.slot0.tick,
+			feeProtocol:  src.slot0.feeProtocol,
+			unlocked:     src.slot0.unlocked,
+		},
+		balances:             src.balances,
+		protocolFees:         src.protocolFees,
+		feeGrowthGlobal0X128: src.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal1X128: src.feeGrowthGlobal1X128.Clone(),
+		liquidity:            src.liquidity.Clone(),
+		ticks:                avl.NewTree(),
+		tickBitmaps:          make(map[int16]string),
+		positions:            avl.NewTree(),
+		observationState:     NewObservationState(time.Now().Unix()),
+	}
+}
+
+func clonePoolTicks(src *avl.Tree) *avl.Tree {
+	if src == nil {
+		return avl.NewTree()
+	}
+
+	cloned := avl.NewTree()
+
+	src.Iterate("", "", func(key string, value any) bool {
+		cloned.Set(key, value)
+		return false
+	})
+
+	return cloned
+}
+
+func clonePoolTickBitmaps(src map[int16]string) map[int16]string {
+	if src == nil {
+		return make(map[int16]string)
+	}
+
+	cloned := make(map[int16]string, len(src))
+	for wordPos, bitmap := range src {
+		cloned[wordPos] = bitmap
+	}
+
+	return cloned
 }
 
 func NewDefaultPositionInfo() PositionInfo {

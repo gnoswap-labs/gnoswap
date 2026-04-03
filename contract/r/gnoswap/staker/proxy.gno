@@ -164,6 +164,6 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 }
 
 // SetUnStakingFee sets the unstaking fee percentage.
-func SetUnStakingFee(cur realm, fee int64) {
+func SetUnStakingFee(cur realm, fee uint64) {
 	getImplementation().SetUnStakingFee(fee)
 }

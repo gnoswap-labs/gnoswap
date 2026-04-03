@@ -4,10 +4,8 @@ import (
 	"chain/runtime"
 	"errors"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
-	"gno.land/r/gnoswap/access"
 
 	// initialize rbac roles
 	_ "gno.land/r/gnoswap/rbac"
@@ -37,7 +35,6 @@ var (
 func init() {
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
-	initRegisterReadableContract()
 
 	// Initialize the initializers map to store implementation registration functions
 	versionManager = version_manager.NewVersionManager(
@@ -47,24 +44,6 @@ func init() {
 	)
 
 	implementation = nil
-}
-
-func initRegisterReadableContract() {
-	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
-	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
-
-	if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
-		panic(err)
-	}
-
-	if err := kvStore.AddAuthorizedCaller(positionAddr, store.ReadOnly); err != nil {
-		panic(err)
-	}
-
-	if err := kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly); err != nil {
-		panic(err)
-	}
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

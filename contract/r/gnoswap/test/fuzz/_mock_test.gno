@@ -323,7 +323,7 @@ type MockStakerStore struct {
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      *avl.Tree
-	unstakingFee                     int64
+	unstakingFee                     uint64
 	pools                            *avl.Tree
 	poolTierMemberships              *avl.Tree
 	poolTierRatio                    sr.TierRatio
@@ -474,11 +474,11 @@ func (s *MockStakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.unstakingFee != 0
 }
 
-func (s *MockStakerStore) GetUnstakingFee() int64 {
+func (s *MockStakerStore) GetUnstakingFee() uint64 {
 	return s.unstakingFee
 }
 
-func (s *MockStakerStore) SetUnstakingFee(fee int64) error {
+func (s *MockStakerStore) SetUnstakingFee(fee uint64) error {
 	s.unstakingFee = fee
 	return nil
 }

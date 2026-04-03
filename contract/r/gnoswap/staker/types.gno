@@ -47,7 +47,7 @@ type IStakerManager interface {
 	SetDepositGnsAmount(amount int64)
 	SetMinimumRewardAmount(amount int64)
 	SetTokenMinimumRewardAmount(paramsStr string)
-	SetUnStakingFee(fee int64)
+	SetUnStakingFee(fee uint64)
 }
 
 type IStakerGetter interface {
@@ -108,7 +108,7 @@ type IStakerGetter interface {
 	GetPoolTierRatio(poolPath string) uint64
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
-	GetUnstakingFee() int64
+	GetUnstakingFee() uint64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
@@ -167,8 +167,8 @@ type IStakerStore interface {
 
 	// UnstakingFee
 	HasUnstakingFeeStoreKey() bool
-	GetUnstakingFee() int64
-	SetUnstakingFee(fee int64) error
+	GetUnstakingFee() uint64
+	SetUnstakingFee(fee uint64) error
 
 	// Pools
 	HasPoolsStoreKey() bool

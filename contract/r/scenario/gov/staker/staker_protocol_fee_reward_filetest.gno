@@ -9,6 +9,8 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/rbac"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
@@ -136,6 +138,8 @@ func formatProtocolFees(fees map[string]int64) string {
 
 func protocolFeeRewardBob() {
 	testing.SetRealm(gnoStakerRealm)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
 	ufmt.Printf("[INFO] claimable reward (bob): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 	testing.SetRealm(bobRealm)
@@ -145,6 +149,8 @@ func protocolFeeRewardBob() {
 
 func protocolFeeRewardAdmin() {
 	testing.SetRealm(gnoStakerRealm)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 	emissionReward, protocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
 	ufmt.Printf("[INFO] claimable reward (adminAddr): emissionReward=%d, protocolFees=%s\n", emissionReward, formatProtocolFees(protocolFees))
 
