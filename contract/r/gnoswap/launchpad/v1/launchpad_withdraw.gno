@@ -39,13 +39,12 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	// Collect reward state before any transfers (CEI: Effects before Interactions)
+	// Collect reward before withdrawal
 	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
-	// Mark deposit as withdrawn before any external calls (CEI: Effects before Interactions)
 	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
 		panic(err.Error())
