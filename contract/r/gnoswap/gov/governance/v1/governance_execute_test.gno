@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -1013,18 +1012,16 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 		{
 			name:         "success - maximum executions",
 			numToExecute: 10,
-			executions: strings.Join([]string{
+			executions: "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
 				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
-			}, "*GOV*"),
 			expectedHasAbort: false,
 		},
 		{
@@ -1408,6 +1405,33 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 			executedHeight:   200,
 			executedBy:       testutils.TestAddress("executor"),
 			expectedError:    "handler not found",
+			expectedHasError: true,
+		},
+		{
+			name: "fail - malformed execution message",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
+					governance.NewProposalData(
+						governance.ParameterChange,
+						nil,
+						governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee"}),
+					),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return CreateParameterHandlers()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedError:    "malformed execution message",
 			expectedHasError: true,
 		},
 	}

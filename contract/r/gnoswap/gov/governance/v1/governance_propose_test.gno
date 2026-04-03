@@ -1196,6 +1196,13 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			shouldFail:    true,
 		},
 		{
+			name:          "fail - over maximum takes precedence over execution count mismatch",
+			numToExecute:  11,
+			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100",
+			expectedError: "numToExecute is greater than 10",
+			shouldFail:    true,
+		},
+		{
 			name:          "fail - empty executions string",
 			numToExecute:  1,
 			executions:    "",
