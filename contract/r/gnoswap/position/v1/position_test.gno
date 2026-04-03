@@ -1758,3 +1758,62 @@ func TestEmergencyHaltAllowsWithdrawalEntrypoints(t *testing.T) {
 		})
 	})
 }
+
+// TestCompleteHaltBlocksWithdrawalEntrypoints is a regression test verifying that
+// removing AssertIsNotHaltedPosition from DecreaseLiquidity and CollectFee did not
+// weaken the Complete halt level.  Under Complete halt, withdraw is also halted,
+// so both functions must still be blocked.
+func TestCompleteHaltBlocksWithdrawalEntrypoints(t *testing.T) {
+	t.Run("DecreaseLiquidity blocked by complete halt", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		testing.SetRealm(adminRealm)
+		mockInstanceMint(
+			barPath, fooPath, fee500,
+			-10000, 10000, "1000000", "1000000",
+			"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		uassert.True(t, halt.IsHaltedWithdraw(), "complete halt should halt withdraw operations")
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		uassert.AbortsWithMessage(t, "halted: withdraw", func() {
+			mockInstanceDecreaseLiquidity(
+				1, "100", "0", "0",
+				time.Now().Add(time.Hour).Unix(),
+			)
+		})
+	})
+
+	t.Run("CollectFee blocked by complete halt", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		testing.SetRealm(adminRealm)
+		mockInstanceMint(
+			barPath, fooPath, fee500,
+			-10000, 10000, "1000000", "1000000",
+			"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		uassert.True(t, halt.IsHaltedWithdraw(), "complete halt should halt withdraw operations")
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		uassert.AbortsWithMessage(t, "halted: withdraw", func() {
+			mockInstanceCollectFee(1, adminAddr)
+		})
+	})
+}
