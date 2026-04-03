@@ -53,17 +53,17 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 		{
 			name:                          "domain implementation has no permission",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"),
-			expectedErrorWithRead:         true,
+			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithRead:  "",
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{
 			name:                          "panic with no permission realm",
 			callerRealm:                   testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedErrorWithRead:         true,
+			expectedErrorWithRead:         false,
 			expectedErrorWithWrite:        true,
-			expectedErrorMessageWithRead:  "read permission denied",
+			expectedErrorMessageWithRead:  "",
 			expectedErrorMessageWithWrite: "write permission denied",
 		},
 		{

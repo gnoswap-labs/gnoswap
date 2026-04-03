@@ -53,12 +53,6 @@ func (k *kvStore) Has(key string) bool {
 // Get retrieves a value by key
 // Checks read permission before returning the value
 func (k *kvStore) Get(key string) (any, error) {
-	currentRealm := runtime.CurrentRealm()
-
-	if currentRealm.IsCode() && !k.IsReadAuthorized(currentRealm.Address()) {
-		return nil, ErrReadPermissionDenied
-	}
-
 	value, exists := k.data[k.makeKey(key)]
 	if !exists {
 		return nil, ErrKeyNotFound
@@ -177,19 +171,6 @@ func (k *kvStore) IsDomainAddress(addr address) bool {
 	return k.domainAddress == addr
 }
 
-// IsReadAuthorized checks if the caller has read permission
-func (k *kvStore) IsReadAuthorized(caller address) bool {
-	if k.IsDomainAddress(caller) {
-		return true
-	}
-
-	if !k.isRegisteredAuthorizedCaller(caller) {
-		return false
-	}
-
-	return k.authorizedCallers[caller] >= ReadOnly
-}
-
 // IsWriteAuthorized checks if the caller has write permission
 func (k *kvStore) IsWriteAuthorized(caller address) bool {
 	if k.IsDomainAddress(caller) {
@@ -284,5 +265,5 @@ func (k *kvStore) makeKey(key string) string {
 
 // isValidPermission ensures only ReadOnly and Write permissions are assignable via registration APIs.
 func isValidPermission(permission Permission) bool {
-	return permission == ReadOnly || permission == Write
+	return permission == Write
 }

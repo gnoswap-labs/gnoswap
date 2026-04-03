@@ -234,24 +234,18 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 //   - title: Clear description of changes
 //   - description: Rationale and impact analysis
 //   - numToExecute: Number of parameter changes
-//   - executions: JSON array of changes, each containing:
-//   - target: Contract address to modify
-//   - function: Function name to call
-//   - params: Parameters for the function
+//   - executions: Raw execution string encoded as messages separated by *GOV*.
+//     Each message is formatted as <pkgPath>*EXE*<function>*EXE*<params>.
 //
 // Example executions format:
 //
-//	[{
-//	  "target": "gno.land/r/gnoswap/v1/gov",
-//	  "function": "SetVotingPeriod",
-//	  "params": ["604800"]
-//	}]
+//	gno.land/r/gnoswap/gov/governance*EXE*SetVotingPeriod*EXE*604800*GOV*
+//	gno.land/r/gnoswap/gov/governance*EXE*SetExecutionDelay*EXE*86400
 //
 // Requirements:
-//   - Valid JSON format for executions
-//   - Target contracts must exist
-//   - Functions must be governance-callable
-//   - Parameters must match function signatures
+//   - Encoded execution messages must match numToExecute
+//   - Target handlers must exist in the parameter registry
+//   - Parameters must match registered function signatures
 //
 // Returns new proposal ID.
 func (gv *governanceV1) ProposeParameterChange(
@@ -290,11 +284,6 @@ func (gv *governanceV1) ProposeParameterChange(
 		config.VotingWeightSmoothingDuration,
 	)
 	if err != nil {
-		panic(err)
-	}
-
-	// Validate executions before creating proposal to fail fast on invalid handlers
-	if err := validateExecutions(numToExecute, executions); err != nil {
 		panic(err)
 	}
 

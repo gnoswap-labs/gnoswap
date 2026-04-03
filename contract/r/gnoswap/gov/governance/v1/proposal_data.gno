@@ -3,6 +3,7 @@ package v1
 import (
 	"strings"
 
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -151,12 +152,11 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 }
 
 // validateParameterChange validates parameter change proposal data.
-// Performs basic structural validation of the parameter change data.
-// Note: Handler existence validation is performed separately by validateExecutions
-// during proposal creation to ensure the target functions are registered.
+// Delegates to validateExecutions for full validation including count checks,
+// message format, handler existence, and parameter type validation.
 //
 // Returns:
-//   - error: validation error if parameter change data structure is invalid
+//   - error: validation error if parameter change data is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
 	if execution == nil {
@@ -165,42 +165,7 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 			"execution info is missing",
 		)
 	}
-	num := execution.Num()
-	msgs := execution.Msgs()
-
-	// Validate execution count is positive
-	if num <= 0 {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"numToExecute is less than or equal to 0",
-		)
-	}
-
-	// Validate execution messages are provided
-	if len(msgs) == 0 {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			"executions is empty",
-		)
-	}
-
-	// Validate execution count matches message count
-	if len(msgs) != int(num) {
-		return makeErrorWithDetails(errInvalidInput, "executions is not equal to numToExecute")
-	}
-
-	// Validate execution count doesn't exceed maximum
-	if num > maxNumberOfExecution {
-		return makeErrorWithDetails(errInvalidInput, "numToExecute is greater than 10")
-	}
-
-	// Validate parameter change message format
-	parameterChangesInfos := r.ParameterChangesInfos()
-	if len(parameterChangesInfos) != int(num) {
-		return makeErrorWithDetails(errInvalidInput, "invalid parameter change info")
-	}
-
-	return nil
+	return validateExecutions(execution.Num(), execution.Msgs())
 }
 
 // ParameterChangesInfos parses the execution messages and returns structured parameter change information.
@@ -208,34 +173,32 @@ func (r *ProposalDataResolver) validateParameterChange() error {
 //
 // Returns:
 //   - []ParameterChangeInfo: slice of parsed parameter change information
-func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterChangeInfo {
+//   - error: validation error if any execution message is malformed
+func (r *ProposalDataResolver) ParameterChangesInfos() ([]governance.ParameterChangeInfo, error) {
 	infos := make([]governance.ParameterChangeInfo, 0)
 
 	// Return empty slice if no executions
 	execution := r.Execution()
 	if execution == nil || execution.Num() <= 0 {
-		return infos
+		return infos, nil
 	}
 
 	// Parse each execution message
 	for _, msg := range execution.Msgs() {
-		// Split message into components: pkgPath, function, params
-		params := strings.Split(msg, parameterSeparator)
-		if len(params) != 3 {
-			// validation rejects mismatched counts upstream.
-			continue
+		pkgPath, function, params, partCount := parseExecutionMessage(msg)
+		if partCount != 3 {
+			return nil, makeErrorWithDetails(
+				errInvalidMessageFormat,
+				ufmt.Sprintf("malformed execution message: expected 3 parts (pkgPath, function, params), got %d", partCount),
+			)
 		}
 
-		pkgPath := params[0]
-		function := params[1]
-		param := strings.Split(params[2], ",")
-
 		// Create parameter change info structure
-		info := governance.NewParameterChangeInfo(pkgPath, function, param)
+		info := governance.NewParameterChangeInfo(pkgPath, function, params)
 		infos = append(infos, info)
 	}
 
-	return infos
+	return infos, nil
 }
 
 // NewProposalTextData creates proposal data for a text proposal.
@@ -279,22 +242,20 @@ func NewProposalCommunityPoolSpendData(
 }
 
 // NewProposalExecutionData creates proposal data for a parameter change proposal.
-// Parses the execution string to create the execution structure.
+// Each message in executions should be formatted as <pkgPath>*EXE*<function>*EXE*<params>,
+// separated by *GOV* when there are multiple messages.
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
-//   - executions: encoded execution string with parameter changes
+//   - executions: raw encoded execution string with parameter changes
 //
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
 func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
-	// Split execution string into individual messages
-	msgs := strings.Split(executions, messageSeparator)
-
 	return governance.NewProposalData(
 		governance.ParameterChange,
 		nil,
-		governance.NewExecutionInfo(numToExecute, msgs),
+		governance.NewExecutionInfo(numToExecute, splitExecutionsRaw(executions)),
 	)
 }
 

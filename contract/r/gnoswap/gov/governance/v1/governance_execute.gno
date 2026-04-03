@@ -214,7 +214,10 @@ func executeCommunityPoolSpend(
 
 	// Execute all parameter changes defined in the proposal
 	dataResolver := NewProposalDataResolver(proposal.Data())
-	parameterChangesInfos := dataResolver.ParameterChangesInfos()
+	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
+	if err != nil {
+		return err
+	}
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := makeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
@@ -244,7 +247,10 @@ func executeParameterChange(
 ) error {
 	// Execute all parameter changes defined in the proposal
 	dataResolver := NewProposalDataResolver(proposal.Data())
-	parameterChangesInfos := dataResolver.ParameterChangesInfos()
+	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
+	if err != nil {
+		return err
+	}
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := makeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
