@@ -167,7 +167,6 @@ func NewRewardManager(
 	distributeStartTime int64,
 	distributeEndTime int64,
 	rewardCollectableDuration int64,
-	currentTime int64,
 ) *RewardManager {
 	return &RewardManager{
 		totalDistributeAmount:           totalDistributeAmount,

@@ -15,7 +15,7 @@ func newLaunchpadDeposit() *Deposit {
 }
 
 func newLaunchpadRewardManager() *RewardManager {
-	manager := NewRewardManager(1000, 10, 20, 30, 50)
+	manager := NewRewardManager(1000, 10, 20, 30)
 	manager.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("100"))
 	manager.SetAccumulatedRewardPerDepositX128(u256.MustFromDecimal("200"))
 	manager.SetTotalClaimedAmount(300)
