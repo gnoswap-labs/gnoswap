@@ -12,7 +12,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/rbac" // initialize rbac package
+	"gno.land/r/gnoswap/rbac"
 )
 
 var (

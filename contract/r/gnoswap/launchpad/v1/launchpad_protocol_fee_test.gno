@@ -74,20 +74,27 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 	}
 }
 
-// TestEmergencyHaltBlocksCollectProtocolFee verifies that launchpad protocol-fee
-// claims remain blocked during emergency even though recovery-path accrual stays allowed.
-func TestEmergencyHaltBlocksCollectProtocolFee(t *testing.T) {
+// TestEmergencyHaltAllowsCollectProtocolFee verifies that launchpad protocol-fee
+// collection is allowed during emergency, consistent with other withdrawal paths.
+func TestEmergencyHaltAllowsCollectProtocolFee(t *testing.T) {
 	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 9000000})
 	lp := getTestImplementation()
 	projectOwner := testutils.TestAddress("project_owner")
 
-	createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-		name:            "Emergency Block Test Project",
+	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		name:            "Emergency Allow Test Project",
 		rewardAmount:    1_000_000,
 		recipientSuffix: "project_owner",
 		tier30Pct:       10,
 		tier90Pct:       30,
 		tier180Pct:      60,
+	})
+
+	// A deposit must exist so that gov/staker has a registered project wallet.
+	createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		userSuffix:    "depositor1",
+		depositAmount: 1_000_000_000,
+		tier:          30,
 	})
 
 	testing.SetRealm(adminRealm)
@@ -98,10 +105,11 @@ func TestEmergencyHaltBlocksCollectProtocolFee(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
+	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
 	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw enabled")
 
 	testing.SetRealm(testing.NewUserRealm(projectOwner))
-	uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+	uassert.NotPanics(t, func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
 			lp.CollectProtocolFee()
