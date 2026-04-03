@@ -566,7 +566,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			balanceToSetup:               10000,
 		},
 		{
-			name:                         "panic on transfer gns amount",
+			name:                         "transfer gns minimum amount",
 			description:                  "change state before transfer",
 			target:                       LIQUIDITY_STAKER,
 			targetName:                   "LIQUIDITY_STAKER",
@@ -575,6 +575,20 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			initialAccuDistributed:       1000,
 			expectedDistributedAfter:     1001,
 			expectedAccuDistributedAfter: 1001,
+			expectedBalanceChange:        1,
+			setupBalance:                 true,
+			balanceToSetup:               1,
+		},
+		{
+			name:                         "panic on transfer gns amount",
+			description:                  "change state before transfer",
+			target:                       LIQUIDITY_STAKER,
+			targetName:                   "LIQUIDITY_STAKER",
+			amount:                       math.MaxInt64,
+			initialDistributed:           1000,
+			initialAccuDistributed:       1000,
+			expectedDistributedAfter:     1000,
+			expectedAccuDistributedAfter: 1000,
 			expectedBalanceChange:        0,
 			setupBalance:                 false,
 			balanceToSetup:               0,
@@ -609,7 +623,7 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 			}
 
 			// Execute transfer
-			beforeBalance := gns.BalanceOf(emissionAddr)
+			var balanceChange int64
 
 			var err error
 
@@ -621,18 +635,27 @@ func TestTransferToTarget_CEIPattern(t *testing.T) {
 					return err
 				}
 
-				return transferToTarget(amountByAddress)
+				beforeBalance := gns.BalanceOf(emissionAddr)
+
+				err = transferToTarget(amountByAddress)
+				if err != nil {
+					return err
+				}
+
+				balanceChange = beforeBalance - gns.BalanceOf(emissionAddr)
+
+				return nil
 			}
 
 			if !tt.setupBalance {
-				uassert.AbortsContains(t, "insufficient balance", func() {
+				uassert.AbortsContains(t, "overflow", func() {
 					transferToTargetFunc(cross)
 				})
+
+				return
 			} else {
 				err = transferToTargetFunc(cross)
 			}
-
-			balanceChange := beforeBalance - gns.BalanceOf(emissionAddr)
 
 			uassert.NoError(t, err)
 
