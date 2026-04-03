@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -838,6 +839,202 @@ func TestRewardStateReset_PreservesSliceLength(t *testing.T) {
 	// Length should be preserved
 	uassert.Equal(t, originalLen, len(rewardState.rewards))
 	uassert.Equal(t, originalLen, len(rewardState.penalties))
+}
+
+func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(t *testing.T) {
+	tests := []struct {
+		name string
+		ops  []struct {
+			at   int64
+			tick int32
+		}
+		expectedSize    int
+		expectedHasKeys []int64
+	}{
+		{
+			// case: modifyDeposit is never called
+			// expect: HistoricalTick remains empty.
+			name:            "no operation keeps history empty",
+			ops:             nil,
+			expectedSize:    0,
+			expectedHasKeys: nil,
+		},
+		{
+			// case: same tick then changed tick sequence
+			// expect: entries only at change points.
+			name: "store only when tick changes",
+			ops: []struct {
+				at   int64
+				tick int32
+			}{
+				{at: 1001, tick: 10},
+				{at: 1002, tick: 10},
+				{at: 1003, tick: 11},
+			},
+			expectedSize:    2,
+			expectedHasKeys: []int64{1001, 1003},
+		},
+		{
+			// case: identical tick repeated across timestamps
+			// expect: first timestamp only is stored.
+			name: "same tick repeated stores only once",
+			ops: []struct {
+				at   int64
+				tick int32
+			}{
+				{at: 1001, tick: -100},
+				{at: 1002, tick: -100},
+				{at: 1003, tick: -100},
+			},
+			expectedSize:    1,
+			expectedHasKeys: []int64{1001},
+		},
+		{
+			// case: tick alternates every operation
+			// expect: each operation stores a new historical tick.
+			name: "alternating ticks stores each changed point",
+			ops: []struct {
+				at   int64
+				tick int32
+			}{
+				{at: 1001, tick: 1},
+				{at: 1002, tick: 2},
+				{at: 1003, tick: 1},
+				{at: 1004, tick: 2},
+			},
+			expectedSize:    4,
+			expectedHasKeys: []int64{1001, 1002, 1003, 1004},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			currentTime := int64(1000)
+			pool := sr.NewPool("test_pool", currentTime)
+			poolResolver := NewPoolResolver(pool)
+			zeroDelta := i256.Zero()
+
+			for _, op := range tt.ops {
+				poolResolver.modifyDeposit(zeroDelta, op.at, op.tick)
+			}
+
+			uassert.Equal(t, tt.expectedSize, pool.HistoricalTick().Size())
+			for _, key := range tt.expectedHasKeys {
+				uassert.True(t, pool.HistoricalTick().Has(key))
+			}
+		})
+	}
+}
+
+func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
+	tests := []struct {
+		name                 string
+		startTime            int64
+		endTime              int64
+		rewardPerSecond      int64
+		liquidity            int64
+		compactHistory       []struct{ at int64; tick int32 }
+		denseHistory         []struct{ at int64; tick int32 }
+		globalAccAtStartMult int64
+		globalAccAtEndMult   int64
+		sampleTimes          []int64
+	}{
+		{
+			name:            "dense unchanged tick history and compact history produce same result", // Case: old style (append even unchanged) vs new style (append on change only); Expect: CurrentTick and internal reward are identical.
+			startTime:       1000,
+			endTime:         1010,
+			rewardPerSecond: 5,
+			liquidity:       1000,
+			compactHistory: []struct {
+				at   int64
+				tick int32
+			}{
+				{at: 1000, tick: 5},
+				{at: 1005, tick: 7},
+			},
+			denseHistory: []struct {
+				at   int64
+				tick int32
+			}{
+				{at: 1000, tick: 5},
+				{at: 1001, tick: 5},
+				{at: 1002, tick: 5},
+				{at: 1003, tick: 5},
+				{at: 1004, tick: 5},
+				{at: 1005, tick: 7},
+				{at: 1006, tick: 7},
+				{at: 1007, tick: 7},
+				{at: 1008, tick: 7},
+				{at: 1009, tick: 7},
+			},
+			globalAccAtStartMult: 0,
+			globalAccAtEndMult:   10,
+			sampleTimes:          []int64{1000, 1001, 1004, 1005, 1009, 1010},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			makePoolWithHistory := func(poolPath string, history []struct{ at int64; tick int32 }) *PoolResolver {
+				pool := sr.NewPool(poolPath, tt.startTime)
+				resolver := NewPoolResolver(pool)
+
+				// Keep reward constant in [start, end).
+				pool.RewardCache().Set(tt.startTime, tt.rewardPerSecond)
+
+				// Build deterministic global accumulation snapshots.
+				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
+				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
+				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc)
+				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc)
+
+				for _, h := range history {
+					pool.HistoricalTick().Set(h.at, h.tick)
+				}
+
+				// Ensure boundary ticks exist with zero outside accumulation.
+				pool.Ticks().Get(-10)
+				pool.Ticks().Get(10)
+				return resolver
+			}
+
+			compactResolver := makePoolWithHistory("pool_compact", tt.compactHistory)
+			denseResolver := makePoolWithHistory("pool_dense", tt.denseHistory)
+
+			// 1) CurrentTick equivalence across sampled timestamps.
+			for _, ts := range tt.sampleTimes {
+				uassert.Equal(t, compactResolver.CurrentTick(ts), denseResolver.CurrentTick(ts))
+			}
+
+			deposit := sr.NewDeposit(
+				testutils.TestAddress("owner"),
+				"pool_compact",
+				u256.NewUintFromInt64(tt.liquidity),
+				tt.startTime,
+				int32(-10),
+				int32(10),
+				[]sr.Warmup{
+					{
+						WarmupRatio:    100,
+						NextWarmupTime: tt.endTime + 1000,
+					},
+				},
+			)
+
+			// 2) Reward calculation equivalence.
+			compactRewards, compactPenalties := compactResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
+			denseRewards, densePenalties := denseResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
+
+			uassert.Equal(t, len(compactRewards), len(denseRewards))
+			for i := range compactRewards {
+				uassert.Equal(t, compactRewards[i], denseRewards[i])
+			}
+			uassert.Equal(t, len(compactPenalties), len(densePenalties))
+			for i := range compactPenalties {
+				uassert.Equal(t, compactPenalties[i], densePenalties[i])
+			}
+		})
+	}
 }
 
 // Test Pools IterateAll

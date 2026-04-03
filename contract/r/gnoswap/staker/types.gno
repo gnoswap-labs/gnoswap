@@ -195,11 +195,6 @@ type IStakerStore interface {
 	GetPoolTierLastRewardCacheTimestamp() int64
 	SetPoolTierLastRewardCacheTimestamp(timestamp int64) error
 
-	// PoolTierLastRewardCacheHeight
-	HasPoolTierLastRewardCacheHeightStoreKey() bool
-	GetPoolTierLastRewardCacheHeight() int64
-	SetPoolTierLastRewardCacheHeight(height int64) error
-
 	// PoolTierCurrentEmission
 	HasPoolTierCurrentEmissionStoreKey() bool
 	GetPoolTierCurrentEmission() int64
