@@ -1176,6 +1176,43 @@ func TestCollectAllowedDuringEmergencyHalt(t *testing.T) {
 	})
 }
 
+// TestCollectBlockedByCompleteHalt is a regression test verifying that the
+// removal of AssertIsNotHaltedPool from Collect did not weaken the Complete
+// halt level.  Under Complete halt, withdraw is also halted, so Collect must
+// still be blocked.
+func TestCollectBlockedByCompleteHalt(t *testing.T) {
+	pool := setupStablecoinPool(t)
+	approveTokensForPool(t, pool)
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(
+		pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr,
+	)
+	mockInstanceBurn(
+		pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr,
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelComplete)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedWithdraw(), "complete halt should halt withdraw operations")
+
+	testing.SetRealm(posRealm)
+	uassert.AbortsWithMessage(t, "halted: withdraw", func() {
+		mockInstanceCollect(
+			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+			"1", "1",
+		)
+	})
+}
+
 // validateCollectInvariant validates pool balance >= tokensOwed invariant
 func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
 	t.Helper()
