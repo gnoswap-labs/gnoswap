@@ -649,10 +649,20 @@ func TestEmergencyHaltAllowsStakerWithdrawalEntrypoints(t *testing.T) {
 		uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
 
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		uassert.NotPanics(t, func() {
-			resultPoolPath := mockInstanceUnStakeToken(positionId)
-			uassert.Equal(t, poolPath, resultPoolPath)
-		})
+		resultPoolPath := mockInstanceUnStakeToken(positionId)
+		uassert.Equal(t, poolPath, resultPoolPath)
+
+		// Verify deposit is removed
+		uassert.False(t, getMockInstance().IsStaked(positionId),
+			"deposit should be removed after emergency unstake")
+
+		// Verify NFT ownership transferred back to user
+		owner, err := getMockInstance().nftAccessor.OwnerOf(positionIdFrom(positionId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, addr01, owner)
+
+		// Verify operator is reset
+		uassert.Equal(t, ZERO_ADDRESS, getPositionOperator(positionId))
 	})
 }
 

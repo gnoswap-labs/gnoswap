@@ -1167,13 +1167,13 @@ func TestCollectAllowedDuringEmergencyHalt(t *testing.T) {
 	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
 
 	testing.SetRealm(posRealm)
-	uassert.NotPanics(t, func() {
-		mockInstanceCollect(
-			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
-			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
-			"1", "1",
-		)
-	})
+	amount0, amount1 := mockInstanceCollect(
+		pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+		"1", "1",
+	)
+	uassert.Equal(t, "1", amount0)
+	uassert.Equal(t, "1", amount1)
 }
 
 // TestCollectBlockedByCompleteHalt is a regression test verifying that the
