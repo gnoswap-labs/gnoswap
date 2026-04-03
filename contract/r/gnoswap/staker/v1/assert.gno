@@ -140,7 +140,7 @@ func assertIsValidFeeRate(fee int64) {
 	}
 }
 
-// assertIsValidIncentiveStartTime ensures the incentive starts at midnight of a future date.
+// assertIsValidIncentiveStartTime ensures the incentive starts at midnight and strictly after the current time.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -153,12 +153,12 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 		))
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
+	// must be strictly after the current time
+	now := time.Now().Unix()
+	if startTimestamp <= now {
 		panic(makeErrorWithDetails(
 			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
+			ufmt.Sprintf("startTimestamp(%d) must be strictly after the current time(%d)", startTimestamp, now),
 		))
 	}
 
@@ -197,9 +197,9 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 
 // isMidnight checks if a time represents midnight (00:00:00).
 func isMidnight(startTime time.Time) bool {
-	hour := startTime.Hour()
+	// hour := startTime.Hour()
 	minute := startTime.Minute()
 	second := startTime.Second()
 
-	return hour == 0 && minute == 0 && second == 0
+	return minute == 0 && second == 0
 }
