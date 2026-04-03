@@ -1591,33 +1591,6 @@ func TestGetProjectTierRewardAccumulatedDistributeAmount(t *testing.T) {
 	})
 }
 
-func TestGetProjectTierRewardAccumulatedHeight(t *testing.T) {
-	t.Run("get reward manager accumulated height", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
-		lp := getTestImplementation()
-		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
-
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-			name:            "Test Project",
-			rewardAmount:    1000000,
-			tier30Pct:       25,
-			tier90Pct:       50,
-			tier180Pct:      25,
-			recipientSuffix: "recipient",
-		})
-
-		projectTierID := projectID + ":" + formatInt(projectTier30)
-
-		// Execute
-		height, err := lp.GetProjectTierRewardAccumulatedHeight(projectTierID)
-
-		// Verify
-		uassert.NoError(t, err)
-		uassert.True(t, height >= 0)
-	})
-}
-
 func TestGetProjectTierRewardAccumulatedTime(t *testing.T) {
 	t.Run("get reward manager accumulated time", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})

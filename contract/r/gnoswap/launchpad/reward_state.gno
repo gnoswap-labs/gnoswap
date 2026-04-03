@@ -14,7 +14,6 @@ type RewardState struct {
 	distributeStartTime     int64 // time when launchpad started staking
 	distributeEndTime       int64 // end time of reward calculation
 	accumulatedRewardAmount int64 // calculated, not collected
-	accumulatedHeight       int64 // last height when reward was calculated
 	accumulatedTime         int64 // last time when reward was calculated
 	claimedAmount           int64 // amount of reward claimed so far
 }
@@ -35,7 +34,6 @@ func NewRewardState(
 		claimableTime:           claimableTime,
 		accumulatedRewardAmount: 0,
 		claimedAmount:           0,
-		accumulatedHeight:       0,
 	}
 }
 
@@ -99,16 +97,6 @@ func (rs *RewardState) SetAccumulatedRewardAmount(amount int64) {
 	rs.accumulatedRewardAmount = amount
 }
 
-// AccumulatedHeight returns the accumulated height of the reward state.
-func (rs *RewardState) AccumulatedHeight() int64 {
-	return rs.accumulatedHeight
-}
-
-// SetAccumulatedHeight sets the accumulated height of the reward state.
-func (rs *RewardState) SetAccumulatedHeight(height int64) {
-	rs.accumulatedHeight = height
-}
-
 // AccumulatedTime returns the accumulated time of the reward state.
 func (rs *RewardState) AccumulatedTime() int64 {
 	return rs.accumulatedTime
@@ -137,7 +125,6 @@ func (rs RewardState) Clone() *RewardState {
 		distributeStartTime:     rs.distributeStartTime,
 		distributeEndTime:       rs.distributeEndTime,
 		accumulatedRewardAmount: rs.accumulatedRewardAmount,
-		accumulatedHeight:       rs.accumulatedHeight,
 		accumulatedTime:         rs.accumulatedTime,
 		claimedAmount:           rs.claimedAmount,
 	}

@@ -148,7 +148,7 @@ func (lp *launchpadV1) depositGns(
 
 	rewardState := addRewardStateByDeposit(rewardManager, deposit)
 
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
 		return nil, nil, false, "", err
 	}

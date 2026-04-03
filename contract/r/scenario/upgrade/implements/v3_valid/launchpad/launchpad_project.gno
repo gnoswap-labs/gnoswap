@@ -194,7 +194,6 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			projectTier.StartTime(),
 			projectTier.EndTime(),
 			rewardCollectableDuration,
-			params.startTime,
 			params.startTime+tierDurationTime,
 		))
 	}

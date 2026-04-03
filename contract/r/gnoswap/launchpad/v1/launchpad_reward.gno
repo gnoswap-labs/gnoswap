@@ -77,7 +77,7 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 	}
 
 	// Update reward state before collection
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
 		return "", 0, err
 	}

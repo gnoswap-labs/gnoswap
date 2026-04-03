@@ -15,12 +15,11 @@ func newLaunchpadDeposit() *Deposit {
 }
 
 func newLaunchpadRewardManager() *RewardManager {
-	manager := NewRewardManager(1000, 10, 20, 30, 40, 50)
+	manager := NewRewardManager(1000, 10, 20, 30, 50)
 	manager.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("100"))
 	manager.SetAccumulatedRewardPerDepositX128(u256.MustFromDecimal("200"))
 	manager.SetTotalClaimedAmount(300)
 	manager.SetAccumulatedDistributeAmount(400)
-	manager.SetAccumulatedHeight(500)
 	manager.SetAccumulatedTime(600)
 	rewards := avl.NewTree()
 	rewards.Set("deposit-1", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100))
@@ -259,7 +258,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				rewardState.SetDistributeStartTime(1011)
 				rewardState.SetDistributeEndTime(1012)
 				rewardState.SetAccumulatedRewardAmount(1013)
-				rewardState.SetAccumulatedHeight(1014)
 				rewardState.SetAccumulatedTime(1015)
 				rewardState.SetClaimedAmount(1016)
 			},
@@ -271,7 +269,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(900), rewardState.DistributeStartTime())
 				uassert.Equal(t, int64(1000), rewardState.DistributeEndTime())
 				uassert.Equal(t, int64(0), rewardState.AccumulatedRewardAmount())
-				uassert.Equal(t, int64(0), rewardState.AccumulatedHeight())
 				uassert.Equal(t, int64(0), rewardState.AccumulatedTime())
 				uassert.Equal(t, int64(0), rewardState.ClaimedAmount())
 			},
@@ -293,7 +290,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				manager.SetDistributeStartTime(1003)
 				manager.SetDistributeEndTime(1004)
 				manager.SetAccumulatedDistributeAmount(1005)
-				manager.SetAccumulatedHeight(1006)
 				manager.SetAccumulatedTime(1007)
 				manager.SetRewardClaimableDuration(1008)
 				rewardState := firstRewardState(t, manager.Rewards())
@@ -303,7 +299,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				rewardState.SetDistributeStartTime(1011)
 				rewardState.SetDistributeEndTime(1012)
 				rewardState.SetAccumulatedRewardAmount(1013)
-				rewardState.SetAccumulatedHeight(1014)
 				rewardState.SetAccumulatedTime(1015)
 				rewardState.SetClaimedAmount(1016)
 			},
@@ -316,7 +311,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(10), manager.DistributeStartTime())
 				uassert.Equal(t, int64(20), manager.DistributeEndTime())
 				uassert.Equal(t, int64(400), manager.AccumulatedDistributeAmount())
-				uassert.Equal(t, int64(500), manager.AccumulatedHeight())
 				uassert.Equal(t, int64(600), manager.AccumulatedTime())
 				uassert.Equal(t, int64(30), manager.RewardClaimableDuration())
 				rewardState := firstRewardState(t, manager.Rewards())
@@ -326,7 +320,6 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.Equal(t, int64(900), rewardState.DistributeStartTime())
 				uassert.Equal(t, int64(1000), rewardState.DistributeEndTime())
 				uassert.Equal(t, int64(0), rewardState.AccumulatedRewardAmount())
-				uassert.Equal(t, int64(0), rewardState.AccumulatedHeight())
 				uassert.Equal(t, int64(0), rewardState.AccumulatedTime())
 				uassert.Equal(t, int64(0), rewardState.ClaimedAmount())
 			},

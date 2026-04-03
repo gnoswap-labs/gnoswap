@@ -117,7 +117,7 @@ func removeRewardState(r *launchpad.RewardManager, depositId string) {
 	r.SetRewards(rewards)
 }
 
-func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) error {
+func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
 	if rewardPerDepositX128.IsZero() {
 		return nil
 	}
@@ -132,7 +132,6 @@ func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u
 
 	accumulated := u256.Zero().Add(r.AccumulatedRewardPerDepositX128(), rewardPerDepositX128)
 	r.SetAccumulatedRewardPerDepositX128(accumulated)
-	r.SetAccumulatedHeight(currentHeight)
 	r.SetAccumulatedTime(currentTime)
 
 	return nil
@@ -140,16 +139,15 @@ func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u
 
 // updateRewardPerDepositX128 updates the reward per deposit state.
 // This function calculates and updates the accumulated reward per deposit
-// based on the current total deposit amount and height.
+// based on the current total deposit amount and time.
 //
 // Parameters:
 // - totalDepositAmount (int64): Current total deposit amount
-// - height (int64): Current blockchain height
 // - time (int64): Current timestamp
 //
 // Returns:
 // - error: If the update fails
-func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount int64, currentHeight, currentTime int64) error {
+func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount int64, currentTime int64) error {
 	if currentTime <= 0 {
 		return makeErrorWithDetails(errInvalidTime, "time must be positive")
 	}
@@ -165,7 +163,7 @@ func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount i
 		return err
 	}
 
-	err = addRewardPerDepositX128(r, rewardPerDepositX128, currentHeight, currentTime)
+	err = addRewardPerDepositX128(r, rewardPerDepositX128, currentTime)
 	if err != nil {
 		return err
 	}
@@ -254,13 +252,12 @@ func newRewardManager(
 	distributeStartTime int64,
 	distributeEndTime int64,
 	rewardCollectableDuration int64,
-	currentHeight int64,
 	currentTime int64,
 ) *launchpad.RewardManager {
-	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, rewardCollectableDuration, currentHeight, currentTime)
+	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, rewardCollectableDuration, currentTime)
 
 	updateDistributeAmountPerSecondX128(manager, totalDistributeAmount, distributeStartTime, distributeEndTime)
-	updateRewardPerDepositX128(manager, 0, currentHeight, currentTime)
+	updateRewardPerDepositX128(manager, 0, currentTime)
 
 	return manager
 }

@@ -96,7 +96,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	}
 
 	// Update rewards with current deposit amount
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
 		return "", 0, err
 	}
@@ -105,7 +105,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	withdrawToTier(projectTier, deposit)
 
 	// Update rewards with new deposit amount after withdrawal
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
 		return "", 0, err
 	}
