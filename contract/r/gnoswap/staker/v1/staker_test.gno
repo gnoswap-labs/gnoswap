@@ -616,7 +616,7 @@ func TestEmergencyHaltAllowsStakerWithdrawalEntrypoints(t *testing.T) {
 		return positionId, poolPath
 	}
 
-	t.Run("CollectReward should remain available in emergency", func(t *testing.T) {
+	t.Run("CollectReward should be blocked in emergency", func(t *testing.T) {
 		positionId, _ := setupStakedPosition(t)
 
 		testing.SetRealm(adminRealm)
@@ -630,7 +630,7 @@ func TestEmergencyHaltAllowsStakerWithdrawalEntrypoints(t *testing.T) {
 		uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
 
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		uassert.NotPanics(t, func() {
+		uassert.AbortsWithMessage(t, "halted: staker", func() {
 			mockInstanceCollectReward(positionId)
 		})
 	})

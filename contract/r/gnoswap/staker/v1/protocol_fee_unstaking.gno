@@ -22,6 +22,15 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
+	return s.handleStakingFee(tokenPath, amount, internal, false)
+}
+
+func (s *stakerV1) handleStakingFee(
+	tokenPath string,
+	amount int64,
+	internal bool,
+	recovery bool,
+) (int64, int64, error) {
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		return amount, 0, nil
@@ -41,7 +50,12 @@ func (s *stakerV1) handleStakingRewardFee(
 		tokenPath = GNS_PATH
 	}
 
-	// external contract has fee
+	// Emergency keeps unstake recovery available, so recovery=true bypasses the
+	// protocol_fee halt check but still transfers and records the accrued fee.
+	if !recovery {
+		halt.AssertIsNotHaltedProtocolFee()
+	}
+
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)

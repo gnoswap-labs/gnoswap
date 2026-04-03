@@ -458,7 +458,12 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStaker()
+
+	return s.collectReward(positionId, false)
+}
+
+func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, string, map[string]int64, map[string]int64) {
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsDepositor(s, caller, positionId)
@@ -527,7 +532,14 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		rewardToken := incentive.RewardToken()
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
+		var toUser int64
+		var feeAmount int64
+		var err error
+		if recovery {
+			toUser, feeAmount, err = s.handleStakingFee(rewardToken, rewardAmount, false, true)
+		} else {
+			toUser, feeAmount, err = s.handleStakingRewardFee(rewardToken, rewardAmount, false)
+		}
 		if err != nil {
 			panic(err.Error())
 		}
@@ -610,7 +622,14 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	}
 
 	// internal reward to user
-	toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
+	var toUser int64
+	var feeAmount int64
+	var err error
+	if recovery {
+		toUser, feeAmount, err = s.handleStakingFee(GNS_PATH, reward.Internal, true, true)
+	} else {
+		toUser, feeAmount, err = s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
+	}
 	if err != nil {
 		panic(err.Error())
 	}
@@ -743,8 +762,8 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	// unStaked status
 	poolPath := deposit.TargetPoolPath()
 
-	// claim All Rewards
-	s.CollectReward(positionId)
+	// claim All Rewards through the recovery-safe path
+	s.collectReward(positionId, true)
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)
