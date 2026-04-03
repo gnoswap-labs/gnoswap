@@ -5,6 +5,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/halt"
 	_ "gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/rbac"
 )
@@ -71,4 +72,39 @@ func TestLaunchpadProtocolFee_CollectProtocolFee(t *testing.T) {
 			collectFn()
 		})
 	}
+}
+
+// TestEmergencyHaltBlocksCollectProtocolFee verifies that launchpad protocol-fee
+// claims remain blocked during emergency even though recovery-path accrual stays allowed.
+func TestEmergencyHaltBlocksCollectProtocolFee(t *testing.T) {
+	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 9000000})
+	lp := getTestImplementation()
+	projectOwner := testutils.TestAddress("project_owner")
+
+	createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		name:            "Emergency Block Test Project",
+		rewardAmount:    1_000_000,
+		recipientSuffix: "project_owner",
+		tier30Pct:       10,
+		tier90Pct:       30,
+		tier180Pct:      60,
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+	defer func() {
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelNone)
+	}()
+
+	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
+	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw enabled")
+
+	testing.SetRealm(testing.NewUserRealm(projectOwner))
+	uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+			lp.CollectProtocolFee()
+		}(cross)
+	})
 }

@@ -538,7 +538,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner2",
 			caller:           "haltOwner2",
 			haltLevel:        halt.HaltLevelComplete,
-			expectedErrorMsg: "halted: launchpad",
+			expectedErrorMsg: "halted: withdraw",
 		},
 	}
 
