@@ -212,8 +212,6 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 			projectTier.StartTime(),
 			projectTier.EndTime(),
 			rewardCollectableDuration,
-			params.startTime,
-			params.startTime+tierDurationTime,
 		))
 	}
 
@@ -248,7 +246,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 		panic(err)
 	}
 
-	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentHeight, currentTime)
+	projectLeftReward, err := lp.transferLeftFromProject(project, recipient, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -293,7 +291,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
@@ -306,15 +304,11 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 	accumCollectableReward := int64(0)
 
 	for _, tier := range project.Tiers() {
-		if !tier.IsEnded(currentTime) {
-			return 0, ufmt.Errorf("tier(%s) is not ended", tier.ID())
-		}
-
 		// Calculate pending rewards for remaining depositors
 		currentDepositCount := getTierCurrentDepositCount(tier)
 
 		if currentDepositCount > 0 {
-			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentHeight, currentTime)
+			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentTime)
 			if err != nil {
 				return 0, err
 			}
@@ -354,14 +348,14 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 
 // applyTierRewardGrowthWithRewards calculates the total claimable rewards
 // for all active deposits in a specific tier.
-func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
 		return 0, err
 	}
 
 	// Update reward accumulation to current time before calculating claimable.
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime)
 	if err != nil {
 		return 0, err
 	}

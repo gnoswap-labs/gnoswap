@@ -589,17 +589,6 @@ func (m *MockLaunchpad) GetProjectTierRewardAccumulatedDistributeAmount(projectT
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error) {
-	res, ok := m.Response.Get("GetProjectTierRewardAccumulatedHeight")
-	if !ok {
-		return 0, nil
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(int64), nil
-	}
-	return res[0].(int64), res[1].(error)
-}
-
 func (m *MockLaunchpad) GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
 	res, ok := m.Response.Get("GetProjectTierRewardAccumulatedTime")
 	if !ok {

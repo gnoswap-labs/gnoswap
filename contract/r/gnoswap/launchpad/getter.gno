@@ -289,11 +289,6 @@ func GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int6
 	return getImplementation().GetProjectTierRewardAccumulatedDistributeAmount(projectTierId)
 }
 
-// GetProjectTierRewardAccumulatedHeight returns the accumulated height of a reward manager.
-func GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error) {
-	return getImplementation().GetProjectTierRewardAccumulatedHeight(projectTierId)
-}
-
 // GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
 func GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
 	return getImplementation().GetProjectTierRewardAccumulatedTime(projectTierId)

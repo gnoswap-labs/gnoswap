@@ -20,7 +20,6 @@ import (
 // - distributeStartTime (int64): The start time of the reward calculation.
 // - distributeEndTime (int64): The end time of the reward calculation.
 // - accumulatedDistributeAmount (int64): The accumulated amount of tokens distributed.
-// - accumulatedHeight (int64): The last height when reward was calculated.
 // - rewardClaimableDuration (int64): The duration of reward claimable.
 type RewardManager struct {
 	rewards *avl.Tree // depositId -> RewardState
@@ -33,7 +32,6 @@ type RewardManager struct {
 	distributeStartTime         int64 // start time of reward calculation
 	distributeEndTime           int64 // end time of reward calculation
 	accumulatedDistributeAmount int64 // accumulated distribute amount
-	accumulatedHeight           int64 // last height when reward was calculated
 	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
 }
@@ -118,16 +116,6 @@ func (rm *RewardManager) SetAccumulatedDistributeAmount(amount int64) {
 	rm.accumulatedDistributeAmount = amount
 }
 
-// AccumulatedHeight returns the accumulated height of the reward manager.
-func (rm *RewardManager) AccumulatedHeight() int64 {
-	return rm.accumulatedHeight
-}
-
-// SetAccumulatedHeight sets the accumulated height of the reward manager.
-func (rm *RewardManager) SetAccumulatedHeight(height int64) {
-	rm.accumulatedHeight = height
-}
-
 // AccumulatedTime returns the accumulated time of the reward manager.
 func (rm *RewardManager) AccumulatedTime() int64 {
 	return rm.accumulatedTime
@@ -168,7 +156,6 @@ func (rm RewardManager) Clone() *RewardManager {
 		distributeStartTime:             rm.distributeStartTime,
 		distributeEndTime:               rm.distributeEndTime,
 		accumulatedDistributeAmount:     rm.accumulatedDistributeAmount,
-		accumulatedHeight:               rm.accumulatedHeight,
 		accumulatedTime:                 rm.accumulatedTime,
 		rewardClaimableDuration:         rm.rewardClaimableDuration,
 	}
@@ -180,8 +167,6 @@ func NewRewardManager(
 	distributeStartTime int64,
 	distributeEndTime int64,
 	rewardCollectableDuration int64,
-	currentHeight int64,
-	currentTime int64,
 ) *RewardManager {
 	return &RewardManager{
 		totalDistributeAmount:           totalDistributeAmount,
@@ -189,7 +174,6 @@ func NewRewardManager(
 		distributeEndTime:               distributeEndTime,
 		totalClaimedAmount:              0,
 		accumulatedDistributeAmount:     0,
-		accumulatedHeight:               0,
 		accumulatedTime:                 0,
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),

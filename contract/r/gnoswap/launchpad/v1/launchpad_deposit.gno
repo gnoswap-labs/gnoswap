@@ -145,7 +145,7 @@ func (lp *launchpadV1) depositGns(
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
 
 	// update rewards before adding deposit to reward manager
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
 		return nil, nil, false, "", err
 	}

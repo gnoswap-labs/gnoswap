@@ -514,16 +514,6 @@ func (lp *launchpadV1) GetProjectTierRewardAccumulatedDistributeAmount(projectTi
 	return manager.AccumulatedDistributeAmount(), nil
 }
 
-// GetProjectTierRewardAccumulatedHeight returns the accumulated height of a reward manager.
-// Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetProjectTierRewardAccumulatedHeight(projectTierId string) (int64, error) {
-	manager, err := lp.GetProjectTierRewardManager(projectTierId)
-	if err != nil {
-		return 0, err
-	}
-
-	return manager.AccumulatedHeight(), nil
-}
 
 // GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
 // Returns 0 and error if reward manager not found.
