@@ -20,9 +20,6 @@ type TickResolver struct {
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
-	if timestamp < 0 {
-		panic("timestamp must be non-negative")
-	}
 	acc := u256.Zero()
 	self.OutsideAccumulation().ReverseIterateByInt64(0, timestamp, func(key uint64, value any) bool {
 		v, ok := value.(*u256.Uint)
@@ -60,9 +57,6 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 // updateCurrentOutsideAccumulation updates the tick's outside accumulation
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
-	if timestamp < 0 {
-		panic("timestamp must be non-negative")
-	}
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
 	self.OutsideAccumulation().SetByInt64(timestamp, newOutsideAccumulation)

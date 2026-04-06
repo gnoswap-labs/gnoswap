@@ -192,9 +192,6 @@ func (g *govStakerV1) addDelegationRecord(delegateeAddr address, amount int64, t
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
 func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64) {
-	if timestamp < 0 {
-		panic("timestamp must be non-negative")
-	}
 	history := g.store.GetTotalDelegationHistory()
 
 	// Get current total from the most recent entry
@@ -220,9 +217,6 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 //   - amount: amount change (positive for delegate, negative for undelegate)
 //   - timestamp: timestamp of the change
 func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount int64, timestamp int64) {
-	if timestamp < 0 {
-		panic("timestamp must be non-negative")
-	}
 	history := g.store.GetUserDelegationHistory()
 	addrStr := delegateeAddr.String()
 

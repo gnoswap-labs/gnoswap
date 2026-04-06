@@ -118,9 +118,9 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// Set up some delegation history
 		func(cur realm) {
 			history := gs.store.GetTotalDelegationHistory()
-			history.Set(100, int64(1000))
-			history.Set(200, int64(2000))
-			history.Set(uint64(math.MaxInt64-1), int64(3000))
+			history.SetByInt64(100, int64(1000))
+			history.SetByInt64(200, int64(2000))
+			history.SetByInt64(math.MaxInt64-1, int64(3000))
 			err := gs.store.SetTotalDelegationHistory(history)
 			if err != nil {
 				panic(err)
@@ -148,9 +148,9 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// Set up user delegation history
 		func(cur realm) {
 			userHistory := staker.NewUintTree()
-			userHistory.Set(100, int64(1000))
-			userHistory.Set(200, int64(2000))
-			userHistory.Set(uint64(math.MaxInt64-1), int64(3000))
+			userHistory.SetByInt64(100, int64(1000))
+			userHistory.SetByInt64(200, int64(2000))
+			userHistory.SetByInt64(math.MaxInt64-1, int64(3000))
 
 			history := avl.NewTree()
 			history.Set(aliceAddr, userHistory)
@@ -179,9 +179,9 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// Set up delegation history with timestamps
 		func(cur realm) {
 			history := gs.store.GetTotalDelegationHistory()
-			history.Set(100, int64(1000))
-			history.Set(uint64(math.MaxInt64-1000), int64(2000))
-			history.Set(uint64(math.MaxInt64-500), int64(3000))
+			history.SetByInt64(100, int64(1000))
+			history.SetByInt64(math.MaxInt64-1000, int64(2000))
+			history.SetByInt64(math.MaxInt64-500, int64(3000))
 			err := gs.store.SetTotalDelegationHistory(history)
 			if err != nil {
 				panic(err)
@@ -197,7 +197,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// then: should preserve continuity and clean old entries
 		history := gs.store.GetTotalDelegationHistory()
 		// Should have at least the cutoff entry
-		val, exists := history.Get(uint64(cutoff))
+			val, exists := history.GetByInt64(cutoff)
 		uassert.True(t, exists || history.Size() > 0)
 		_ = val
 	})
@@ -212,9 +212,9 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		// Set up user delegation history
 		func(cur realm) {
 			userHistory := staker.NewUintTree()
-			userHistory.Set(100, int64(1000))
-			userHistory.Set(uint64(math.MaxInt64-1000), int64(2000))
-			userHistory.Set(uint64(math.MaxInt64-500), int64(3000))
+			userHistory.SetByInt64(100, int64(1000))
+			userHistory.SetByInt64(math.MaxInt64-1000, int64(2000))
+			userHistory.SetByInt64(math.MaxInt64-500, int64(3000))
 
 			history := avl.NewTree()
 			history.Set(aliceAddr, userHistory)

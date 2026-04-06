@@ -94,9 +94,6 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 // cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.
 // Keeps the most recent entry before cutoff to preserve state continuity.
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
-	if cutoffTimestamp < 0 {
-		panic("cutoffTimestamp must be non-negative")
-	}
 	history := gs.store.GetTotalDelegationHistory()
 
 	toTimestamp := cutoffTimestamp
@@ -136,9 +133,6 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 // Structure: address -> *UintTree[timestamp -> int64]
 // Keeps the most recent entry before cutoff for each user to preserve state continuity.
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
-	if cutoffTimestamp < 0 {
-		panic("cutoffTimestamp must be non-negative")
-	}
 	history := gs.store.GetUserDelegationHistory()
 
 	// Iterate over all users and clean each user's history

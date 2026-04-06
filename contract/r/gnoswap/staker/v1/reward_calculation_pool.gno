@@ -79,9 +79,6 @@ func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
 func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	acc = u256.Zero()
 
 	self.GlobalRewardRatioAccumulation().ReverseIterateByInt64(0, currentTime, func(key uint64, value any) bool {
@@ -102,9 +99,6 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	self.HistoricalTick().ReverseIterateByInt64(0, currentTime, func(key uint64, value any) bool {
 		res, ok := value.(int32)
 		if !ok {
@@ -117,9 +111,6 @@ func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
 }
 
 func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	liquidity = u256.Zero()
 
 	self.StakedLiquidity().ReverseIterateByInt64(0, currentTime, func(key uint64, value any) bool {
@@ -162,9 +153,6 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 // Get the latest reward in [0, currentTime] range.
 // Returns the reward.
 func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	self.RewardCache().ReverseIterateByInt64(0, currentTime, func(key uint64, value any) bool {
 		res, ok := value.(int64)
 		if !ok {
@@ -184,9 +172,6 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 // - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
 // - This ensures unclaimable period tracking begins from the moment rewards start emitting
 func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64) {
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	oldTierReward := self.CurrentReward(currentTime)
 	if oldTierReward == currentTierReward {
 		return
@@ -292,12 +277,6 @@ type RewardState struct {
 // calculateInternalReward calculates the internal reward for the deposit.
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
 func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
-	if startTime < 0 {
-		panic("startTime must be non-negative")
-	}
-	if endTime < 0 {
-		panic("endTime must be non-negative")
-	}
 	currentReward := self.pool.CurrentReward(startTime)
 
 	self.pool.RewardCache().IterateByInt64(startTime, endTime, func(key uint64, value any) bool {

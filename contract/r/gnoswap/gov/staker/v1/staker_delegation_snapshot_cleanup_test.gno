@@ -32,8 +32,8 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 			name: "all entries after cutoff are preserved",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(uint64(2000), int64(500))
-				h.Set(uint64(3000), int64(600))
+				h.SetByInt64(2000, int64(500))
+				h.SetByInt64(3000, int64(600))
 				return h
 			},
 			cutoffTimestamp:       1000,
@@ -45,10 +45,10 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 			name: "entries before cutoff are removed, last value preserved at cutoff",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(uint64(100), int64(100))
-				h.Set(uint64(200), int64(200))
-				h.Set(uint64(500), int64(500)) // most recent before cutoff
-				h.Set(uint64(1500), int64(1500))
+				h.SetByInt64(100, int64(100))
+				h.SetByInt64(200, int64(200))
+				h.SetByInt64(500, int64(500)) // most recent before cutoff
+				h.SetByInt64(1500, int64(1500))
 				return h
 			},
 			cutoffTimestamp:       1000,
@@ -60,9 +60,9 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 			name: "all entries before cutoff leaves only preserved value",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(uint64(100), int64(100))
-				h.Set(uint64(200), int64(200))
-				h.Set(uint64(500), int64(999))
+				h.SetByInt64(100, int64(100))
+				h.SetByInt64(200, int64(200))
+				h.SetByInt64(500, int64(999))
 				return h
 			},
 			cutoffTimestamp:       1000,
@@ -74,9 +74,9 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 			name: "exact cutoff timestamp entry is preserved",
 			setupHistory: func() *staker.UintTree {
 				h := staker.NewUintTree()
-				h.Set(uint64(500), int64(500))
-				h.Set(uint64(1000), int64(1000)) // exact cutoff
-				h.Set(uint64(1500), int64(1500))
+				h.SetByInt64(500, int64(500))
+				h.SetByInt64(1000, int64(1000)) // exact cutoff
+				h.SetByInt64(1500, int64(1500))
 				return h
 			},
 			cutoffTimestamp:       1000,
@@ -100,7 +100,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 
 			// Verify value at cutoff if there are entries
 			if tt.expectedEntries > 0 {
-				valueAtCutoff, exists := resultHistory.Get(uint64(tt.cutoffTimestamp))
+				valueAtCutoff, exists := resultHistory.GetByInt64(tt.cutoffTimestamp)
 				if tt.expectedValueAtCutoff > 0 {
 					uassert.True(t, exists)
 					uassert.Equal(t, tt.expectedValueAtCutoff, valueAtCutoff.(int64))
@@ -141,8 +141,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(uint64(2000), int64(500))
-				userHistory.Set(uint64(3000), int64(600))
+				userHistory.SetByInt64(2000, int64(500))
+				userHistory.SetByInt64(3000, int64(600))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},
@@ -156,9 +156,9 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(uint64(100), int64(100))
-				userHistory.Set(uint64(500), int64(500))
-				userHistory.Set(uint64(1500), int64(1500))
+				userHistory.SetByInt64(100, int64(100))
+				userHistory.SetByInt64(500, int64(500))
+				userHistory.SetByInt64(1500, int64(1500))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},
@@ -173,12 +173,12 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 				tree := avl.NewTree()
 
 				user1History := staker.NewUintTree()
-				user1History.Set(uint64(500), int64(500))
-				user1History.Set(uint64(1500), int64(1500))
+				user1History.SetByInt64(500, int64(500))
+				user1History.SetByInt64(1500, int64(1500))
 				tree.Set(user1.String(), user1History)
 
 				user2History := staker.NewUintTree()
-				user2History.Set(uint64(2000), int64(2000))
+				user2History.SetByInt64(2000, int64(2000))
 				tree.Set(user2.String(), user2History)
 
 				return tree
@@ -193,8 +193,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 				userHistory := staker.NewUintTree()
-				userHistory.Set(uint64(100), int64(100))
-				userHistory.Set(uint64(500), int64(999))
+				userHistory.SetByInt64(100, int64(100))
+				userHistory.SetByInt64(500, int64(999))
 				tree.Set(user1.String(), userHistory)
 				return tree
 			},

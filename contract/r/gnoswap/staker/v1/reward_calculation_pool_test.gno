@@ -234,9 +234,9 @@ func TestCurrentTick(t *testing.T) {
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
 				historicalTicks := staker.NewUintTree()
-				historicalTicks.Set(1, int32(1))
-				historicalTicks.Set(2, int32(2))
-				historicalTicks.Set(3, int32(3))
+				historicalTicks.SetByInt64(1, int32(1))
+				historicalTicks.SetByInt64(2, int32(2))
+				historicalTicks.SetByInt64(3, int32(3))
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
@@ -250,10 +250,10 @@ func TestCurrentTick(t *testing.T) {
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
 				historicalTicks := staker.NewUintTree()
-				historicalTicks.Set(1, int32(1))
-				historicalTicks.Set(2, int32(2))
-				historicalTicks.Set(3, int32(3))
-				historicalTicks.Set(1001, int32(3))
+				historicalTicks.SetByInt64(1, int32(1))
+				historicalTicks.SetByInt64(2, int32(2))
+				historicalTicks.SetByInt64(3, int32(3))
+				historicalTicks.SetByInt64(1001, int32(3))
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
@@ -267,9 +267,9 @@ func TestCurrentTick(t *testing.T) {
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
 				historicalTicks := staker.NewUintTree()
-				historicalTicks.Set(1, int64(1))
-				historicalTicks.Set(2, int64(2))
-				historicalTicks.Set(3, int64(3))
+				historicalTicks.SetByInt64(1, int64(1))
+				historicalTicks.SetByInt64(2, int64(2))
+				historicalTicks.SetByInt64(3, int64(3))
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},
@@ -282,9 +282,9 @@ func TestCurrentTick(t *testing.T) {
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
 				historicalTicks := staker.NewUintTree()
-				historicalTicks.Set(1, "1")
-				historicalTicks.Set(2, "2")
-				historicalTicks.Set(3, "3")
+				historicalTicks.SetByInt64(1, "1")
+				historicalTicks.SetByInt64(2, "2")
+				historicalTicks.SetByInt64(3, "3")
 
 				poolResolver.Pool.SetHistoricalTick(historicalTicks)
 			},

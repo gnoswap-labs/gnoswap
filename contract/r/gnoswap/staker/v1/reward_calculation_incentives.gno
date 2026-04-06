@@ -59,18 +59,12 @@ func (self *IncentivesResolver) update(
 
 // starts incentive unclaimable period for this pool
 func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
-	if startTimestamp < 0 {
-		panic("startTimestamp must be non-negative")
-	}
 	self.UnclaimablePeriods().SetByInt64(startTimestamp, int64(0))
 }
 
 // ends incentive unclaimable period for this pool
 // ignores if currently not in unclaimable period
 func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
-	if endTimestamp < 0 {
-		panic("endTimestamp must be non-negative")
-	}
 	startTimestamp := int64(0)
 	self.UnclaimablePeriods().ReverseIterateByInt64(0, endTimestamp, func(key uint64, value any) bool {
 		v, ok := value.(int64)
@@ -103,13 +97,6 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	incentive, ok := self.Get(incentiveId)
 	if !ok {
 		return 0
-	}
-
-	if incentive.StartTimestamp() < 0 {
-		panic("incentive startTimestamp must be non-negative")
-	}
-	if incentive.EndTimestamp() < 0 {
-		panic("incentive endTimestamp must be non-negative")
 	}
 
 	timeDiff := int64(0)

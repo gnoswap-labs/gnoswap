@@ -642,13 +642,13 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	// Create pool map for timestamp 100
 	poolMap1 := avl.NewTree()
 	poolMap1.Set(poolPath1, []string{"incentive1"})
-	tree.Set(100, poolMap1)
+	tree.SetByInt64(100, poolMap1)
 
 	// Create pool map for timestamp 200
 	poolMap2 := avl.NewTree()
 	poolMap2.Set(poolPath1, []string{"incentive2"})
 	poolMap2.Set(poolPath2, []string{"incentive3"})
-	tree.Set(200, poolMap2)
+	tree.SetByInt64(200, poolMap2)
 
 	err := instance.store.SetExternalIncentivesByCreationTime(tree)
 	if err != nil {
@@ -667,7 +667,7 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	}
 
 	// Verify data at timestamp 100
-	value1, exists1 := retrieved.Get(100)
+	value1, exists1 := retrieved.GetByInt64(100)
 	if !exists1 {
 		t.Error("Expected pool map at timestamp 100")
 	}
@@ -685,7 +685,7 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	}
 
 	// Verify data at timestamp 200
-	value2, exists2 := retrieved.Get(200)
+	value2, exists2 := retrieved.GetByInt64(200)
 	if !exists2 {
 		t.Error("Expected pool map at timestamp 200")
 	}

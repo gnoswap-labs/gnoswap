@@ -266,9 +266,6 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveIds
 func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
-	if creationTime < 0 {
-		panic("creationTime must be non-negative")
-	}
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
 	currentPoolIncentiveIdsValue, exists := incentivesByTime.GetByInt64(creationTime)
@@ -304,9 +301,6 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 // The index structure is:
 //   - creationTime (int64) -> poolPath (string) -> []incentiveId
 func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
-	if creationTime < 0 {
-		panic("creationTime must be non-negative")
-	}
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
 	// check if creation time exists

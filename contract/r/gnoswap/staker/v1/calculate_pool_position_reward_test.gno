@@ -480,9 +480,9 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -524,10 +524,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000)) // 1M reward per second
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000)) // 1M reward per second
 
 				return positionId, poolPath
 			},
@@ -580,10 +580,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(stakeTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(stakeTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(stakeTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(stakeTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(stakeTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(stakeTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(stakeTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -653,9 +653,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime-100), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime-100), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime-100), u256.NewUint(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime-100, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime-100, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime-100, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -723,9 +723,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime-100), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime-100), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime-100), u256.NewUint(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime-100, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime-100, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime-100, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -777,10 +777,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state with tick at 500 (out of range)
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(500))   // Out of range
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.Zero()) // No in-range liquidity
-				poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(500))   // Out of range
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.Zero()) // No in-range liquidity
+				poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -822,10 +822,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -885,9 +885,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -946,9 +946,9 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime-2000), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime-2000), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime-2000), u256.NewUint(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime-2000, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime-2000, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime-2000, u256.NewUint(1000000))
 
 				return positionId, poolPath
 			},
@@ -1013,10 +1013,10 @@ func TestCalcPositionReward(t *testing.T) {
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime-100), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime-100), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime-100), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(baseTime-100), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime-100, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime-100, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime-100, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(baseTime-100, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1063,10 +1063,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(stakeTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(stakeTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(stakeTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(stakeTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(stakeTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(stakeTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(stakeTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1116,10 +1116,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(stakeTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(stakeTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(stakeTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(stakeTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(stakeTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(stakeTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(stakeTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(stakeTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1167,10 +1167,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
-				poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
+				poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1213,10 +1213,10 @@ func TestCalcPositionReward(t *testing.T) {
 
 				// Initialize pool state
 				poolResolver := NewPoolResolver(pool)
-				poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-				poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), largeLiquidity)
-				poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+				poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+				poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, largeLiquidity)
+				poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 				return positionId, poolPath
 			},
@@ -1386,14 +1386,14 @@ func TestCalcPositionReward_BoundaryConditions(t *testing.T) {
 
 			// Initialize pool state with specified current tick
 			poolResolver := NewPoolResolver(pool)
-			poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-			poolResolver.HistoricalTick().Set(uint64(baseTime), tt.currentTick)
+			poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+			poolResolver.HistoricalTick().SetByInt64(baseTime, tt.currentTick)
 			if tt.expectInRange {
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
 			} else {
-				poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.Zero())
+				poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.Zero())
 			}
-			poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+			poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 			// Execute
 			reward := s.calcPositionReward(baseHeight+10, baseTime+100, positionId)
@@ -1444,10 +1444,10 @@ func TestCalcPositionReward_RewardAggregation(t *testing.T) {
 
 	// Initialize pool state
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime), u256.Zero())
-	poolResolver.HistoricalTick().Set(uint64(baseTime), int32(0))
-	poolResolver.StakedLiquidity().Set(uint64(baseTime), u256.NewUint(1000000))
-	poolResolver.RewardCache().Set(uint64(baseTime), int64(1000000))
+	poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime, u256.Zero())
+	poolResolver.HistoricalTick().SetByInt64(baseTime, int32(0))
+	poolResolver.StakedLiquidity().SetByInt64(baseTime, u256.NewUint(1000000))
+	poolResolver.RewardCache().SetByInt64(baseTime, int64(1000000))
 
 	// Execute at different time points and verify aggregation
 	times := []int64{
@@ -1515,9 +1515,9 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 	s.getDeposits().set(positionId, deposit)
 
 	// Initialize pool state
-	poolResolver.GlobalRewardRatioAccumulation().Set(uint64(baseTime-100), u256.Zero())
-	poolResolver.HistoricalTick().Set(uint64(baseTime-100), int32(0))
-	poolResolver.StakedLiquidity().Set(uint64(baseTime-100), u256.NewUint(1000000))
+	poolResolver.GlobalRewardRatioAccumulation().SetByInt64(baseTime-100, u256.Zero())
+	poolResolver.HistoricalTick().SetByInt64(baseTime-100, int32(0))
+	poolResolver.StakedLiquidity().SetByInt64(baseTime-100, u256.NewUint(1000000))
 
 	// Get first reward
 	reward1 := s.calcPositionReward(baseHeight+10, baseTime+10, positionId)

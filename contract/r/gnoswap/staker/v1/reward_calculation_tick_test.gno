@@ -262,7 +262,7 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 
 			// Set up current accumulation
 			if !tt.currentAcc.IsZero() {
-				tick.OutsideAccumulation().Set(uint64(tt.timestamp-100), tt.currentAcc)
+				tick.OutsideAccumulation().SetByInt64(tt.timestamp-100, tt.currentAcc)
 			}
 
 			tickResolver := NewTickResolver(tick)

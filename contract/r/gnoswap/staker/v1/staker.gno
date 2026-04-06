@@ -354,9 +354,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	if currentTime < 0 {
-		panic("currentTime must be non-negative")
-	}
 	poolResolver.HistoricalTick().SetByInt64(currentTime, currentTick)
 
 	// This could happen because of how position stores the ticks.

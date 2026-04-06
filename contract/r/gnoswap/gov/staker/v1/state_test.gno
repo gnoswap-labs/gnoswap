@@ -286,7 +286,7 @@ func TestAddDelegationRecord(t *testing.T) {
 			// Then: Should update total delegation history
 			totalHistory := gs.store.GetTotalDelegationHistory()
 			var totalAmount int64
-			totalHistory.ReverseIterate(0, uint64(timestamp+1), func(key uint64, value any) bool {
+			totalHistory.ReverseIterateByInt64(0, timestamp+1, func(key uint64, value any) bool {
 				if amount, ok := value.(int64); ok {
 					totalAmount = amount
 				}
@@ -300,7 +300,7 @@ func TestAddDelegationRecord(t *testing.T) {
 			// New structure: address -> *UintTree[timestamp -> int64]
 			if userHistoryRaw, exists := userHistoryTree.Get(delegatee.String()); exists {
 				userHistory := userHistoryRaw.(*staker.UintTree)
-				userHistory.ReverseIterate(0, uint64(timestamp+1), func(key uint64, value any) bool {
+				userHistory.ReverseIterateByInt64(0, timestamp+1, func(key uint64, value any) bool {
 					if amount, ok := value.(int64); ok {
 						userAmount = amount
 					}

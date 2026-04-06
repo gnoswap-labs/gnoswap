@@ -149,9 +149,6 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 		return 0, false
 	}
 
-	if snapshotTime < 0 {
-		panic("snapshotTime must be non-negative")
-	}
 	toTimestamp := snapshotTime
 	if toTimestamp < math.MaxInt64 {
 		toTimestamp = toTimestamp + 1
@@ -203,9 +200,6 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 		return 0, false
 	}
 
-	if snapshotTime < 0 {
-		panic("snapshotTime must be non-negative")
-	}
 	toTimestamp := snapshotTime
 	if toTimestamp < math.MaxInt64 {
 		toTimestamp = toTimestamp + 1
