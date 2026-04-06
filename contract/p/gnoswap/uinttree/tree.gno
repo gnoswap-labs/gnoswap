@@ -1,4 +1,4 @@
-package staker
+package uinttree
 
 import (
 	"strconv"
@@ -7,24 +7,12 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 )
 
-// UintTree is a wrapper around an AVL tree for storing uint64 keys as strings.
-//
-// Methods:
-// - Get: Retrieves a value associated with a uint64 key.
-// - Set: Stores a value with a uint64 key.
-// - Has: Checks if a uint64 key exists in the tree.
-// - Remove: Removes a uint64 key and its associated value.
-// - Iterate: Iterates over keys and values in a range.
-// - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockTimestamp -> any
+	tree *avl.Tree
 }
 
-// NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
-	return &UintTree{
-		tree: avl.NewTree(),
-	}
+	return &UintTree{tree: avl.NewTree()}
 }
 
 func (self *UintTree) Get(key uint64) (any, bool) {
@@ -36,7 +24,7 @@ func (self *UintTree) Get(key uint64) (any, bool) {
 }
 
 func (self *UintTree) GetByInt64(key int64) (any, bool) {
-	return self.Get(safeConvertInt64ToUint64(key))
+	return self.Get(SafeConvertInt64ToUint64(key))
 }
 
 func (self *UintTree) Set(key uint64, value any) {
@@ -44,7 +32,7 @@ func (self *UintTree) Set(key uint64, value any) {
 }
 
 func (self *UintTree) SetByInt64(key int64, value any) {
-	self.Set(safeConvertInt64ToUint64(key), value)
+	self.Set(SafeConvertInt64ToUint64(key), value)
 }
 
 func (self *UintTree) Has(key uint64) bool {
@@ -52,7 +40,7 @@ func (self *UintTree) Has(key uint64) bool {
 }
 
 func (self *UintTree) HasByInt64(key int64) bool {
-	return self.Has(safeConvertInt64ToUint64(key))
+	return self.Has(SafeConvertInt64ToUint64(key))
 }
 
 func (self *UintTree) Remove(key uint64) {
@@ -60,7 +48,7 @@ func (self *UintTree) Remove(key uint64) {
 }
 
 func (self *UintTree) RemoveByInt64(key int64) {
-	self.Remove(safeConvertInt64ToUint64(key))
+	self.Remove(SafeConvertInt64ToUint64(key))
 }
 
 func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value any) bool) {
@@ -70,7 +58,7 @@ func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value any) 
 }
 
 func (self *UintTree) IterateByInt64(start, end int64, fn func(key uint64, value any) bool) {
-	self.Iterate(safeConvertInt64ToUint64(start), safeConvertInt64ToUint64(end), fn)
+	self.Iterate(SafeConvertInt64ToUint64(start), SafeConvertInt64ToUint64(end), fn)
 }
 
 func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, value any) bool) {
@@ -80,48 +68,47 @@ func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, valu
 }
 
 func (self *UintTree) ReverseIterateByInt64(start, end int64, fn func(key uint64, value any) bool) {
-	self.ReverseIterate(safeConvertInt64ToUint64(start), safeConvertInt64ToUint64(end), fn)
+	self.ReverseIterate(SafeConvertInt64ToUint64(start), SafeConvertInt64ToUint64(end), fn)
 }
 
-// Size returns the number of entries in the tree.
 func (self *UintTree) Size() int {
 	return self.tree.Size()
 }
 
-// EncodeUint converts a uint64 number into a zero-padded 20-character string.
-//
-// Parameters:
-// - num (uint64): The number to encode.
-//
-// Returns:
-// - string: A zero-padded string representation of the number.
-//
-// Example:
-// Input: 12345
-// Output: "00000000000000012345"
-func EncodeUint(num uint64) string {
-	// Convert the value to a decimal string.
-	s := strconv.FormatUint(num, 10)
+func (self *UintTree) IterateByOffset(offset, count int, fn func(key uint64, value any) bool) {
+	self.tree.IterateByOffset(offset, count, func(key string, value any) bool {
+		return fn(DecodeUint(key), value)
+	})
+}
 
-	// Zero-pad to a total length of 20 characters.
+func (self *UintTree) Clone() *UintTree {
+	if self == nil {
+		return nil
+	}
+
+	cloned := NewUintTree()
+	self.tree.Iterate("", "", func(key string, value any) bool {
+		cloned.tree.Set(key, value)
+		return false
+	})
+
+	return cloned
+}
+
+func SafeConvertInt64ToUint64(value int64) uint64 {
+	if value < 0 {
+		panic("value must be non-negative")
+	}
+
+	return uint64(value)
+}
+
+func EncodeUint(num uint64) string {
+	s := strconv.FormatUint(num, 10)
 	zerosNeeded := 20 - len(s)
 	return strings.Repeat("0", zerosNeeded) + s
 }
 
-// DecodeUint converts a zero-padded string back into a uint64 number.
-//
-// Parameters:
-// - s (string): The zero-padded string.
-//
-// Returns:
-// - uint64: The decoded number.
-//
-// Panics:
-// - If the string cannot be parsed into a uint64.
-//
-// Example:
-// Input: "00000000000000012345"
-// Output: 12345
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
