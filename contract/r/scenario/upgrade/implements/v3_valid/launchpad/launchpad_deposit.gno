@@ -44,10 +44,7 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 		panic(err.Error())
 	}
 
-	actualReferrer, success := registerReferral(referrer, caller)
-	if !success {
-		actualReferrer = referral.GetReferral(runtime.PreviousRealm().Address().String())
-	}
+	actualReferrer := registerReferral(referrer, caller)
 
 	if isFirstDeposit {
 		chain.Emit(
@@ -166,14 +163,8 @@ func (lp *launchpadV1) depositGns(
 }
 
 // registerReferral registers a referral for a caller.
-func registerReferral(referrer string, callerAddress address) (string, bool) {
-	success := referral.TryRegister(cross, callerAddress, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(callerAddress.String())
-	}
-
-	return actualReferrer, success
+func registerReferral(referrer string, callerAddress address) string {
+	return referral.TryRegister(cross, callerAddress, referrer)
 }
 
 // stakeGovernance stakes governance token to the project.
