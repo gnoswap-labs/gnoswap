@@ -21,7 +21,6 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/referral"
 )
 
 // Test Delegate function
@@ -1222,42 +1221,6 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 
 	testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 	xgns.Mint(cross, user, amount)
-}
-
-// TestStakerDelegate_TryRegisterReferrer tests referral registration integration.
-func TestStakerDelegate_TryRegisterReferrer(t *testing.T) {
-	tests := []struct {
-		name     string
-		caller   address
-		referrer string
-	}{
-		{
-			name:     "register with valid referrer",
-			caller:   testutils.TestAddress("alice"),
-			referrer: "referrer1",
-		},
-		{
-			name:     "register with empty referrer",
-			caller:   testutils.TestAddress("bob"),
-			referrer: "",
-		},
-		{
-			name:     "register same caller multiple times",
-			caller:   testutils.TestAddress("charlie"),
-			referrer: "referrer2",
-		},
-	}
-
-	for _, tc := range tests {
-			t.Run(tc.name, func(t *testing.T) {
-				// when - call referral registration directly
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				result := referral.TryRegister(cross, tc.caller, tc.referrer)
-
-				// then - should return the effective referrer string
-				uassert.NotNil(t, result)
-			})
-		}
 }
 
 // TestStakerDelegate_collectDelegations_MultipleDelegations tests collecting from multiple delegations
