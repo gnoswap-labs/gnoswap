@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -637,7 +638,7 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	poolPath2 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
 
 	// Test SetExternalIncentivesByCreationTime with 2-level structure
-	tree := sr.NewUintTree()
+	tree := utree.NewUintTree()
 
 	// Create pool map for timestamp 100
 	poolMap1 := avl.NewTree()

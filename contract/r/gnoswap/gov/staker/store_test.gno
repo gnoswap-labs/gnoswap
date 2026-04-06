@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -572,7 +573,7 @@ func TestStoreSetAndGetTotalDelegationHistory(t *testing.T) {
 		{
 			name: "set and get total delegation history successfully",
 			setupFn: func(gs IGovStakerStore) {
-				history := NewUintTree()
+				history := utree.NewUintTree()
 				gs.SetTotalDelegationHistory(history)
 			},
 			testFn: func(t *testing.T, gs IGovStakerStore) {
@@ -926,7 +927,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				}
 				gs.SetDelegationCounter(counter)
 
-				totalHistory := NewUintTree()
+				totalHistory := utree.NewUintTree()
 				gs.SetTotalDelegationHistory(totalHistory)
 
 				userHistory := avl.NewTree()

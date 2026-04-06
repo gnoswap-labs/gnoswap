@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -42,7 +43,7 @@ func newMockGovStakerStore() staker.IGovStakerStore {
 		delegations:                  avl.NewTree(),
 		userDelegations:              avl.NewTree(),
 		delegationNextID:             staker.NewCounter(),
-		totalDelegationHistory:       staker.NewUintTree(),
+		totalDelegationHistory:       utree.NewUintTree(),
 		userDelegationHistory:        avl.NewTree(),
 		hasTotalDelegationHistoryKey: true,
 	}

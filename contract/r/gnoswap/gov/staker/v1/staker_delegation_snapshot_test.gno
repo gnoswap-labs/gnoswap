@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -147,7 +148,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 
 		// Set up user delegation history
 		func(cur realm) {
-			userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 			userHistory.SetByInt64(100, int64(1000))
 			userHistory.SetByInt64(200, int64(2000))
 			userHistory.SetByInt64(math.MaxInt64-1, int64(3000))
@@ -211,7 +212,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 
 		// Set up user delegation history
 		func(cur realm) {
-			userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 			userHistory.SetByInt64(100, int64(1000))
 			userHistory.SetByInt64(math.MaxInt64-1000, int64(2000))
 			userHistory.SetByInt64(math.MaxInt64-500, int64(3000))

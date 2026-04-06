@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -1153,7 +1154,7 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	mockStore := gs.store.(*mockGovStakerStore)
 	mockStore.delegationNextID = staker.NewCounter()
 	mockStore.delegations = avl.NewTree()
-	mockStore.totalDelegationHistory = staker.NewUintTree()
+	mockStore.totalDelegationHistory = utree.NewUintTree()
 	mockStore.userDelegationHistory = avl.NewTree()
 	mockStore.userDelegations = avl.NewTree()
 

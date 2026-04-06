@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -162,7 +163,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 		{
 			name: "first entry in empty history",
 			initialHistory: func() *staker.UintTree {
-				return staker.NewUintTree()
+				return utree.NewUintTree()
 			},
 			amount:        1000,
 			timestamp:     100,
@@ -171,7 +172,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 		{
 			name: "add to existing total",
 			initialHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(50, int64(500))
 				return h
 			},
@@ -182,7 +183,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 		{
 			name: "subtract from existing total",
 			initialHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(50, int64(500))
 				return h
 			},
@@ -193,7 +194,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 		{
 			name: "negative result clamps to zero",
 			initialHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(50, int64(500))
 				return h
 			},
@@ -204,7 +205,7 @@ func TestUpdateTotalDelegationHistory_Comprehensive(t *testing.T) {
 		{
 			name: "zero amount no change",
 			initialHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(50, int64(500))
 				return h
 			},
@@ -255,7 +256,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "add to existing user amount",
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(50, int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
@@ -269,7 +270,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "subtract from existing user amount",
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(50, int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
@@ -283,7 +284,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "negative result clamps to zero",
 			initialHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(50, int64(500))
 				tree.Set(user1.String(), userHistory)
 				return tree
@@ -320,14 +321,14 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 		{
 			name: "empty history returns zero",
 			setupHistory: func() *staker.UintTree {
-				return staker.NewUintTree()
+				return utree.NewUintTree()
 			},
 			expectedAmount: 0,
 		},
 		{
 			name: "single entry returns that value",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(1000))
 				return h
 			},
@@ -336,7 +337,7 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 		{
 			name: "multiple entries returns latest",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(1000))
 				h.SetByInt64(200, int64(2000))
 				h.SetByInt64(300, int64(3000))
@@ -347,7 +348,7 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 		{
 			name: "non-chronological insertion still returns max timestamp",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(300, int64(3000))
 				h.SetByInt64(100, int64(1000))
 				h.SetByInt64(200, int64(2000))
@@ -378,14 +379,14 @@ func TestGetLatestUserDelegation(t *testing.T) {
 		{
 			name: "empty history returns zero",
 			setupHistory: func() *staker.UintTree {
-				return staker.NewUintTree()
+				return utree.NewUintTree()
 			},
 			expectedAmount: 0,
 		},
 		{
 			name: "single entry returns that value",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(500))
 				return h
 			},
@@ -394,7 +395,7 @@ func TestGetLatestUserDelegation(t *testing.T) {
 		{
 			name: "multiple entries returns latest",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(500))
 				h.SetByInt64(200, int64(1000))
 				h.SetByInt64(300, int64(1500))

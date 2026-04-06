@@ -3,11 +3,12 @@ package staker
 import (
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestUintTreeSetAndGetByInt64(t *testing.T) {
-	tree := NewUintTree()
+	tree := utree.NewUintTree()
 	tree.SetByInt64(7, "value")
 
 	value, ok := tree.GetByInt64(7)
@@ -16,7 +17,7 @@ func TestUintTreeSetAndGetByInt64(t *testing.T) {
 }
 
 func TestUintTreeReverseIterateByInt64(t *testing.T) {
-	tree := NewUintTree()
+	tree := utree.NewUintTree()
 	tree.SetByInt64(5, "five")
 	tree.SetByInt64(10, "ten")
 
@@ -30,7 +31,7 @@ func TestUintTreeReverseIterateByInt64(t *testing.T) {
 }
 
 func TestUintTreeSetByInt64PanicsOnNegativeKey(t *testing.T) {
-	tree := NewUintTree()
+	tree := utree.NewUintTree()
 
 	defer func() {
 		r := recover()

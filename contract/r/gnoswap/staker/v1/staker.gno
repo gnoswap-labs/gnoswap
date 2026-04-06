@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -44,25 +45,25 @@ func NewDeposits() *Deposits {
 
 // Has checks if a position ID exists in deposits.
 func (self *Deposits) Has(positionId uint64) bool {
-	return self.tree.Has(EncodeUint(positionId))
+	return self.tree.Has(utree.EncodeUint(positionId))
 }
 
 // Iterate traverses deposits within the specified range.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utree.EncodeUint(start), utree.EncodeUint(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
-		return fn(DecodeUint(positionId), dpst)
+		return fn(utree.DecodeUint(positionId), dpst)
 	})
 }
 
 func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utree.EncodeUint(start), utree.EncodeUint(end), func(positionId string, depositI any) bool {
 		deposit := retrieveDeposit(depositI)
 		if deposit.TargetPoolPath() != poolPath {
 			return false
 		}
 
-		return fn(DecodeUint(positionId), deposit)
+		return fn(utree.DecodeUint(positionId), deposit)
 	})
 }
 
@@ -73,7 +74,7 @@ func (self *Deposits) Size() int {
 
 // get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
-	depositI, ok := self.tree.Get(EncodeUint(positionId))
+	depositI, ok := self.tree.Get(utree.EncodeUint(positionId))
 	if !ok {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -94,12 +95,12 @@ func retrieveDeposit(data any) *sr.Deposit {
 
 // set stores a deposit for a position ID.
 func (self *Deposits) set(positionId uint64, deposit *sr.Deposit) {
-	self.tree.Set(EncodeUint(positionId), deposit)
+	self.tree.Set(utree.EncodeUint(positionId), deposit)
 }
 
 // remove deletes a deposit by position ID.
 func (self *Deposits) remove(positionId uint64) {
-	self.tree.Remove(EncodeUint(positionId))
+	self.tree.Remove(utree.EncodeUint(positionId))
 }
 
 // ExternalIncentives manages external incentive programs.
@@ -171,7 +172,7 @@ func (self *Stakers) IterateAll(address address, fn func(depositId uint64, depos
 		if !ok {
 			panic("failed to cast value to *Deposit")
 		}
-		return fn(DecodeUint(depositId), deposit)
+		return fn(utree.DecodeUint(depositId), deposit)
 	})
 }
 
@@ -185,7 +186,7 @@ func (self *Stakers) addDeposit(address address, depositId uint64, deposit *sr.D
 	}
 
 	depositTree := retrieveDepositTree(depositTreeI)
-	depositTree.Set(EncodeUint(depositId), deposit)
+	depositTree.Set(utree.EncodeUint(depositId), deposit)
 }
 
 // removeDeposit removes a deposit for a staker address.
@@ -196,7 +197,7 @@ func (self *Stakers) removeDeposit(address address, depositId uint64) {
 	}
 
 	depositTree := retrieveDepositTree(depositTreeI)
-	depositTree.Remove(EncodeUint(depositId))
+	depositTree.Remove(utree.EncodeUint(depositId))
 }
 
 // retrieveDepositTree safely casts data to AVL tree type.

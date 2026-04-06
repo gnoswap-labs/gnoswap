@@ -1,6 +1,7 @@
 package staker
 
 import (
+	utree "gno.land/p/gnoswap/uinttree"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 )
@@ -226,6 +227,6 @@ type IStakerStore interface {
 
 	// ExternalIncentivesByCreationTime
 	HasExternalIncentivesByCreationTimeStoreKey() bool
-	GetExternalIncentivesByCreationTime() *UintTree
-	SetExternalIncentivesByCreationTime(tree *UintTree) error
+	GetExternalIncentivesByCreationTime() *utree.UintTree
+	SetExternalIncentivesByCreationTime(tree *utree.UintTree) error
 }

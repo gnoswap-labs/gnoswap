@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -19,7 +20,7 @@ func TestEncodeUint(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := EncodeUint(tt.input)
+			result := utree.EncodeUint(tt.input)
 			if result != tt.expected {
 				t.Errorf("EncodeUint(%d) = %s; want %s", tt.input, result, tt.expected)
 			}
@@ -41,7 +42,7 @@ func TestDecodeUint(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := DecodeUint(tt.input)
+				result := utree.DecodeUint(tt.input)
 				if result != tt.expected {
 					t.Errorf("DecodeUint(%s) = %d; want %d", tt.input, result, tt.expected)
 				}
@@ -64,14 +65,14 @@ func TestDecodeUint(t *testing.T) {
 						t.Errorf("DecodeUint(%s) should have panicked", input)
 					}
 				}()
-				DecodeUint(input)
+				utree.DecodeUint(input)
 			})
 		}
 	})
 }
 
 func TestUintTree(t *testing.T) {
-	tree := NewUintTree()
+	tree := utree.NewUintTree()
 
 	// Test SetByInt64 and GetByInt64
 	tree.SetByInt64(12345, "testValue")

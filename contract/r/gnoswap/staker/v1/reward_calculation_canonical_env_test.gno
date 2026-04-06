@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	sr "gno.land/r/gnoswap/staker"
 
@@ -66,7 +67,7 @@ type canonicalRewardState struct {
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
-	emissionUpdates *UintTree
+	emissionUpdates *utree.UintTree
 
 	SecondsPerBlock   int64  // How many seconds per block (1 for testing)
 	PerBlockEmission  uint64 // This will be converted to per-second internally
@@ -94,7 +95,7 @@ func NewCanonicalRewardState(
 		},
 		Pool:              make(map[string]*canonicalPool),
 		Reward:            make([]map[uint64]Reward, 124),
-		emissionUpdates:   NewUintTree(),
+		emissionUpdates:   utree.NewUintTree(),
 		SecondsPerBlock:   1, // 1 second per block
 		PerBlockEmission:  1000000000,
 		PerSecondEmission: 1000000000, // Same as per-block since 1 block = 1 second

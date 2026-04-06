@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	"gno.land/r/gnoswap/emission"
 
@@ -120,7 +121,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasExternalIncentivesByCreationTimeStoreKey() {
-		err := stakerStore.SetExternalIncentivesByCreationTime(sr.NewUintTree())
+		err := stakerStore.SetExternalIncentivesByCreationTime(utree.NewUintTree())
 		if err != nil {
 			return err
 		}

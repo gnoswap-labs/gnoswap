@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -220,21 +221,21 @@ func (s *govStakerStore) HasTotalDelegationHistoryStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalDelegationHistory)
 }
 
-func (s *govStakerStore) GetTotalDelegationHistory() *UintTree {
+func (s *govStakerStore) GetTotalDelegationHistory() *utree.UintTree {
 	result, err := s.kvStore.Get(StoreKeyTotalDelegationHistory)
 	if err != nil {
 		panic(err)
 	}
 
-	history, ok := result.(*UintTree)
+	history, ok := result.(*utree.UintTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *UintTree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *utree.UintTree: %T", result))
 	}
 
 	return history
 }
 
-func (s *govStakerStore) SetTotalDelegationHistory(history *UintTree) error {
+func (s *govStakerStore) SetTotalDelegationHistory(history *utree.UintTree) error {
 	return s.kvStore.Set(StoreKeyTotalDelegationHistory, history)
 }
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -233,7 +234,7 @@ func TestCurrentTick(t *testing.T) {
 			name:     "get current tick by valid historical ticks",
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
-				historicalTicks := staker.NewUintTree()
+				historicalTicks := utree.NewUintTree()
 				historicalTicks.SetByInt64(1, int32(1))
 				historicalTicks.SetByInt64(2, int32(2))
 				historicalTicks.SetByInt64(3, int32(3))
@@ -249,7 +250,7 @@ func TestCurrentTick(t *testing.T) {
 			name:     "get current tick by valid historical ticks",
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
-				historicalTicks := staker.NewUintTree()
+				historicalTicks := utree.NewUintTree()
 				historicalTicks.SetByInt64(1, int32(1))
 				historicalTicks.SetByInt64(2, int32(2))
 				historicalTicks.SetByInt64(3, int32(3))
@@ -266,7 +267,7 @@ func TestCurrentTick(t *testing.T) {
 			name:     "get current tick by invalid historical ticks (int64 type)",
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
-				historicalTicks := staker.NewUintTree()
+				historicalTicks := utree.NewUintTree()
 				historicalTicks.SetByInt64(1, int64(1))
 				historicalTicks.SetByInt64(2, int64(2))
 				historicalTicks.SetByInt64(3, int64(3))
@@ -281,7 +282,7 @@ func TestCurrentTick(t *testing.T) {
 			name:     "get current tick by invalid historical ticks (string type)",
 			poolPath: "test_pool",
 			setupHistoricalTicks: func(poolResolver *PoolResolver) {
-				historicalTicks := staker.NewUintTree()
+				historicalTicks := utree.NewUintTree()
 				historicalTicks.SetByInt64(1, "1")
 				historicalTicks.SetByInt64(2, "2")
 				historicalTicks.SetByInt64(3, "3")

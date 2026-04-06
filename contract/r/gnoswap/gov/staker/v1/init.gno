@@ -1,6 +1,7 @@
 package v1
 
 import (
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -67,7 +68,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 
 	// Initialize total delegation history (timestamp -> int64)
 	if !store.HasTotalDelegationHistoryStoreKey() {
-		err := store.SetTotalDelegationHistory(staker.NewUintTree())
+		err := store.SetTotalDelegationHistory(utree.NewUintTree())
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	i256 "gno.land/p/gnoswap/int256"
+	utree "gno.land/p/gnoswap/uinttree"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -261,7 +262,7 @@ func TestDepositLastExternalIncentiveUpdatedAt(t *testing.T) {
 }
 
 func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
-	tree := sr.NewUintTree()
+	tree := utree.NewUintTree()
 
 	timestamp := int64(1000)
 	poolPath := "pool1"
@@ -462,7 +463,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
 		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime = sr.NewUintTree()
+		incentivesByTime = utree.NewUintTree()
 		} else {
 			incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
 		}
@@ -591,7 +592,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
 		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime = sr.NewUintTree()
+		incentivesByTime = utree.NewUintTree()
 		} else {
 			incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
 		}
@@ -726,7 +727,7 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		// Add to time-based index (2-level structure)
 		var incentivesByTime *sr.UintTree
 		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime = sr.NewUintTree()
+		incentivesByTime = utree.NewUintTree()
 		} else {
 			incentivesByTime = instance.store.GetExternalIncentivesByCreationTime()
 		}

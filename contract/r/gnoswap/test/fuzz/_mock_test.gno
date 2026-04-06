@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/avl/v0"
-	"gno.land/p/nt/ufmt/v0"
+	utree "gno.land/p/gnoswap/uinttree"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -680,7 +681,7 @@ func newMockStakerStore() *MockStakerStore {
 		},
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
 		currentSwapBatch:                 &sr.SwapBatchProcessor{},
-		externalIncentivesByCreationTime: sr.NewUintTree(),
+		externalIncentivesByCreationTime: utree.NewUintTree(),
 	}
 }
 

@@ -1,6 +1,7 @@
 package staker
 
 import (
+	utree "gno.land/p/gnoswap/uinttree"
 	"gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 )
@@ -116,8 +117,8 @@ type IGovStakerStore interface {
 
 	// Total delegation history (timestamp -> int64)
 	HasTotalDelegationHistoryStoreKey() bool
-	GetTotalDelegationHistory() *UintTree
-	SetTotalDelegationHistory(history *UintTree) error
+	GetTotalDelegationHistory() *utree.UintTree
+	SetTotalDelegationHistory(history *utree.UintTree) error
 
 	// User delegation history (address -> *UintTree[timestamp -> int64])
 	HasUserDelegationHistoryStoreKey() bool

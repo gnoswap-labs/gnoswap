@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -21,7 +22,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 		{
 			name: "empty history stays empty",
 			setupHistory: func() *staker.UintTree {
-				return staker.NewUintTree()
+				return utree.NewUintTree()
 			},
 			cutoffTimestamp:       1000,
 			expectedEntries:       0,
@@ -31,7 +32,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 		{
 			name: "all entries after cutoff are preserved",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(2000, int64(500))
 				h.SetByInt64(3000, int64(600))
 				return h
@@ -44,7 +45,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 		{
 			name: "entries before cutoff are removed, last value preserved at cutoff",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(100))
 				h.SetByInt64(200, int64(200))
 				h.SetByInt64(500, int64(500)) // most recent before cutoff
@@ -59,7 +60,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 		{
 			name: "all entries before cutoff leaves only preserved value",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(100, int64(100))
 				h.SetByInt64(200, int64(200))
 				h.SetByInt64(500, int64(999))
@@ -73,7 +74,7 @@ func TestCleanTotalDelegationHistory(t *testing.T) {
 		{
 			name: "exact cutoff timestamp entry is preserved",
 			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
+				h := utree.NewUintTree()
 				h.SetByInt64(500, int64(500))
 				h.SetByInt64(1000, int64(1000)) // exact cutoff
 				h.SetByInt64(1500, int64(1500))
@@ -140,7 +141,7 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			name: "user with all entries after cutoff preserved",
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(2000, int64(500))
 				userHistory.SetByInt64(3000, int64(600))
 				tree.Set(user1.String(), userHistory)
@@ -155,7 +156,7 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			name: "user with entries before cutoff cleaned",
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(100, int64(100))
 				userHistory.SetByInt64(500, int64(500))
 				userHistory.SetByInt64(1500, int64(1500))
@@ -172,12 +173,12 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
 
-				user1History := staker.NewUintTree()
+			user1History := utree.NewUintTree()
 				user1History.SetByInt64(500, int64(500))
 				user1History.SetByInt64(1500, int64(1500))
 				tree.Set(user1.String(), user1History)
 
-				user2History := staker.NewUintTree()
+			user2History := utree.NewUintTree()
 				user2History.SetByInt64(2000, int64(2000))
 				tree.Set(user2.String(), user2History)
 
@@ -192,7 +193,7 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 			name: "user with only old entries gets cutoff value preserved",
 			setupHistory: func() *avl.Tree {
 				tree := avl.NewTree()
-				userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 				userHistory.SetByInt64(100, int64(100))
 				userHistory.SetByInt64(500, int64(999))
 				tree.Set(user1.String(), userHistory)
@@ -239,7 +240,7 @@ func TestCleanUserDelegationHistory_UserRemovedWhenEmpty(t *testing.T) {
 	store := newMockGovStakerStore().(*mockGovStakerStore)
 	tree := avl.NewTree()
 	// Empty user history should result in user being removed
-	userHistory := staker.NewUintTree()
+			userHistory := utree.NewUintTree()
 	tree.Set(user1.String(), userHistory)
 	store.userDelegationHistory = tree
 

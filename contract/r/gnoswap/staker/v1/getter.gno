@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -422,7 +423,7 @@ func (s *stakerV1) GetStakedPositionsByUser(owner address, offset, count int) []
 	depositTree := retrieveDepositTree(depositTreeI)
 	positions := make([]uint64, 0, count)
 	depositTree.IterateByOffset(offset, count, func(depositId string, _ any) bool {
-		positions = append(positions, sr.DecodeUint(depositId))
+		positions = append(positions, utree.DecodeUint(depositId))
 		return false
 	})
 

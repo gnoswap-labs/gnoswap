@@ -3,6 +3,7 @@ package v1
 import (
 	"math"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -231,7 +232,7 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 
 		userHistory = userHistoryInt
 	} else {
-		userHistory = staker.NewUintTree()
+		userHistory = utree.NewUintTree()
 	}
 
 	// Get current amount from the most recent entry

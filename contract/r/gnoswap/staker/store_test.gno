@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -1329,7 +1330,7 @@ func TestStoreSetAndGetExternalIncentivesByCreationTime(t *testing.T) {
 		{
 			name: "set and get external incentives by creation time successfully",
 			setupFn: func(ss IStakerStore) {
-				tree := NewUintTree()
+				tree := utree.NewUintTree()
 				ss.SetExternalIncentivesByCreationTime(tree)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {

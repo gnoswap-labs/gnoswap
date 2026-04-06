@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
@@ -33,7 +34,7 @@ type MockStakerStore struct {
 	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
-	externalIncentivesByCreationTime *sr.UintTree
+	externalIncentivesByCreationTime *utree.UintTree
 }
 
 // DepositGnsAmount
@@ -340,11 +341,11 @@ func (s *MockStakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
 	return s.externalIncentivesByCreationTime != nil
 }
 
-func (s *MockStakerStore) GetExternalIncentivesByCreationTime() *sr.UintTree {
+func (s *MockStakerStore) GetExternalIncentivesByCreationTime() *utree.UintTree {
 	return s.externalIncentivesByCreationTime
 }
 
-func (s *MockStakerStore) SetExternalIncentivesByCreationTime(tree *sr.UintTree) error {
+func (s *MockStakerStore) SetExternalIncentivesByCreationTime(tree *utree.UintTree) error {
 	s.externalIncentivesByCreationTime = tree
 	return nil
 }
@@ -376,7 +377,7 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64) { return nil, nil },
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
 		currentSwapBatch:                 &sr.SwapBatchProcessor{},
-		externalIncentivesByCreationTime: sr.NewUintTree(),
+		externalIncentivesByCreationTime: utree.NewUintTree(),
 	}
 }
 

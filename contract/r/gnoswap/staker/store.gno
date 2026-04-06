@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
+	utree "gno.land/p/gnoswap/uinttree"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -536,21 +537,21 @@ func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
 }
 
-func (s *stakerStore) GetExternalIncentivesByCreationTime() *UintTree {
+func (s *stakerStore) GetExternalIncentivesByCreationTime() *utree.UintTree {
 	result, err := s.kvStore.Get(StoreKeyExternalIncentivesByCreationTime.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tree, ok := result.(*UintTree)
+	tree, ok := result.(*utree.UintTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *UintTree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *utree.UintTree: %T", result))
 	}
 
 	return tree
 }
 
-func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *UintTree) error {
+func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *utree.UintTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
