@@ -109,7 +109,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 
 	hasLastValue := false
 
-	history.ReverseIterate(0, uint64(toTimestamp), func(timestamp uint64, value any) bool {
+	history.ReverseIterateByInt64(0, toTimestamp, func(timestamp uint64, value any) bool {
 		lastValue = value
 		hasLastValue = true
 
@@ -118,10 +118,10 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 
 	// If there was a value before cutoff, set it at cutoff time to preserve continuity
 	if hasLastValue {
-		history.Set(uint64(cutoffTimestamp), lastValue)
+		history.SetByInt64(cutoffTimestamp, lastValue)
 	}
 
-	history.Iterate(0, uint64(cutoffTimestamp), func(timestamp uint64, _ any) bool {
+	history.IterateByInt64(0, cutoffTimestamp, func(timestamp uint64, _ any) bool {
 		history.Remove(timestamp)
 
 		return false // continue
@@ -155,7 +155,7 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 
 		hasLastValue := false
 
-		userHistory.ReverseIterate(0, uint64(toTimestamp), func(_ uint64, val any) bool {
+		userHistory.ReverseIterateByInt64(0, toTimestamp, func(_ uint64, val any) bool {
 			lastValue = val
 			hasLastValue = true
 
@@ -164,11 +164,11 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 
 		// If there was a value before cutoff, set it at cutoff time to preserve continuity
 		if hasLastValue {
-			userHistory.Set(uint64(cutoffTimestamp), lastValue)
+			userHistory.SetByInt64(cutoffTimestamp, lastValue)
 		}
 
 		// Copy all entries at or after cutoff time
-		userHistory.Iterate(0, uint64(cutoffTimestamp), func(key uint64, val any) bool {
+		userHistory.IterateByInt64(0, cutoffTimestamp, func(key uint64, val any) bool {
 			userHistory.Remove(key)
 
 			return false // continue

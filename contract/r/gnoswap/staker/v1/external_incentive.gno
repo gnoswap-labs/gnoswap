@@ -271,7 +271,7 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 	}
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(creationTime))
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.GetByInt64(creationTime)
 	if !exists {
 		currentPoolIncentiveIdsValue = avl.NewTree()
 	}
@@ -293,7 +293,7 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 
 	incentiveIds = append(incentiveIds, incentiveId)
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
-	incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
+	incentivesByTime.SetByInt64(creationTime, currentPoolIncentiveIds)
 
 	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }
@@ -310,7 +310,7 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
 	// check if creation time exists
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(uint64(creationTime))
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.GetByInt64(creationTime)
 	if !exists {
 		return
 	}
@@ -337,9 +337,9 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 
 		// if no pools remain at this time, remove the time entry
 		if currentPoolIncentiveIds.Size() == 0 {
-			incentivesByTime.Remove(uint64(creationTime))
+			incentivesByTime.RemoveByInt64(creationTime)
 		} else {
-			incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
+			incentivesByTime.SetByInt64(creationTime, currentPoolIncentiveIds)
 		}
 
 		s.updateExternalIncentivesByCreationTime(incentivesByTime)
@@ -356,7 +356,7 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 	}
 
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
-	incentivesByTime.Set(uint64(creationTime), currentPoolIncentiveIds)
+	incentivesByTime.SetByInt64(creationTime, currentPoolIncentiveIds)
 
 	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }

@@ -357,7 +357,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	if currentTime < 0 {
 		panic("currentTime must be non-negative")
 	}
-	poolResolver.HistoricalTick().Set(uint64(currentTime), currentTick)
+	poolResolver.HistoricalTick().SetByInt64(currentTime, currentTick)
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.

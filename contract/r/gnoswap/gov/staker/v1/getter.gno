@@ -163,7 +163,7 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	history.ReverseIterate(0, uint64(toTimestamp), func(key uint64, value any) bool {
+	history.ReverseIterateByInt64(0, toTimestamp, func(key uint64, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))
@@ -217,7 +217,7 @@ func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snaps
 	)
 
 	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	userHistory.ReverseIterate(0, uint64(toTimestamp), func(key uint64, value any) bool {
+	userHistory.ReverseIterateByInt64(0, toTimestamp, func(key uint64, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))

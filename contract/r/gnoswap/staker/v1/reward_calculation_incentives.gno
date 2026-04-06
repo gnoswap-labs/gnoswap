@@ -62,7 +62,7 @@ func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
 	if startTimestamp < 0 {
 		panic("startTimestamp must be non-negative")
 	}
-	self.UnclaimablePeriods().Set(uint64(startTimestamp), int64(0))
+	self.UnclaimablePeriods().SetByInt64(startTimestamp, int64(0))
 }
 
 // ends incentive unclaimable period for this pool
@@ -72,7 +72,7 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 		panic("endTimestamp must be non-negative")
 	}
 	startTimestamp := int64(0)
-	self.UnclaimablePeriods().ReverseIterate(0, uint64(endTimestamp), func(key uint64, value any) bool {
+	self.UnclaimablePeriods().ReverseIterateByInt64(0, endTimestamp, func(key uint64, value any) bool {
 		v, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
@@ -92,9 +92,9 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	}
 
 	if startTimestamp == endTimestamp {
-		self.UnclaimablePeriods().Remove(uint64(startTimestamp))
+		self.UnclaimablePeriods().RemoveByInt64(startTimestamp)
 	} else {
-		self.UnclaimablePeriods().Set(uint64(startTimestamp), endTimestamp)
+		self.UnclaimablePeriods().SetByInt64(startTimestamp, endTimestamp)
 	}
 }
 
@@ -115,7 +115,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	timeDiff := int64(0)
 
 	// Find unclaimable periods that end before or at incentive start
-	self.UnclaimablePeriods().ReverseIterate(0, uint64(incentive.StartTimestamp()), func(startTimestamp uint64, value any) bool {
+	self.UnclaimablePeriods().ReverseIterateByInt64(0, incentive.StartTimestamp(), func(startTimestamp uint64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
@@ -143,7 +143,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	})
 
 	// Find unclaimable periods that start within incentive period
-	self.UnclaimablePeriods().Iterate(uint64(incentive.StartTimestamp()), uint64(incentive.EndTimestamp()), func(startTimestamp uint64, value any) bool {
+	self.UnclaimablePeriods().IterateByInt64(incentive.StartTimestamp(), incentive.EndTimestamp(), func(startTimestamp uint64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")

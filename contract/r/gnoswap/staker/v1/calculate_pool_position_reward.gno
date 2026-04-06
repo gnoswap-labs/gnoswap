@@ -179,7 +179,7 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	incentivesByTime.Iterate(uint64(startTime), uint64(endTime), func(_ uint64, value any) bool {
+	incentivesByTime.IterateByInt64(startTime, endTime, func(_ uint64, value any) bool {
 		// Value is a slice of incentive IDs (handles timestamp collisions)
 		poolIncentiveIds, ok := value.(*avl.Tree)
 		if !ok {

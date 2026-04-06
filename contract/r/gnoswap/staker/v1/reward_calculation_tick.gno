@@ -24,7 +24,7 @@ func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint
 		panic("timestamp must be non-negative")
 	}
 	acc := u256.Zero()
-	self.OutsideAccumulation().ReverseIterate(0, uint64(timestamp), func(key uint64, value any) bool {
+	self.OutsideAccumulation().ReverseIterateByInt64(0, timestamp, func(key uint64, value any) bool {
 		v, ok := value.(*u256.Uint)
 		if !ok {
 			panic("failed to cast value to *u256.Uint")
@@ -65,7 +65,7 @@ func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc 
 	}
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.OutsideAccumulation().Set(uint64(timestamp), newOutsideAccumulation)
+	self.OutsideAccumulation().SetByInt64(timestamp, newOutsideAccumulation)
 }
 
 func NewTickResolver(tick *sr.Tick) *TickResolver {

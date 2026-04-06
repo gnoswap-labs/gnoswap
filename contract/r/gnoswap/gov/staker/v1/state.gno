@@ -205,7 +205,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 		newTotal = 0
 	}
 
-	history.Set(uint64(timestamp), newTotal)
+	history.SetByInt64(timestamp, newTotal)
 
 	if err := g.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
@@ -248,7 +248,7 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	}
 
 	// Store new cumulative value at this timestamp
-	userHistory.Set(uint64(timestamp), newAmount)
+	userHistory.SetByInt64(timestamp, newAmount)
 	history.Set(addrStr, userHistory)
 
 	if err := g.store.SetUserDelegationHistory(history); err != nil {

@@ -35,16 +35,32 @@ func (self *UintTree) Get(key uint64) (any, bool) {
 	return v, true
 }
 
+func (self *UintTree) GetByInt64(key int64) (any, bool) {
+	return self.Get(safeConvertInt64ToUint64(key))
+}
+
 func (self *UintTree) Set(key uint64, value any) {
 	self.tree.Set(EncodeUint(key), value)
+}
+
+func (self *UintTree) SetByInt64(key int64, value any) {
+	self.Set(safeConvertInt64ToUint64(key), value)
 }
 
 func (self *UintTree) Has(key uint64) bool {
 	return self.tree.Has(EncodeUint(key))
 }
 
+func (self *UintTree) HasByInt64(key int64) bool {
+	return self.Has(safeConvertInt64ToUint64(key))
+}
+
 func (self *UintTree) Remove(key uint64) {
 	self.tree.Remove(EncodeUint(key))
+}
+
+func (self *UintTree) RemoveByInt64(key int64) {
+	self.Remove(safeConvertInt64ToUint64(key))
 }
 
 func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value any) bool) {
@@ -53,10 +69,18 @@ func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value any) 
 	})
 }
 
+func (self *UintTree) IterateByInt64(start, end int64, fn func(key uint64, value any) bool) {
+	self.Iterate(safeConvertInt64ToUint64(start), safeConvertInt64ToUint64(end), fn)
+}
+
 func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, value any) bool) {
 	self.tree.ReverseIterate(EncodeUint(start), EncodeUint(end), func(key string, value any) bool {
 		return fn(DecodeUint(key), value)
 	})
+}
+
+func (self *UintTree) ReverseIterateByInt64(start, end int64, fn func(key uint64, value any) bool) {
+	self.ReverseIterate(safeConvertInt64ToUint64(start), safeConvertInt64ToUint64(end), fn)
 }
 
 // Size returns the number of entries in the tree.
