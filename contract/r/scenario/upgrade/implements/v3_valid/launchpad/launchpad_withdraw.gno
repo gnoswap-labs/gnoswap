@@ -36,9 +36,8 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 
 	deposit := lp.mustGetDeposit(depositID)
 
-	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentHeight, currentTime)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -60,7 +59,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentTime int64) (address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
@@ -112,7 +111,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	}
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	withdrawalAmount := withdrawDeposit(deposit, currentTime)
 
 	// Store updated deposit in state
 	deposits := lp.store.GetDeposits()

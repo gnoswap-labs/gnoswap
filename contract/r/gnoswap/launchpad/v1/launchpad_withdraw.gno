@@ -36,7 +36,6 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	emission.MintAndDistributeGns(cross)
 
 	deposit := lp.mustGetDeposit(depositID)
-	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
 	// Collect reward before withdrawal
@@ -45,7 +44,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 		panic(err)
 	}
 
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentHeight, currentTime)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -81,7 +80,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentTime int64) (address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
@@ -128,7 +127,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	project.SetTier(deposit.Tier(), projectTier)
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	withdrawalAmount := withdrawDeposit(deposit, currentTime)
 
 	// Remove reward state from AVL tree after withdrawal
 	// This improves iteration performance for calculateClaimableRewardsForActiveDeposits

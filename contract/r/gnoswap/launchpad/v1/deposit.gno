@@ -1,9 +1,13 @@
 package v1
 
-import "gno.land/r/gnoswap/launchpad"
+import (
+	"chain/runtime"
 
-func withdrawDeposit(d *launchpad.Deposit, currentHeight, currentTime int64) int64 {
-	d.SetWithdrawn(currentHeight, currentTime)
+	"gno.land/r/gnoswap/launchpad"
+)
+
+func withdrawDeposit(d *launchpad.Deposit, currentTime int64) int64 {
+	d.SetWithdrawn(runtime.ChainHeight(), currentTime)
 
 	previousDepositAmount := d.DepositAmount()
 	d.SetDepositAmount(0)
