@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	avl "gno.land/p/nt/avl/v0"
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 func TestStoreInitialization(t *testing.T) {

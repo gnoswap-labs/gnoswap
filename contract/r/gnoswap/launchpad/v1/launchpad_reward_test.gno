@@ -100,7 +100,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			}
 
 			// Create deposit
-			deposit := launchpad.NewDeposit("deposit_1", tt.projectID, tt.tier, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
+			deposit := launchpad.NewDeposit("deposit_1", tt.projectID, tt.tier, testutils.TestAddress("depositor"), tt.depositAmount, 100, 200)
 
 			// Execute
 			_, _, err := lp.collectDepositReward(deposit, tt.currentTime)

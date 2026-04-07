@@ -1,13 +1,9 @@
 package v3
 
-import (
-	"chain/runtime"
-
-	"gno.land/r/gnoswap/launchpad"
-)
+import "gno.land/r/gnoswap/launchpad"
 
 func withdrawDeposit(d *launchpad.Deposit, currentTime int64) int64 {
-	d.SetWithdrawn(runtime.ChainHeight(), currentTime)
+	d.SetWithdrawn(currentTime)
 
 	previousDepositAmount := d.DepositAmount()
 	d.SetDepositAmount(0)
@@ -21,7 +17,6 @@ func newDeposit(
 	tier int64,
 	depositor address,
 	depositAmount int64,
-	createdHeight int64,
 	createdTime int64,
 	endTime int64,
 ) *launchpad.Deposit {
@@ -31,7 +26,6 @@ func newDeposit(
 		tier,
 		depositor,
 		depositAmount,
-		createdHeight,
 		createdTime,
 		endTime,
 	)

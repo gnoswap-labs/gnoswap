@@ -1154,37 +1154,6 @@ func TestGetDepositProjectTierID(t *testing.T) {
 	})
 }
 
-func TestGetDepositCreatedHeight(t *testing.T) {
-	t.Run("get deposit created height", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
-		lp := getTestImplementation()
-		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
-
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-			name:            "Test Project",
-			rewardAmount:    1000000,
-			tier30Pct:       25,
-			tier90Pct:       50,
-			tier180Pct:      25,
-			recipientSuffix: "recipient",
-		})
-
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
-			userSuffix:    "user1",
-			depositAmount: 1000000,
-			tier:          30,
-		})
-
-		// Execute
-		height, err := lp.GetDepositCreatedHeight(depositID)
-
-		// Verify
-		uassert.NoError(t, err)
-		uassert.True(t, height > 0)
-	})
-}
-
 func TestGetDepositCreatedAt(t *testing.T) {
 	t.Run("get deposit created at", func(t *testing.T) {
 		setupTestEnvironment(t, testEnvConfig{})
@@ -1244,37 +1213,6 @@ func TestGetDepositEndTime(t *testing.T) {
 		// Verify
 		uassert.NoError(t, err)
 		uassert.True(t, endTime > 0)
-	})
-}
-
-func TestGetDepositWithdrawnHeight(t *testing.T) {
-	t.Run("get deposit withdrawn height", func(t *testing.T) {
-		setupTestEnvironment(t, testEnvConfig{})
-		lp := getTestImplementation()
-		launchpadAddr := chain.PackageAddress(testLaunchpadPkgPath)
-		_, adminRealm := setupTestEnvironment(t, testEnvConfig{})
-
-		projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
-			name:            "Test Project",
-			rewardAmount:    1000000,
-			tier30Pct:       25,
-			tier90Pct:       50,
-			tier180Pct:      25,
-			recipientSuffix: "recipient",
-		})
-
-		_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
-			userSuffix:    "user1",
-			depositAmount: 1000000,
-			tier:          30,
-		})
-
-		// Execute
-		height, err := lp.GetDepositWithdrawnHeight(depositID)
-
-		// Verify
-		uassert.NoError(t, err)
-		uassert.True(t, height >= 0)
 	})
 }
 

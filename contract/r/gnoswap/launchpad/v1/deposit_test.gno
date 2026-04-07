@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"math"
 	"testing"
 	"time"
 
@@ -24,7 +23,6 @@ func TestDeposit_ID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -38,7 +36,6 @@ func TestDeposit_ID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -67,7 +64,6 @@ func TestDeposit_ProjectID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -81,7 +77,6 @@ func TestDeposit_ProjectID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -110,7 +105,6 @@ func TestDeposit_ProjectTierID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -124,7 +118,6 @@ func TestDeposit_ProjectTierID(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -157,7 +150,6 @@ func TestDeposit_IsOwner(t *testing.T) {
 				30,
 				testAddr,
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -172,7 +164,6 @@ func TestDeposit_IsOwner(t *testing.T) {
 				30,
 				testAddr,
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
@@ -204,7 +195,6 @@ func TestDeposit_IsEnded(t *testing.T) {
 				30,
 				testAddr,
 				1000,
-				100,
 				0,
 				100,
 			),
@@ -219,7 +209,6 @@ func TestDeposit_IsEnded(t *testing.T) {
 				30,
 				testAddr,
 				1000,
-				100,
 				0,
 				100,
 			),
@@ -234,7 +223,6 @@ func TestDeposit_IsEnded(t *testing.T) {
 				30,
 				testAddr,
 				1000,
-				100,
 				0,
 				100,
 			),
@@ -254,31 +242,16 @@ func TestDeposit_IsWithdrawn(t *testing.T) {
 	tests := []struct {
 		name             string
 		withdrawnTime    int64
-		withdrawnHeight  int64
 		expectedWithdawn bool
 	}{
 		{
-			name:             "not withdrawn when both time and height are zero",
+			name:             "not withdrawn when time is zero",
 			withdrawnTime:    0,
-			withdrawnHeight:  0,
 			expectedWithdawn: false,
 		},
 		{
-			name:             "not withdrawn when only time is set",
+			name:             "withdrawn when time is set",
 			withdrawnTime:    100,
-			withdrawnHeight:  0,
-			expectedWithdawn: false,
-		},
-		{
-			name:             "not withdrawn when only height is set",
-			withdrawnTime:    0,
-			withdrawnHeight:  100,
-			expectedWithdawn: false,
-		},
-		{
-			name:             "withdrawn when both time and height are set",
-			withdrawnTime:    100,
-			withdrawnHeight:  100,
 			expectedWithdawn: true,
 		},
 	}
@@ -291,44 +264,11 @@ func TestDeposit_IsWithdrawn(t *testing.T) {
 				30,
 				testutils.TestAddress("test"),
 				1000,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			)
-			deposit.SetWithdrawn(tt.withdrawnHeight, tt.withdrawnTime)
+			deposit.SetWithdrawn(tt.withdrawnTime)
 			uassert.Equal(t, tt.expectedWithdawn, deposit.IsWithdrawn())
-		})
-	}
-}
-
-func TestDeposit_WithdrawnHeight(t *testing.T) {
-	tests := []struct {
-		name            string
-		withdrawnHeight int64
-		expected        int64
-	}{
-		{
-			name:            "zero withdrawn height",
-			withdrawnHeight: 0,
-			expected:        0,
-		},
-		{
-			name:            "positive withdrawn height",
-			withdrawnHeight: 12345,
-			expected:        12345,
-		},
-		{
-			name:            "max int64 withdrawn height",
-			withdrawnHeight: math.MaxInt64,
-			expected:        math.MaxInt64,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			deposit := &launchpad.Deposit{}
-			deposit.SetWithdrawnHeight(tt.withdrawnHeight)
-			uassert.Equal(t, tt.expected, deposit.WithdrawnHeight())
 		})
 	}
 }
@@ -377,7 +317,6 @@ func TestDeposit_Withdraw(t *testing.T) {
 				30,
 				testAddr,
 				tt.depositAmount,
-				100,
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			)
@@ -395,43 +334,37 @@ func TestDeposit_NewDeposit(t *testing.T) {
 	projectID := "gno.land/r/onbloc/obl:123"
 
 	tests := []struct {
-		name               string
-		depositID          string
-		projectID          string
-		tier               int64
-		depositor          address
-		depositAmount      int64
-		createdBlockTime   int64
-		createdBlockHeight int64
-		endBlockTime       int64
-		endBlockHeight     int64
-		expectedID         string
+		name             string
+		depositID        string
+		projectID        string
+		tier             int64
+		depositor        address
+		depositAmount    int64
+		createdBlockTime int64
+		endBlockTime     int64
+		expectedID       string
 	}{
 		{
-			name:               "create new deposit successfully",
-			depositID:          "123",
-			projectID:          projectID,
-			tier:               30,
-			depositor:          testAddr,
-			depositAmount:      1000,
-			createdBlockTime:   900,
-			createdBlockHeight: 90,
-			endBlockTime:       1000,
-			endBlockHeight:     100,
-			expectedID:         "123",
+			name:             "create new deposit successfully",
+			depositID:        "123",
+			projectID:        projectID,
+			tier:             30,
+			depositor:        testAddr,
+			depositAmount:    1000,
+			createdBlockTime: 900,
+			endBlockTime:     1000,
+			expectedID:       "123",
 		},
 		{
-			name:               "create deposit with zero values",
-			depositID:          "0",
-			projectID:          projectID,
-			tier:               0,
-			depositor:          testAddr,
-			depositAmount:      0,
-			createdBlockTime:   0,
-			createdBlockHeight: 0,
-			endBlockTime:       0,
-			endBlockHeight:     0,
-			expectedID:         "0",
+			name:             "create deposit with zero values",
+			depositID:        "0",
+			projectID:        projectID,
+			tier:             0,
+			depositor:        testAddr,
+			depositAmount:    0,
+			createdBlockTime: 0,
+			endBlockTime:     0,
+			expectedID:       "0",
 		},
 	}
 
@@ -443,7 +376,6 @@ func TestDeposit_NewDeposit(t *testing.T) {
 				tt.tier,
 				tt.depositor,
 				tt.depositAmount,
-				tt.createdBlockHeight,
 				tt.createdBlockTime,
 				tt.endBlockTime,
 			)
@@ -454,9 +386,7 @@ func TestDeposit_NewDeposit(t *testing.T) {
 			uassert.Equal(t, tt.depositor, deposit.Depositor())
 			uassert.Equal(t, tt.depositAmount, deposit.DepositAmount())
 			uassert.Equal(t, tt.createdBlockTime, deposit.CreatedAt())
-			uassert.Equal(t, tt.createdBlockHeight, deposit.CreatedHeight())
 			uassert.Equal(t, tt.endBlockTime, deposit.EndTime())
-			uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
 		})
 	}
 }

@@ -115,7 +115,6 @@ func (lp *launchpadV1) depositGns(
 	}
 
 	currentTime := time.Now().Unix()
-	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
 		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
@@ -128,7 +127,6 @@ func (lp *launchpadV1) depositGns(
 		tierDuration,
 		callerAddress,
 		depositAmount,
-		currentHeight,
 		currentTime,
 		projectTier.EndTime(),
 	)

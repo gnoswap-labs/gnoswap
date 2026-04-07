@@ -457,30 +457,8 @@ func (m *MockLaunchpad) GetDepositAmount(depositId string) (int64, error) {
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetDepositWithdrawnHeight(depositId string) (int64, error) {
-	res, ok := m.Response.Get("GetDepositWithdrawnHeight")
-	if !ok {
-		return 0, nil
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(int64), nil
-	}
-	return res[0].(int64), res[1].(error)
-}
-
 func (m *MockLaunchpad) GetDepositWithdrawnTime(depositId string) (int64, error) {
 	res, ok := m.Response.Get("GetDepositWithdrawnTime")
-	if !ok {
-		return 0, nil
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(int64), nil
-	}
-	return res[0].(int64), res[1].(error)
-}
-
-func (m *MockLaunchpad) GetDepositCreatedHeight(depositId string) (int64, error) {
-	res, ok := m.Response.Get("GetDepositCreatedHeight")
 	if !ok {
 		return 0, nil
 	}

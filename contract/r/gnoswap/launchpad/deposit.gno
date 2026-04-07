@@ -11,22 +11,19 @@ package launchpad
 // - projectID (string): The ID of the project associated with the deposit.
 // - tier (int64): The tier of the deposit.
 // - depositAmount (int64): The amount of the deposit.
-// - withdrawnHeight (int64): The height at which the deposit was withdrawn.
 // - withdrawnTime (int64): The time when the deposit was withdrawn.
-// - createdTime (int64): The time when the deposit was created.
+// - createdAt (int64): The time when the deposit was created.
 // - endTime (int64): The time when the deposit ends.
 type Deposit struct {
 	depositor address
 
-	id              string
-	projectID       string
-	tier            int64 // 30, 60, 180 // instead of tierId
-	depositAmount   int64
-	withdrawnHeight int64
-	withdrawnTime   int64
-	createdHeight   int64
-	createdAt       int64
-	endTime         int64
+	id            string
+	projectID     string
+	tier          int64 // 30, 60, 180 // instead of tierId
+	depositAmount int64
+	withdrawnTime int64
+	createdAt     int64
+	endTime       int64
 }
 
 func (d *Deposit) ID() string {
@@ -69,14 +66,6 @@ func (d *Deposit) SetDepositAmount(depositAmount int64) {
 	d.depositAmount = depositAmount
 }
 
-func (d *Deposit) CreatedHeight() int64 {
-	return d.createdHeight
-}
-
-func (d *Deposit) SetCreatedHeight(createdHeight int64) {
-	d.createdHeight = createdHeight
-}
-
 func (d *Deposit) CreatedAt() int64 {
 	return d.createdAt
 }
@@ -91,14 +80,6 @@ func (d *Deposit) WithdrawnTime() int64 {
 
 func (d *Deposit) SetWithdrawnTime(withdrawnTime int64) {
 	d.withdrawnTime = withdrawnTime
-}
-
-func (d *Deposit) WithdrawnHeight() int64 {
-	return d.withdrawnHeight
-}
-
-func (d *Deposit) SetWithdrawnHeight(withdrawnHeight int64) {
-	d.withdrawnHeight = withdrawnHeight
 }
 
 func (d *Deposit) EndTime() int64 {
@@ -122,26 +103,23 @@ func (d *Deposit) IsEnded(currentTime int64) bool {
 }
 
 func (d *Deposit) IsWithdrawn() bool {
-	return d.withdrawnTime > 0 && d.withdrawnHeight > 0
+	return d.withdrawnTime > 0
 }
 
-func (d *Deposit) SetWithdrawn(withdrawnHeight int64, withdrawnTime int64) {
-	d.withdrawnHeight = withdrawnHeight
+func (d *Deposit) SetWithdrawn(withdrawnTime int64) {
 	d.withdrawnTime = withdrawnTime
 }
 
 func (d Deposit) Clone() *Deposit {
 	return &Deposit{
-		id:              d.id,
-		projectID:       d.projectID,
-		tier:            d.tier,
-		depositor:       d.depositor,
-		depositAmount:   d.depositAmount,
-		withdrawnHeight: d.withdrawnHeight,
-		withdrawnTime:   d.withdrawnTime,
-		createdHeight:   d.createdHeight,
-		createdAt:       d.createdAt,
-		endTime:         d.endTime,
+		id:            d.id,
+		projectID:     d.projectID,
+		tier:          d.tier,
+		depositor:     d.depositor,
+		depositAmount: d.depositAmount,
+		withdrawnTime: d.withdrawnTime,
+		createdAt:     d.createdAt,
+		endTime:       d.endTime,
 	}
 }
 
@@ -152,19 +130,16 @@ func NewDeposit(
 	tier int64,
 	depositor address,
 	depositAmount int64,
-	createdHeight int64,
 	createdTime int64,
 	endTime int64,
 ) *Deposit {
 	return &Deposit{
-		id:              depositID,
-		projectID:       projectID,
-		tier:            tier,
-		depositor:       depositor,
-		depositAmount:   depositAmount,
-		withdrawnHeight: 0,
-		createdHeight:   createdHeight,
-		createdAt:       createdTime,
-		endTime:         endTime,
+		id:            depositID,
+		projectID:     projectID,
+		tier:          tier,
+		depositor:     depositor,
+		depositAmount: depositAmount,
+		createdAt:     createdTime,
+		endTime:       endTime,
 	}
 }

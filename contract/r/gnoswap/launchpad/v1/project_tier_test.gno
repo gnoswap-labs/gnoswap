@@ -278,7 +278,7 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 			tier.SetTotalDepositCount(tt.initialDepositCount)
 			tier.SetTotalWithdrawCount(tt.initialWithdrawCount)
 
-			deposit := launchpad.NewDeposit("test_deposit", "test_project", 180, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
+			deposit := launchpad.NewDeposit("test_deposit", "test_project", 180, testutils.TestAddress("depositor"), tt.depositAmount, 100, 200)
 
 			// Execute
 			if tt.operation == "deposit" {
