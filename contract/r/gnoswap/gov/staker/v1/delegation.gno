@@ -3,12 +3,11 @@ package v1
 import (
 	"errors"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-var (
-	errCollectAmountExceedsCollectable = errors.New("amount to collect is greater than collectable amount")
-)
+var errCollectAmountExceedsCollectable = errors.New("amount to collect is greater than collectable amount")
 
 type DelegationResolver struct {
 	delegation *staker.Delegation
@@ -23,11 +22,11 @@ func (r *DelegationResolver) Get() *staker.Delegation {
 }
 
 func (r *DelegationResolver) DelegatedAmount() int64 {
-	return safeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.UnDelegatedAmount())
+	return gnsmath.SafeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.UnDelegatedAmount())
 }
 
 func (r *DelegationResolver) LockedAmount() int64 {
-	return safeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.CollectedAmount())
+	return gnsmath.SafeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.CollectedAmount())
 }
 
 func (r *DelegationResolver) IsEmpty() bool {
@@ -37,7 +36,7 @@ func (r *DelegationResolver) IsEmpty() bool {
 // CollectableAmount calculates the total amount that can be collected at the given time
 func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) {
 	for _, withdraw := range r.delegation.Withdraws() {
-		total = safeAddInt64(total, NewDelegationWithdrawResolver(&withdraw).CollectableAmount(currentTime))
+		total = gnsmath.SafeAddInt64(total, NewDelegationWithdrawResolver(&withdraw).CollectableAmount(currentTime))
 	}
 
 	return total
@@ -47,7 +46,7 @@ func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) 
 func (r *DelegationResolver) UnDelegate(
 	amount, currentHeight, currentTimestamp, unDelegationLockupPeriod int64,
 ) {
-	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
+	r.delegation.SetUnDelegateAmount(gnsmath.SafeAddInt64(r.delegation.UnDelegatedAmount(), amount))
 
 	withdraw := NewDelegationWithdraw(
 		r.delegation.ID(),
@@ -63,8 +62,8 @@ func (r *DelegationResolver) UnDelegate(
 func (r *DelegationResolver) UnDelegateWithoutLockup(
 	amount, currentHeight, currentTime int64,
 ) {
-	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
-	r.delegation.SetCollectedAmount(safeAddInt64(r.delegation.CollectedAmount(), amount))
+	r.delegation.SetUnDelegateAmount(gnsmath.SafeAddInt64(r.delegation.UnDelegatedAmount(), amount))
+	r.delegation.SetCollectedAmount(gnsmath.SafeAddInt64(r.delegation.CollectedAmount(), amount))
 }
 
 // processCollection handles the actual collection logic
@@ -91,7 +90,7 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 		}
 
 		r.delegation.SetCollectedAmount(updatedAmount)
-		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
+		collectedAmount = gnsmath.SafeAddInt64(collectedAmount, collectableAmount)
 	}
 
 	// Skip filtering if nothing was collected
@@ -117,7 +116,7 @@ func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
 	if amount < 0 {
 		return 0, errors.New("amount must be non-negative")
 	}
-	return safeAddInt64(collectedAmount, amount), nil
+	return gnsmath.SafeAddInt64(collectedAmount, amount), nil
 }
 
 // NewDelegation creates a new delegation.

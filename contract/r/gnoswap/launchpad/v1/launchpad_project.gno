@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -189,13 +190,13 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 	for _, duration := range projectTierDurations {
 		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
 		tierDurationTime := projectTierDurationTimes[duration]
-		tierDistributeAmount := safeMulDiv(params.depositAmount, projectTierRatios[duration], 100)
-		accumulatedTierDistributeAmount = safeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
+		tierDistributeAmount := gnsmath.SafeMulDivInt64(params.depositAmount, projectTierRatios[duration], 100)
+		accumulatedTierDistributeAmount = gnsmath.SafeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
 
 		// if the last tier, distribute the remaining amount
 		if duration == projectTier180 {
-			remainTierDistributeAmount := safeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
-			tierDistributeAmount = safeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
+			remainTierDistributeAmount := gnsmath.SafeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
+			tierDistributeAmount = gnsmath.SafeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
 		}
 
 		projectTier := newProjectTier(
@@ -313,27 +314,27 @@ func (lp *launchpadV1) transferLeftFromProject(project *launchpad.Project, recip
 				return 0, err
 			}
 
-			accumCollectableReward = safeAddInt64(accumCollectableReward, claimableReward)
+			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, claimableReward)
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
-		accumLeftReward = safeAddInt64(accumLeftReward, leftReward)
-		accumCollectedReward = safeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
-		accumTotalDistributeAmount = safeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
+		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
+		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
+		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
 	}
 
 	if accumLeftReward == 0 {
 		return 0, errors.New("project has no remaining amount")
 	}
 
-	actualTotalDistributeAmount := safeAddInt64(accumCollectedReward, accumLeftReward)
+	actualTotalDistributeAmount := gnsmath.SafeAddInt64(accumCollectedReward, accumLeftReward)
 	if accumTotalDistributeAmount != actualTotalDistributeAmount {
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
 	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
 	projectLeftReward := accumLeftReward
-	refundableAmount := safeSubInt64(projectLeftReward, accumCollectableReward)
+	refundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
 
 	if refundableAmount < 0 {
 		return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))

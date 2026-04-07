@@ -8,6 +8,7 @@ import (
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -527,12 +528,12 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		// process reward states
 		rewardToken := incentive.RewardToken()
 		externalPenalty := reward.ExternalPenalty[incentiveId]
-		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+		totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
 
-		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
+		toUserExternalReward[rewardToken] = gnsmath.SafeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
+		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
+		incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
 		incentiveResolver.addDistributedRewardAmount(rewardAmount)
 		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
 
@@ -627,13 +628,13 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 
 	if toUser > 0 {
 		// internal reward to user
-		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, toUser)
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	if reward.InternalPenalty > 0 {
 		// internal penalty to community pool
-		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, reward.InternalPenalty)
 		depositResolver.addCollectedInternalReward(reward.InternalPenalty)
 	}
 
@@ -641,7 +642,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	// unclaimable amounts are reset in the same collect window.
 	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
-		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
+		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
 	err = s.store.SetTotalEmissionSent(totalEmissionSent)

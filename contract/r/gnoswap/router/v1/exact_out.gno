@@ -6,6 +6,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
@@ -66,8 +67,8 @@ func (r *routerV1) ExactOutSwapRoute(
 		quoteArr:          quoteArr,
 		deadline:          deadline,
 		typ:               ExactOut,
-		exactAmount:       safeParseInt64(amountOut),
-		limitAmount:       safeParseInt64(amountInMax),
+		exactAmount:       gnsmath.SafeParseInt64(amountOut),
+		limitAmount:       gnsmath.SafeParseInt64(amountInMax),
 		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
@@ -128,8 +129,8 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 		quoteArr:          "100",
 		deadline:          deadline,
 		typ:               ExactOut,
-		exactAmount:       safeParseInt64(amountOut),
-		limitAmount:       safeParseInt64(amountInMax),
+		exactAmount:       gnsmath.SafeParseInt64(amountOut),
+		limitAmount:       gnsmath.SafeParseInt64(amountInMax),
 		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 

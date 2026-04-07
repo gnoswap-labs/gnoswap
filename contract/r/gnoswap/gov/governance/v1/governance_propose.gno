@@ -5,11 +5,12 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	avl "gno.land/p/nt/avl/v0"
-	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/halt"
 )
 
 // ProposeText creates a text proposal for community discussion.
@@ -421,7 +422,7 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 		totalAtCurrent = 0
 	}
 
-	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
+	totalVotingWeight := gnsmath.SafeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
 	if totalVotingWeight <= 0 {
 		return 0, snapshotTime, errNotEnoughVotingWeight
 	}

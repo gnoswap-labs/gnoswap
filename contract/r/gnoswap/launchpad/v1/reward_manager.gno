@@ -1,10 +1,10 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Helper functions for RewardManager
@@ -15,7 +15,7 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 
 func getAccumulatedReward(r *launchpad.RewardManager) int64 {
 	res := u256.Zero().Rsh(r.AccumulatedRewardPerDepositX128(), 128)
-	return safeConvertToInt64(res)
+	return gnsmath.SafeConvertToInt64(res)
 }
 
 func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
@@ -275,7 +275,7 @@ func calculateClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int6
 
 		// Calculate claimable reward for this deposit
 		claimable := calculateClaimableReward(rewardState, accumulatedReward)
-		totalClaimable = safeAddInt64(totalClaimable, claimable)
+		totalClaimable = gnsmath.SafeAddInt64(totalClaimable, claimable)
 
 		return false
 	})

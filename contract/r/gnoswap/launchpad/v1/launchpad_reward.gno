@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
@@ -90,7 +92,7 @@ func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentH
 
 	// Update total collected amount for the tier
 	if rewardAmount > 0 {
-		projectTier.SetTotalCollectedAmount(safeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
+		projectTier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(projectTier.TotalCollectedAmount(), rewardAmount))
 		project.SetTier(deposit.Tier(), projectTier)
 
 		projects := lp.store.GetProjects()

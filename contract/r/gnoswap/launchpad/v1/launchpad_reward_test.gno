@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
@@ -489,7 +490,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_UpdatesTotalCollectedAmount(t 
 		remainingAmount += tier.TotalDistributeAmount() - tier.TotalCollectedAmount()
 	}
 	uassert.Equal(t, reward, totalCollectedAmount)
-	uassert.Equal(t, safeSubInt64(storedProject.DepositAmount(), reward), remainingAmount)
+	uassert.Equal(t, gnsmath.SafeSubInt64(storedProject.DepositAmount(), reward), remainingAmount)
 }
 
 // TestCollectRewardByDepositId_Failure tests error scenarios

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -314,7 +315,7 @@ func (gs *govStakerV1) GetCollectableWithdrawAmount(delegationID int64) int64 {
 
 	totalAmount := int64(0)
 	for _, withdraw := range delegation.Withdraws() {
-		totalAmount += safeSubInt64(withdraw.UnDelegateAmount(), withdraw.CollectedAmount())
+		totalAmount += gnsmath.SafeSubInt64(withdraw.UnDelegateAmount(), withdraw.CollectedAmount())
 	}
 
 	return totalAmount

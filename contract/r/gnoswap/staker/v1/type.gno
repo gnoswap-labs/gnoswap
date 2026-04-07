@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -24,7 +25,7 @@ func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
 // This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) {
-	distributedRewardAmount := safeAddInt64(self.DistributedRewardAmount(), amount)
+	distributedRewardAmount := gnsmath.SafeAddInt64(self.DistributedRewardAmount(), amount)
 	self.SetDistributedRewardAmount(distributedRewardAmount)
 }
 
@@ -72,11 +73,11 @@ func (self *DepositResolver) CollectedExternalReward(incentiveID string) int64 {
 }
 
 func (self *DepositResolver) addCollectedInternalReward(reward int64) {
-	self.SetCollectedInternalReward(safeAddInt64(self.CollectedInternalReward(), reward))
+	self.SetCollectedInternalReward(gnsmath.SafeAddInt64(self.CollectedInternalReward(), reward))
 }
 
 func (self *DepositResolver) addCollectedExternalReward(incentiveID string, reward int64) {
-	collectedExternalReward := safeAddInt64(self.CollectedExternalReward(incentiveID), reward)
+	collectedExternalReward := gnsmath.SafeAddInt64(self.CollectedExternalReward(incentiveID), reward)
 	self.SetCollectedExternalReward(incentiveID, collectedExternalReward)
 }
 

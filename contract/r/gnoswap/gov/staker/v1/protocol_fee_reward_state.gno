@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -92,7 +93,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 			q128,
 		)
 
-		rewardAmounts[token] = safeConvertToInt64(rewardAmount)
+		rewardAmounts[token] = gnsmath.SafeConvertToInt64(rewardAmount)
 	}
 
 	return rewardAmounts, nil
@@ -104,7 +105,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 // Parameters:
 //   - amount: amount of stake to add
 func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
-	p.SetStakedAmount(safeAddInt64(p.GetStakedAmount(), amount))
+	p.SetStakedAmount(gnsmath.SafeAddInt64(p.GetStakedAmount(), amount))
 }
 
 // removeStake decreases the staked amount for this address.
@@ -113,7 +114,7 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
-	newAmount := safeSubInt64(p.GetStakedAmount(), amount)
+	newAmount := gnsmath.SafeSubInt64(p.GetStakedAmount(), amount)
 	if newAmount < 0 {
 		newAmount = 0
 	}
@@ -145,7 +146,7 @@ func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (m
 	// Calculate and update claimed amounts for each token
 	for token, rewardAmount := range accumulatedRewards {
 		claimedAmount := claimedRewards[token]
-		currentClaimedRewards[token] = safeSubInt64(rewardAmount, claimedAmount)
+		currentClaimedRewards[token] = gnsmath.SafeSubInt64(rewardAmount, claimedAmount)
 		p.SetClaimedRewardForToken(token, rewardAmount)
 	}
 
@@ -181,7 +182,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	// Add newly calculated rewards to accumulated amounts
 	accumulatedRewards := p.GetAccumulatedRewards()
 	for token, rewardAmount := range rewardAmounts {
-		p.SetAccumulatedRewardForToken(token, safeAddInt64(accumulatedRewards[token], rewardAmount))
+		p.SetAccumulatedRewardForToken(token, gnsmath.SafeAddInt64(accumulatedRewards[token], rewardAmount))
 	}
 
 	p.SetAccumulatedTimestamp(currentTimestamp)

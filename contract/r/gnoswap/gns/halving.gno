@@ -1,5 +1,9 @@
 package gns
 
+import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+)
+
 // HalvingData stores emission data for each halving period.
 // Contains timestamps, amounts, and rates for the 12-year emission schedule.
 type HalvingData struct {
@@ -161,7 +165,7 @@ func (h *HalvingData) addAccumAmount(year, amount int64) error {
 		return err
 	}
 
-	h.accumAmount[year-1] = safeAddInt64(h.accumAmount[year-1], amount)
+	h.accumAmount[year-1] = gnsmath.SafeAddInt64(h.accumAmount[year-1], amount)
 
 	return nil
 }

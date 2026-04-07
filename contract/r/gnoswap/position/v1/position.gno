@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -379,20 +380,20 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 	)
 	amount0Uint256 := u256.MustFromDecimal(amount0)
 	amount1Uint256 := u256.MustFromDecimal(amount1)
-	amount0Int64 := safeConvertToInt64(amount0Uint256)
-	amount1Int64 := safeConvertToInt64(amount1Uint256)
+	amount0Int64 := gnsmath.SafeConvertToInt64(amount0Uint256)
+	amount1Int64 := gnsmath.SafeConvertToInt64(amount1Uint256)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
 	if tokensOwed0 < amount0Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
-	position.SetTokensOwed0(safeSubInt64(tokensOwed0, amount0Int64))
+	position.SetTokensOwed0(gnsmath.SafeSubInt64(tokensOwed0, amount0Int64))
 
 	if tokensOwed1 < amount1Int64 {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
-	position.SetTokensOwed1(safeSubInt64(tokensOwed1, amount1Int64))
+	position.SetTokensOwed1(gnsmath.SafeSubInt64(tokensOwed1, amount1Int64))
 	p.mustUpdatePosition(positionId, *position)
 
 	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
@@ -489,5 +490,5 @@ func calculatePositionBalances(position *position.Position) (int64, int64) {
 		liquidity,
 	)
 
-	return safeConvertToInt64(token0Balance), safeConvertToInt64(token1Balance)
+	return gnsmath.SafeConvertToInt64(token0Balance), gnsmath.SafeConvertToInt64(token1Balance)
 }

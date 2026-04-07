@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"errors"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -28,7 +29,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := safeMulDivInt64(amount, safeUint64ToInt64(unstakingFee), 10000)
+	feeAmount := gnsmath.SafeMulDivInt64(amount, gnsmath.SafeUint64ToInt64(unstakingFee), 10000)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}
@@ -46,7 +47,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
-	return safeSubInt64(amount, feeAmount), feeAmount, nil
+	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.

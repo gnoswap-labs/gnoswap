@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -834,8 +835,8 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 				}
 
 				// Update position with simulated fees
-				position.SetTokensOwed0(safeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
-				position.SetTokensOwed1(safeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
+				position.SetTokensOwed0(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount0)))
+				position.SetTokensOwed1(gnsmath.SafeConvertToInt64(u256.MustFromDecimal(feeAmount1)))
 				pool.Positions().Set(posKey, position)
 			}
 
@@ -1476,7 +1477,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsContains(t, tt.panicMsg, func() {
 					liq := u256.MustFromDecimal(tt.liquidity)
-					liqDelta := safeConvertToInt128(liq)
+					liqDelta := gnsmath.SafeConvertToInt128(liq)
 					params := ModifyPositionParams{
 						owner:          positionAddr,
 						tickLower:      -60,
@@ -1487,7 +1488,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 				})
 			} else {
 				liq := u256.MustFromDecimal(tt.liquidity)
-				liqDelta := safeConvertToInt128(liq)
+				liqDelta := gnsmath.SafeConvertToInt128(liq)
 				params := ModifyPositionParams{
 					owner:          positionAddr,
 					tickLower:      -60,

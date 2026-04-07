@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -26,7 +27,7 @@ func (r *DelegationWithdrawResolver) Get() *staker.DelegationWithdraw {
 //   - int64: amount available for collection
 func (r *DelegationWithdrawResolver) CollectableAmount(currentTime int64) int64 {
 	if r.IsCollectable(currentTime) {
-		return safeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
+		return gnsmath.SafeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
 	}
 
 	return 0
@@ -48,7 +49,7 @@ func (r *DelegationWithdrawResolver) IsCollectable(currentTime int64) bool {
 		return false
 	}
 
-	remaining := safeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
+	remaining := gnsmath.SafeSubInt64(r.withdraw.UnDelegateAmount(), r.withdraw.CollectedAmount())
 	if remaining <= 0 {
 		return false
 	}
@@ -82,7 +83,7 @@ func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) er
 		return errWithdrawNotCollectable
 	}
 
-	r.withdraw.SetCollectedAmount(safeAddInt64(r.withdraw.CollectedAmount(), amount))
+	r.withdraw.SetCollectedAmount(gnsmath.SafeAddInt64(r.withdraw.CollectedAmount(), amount))
 
 	if r.withdraw.UnDelegateAmount() == r.withdraw.CollectedAmount() {
 		r.withdraw.SetCollected(true)

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -94,10 +95,10 @@ func NewProposalScheduleStatus(
 ) *governance.ProposalScheduleStatus {
 	// Calculate all phase timestamps based on creation time and configuration
 	createTime := createdAt
-	activeTime := safeAddInt64(createTime, votingStartDelay)      // When voting can start
-	votingEndTime := safeAddInt64(activeTime, votingPeriod)       // When voting ends
-	executableTime := safeAddInt64(votingEndTime, executionDelay) // When execution can start
-	expiredTime := safeAddInt64(executableTime, executionWindow)  // When execution window closes
+	activeTime := gnsmath.SafeAddInt64(createTime, votingStartDelay)      // When voting can start
+	votingEndTime := gnsmath.SafeAddInt64(activeTime, votingPeriod)       // When voting ends
+	executableTime := gnsmath.SafeAddInt64(votingEndTime, executionDelay) // When execution can start
+	expiredTime := gnsmath.SafeAddInt64(executableTime, executionWindow)  // When execution window closes
 
 	return governance.NewProposalScheduleStatus(createTime, activeTime, votingEndTime, executableTime, expiredTime)
 }

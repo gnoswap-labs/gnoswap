@@ -6,6 +6,8 @@ import (
 	"math"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
@@ -110,7 +112,7 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	}
 
 	distributable, leftAmount := calculateDistributableAmounts(distributableAmount)
-	totalDistAmount := safeSubInt64(distributableAmount, leftAmount)
+	totalDistAmount := gnsmath.SafeSubInt64(distributableAmount, leftAmount)
 	if leftAmount > 0 {
 		setLeftGNSAmount(leftAmount)
 	}
