@@ -84,5 +84,5 @@ func TryRegister(cur realm, addr address, referral string) string {
 		"referral", refAddr.String(),
 	)
 
-	return GetReferral(addr.String())
+	return referral
 }
