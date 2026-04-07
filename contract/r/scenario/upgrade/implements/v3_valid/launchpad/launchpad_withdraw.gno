@@ -36,8 +36,9 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 
 	deposit := lp.mustGetDeposit(depositID)
 
+	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -111,7 +112,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	}
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
+	withdrawalAmount := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 
 	// Store updated deposit in state
 	deposits := lp.store.GetDeposits()

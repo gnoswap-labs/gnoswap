@@ -61,7 +61,6 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 		totalDistributeAmount               int64
 		distributeStartHeight               int64
 		distributeEndHeight                 int64
-		currentHeight                       int64
 		rewardHeight                        int64
 		expectedAccumulatedRewardPerDeposit string
 		expectedHasError                    bool
@@ -72,7 +71,6 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 			totalDistributeAmount:               1000,
 			distributeStartHeight:               100,
 			distributeEndHeight:                 200,
-			currentHeight:                       150,
 			rewardHeight:                        100,
 			expectedAccumulatedRewardPerDeposit: "0",
 			expectedHasError:                    false,
@@ -82,7 +80,6 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 			totalDistributeAmount:               1000,
 			distributeStartHeight:               100,
 			distributeEndHeight:                 200,
-			currentHeight:                       50,
 			rewardHeight:                        0,
 			expectedAccumulatedRewardPerDeposit: "0",
 			expectedHasError:                    false,
@@ -232,7 +229,6 @@ func TestRewardManager_CollectReward(t *testing.T) {
 		totalDistributeAmount int64
 		distributeStartTime   int64
 		distributeEndTime     int64
-		currentHeight         int64
 		depositId             string
 		deposit               *launchpad.Deposit
 		existingDeposits      []*launchpad.Deposit
@@ -246,7 +242,6 @@ func TestRewardManager_CollectReward(t *testing.T) {
 			totalDistributeAmount: 1000,
 			distributeStartTime:   100,
 			distributeEndTime:     200,
-			currentHeight:         150,
 			deposit: launchpad.NewDeposit(
 				"1",
 				"test",
@@ -328,7 +323,6 @@ func TestnewRewardManager(t *testing.T) {
 		distributeStartTime           int64
 		distributeEndTime             int64
 		distributeAmountPerSecondX128 *u256.Uint
-		currentHeight                 int64
 		expectedHasError              bool
 		expectedError                 string
 	}{
@@ -338,7 +332,6 @@ func TestnewRewardManager(t *testing.T) {
 			distributeStartTime:           100,
 			distributeEndTime:             200,
 			distributeAmountPerSecondX128: u256.NewUintFromInt64(100),
-			currentHeight:                 100,
 			expectedHasError:              false,
 		},
 	}
@@ -1832,8 +1825,8 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 				result := u256.Zero().Sub(maxUint128, u256.NewUint(500))
 				return result.ToString()
 			}(),
-			expectedAccumulatedTime:   1100,
-			expectNoUpdate:            false,
+			expectedAccumulatedTime: 1100,
+			expectNoUpdate:          false,
 		},
 		{
 			name: "very small reward addition",

@@ -107,7 +107,7 @@ func TestProjectTier_Status(t *testing.T) {
 		name             string
 		startHeight      int64
 		endHeight        int64
-		currentHeight    int64
+		currentTime      int64
 		expectedIsActive bool
 		expectedIsEnded  bool
 		expectedHasError bool
@@ -117,7 +117,7 @@ func TestProjectTier_Status(t *testing.T) {
 			name:             "project tier status inactive and not ended when before start",
 			startHeight:      100,
 			endHeight:        200,
-			currentHeight:    50,
+			currentTime:      50,
 			expectedIsActive: false,
 			expectedIsEnded:  false,
 		},
@@ -125,7 +125,7 @@ func TestProjectTier_Status(t *testing.T) {
 			name:             "project tier status active and not ended during active period",
 			startHeight:      100,
 			endHeight:        200,
-			currentHeight:    150,
+			currentTime:      150,
 			expectedIsActive: true,
 			expectedIsEnded:  false,
 		},
@@ -133,7 +133,7 @@ func TestProjectTier_Status(t *testing.T) {
 			name:             "project tier status inactive and ended after end",
 			startHeight:      100,
 			endHeight:        200,
-			currentHeight:    250,
+			currentTime:      250,
 			expectedIsActive: false,
 			expectedIsEnded:  true,
 		},
@@ -145,8 +145,8 @@ func TestProjectTier_Status(t *testing.T) {
 			tier := launchpad.NewProjectTier("test_project", 180, 1000, tt.startHeight, tt.endHeight)
 
 			// Execute and verify
-			isActive := tier.IsActivated(tt.currentHeight)
-			isEnded := tier.IsEnded(tt.currentHeight)
+			isActive := tier.IsActivated(tt.currentTime)
+			isEnded := tier.IsEnded(tt.currentTime)
 
 			uassert.Equal(t, isActive, tt.expectedIsActive)
 			uassert.Equal(t, isEnded, tt.expectedIsEnded)

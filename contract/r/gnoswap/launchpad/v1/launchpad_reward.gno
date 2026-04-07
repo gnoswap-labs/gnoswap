@@ -29,10 +29,9 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	lp.assertIsDepositOwner(depositID, caller)
 
 	deposit := lp.mustGetDeposit(depositID)
-	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
-	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +53,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
+func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}

@@ -40,12 +40,12 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	currentTime := time.Now().Unix()
 
 	// Collect reward before withdrawal
-	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
-	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -128,7 +128,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 	project.SetTier(deposit.Tier(), projectTier)
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
+	withdrawalAmount := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 
 	// Remove reward state from AVL tree after withdrawal
 	// This improves iteration performance for calculateClaimableRewardsForActiveDeposits
