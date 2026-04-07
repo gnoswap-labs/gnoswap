@@ -4,7 +4,6 @@ import (
 	"math"
 	"strconv"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/onbloc/json"
@@ -87,61 +86,6 @@ func getOrCreateInnerTree(tree *bptree.BPTree, key string) *bptree.BPTree {
 func milliToSec(ms int64) int64 {
 	var msPerSec int64 = 1000
 	return ms / msPerSec
-}
-
-// safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
-//
-// This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
-// the maximum allowable range for int64 (`2^63 - 1`), it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - int64: The converted value if it falls within the int64 range.
-//
-// Panics:
-//   - If the `value` exceeds the range of int64, the function will panic with an error indicating
-//     the overflow and the original value.
-func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
-
-	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
-		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
-			value.ToString(),
-			MAX_INT64,
-		))
-	}
-	return int64(res)
-}
-
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-
-	return a + b
-}
-
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-
-	return a - b
 }
 
 // safeAddUint64 performs safe addition of uint64 values, panicking on overflow

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -315,8 +316,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				testing.SkipHeights(1)
 				afterBarBalance := bar.BalanceOf(tt.recipient)
 
-				drySwapAmountOutInt := safeParseInt64(drySwapAmountOut)
-				amountOutInt := safeParseInt64(amountOut)
+				drySwapAmountOutInt := gnsmath.SafeParseInt64(drySwapAmountOut)
+				amountOutInt := gnsmath.SafeParseInt64(amountOut)
 				if drySwapAmountOutInt < 0 {
 					drySwapAmountOutInt = -drySwapAmountOutInt
 				}
@@ -625,7 +626,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			router.handleSwapFee(tt.outputToken, safeParseInt64(drySwapAmountOut))
+			router.handleSwapFee(tt.outputToken, gnsmath.SafeParseInt64(drySwapAmountOut))
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -803,7 +804,7 @@ func TestHandleMultiSwap(t *testing.T) {
 
 			common.SafeGRC20Approve(cross, tt.inputToken, routerAddr, math.MaxInt64)
 
-			amountSpecified := safeParseInt64(tt.amountSpecified)
+			amountSpecified := gnsmath.SafeParseInt64(tt.amountSpecified)
 
 			router := mockRouter()
 
@@ -905,10 +906,10 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			createMultiHopPools(t)
 
 			op := &baseSwapOperation{
-				amountSpecified: safeParseInt64(tt.toSwap),
+				amountSpecified: gnsmath.SafeParseInt64(tt.toSwap),
 			}
 
-			toSwapAmount := safeParseInt64(tt.toSwap)
+			toSwapAmount := gnsmath.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
 			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
@@ -1719,7 +1720,6 @@ func TestSwapValidator_ExactOutAmount(t *testing.T) {
 		})
 	}
 }
-
 
 // Test validateRoutesAndQuotes convenience function
 func TestValidateRoutesAndQuotes(t *testing.T) {

@@ -52,327 +52,35 @@ func TestPoolPathDivide(t *testing.T) {
 
 func TestTid(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       uint64
-		expected    string
+		name     string
+		input    uint64
+		expected string
 	}{
 		{
-			name:        "Success - uint64 min",
-			input:       uint64(0),
-			expected:    "0",
+			name:     "Success - uint64 min",
+			input:    uint64(0),
+			expected: "0",
 		},
 		{
-			name:        "Success - uint64",
-			input:       uint64(1),
-			expected:    "1",
+			name:     "Success - uint64",
+			input:    uint64(1),
+			expected: "1",
 		},
 		{
-			name:        "Success - uint64 1<<63",
-			input:       uint64(9223372036854775808),
-			expected:    "9223372036854775808",
+			name:     "Success - uint64 1<<63",
+			input:    uint64(9223372036854775808),
+			expected: "9223372036854775808",
 		},
 		{
-			name:        "Success - uint64 max",
-			input:       uint64(math.MaxUint64),
-			expected:    "18446744073709551615",
+			name:     "Success - uint64 max",
+			input:    uint64(math.MaxUint64),
+			expected: "18446744073709551615",
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got := positionIdFrom(tc.input)
 			uassert.Equal(t, tc.expected, string(got))
-		})
-	}
-}
-
-func TestSafeMulDivInt64(t *testing.T) {
-	tests := []struct {
-		name        string
-		a           int64
-		b           int64
-		c           int64
-		expected    int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		// Normal cases
-		{
-			name:     "simple multiplication and division",
-			a:        1000,
-			b:        50,
-			c:        100, // PERCENTAGE_DENOMINATOR
-			expected: 500,
-		},
-		{
-			name:     "100% of value",
-			a:        1000,
-			b:        100,
-			c:        100,
-			expected: 1000,
-		},
-		{
-			name:     "10% of value",
-			a:        1000,
-			b:        10,
-			c:        100,
-			expected: 100,
-		},
-		// Zero cases
-		{
-			name:     "a is zero",
-			a:        0,
-			b:        100,
-			c:        100,
-			expected: 0,
-		},
-		{
-			name:     "b is zero",
-			a:        100,
-			b:        0,
-			c:        100,
-			expected: 0,
-		},
-		{
-			name:     "both a and b are zero",
-			a:        0,
-			b:        0,
-			c:        100,
-			expected: 0,
-		},
-		// Division by zero
-		{
-			name:        "division by zero",
-			a:           100,
-			b:           50,
-			c:           0,
-			shouldPanic: true,
-			panicMsg:    "zero division",
-		},
-		// Result is zero after division (too small)
-		{
-			name:        "result too small - becomes zero",
-			a:           1,
-			b:           1,
-			c:           100,
-			shouldPanic: false,
-		},
-		// Negative values
-		{
-			name:     "negative a",
-			a:        -1000,
-			b:        50,
-			c:        100,
-			expected: -500,
-		},
-		{
-			name:     "negative b",
-			a:        1000,
-			b:        -50,
-			c:        100,
-			expected: -500,
-		},
-		{
-			name:     "both negative",
-			a:        -1000,
-			b:        -50,
-			c:        100,
-			expected: 500,
-		},
-		// Large values
-		{
-			name:     "large values within range",
-			a:        1000000000000,
-			b:        50,
-			c:        100,
-			expected: 500000000000,
-		},
-		{
-			name:        "int64 overflow on final conversion",
-			a:           math.MaxInt64,
-			b:           200,
-			c:           100,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-STAKER-019] overflow",
-		},
-		{
-			name:     "minInt64 allow negative value",
-			a:        math.MinInt64,
-			b:        -100,
-			c:        -100,
-			expected: math.MinInt64,
-		},
-		{
-			name:        "minInt64 overflow on positive value",
-			a:           math.MinInt64,
-			b:           -100,
-			c:           100,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-STAKER-019] overflow",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("expected panic but got none")
-						return
-					}
-					panicStr, ok := r.(string)
-					if !ok {
-						// Handle error type
-						if err, isErr := r.(error); isErr {
-							panicStr = err.Error()
-						}
-					}
-					if panicStr != tt.panicMsg {
-						t.Errorf("expected panic message %q, got %q", tt.panicMsg, panicStr)
-					}
-				}()
-				safeMulDivInt64(tt.a, tt.b, tt.c)
-			} else {
-				result := safeMulDivInt64(tt.a, tt.b, tt.c)
-				uassert.Equal(t, result, tt.expected)
-			}
-		})
-	}
-}
-
-func TestSafeUint64ToInt64(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       uint64
-		expected    int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:     "zero",
-			input:    0,
-			expected: 0,
-		},
-		{
-			name:     "one",
-			input:    1,
-			expected: 1,
-		},
-		{
-			name:     "max int64 minus one",
-			input:    math.MaxInt64 - 1,
-			expected: math.MaxInt64 - 1,
-		},
-		{
-			name:     "max int64 boundary",
-			input:    math.MaxInt64,
-			expected: math.MaxInt64,
-		},
-		{
-			name:        "max int64 plus one overflows",
-			input:       uint64(math.MaxInt64) + 1,
-			shouldPanic: true,
-			panicMsg:    "overflows int64 range",
-		},
-		{
-			name:        "max uint64 overflows",
-			input:       math.MaxUint64,
-			shouldPanic: true,
-			panicMsg:    "overflows int64 range",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					safeUint64ToInt64(tt.input)
-				})
-			} else {
-				result := safeUint64ToInt64(tt.input)
-				uassert.Equal(t, result, tt.expected)
-			}
-		})
-	}
-}
-
-func TestSafeMulInt64(t *testing.T) {
-	overflowMsg := "int64 multiplication overflow"
-	underflowMsg := "int64 multiplication underflow"
-
-	tests := []struct {
-		name        string
-		a, b        int64
-		want        int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "simple positive multiplication",
-			a:    3, b: 4,
-			want: 12,
-		},
-		{
-			name: "simple negative multiplication",
-			a:    -3, b: 4,
-			want: -12,
-		},
-		{
-			name: "simple negative negative multiplication",
-			a:    -3, b: -4,
-			want: 12,
-		},
-		{
-			name: "a is zero",
-			a:    0, b: 123456,
-			want: 0,
-		},
-		{
-			name: "b is zero",
-			a:    987654, b: 0,
-			want: 0,
-		},
-		{
-			name: "positive overflow",
-			a:    math.MaxInt64 / 2, b: 3, // 1.5 * 3 > MaxInt64
-			shouldPanic: true,
-			panicMsg:    overflowMsg,
-		},
-		{
-			name: "negative negative overflow",
-			a:    -math.MaxInt64 / 2, b: -3,
-			shouldPanic: true,
-			panicMsg:    overflowMsg,
-		},
-		{
-			name: "positive negative underflow",
-			a:    math.MaxInt64, b: -2,
-			shouldPanic: true,
-			panicMsg:    underflowMsg,
-		},
-		{
-			name: "MinInt64 * -1 overflows",
-			a:    math.MinInt64, b: -1,
-			shouldPanic: true,
-			panicMsg:    overflowMsg,
-		},
-		{
-			name: "MinInt64 * 1 OK",
-			a:    math.MinInt64, b: 1,
-			want: math.MinInt64,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					safeMulInt64(tt.a, tt.b)
-				})
-			} else {
-				result := safeMulInt64(tt.a, tt.b)
-				uassert.Equal(t, result, tt.want)
-			}
 		})
 	}
 }

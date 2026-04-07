@@ -336,11 +336,11 @@ func (i *poolV1) DrySwap(
 	}
 
 	if zeroForOne {
-		if poolSnapshot.BalanceToken1() < safeConvertToInt64(result.Amount1.Abs()) {
+		if poolSnapshot.BalanceToken1() < plp.SafeConvertToInt64(result.Amount1.Abs()) {
 			return "0", "0", false
 		}
 	} else {
-		if poolSnapshot.BalanceToken0() < safeConvertToInt64(result.Amount0.Abs()) {
+		if poolSnapshot.BalanceToken0() < plp.SafeConvertToInt64(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
 	}
@@ -390,12 +390,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 	// Update protocol fees if necessary
 	if comp.ZeroForOne {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFees.SetToken0(plp.SafeAddInt64(result.NewProtocolFees.Token0(), plp.SafeConvertToInt64(state.protocolFee)))
 		}
 		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
 	} else {
 		if state.protocolFee.Gt(zero) {
-			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
+			result.NewProtocolFees.SetToken1(plp.SafeAddInt64(result.NewProtocolFees.Token1(), plp.SafeConvertToInt64(state.protocolFee)))
 		}
 		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
 	}

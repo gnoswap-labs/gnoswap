@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/runtime"
 
@@ -53,8 +54,8 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
 	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
 
-	fee0Int64 := safeConvertToInt64(fee0)
-	fee1Int64 := safeConvertToInt64(fee1)
+	fee0Int64 := gnsmath.SafeConvertToInt64(fee0)
+	fee1Int64 := gnsmath.SafeConvertToInt64(fee1)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20Approve(cross, token0Path, protocolFeeAddr, fee0Int64)
@@ -62,8 +63,8 @@ func (i *poolV1) HandleWithdrawalFee(
 
 	pf.AddToProtocolFee(cross, token0Path, fee0Int64)
 	pf.AddToProtocolFee(cross, token1Path, fee1Int64)
-	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
-	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
+	common.SafeGRC20Transfer(cross, token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
+	common.SafeGRC20Transfer(cross, token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }

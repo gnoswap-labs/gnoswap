@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -236,9 +237,9 @@ func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 				if i < len(tt.routes)-1 {
 					// For non-last routes, calculate based on quote
 					quote := tt.quotes[i]
-					quoteInt := safeParseInt64(quote)
+					quoteInt := gnsmath.SafeParseInt64(quote)
 
-					amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+					amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 
 					calculatedAmounts[i] = amount
 					totalUsed = totalUsed + amount
@@ -375,7 +376,6 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 		})
 	}
 }
-
 
 // Test SwapRouteParams.SwapCount
 func TestSwapRouteParams_SwapCount(t *testing.T) {
@@ -859,8 +859,8 @@ func TestProcessRoutes_LastRouteRemainder(t *testing.T) {
 			// Calculate what the last route should receive
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := gnsmath.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1111,8 +1111,8 @@ func TestProcessRoutes_SingleRoute(t *testing.T) {
 			// Verify the last route gets all remaining amount
 			remainingAmount := tt.amountSpecified
 			for i := 0; i < len(tt.routes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := gnsmath.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				remainingAmount = remainingAmount - amount
 			}
 
@@ -1312,7 +1312,6 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 	}
 }
 
-
 // Test processRoutes remainder calculation accuracy
 func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 	tests := []struct {
@@ -1342,8 +1341,8 @@ func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			totalUsed := int64(0)
 			for i := 0; i < len(tt.quotes)-1; i++ {
-				quoteInt := safeParseInt64(tt.quotes[i])
-				amount := safeMulDivInt64(tt.amountSpecified, quoteInt, 100)
+				quoteInt := gnsmath.SafeParseInt64(tt.quotes[i])
+				amount := gnsmath.SafeMulDivInt64(tt.amountSpecified, quoteInt, 100)
 				totalUsed = totalUsed + amount
 			}
 

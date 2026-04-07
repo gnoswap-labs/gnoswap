@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -121,7 +122,7 @@ func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) 
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetAccuToGovStakerItem(tokenPath, after); err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) err
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
-	after := safeAddInt64(before, amount)
+	after := gnsmath.SafeAddInt64(before, amount)
 	if err := pfs.store.SetAccuToDevOpsItem(tokenPath, after); err != nil {
 		return err
 	}

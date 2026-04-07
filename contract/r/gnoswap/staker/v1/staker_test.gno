@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"testing"
 	"time"
@@ -446,7 +447,7 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 		t.Fatalf("expected positive external penalty during warmup, got %d", externalPenalty)
 	}
 
-	totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+	totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
 	incentive.SetRewardAmount(totalRewardAmount - 1)
 	incentives.set(incentiveId, incentive)
 

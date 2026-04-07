@@ -7,6 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -157,13 +158,13 @@ func (b *SwapBuilder) WithFee(fee uint32) *SwapBuilder {
 
 // ExactInput sets exact input amount
 func (b *SwapBuilder) ExactInput(amount string) *SwapBuilder {
-	b.params.amountSpecified = safeParseInt64(amount)
+	b.params.amountSpecified = gnsmath.SafeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount (negative value)
 func (b *SwapBuilder) ExactOutput(amount string) *SwapBuilder {
-	b.params.amountSpecified = -safeParseInt64(amount)
+	b.params.amountSpecified = -gnsmath.SafeParseInt64(amount)
 	return b
 }
 
@@ -347,13 +348,13 @@ func (b *SingleSwapParamsBuilder) Fee(fee uint32) *SingleSwapParamsBuilder {
 
 // ExactInput sets exact input amount
 func (b *SingleSwapParamsBuilder) ExactInput(amount string) *SingleSwapParamsBuilder {
-	b.p.amountSpecified = safeParseInt64(amount)
+	b.p.amountSpecified = gnsmath.SafeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount (negative)
 func (b *SingleSwapParamsBuilder) ExactOutput(amount string) *SingleSwapParamsBuilder {
-	b.p.amountSpecified = -safeParseInt64(amount)
+	b.p.amountSpecified = -gnsmath.SafeParseInt64(amount)
 	return b
 }
 
@@ -408,13 +409,13 @@ func (b *SwapParamsBuilder) Fee(fee uint32) *SwapParamsBuilder {
 
 // ExactInput sets exact input amount
 func (b *SwapParamsBuilder) ExactInput(amount string) *SwapParamsBuilder {
-	b.p.amountSpecified = safeParseInt64(amount)
+	b.p.amountSpecified = gnsmath.SafeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount
 func (b *SwapParamsBuilder) ExactOutput(amount string) *SwapParamsBuilder {
-	b.p.amountSpecified = -safeParseInt64(amount)
+	b.p.amountSpecified = -gnsmath.SafeParseInt64(amount)
 	return b
 }
 

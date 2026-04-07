@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -352,7 +353,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(2000)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(2000, 60, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(2000, 60, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
@@ -370,7 +371,7 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 			},
 			action: func(resolver *ProposalStatusResolver) error {
 				resolver.voteStatusResolver.SetMaxVotingWeight(500)
-				resolver.voteStatusResolver.SetQuorumAmount(safeMulDiv(500, 40, 100))
+				resolver.voteStatusResolver.SetQuorumAmount(gnsmath.SafeMulDivInt64(500, 40, 100))
 				return nil
 			},
 			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {

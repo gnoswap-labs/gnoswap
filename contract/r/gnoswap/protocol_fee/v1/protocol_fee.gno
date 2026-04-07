@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/runtime"
 	"strconv"
@@ -52,8 +53,8 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 
 		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
-		toDevOpsAmount := safeMulDiv(amount, devOpsPct, 10000)    // default 0%
-		toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount) // default 100%
+		toDevOpsAmount := gnsmath.SafeMulDivInt64(amount, devOpsPct, 10000)    // default 0%
+		toGovStakerAmount := gnsmath.SafeSubInt64(amount, toDevOpsAmount) // default 100%
 
 		// Distribute to DevOps
 		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -193,7 +194,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	}
 
 	// Check for overflow
-	addedAmount := safeAddInt64(currentAmount, amount)
+	addedAmount := gnsmath.SafeAddInt64(currentAmount, amount)
 
 	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
 

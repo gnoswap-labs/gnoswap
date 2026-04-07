@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -97,7 +98,7 @@ func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmi
 	result := &PoolTier{
 		membership:               bptree.NewBPTreeN(16),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),
+		lastRewardCacheTimestamp: gnsmath.SafeAddInt64(currentTime, 1),
 		getEmission:              getEmission,
 		getHalvingBlocksInRange:  getHalvingBlocksInRange,
 		currentEmission:          getEmission(),
@@ -415,7 +416,7 @@ func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64
 		return 0
 	}
 
-	tierReward := safeMulDivInt64(emission, tierRatio, 100)
+	tierReward := gnsmath.SafeMulDivInt64(emission, tierRatio, 100)
 
 	return tierReward / tierCount
 }
