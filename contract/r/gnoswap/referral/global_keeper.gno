@@ -77,12 +77,17 @@ func TryRegister(cur realm, addr address, referral string) string {
 		return GetReferral(addr.String())
 	}
 
+	result := referral
+	if refAddr == contractAddress() {
+		result = ""
+	}
+
 	chain.Emit(
 		"RegisterReferral",
 		"prevAddr", caller.String(),
 		"address", addr.String(),
-		"referral", refAddr.String(),
+		"referral", result,
 	)
 
-	return referral
+	return result
 }
