@@ -368,7 +368,7 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	uassert.Equal(t, lastCollectAfter, resolver.ExternalRewardLastCollectTime(incentiveId))
 }
 
-func TestCollectReward_SkipsWhenPenaltyMakesDebitExceedAvailableReward(t *testing.T) {
+func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *testing.T) {
 	initStakerTest(t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
@@ -409,8 +409,7 @@ func TestCollectReward_SkipsWhenPenaltyMakesDebitExceedAvailableReward(t *testin
 	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
 	mockInstanceStakeToken(positionId, "")
 
-	tomorrow := time.Now().AddDate(0, 0, 1)
-	startTimestamp := tomorrow.Truncate(24 * time.Hour).Unix()
+	startTimestamp := int64(1234569600)
 	mockInstanceCreateExternalIncentive(
 		poolPath,
 		barPath,
@@ -419,13 +418,7 @@ func TestCollectReward_SkipsWhenPenaltyMakesDebitExceedAvailableReward(t *testin
 		startTimestamp+incentiveDuration,
 	)
 
-	currentTime := time.Now().Unix()
-	timeToWait := startTimestamp - currentTime
-	blocksToSkip := timeToWait / 2
-	if blocksToSkip > 0 {
-		testing.SkipHeights(blocksToSkip)
-	}
-	testing.SkipHeights(100)
+	testing.SkipHeights(3600)
 
 	incentives := getMockInstance().getExternalIncentives()
 	incentiveId := ""
@@ -461,22 +454,19 @@ func TestCollectReward_SkipsWhenPenaltyMakesDebitExceedAvailableReward(t *testin
 	beforeLastCollect := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 	beforeCollected := depositResolver.CollectedExternalReward(incentiveId)
 	beforeUserBar := bar.BalanceOf(addr01)
+	beforeCommunityBar := bar.BalanceOf(communityPoolAddr)
 	beforeAvailable := incentive.RewardAmount()
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	_, _, externalRewards, externalPenalties := getMockInstance().CollectReward(positionId)
+	mockInstanceCollectReward(positionId)
 
 	depositResolver = getMockInstance().getDepositResolver(positionId)
 	incentiveAfter := getMockInstance().getExternalIncentives().get(incentiveId)
 	afterUserBar := bar.BalanceOf(addr01)
+	afterCommunityBar := bar.BalanceOf(communityPoolAddr)
 
-	if _, exists := externalRewards[barPath]; exists {
-		t.Fatalf("expected skipped incentive to produce no external reward transfer, got %d", externalRewards[barPath])
-	}
-	if _, exists := externalPenalties[barPath]; exists {
-		t.Fatalf("expected skipped incentive to produce no external penalty transfer, got %d", externalPenalties[barPath])
-	}
 	uassert.Equal(t, beforeUserBar, afterUserBar)
+	uassert.Equal(t, beforeCommunityBar, afterCommunityBar)
 	uassert.Equal(t, beforeCollected, depositResolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, beforeLastCollect, depositResolver.ExternalRewardLastCollectTime(incentiveId))
 	uassert.Equal(t, beforeAvailable, incentiveAfter.RewardAmount())
