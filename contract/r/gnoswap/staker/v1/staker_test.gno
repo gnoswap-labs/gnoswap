@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -365,6 +366,120 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *te
 	uassert.Equal(t, communityPoolAfter, TokenBalance(t, barPath, communityPoolAddr))
 	uassert.Equal(t, collectedAfter, resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, lastCollectAfter, resolver.ExternalRewardLastCollectTime(incentiveId))
+}
+
+func TestCollectReward_SkipsWhenPenaltyMakesDebitExceedAvailableReward(t *testing.T) {
+	initStakerTest(t)
+
+	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(poolPath, 1)
+	mockInstanceAddToken(barPath)
+	mockInstanceSetWarmupPeriod(poolPath, 86400)
+
+	TokenFaucet(t, barPath, addr01)
+	TokenFaucet(t, bazPath, addr01)
+	TokenFaucet(t, gnsPath, addr01)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(t, addr01, stakerAddr, 1000000000)
+
+	positionId, _, _, _ := MintPosition(
+		t,
+		barPath,
+		bazPath,
+		fee3000,
+		-18000,
+		18000,
+		"1000000",
+		"1000000",
+		"0",
+		"0",
+		max_timeout,
+		addr01,
+		addr01,
+	)
+
+	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
+	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockInstanceStakeToken(positionId, "")
+
+	tomorrow := time.Now().AddDate(0, 0, 1)
+	startTimestamp := tomorrow.Truncate(24 * time.Hour).Unix()
+	mockInstanceCreateExternalIncentive(
+		poolPath,
+		barPath,
+		rewardMinimumAmount,
+		startTimestamp,
+		startTimestamp+incentiveDuration,
+	)
+
+	currentTime := time.Now().Unix()
+	timeToWait := startTimestamp - currentTime
+	blocksToSkip := timeToWait / 2
+	if blocksToSkip > 0 {
+		testing.SkipHeights(blocksToSkip)
+	}
+	testing.SkipHeights(100)
+
+	incentives := getMockInstance().getExternalIncentives()
+	incentiveId := ""
+	var incentive *sr.ExternalIncentive
+	incentives.tree.Iterate("", "", func(key string, value any) bool {
+		if incentive == nil {
+			incentiveId = key
+			incentive = value.(*sr.ExternalIncentive)
+		}
+		return false
+	})
+
+	if incentive == nil {
+		t.Fatal("expected incentive to be created")
+	}
+
+	blockHeight := runtime.ChainHeight()
+	reward := getMockInstance().calcPositionReward(blockHeight, time.Now().Unix(), positionId)
+	rewardAmount := reward.External[incentiveId]
+	externalPenalty := reward.ExternalPenalty[incentiveId]
+	if rewardAmount <= 0 {
+		t.Fatalf("expected positive external reward, got %d", rewardAmount)
+	}
+	if externalPenalty <= 0 {
+		t.Fatalf("expected positive external penalty during warmup, got %d", externalPenalty)
+	}
+
+	totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+	incentive.SetRewardAmount(totalRewardAmount - 1)
+	incentives.set(incentiveId, incentive)
+
+	depositResolver := getMockInstance().getDepositResolver(positionId)
+	beforeLastCollect := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+	beforeCollected := depositResolver.CollectedExternalReward(incentiveId)
+	beforeUserBar := bar.BalanceOf(addr01)
+	beforeAvailable := incentive.RewardAmount()
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	_, _, externalRewards, externalPenalties := getMockInstance().CollectReward(positionId)
+
+	depositResolver = getMockInstance().getDepositResolver(positionId)
+	incentiveAfter := getMockInstance().getExternalIncentives().get(incentiveId)
+	afterUserBar := bar.BalanceOf(addr01)
+
+	if _, exists := externalRewards[barPath]; exists {
+		t.Fatalf("expected skipped incentive to produce no external reward transfer, got %d", externalRewards[barPath])
+	}
+	if _, exists := externalPenalties[barPath]; exists {
+		t.Fatalf("expected skipped incentive to produce no external penalty transfer, got %d", externalPenalties[barPath])
+	}
+	uassert.Equal(t, beforeUserBar, afterUserBar)
+	uassert.Equal(t, beforeCollected, depositResolver.CollectedExternalReward(incentiveId))
+	uassert.Equal(t, beforeLastCollect, depositResolver.ExternalRewardLastCollectTime(incentiveId))
+	uassert.Equal(t, beforeAvailable, incentiveAfter.RewardAmount())
 }
 
 // TestCollectReward_ZeroNetRewardWithPenalty tests the case where fees/warmup zero out
