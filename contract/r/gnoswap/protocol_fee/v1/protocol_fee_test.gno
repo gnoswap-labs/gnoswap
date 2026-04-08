@@ -1377,7 +1377,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           50,
 			c:           0,
 			shouldPanic: true,
-			panicMsg:    "division by zero in safeMulDiv",
+			panicMsg:    "division by zero in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication overflow (positive * positive)",
@@ -1385,7 +1385,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication overflow in safeMulDiv",
+			panicMsg:    "int64 multiplication overflow in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication underflow (positive * negative)",
@@ -1393,7 +1393,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           -2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+			panicMsg:    "int64 multiplication overflow in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication underflow (negative * positive)",
@@ -1401,7 +1401,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+			panicMsg:    "int64 multiplication underflow in SafeMulDivInt64",
 		},
 	}
 
