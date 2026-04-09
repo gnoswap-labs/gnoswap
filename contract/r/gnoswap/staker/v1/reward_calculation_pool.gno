@@ -194,7 +194,7 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 		self.endUnclaimablePeriod(currentTime)
 	}
 
-	self.RewardCache().Set(currentTime, currentTierReward)
+	// self.RewardCache().Set(currentTime, currentTierReward)
 
 	if isInUnclaimable {
 		// Start/restart unclaimable period tracking
@@ -207,8 +207,8 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
 	self.cacheReward(currentTime, currentEmission)
 
-	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
+	// currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
+	// self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
