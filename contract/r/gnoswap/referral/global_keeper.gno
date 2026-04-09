@@ -65,8 +65,7 @@ func TryRegister(cur realm, addr address, referral string) string {
 	caller := runtime.PreviousRealm().Address()
 	assertValidCaller(caller)
 
-	refAddr := address(referral)
-	err := gReferralKeeper.register(addr, refAddr)
+	result, err := gReferralKeeper.register(addr, address(referral))
 	if err != nil {
 		chain.Emit(
 			EventRegisterFailed,
@@ -77,17 +76,12 @@ func TryRegister(cur realm, addr address, referral string) string {
 		return GetReferral(addr.String())
 	}
 
-	result := referral
-	if refAddr == contractAddress() {
-		result = ""
-	}
-
 	chain.Emit(
 		"RegisterReferral",
 		"prevAddr", caller.String(),
 		"address", addr.String(),
-		"referral", result,
+		"referral", result.String(),
 	)
 
-	return result
+	return result.String()
 }
