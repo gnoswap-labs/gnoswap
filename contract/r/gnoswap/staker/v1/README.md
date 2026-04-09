@@ -27,7 +27,7 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 - Created for specific pools
 - Constant reward per block
 - Proportional to staked liquidity
-- Unclaimed rewards returned to creator
+- Unclaimed rewards and the GNS deposit are refunded to the explicit refund address passed when ending the incentive
 
 ### Warmup Periods
 Every staked position progresses through warmup periods:

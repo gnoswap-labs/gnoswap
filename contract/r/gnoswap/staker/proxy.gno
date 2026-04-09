@@ -18,7 +18,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 //   - positionId: ID of the position to unstake
 //
 // Returns:
-//   - string: collected reward details
+//   - string: pool path of the unstaked position
 func UnStakeToken(cur realm, positionId uint64) string {
 	return getImplementation().UnStakeToken(positionId)
 }
@@ -78,7 +78,7 @@ func CreateExternalIncentive(
 	)
 }
 
-// EndExternalIncentive terminates an external incentive early.
+// EndExternalIncentive ends an external incentive after it becomes terminable and refunds remaining rewards to the provided refund address.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundAddress address) {
 	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
@@ -103,7 +103,7 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 	getImplementation().SetWarmUp(pct, timeDuration)
 }
 
-// SetDepositGnsAmount sets the required GNS deposit amount for staking.
+// SetDepositGnsAmount sets the required GNS deposit amount for creating an external incentive.
 func SetDepositGnsAmount(cur realm, amount int64) {
 	getImplementation().SetDepositGnsAmount(amount)
 }
@@ -118,7 +118,7 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	getImplementation().SetTokenMinimumRewardAmount(paramsStr)
 }
 
-// SetUnStakingFee sets the unstaking fee percentage.
+// SetUnStakingFee sets the unstaking fee percentage in basis points.
 func SetUnStakingFee(cur realm, fee uint64) {
 	getImplementation().SetUnStakingFee(fee)
 }
