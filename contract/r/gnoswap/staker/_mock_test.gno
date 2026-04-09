@@ -620,12 +620,12 @@ func (m *MockStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	return res[0].([]uint64)
 }
 
-func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (m *MockStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	res, ok := m.Response.Get("GetPoolGlobalRewardRatioAccumulation")
 	if !ok {
-		return u256.Zero()
+		return "0"
 	}
-	return res[0].(*u256.Uint)
+	return res[0].(string)
 }
 
 func (m *MockStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {

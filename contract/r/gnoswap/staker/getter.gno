@@ -322,8 +322,8 @@ func GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int)
 }
 
 // GetPoolGlobalRewardRatioAccumulation returns the global reward ratio accumulation at a specific timestamp for a pool.
-func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
-	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp).Clone()
+func GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
+	return getImplementation().GetPoolGlobalRewardRatioAccumulation(poolPath, timestamp)
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.
