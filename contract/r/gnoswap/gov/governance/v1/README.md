@@ -95,12 +95,12 @@ userShare = (userXGNS / totalXGNS) * protocolFees
 ## Usage
 
 ```go
-// Delegate voting power
+// Stake GNS for xGNS
 Delegate(delegateTo, amount, "g1referrer...")
 
 // Create proposal
-proposalId := ProposeText(title, description)
-proposalId = ProposeCommunityPoolSpend(title, description, recipient, tokenPath, amount)
+ProposeText(title, description)
+ProposeCommunityPoolSpend(title, description, recipient, tokenPath, amount)
 ProposeParameterChange(title, description, numToExecute, executions)
 
 // Vote on proposal
@@ -110,7 +110,7 @@ Vote(proposalId, false) // NO
 // Execute after timelock
 Execute(proposalId)
 
-// Undelegate (lockup applies before collection)
+// Undelegate (7-day lockup)
 Undelegate(delegateTo, amount)
 ```
 
