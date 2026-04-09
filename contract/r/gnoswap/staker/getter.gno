@@ -86,7 +86,7 @@ func GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId 
 	return getImplementation().GetDepositExternalRewardLastCollectTimestamp(lpTokenId, incentiveId)
 }
 
-// GetDepositGnsAmount returns the required GNS deposit amount for staking.
+// GetDepositGnsAmount returns the required GNS deposit amount for creating an external incentive.
 func GetDepositGnsAmount() int64 {
 	return getImplementation().GetDepositGnsAmount()
 }

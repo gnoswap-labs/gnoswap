@@ -29,7 +29,7 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 - Created for specific pools
 - Constant reward per block
 - Proportional to staked liquidity
-- Unclaimed rewards returned to creator
+- Unclaimed rewards and the GNS deposit are refunded to the explicit refund address passed when ending the incentive
 
 ### Warmup Periods
 
@@ -64,7 +64,7 @@ Creates external reward program for specific pool.
 
 ### `EndExternalIncentive`
 
-Ends incentive program and returns unused rewards.
+Ends incentive program and refunds remaining rewards to the provided refund address.
 
 ## Reward Calculation Logic
 
@@ -177,7 +177,7 @@ StakeToken(123, "g1referrer...")
 CreateExternalIncentive(
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
-    "1000000000",  // 1000 tokens
+    1000000000,    // rewardAmount as int64
     startTime,
     endTime,
 )

@@ -145,63 +145,38 @@ Split large trades across routes to minimize impact:
 - `quoteArr`: Percentage per route (must sum to 100)
 - Example: "30,70" = 30% route1, 70% route2
 
-### GNOT Handling
+### Native Token Handling
 
-The Router automatically handles native GNOT token operations through wrapping/unwrapping mechanisms:
+The current router implementation does **not** handle native `ugnot` directly. It rejects native-coin handling and routes swaps only through token contract paths such as wrapped GNOT (`wugnot`).
 
 #### Token Identifier Requirements
 
-- **Input Token**: Use `"ugnot"` to specify native GNOT as input token
-- **Output Token**: Use `"ugnot"` to specify native GNOT as output token
-- **Routes**: Must always use wrapped token path `"gno.land/r/gnoland/wugnot"` in route specifications
+- Use token contract paths such as `gno.land/r/gnoland/wugnot` for both inputs/outputs and route specifications.
+- Do not pass `"ugnot"` as `inputToken` or `outputToken` to router swap functions.
 
-#### Native Token Send Requirements
+#### Approval and Transfer Requirements
 
-When using native GNOT tokens, you must send the appropriate amount of native `ugnot` with your function call:
+- Approve the router to spend the token contract you are swapping from.
+- If you want wrapped GNOT exposure, use the `wugnot` token contract path directly.
+- Native-token refund and unwrap flows are not part of the current router implementation.
 
-- **ExactInSwapRoute**: Send exactly `amountIn` amount of `ugnot`
-- **ExactInSingleSwapRoute**: Send exactly `amountIn` amount of `ugnot`
-- **ExactOutSwapRoute**: Send exactly `amountInMax` amount of `ugnot`
-- **ExactOutSingleSwapRoute**: Send exactly `amountInMax` amount of `ugnot`
-
-#### WUGNOT Approval Requirements for Refunds
+#### Example with Wrapped GNOT
 
 ```go
-// Before calling router functions with native tokens
-wugnot.Approve(cross, routerAddress, maxAmount)
-```
+// 1. Approve WUGNOT spending for the router
+wugnot.Approve(cross, routerAddress, 1000000)
 
-This approval is required because:
-
-- Router wraps native GNOT to WUGNOT for internal processing
-- Unused GNOT is refunded by transferring WUGNOT from user and unwrapping it
-- The `unwrapWithTransferFrom` function requires WUGNOT transfer approval
-
-#### Refund Logic
-
-- **ExactIn Functions**: Unused GNOT is automatically refunded after swap
-- **ExactOut Functions**: Excess GNOT (difference between `amountInMax` and actual input used) is refunded
-- Refunds use `unwrapWithTransferFrom` which requires prior WUGNOT approval
-
-#### Example with Native GNOT
-
-```go
-// 1. First approve WUGNOT spending for potential refunds
-wugnot.Approve(cross, routerAddress, 1000000) // Approve max amount
-
-// 2. Call swap function with native GNOT, sending ugnot
-// Note: inputToken="ugnot" but route uses wugnot path
+// 2. Call swap function with wrapped GNOT paths
 amountIn, amountOut := ExactInSwapRoute(
-    "ugnot",                                    // input token (native)
+    "gno.land/r/gnoland/wugnot",               // input token
     "gno.land/r/demo/bar",                    // output token
-    "1000000",                                // amount (send this much ugnot)
-    "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000", // route uses wugnot
+    "1000000",                                // amount in wrapped token units
+    "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000",
     "100",                                    // 100% through route
     "950000",                                 // min output
     time.Now().Unix() + 300,                  // deadline
     "",                                       // no referrer
 )
-// Any unused GNOT will be automatically refunded
 ```
 
 ### Slippage Protection

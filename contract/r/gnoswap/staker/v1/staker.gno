@@ -714,7 +714,6 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 //
 // Parameters:
 //   - positionId: LP position NFT token ID to unstake
-//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Process:
 //  1. Collects all pending rewards (GNS + external)
