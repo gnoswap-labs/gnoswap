@@ -17,7 +17,8 @@ import (
 // Parameters:
 //   - tokenPath: the path to the token contract (e.g., "gno.land/r/gnoswap/gns")
 //
-// Returns the balance of the specified token held by the community pool.
+// Returns:
+//   - balance: the balance of the specified token held by the community pool
 func GetBalanceOf(tokenPath string) int64 {
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
