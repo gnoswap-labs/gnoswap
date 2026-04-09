@@ -177,7 +177,7 @@ StakeToken(123, "g1referrer...")
 CreateExternalIncentive(
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
-    1000000000,    // rewardAmount as int64
+    1000000000,
     startTime,
     endTime,
 )
