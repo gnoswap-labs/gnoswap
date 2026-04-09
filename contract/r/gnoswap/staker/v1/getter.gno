@@ -536,12 +536,12 @@ func (s *stakerV1) GetPoolGlobalRewardRatioAccumulation(poolPath string, timesta
 		return u256.Zero()
 	}
 
-	accumulation, ok := value.(*u256.Uint)
+	accumulationStr, ok := value.(string)
 	if !ok {
-		panic("failed to cast global reward ratio accumulation to *u256.Uint")
+		panic("failed to cast global reward ratio accumulation to string")
 	}
 
-	return accumulation
+	return u256.MustFromDecimal(accumulationStr)
 }
 
 // GetPoolHistoricalTickCount returns the number of historical tick entries for a pool.

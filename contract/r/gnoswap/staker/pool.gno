@@ -201,7 +201,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		historicalTick:                NewUintTree(),
 	}
 
-	pool.GlobalRewardRatioAccumulation().Set(currentTime, u256.Zero())
+	pool.GlobalRewardRatioAccumulation().Set(currentTime, "0")
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.RewardCache().Set(currentTime, int64(0))

@@ -83,11 +83,14 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 
 	self.GlobalRewardRatioAccumulation().ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		time = key
-		v, ok := value.(*u256.Uint)
+
+		valueStr, ok := value.(string)
 		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
+			panic(ufmt.Sprintf("failed to cast value to string: %T", value))
 		}
-		acc = v
+
+		acc = u256.MustFromDecimal(valueStr)
+
 		return true
 	})
 	if acc == nil {
@@ -237,7 +240,8 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
-	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc)
+	// Persist as string to reduce stored object complexity.
+	self.GlobalRewardRatioAccumulation().Set(currentTime, newAcc.ToString())
 	return newAcc
 }
 
