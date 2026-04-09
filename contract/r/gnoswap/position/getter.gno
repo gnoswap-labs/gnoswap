@@ -34,7 +34,7 @@ func IsInRange(positionId uint64) bool {
 	return getImplementation().IsInRange(positionId)
 }
 
-// GetPositionTokenBalances returns the token0 balance of a position.
+// GetPositionTokenBalances returns the token balances of a position.
 func GetPositionTokenBalances(positionId uint64) (int64, int64) {
 	balance0, balance1 := getImplementation().GetPositionTokenBalances(positionId)
 	return balance0, balance1
