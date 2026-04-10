@@ -509,7 +509,7 @@ func TestDiv(t *testing.T) {
 			wantErr: false,
 		},
 
-		// Division by zero
+		// Division by zero panics
 		{
 			name:    "div_by_zero",
 			x:       "31337",
@@ -637,7 +637,7 @@ func TestMod(t *testing.T) {
 			wantErr: false,
 		},
 
-		// Modulo by zero
+		// Modulo by zero panics
 		{
 			name:    "mod_by_zero",
 			x:       "31337",
@@ -675,16 +675,17 @@ func TestMod(t *testing.T) {
 			x := parseUint(tc.x)
 			y := parseUint(tc.y)
 
-			got := new(Uint).Mod(x, y)
-
 			if tc.wantErr {
-				// Modulo by zero returns 0
-				if !got.IsZero() {
-					t.Errorf("Mod(%s, %s) expected zero for modulo by zero", tc.x, tc.y)
-				}
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Mod(%s, %s) expected panic on modulo by zero", tc.x, tc.y)
+					}
+				}()
+				new(Uint).Mod(x, y)
 				return
 			}
 
+			got := new(Uint).Mod(x, y)
 			want := parseUint(tc.want)
 			if !got.Eq(want) {
 				t.Errorf("Mod(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
@@ -755,7 +756,7 @@ func TestDivMod(t *testing.T) {
 			wantErr: false,
 		},
 
-		// Division by zero
+		// Division by zero panics
 		{
 			name:    "divmod_by_zero",
 			x:       "31337",
@@ -807,18 +808,21 @@ func TestDivMod(t *testing.T) {
 			x := parseUint(tc.x)
 			y := parseUint(tc.y)
 
-			gotDiv := new(Uint)
-			gotMod := new(Uint)
-			gotDiv, gotMod = gotDiv.DivMod(x, y, gotMod)
-
 			if tc.wantErr {
-				// Division by zero returns (0, 0)
-				if !gotDiv.IsZero() || !gotMod.IsZero() {
-					t.Errorf("DivMod(%s, %s) expected (0, 0) for division by zero", tc.x, tc.y)
-				}
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("DivMod(%s, %s) expected panic on division by zero", tc.x, tc.y)
+					}
+				}()
+				gotDiv := new(Uint)
+				gotMod := new(Uint)
+				gotDiv.DivMod(x, y, gotMod)
 				return
 			}
 
+			gotDiv := new(Uint)
+			gotMod := new(Uint)
+			gotDiv, gotMod = gotDiv.DivMod(x, y, gotMod)
 			wantDiv := parseUint(tc.wantDiv)
 			wantMod := parseUint(tc.wantMod)
 
@@ -940,16 +944,17 @@ func TestMulMod(t *testing.T) {
 			y := parseUint(tc.y)
 			m := parseUint(tc.m)
 
-			got := new(Uint).MulMod(x, y, m)
-
 			if tc.wantErr {
-				// MulMod by zero returns 0
-				if !got.IsZero() {
-					t.Errorf("MulMod(%s, %s, %s) expected zero for modulo by zero", tc.x, tc.y, tc.m)
-				}
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("MulMod(%s, %s, %s) expected panic on modulo by zero", tc.x, tc.y, tc.m)
+					}
+				}()
+				new(Uint).MulMod(x, y, m)
 				return
 			}
 
+			got := new(Uint).MulMod(x, y, m)
 			want := parseUint(tc.want)
 			if !got.Eq(want) {
 				t.Errorf("MulMod(%s, %s, %s) = %s, want %s", tc.x, tc.y, tc.m, got.ToString(), tc.want)
@@ -1020,38 +1025,6 @@ func TestNeg(t *testing.T) {
 	}
 }
 
-// TestMustMul verifies MustMul panic behavior
-func TestMustMul(t *testing.T) {
-	t.Run("normal_multiplication", func(t *testing.T) {
-		x := NewUint(1000)
-		y := NewUint(2000)
-		result := new(Uint).MustMul(x, y)
-		if result.ToString() != "2000000" {
-			t.Errorf("MustMul(1000, 2000) = %s, want 2000000", result.ToString())
-		}
-	})
-
-	t.Run("large_valid_multiplication", func(t *testing.T) {
-		x := parseUint("340282366920938463463374607431768211455") // 2^128 - 1
-		y := NewUint(2)
-		result := new(Uint).MustMul(x, y)
-		if result.ToString() != "680564733841876926926749214863536422910" {
-			t.Errorf("MustMul large valid failed")
-		}
-	})
-
-	t.Run("overflow_panics", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("MustMul should panic on overflow")
-			}
-		}()
-
-		max := MustFromDecimal(MAX_UINT256)
-		new(Uint).MustMul(max, NewUint(2))
-	})
-}
-
 // TestIsOverflow verifies overflow bit detection
 func TestIsOverflow(t *testing.T) {
 	tests := []struct {
@@ -1097,126 +1070,53 @@ func TestIsOverflow(t *testing.T) {
 
 // TestDivisionByZero verifies zero-divisor behavior across division helpers
 func TestDivisionByZero(t *testing.T) {
-	zeroResultCases := []struct {
-		name string
-		fn   func() *Uint
+	panicCases := []struct {
+		name    string
+		message string
+		fn      func()
 	}{
 		{
-			name: "mod_by_zero",
-			fn: func() *Uint {
+			name:    "div_by_zero",
+			message: "division by zero",
+			fn: func() {
 				x := MustFromDecimal("12345")
 				y := MustFromDecimal("0")
-				return new(Uint).Mod(x, y)
+				new(Uint).Div(x, y)
 			},
 		},
 		{
-			name: "mulmod_by_zero",
-			fn: func() *Uint {
+			name:    "mod_by_zero",
+			message: "modulo by zero",
+			fn: func() {
+				x := MustFromDecimal("12345")
+				y := MustFromDecimal("0")
+				new(Uint).Mod(x, y)
+			},
+		},
+		{
+			name:    "mulmod_by_zero",
+			message: "modulo by zero",
+			fn: func() {
 				x := MustFromDecimal("12345")
 				y := MustFromDecimal("67890")
 				m := MustFromDecimal("0")
-				return new(Uint).MulMod(x, y, m)
+				new(Uint).MulMod(x, y, m)
 			},
 		},
 	}
 
-	t.Run("div_by_zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Div should panic on division by zero")
-			}
-		}()
-		x := MustFromDecimal("12345")
-		y := MustFromDecimal("0")
-		new(Uint).Div(x, y)
-	})
-
-	for _, tc := range zeroResultCases {
+	for _, tc := range panicCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := tc.fn()
-			if !result.IsZero() {
-				t.Errorf("%s should return zero but returned %s", tc.name, result.ToString())
-			}
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("%s should panic", tc.name)
+				} else if msg, ok := r.(string); ok && msg != tc.message {
+					t.Errorf("%s panic = %q, want %q", tc.name, msg, tc.message)
+				}
+			}()
+			tc.fn()
 		})
 	}
-}
-
-// TestMustOperations verifies that Must* functions panic appropriately
-func TestMustOperations(t *testing.T) {
-	t.Run("MustDiv_panics_on_zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("MustDiv should panic on division by zero")
-			}
-		}()
-		x := NewUint(100)
-		y := Zero()
-		new(Uint).MustDiv(x, y)
-	})
-
-	t.Run("MustMod_panics_on_zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("MustMod should panic on modulo by zero")
-			}
-		}()
-		x := NewUint(100)
-		y := Zero()
-		new(Uint).MustMod(x, y)
-	})
-
-	t.Run("MustMulMod_panics_on_zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("MustMulMod should panic on modulo by zero")
-			}
-		}()
-		x := NewUint(10)
-		y := NewUint(20)
-		m := Zero()
-		new(Uint).MustMulMod(x, y, m)
-	})
-
-	t.Run("MustDivMod_panics_on_zero", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("MustDivMod should panic on division by zero")
-			}
-		}()
-		x := NewUint(100)
-		y := Zero()
-		new(Uint).MustDivMod(x, y, new(Uint))
-	})
-
-	t.Run("MustMul_panics_on_overflow", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("MustMul should panic on overflow")
-			}
-		}()
-		x := MustFromDecimal("340282366920938463463374607431768211456") // 2^128
-		y := MustFromDecimal("340282366920938463463374607431768211456")
-		new(Uint).MustMul(x, y)
-	})
-
-	// Test successful Must operations
-	t.Run("MustDiv_success", func(t *testing.T) {
-		x := NewUint(100)
-		y := NewUint(10)
-		result := new(Uint).MustDiv(x, y)
-		if !result.Eq(NewUint(10)) {
-			t.Error("MustDiv failed")
-		}
-	})
-
-	t.Run("MustMul_success", func(t *testing.T) {
-		x := NewUint(100)
-		y := NewUint(200)
-		result := new(Uint).MustMul(x, y)
-		if !result.Eq(NewUint(20000)) {
-			t.Error("MustMul failed")
-		}
-	})
 }
 
 // TestMulModPaths verifies both fast and reduce4 paths in MulMod

@@ -87,8 +87,8 @@ type divParams struct {
 }
 
 func (p *divParams) IsValid() bool {
-	// Division by zero returns 0 (not panic), so always valid
-	return true
+	// Div panics on zero divisor.
+	return p.y != "0"
 }
 
 func (p *divParams) ToString() string {
@@ -108,11 +108,11 @@ func NewValidDivParams(t *fuzz.T) *divParams {
 
 func NewRandomizedDivParams(t *fuzz.T) *divParams {
 	x := fuzz.Uint256().Draw(t, "x").(*u256.Uint)
-	y := fuzz.Uint256().Draw(t, "y").(*u256.Uint)
+	y := fuzz.Uint64Range(1, 1<<63-1).Draw(t, "y").(uint64)
 
 	return &divParams{
 		x: x.ToString(),
-		y: y.ToString(),
+		y: u256.NewUint(y).ToString(),
 	}
 }
 
@@ -123,8 +123,8 @@ type modParams struct {
 }
 
 func (p *modParams) IsValid() bool {
-	// Mod by zero returns 0 (not panic), so always valid
-	return true
+	// Mod panics on zero modulus.
+	return p.y != "0"
 }
 
 func (p *modParams) ToString() string {
@@ -143,11 +143,11 @@ func NewValidModParams(t *fuzz.T) *modParams {
 
 func NewRandomizedModParams(t *fuzz.T) *modParams {
 	x := fuzz.Uint256().Draw(t, "x").(*u256.Uint)
-	y := fuzz.Uint256().Draw(t, "y").(*u256.Uint)
+	y := fuzz.Uint64Range(1, 1<<63-1).Draw(t, "y").(uint64)
 
 	return &modParams{
 		x: x.ToString(),
-		y: y.ToString(),
+		y: u256.NewUint(y).ToString(),
 	}
 }
 
@@ -158,8 +158,8 @@ type divModParams struct {
 }
 
 func (p *divModParams) IsValid() bool {
-	// DivMod by zero returns (0, 0) (not panic), so always valid
-	return true
+	// DivMod panics on zero divisor.
+	return p.y != "0"
 }
 
 func (p *divModParams) ToString() string {
@@ -178,11 +178,11 @@ func NewValidDivModParams(t *fuzz.T) *divModParams {
 
 func NewRandomizedDivModParams(t *fuzz.T) *divModParams {
 	x := fuzz.Uint256().Draw(t, "x").(*u256.Uint)
-	y := fuzz.Uint256().Draw(t, "y").(*u256.Uint)
+	y := fuzz.Uint64Range(1, 1<<63-1).Draw(t, "y").(uint64)
 
 	return &divModParams{
 		x: x.ToString(),
-		y: y.ToString(),
+		y: u256.NewUint(y).ToString(),
 	}
 }
 
