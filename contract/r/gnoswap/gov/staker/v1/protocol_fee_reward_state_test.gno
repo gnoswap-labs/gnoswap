@@ -128,6 +128,9 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 				s.SetAccumulatedRewards(map[string]int64{
 					"token1": 1000,
 				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 400,
+				})
 			},
 			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
 				"token1": u256.NewUintFromInt64(1000),
@@ -184,8 +187,38 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			for token, amount := range result {
 				uassert.True(t, amount >= 0, "Reward amount should be non-negative for token: "+token)
 			}
+
+			if tt.name == "No rewards when accumulated height is greater than current height" {
+				uassert.Equal(t, result["token1"], int64(600))
+			}
 		})
 	}
+}
+
+func TestProtocolFeeRewardState_GetClaimableRewardAmounts_SubtractsClaimedRewards(t *testing.T) {
+	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+	resolver := NewProtocolFeeRewardStateResolver(state)
+	resolver.SetAccumulatedTimestamp(50)
+	resolver.SetStakedAmount(10)
+	resolver.SetAccumulatedRewards(map[string]int64{
+		"token1": 100,
+		"token2": 50,
+	})
+	resolver.SetClaimedRewards(map[string]int64{
+		"token1": 30,
+		"token2": 50,
+	})
+	resolver.SetRewardDebtX128ForToken("token1", u256.NewUintFromInt64(5).Lsh(u256.NewUintFromInt64(5), 128))
+	resolver.SetRewardDebtX128ForToken("token2", u256.NewUintFromInt64(2).Lsh(u256.NewUintFromInt64(2), 128))
+
+	result, err := resolver.GetClaimableRewardAmounts(map[string]*u256.Uint{
+		"token1": u256.NewUintFromInt64(8).Lsh(u256.NewUintFromInt64(8), 128),
+		"token2": u256.NewUintFromInt64(4).Lsh(u256.NewUintFromInt64(4), 128),
+	}, 100)
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, result["token1"], int64(100))
+	uassert.Equal(t, result["token2"], int64(20))
 }
 
 // Test addStake

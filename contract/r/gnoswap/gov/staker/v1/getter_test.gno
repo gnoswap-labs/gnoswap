@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"time"
 
 	uassert "gno.land/p/nt/uassert/v0"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -622,6 +623,7 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 		{
 			name: "Single undelegation with lockup",
 			setupDelegation: func() *staker.Delegation {
+				now := time.Now().Unix()
 				delegation := NewDelegation(
 					1,
 					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
@@ -631,14 +633,15 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 					100,
 				)
 				resolver := NewDelegationResolver(delegation)
-				resolver.UnDelegate(300, 200, 200, 86400)
+				resolver.UnDelegate(300, 200, now, 86400)
 				return delegation
 			},
-			expectedAmount: 300,
+			expectedAmount: 0,
 		},
 		{
 			name: "Multiple undelegations with partial collection",
 			setupDelegation: func() *staker.Delegation {
+				now := time.Now().Unix()
 				delegation := NewDelegation(
 					1,
 					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
@@ -648,11 +651,33 @@ func TestGetter_GetCollectableWithdrawAmount(t *testing.T) {
 					100,
 				)
 				resolver := NewDelegationResolver(delegation)
-				resolver.UnDelegate(300, 200, 200, 86400)
-				resolver.UnDelegateWithoutLockup(200, 300, 300) // Already collected
+				resolver.UnDelegate(300, 200, now, 86400)
+				resolver.UnDelegateWithoutLockup(200, 300, now) // Already collected
 				return delegation
 			},
-			expectedAmount: 300, // Only the locked one counts
+			expectedAmount: 0,
+		},
+		{
+			name: "Only matured remaining withdraws count",
+			setupDelegation: func() *staker.Delegation {
+				now := time.Now().Unix()
+				delegation := NewDelegation(
+					1,
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					1000,
+					100,
+					100,
+				)
+				resolver := NewDelegationResolver(delegation)
+				resolver.UnDelegate(300, 200, now-200, 100)
+				resolver.UnDelegate(200, 300, now-50, 100)
+				withdraws := delegation.Withdraws()
+				withdraws[0].SetCollectedAmount(50)
+				delegation.SetWithdraws(withdraws)
+				return delegation
+			},
+			expectedAmount: 250,
 		},
 	}
 

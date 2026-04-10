@@ -134,6 +134,18 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			expected:                      500,
 		},
 		{
+			name: "Subtracts already claimed accumulated rewards",
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedRewardAmount(500)
+				s.SetClaimedRewardAmount(300)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
+			},
+			accumulatedRewardX128PerStake: u256.NewUint(0),
+			currentHeight:                 100,
+			expected:                      200,
+		},
+		{
 			name: "With new rewards to calculate",
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetAccumulatedRewardAmount(0)
@@ -144,6 +156,19 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128), // 1000 << 128
 			currentHeight:                 100,
 			expected:                      1000 * 1000,
+		},
+		{
+			name: "Includes new rewards on top of unclaimed accumulated rewards",
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedRewardAmount(500)
+				s.SetClaimedRewardAmount(300)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetAccumulatedTimestamp(50)
+			},
+			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1).Lsh(u256.NewUintFromInt64(1), 128),
+			currentHeight:                 100,
+			expected:                      1200,
 		},
 	}
 
