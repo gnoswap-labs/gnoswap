@@ -461,7 +461,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 					100)
 			},
 			setupHalt:     true,
-			expectedError: "halted: governance",
+			expectedError: "halted: governance:operate",
 		},
 		{
 			name:       "fail - canceled proposal voting",

@@ -81,7 +81,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "halted: governance",
+			expectedPanicMsg:              "halted: governance:operate",
 		},
 		{
 			name:                          "Fail: negative voting start delay",

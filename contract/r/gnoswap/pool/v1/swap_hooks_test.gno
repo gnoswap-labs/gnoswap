@@ -43,7 +43,7 @@ func TestHookSetters_RespectHalt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, "halted: pool", func() {
+			uassert.PanicsWithMessage(t, "halted: pool:operate", func() {
 				tt.call()
 			})
 		})

@@ -788,7 +788,7 @@ func TestProtocolFeeOperationsBlockedDuringEmergency(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}()
 
-			uassert.AbortsWithMessage(t, "halted: protocol_fee", func() {
+		uassert.AbortsWithMessage(t, "halted: protocol_fee:operate", func() {
 				tt.fn(pf)
 			})
 		})
@@ -926,7 +926,7 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			panicMsg:    "halted: protocol_fee:operate",
 		},
 	}
 

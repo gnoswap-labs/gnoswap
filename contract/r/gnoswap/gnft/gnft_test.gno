@@ -1184,7 +1184,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "Burn when halted",
@@ -1196,7 +1196,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "SafeTransferFrom when halted",
@@ -1210,7 +1210,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "TransferFrom when halted",
@@ -1224,7 +1224,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "Approve when halted",
@@ -1236,7 +1236,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "SetApprovalForAll when halted",
@@ -1246,7 +1246,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 		{
 			name:      "SetTokenURI when halted",
@@ -1258,7 +1258,7 @@ func TestHaltedOperations(t *testing.T) {
 				setHalted(true)
 			},
 			shouldPanic: true,
-			panicMsg:    "halted: position",
+			panicMsg:    "halted: position:operate",
 		},
 	}
 

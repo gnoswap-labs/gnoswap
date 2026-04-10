@@ -23,7 +23,7 @@ import (
 //
 // Returns amount collected and any error.
 func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypeLaunchpad)
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

@@ -1203,7 +1203,7 @@ func TestCollectBlockedByCompleteHalt(t *testing.T) {
 		halt.SetHaltLevel(cross, halt.HaltLevelNone)
 	}()
 
-	halted, err = halt.IsActionHalted(halt.OpTypePool, halt.ActionRecover)
+	halted, err := halt.IsActionHalted(halt.OpTypePool, halt.ActionRecover)
 	uassert.NoError(t, err)
 	uassert.True(t, halted, "complete halt should halt pool recovery")
 

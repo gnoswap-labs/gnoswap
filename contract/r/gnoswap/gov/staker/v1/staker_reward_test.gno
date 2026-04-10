@@ -149,7 +149,7 @@ func TestEmergencyHaltBlocksGovStakerCollectReward(t *testing.T) {
 	uassert.False(t, halted, "emergency should keep gov staker recovery enabled")
 
 	testing.SetRealm(testing.NewUserRealm(caller))
-	uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+	uassert.AbortsWithMessage(t, "halted: gov_staker:operate", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			gs.CollectReward()
@@ -783,7 +783,7 @@ func TestEmergencyHaltSetAmountByProjectWallet(t *testing.T) {
 		uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
 
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
-		uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+		uassert.AbortsWithMessage(t, "halted: gov_staker:operate", func() {
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 				gs.SetAmountByProjectWallet(testutils.TestAddress("project1"), 1000, true)
