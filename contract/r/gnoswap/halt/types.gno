@@ -3,8 +3,8 @@ package halt
 // Halt levels define different states of system operation restriction.
 const (
 	HaltLevelNone      HaltLevel = "NONE"      // All actions enabled.
-	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // Shared recovery actions halted.
-	HaltLevelEmergency HaltLevel = "EMERGENCY" // Governance operate + recovery actions remain enabled.
+	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // Shared withdrawal actions halted.
+	HaltLevelEmergency HaltLevel = "EMERGENCY" // Governance operate + withdrawal actions remain enabled.
 	HaltLevelComplete  HaltLevel = "COMPLETE"  // All actions disabled.
 )
 
@@ -25,14 +25,14 @@ const (
 
 // Action keys represent the type of behavior being controlled within a domain.
 const (
-	ActionOperate Action = "operate"
-	ActionRecover Action = "recover"
+	ActionOperate  Action = "operate"
+	ActionWithdraw Action = "withdraw"
 )
 
 var haltLevelDescriptions = map[HaltLevel]string{
 	HaltLevelNone:      "All actions enabled",
-	HaltLevelSafeMode:  "Shared recovery actions halted",
-	HaltLevelEmergency: "Governance operate and recovery actions remain enabled",
+	HaltLevelSafeMode:  "Shared withdrawal actions halted",
+	HaltLevelEmergency: "Governance operate and withdrawal actions remain enabled",
 	HaltLevelComplete:  "All actions disabled",
 }
 
@@ -92,8 +92,8 @@ func OpTypes() []OpType {
 type Action string
 
 var actions = map[Action]bool{
-	ActionOperate: true,
-	ActionRecover: true,
+	ActionOperate:  true,
+	ActionWithdraw: true,
 }
 
 func (a Action) String() string { return string(a) }
@@ -114,37 +114,36 @@ func Actions() []Action {
 var allowedActionsByDomain = map[OpType]map[Action]bool{
 	OpTypePool: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypePosition: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypeProtocolFee: {
 		ActionOperate: true,
-		ActionRecover: true,
 	},
 	OpTypeRouter: {
 		ActionOperate: true,
 	},
 	OpTypeStaker: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypeLaunchpad: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypeGovernance: {
 		ActionOperate: true,
 	},
 	OpTypeGovStaker: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypeXGns: {
 		ActionOperate: true,
-		ActionRecover: true,
+		ActionWithdraw: true,
 	},
 	OpTypeCommunityPool: {
 		ActionOperate: true,

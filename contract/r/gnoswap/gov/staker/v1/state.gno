@@ -8,7 +8,6 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/halt"
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
 

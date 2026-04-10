@@ -627,12 +627,12 @@ func TestEmergencyHaltAllowsStakerWithdrawalEntrypoints(t *testing.T) {
 		}()
 
 		uassert.True(t, halt.IsHaltedStaker(), "emergency should halt staker operations")
-		halted, err := halt.IsActionHalted(halt.OpTypeStaker, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypeStaker, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.False(t, halted, "emergency should keep staker recovery enabled")
+		uassert.False(t, halted, "emergency should keep staker withdraw enabled")
 
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		uassert.AbortsWithMessage(t, "halted: staker", func() {
+		uassert.AbortsWithMessage(t, "halted: staker:operate", func() {
 			mockInstanceCollectReward(positionId)
 		})
 	})
@@ -648,9 +648,9 @@ func TestEmergencyHaltAllowsStakerWithdrawalEntrypoints(t *testing.T) {
 		}()
 
 		uassert.True(t, halt.IsHaltedStaker(), "emergency should halt staker operations")
-		halted, err := halt.IsActionHalted(halt.OpTypeStaker, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypeStaker, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.False(t, halted, "emergency should keep staker recovery enabled")
+		uassert.False(t, halted, "emergency should keep staker withdraw enabled")
 
 		testing.SetRealm(testing.NewUserRealm(addr01))
 		resultPoolPath := mockInstanceUnStakeToken(positionId)

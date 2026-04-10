@@ -15,7 +15,7 @@ func TestAssert_OperateWrappers(t *testing.T) {
 	uassert.NotPanics(t, func() { AssertIsNotHaltedGovernance() })
 }
 
-func TestAssert_AssertCanRecover(t *testing.T) {
+func TestAssert_AssertCanWithdraw(t *testing.T) {
 	tests := []struct {
 		level       HaltLevel
 		shouldPanic bool
@@ -30,16 +30,16 @@ func TestAssert_AssertCanRecover(t *testing.T) {
 		err := setHaltLevel(tt.level)
 		uassert.NoError(t, err)
 		if tt.shouldPanic {
-			uassert.PanicsWithMessage(t, "halted: position:recover", func() {
-				AssertCanRecover(OpTypePosition)
+			uassert.PanicsWithMessage(t, "halted: position:withdraw", func() {
+				AssertCanWithdraw(OpTypePosition)
 			})
 		} else {
-			uassert.NotPanics(t, func() { AssertCanRecover(OpTypePosition) })
+			uassert.NotPanics(t, func() { AssertCanWithdraw(OpTypePosition) })
 		}
 	}
 
-	uassert.PanicsWithMessage(t, "action not allowed for domain: governance:recover", func() {
-		AssertCanRecover(OpTypeGovernance)
+	uassert.PanicsWithMessage(t, "action not allowed for domain: governance:withdraw", func() {
+		AssertCanWithdraw(OpTypeGovernance)
 	})
 }
 
@@ -53,8 +53,10 @@ func TestAssert_InternalActionHelperCoverage(t *testing.T) {
 	uassert.PanicsWithMessage(t, "halted: community_pool:operate", func() {
 		AssertIsNotHaltedCommunityPool()
 	})
-	uassert.PanicsWithMessage(t, "action not allowed for domain: router:recover", func() {
-		AssertCanRecover(OpTypeRouter)
+	uassert.PanicsWithMessage(t, "action not allowed for domain: router:withdraw", func() {
+		AssertCanWithdraw(OpTypeRouter)
 	})
-	uassert.NotPanics(t, func() { AssertCanRecover(OpTypeProtocolFee) })
+	uassert.PanicsWithMessage(t, "action not allowed for domain: protocol_fee:withdraw", func() {
+		AssertCanWithdraw(OpTypeProtocolFee)
+	})
 }

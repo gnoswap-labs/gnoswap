@@ -82,8 +82,8 @@ func newNoneConfig() HaltConfig {
 func newSafeModeConfig() HaltConfig {
 	config := newNoneConfig()
 	for domain := range allowedActionsByDomain {
-		if IsAllowedAction(domain, ActionRecover) {
-			config[domain][ActionRecover] = true
+		if IsAllowedAction(domain, ActionWithdraw) {
+			config[domain][ActionWithdraw] = true
 		}
 	}
 	return config
@@ -93,8 +93,8 @@ func newEmergencyConfig() HaltConfig {
 	config := newBaseConfig(true)
 	config[OpTypeGovernance][ActionOperate] = false
 	for domain := range allowedActionsByDomain {
-		if IsAllowedAction(domain, ActionRecover) {
-			config[domain][ActionRecover] = false
+		if IsAllowedAction(domain, ActionWithdraw) {
+			config[domain][ActionWithdraw] = false
 		}
 	}
 	return config

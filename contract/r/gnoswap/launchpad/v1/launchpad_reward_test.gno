@@ -538,7 +538,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner2",
 			caller:           "haltOwner2",
 			haltLevel:        halt.HaltLevelComplete,
-		expectedErrorMsg: "halted: launchpad:recover",
+		expectedErrorMsg: "halted: launchpad:operate",
 		},
 	}
 
@@ -592,7 +592,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 	}
 }
 
-func TestEmergencyHaltAllowsCollectRewardByDepositId(t *testing.T) {
+func TestEmergencyHaltBlocksCollectRewardByDepositId(t *testing.T) {
 	env := testEnvConfig{initialTime: 9000000}
 	project := testProjectConfig{
 		rewardAmount:    10000000,
@@ -616,16 +616,11 @@ func TestEmergencyHaltAllowsCollectRewardByDepositId(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
-	halted, err := halt.IsActionHalted(halt.OpTypeLaunchpad, halt.ActionRecover)
-	uassert.NoError(t, err)
-	uassert.False(t, halted, "emergency should keep launchpad recovery enabled")
-
 	testing.SetRealm(testing.NewUserRealm(userAddr))
-	uassert.NotPanics(t, func() {
+	uassert.AbortsWithMessage(t, "halted: launchpad:operate", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-			rewardAmount := lp.CollectRewardByDepositId(depositID)
-			uassert.True(t, rewardAmount > 0, "reward amount should be > 0 during emergency")
+			lp.CollectRewardByDepositId(depositID)
 		}(cross)
 	})
 }

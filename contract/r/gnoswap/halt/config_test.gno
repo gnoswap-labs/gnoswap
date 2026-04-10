@@ -12,10 +12,10 @@ func TestConfig_Factories(t *testing.T) {
 	emergency := newEmergencyConfig()
 	complete := newCompleteConfig()
 
-	uassert.Equal(t, none.IsHalted(OpTypePosition, ActionRecover), false)
-	uassert.Equal(t, safe.IsHalted(OpTypePosition, ActionRecover), true)
-	uassert.Equal(t, emergency.IsHalted(OpTypePosition, ActionRecover), false)
-	uassert.Equal(t, complete.IsHalted(OpTypePosition, ActionRecover), true)
+	uassert.Equal(t, none.IsHalted(OpTypePosition, ActionWithdraw), false)
+	uassert.Equal(t, safe.IsHalted(OpTypePosition, ActionWithdraw), true)
+	uassert.Equal(t, emergency.IsHalted(OpTypePosition, ActionWithdraw), false)
+	uassert.Equal(t, complete.IsHalted(OpTypePosition, ActionWithdraw), true)
 
 	uassert.Equal(t, emergency.IsHalted(OpTypePool, ActionOperate), true)
 	uassert.Equal(t, emergency.IsHalted(OpTypeGovernance, ActionOperate), false)
@@ -39,8 +39,8 @@ func TestConfig_GetSetClone(t *testing.T) {
 
 func TestConfig_InvalidCombination(t *testing.T) {
 	config := newNoneConfig()
-	_, err := config.get(OpTypeGovernance, ActionRecover)
+	_, err := config.get(OpTypeGovernance, ActionWithdraw)
 	uassert.ErrorContains(t, err, "action not allowed for domain")
-	err = config.set(OpTypeGovernance, ActionRecover, true)
+	err = config.set(OpTypeGovernance, ActionWithdraw, true)
 	uassert.ErrorContains(t, err, "action not allowed for domain")
 }

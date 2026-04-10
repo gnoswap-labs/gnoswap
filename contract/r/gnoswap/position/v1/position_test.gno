@@ -1712,9 +1712,9 @@ func TestEmergencyHaltAllowsWithdrawalEntrypoints(t *testing.T) {
 		}()
 
 		uassert.True(t, halt.IsHaltedPosition(), "emergency should halt position operations")
-		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.False(t, halted, "emergency should keep position recovery enabled")
+		uassert.False(t, halted, "emergency should keep position withdraw enabled")
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		uassert.NotPanics(t, func() {
@@ -1728,7 +1728,7 @@ func TestEmergencyHaltAllowsWithdrawalEntrypoints(t *testing.T) {
 		})
 	})
 
-	t.Run("CollectFee should remain available in emergency because withdraw is enabled", func(t *testing.T) {
+	t.Run("CollectFee should remain blocked in emergency", func(t *testing.T) {
 		initPositionTest(t)
 
 		createPoolWithoutFee(barPath, fooPath, fee500, 0)
@@ -1752,12 +1752,12 @@ func TestEmergencyHaltAllowsWithdrawalEntrypoints(t *testing.T) {
 		}()
 
 		uassert.True(t, halt.IsHaltedPosition(), "emergency should halt position operations")
-		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.False(t, halted, "emergency should keep position recovery enabled")
+		uassert.False(t, halted, "emergency should keep position withdraw enabled")
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.NotPanics(t, func() {
+		uassert.AbortsWithMessage(t, "halted: position:operate", func() {
 			mockInstanceCollectFee(1, adminAddr)
 		})
 	})
@@ -1785,12 +1785,12 @@ func TestCompleteHaltBlocksWithdrawalEntrypoints(t *testing.T) {
 			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 		}()
 
-		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.True(t, halted, "complete halt should halt position recovery")
+		uassert.True(t, halted, "complete halt should halt position withdraw")
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.AbortsWithMessage(t, "halted: position:recover", func() {
+		uassert.AbortsWithMessage(t, "halted: position:withdraw", func() {
 			mockInstanceDecreaseLiquidity(
 				1, "100", "0", "0",
 				time.Now().Add(time.Hour).Unix(),
@@ -1815,12 +1815,12 @@ func TestCompleteHaltBlocksWithdrawalEntrypoints(t *testing.T) {
 			halt.SetHaltLevel(cross, halt.HaltLevelNone)
 		}()
 
-		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+		halted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 		uassert.NoError(t, err)
-		uassert.True(t, halted, "complete halt should halt position recovery")
+		uassert.True(t, halted, "complete halt should halt position withdraw")
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.AbortsWithMessage(t, "halted: position:recover", func() {
+		uassert.AbortsWithMessage(t, "halted: position:operate", func() {
 			mockInstanceCollectFee(1, adminAddr)
 		})
 	})

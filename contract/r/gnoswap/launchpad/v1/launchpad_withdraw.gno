@@ -24,7 +24,7 @@ import (
 // Returns amount withdrawn and any error.
 // Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
-	halt.AssertCanRecover(halt.OpTypeLaunchpad)
+	halt.AssertCanWithdraw(halt.OpTypeLaunchpad)
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

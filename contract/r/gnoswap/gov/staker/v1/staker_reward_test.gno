@@ -144,9 +144,9 @@ func TestEmergencyHaltBlocksGovStakerCollectReward(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov staker operations")
-	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionRecover)
+	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionWithdraw)
 	uassert.NoError(t, err)
-	uassert.False(t, halted, "emergency should keep gov staker recovery enabled")
+	uassert.False(t, halted, "emergency should keep gov staker withdraw enabled")
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	uassert.AbortsWithMessage(t, "halted: gov_staker:operate", func() {
@@ -791,7 +791,7 @@ func TestEmergencyHaltSetAmountByProjectWallet(t *testing.T) {
 		})
 	})
 
-	t.Run("add=false is allowed during emergency because only withdraw halt is checked", func(t *testing.T) {
+	t.Run("add=false is allowed during emergency because it is part of principal withdrawal cleanup", func(t *testing.T) {
 		gs := createTestGovStaker()
 		proj := testutils.TestAddress("project1")
 		cleanupStakerRewardTest(t)
@@ -806,17 +806,17 @@ func TestEmergencyHaltSetAmountByProjectWallet(t *testing.T) {
 		}()
 
 		uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
-	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionRecover)
+	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionWithdraw)
 	uassert.NoError(t, err)
-	uassert.False(t, halted, "emergency should keep gov staker recovery enabled")
+	uassert.False(t, halted, "emergency should keep gov staker withdraw enabled")
 
 		testing.SetRealm(testing.NewUserRealm(launchpadAddr))
-		uassert.NotPanics(t, func() {
-			func(cur realm) {
-				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-				gs.SetAmountByProjectWallet(proj, 500, false)
-			}(cross)
-		})
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.SetAmountByProjectWallet(proj, 500, false)
+		}(cross)
+	})
 	})
 }
 

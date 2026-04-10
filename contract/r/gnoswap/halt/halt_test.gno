@@ -22,7 +22,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 	halted, err := config.get(OpTypePool, ActionOperate)
 	uassert.NoError(t, err)
 	uassert.Equal(t, halted, true)
-	halted, err = config.get(OpTypePosition, ActionRecover)
+	halted, err = config.get(OpTypePosition, ActionWithdraw)
 	uassert.NoError(t, err)
 	uassert.Equal(t, halted, false)
 	halted, err = config.get(OpTypeGovernance, ActionOperate)
@@ -32,8 +32,8 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 func TestHalt_SetActionStatus_Internal(t *testing.T) {
 	cleanup(t)
-	uassert.NoError(t, haltStates.setActionHalted(OpTypePosition, ActionRecover, true))
-	halted, err := IsActionHalted(OpTypePosition, ActionRecover)
+	uassert.NoError(t, haltStates.setActionHalted(OpTypePosition, ActionWithdraw, true))
+	halted, err := IsActionHalted(OpTypePosition, ActionWithdraw)
 	uassert.NoError(t, err)
 	uassert.Equal(t, halted, true)
 }
@@ -49,8 +49,8 @@ func TestHalt_Setters_WithAuthorization(t *testing.T) {
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	SetActionStatus(cross, OpTypePosition, ActionRecover, true)
-	halted, err := IsActionHalted(OpTypePosition, ActionRecover)
+	SetActionStatus(cross, OpTypePosition, ActionWithdraw, true)
+	halted, err := IsActionHalted(OpTypePosition, ActionWithdraw)
 	uassert.NoError(t, err)
 	uassert.Equal(t, halted, true)
 

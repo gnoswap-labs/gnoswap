@@ -120,7 +120,7 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	halt.AssertCanRecover(halt.OpTypePool)
+	halt.AssertCanWithdraw(halt.OpTypePool)
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
@@ -188,7 +188,7 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertCanRecover(halt.OpTypePool)
+	halt.AssertCanWithdraw(halt.OpTypePool)
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)

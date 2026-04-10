@@ -12,8 +12,8 @@ func AssertIsNotHaltedXGns()          { assertActionAllowed(OpTypeXGns, ActionOp
 func AssertIsNotHaltedCommunityPool() { assertActionAllowed(OpTypeCommunityPool, ActionOperate) }
 func AssertIsNotHaltedEmission()      { assertActionAllowed(OpTypeEmission, ActionOperate) }
 
-func AssertCanRecover(domain OpType) {
-	assertActionAllowed(domain, ActionRecover)
+func AssertCanWithdraw(domain OpType) {
+	assertActionAllowed(domain, ActionWithdraw)
 }
 
 func assertActionAllowed(domain OpType, action Action) {

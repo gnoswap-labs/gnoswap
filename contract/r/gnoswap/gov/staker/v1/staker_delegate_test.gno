@@ -725,9 +725,9 @@ func TestEmergencyHaltAllowsCollectUndelegatedGns(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov staker operations")
-	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionRecover)
+	halted, err := halt.IsActionHalted(halt.OpTypeGovStaker, halt.ActionWithdraw)
 	uassert.NoError(t, err)
-	uassert.False(t, halted, "emergency should keep gov staker recovery enabled")
+	uassert.False(t, halted, "emergency should keep gov staker withdraw enabled")
 
 	testing.SetRealm(testing.NewUserRealm(caller))
 	uassert.NotPanics(t, func() {

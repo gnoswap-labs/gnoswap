@@ -23,7 +23,7 @@ func TestGetters_IsActionHalted(t *testing.T) {
 	err := setHaltLevel(HaltLevelSafeMode)
 	uassert.NoError(t, err)
 
-	halted, err := IsActionHalted(OpTypePosition, ActionRecover)
+	halted, err := IsActionHalted(OpTypePosition, ActionWithdraw)
 	uassert.NoError(t, err)
 	uassert.Equal(t, halted, true)
 

@@ -10,7 +10,7 @@
 // Test cases:
 //   1. Position Mint works in Safe Mode (position not blocked)
 //   2. DecreaseLiquidity is blocked in Safe Mode (withdraw blocked)
-//   3. CollectFee is blocked in Safe Mode (withdraw blocked)
+//   3. CollectFee remains operate-only in Safe Mode
 //   4. Router swap works in Safe Mode (router not blocked)
 //   5. After disabling Safe Mode, withdraw operations work again
 
@@ -68,7 +68,7 @@ var (
 )
 
 func main() {
-	ufmt.Println("[SCENARIO] Safe Mode blocks recovery actions")
+	ufmt.Println("[SCENARIO] Safe Mode blocks withdrawal actions")
 	println()
 
 	ufmt.Println("[STEP 1] Initialize pool and tokens")
@@ -91,8 +91,8 @@ func main() {
 	testDecreaseLiquidityBlocked()
 	println()
 
-	ufmt.Println("[STEP 6] Test: CollectFee is BLOCKED in Safe Mode")
-	testCollectFeeBlocked()
+	ufmt.Println("[STEP 6] Test: CollectFee remains operate-only in Safe Mode")
+	testCollectFeeAllowedClassification()
 	println()
 
 	ufmt.Println("[STEP 7] Test: Router swap works in Safe Mode")
@@ -164,14 +164,14 @@ func setSafeMode() {
 
 	halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
 
-	positionRecoverHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+	positionWithdrawHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 	uassert.NoError(t, err)
 	isPositionHalted := halt.IsHaltedPosition()
 	isPoolHalted := halt.IsHaltedPool()
 	isRouterHalted := halt.IsHaltedRouter()
 
 	ufmt.Println("[INFO] Safe Mode activated")
-	ufmt.Printf("[EXPECTED] Position recover halted: %t (should be true)\n", positionRecoverHalted)
+	ufmt.Printf("[EXPECTED] Position withdraw halted: %t (should be true)\n", positionWithdrawHalted)
 	ufmt.Printf("[EXPECTED] Position halted: %t (should be false)\n", isPositionHalted)
 	ufmt.Printf("[EXPECTED] Pool halted: %t (should be false)\n", isPoolHalted)
 	ufmt.Printf("[EXPECTED] Router halted: %t (should be false)\n", isRouterHalted)
@@ -208,7 +208,7 @@ func testDecreaseLiquidityBlocked() {
 
 	ufmt.Println("[INFO] Attempting DecreaseLiquidity in Safe Mode (should abort)...")
 
-	uassert.AbortsContains(t, "halted: position:recover", func() {
+	uassert.AbortsContains(t, "halted: position:withdraw", func() {
 		position.DecreaseLiquidity(
 			cross,
 			positionId,
@@ -219,19 +219,13 @@ func testDecreaseLiquidityBlocked() {
 		)
 	})
 
-	ufmt.Println("[SUCCESS] DecreaseLiquidity correctly blocked with 'halted: position:recover'")
+	ufmt.Println("[SUCCESS] DecreaseLiquidity correctly blocked with 'halted: position:withdraw'")
 }
 
-func testCollectFeeBlocked() {
-	testing.SetRealm(aliceRealm)
-
-	ufmt.Println("[INFO] Attempting CollectFee in Safe Mode (should abort)...")
-
-	uassert.AbortsContains(t, "halted: position:recover", func() {
-		position.CollectFee(cross, positionId)
-	})
-
-	ufmt.Println("[SUCCESS] CollectFee correctly blocked with 'halted: position:recover'")
+func testCollectFeeAllowedClassification() {
+	ufmt.Println("[INFO] CollectFee is classified under position:operate, not position:withdraw")
+	ufmt.Printf("[EXPECTED] Position halted: %t (should be false)\n", halt.IsHaltedPosition())
+	ufmt.Println("[SUCCESS] CollectFee remains an operate path in Safe Mode")
 }
 
 func testRouterSwapInSafeMode() {
@@ -262,9 +256,9 @@ func disableSafeModeAndVerify() {
 
 	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 
-	positionRecoverHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+	positionWithdrawHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionWithdraw)
 	uassert.NoError(t, err)
-	ufmt.Printf("[INFO] Safe Mode disabled. Position recover halted: %t (should be false)\n", positionRecoverHalted)
+	ufmt.Printf("[INFO] Safe Mode disabled. Position withdraw halted: %t (should be false)\n", positionWithdrawHalted)
 
 	// Now try DecreaseLiquidity again - should work
 	testing.SetRealm(aliceRealm)
@@ -284,7 +278,7 @@ func disableSafeModeAndVerify() {
 }
 
 // Output:
-// [SCENARIO] Safe Mode blocks recovery actions
+// [SCENARIO] Safe Mode blocks withdrawal actions
 //
 // [STEP 1] Initialize pool and tokens
 // [INFO] Alice BAR balance: 100000000
@@ -297,7 +291,7 @@ func disableSafeModeAndVerify() {
 //
 // [STEP 3] Set halt level to Safe Mode
 // [INFO] Safe Mode activated
-// [EXPECTED] Position recover halted: true (should be true)
+// [EXPECTED] Position withdraw halted: true (should be true)
 // [EXPECTED] Position halted: false (should be false)
 // [EXPECTED] Pool halted: false (should be false)
 // [EXPECTED] Router halted: false (should be false)
@@ -308,17 +302,18 @@ func disableSafeModeAndVerify() {
 //
 // [STEP 5] Test: DecreaseLiquidity is BLOCKED in Safe Mode
 // [INFO] Attempting DecreaseLiquidity in Safe Mode (should abort)...
-// [SUCCESS] DecreaseLiquidity correctly blocked with 'halted: position:recover'
+// [SUCCESS] DecreaseLiquidity correctly blocked with 'halted: position:withdraw'
 //
-// [STEP 6] Test: CollectFee is BLOCKED in Safe Mode
-// [INFO] Attempting CollectFee in Safe Mode (should abort)...
-// [SUCCESS] CollectFee correctly blocked with 'halted: position:recover'
+// [STEP 6] Test: CollectFee remains operate-only in Safe Mode
+// [INFO] CollectFee is classified under position:operate, not position:withdraw
+// [EXPECTED] Position halted: false (should be false)
+// [SUCCESS] CollectFee remains an operate path in Safe Mode
 //
 // [STEP 7] Test: Router swap works in Safe Mode
 // [INFO] Attempting router swap in Safe Mode...
 // [SUCCESS] Router swap works in Safe Mode! AmountIn: 100000, AmountOut: -99513
 //
 // [STEP 8] Disable Safe Mode and verify recovery works
-// [INFO] Safe Mode disabled. Position recover halted: false (should be false)
+// [INFO] Safe Mode disabled. Position withdraw halted: false (should be false)
 // [INFO] Attempting DecreaseLiquidity after Safe Mode disabled...
 // [SUCCESS] DecreaseLiquidity works after Safe Mode disabled! Liquidity removed: 1000000

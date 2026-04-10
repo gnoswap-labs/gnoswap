@@ -7,8 +7,8 @@ import (
 )
 
 func TestTypes_HaltLevelDescription(t *testing.T) {
-	uassert.Equal(t, HaltLevelSafeMode.Description(), "Shared recovery actions halted")
-	uassert.Equal(t, HaltLevelEmergency.Description(), "Governance operate and recovery actions remain enabled")
+	uassert.Equal(t, HaltLevelSafeMode.Description(), "Shared withdrawal actions halted")
+	uassert.Equal(t, HaltLevelEmergency.Description(), "Governance operate and withdrawal actions remain enabled")
 }
 
 func TestTypes_DomainValidation(t *testing.T) {
@@ -17,10 +17,10 @@ func TestTypes_DomainValidation(t *testing.T) {
 }
 
 func TestTypes_ActionValidation(t *testing.T) {
-	uassert.Equal(t, ActionRecover.IsValid(), true)
-	uassert.Equal(t, Action("withdraw").IsValid(), false)
-	uassert.Equal(t, IsAllowedAction(OpTypePosition, ActionRecover), true)
-	uassert.Equal(t, IsAllowedAction(OpTypeGovernance, ActionRecover), false)
+	uassert.Equal(t, ActionWithdraw.IsValid(), true)
+	uassert.Equal(t, Action("invalid").IsValid(), false)
+	uassert.Equal(t, IsAllowedAction(OpTypePosition, ActionWithdraw), true)
+	uassert.Equal(t, IsAllowedAction(OpTypeGovernance, ActionWithdraw), false)
 	uassert.Equal(t, policyKey(OpTypePool, ActionOperate), "pool:operate")
 	uassert.Equal(t, IsAllowedAction(OpTypeProtocolFee, ActionOperate), true)
 	uassert.Equal(t, IsAllowedAction(OpTypeCommunityPool, ActionOperate), true)

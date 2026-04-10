@@ -377,13 +377,13 @@ func TestXgns_Halted(t *testing.T) {
 			haltOp:          halt.OpTypeXGns,
 			expectedMessage: "halted: xgns:operate",
 		},
-		// Burn checks xgns:recover, not xgns:operate.
+		// Burn checks xgns:withdraw, not xgns:operate.
 		{
-			name:            "Halted Burn blocked by recover halt",
+			name:            "Halted Burn blocked by withdraw halt",
 			operation:       "Burn",
 			setupMint:       true,
 			haltOp:          halt.OpTypeXGns,
-			expectedMessage: "halted: xgns:recover",
+			expectedMessage: "halted: xgns:withdraw",
 		},
 	}
 
@@ -401,14 +401,14 @@ func TestXgns_Halted(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			if tc.operation == "Burn" {
-				halt.SetActionStatus(cross, tc.haltOp, halt.ActionRecover, true)
+				halt.SetActionStatus(cross, tc.haltOp, halt.ActionWithdraw, true)
 			} else {
 				halt.SetOperationStatus(cross, tc.haltOp, true)
 			}
 			defer func() {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				if tc.operation == "Burn" {
-					halt.SetActionStatus(cross, tc.haltOp, halt.ActionRecover, false)
+					halt.SetActionStatus(cross, tc.haltOp, halt.ActionWithdraw, false)
 				} else {
 					halt.SetOperationStatus(cross, tc.haltOp, false)
 				}
@@ -433,7 +433,7 @@ func TestXgns_Halted(t *testing.T) {
 
 // TestXgns_BurnAllowedDuringEmergencyHalt verifies that xGNS burning (part of
 // undelegation withdrawal) remains available under emergency halt even though
-// xgns operate is halted, because Burn gates on xgns:recover.
+// xgns operate is halted, because Burn gates on xgns:withdraw.
 func TestXgns_BurnAllowedDuringEmergencyHalt(t *testing.T) {
 	cleanup(t)
 	resetHalt(t)
@@ -449,9 +449,9 @@ func TestXgns_BurnAllowedDuringEmergencyHalt(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedXGns(), "emergency should halt xgns operations")
-	halted, err := halt.IsActionHalted(halt.OpTypeXGns, halt.ActionRecover)
+	halted, err := halt.IsActionHalted(halt.OpTypeXGns, halt.ActionWithdraw)
 	uassert.NoError(t, err)
-	uassert.False(t, halted, "emergency should keep xgns recovery enabled")
+	uassert.False(t, halted, "emergency should keep xgns withdraw enabled")
 
 	// Mint must be blocked (still checks AssertIsNotHaltedXGns)
 	uassert.AbortsWithMessage(t, "halted: xgns:operate", func() {
@@ -459,7 +459,7 @@ func TestXgns_BurnAllowedDuringEmergencyHalt(t *testing.T) {
 		Mint(cross, govStakerAddress, 10)
 	})
 
-	// Burn must be allowed (checks xgns:recover)
+	// Burn must be allowed (checks xgns:withdraw)
 	uassert.NotPanics(t, func() {
 		testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 		Burn(cross, govStakerAddress, 50)
