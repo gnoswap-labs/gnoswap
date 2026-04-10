@@ -19,7 +19,7 @@ func TestKeeper_Register(t *testing.T) {
 		callerRealm          runtime.Realm
 		addr                 address
 		refAddr              address
-		expectedSuccess      bool
+		expectedReferrer     string
 		expectedPanicMessage string
 	}{
 		{
@@ -27,28 +27,28 @@ func TestKeeper_Register(t *testing.T) {
 			callerRealm:     routerRealm,
 			addr:            testutils.TestAddress("user1"),
 			refAddr:         testutils.TestAddress("referrer1"),
-			expectedSuccess: true,
+			expectedReferrer: testutils.TestAddress("referrer1").String(),
 		},
 		{
 			name:            "Success register with contract address referral (removal)",
 			callerRealm:     routerRealm,
 			addr:            testutils.TestAddress("user2"),
 			refAddr:         contractAddress(),
-			expectedSuccess: true,
+			expectedReferrer: "",
 		},
 		{
 			name:            "Fail register with self referral",
 			callerRealm:     routerRealm,
 			addr:            testutils.TestAddress("user3"),
 			refAddr:         testutils.TestAddress("user3"),
-			expectedSuccess: false,
+			expectedReferrer: "",
 		},
 		{
 			name:                 "Panic with unauthorized caller",
 			callerRealm:          userRealm,
 			addr:                 testutils.TestAddress("user4"),
 			refAddr:              testutils.TestAddress("referrer2"),
-			expectedSuccess:      false,
+			expectedReferrer:     "",
 			expectedPanicMessage: "unauthorized caller",
 		},
 	}
@@ -66,8 +66,8 @@ func TestKeeper_Register(t *testing.T) {
 					TryRegister(cross, tc.addr, tc.refAddr.String())
 				})
 			} else {
-				success := TryRegister(cross, tc.addr, tc.refAddr.String())
-				uassert.Equal(t, tc.expectedSuccess, success)
+				result := TryRegister(cross, tc.addr, tc.refAddr.String())
+				uassert.Equal(t, tc.expectedReferrer, result)
 			}
 		})
 	}
@@ -259,8 +259,8 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		referrer := testutils.TestAddress("referrer1")
 
 		// Register referral first
-		success := TryRegister(cross, user, referrer.String())
-		uassert.True(t, success, "Initial registration should succeed")
+		result := TryRegister(cross, user, referrer.String())
+		uassert.Equal(t, referrer.String(), result, "Initial registration should succeed")
 		uassert.True(t, HasReferral(user.String()), "Referral should exist after registration")
 
 		// Simulate time passage to bypass rate limit
@@ -268,8 +268,8 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		k.lastOps.Set(user.String(), int64(0))
 
 		// Remove by registering with contract address
-		success = TryRegister(cross, user, contractAddress().String())
-		uassert.True(t, success, "Removal with contract address should succeed")
+		result = TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result, "Removal with contract address should succeed")
 		uassert.False(t, HasReferral(user.String()), "Referral should not exist after removal")
 	})
 
@@ -281,14 +281,14 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		referrer := testutils.TestAddress("referrer2")
 
 		// Register referral
-		success := TryRegister(cross, user, referrer.String())
-		uassert.True(t, success)
+		result := TryRegister(cross, user, referrer.String())
+		uassert.Equal(t, referrer.String(), result)
 		uassert.True(t, HasReferral(user.String()))
 
 		// Immediately try to remove with contract address (no time passage)
 		// This should succeed because contract address removal bypasses rate limit
-		success = TryRegister(cross, user, contractAddress().String())
-		uassert.True(t, success, "Contract address removal should bypass rate limit")
+		result = TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result, "Contract address removal should bypass rate limit")
 		uassert.False(t, HasReferral(user.String()))
 	})
 
@@ -301,19 +301,19 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		referrer2 := testutils.TestAddress("referrer3b")
 
 		// Register first referral
-		success := TryRegister(cross, user, referrer1.String())
-		uassert.True(t, success)
+		result := TryRegister(cross, user, referrer1.String())
+		uassert.Equal(t, referrer1.String(), result)
 		uassert.Equal(t, referrer1.String(), GetReferral(user.String()))
 
 		// Remove with contract address (bypasses rate limit)
-		success = TryRegister(cross, user, contractAddress().String())
-		uassert.True(t, success)
+		result = TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result)
 		uassert.False(t, HasReferral(user.String()))
 
 		// Re-register with new referrer should be rate limited
 		// because lastOps was set during first registration
-		success = TryRegister(cross, user, referrer2.String())
-		uassert.False(t, success, "Re-registration should be rate limited")
+		result = TryRegister(cross, user, referrer2.String())
+		uassert.Equal(t, "", result, "Re-registration should be rate limited")
 	})
 
 	t.Run("Contract address on non-existent referral is no-op", func(t *testing.T) {
@@ -323,8 +323,8 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		user := testutils.TestAddress("user4")
 
 		// Try to remove non-existent referral
-		success := TryRegister(cross, user, contractAddress().String())
-		uassert.True(t, success, "Contract address on non-existent should succeed (no-op)")
+		result := TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result, "Contract address on non-existent should succeed (no-op)")
 		uassert.False(t, HasReferral(user.String()))
 	})
 
@@ -340,8 +340,8 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 
 		// Multiple contract address calls should all succeed
 		for i := 0; i < 3; i++ {
-			success := TryRegister(cross, user, contractAddress().String())
-			uassert.True(t, success, "Multiple contract address calls should succeed")
+			result := TryRegister(cross, user, contractAddress().String())
+			uassert.Equal(t, "", result, "Multiple contract address calls should succeed")
 		}
 	})
 }

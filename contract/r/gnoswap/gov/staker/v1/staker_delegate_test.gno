@@ -1223,42 +1223,6 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 	xgns.Mint(cross, user, amount)
 }
 
-// TestStakerDelegate_registerReferrer tests the private registerReferrer function
-func TestStakerDelegate_registerReferrer(t *testing.T) {
-	tests := []struct {
-		name     string
-		caller   address
-		referrer string
-	}{
-		{
-			name:     "register with valid referrer",
-			caller:   testutils.TestAddress("alice"),
-			referrer: "referrer1",
-		},
-		{
-			name:     "register with empty referrer",
-			caller:   testutils.TestAddress("bob"),
-			referrer: "",
-		},
-		{
-			name:     "register same caller multiple times",
-			caller:   testutils.TestAddress("charlie"),
-			referrer: "referrer2",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when - call registerReferrer
-			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-			result := registerReferrer(tc.caller, tc.referrer)
-
-			// then - should return a referrer string (actual referrer may differ based on referral module logic)
-			uassert.NotNil(t, result)
-		})
-	}
-}
-
 // TestStakerDelegate_collectDelegations_MultipleDelegations tests collecting from multiple delegations
 func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	tests := []struct {
