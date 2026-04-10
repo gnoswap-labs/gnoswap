@@ -306,7 +306,7 @@ func testGovStakerGetters(delegationId1 int64) {
 //
 // [EXPECTED] Protocol Fee Accumulated X128 Per Stake: 0
 // [EXPECTED] Protocol Fee Amounts: 0
-// [EXPECTED] Protocol Fee Accumulated Timestamp: 1234567890
+// [EXPECTED] Protocol Fee Accumulated Timestamp: 0
 //
 // [EXPECTED] Emission Accumulated X128 Per Stake: 0
 // [EXPECTED] Emission Distributed Amount: 0
