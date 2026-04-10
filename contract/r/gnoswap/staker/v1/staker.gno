@@ -504,7 +504,10 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			continue
 		}
 
-		if incentiveResolver.RewardAmount() < rewardAmount {
+		externalPenalty := reward.ExternalPenalty[incentiveId]
+		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+
+		if incentiveResolver.RewardAmount() < totalRewardAmount {
 			// Do not update last collect time here; insufficient funds should
 			// leave the incentive collectible when refilled or corrected.
 			chain.Emit(
@@ -513,7 +516,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 				"prevRealm", previousRealm.PkgPath(),
 				"positionId", formatUint(positionId),
 				"incentiveId", incentiveId,
-				"requiredAmount", formatAnyInt(rewardAmount),
+				"requiredAmount", formatAnyInt(totalRewardAmount),
 				"availableAmount", formatAnyInt(incentiveResolver.RewardAmount()),
 				"currentTime", formatAnyInt(currentTime),
 				"currentHeight", formatAnyInt(blockHeight),
@@ -523,8 +526,6 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 
 		// process reward states
 		rewardToken := incentive.RewardToken()
-		externalPenalty := reward.ExternalPenalty[incentiveId]
-		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)

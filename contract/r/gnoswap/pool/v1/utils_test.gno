@@ -157,98 +157,6 @@ func TestU256Min_AdditionalCases(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToUint64(t *testing.T) {
-	tests := []struct {
-		name      string
-		value     *u256.Uint
-		wantRes   uint64
-		wantPanic bool
-		errorMsg  string
-	}{
-		// Normal cases
-		{
-			name:      "normal conversion - small",
-			value:     u256.NewUint(123),
-			wantRes:   123,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-		{
-			name:      "normal conversion - medium",
-			value:     u256.NewUint(1000000),
-			wantRes:   1000000,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-		{
-			name:      "zero",
-			value:     u256.NewUint(0),
-			wantRes:   0,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-
-		// Boundary cases
-		{
-			name:      "max uint64 - 2",
-			value:     u256.NewUint(18446744073709551613),
-			wantRes:   18446744073709551613,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-		{
-			name:      "max uint64 - 1",
-			value:     u256.NewUint(18446744073709551614),
-			wantRes:   18446744073709551614,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-		{
-			name:      "max uint64",
-			value:     u256.NewUint(1<<64 - 1),
-			wantRes:   1<<64 - 1,
-			wantPanic: false,
-			errorMsg:  "",
-		},
-
-		// Overflow cases
-		{
-			name:      "overflow - max uint64 + 1",
-			value:     u256.MustFromDecimal("18446744073709551616"),
-			wantRes:   0,
-			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
-		},
-		{
-			name:      "overflow - large value",
-			value:     u256.MustFromDecimal(MAX_UINT128),
-			wantRes:   0,
-			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)",
-		},
-		{
-			name:      "overflow - very large value",
-			value:     u256.MustFromDecimal(MAX_UINT256),
-			wantRes:   0,
-			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantPanic {
-				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
-					safeConvertToUint64(tt.value)
-				})
-			} else {
-				res := safeConvertToUint64(tt.value)
-				uassert.Equal(t, tt.wantRes, res)
-			}
-		})
-	}
-}
-
 func TestSafeConvertToInt64(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -816,16 +724,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 
 // Additional edge case tests for better coverage
 func TestConversionBoundaryValues(t *testing.T) {
-	t.Run("uint64 power of 2 boundaries", func(t *testing.T) {
-		// Test various power of 2 values
-		pow32 := u256.NewUint(1 << 32) // 4,294,967,296
-		result := safeConvertToUint64(pow32)
-		uassert.Equal(t, uint64(1<<32), result)
-
-		pow48 := u256.NewUint(1 << 48)
-		result = safeConvertToUint64(pow48)
-		uassert.Equal(t, uint64(1<<48), result)
-
+	t.Run("int64 power of 2 boundary", func(t *testing.T) {
 		pow63 := u256.NewUint(1 << 63) // 9,223,372,036,854,775,808
 		defer func() {
 			if r := recover(); r == nil {
@@ -854,19 +753,6 @@ func TestConversionBoundaryValues(t *testing.T) {
 }
 
 func TestSafeConversions_ExactBoundaries(t *testing.T) {
-	t.Run("uint64 exact boundary", func(t *testing.T) {
-		// MAX_UINT64
-		maxValue := u256.MustFromDecimal(MAX_UINT64)
-		result := safeConvertToUint64(maxValue)
-		uassert.Equal(t, UINT64_MAX, result)
-
-		// MAX_UINT64 + 1
-		overValue := new(u256.Uint).Add(maxValue, u256.One())
-		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POOL-003] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
-			func() { safeConvertToUint64(overValue) })
-	})
-
 	t.Run("int64 exact boundary", func(t *testing.T) {
 		// MAX_INT64
 		maxValue := u256.MustFromDecimal(MAX_INT64)
