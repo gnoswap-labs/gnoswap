@@ -423,9 +423,7 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	if !halt.IsHaltedProtocolFee() {
-		pf.DistributeProtocolFee(cross)
-	}
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
@@ -454,9 +452,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
 func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
-	if !halt.IsHaltedProtocolFee() {
-		pf.DistributeProtocolFee(cross)
-	}
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
