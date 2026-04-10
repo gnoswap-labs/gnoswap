@@ -678,7 +678,7 @@ func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
 			},
 			expectedEmission: 0,
 			expectedProtocol: map[string]int64{
-				GNS_PATH: 0,
+				GNS_PATH: 1_999_999_999,
 			},
 		},
 		{

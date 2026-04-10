@@ -614,6 +614,19 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 			shouldUpdate:     true,
 		},
 		{
+			name: "Should not update when no staked amount",
+			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(50)
+				m.SetTotalStakedAmount(0)
+				m.SetProtocolFeeAmounts(map[string]int64{"token1": 500})
+			},
+			protocolFeeAmounts: map[string]int64{
+				"token1": 1000,
+			},
+			currentTimestamp: 100,
+			shouldUpdate:     false,
+		},
+		{
 			name: "Update with past timestamp preserves state",
 			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
 				m.SetAccumulatedTimestamp(100)
@@ -633,6 +646,7 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
 			tt.setupManager(resolver)
 			initialTimestamp := resolver.GetAccumulatedTimestamp()
+			initialProtocolFeeAmounts := resolver.GetProtocolFeeAmounts()
 
 			// When: Update accumulated protocol fee X128 per stake
 			resolver.updateAccumulatedProtocolFeeX128PerStake(
@@ -645,9 +659,40 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentTimestamp)
 			} else {
 				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), initialTimestamp)
+				uassert.Equal(t, len(resolver.GetProtocolFeeAmounts()), len(initialProtocolFeeAmounts))
+				for token, amount := range initialProtocolFeeAmounts {
+					uassert.Equal(t, resolver.GetProtocolFeeAmount(token), amount)
+				}
 			}
 		})
 	}
+}
+
+func TestProtocolFeeRewardManager_ZeroStakeBacklogPreserved(t *testing.T) {
+	t.Run("pre-stake protocol fee backlog becomes claimable after first stake", func(t *testing.T) {
+		manager := staker.NewProtocolFeeRewardManager()
+		resolver := NewProtocolFeeRewardManagerResolver(manager)
+
+		protocolFeeAmounts := map[string]int64{"token1": 1000}
+		err := resolver.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
+		uassert.Equal(t, len(resolver.GetProtocolFeeAmounts()), 0)
+
+		err = resolver.addStake("user1", 500, 100)
+		uassert.NoError(t, err)
+
+		claimableBeforeRefresh, err := resolver.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimableBeforeRefresh["token1"], int64(0))
+
+		err = resolver.updateAccumulatedProtocolFeeX128PerStake(map[string]int64{"token1": 1500}, 150)
+		uassert.NoError(t, err)
+
+		claimableAfterNewFees, err := resolver.GetClaimableRewardAmounts(map[string]int64{"token1": 1500}, "user1", 150)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimableAfterNewFees["token1"], int64(1500))
+	})
 }
 
 func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {

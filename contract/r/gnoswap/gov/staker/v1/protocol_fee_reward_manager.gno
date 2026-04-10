@@ -134,6 +134,11 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 		return nil
 	}
 
+	// Preserve backlog while there are no active stakers.
+	if self.GetTotalStakedAmount() == 0 {
+		return nil
+	}
+
 	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts, err := self.calculateAccumulatedRewardX128PerStake(
 		protocolFeeAmounts,
 		currentTimestamp,
