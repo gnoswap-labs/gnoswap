@@ -459,11 +459,12 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedProtocolFee()
 
-	return s.collectReward(positionId, false)
+	return s.collectReward(positionId)
 }
 
-func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, string, map[string]int64, map[string]int64) {
+func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsDepositor(s, caller, positionId)
@@ -533,14 +534,7 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		var toUser int64
-		var feeAmount int64
-		var err error
-		if recovery {
-			toUser, feeAmount, err = s.handleStakingFee(rewardToken, rewardAmount, false, true)
-		} else {
-			toUser, feeAmount, err = s.handleStakingRewardFee(rewardToken, rewardAmount, false)
-		}
+		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -616,14 +610,7 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 	}
 
 	// internal reward to user
-	var toUser int64
-	var feeAmount int64
-	var err error
-	if recovery {
-		toUser, feeAmount, err = s.handleStakingFee(GNS_PATH, reward.Internal, true, true)
-	} else {
-		toUser, feeAmount, err = s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
-	}
+	toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -748,7 +735,6 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertCanRecover(halt.OpTypeStaker)
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
@@ -756,8 +742,9 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	// unStaked status
 	poolPath := deposit.TargetPoolPath()
 
-	// claim All Rewards through the recovery-safe path
-	s.collectReward(positionId, true)
+	// claim all rewards through the recovery-safe path
+	halt.AssertCanRecover(halt.OpTypeStaker)
+	s.collectReward(positionId)
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)
