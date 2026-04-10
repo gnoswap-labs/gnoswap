@@ -53,15 +53,19 @@ func ContractAddress() string {
 //   - addr: address to register
 //   - referral: referral address string
 //
-// Returns true on success, false on failure.
-// Panics if the caller is not authorized.
-func TryRegister(cur realm, addr address, referral string) bool {
+// Returns the effective referrer after applying registration or fallback.
+// Empty input is treated as "no new referrer provided" and returns the stored
+// referrer without attempting registration.
+// Panics if the caller is not authorized for non-empty registration attempts.
+func TryRegister(cur realm, addr address, referral string) string {
+	if referral == "" {
+		return GetReferral(addr.String())
+	}
+
 	caller := runtime.PreviousRealm().Address()
 	assertValidCaller(caller)
 
-	refAddr := address(referral)
-
-	err := gReferralKeeper.register(addr, refAddr)
+	result, err := gReferralKeeper.register(addr, address(referral))
 	if err != nil {
 		chain.Emit(
 			EventRegisterFailed,
@@ -69,15 +73,15 @@ func TryRegister(cur realm, addr address, referral string) bool {
 			"error", err.Error(),
 		)
 
-		return false
+		return GetReferral(addr.String())
 	}
 
 	chain.Emit(
 		"RegisterReferral",
 		"prevAddr", caller.String(),
 		"address", addr.String(),
-		"referral", refAddr.String(),
+		"referral", result.String(),
 	)
 
-	return true
+	return result.String()
 }

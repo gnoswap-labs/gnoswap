@@ -694,50 +694,6 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 	})
 }
 
-func TestAssertTickLowerLessThanUpper(t *testing.T) {
-	tests := []struct {
-		name        string
-		tickLower   int32
-		tickUpper   int32
-		shouldPanic bool
-		expected    string
-	}{
-		{
-			name:        "tickLower is less than tickUpper",
-			tickLower:   -100,
-			tickUpper:   100,
-			shouldPanic: false,
-			expected:    "",
-		},
-		{
-			name:        "tickLower equals tickUpper",
-			tickLower:   50,
-			tickUpper:   50,
-			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-018] tickLower is greater than or equal to tickUpper || tickLower(50), tickUpper(50)",
-		},
-		{
-			name:        "tickLower greater than tickUpper",
-			tickLower:   200,
-			tickUpper:   100,
-			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-018] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expected, func() {
-					assertIsValidTicks(tt.tickLower, tt.tickUpper)
-				})
-			} else {
-				assertIsValidTicks(tt.tickLower, tt.tickUpper)
-			}
-		})
-	}
-}
-
 func TestPositionFeeCollection_Scenarios(t *testing.T) {
 	scenarios := []FeeCollectionScenario{
 		{

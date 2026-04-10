@@ -92,10 +92,6 @@ func (p *poolCreateConfig) update() error {
 	return nil
 }
 
-func (p *poolCreateConfig) isSameTokenPath() bool {
-	return p.token0Path == p.token1Path
-}
-
 // isInOrder checks if token paths are in lexicographical (or, alphabetical) order
 func (p *poolCreateConfig) isInOrder() bool {
 	if strings.Compare(p.token0Path, p.token1Path) < 0 {
@@ -106,14 +102,6 @@ func (p *poolCreateConfig) isInOrder() bool {
 
 func (p *poolCreateConfig) poolPath() string {
 	return pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
-}
-
-func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
-	switch feeTier {
-	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
-		return true
-	}
-	return false
 }
 
 // validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range

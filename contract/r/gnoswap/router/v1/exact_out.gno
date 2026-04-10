@@ -168,11 +168,7 @@ func (r *routerV1) exactOutSwapRoute(
 	// handle referral registration
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	resultInputAmount := inputAmount
 	resultOutputAmount := -outputAmount
