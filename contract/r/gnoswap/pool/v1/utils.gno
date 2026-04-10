@@ -40,25 +40,6 @@ var uint128Mask = func() *u256.Uint {
 	return m.Sub(m, u256.One())
 }()
 
-// safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
-// This function attempts to convert the given *u256.Uint value to a uint64.
-// If the value exceeds the maximum allowable range for uint64 (2^64 - 1), it panics.
-func safeConvertToUint64(value *u256.Uint) uint64 {
-	if value == nil {
-		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
-	}
-	res, overflow := value.Uint64WithOverflow()
-	if overflow {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows uint64 range (max %s)",
-			errOutOfRange,
-			value.ToString(),
-			MAX_UINT64,
-		))
-	}
-	return res
-}
-
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
 // This function attempts to convert the given *u256.Uint value to an int64.
 // If the value exceeds the maximum allowable range for int64 (2^63 - 1), it panics.
