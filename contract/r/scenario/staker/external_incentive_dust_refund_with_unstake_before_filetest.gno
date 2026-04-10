@@ -7,10 +7,11 @@
 // 1. in-range position
 
 // SCENARIO:
-// This test demonstrates that the rewardDust mechanism correctly handles
-// precision loss from integer division when calculating rewardPerSecond.
-// The dust amount (remainder from division) is properly tracked and refunded
-// when the external incentive ends.
+// Stress-test external incentive end refund with the largest possible integer division remainder:
+//   remainder = TotalRewardAmount - (rewardAmount/duration)*duration == duration - 1 (7775999).
+// Pick TotalRewardAmount = k*duration + (duration-1). Staker refund math is:
+//   refund = unclaimableReward + remainder + collectedPenalties
+// (see staker/v1/external_incentive.gno endExternalIncentive).
 
 package main
 
@@ -82,7 +83,7 @@ func main() {
 	mintPosition()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with amount that causes dust")
+	println("[SCENARIO] 4. Create external incentive (max division remainder = duration-1)")
 	createExternalIncentiveWithDust()
 	println()
 
@@ -160,11 +161,11 @@ func mintPosition() {
 var incentiveCreationTime int64
 
 func createExternalIncentiveWithDust() {
-	// Use a reward amount and duration that will cause dust
-	// For 90 days: 10000000007 / 7776000 = 1286 with remainder 7
-	// This means rewardDust = 7
-	rewardAmount := int64(10000000007)   // This will create dust of 7
-	duration := int64(90 * 24 * 60 * 60) // 90 days in seconds
+	duration := int64(90 * 24 * 60 * 60) // 7776000 seconds
+	// rewardAmount = k*duration + (duration-1) with k=129 => 129*7_776_000 + 7_775_999 = 1_010_879_999.
+	// Integer division rewardPerSecond = rewardAmount/duration is k (see staker/pool.gno NewExternalIncentive),
+	// so remainder = total - rps*duration = duration-1, the maximum possible for this duration.
+	rewardAmount := int64(1010879999)
 
 	println("[INFO] transfer tokens to external creator")
 	testing.SetRealm(adminRealm)
@@ -183,7 +184,7 @@ func createExternalIncentiveWithDust() {
 	ufmt.Printf("[INFO] create external incentive with reward amount: %d\n", rewardAmount)
 	ufmt.Printf("[INFO] duration: %d seconds\n", duration)
 	ufmt.Printf("[INFO] expected rewardPerSecond: %d\n", rewardAmount/duration)
-	ufmt.Printf("[INFO] expected rewardDust: %d\n", rewardAmount-(rewardAmount/duration)*duration)
+	ufmt.Printf("[INFO] expected division remainder (total - rps*duration): %d\n", rewardAmount-(rewardAmount/duration)*duration)
 
 	testing.SkipHeights(1)
 
@@ -233,6 +234,14 @@ func endExternalIncentiveAndVerifyDustRefund() {
 
 	testing.SkipHeights(blocksToSkip)
 
+	beforeUnStakeBarBalance := bar.BalanceOf(adminAddr)
+	testing.SetRealm(adminRealm)
+	sr.UnStakeToken(cross, 1)
+	afterUnStakeBarBalance := bar.BalanceOf(adminAddr)
+	ufmt.Printf("[INFO] admin bar balance changes after unstake: %d\n", afterUnStakeBarBalance-beforeUnStakeBarBalance)
+
+	testing.SkipHeights(1)
+
 	testing.SetRealm(externalCreatorRealm)
 
 	// Get balance before ending incentive
@@ -244,6 +253,20 @@ func endExternalIncentiveAndVerifyDustRefund() {
 
 	// Use the exact incentive ID format with the stored creation time
 	incentiveID := ufmt.Sprintf("%s:%d:1", externalCreatorAddr, incentiveCreationTime)
+
+	poolPathStr := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+	totalReward := sr.GetIncentiveTotalRewardAmount(poolPathStr, incentiveID)
+	distributed := sr.GetIncentiveDistributedRewardAmount(poolPathStr, incentiveID)
+	remainingInPool := sr.GetIncentiveRemainingRewardAmount(poolPathStr, incentiveID)
+	rps := sr.GetIncentiveRewardPerSecond(poolPathStr, incentiveID)
+	duration := int64(90 * 24 * 60 * 60)
+	remainder := totalReward - rps*duration
+	consumed := totalReward - remainingInPool
+	collectedPenalties := consumed - distributed
+	ufmt.Printf("[INFO] pre-end snapshot: total=%d distributed=%d remainingInPool=%d rps=%d\n",
+		totalReward, distributed, remainingInPool, rps)
+	ufmt.Printf("[INFO] pre-end derived: remainder=%d consumed=%d collectedPenalties=%d\n",
+		remainder, consumed, collectedPenalties)
 
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
@@ -267,33 +290,29 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	ufmt.Printf("[RESULT] bar tokens refunded: %d\n", barRefunded)
 	ufmt.Printf("[RESULT] gns tokens refunded: %d\n", gnsRefunded)
 
-	// The refund should include:
-	// 1. Unallocated rewards (rewards that weren't distributed)
-	// 2. The dust amount (64007 in this case based on 10000000007 % 7776000)
-	// 3. The full GNS deposit (1_000_000_000)
+	// Refund BAR = unclaimableReward + remainder + collectedPenalties (see endExternalIncentive).
+	// GNS deposit is refunded separately.
 
 	// Verify GNS refund
 	if gnsRefunded != depositGnsAmount {
 		panic(ufmt.Sprintf("Expected GNS refund of %d, but got %d", depositGnsAmount, gnsRefunded))
 	}
 
-	// Calculate expected dust
-	rewardAmount := int64(10000000007)
-	duration := int64(90 * 24 * 60 * 60)
-	expectedDust := rewardAmount - (rewardAmount/duration)*duration
-
-	// Verify that dust was included in the refund
-	// The refund should be at least the dust amount
-	if barRefunded < expectedDust {
-		panic(ufmt.Sprintf("Expected refund to include at least dust amount of %d, but got %d", expectedDust, barRefunded))
+	// Reconcile BAR refund with the three-term formula (snapshot taken before EndExternalIncentive).
+	impliedUnclaimable := barRefunded - remainder - collectedPenalties
+	if impliedUnclaimable < 0 {
+		panic(ufmt.Sprintf(
+			"Refund %d cannot be less than remainder(%d)+penalties(%d)",
+			barRefunded, remainder, collectedPenalties,
+		))
 	}
 
-	// Check if the refund amount makes sense (dust + unallocated rewards)
-	if barRefunded > 0 && barRefunded >= expectedDust {
-		ufmt.Printf("[SUCCESS] Dust refund mechanism verified - dust amount (%d) properly included in total refund (%d)!\n", expectedDust, barRefunded)
-	} else {
-		panic(ufmt.Sprintf("Unexpected refund amount: %d (expected dust: %d)", barRefunded, expectedDust))
-	}
+	ufmt.Printf("[VERIFY] refund: %d = unclaimableReward(%d) + remainder(%d) + collectedPenalties(%d)\n",
+		barRefunded, impliedUnclaimable, remainder, collectedPenalties)
+
+	stakerBarLeft := bar.BalanceOf(stakerAddr)
+	ufmt.Printf("[RESULT] remaining staker balance: %d BAR\n", stakerBarLeft)
+	ufmt.Printf("[RESULT] remaining staker balance: %d GNS\n", gns.BalanceOf(stakerAddr))
 }
 
 func positionIdFrom(tokenId uint64) grc721.TokenID {
@@ -314,13 +333,13 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] approve tokens for position
 // [INFO] mint in-range position (tick range: -100 ~ 100)
 //
-// [SCENARIO] 4. Create external incentive with amount that causes dust
+// [SCENARIO] 4. Create external incentive (max division remainder = duration-1)
 // [INFO] transfer tokens to external creator
 // [INFO] approve tokens for external incentive creation
-// [INFO] create external incentive with reward amount: 10000000007
+// [INFO] create external incentive with reward amount: 1010879999
 // [INFO] duration: 7776000 seconds
-// [INFO] expected rewardPerSecond: 1286
-// [INFO] expected rewardDust: 64007
+// [INFO] expected rewardPerSecond: 129
+// [INFO] expected division remainder (total - rps*duration): 7775999
 // [INFO] incentive creation time: 1234567905
 //
 // [SCENARIO] 5. Start external incentive
@@ -331,13 +350,18 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] position staked successfully
 //
 // [SCENARIO] 7. Wait until incentive ends and verify dust refund
+// [INFO] admin bar balance changes after unstake: 799974799
 // [INFO] bar balance before ending: 100000000
 // [INFO] gns balance before ending: 0
+// [INFO] pre-end snapshot: total=1010879999 distributed=808055352 remainingInPool=7776647 rps=129
+// [INFO] pre-end derived: remainder=7775999 consumed=1003103352 collectedPenalties=195048000
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 2044502440
+// [INFO] bar balance after ending: 302824647
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 1944502440
+// [RESULT] bar tokens refunded: 202824647
 // [RESULT] gns tokens refunded: 1000000000
-// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (1944502440)!
+// [VERIFY] refund: 202824647 = unclaimableReward(648) + remainder(7775999) + collectedPenalties(195048000)
+// [RESULT] remaining staker balance: 0 BAR
+// [RESULT] remaining staker balance: 0 GNS
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!
