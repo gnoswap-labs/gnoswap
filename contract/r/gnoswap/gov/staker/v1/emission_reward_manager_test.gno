@@ -674,7 +674,7 @@ func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
 
-		// Distribute with zero stakes (should be no-op)
+		// Distribute with zero stakes (baseline is preserved for future backlog release)
 		_, err := resolver.calculateAccumulatedRewardX128PerStake(1000, 0)
 		uassert.NoError(t, err)
 
@@ -686,11 +686,33 @@ func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
 		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(2000, 500)
 		uassert.NoError(t, err)
 
-		// then - Should calculate rewards correctly for new distribution only
-		// Delta = 2000 - 1000 = 1000 (previous distribution at zero stake doesn't count)
-		// But since distributed amount tracks cumulative, delta considers last update
-		// Reward per stake = 1000 * 2^128 / 500
+		// then - The preserved zero-stake backlog plus new distribution is considered.
 		uassert.NotEqual(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("pre-stake emission backlog becomes claimable after first stake", func(t *testing.T) {
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		err := resolver.updateAccumulatedRewardX128PerStake(1000, 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetDistributedAmount(), int64(0))
+		uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
+		uassert.Equal(t, resolver.GetAccumulatedRewardX128PerStake().ToString(), "0")
+
+		err = resolver.addStake("user1", 500, 100)
+		uassert.NoError(t, err)
+
+		claimableBeforeRefresh, err := resolver.GetClaimableRewardAmount(1000, "user1", 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimableBeforeRefresh, int64(1000))
+
+		err = resolver.updateAccumulatedRewardX128PerStake(1500, 150)
+		uassert.NoError(t, err)
+
+		claimableAfterNewEmission, err := resolver.GetClaimableRewardAmount(1500, "user1", 150)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimableAfterNewEmission, int64(1500))
 	})
 }
 
