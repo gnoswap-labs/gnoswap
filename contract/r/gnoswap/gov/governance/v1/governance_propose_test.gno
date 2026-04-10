@@ -1237,6 +1237,41 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			expectedError: "executions count (1) does not match numToExecute (2)",
 			shouldFail:    true,
 		},
+		{
+			name:          "fail - community_pool TransferToken empty recipient",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,,1000000",
+			expectedError: "invalid address",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - pool CollectProtocol empty recipient",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500,,100,100",
+			expectedError: "invalid address",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - rbac RegisterRole empty role address",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
+			expectedError: "invalid address",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - rbac UpdateRoleAddress empty role address",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
+			expectedError: "invalid address",
+			shouldFail:    true,
+		},
+		{
+			name:          "fail - launchpad CreateProject empty recipient",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns,,1000000,,,10,20,70,1000",
+			expectedError: "invalid address",
+			shouldFail:    true,
+		},
 	}
 
 	for _, tt := range tests {
