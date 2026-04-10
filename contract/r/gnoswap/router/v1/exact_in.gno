@@ -169,11 +169,7 @@ func (r *routerV1) exactInSwapRoute(
 	common.SafeGRC20Transfer(cross, params.outputToken, caller, outputAmount)
 
 	// handle referral registration
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	resultInputAmount := inputAmount
 	resultOutputAmount := -outputAmount

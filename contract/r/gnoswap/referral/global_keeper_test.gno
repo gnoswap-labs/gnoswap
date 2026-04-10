@@ -24,7 +24,8 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 		callerRealm          runtime.Realm
 		addr                 address
 		referral             string
-		expectedResult       bool
+		expectedReferrer     string
+		existingReferral     string
 		expectedPanics       bool
 		expectedPanicMessage string
 	}{
@@ -33,7 +34,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:          routerRealm,
 			addr:                 testutils.TestAddress("test1"),
 			referral:             testutils.TestAddress("referrer1").String(),
-			expectedResult:       true,
+			expectedReferrer:     testutils.TestAddress("referrer1").String(),
 			expectedPanics:       false,
 			expectedPanicMessage: "",
 		},
@@ -42,7 +43,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:          routerRealm,
 			addr:                 testutils.TestAddress("test2"),
 			referral:             contractAddress().String(),
-			expectedResult:       true,
+			expectedReferrer:     "",
 			expectedPanics:       false,
 			expectedPanicMessage: "",
 		},
@@ -51,7 +52,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:          routerRealm,
 			addr:                 testutils.TestAddress("test3"),
 			referral:             testutils.TestAddress("test3").String(),
-			expectedResult:       false,
+			expectedReferrer:     "",
 			expectedPanics:       false,
 			expectedPanicMessage: "",
 		},
@@ -60,7 +61,8 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:          routerRealm,
 			addr:                 testutils.TestAddress("test4"),
 			referral:             testutils.TestAddress("referrer2").String(),
-			expectedResult:       false,
+			expectedReferrer:     testutils.TestAddress("existing").String(),
+			existingReferral:     testutils.TestAddress("existing").String(),
 			expectedPanics:       false,
 			expectedPanicMessage: "",
 		},
@@ -69,7 +71,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:          userRealm,
 			addr:                 testutils.TestAddress("test5"),
 			referral:             testutils.TestAddress("referrer3").String(),
-			expectedResult:       false,
+			expectedReferrer:     "",
 			expectedPanics:       true,
 			expectedPanicMessage: "unauthorized caller",
 		},
@@ -78,7 +80,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:    routerRealm,
 			addr:           testutils.TestAddress("test6"),
 			referral:       "invalid_ref",
-			expectedResult: false,
+			expectedReferrer: "",
 			expectedPanics: false,
 		},
 		{
@@ -86,8 +88,16 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			callerRealm:    routerRealm,
 			addr:           zeroAddress,
 			referral:       testutils.TestAddress("referrer4").String(),
-			expectedResult: false,
+			expectedReferrer: "",
 			expectedPanics: false,
+		},
+		{
+			name:             "Empty referral returns existing referral without registration",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("test7"),
+			referral:         "",
+			existingReferral: testutils.TestAddress("existing7").String(),
+			expectedReferrer: testutils.TestAddress("existing7").String(),
 		},
 	}
 
@@ -98,9 +108,8 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			// given
 			testing.SetRealm(tc.callerRealm)
 
-			// Set up pre-existing referral for failure test case
-			if tc.name == "Fail register existing referral" {
-				setupExistingReferral(t, tc.addr, testutils.TestAddress("existing"))
+			if tc.existingReferral != "" {
+				setupExistingReferral(t, tc.addr, address(tc.existingReferral))
 			}
 
 			if tc.expectedPanics {
@@ -109,7 +118,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 				})
 			} else {
 				result := TryRegister(cross, tc.addr, tc.referral)
-				uassert.Equal(t, tc.expectedResult, result)
+				uassert.Equal(t, tc.expectedReferrer, result)
 			}
 		})
 	}
@@ -325,7 +334,7 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 				userAddr := address(tc.addr)
 				refAddr := testutils.TestAddress("referrer1")
 				before = time.Now().Unix()
-				uassert.True(t, TryRegister(cross, userAddr, refAddr.String()))
+				uassert.Equal(t, refAddr.String(), TryRegister(cross, userAddr, refAddr.String()))
 				after = time.Now().Unix()
 			}
 
@@ -337,6 +346,58 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 			} else {
 				uassert.ErrorIs(t, err, tc.expectedErr)
 			}
+		})
+	}
+}
+
+func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
+	tests := []struct {
+		name             string
+		caller           address
+		referrer         string
+		setupReferral    string
+		expectedReferrer string
+		expectedHas       bool
+	}{
+		{
+			name:             "Empty referrer falls back to stored referral",
+			caller:           testutils.TestAddress("user1"),
+			referrer:         "",
+			setupReferral:    testutils.TestAddress("stored1").String(),
+			expectedReferrer: testutils.TestAddress("stored1").String(),
+			expectedHas:       true,
+		},
+		{
+			name:             "Valid referrer registers successfully",
+			caller:           testutils.TestAddress("user2"),
+			referrer:         testutils.TestAddress("referrer2").String(),
+			setupReferral:    "",
+			expectedReferrer: testutils.TestAddress("referrer2").String(),
+			expectedHas:       true,
+		},
+		{
+			name:             "Invalid referrer falls back to stored referral",
+			caller:           testutils.TestAddress("user3"),
+			referrer:         "invalid_referrer",
+			setupReferral:    testutils.TestAddress("stored3").String(),
+			expectedReferrer: testutils.TestAddress("stored3").String(),
+			expectedHas:       true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup(t)
+			testing.SetRealm(routerRealm)
+
+			if tc.setupReferral != "" {
+				setupExistingReferral(t, tc.caller, address(tc.setupReferral))
+			}
+
+			result := TryRegister(cross, tc.caller, tc.referrer)
+
+			uassert.Equal(t, tc.expectedReferrer, result)
+			uassert.Equal(t, tc.expectedHas, HasReferral(tc.caller.String()))
 		})
 	}
 }

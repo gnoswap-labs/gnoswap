@@ -22,7 +22,7 @@ func TestRateLimit_AllowsFirstOperation(t *testing.T) {
 	userAddr := testutils.TestAddress("user1")
 	referrerAddr := testutils.TestAddress("referrer1")
 
-	err := k.register(userAddr, referrerAddr)
+	_, err := k.register(userAddr, referrerAddr)
 
 	uassert.NoError(t, err)
 	uassert.True(t, k.has(userAddr))
@@ -39,10 +39,10 @@ func TestRateLimit_BlocksSecondOperationWithin24Hours(t *testing.T) {
 	referrerAddr := testutils.TestAddress("referrer1")
 	newReferrerAddr := testutils.TestAddress("referrer2")
 
-	k.register(userAddr, referrerAddr)
+	_, _ = k.register(userAddr, referrerAddr)
 
 	// Second register attempt should be blocked by rate limit
-	err := k.register(userAddr, newReferrerAddr)
+	_, err := k.register(userAddr, newReferrerAddr)
 
 	uassert.ErrorIs(t, err, ErrTooManyRequests)
 	// verify original referral is preserved
@@ -60,8 +60,8 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	user2 := testutils.TestAddress("user2")
 	referrer := testutils.TestAddress("referrer")
 
-	err1 := k.register(user1, referrer)
-	err2 := k.register(user2, referrer)
+	_, err1 := k.register(user1, referrer)
+	_, err2 := k.register(user2, referrer)
 
 	uassert.NoError(t, err1)
 	uassert.NoError(t, err2)
@@ -78,7 +78,7 @@ func TestRateLimit_ContractAddressNotRateLimited(t *testing.T) {
 
 	// contract address registration (removal) is not rate limited
 	for i := 0; i < 3; i++ {
-		err := k.register(userAddr, contractAddress())
+		_, err := k.register(userAddr, contractAddress())
 		uassert.NoError(t, err)
 	}
 
@@ -122,14 +122,14 @@ func TestRateLimit_TimeBoundaries(t *testing.T) {
 			ref1 := testutils.TestAddress(tc.prefix + "_ref1")
 			ref2 := testutils.TestAddress(tc.prefix + "_ref2")
 
-			k.register(user, ref1)
+			_, _ = k.register(user, ref1)
 
 			// simulate time passage
 			now := time.Now().Unix()
 			k.lastOps.Set(user.String(), now-tc.timeSinceLastOp)
 
 			// Try to register again (simulating update)
-			err := k.register(user, ref2)
+			_, err := k.register(user, ref2)
 
 			if tc.wantErr != nil {
 				uassert.ErrorIs(t, err, tc.wantErr)
@@ -212,7 +212,7 @@ func TestRateLimit_SelfReferralTakesPrecedence(t *testing.T) {
 
 	user := testutils.TestAddress("user")
 
-	err := k.register(user, user)
+	_, err := k.register(user, user)
 
 	uassert.ErrorIs(t, err, ErrSelfReferral)
 }

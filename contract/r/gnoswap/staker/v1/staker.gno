@@ -261,10 +261,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
 
-	actualReferrer := referrer
-	if !referral.TryRegister(cross, caller, referrer) {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	if err := hasTokenOwnership(owner, caller); err != nil {
 		panic(err.Error())

@@ -30,9 +30,9 @@ func NewKeeper() ReferralKeeper {
 
 // register creates or updates a referral relationship between addresses.
 // Setting refAddr to the contract's own address removes the referral.
-func (k *keeper) register(addr, refAddr address) error {
+func (k *keeper) register(addr, refAddr address) (address, error) {
 	if err := k.validateAddresses(addr, refAddr); err != nil {
-		return err
+		return zeroAddress, err
 	}
 
 	addrStr := addr.String()
@@ -42,21 +42,21 @@ func (k *keeper) register(addr, refAddr address) error {
 		if k.has(addr) {
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
-				return ErrNotFound
+				return zeroAddress, ErrNotFound
 			}
 		}
 
-		return nil
+		return zeroAddress, nil
 	}
 
 	if err := k.checkRateLimit(addrStr); err != nil {
-		return err
+		return zeroAddress, err
 	}
 
 	k.store.Set(addrStr, refAddrStr)
 	k.lastOps.Set(addrStr, time.Now().Unix())
 
-	return nil
+	return refAddr, nil
 }
 
 // validateAddresses validates that addresses are properly formatted and not self-referencing.
