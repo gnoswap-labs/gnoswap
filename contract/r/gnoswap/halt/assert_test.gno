@@ -43,17 +43,18 @@ func TestAssert_AssertCanRecover(t *testing.T) {
 	})
 }
 
-func TestAssert_AssertActionAllowed(t *testing.T) {
+func TestAssert_InternalActionHelperCoverage(t *testing.T) {
 	err := setHaltLevel(HaltLevelEmergency)
 	uassert.NoError(t, err)
 
 	uassert.PanicsWithMessage(t, "halted: protocol_fee:operate", func() {
-		AssertActionAllowed(OpTypeProtocolFee, ActionOperate)
+		AssertIsNotHaltedProtocolFee()
 	})
 	uassert.PanicsWithMessage(t, "halted: community_pool:operate", func() {
-		AssertActionAllowed(OpTypeCommunityPool, ActionOperate)
+		AssertIsNotHaltedCommunityPool()
 	})
 	uassert.PanicsWithMessage(t, "action not allowed for domain: router:recover", func() {
-		AssertActionAllowed(OpTypeRouter, ActionRecover)
+		AssertCanRecover(OpTypeRouter)
 	})
+	uassert.NotPanics(t, func() { AssertCanRecover(OpTypeProtocolFee) })
 }

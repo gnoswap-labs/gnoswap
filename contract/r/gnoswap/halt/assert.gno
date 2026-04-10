@@ -1,23 +1,23 @@
 package halt
 
-func AssertActionAllowed(domain OpType, action Action) {
+func AssertIsNotHaltedPool()          { assertActionAllowed(OpTypePool, ActionOperate) }
+func AssertIsNotHaltedPosition()      { assertActionAllowed(OpTypePosition, ActionOperate) }
+func AssertIsNotHaltedProtocolFee()   { assertActionAllowed(OpTypeProtocolFee, ActionOperate) }
+func AssertIsNotHaltedRouter()        { assertActionAllowed(OpTypeRouter, ActionOperate) }
+func AssertIsNotHaltedStaker()        { assertActionAllowed(OpTypeStaker, ActionOperate) }
+func AssertIsNotHaltedLaunchpad()     { assertActionAllowed(OpTypeLaunchpad, ActionOperate) }
+func AssertIsNotHaltedGovernance()    { assertActionAllowed(OpTypeGovernance, ActionOperate) }
+func AssertIsNotHaltedGovStaker()     { assertActionAllowed(OpTypeGovStaker, ActionOperate) }
+func AssertIsNotHaltedXGns()          { assertActionAllowed(OpTypeXGns, ActionOperate) }
+func AssertIsNotHaltedCommunityPool() { assertActionAllowed(OpTypeCommunityPool, ActionOperate) }
+func AssertIsNotHaltedEmission()      { assertActionAllowed(OpTypeEmission, ActionOperate) }
+
+func AssertCanRecover(domain OpType) {
+	assertActionAllowed(domain, ActionRecover)
+}
+
+func assertActionAllowed(domain OpType, action Action) {
 	if halted := isActionHalted(domain, action); halted {
 		panic(makeErrorWithDetails(errHalted, policyKey(domain, action)))
 	}
-}
-
-func AssertIsNotHaltedPool()       { AssertActionAllowed(OpTypePool, ActionOperate) }
-func AssertIsNotHaltedPosition()   { AssertActionAllowed(OpTypePosition, ActionOperate) }
-func AssertIsNotHaltedProtocolFee() { AssertActionAllowed(OpTypeProtocolFee, ActionOperate) }
-func AssertIsNotHaltedRouter()     { AssertActionAllowed(OpTypeRouter, ActionOperate) }
-func AssertIsNotHaltedStaker()     { AssertActionAllowed(OpTypeStaker, ActionOperate) }
-func AssertIsNotHaltedLaunchpad()  { AssertActionAllowed(OpTypeLaunchpad, ActionOperate) }
-func AssertIsNotHaltedGovernance() { AssertActionAllowed(OpTypeGovernance, ActionOperate) }
-func AssertIsNotHaltedGovStaker()  { AssertActionAllowed(OpTypeGovStaker, ActionOperate) }
-func AssertIsNotHaltedXGns()       { AssertActionAllowed(OpTypeXGns, ActionOperate) }
-func AssertIsNotHaltedCommunityPool() { AssertActionAllowed(OpTypeCommunityPool, ActionOperate) }
-func AssertIsNotHaltedEmission()   { AssertActionAllowed(OpTypeEmission, ActionOperate) }
-
-func AssertCanRecover(domain OpType) {
-	AssertActionAllowed(domain, ActionRecover)
 }

@@ -736,7 +736,7 @@ func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]
 func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
 	halt.AssertCanRecover(halt.OpTypeStaker)
-	halt.AssertActionAllowed(halt.OpTypeProtocolFee, halt.ActionRecover)
+	halt.AssertCanRecover(halt.OpTypeProtocolFee)
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
