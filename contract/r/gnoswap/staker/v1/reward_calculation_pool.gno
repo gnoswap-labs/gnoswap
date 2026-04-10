@@ -78,8 +78,8 @@ func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
-func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
-	acc = u256.Zero()
+func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc string) {
+	acc = "0"
 
 	self.GlobalRewardRatioAccumulation().ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		time = key
@@ -89,13 +89,11 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 			panic(ufmt.Sprintf("failed to cast value to string: %T", value))
 		}
 
-		acc = u256.MustFromDecimal(valueStr)
+		acc = valueStr
 
 		return true
 	})
-	if acc == nil {
-		panic("should not happen, globalRewardRatioAccumulation must be set when pool is created")
-	}
+
 	return time, acc
 }
 
@@ -215,19 +213,20 @@ func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission
 }
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
-	oldAccTime, oldAcc := self.CurrentGlobalRewardRatioAccumulation(currentTime)
+	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := safeSubInt64(currentTime, oldAccTime)
 	if timeDiff == 0 {
-		return oldAcc.Clone()
+		return u256.MustFromDecimal(oldAccStr)
 	}
 	if timeDiff < 0 {
 		panic("time cannot go backwards")
 	}
 
 	if currentStakedLiquidity.IsZero() {
-		return oldAcc.Clone()
+		return u256.MustFromDecimal(oldAccStr)
 	}
 
+	oldAcc := u256.MustFromDecimal(oldAccStr)
 	acc := u256.MulDiv(
 		u256.NewUintFromInt64(timeDiff),
 		q128,

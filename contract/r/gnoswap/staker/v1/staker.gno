@@ -388,7 +388,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128.ToString(),
+		"globalRewardRatioAccX128", globalAccX128,
 		"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 	)
@@ -599,7 +599,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"currentTime", formatAnyInt(currentTime),
 			"currentHeight", formatAnyInt(blockHeight),
 			"stakedLiquidity", stakedLiquidity.ToString(),
-			"globalRewardRatioAccX128", globalAccX128.ToString(),
+			"globalRewardRatioAccX128", globalAccX128,
 			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 		)
@@ -701,7 +701,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		"currentTime", formatAnyInt(currentTime),
 		"currentHeight", formatAnyInt(blockHeight),
 		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128.ToString(),
+		"globalRewardRatioAccX128", globalAccX128,
 		"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
 		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
 	)
@@ -781,7 +781,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 		"to", deposit.Owner().String(),
 		"currentTick", formatAnyInt(currentTick),
 		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128.ToString(),
+		"globalRewardRatioAccX128", globalAccX128,
 	)
 
 	return poolPath
