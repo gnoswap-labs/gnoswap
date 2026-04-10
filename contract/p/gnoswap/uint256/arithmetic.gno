@@ -84,9 +84,12 @@ func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Div sets z to the quotient x/y and returns z.
-// If y == 0, z is set to 0.
+// It panics if y == 0.
 func (z *Uint) Div(x, y *Uint) *Uint {
-	if y.IsZero() || y.Gt(x) {
+	if y.IsZero() {
+		panic("division by zero")
+	}
+	if y.Gt(x) {
 		return z.Clear()
 	}
 	if x.Eq(y) {

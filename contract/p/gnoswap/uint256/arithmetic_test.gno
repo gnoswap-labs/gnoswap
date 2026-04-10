@@ -562,16 +562,17 @@ func TestDiv(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			x := parseUint(tc.x)
 			y := parseUint(tc.y)
-
-			got := new(Uint).Div(x, y)
-
 			if tc.wantErr {
-				// Division by zero returns 0
-				if !got.IsZero() {
-					t.Errorf("Div(%s, %s) expected zero for division by zero", tc.x, tc.y)
-				}
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Div(%s, %s) expected panic on division by zero", tc.x, tc.y)
+					}
+				}()
+				new(Uint).Div(x, y)
 				return
 			}
+
+			got := new(Uint).Div(x, y)
 
 			want := parseUint(tc.want)
 			if !got.Eq(want) {
@@ -1094,20 +1095,12 @@ func TestIsOverflow(t *testing.T) {
 	}
 }
 
-// TestDivisionByZero verifies all division by zero cases return error
+// TestDivisionByZero verifies zero-divisor behavior across division helpers
 func TestDivisionByZero(t *testing.T) {
-	testCases := []struct {
+	zeroResultCases := []struct {
 		name string
 		fn   func() *Uint
 	}{
-		{
-			name: "div_by_zero",
-			fn: func() *Uint {
-				x := MustFromDecimal("12345")
-				y := MustFromDecimal("0")
-				return new(Uint).Div(x, y)
-			},
-		},
 		{
 			name: "mod_by_zero",
 			fn: func() *Uint {
@@ -1127,7 +1120,18 @@ func TestDivisionByZero(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	t.Run("div_by_zero", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Div should panic on division by zero")
+			}
+		}()
+		x := MustFromDecimal("12345")
+		y := MustFromDecimal("0")
+		new(Uint).Div(x, y)
+	})
+
+	for _, tc := range zeroResultCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := tc.fn()
 			if !result.IsZero() {
