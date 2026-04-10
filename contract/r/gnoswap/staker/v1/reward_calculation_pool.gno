@@ -360,6 +360,9 @@ func (self *RewardState) calculateCollectableExternalReward(startTime, endTime i
 		panic(err)
 	}
 
+	// apply warmup to collect rewards
+	self.applyWarmup()
+
 	currentReward := u256.Zero()
 
 	for i := range self.rewards {
