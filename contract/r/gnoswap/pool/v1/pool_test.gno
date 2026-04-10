@@ -1164,7 +1164,9 @@ func TestCollectAllowedDuringEmergencyHalt(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedPool(), "emergency should halt pool operations")
-	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+	halted, err := halt.IsActionHalted(halt.OpTypePool, halt.ActionRecover)
+	uassert.NoError(t, err)
+	uassert.False(t, halted, "emergency should keep pool recovery enabled")
 
 	testing.SetRealm(posRealm)
 	amount0, amount1 := mockInstanceCollect(
@@ -1201,10 +1203,12 @@ func TestCollectBlockedByCompleteHalt(t *testing.T) {
 		halt.SetHaltLevel(cross, halt.HaltLevelNone)
 	}()
 
-	uassert.True(t, halt.IsHaltedWithdraw(), "complete halt should halt withdraw operations")
+	halted, err = halt.IsActionHalted(halt.OpTypePool, halt.ActionRecover)
+	uassert.NoError(t, err)
+	uassert.True(t, halted, "complete halt should halt pool recovery")
 
 	testing.SetRealm(posRealm)
-	uassert.AbortsWithMessage(t, "halted: withdraw", func() {
+	uassert.AbortsWithMessage(t, "halted: pool:recover", func() {
 		mockInstanceCollect(
 			pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 			adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,

@@ -256,7 +256,7 @@ func (p *positionV1) DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypePosition)
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(p, positionId, caller)
@@ -330,7 +330,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypePosition)
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(p, positionId, caller)

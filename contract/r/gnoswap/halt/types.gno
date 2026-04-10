@@ -2,13 +2,13 @@ package halt
 
 // Halt levels define different states of system operation restriction.
 const (
-	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled.
-	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // All operations enabled except withdrawals.
-	HaltLevelEmergency HaltLevel = "EMERGENCY" // Only governance and withdrawal operations enabled.
-	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations disabled.
+	HaltLevelNone      HaltLevel = "NONE"      // All actions enabled.
+	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // Shared recovery actions halted.
+	HaltLevelEmergency HaltLevel = "EMERGENCY" // Governance operate + recovery actions remain enabled.
+	HaltLevelComplete  HaltLevel = "COMPLETE"  // All actions disabled.
 )
 
-// Operation types representing individual contracts.
+// Domain keys represent protocol areas controlled by halt policy.
 const (
 	OpTypePool          OpType = "pool"
 	OpTypePosition      OpType = "position"
@@ -21,35 +21,33 @@ const (
 	OpTypeXGns          OpType = "xgns"
 	OpTypeCommunityPool OpType = "community_pool"
 	OpTypeEmission      OpType = "emission"
-	OpTypeWithdraw      OpType = "withdraw"
+)
+
+// Action keys represent the type of behavior being controlled within a domain.
+const (
+	ActionOperate Action = "operate"
+	ActionRecover Action = "recover"
 )
 
 var haltLevelDescriptions = map[HaltLevel]string{
-	HaltLevelNone:      "All operations enabled",
-	HaltLevelSafeMode:  "All operations enabled except withdrawals",
-	HaltLevelEmergency: "Only governance and withdrawal operations enabled",
-	HaltLevelComplete:  "All operations disabled",
+	HaltLevelNone:      "All actions enabled",
+	HaltLevelSafeMode:  "Shared recovery actions halted",
+	HaltLevelEmergency: "Governance operate and recovery actions remain enabled",
+	HaltLevelComplete:  "All actions disabled",
 }
 
-// HaltLevel represents current system halt state.
 type HaltLevel string
 
-// String returns the string representation of the halt level.
-func (h HaltLevel) String() string {
-	return string(h)
-}
+func (h HaltLevel) String() string { return string(h) }
 
-// Description returns a human-readable description of the halt level.
 func (h HaltLevel) Description() string {
 	desc, ok := haltLevelDescriptions[h]
 	if !ok {
 		return "Unknown halt level"
 	}
-
 	return desc
 }
 
-// IsValid returns true if the halt level is valid.
 func (h HaltLevel) IsValid() bool {
 	switch h {
 	case HaltLevelNone, HaltLevelSafeMode, HaltLevelEmergency, HaltLevelComplete:
@@ -59,7 +57,7 @@ func (h HaltLevel) IsValid() bool {
 	}
 }
 
-// OpType represents operation types that can be controlled independently.
+// OpType now represents the domain axis of halt policy.
 type OpType string
 
 var opTypes = map[OpType]bool{
@@ -74,27 +72,96 @@ var opTypes = map[OpType]bool{
 	OpTypeXGns:          true,
 	OpTypeCommunityPool: true,
 	OpTypeEmission:      true,
-	OpTypeWithdraw:      true,
 }
 
-// String returns the string representation of the operation type.
-func (o OpType) String() string {
-	return string(o)
-}
+func (o OpType) String() string { return string(o) }
 
-// IsValid returns true if the operation type is valid.
 func (o OpType) IsValid() bool {
 	_, ok := opTypes[o]
-
 	return ok
 }
 
 func OpTypes() []OpType {
 	allOpTypes := make([]OpType, 0, len(opTypes))
-
-	for op, _ := range opTypes {
+	for op := range opTypes {
 		allOpTypes = append(allOpTypes, op)
 	}
-
 	return allOpTypes
+}
+
+type Action string
+
+var actions = map[Action]bool{
+	ActionOperate: true,
+	ActionRecover: true,
+}
+
+func (a Action) String() string { return string(a) }
+
+func (a Action) IsValid() bool {
+	_, ok := actions[a]
+	return ok
+}
+
+func Actions() []Action {
+	allActions := make([]Action, 0, len(actions))
+	for action := range actions {
+		allActions = append(allActions, action)
+	}
+	return allActions
+}
+
+var allowedActionsByDomain = map[OpType]map[Action]bool{
+	OpTypePool: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypePosition: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypeProtocolFee: {
+		ActionOperate: true,
+	},
+	OpTypeRouter: {
+		ActionOperate: true,
+	},
+	OpTypeStaker: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypeLaunchpad: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypeGovernance: {
+		ActionOperate: true,
+	},
+	OpTypeGovStaker: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypeXGns: {
+		ActionOperate: true,
+		ActionRecover: true,
+	},
+	OpTypeCommunityPool: {
+		ActionOperate: true,
+	},
+	OpTypeEmission: {
+		ActionOperate: true,
+	},
+}
+
+func IsAllowedAction(domain OpType, action Action) bool {
+	allowedActions, ok := allowedActionsByDomain[domain]
+	if !ok {
+		return false
+	}
+	_, ok = allowedActions[action]
+	return ok
+}
+
+func policyKey(domain OpType, action Action) string {
+	return domain.String() + ":" + action.String()
 }

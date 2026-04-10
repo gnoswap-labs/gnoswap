@@ -7,13 +7,14 @@ import (
 )
 
 var (
-	errHalted           = errors.New("halted")
-	errInvalidOpType    = errors.New("invalid operation type")
-	errInvalidHaltLevel = errors.New("invalid halt level")
-	errOpTypeNotFound   = errors.New("operation type not found in config")
+	errHalted             = errors.New("halted")
+	errInvalidOpType      = errors.New("invalid operation type")
+	errInvalidAction      = errors.New("invalid action")
+	errInvalidHaltLevel   = errors.New("invalid halt level")
+	errActionNotAllowed   = errors.New("action not allowed for domain")
+	errPolicyNotFound     = errors.New("policy not found in config")
 )
 
-// makeErrorWithDetails creates an error with additional details appended to the base error message.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s: %s", err.Error(), details)
 }

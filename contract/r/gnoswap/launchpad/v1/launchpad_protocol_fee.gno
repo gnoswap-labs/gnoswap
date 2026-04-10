@@ -11,7 +11,7 @@ import (
 // CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.
 // Only users can call this function.
 func (lp *launchpadV1) CollectProtocolFee() {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypeLaunchpad)
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

@@ -39,7 +39,7 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypePool)
 
 	// only position contract can call this function
 	previousRealm := runtime.PreviousRealm()

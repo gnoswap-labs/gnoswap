@@ -609,6 +609,25 @@ func CreateParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
+		{
+			pkgPath:    HALT_PATH,
+			function:   "SetActionStatus",
+			paramCount: 3,
+			paramValidators: []paramValidator{
+				stringValidator, // domain
+				stringValidator, // action
+				boolValidator,   // halted
+			},
+			handlerFunc: func(params []string) error {
+				domain := halt.OpType(params[0])
+				action := halt.Action(params[1])
+				allowed := parseBool(params[2])
+
+				halt.SetActionStatus(cross, domain, action, allowed)
+
+				return nil
+			},
+		},
 
 		// RBAC configuration
 		{

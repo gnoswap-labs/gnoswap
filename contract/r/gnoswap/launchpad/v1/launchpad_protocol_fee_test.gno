@@ -106,7 +106,9 @@ func TestEmergencyHaltAllowsCollectProtocolFee(t *testing.T) {
 
 	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
 	uassert.True(t, halt.IsHaltedGovStaker(), "emergency should halt gov_staker operations")
-	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw enabled")
+	halted, err := halt.IsActionHalted(halt.OpTypeLaunchpad, halt.ActionRecover)
+	uassert.NoError(t, err)
+	uassert.False(t, halted, "emergency should keep launchpad recovery enabled")
 
 	testing.SetRealm(testing.NewUserRealm(projectOwner))
 	uassert.NotPanics(t, func() {

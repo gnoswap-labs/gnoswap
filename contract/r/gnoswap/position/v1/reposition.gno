@@ -34,7 +34,6 @@ func (p *positionV1) Reposition(
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
 	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(p, positionId, caller)

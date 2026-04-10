@@ -133,7 +133,9 @@ func TestEmergencyHaltAllowsCollectDepositGns(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
-	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+	halted, err := halt.IsActionHalted(halt.OpTypeLaunchpad, halt.ActionRecover)
+	uassert.NoError(t, err)
+	uassert.False(t, halted, "emergency should keep launchpad recovery enabled")
 
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 	testing.SkipHeights(60*60*24*180/5 + 2)

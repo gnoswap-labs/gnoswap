@@ -1,124 +1,105 @@
 package halt
 
-// HaltConfig stores halt state for each operation type.
-type HaltConfig map[OpType]bool
+// HaltConfig stores halt state for each domain/action policy key.
+type HaltConfig map[OpType]map[Action]bool
 
-// IsHalted returns true if the specified operation is halted, false otherwise.
-// Returns false if operation type is not found in configuration.
-func (c HaltConfig) IsHalted(op OpType) bool {
-	halted, exists := c[op]
+func (c HaltConfig) IsHalted(domain OpType, action Action) bool {
+	actions, exists := c[domain]
 	if !exists {
 		return false
 	}
-
+	halted, exists := actions[action]
+	if !exists {
+		return false
+	}
 	return halted
 }
 
-// Clone creates a deep copy of the halt configuration and returns it.
 func (c HaltConfig) Clone() HaltConfig {
 	clone := make(HaltConfig)
-
-	for op, option := range c {
-		clone[op] = option
+	for domain, actions := range c {
+		clone[domain] = make(map[Action]bool)
+		for action, halted := range actions {
+			clone[domain][action] = halted
+		}
 	}
-
 	return clone
 }
 
-// get retrieves halt state for the specified operation type.
-//
-// Errors:
-//   - errOpTypeNotFound: the specified operation type does not exist in the config
-func (c HaltConfig) get(op OpType) (bool, error) {
-	enabled, exists := c[op]
-	if !exists {
-		return false, makeErrorWithDetails(errOpTypeNotFound, op.String())
+func (c HaltConfig) get(domain OpType, action Action) (bool, error) {
+	if !domain.IsValid() {
+		return false, makeErrorWithDetails(errInvalidOpType, domain.String())
 	}
-
-	return enabled, nil
+	if !action.IsValid() {
+		return false, makeErrorWithDetails(errInvalidAction, action.String())
+	}
+	if !IsAllowedAction(domain, action) {
+		return false, makeErrorWithDetails(errActionNotAllowed, policyKey(domain, action))
+	}
+	actions, exists := c[domain]
+	if !exists {
+		return false, makeErrorWithDetails(errPolicyNotFound, policyKey(domain, action))
+	}
+	halted, exists := actions[action]
+	if !exists {
+		return false, makeErrorWithDetails(errPolicyNotFound, policyKey(domain, action))
+	}
+	return halted, nil
 }
 
-// set updates halt state for the specified operation type.
-// Returns error if operation type is invalid.
-func (c HaltConfig) set(op OpType, enabled bool) error {
-	if !op.IsValid() {
-		return makeErrorWithDetails(errInvalidOpType, op.String())
+func (c HaltConfig) set(domain OpType, action Action, halted bool) error {
+	if !domain.IsValid() {
+		return makeErrorWithDetails(errInvalidOpType, domain.String())
 	}
-
-	c[op] = enabled
-
+	if !action.IsValid() {
+		return makeErrorWithDetails(errInvalidAction, action.String())
+	}
+	if !IsAllowedAction(domain, action) {
+		return makeErrorWithDetails(errActionNotAllowed, policyKey(domain, action))
+	}
+	if _, exists := c[domain]; !exists {
+		c[domain] = make(map[Action]bool)
+	}
+	c[domain][action] = halted
 	return nil
 }
 
-// newNoneConfig creates configuration with all operations enabled (no halts).
+func newBaseConfig(defaultHalted bool) HaltConfig {
+	config := make(HaltConfig)
+	for domain, actions := range allowedActionsByDomain {
+		config[domain] = make(map[Action]bool)
+		for action := range actions {
+			config[domain][action] = defaultHalted
+		}
+	}
+	return config
+}
+
 func newNoneConfig() HaltConfig {
-	return HaltConfig{
-		OpTypePool:          false,
-		OpTypePosition:      false,
-		OpTypeProtocolFee:   false,
-		OpTypeRouter:        false,
-		OpTypeStaker:        false,
-		OpTypeLaunchpad:     false,
-		OpTypeGovernance:    false,
-		OpTypeGovStaker:     false,
-		OpTypeXGns:          false,
-		OpTypeCommunityPool: false,
-		OpTypeEmission:      false,
-		OpTypeWithdraw:      false,
-	}
+	return newBaseConfig(false)
 }
 
-// newSafeModeConfig creates configuration for safe mode with only withdrawals halted.
 func newSafeModeConfig() HaltConfig {
-	return HaltConfig{
-		OpTypePool:          false,
-		OpTypePosition:      false,
-		OpTypeProtocolFee:   false,
-		OpTypeRouter:        false,
-		OpTypeStaker:        false,
-		OpTypeLaunchpad:     false,
-		OpTypeGovernance:    false,
-		OpTypeGovStaker:     false,
-		OpTypeXGns:          false,
-		OpTypeCommunityPool: false,
-		OpTypeEmission:      false,
-		OpTypeWithdraw:      true,
+	config := newNoneConfig()
+	for domain := range allowedActionsByDomain {
+		if IsAllowedAction(domain, ActionRecover) {
+			config[domain][ActionRecover] = true
+		}
 	}
+	return config
 }
 
-// newEmergencyConfig creates configuration for emergency mode with most operations halted.
-// Only governance and withdraw operations remain enabled for emergency recovery.
 func newEmergencyConfig() HaltConfig {
-	return HaltConfig{
-		OpTypePool:          true,
-		OpTypePosition:      true,
-		OpTypeProtocolFee:   true,
-		OpTypeRouter:        true,
-		OpTypeStaker:        true,
-		OpTypeLaunchpad:     true,
-		OpTypeGovernance:    false,
-		OpTypeGovStaker:     true,
-		OpTypeXGns:          true,
-		OpTypeCommunityPool: true,
-		OpTypeEmission:      true,
-		OpTypeWithdraw:      false,
+	config := newBaseConfig(true)
+	config[OpTypeGovernance][ActionOperate] = false
+	for domain := range allowedActionsByDomain {
+		if IsAllowedAction(domain, ActionRecover) {
+			config[domain][ActionRecover] = false
+		}
 	}
+	return config
 }
 
-// newCompleteConfig creates configuration with all operations halted for complete lockdown.
 func newCompleteConfig() HaltConfig {
-	return HaltConfig{
-		OpTypePool:          true,
-		OpTypePosition:      true,
-		OpTypeProtocolFee:   true,
-		OpTypeRouter:        true,
-		OpTypeStaker:        true,
-		OpTypeLaunchpad:     true,
-		OpTypeGovernance:    true,
-		OpTypeGovStaker:     true,
-		OpTypeXGns:          true,
-		OpTypeCommunityPool: true,
-		OpTypeEmission:      true,
-		OpTypeWithdraw:      true,
-	}
+	return newBaseConfig(true)
 }

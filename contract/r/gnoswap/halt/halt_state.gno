@@ -1,64 +1,84 @@
 package halt
 
-type HaltStateManager map[OpType]bool
+type HaltStateManager map[OpType]map[Action]bool
 
-func (h HaltStateManager) IsOperationHalted(op OpType) (bool, error) {
-	return h.getOperationHalted(op)
+func (h HaltStateManager) IsActionHalted(domain OpType, action Action) (bool, error) {
+	return h.getActionHalted(domain, action)
 }
 
-// ToConfig converts the `HaltStateManager` to a HaltConfig.
 func (h HaltStateManager) ToConfig() HaltConfig {
 	config := make(HaltConfig)
-	for op, halted := range h {
-		config[op] = halted
+	for domain, actions := range h {
+		config[domain] = make(map[Action]bool)
+		for action, halted := range actions {
+			config[domain][action] = halted
+		}
 	}
 	return config
 }
 
-// getOperationHalted retrieves halt state for the specified operation type.
-//
-// Errors:
-//   - errOpTypeNotFound: the specified operation type does not exist in the manager
-func (h HaltStateManager) getOperationHalted(op OpType) (bool, error) {
-	halted, exists := h[op]
-	if !exists {
-		return false, makeErrorWithDetails(errOpTypeNotFound, op.String())
+func (h HaltStateManager) getActionHalted(domain OpType, action Action) (bool, error) {
+	if !domain.IsValid() {
+		return false, makeErrorWithDetails(errInvalidOpType, domain.String())
 	}
-
+	if !action.IsValid() {
+		return false, makeErrorWithDetails(errInvalidAction, action.String())
+	}
+	if !IsAllowedAction(domain, action) {
+		return false, makeErrorWithDetails(errActionNotAllowed, policyKey(domain, action))
+	}
+	actions, exists := h[domain]
+	if !exists {
+		return false, makeErrorWithDetails(errPolicyNotFound, policyKey(domain, action))
+	}
+	halted, exists := actions[action]
+	if !exists {
+		return false, makeErrorWithDetails(errPolicyNotFound, policyKey(domain, action))
+	}
 	return halted, nil
 }
 
-func (h HaltStateManager) setOperationHalted(op OpType, halted bool) error {
-	if !op.IsValid() {
-		return makeErrorWithDetails(errInvalidOpType, op.String())
+func (h HaltStateManager) setActionHalted(domain OpType, action Action, halted bool) error {
+	if !domain.IsValid() {
+		return makeErrorWithDetails(errInvalidOpType, domain.String())
 	}
-
-	h[op] = halted
-
+	if !action.IsValid() {
+		return makeErrorWithDetails(errInvalidAction, action.String())
+	}
+	if !IsAllowedAction(domain, action) {
+		return makeErrorWithDetails(errActionNotAllowed, policyKey(domain, action))
+	}
+	if _, exists := h[domain]; !exists {
+		h[domain] = make(map[Action]bool)
+	}
+	h[domain][action] = halted
 	return nil
 }
 
-func (h HaltStateManager) updateOperationHaltsByConfig(config HaltConfig) error {
-	for op, halted := range config {
-		if err := h.setOperationHalted(op, halted); err != nil {
-			return err
+func (h HaltStateManager) updateByConfig(config HaltConfig) error {
+	for domain, actions := range config {
+		for action, halted := range actions {
+			if err := h.setActionHalted(domain, action, halted); err != nil {
+				return err
+			}
 		}
 	}
-
 	return nil
 }
 
 func newHaltStateManagerByConfig(config HaltConfig) HaltStateManager {
 	haltState := make(HaltStateManager)
-
-	for _, op := range OpTypes() {
-		halted, exists := config[op]
-		if !exists {
-			halted = true
+	for domain, actions := range allowedActionsByDomain {
+		haltState[domain] = make(map[Action]bool)
+		for action := range actions {
+			halted := true
+			if cfgActions, exists := config[domain]; exists {
+				if cfgHalted, ok := cfgActions[action]; ok {
+					halted = cfgHalted
+				}
+			}
+			haltState[domain][action] = halted
 		}
-
-		haltState[op] = halted
 	}
-
 	return haltState
 }

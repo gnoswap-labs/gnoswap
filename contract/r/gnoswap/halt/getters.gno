@@ -4,118 +4,58 @@ import (
 	"gno.land/p/onbloc/json"
 )
 
-// IsHalted returns true if any of the specified operation types are halted.
-// Returns error if any operation type is invalid.
-func IsHalted(opTypes ...OpType) (bool, error) {
-	for _, op := range opTypes {
-		if !op.IsValid() {
-			return true, makeErrorWithDetails(errInvalidOpType, op.String())
-		}
-
-		halted, err := haltStates.IsOperationHalted(op)
+// IsHalted keeps backward-compatible meaning: operate action for the domains.
+func IsHalted(domains ...OpType) (bool, error) {
+	for _, domain := range domains {
+		halted, err := haltStates.IsActionHalted(domain, ActionOperate)
 		if err != nil {
 			return true, err
 		}
-
 		if halted {
 			return true, nil
 		}
 	}
-
 	return false, nil
 }
 
-// GetHaltConfig returns a copy of the current halt configuration.
+func IsActionHalted(domain OpType, action Action) (bool, error) {
+	return haltStates.IsActionHalted(domain, action)
+}
+
 func GetHaltConfig() HaltConfig {
 	return haltStates.ToConfig()
 }
 
-// GetHaltConfigJson returns the halt configuration as a JSON string.
 func GetHaltConfigJson() string {
 	haltConfig := GetHaltConfig()
-
 	statusNodes := make(map[string]*json.Node)
-
-	for op, halted := range haltConfig {
-		statusNodes[op.String()] = json.BoolNode(op.String(), halted)
+	for domain, actions := range haltConfig {
+		actionNodes := make(map[string]*json.Node)
+		for action, halted := range actions {
+			actionNodes[action.String()] = json.BoolNode(action.String(), halted)
+		}
+		statusNodes[domain.String()] = json.ObjectNode(domain.String(), actionNodes)
 	}
-
 	objectNode := json.ObjectNode("status", statusNodes)
-
 	return objectNode.String()
 }
 
-// IsHaltedPool returns true if pool operations are halted.
-func IsHaltedPool() bool {
-	return isHaltedOperation(OpTypePool)
-}
+func IsHaltedPool() bool          { return isActionHalted(OpTypePool, ActionOperate) }
+func IsHaltedPosition() bool      { return isActionHalted(OpTypePosition, ActionOperate) }
+func IsHaltedProtocolFee() bool   { return isActionHalted(OpTypeProtocolFee, ActionOperate) }
+func IsHaltedRouter() bool        { return isActionHalted(OpTypeRouter, ActionOperate) }
+func IsHaltedStaker() bool        { return isActionHalted(OpTypeStaker, ActionOperate) }
+func IsHaltedLaunchpad() bool     { return isActionHalted(OpTypeLaunchpad, ActionOperate) }
+func IsHaltedGovernance() bool    { return isActionHalted(OpTypeGovernance, ActionOperate) }
+func IsHaltedGovStaker() bool     { return isActionHalted(OpTypeGovStaker, ActionOperate) }
+func IsHaltedXGns() bool          { return isActionHalted(OpTypeXGns, ActionOperate) }
+func IsHaltedCommunityPool() bool { return isActionHalted(OpTypeCommunityPool, ActionOperate) }
+func IsHaltedEmission() bool      { return isActionHalted(OpTypeEmission, ActionOperate) }
 
-// IsHaltedPosition returns true if position operations are halted.
-func IsHaltedPosition() bool {
-	return isHaltedOperation(OpTypePosition)
-}
-
-// IsHaltedProtocolFee returns true if protocol fee operations are halted.
-func IsHaltedProtocolFee() bool {
-	return isHaltedOperation(OpTypeProtocolFee)
-}
-
-// IsHaltedRouter returns true if router operations are halted.
-func IsHaltedRouter() bool {
-	return isHaltedOperation(OpTypeRouter)
-}
-
-// IsHaltedStaker returns true if staker operations are halted.
-func IsHaltedStaker() bool {
-	return isHaltedOperation(OpTypeStaker)
-}
-
-// IsHaltedLaunchpad returns true if launchpad operations are halted.
-func IsHaltedLaunchpad() bool {
-	return isHaltedOperation(OpTypeLaunchpad)
-}
-
-// IsHaltedGovernance returns true if governance operations are halted.
-func IsHaltedGovernance() bool {
-	return isHaltedOperation(OpTypeGovernance)
-}
-
-// IsHaltedGovStaker returns true if governance staker operations are halted.
-func IsHaltedGovStaker() bool {
-	return isHaltedOperation(OpTypeGovStaker)
-}
-
-// IsHaltedXGns returns true if xGNS operations are halted.
-func IsHaltedXGns() bool {
-	return isHaltedOperation(OpTypeXGns)
-}
-
-// IsHaltedCommunityPool returns true if community pool operations are halted.
-func IsHaltedCommunityPool() bool {
-	return isHaltedOperation(OpTypeCommunityPool)
-}
-
-// IsHaltedEmission returns true if emission operations are halted.
-func IsHaltedEmission() bool {
-	return isHaltedOperation(OpTypeEmission)
-}
-
-// IsHaltedWithdraw returns true if withdraw operations are halted.
-func IsHaltedWithdraw() bool {
-	return isHaltedOperation(OpTypeWithdraw)
-}
-
-// isHaltedOperation returns halt status for the specified operation type.
-// Panics if operation type is invalid.
-func isHaltedOperation(op OpType) bool {
-	if !op.IsValid() {
-		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
-	}
-
-	halted, err := haltStates.IsOperationHalted(op)
+func isActionHalted(domain OpType, action Action) bool {
+	halted, err := haltStates.IsActionHalted(domain, action)
 	if err != nil {
 		panic(err)
 	}
-
 	return halted
 }

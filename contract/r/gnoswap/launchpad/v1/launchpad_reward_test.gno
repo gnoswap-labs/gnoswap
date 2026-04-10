@@ -538,7 +538,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner2",
 			caller:           "haltOwner2",
 			haltLevel:        halt.HaltLevelComplete,
-			expectedErrorMsg: "halted: withdraw",
+		expectedErrorMsg: "halted: launchpad:recover",
 		},
 	}
 
@@ -616,7 +616,9 @@ func TestEmergencyHaltAllowsCollectRewardByDepositId(t *testing.T) {
 	}()
 
 	uassert.True(t, halt.IsHaltedLaunchpad(), "emergency should halt launchpad operations")
-	uassert.False(t, halt.IsHaltedWithdraw(), "emergency should keep withdraw operations enabled")
+	halted, err := halt.IsActionHalted(halt.OpTypeLaunchpad, halt.ActionRecover)
+	uassert.NoError(t, err)
+	uassert.False(t, halted, "emergency should keep launchpad recovery enabled")
 
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 	uassert.NotPanics(t, func() {

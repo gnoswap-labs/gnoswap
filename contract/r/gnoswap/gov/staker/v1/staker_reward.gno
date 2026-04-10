@@ -171,7 +171,7 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 	if add {
 		halt.AssertIsNotHaltedGovStaker()
 	} else {
-		halt.AssertIsNotHaltedWithdraw()
+		halt.AssertCanRecover(halt.OpTypeGovStaker)
 	}
 
 	caller := runtime.PreviousRealm().Address()

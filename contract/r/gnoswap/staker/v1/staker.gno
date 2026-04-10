@@ -748,7 +748,7 @@ func (s *stakerV1) collectReward(positionId uint64, recovery bool) (string, stri
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypeStaker)
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
