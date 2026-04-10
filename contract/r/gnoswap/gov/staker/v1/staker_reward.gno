@@ -96,7 +96,7 @@ func (gs *govStakerV1) CollectReward() {
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertCanRecover(halt.OpTypeGovStaker)
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsLaunchpad(caller)

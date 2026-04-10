@@ -122,6 +122,7 @@ var allowedActionsByDomain = map[OpType]map[Action]bool{
 	},
 	OpTypeProtocolFee: {
 		ActionOperate: true,
+		ActionRecover: true,
 	},
 	OpTypeRouter: {
 		ActionOperate: true,

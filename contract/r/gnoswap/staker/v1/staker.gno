@@ -534,11 +534,6 @@ func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]
 		totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
-		if err != nil {
-			panic(err.Error())
-		}
-
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
@@ -547,7 +542,7 @@ func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
-		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		err := depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
 		if err != nil {
 			panic(err)
 		}
@@ -560,6 +555,11 @@ func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]
 
 		// update
 		s.getExternalIncentives().set(incentiveId, incentive)
+
+		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
+		if err != nil {
+			panic(err.Error())
+		}
 
 		if toUser > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
@@ -735,6 +735,8 @@ func (s *stakerV1) collectReward(positionId uint64) (string, string, map[string]
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
+	halt.AssertCanRecover(halt.OpTypeStaker)
+	halt.AssertActionAllowed(halt.OpTypeProtocolFee, halt.ActionRecover)
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
@@ -742,8 +744,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	// unStaked status
 	poolPath := deposit.TargetPoolPath()
 
-	// claim all rewards through the recovery-safe path
-	halt.AssertCanRecover(halt.OpTypeStaker)
+	// claim All Rewards
 	s.collectReward(positionId)
 
 	if err := s.applyUnStake(positionId); err != nil {

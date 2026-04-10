@@ -94,7 +94,7 @@ var (
 )
 
 func main() {
-	ufmt.Println("[SCENARIO] Emergency Mode allows only governance and withdraw operations")
+	ufmt.Println("[SCENARIO] Emergency Mode allows governance operate and recovery actions")
 	println()
 
 	ufmt.Println("[STEP 1] Initialize governance, pool and tokens")
@@ -245,7 +245,9 @@ func setEmergencyMode() {
 	ufmt.Printf("  - Router: %t (should be true/blocked)\n", halt.IsHaltedRouter())
 	ufmt.Printf("  - Staker: %t (should be true/blocked)\n", halt.IsHaltedStaker())
 	ufmt.Printf("  - Governance: %t (should be false/allowed)\n", halt.IsHaltedGovernance())
-	ufmt.Printf("  - Withdraw: %t (should be false/allowed)\n", halt.IsHaltedWithdraw())
+	positionRecoverHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+	uassert.NoError(t, err)
+	ufmt.Printf("  - Position Recover: %t (should be false/allowed)\n", positionRecoverHalted)
 }
 
 func testPoolCreationBlocked() {
@@ -471,11 +473,13 @@ func verifyHaltStatusSummary() {
 	ufmt.Printf("    - Emission: %t\n", halt.IsHaltedEmission())
 	ufmt.Println("  Operations ALLOWED (halted: false):")
 	ufmt.Printf("    - Governance: %t\n", halt.IsHaltedGovernance())
-	ufmt.Printf("    - Withdraw: %t\n", halt.IsHaltedWithdraw())
+	positionRecoverHalted, err := halt.IsActionHalted(halt.OpTypePosition, halt.ActionRecover)
+	uassert.NoError(t, err)
+	ufmt.Printf("    - Position Recover: %t\n", positionRecoverHalted)
 }
 
 // Output:
-// [SCENARIO] Emergency Mode allows only governance and withdraw operations
+// [SCENARIO] Emergency Mode allows governance operate and recovery actions
 //
 // [STEP 1] Initialize governance, pool and tokens
 // [INFO] Alice GNS balance: 1500000000
@@ -494,7 +498,7 @@ func verifyHaltStatusSummary() {
 //   - Router: true (should be true/blocked)
 //   - Staker: true (should be true/blocked)
 //   - Governance: false (should be false/allowed)
-//   - Withdraw: false (should be false/allowed)
+//   - Position Recover: false (should be false/allowed)
 //
 // [STEP 4] Test: Pool creation is BLOCKED in Emergency Mode
 // [INFO] Attempting to create pool in Emergency Mode (should abort)...
@@ -565,4 +569,4 @@ func verifyHaltStatusSummary() {
 //     - Emission: true
 //   Operations ALLOWED (halted: false):
 //     - Governance: false
-//     - Withdraw: false
+//     - Position Recover: false
