@@ -187,44 +187,6 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 	}
 }
 
-func TestAssertAmountSpecifiedIsNotZero(t *testing.T) {
-	tests := []struct {
-		name            string
-		amountSpecified string
-		shouldPanic     bool
-		panicMsg        string
-	}{
-		{
-			name:            "success - positive amount",
-			amountSpecified: "1000",
-			shouldPanic:     false,
-		},
-		{
-			name:            "success - negative amount",
-			amountSpecified: "-1000",
-			shouldPanic:     false,
-		},
-		{
-			name:            "fail - zero amount",
-			amountSpecified: "0",
-			shouldPanic:     true,
-			panicMsg:        "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertAmountSpecifiedIsNotZero(tt.amountSpecified)
-				})
-			} else {
-				assertAmountSpecifiedIsNotZero(tt.amountSpecified)
-			}
-		})
-	}
-}
-
 func TestAssertIsValidTokenOrder(t *testing.T) {
 	tests := []struct {
 		name        string

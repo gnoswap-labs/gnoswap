@@ -13,11 +13,6 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 	return r.Rewards().Size() > 0
 }
 
-func getAccumulatedReward(r *launchpad.RewardManager) int64 {
-	res := u256.Zero().Rsh(r.AccumulatedRewardPerDepositX128(), 128)
-	return safeConvertToInt64(res)
-}
-
 func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
 	rewardStateI, exists := r.Rewards().Get(depositId)
 	if !exists {
