@@ -704,14 +704,14 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	).([]uint64)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	return t.ExecuteFn(
 		"GetPoolGlobalRewardRatioAccumulation",
 		func(args ...any) any {
 			return t.instance.GetPoolGlobalRewardRatioAccumulation(args[0].(string), args[1].(uint64))
 		},
 		poolPath, timestamp,
-	).(*u256.Uint)
+	).(string)
 }
 
 func (t *TestStaker) GetPoolHistoricalTickCount(poolPath string) uint64 {
