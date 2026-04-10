@@ -279,12 +279,6 @@ func TestValidateExecutions(t *testing.T) {
 			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
-		{
-			name:          "Success - community_pool TransferToken empty address",
-			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns," + address("").String() + ",1000000",
-			expectedError: false,
-		},
 		// emission
 		{
 			name:          "Success - emission SetDistributionStartTime",
@@ -570,9 +564,44 @@ func TestValidateExecutions(t *testing.T) {
 			expectedErrorContains: "invalid bool value: not_bool",
 		},
 		{
+			name:                  "Failure - community_pool TransferToken empty address",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,,1000000",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+		{
 			name:                  "Failure - community_pool TransferToken invalid address",
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,invalidAddress,1000000",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - pool CollectProtocol empty recipient",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500,,100,100",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - rbac RegisterRole empty role address",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - rbac UpdateRoleAddress empty role address",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
+			expectedError:         true,
+			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - launchpad CreateProject empty recipient",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns,,1000000,,,10,20,70,1000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},

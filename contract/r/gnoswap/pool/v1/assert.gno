@@ -49,32 +49,6 @@ func assertIsNotExistsPoolPath(instance *poolV1, token0Path, token1Path string, 
 	}
 }
 
-// assertIsValidTicks validates the tick range for a liquidity position.
-func assertIsValidTicks(tickLower, tickUpper int32) {
-	if err := validateTicks(tickLower, tickUpper); err != nil {
-		panic(err)
-	}
-}
-
-// assertAmountSpecifiedIsNotZero asserts that the amountSpecified is not zero.
-func assertAmountSpecifiedIsNotZero(amountSpecified string) {
-	if amountSpecified == "0" {
-		panic(newErrorWithDetail(
-			errInvalidSwapAmount,
-			ufmt.Sprintf("amountSpecified == 0"),
-		))
-	}
-}
-
-func assertPayerIsPreviousRealmOrOriginCaller(payer address) {
-	if payer != runtime.PreviousRealm().Address() && payer != runtime.OriginCaller() {
-		panic(newErrorWithDetail(
-			errInvalidPayer,
-			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),
-		))
-	}
-}
-
 func assertIsValidTokenOrder(token0Path, token1Path string) {
 	if token0Path >= token1Path {
 		panic(newErrorWithDetail(
