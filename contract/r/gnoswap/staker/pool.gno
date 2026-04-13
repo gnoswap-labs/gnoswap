@@ -537,8 +537,8 @@ func (t *Ticks) Get(tickId int32) *Tick {
 	if !ok {
 		tick := &Tick{
 			id:                   tickId,
-			stakedLiquidityGross: u256.Zero(),
-			stakedLiquidityDelta: i256.Zero(),
+			stakedLiquidityGross: "0",
+			stakedLiquidityDelta: "0",
 			outsideAccumulation:  NewUintTree(),
 		}
 		t.tree.Set(EncodeInt(tickId), tick)
@@ -558,7 +558,7 @@ func (self *Ticks) Has(tickId int32) bool {
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
-	if tick.stakedLiquidityGross.IsZero() {
+	if tick.stakedLiquidityGross == "0" {
 		t.tree.Remove(EncodeInt(tickId))
 		return
 	}
@@ -608,17 +608,17 @@ func NewTicks() Ticks {
 //
 // Fields:
 // - id (int32): The ID of the tick.
-// - stakedLiquidityGross (*u256.Uint): Total gross staked liquidity at this tick.
-// - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
+// - stakedLiquidityGross (string): Total gross staked liquidity at this tick (decimal string of uint256).
+// - stakedLiquidityDelta (string): Net change in staked liquidity at this tick (decimal string of int256).
 // - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
 type Tick struct {
 	id int32
 
 	// conceptually equal with Pool.liquidityGross but only for the staked positions
-	stakedLiquidityGross *u256.Uint
+	stakedLiquidityGross string
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
-	stakedLiquidityDelta *i256.Int
+	stakedLiquidityDelta string
 
 	// outsideAccumulation is the accumulation of time / TotalStake outside the tick.
 	// Stores snapshots at key time points (stake/unstake/collect).
@@ -638,24 +638,24 @@ func (t *Tick) SetId(id int32) {
 	t.id = id
 }
 
-// StakedLiquidityGross returns the staked liquidity gross
+// StakedLiquidityGross returns the staked liquidity gross as *u256.Uint.
 func (t *Tick) StakedLiquidityGross() *u256.Uint {
-	return t.stakedLiquidityGross
+	return u256.MustFromDecimal(t.stakedLiquidityGross)
 }
 
-// SetStakedLiquidityGross sets the staked liquidity gross
+// SetStakedLiquidityGross sets the staked liquidity gross.
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = stakedLiquidityGross
+	t.stakedLiquidityGross = stakedLiquidityGross.ToString()
 }
 
-// StakedLiquidityDelta returns the staked liquidity delta
+// StakedLiquidityDelta returns the staked liquidity delta as *i256.Int.
 func (t *Tick) StakedLiquidityDelta() *i256.Int {
-	return t.stakedLiquidityDelta
+	return i256.MustFromDecimal(t.stakedLiquidityDelta)
 }
 
-// SetStakedLiquidityDelta sets the staked liquidity delta
+// SetStakedLiquidityDelta sets the staked liquidity delta.
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = stakedLiquidityDelta
+	t.stakedLiquidityDelta = stakedLiquidityDelta.ToString()
 }
 
 // OutsideAccumulation returns the outside accumulation tree.
@@ -676,8 +676,8 @@ func (t *Tick) Clone() *Tick {
 
 	return &Tick{
 		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
-		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
+		stakedLiquidityGross: t.stakedLiquidityGross,
+		stakedLiquidityDelta: t.stakedLiquidityDelta,
 		outsideAccumulation:  t.outsideAccumulation.Clone(),
 	}
 }
@@ -685,8 +685,8 @@ func (t *Tick) Clone() *Tick {
 func NewTick(tickId int32) *Tick {
 	return &Tick{
 		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
-		stakedLiquidityDelta: i256.Zero(),
+		stakedLiquidityGross: "0",
+		stakedLiquidityDelta: "0",
 		outsideAccumulation:  NewUintTree(),
 	}
 }
