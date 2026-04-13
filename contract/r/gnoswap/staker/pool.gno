@@ -620,8 +620,9 @@ type Tick struct {
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
 
-	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
-	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
+	// outsideAccumulation is the accumulation of time / TotalStake outside the tick.
+	// Stores snapshots at key time points (stake/unstake/collect).
+	// During tick crosses, the latest entry is updated in-place to avoid tree growth.
 	outsideAccumulation *UintTree // timestamp -> string (decimal representation of *u256.Uint)
 }
 
@@ -657,12 +658,12 @@ func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
 	t.stakedLiquidityDelta = stakedLiquidityDelta
 }
 
-// OutsideAccumulation returns the outside accumulation tree
+// OutsideAccumulation returns the outside accumulation tree.
 func (t *Tick) OutsideAccumulation() *UintTree {
 	return t.outsideAccumulation
 }
 
-// SetOutsideAccumulation sets the outside accumulation tree
+// SetOutsideAccumulation sets the outside accumulation tree.
 func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 	t.outsideAccumulation = outsideAccumulation
 }

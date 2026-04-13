@@ -164,7 +164,7 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 			setupFunc: func(tick *sr.Tick) {
 				// No setup - empty accumulation
 			},
-			queryTimestamp: 1000,
+			queryTimestamp:  1000,
 			expectedIsZero: true,
 		},
 		{
@@ -173,7 +173,7 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 			setupFunc: func(tick *sr.Tick) {
 				tick.OutsideAccumulation().Set(500, u256.NewUint(12345).ToString())
 			},
-			queryTimestamp: 1000,
+			queryTimestamp:  1000,
 			expectedIsZero: false,
 		},
 		{
@@ -184,7 +184,7 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 				tick.OutsideAccumulation().Set(500, u256.NewUint(5000).ToString())
 				tick.OutsideAccumulation().Set(1000, u256.NewUint(10000).ToString())
 			},
-			queryTimestamp: 1500,
+			queryTimestamp:  1500,
 			expectedIsZero: false,
 		},
 	}

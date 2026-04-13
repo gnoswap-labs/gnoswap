@@ -18,10 +18,10 @@ type TickResolver struct {
 	*sr.Tick
 }
 
-// CurrentOutsideAccumulation returns the latest outside accumulation for the tick
+// CurrentOutsideAccumulation returns the latest outside accumulation for the tick.
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
-	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
+	self.Tick.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
 		v, ok := value.(string)
 		if !ok {
 			panic("failed to cast value to string")
@@ -54,13 +54,13 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 	self.SetStakedLiquidityDelta(i256.Zero().Sub(self.StakedLiquidityDelta(), liquidity))
 }
 
-// updateCurrentOutsideAccumulation updates the tick's outside accumulation
-// It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
-// Returns the new outside accumulation value to avoid redundant tree lookups.
+// updateCurrentOutsideAccumulation updates the tick's outside accumulation.
+// It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation.
+// Returns the new outside accumulation value.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) *u256.Uint {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
+	self.Tick.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
 	return newOutsideAccumulation
 }
 
@@ -156,7 +156,7 @@ func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool,
 
 	// Immediate processing path: handle tick crosses outside of swap context
 	// This ensures real-time updates for non-swap operations (e.g., position modifications)
-	// s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
+	s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
 }
 
 // processTickCrossImmediate processes a single tick cross immediately
