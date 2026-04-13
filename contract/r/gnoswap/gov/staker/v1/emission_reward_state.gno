@@ -44,7 +44,13 @@ func (self *EmissionRewardStateResolver) GetClaimableRewardAmount(
 	if err != nil {
 		return 0, err
 	}
-	return safeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount), nil
+
+	accumulatedUnclaimedReward := safeSubInt64(
+		self.GetAccumulatedRewardAmount(),
+		self.GetClaimedRewardAmount(),
+	)
+
+	return safeAddInt64(accumulatedUnclaimedReward, rewardAmount), nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards since the last update.
