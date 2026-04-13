@@ -952,7 +952,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:           50,
 			c:           0,
 			shouldPanic: true,
-			panicMsg:    "division by zero in safeMulDivInt64",
+			panicMsg:    "zero division",
 		},
 		// Result is zero after division (too small)
 		{
