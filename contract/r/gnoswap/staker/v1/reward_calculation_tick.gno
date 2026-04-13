@@ -60,7 +60,7 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) *u256.Uint {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.Tick.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
+	// self.Tick.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
 	return newOutsideAccumulation
 }
 
