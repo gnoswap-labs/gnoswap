@@ -7,6 +7,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
@@ -142,10 +143,10 @@ func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 		}
 
 		distributable[target] = distAmount
-		totalSent = safeAddInt64(totalSent, distAmount)
+		totalSent = gnsmath.SafeAddInt64(totalSent, distAmount)
 	}
 
-	leftAmount := safeSubInt64(amount, totalSent)
+	leftAmount := gnsmath.SafeSubInt64(amount, totalSent)
 	return distributable, leftAmount
 }
 
@@ -177,23 +178,23 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 
 		switch target {
 		case LIQUIDITY_STAKER:
-			distributedToStaker = safeAddInt64(distributedToStaker, amount)
-			accuDistributedToStaker = safeAddInt64(accuDistributedToStaker, amount)
+			distributedToStaker = gnsmath.SafeAddInt64(distributedToStaker, amount)
+			accuDistributedToStaker = gnsmath.SafeAddInt64(accuDistributedToStaker, amount)
 			addr = access.MustGetAddress(prbac.ROLE_STAKER.String())
 
 		case DEVOPS:
-			distributedToDevOps = safeAddInt64(distributedToDevOps, amount)
-			accuDistributedToDevOps = safeAddInt64(accuDistributedToDevOps, amount)
+			distributedToDevOps = gnsmath.SafeAddInt64(distributedToDevOps, amount)
+			accuDistributedToDevOps = gnsmath.SafeAddInt64(accuDistributedToDevOps, amount)
 			addr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 		case COMMUNITY_POOL:
-			distributedToCommunityPool = safeAddInt64(distributedToCommunityPool, amount)
-			accuDistributedToCommunityPool = safeAddInt64(accuDistributedToCommunityPool, amount)
+			distributedToCommunityPool = gnsmath.SafeAddInt64(distributedToCommunityPool, amount)
+			accuDistributedToCommunityPool = gnsmath.SafeAddInt64(accuDistributedToCommunityPool, amount)
 			addr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 		case GOV_STAKER:
-			distributedToGovStaker = safeAddInt64(distributedToGovStaker, amount)
-			accuDistributedToGovStaker = safeAddInt64(accuDistributedToGovStaker, amount)
+			distributedToGovStaker = gnsmath.SafeAddInt64(distributedToGovStaker, amount)
+			accuDistributedToGovStaker = gnsmath.SafeAddInt64(accuDistributedToGovStaker, amount)
 			addr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 		default:
@@ -203,12 +204,11 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 			)
 		}
 
-		amountByAddress[addr] = safeAddInt64(amountByAddress[addr], amount)
+		amountByAddress[addr] = gnsmath.SafeAddInt64(amountByAddress[addr], amount)
 	}
 
 	return amountByAddress, nil
 }
-
 
 func transferToTarget(targets map[address]int64) error {
 	for address, amount := range targets {

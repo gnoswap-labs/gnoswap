@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -17,7 +18,7 @@ func NewProposalVoteStatusResolver(voteStatus *governance.ProposalVoteStatus) *P
 // Returns:
 //   - int64: combined weight of all votes
 func (p *ProposalVoteStatusResolver) TotalVoteWeight() int64 {
-	return safeAddInt64(p.YesWeight(), p.NoWeight())
+	return gnsmath.SafeAddInt64(p.YesWeight(), p.NoWeight())
 }
 
 // IsPassed determines if the proposal has passed the voting requirements.
@@ -39,7 +40,7 @@ func (p *ProposalVoteStatusResolver) IsPassed() bool {
 // Returns:
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) error {
-	p.SetYesWeight(safeAddInt64(p.YesWeight(), yea))
+	p.SetYesWeight(gnsmath.SafeAddInt64(p.YesWeight(), yea))
 	return nil
 }
 
@@ -52,6 +53,6 @@ func (p *ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) error {
 // Returns:
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) error {
-	p.SetNoWeight(safeAddInt64(p.NoWeight(), nay))
+	p.SetNoWeight(gnsmath.SafeAddInt64(p.NoWeight(), nay))
 	return nil
 }

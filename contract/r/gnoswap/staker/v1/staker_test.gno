@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -446,7 +447,7 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(t *t
 		t.Fatalf("expected positive external penalty during warmup, got %d", externalPenalty)
 	}
 
-	totalRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+	totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
 	incentive.SetRewardAmount(totalRewardAmount - 1)
 	incentives.set(incentiveId, incentive)
 

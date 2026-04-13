@@ -6,6 +6,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -99,7 +100,7 @@ func (r *routerV1) handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	return safeSubInt64(amount, feeAmountInt64)
+	return gnsmath.SafeSubInt64(amount, feeAmountInt64)
 }
 
 func calculateRouterFee(amount int64, swapFee uint64) int64 {
@@ -108,7 +109,7 @@ func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	}
 
 	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
-	return safeConvertToInt64(feeAmount)
+	return gnsmath.SafeConvertToInt64(feeAmount)
 }
 
 // calculate amount to fetch from pool including router fee
@@ -127,7 +128,7 @@ func calculateExactOutWithRouterFee(amount int64, swapFee uint64) int64 {
 			u256.NewUint(10000-swapFee),
 		)
 
-		return safeConvertToInt64(poolAmount)
+		return gnsmath.SafeConvertToInt64(poolAmount)
 	}
 
 	return amount

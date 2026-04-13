@@ -6,6 +6,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -1018,11 +1019,11 @@ func TestSafeAddInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeAddInt64(tt.a, tt.b)
+					gnsmath.SafeAddInt64(tt.a, tt.b)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					result := safeAddInt64(tt.a, tt.b)
+					result := gnsmath.SafeAddInt64(tt.a, tt.b)
 					uassert.Equal(t, tt.expected, result)
 				})
 			}
@@ -1160,11 +1161,11 @@ func TestSafeSubInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeSubInt64(tt.a, tt.b)
+					gnsmath.SafeSubInt64(tt.a, tt.b)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					result := safeSubInt64(tt.a, tt.b)
+					result := gnsmath.SafeSubInt64(tt.a, tt.b)
 					uassert.Equal(t, tt.expected, result)
 				})
 			}

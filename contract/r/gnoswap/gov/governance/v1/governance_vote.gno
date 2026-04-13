@@ -5,10 +5,11 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Vote casts a vote on a proposal.
@@ -121,7 +122,7 @@ func (gv *governanceV1) vote(
 		weightAtCreated = 0
 	}
 
-	votingWeight := safeAddInt64(weightAtSnapshot, weightAtCreated) / 2
+	votingWeight := gnsmath.SafeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")

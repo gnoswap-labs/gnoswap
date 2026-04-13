@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -46,7 +47,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
-	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
+	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
 
@@ -251,14 +252,14 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 		rewardState := resolver.RewardStateOf(deposit)
 		calculatedTotalReward := rewardState.calculateCollectableExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
-		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
+		totalReward = gnsmath.SafeAddInt64(totalReward, calculatedTotalReward)
 
 		return false
 	})
 
 	// calculate refund amount is the difference between the incentive reward amount and the total external reward
-	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
-	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
+	refund := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
+	refund = gnsmath.SafeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
 }

@@ -3,11 +3,11 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
-
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	avl "gno.land/p/nt/avl/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/common"
 	sr "gno.land/r/gnoswap/staker"
@@ -213,7 +213,7 @@ func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAcc := self.CurrentGlobalRewardRatioAccumulation(currentTime)
-	timeDiff := safeSubInt64(currentTime, oldAccTime)
+	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
 	if timeDiff == 0 {
 		return oldAcc.Clone()
 	}
@@ -366,7 +366,7 @@ func (self *RewardState) calculateCollectableExternalReward(startTime, endTime i
 		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
 	}
 
-	return safeConvertToInt64(currentReward)
+	return gnsmath.SafeConvertToInt64(currentReward)
 }
 
 // calculateExternalReward calculates the external reward for the deposit.
@@ -389,10 +389,10 @@ func (self *RewardState) applyWarmup() {
 		warmupReward := self.rewards[i]
 
 		// calculate warmup reward applying warmup ratio
-		self.rewards[i] = safeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+		self.rewards[i] = gnsmath.SafeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
 
 		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
-		self.penalties[i] = safeSubInt64(warmupReward, self.rewards[i])
+		self.penalties[i] = gnsmath.SafeSubInt64(warmupReward, self.rewards[i])
 	}
 }
 
@@ -420,7 +420,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+			self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 			break
 		}
@@ -435,7 +435,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
+		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
 	}
@@ -508,9 +508,9 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 		return
 	}
 
-	unclaimableDuration := safeSubInt64(currentTime, self.LastUnclaimableTime())
-	currentUnclaimableReward := safeMulInt64(unclaimableDuration, self.CurrentReward(self.LastUnclaimableTime()))
-	self.SetUnclaimableAcc(safeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
+	unclaimableDuration := gnsmath.SafeSubInt64(currentTime, self.LastUnclaimableTime())
+	currentUnclaimableReward := gnsmath.SafeMulInt64(unclaimableDuration, self.CurrentReward(self.LastUnclaimableTime()))
+	self.SetUnclaimableAcc(gnsmath.SafeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.

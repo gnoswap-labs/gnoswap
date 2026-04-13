@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	avl "gno.land/p/nt/avl/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -34,15 +35,15 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 	externalPenalty := make(map[string]int64, rewardLen)
 
 	for _, reward := range rewards {
-		internal = safeAddInt64(internal, reward.Internal)
-		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
+		internal = gnsmath.SafeAddInt64(internal, reward.Internal)
+		internalPenalty = gnsmath.SafeAddInt64(internalPenalty, reward.InternalPenalty)
 
 		for incentive, amount := range reward.External {
-			externalReward[incentive] = safeAddInt64(externalReward[incentive], amount)
+			externalReward[incentive] = gnsmath.SafeAddInt64(externalReward[incentive], amount)
 		}
 
 		for incentive, penalty := range reward.ExternalPenalty {
-			externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
+			externalPenalty[incentive] = gnsmath.SafeAddInt64(externalPenalty[incentive], penalty)
 		}
 	}
 

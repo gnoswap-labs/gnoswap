@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -444,20 +445,19 @@ func TestUtil_safeConvertToInt64(t *testing.T) {
 			name:                 "panics on overflow - int64 max + 1",
 			input:                u256.NewUint(9223372036854775808), // int64 max + 1
 			expectedHasPanic:     true,
-			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// when/then
 			if tc.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
-					safeConvertToInt64(tc.input)
+					gnsmath.SafeConvertToInt64(tc.input)
 				})
 			} else {
-				result := safeConvertToInt64(tc.input)
+				result := gnsmath.SafeConvertToInt64(tc.input)
 				uassert.Equal(t, result, tc.expected)
 			}
 		})

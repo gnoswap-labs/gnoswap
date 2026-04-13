@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -19,7 +20,7 @@ func getProjectRemainingAmount(p *launchpad.Project) int64 {
 	remainingAmount := int64(0)
 
 	for _, tier := range p.Tiers() {
-		remainingAmount = safeAddInt64(remainingAmount, getCalculatedLeftReward(tier))
+		remainingAmount = gnsmath.SafeAddInt64(remainingAmount, getCalculatedLeftReward(tier))
 	}
 
 	return remainingAmount

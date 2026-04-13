@@ -3,6 +3,7 @@ package v1
 import (
 	"math"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	avl "gno.land/p/nt/avl/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -196,7 +197,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 
 	// Get current total from the most recent entry
 	currentTotal := g.getLatestTotalDelegation(history)
-	newTotal := safeAddInt64(currentTotal, amount)
+	newTotal := gnsmath.SafeAddInt64(currentTotal, amount)
 
 	if newTotal < 0 {
 		newTotal = 0
@@ -236,7 +237,7 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 
 	// Get current amount from the most recent entry
 	currentAmount := g.getLatestUserDelegation(userHistory)
-	newAmount := safeAddInt64(currentAmount, amount)
+	newAmount := gnsmath.SafeAddInt64(currentAmount, amount)
 	if newAmount < 0 {
 		newAmount = 0
 	}
@@ -539,7 +540,7 @@ func (g *govStakerV1) addStakeFromLaunchpad(address string, amount int64, curren
 		deposit = 0
 	}
 
-	deposit = safeAddInt64(deposit, amount)
+	deposit = gnsmath.SafeAddInt64(deposit, amount)
 	g.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
 
 	return nil
@@ -569,7 +570,7 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 		deposit = 0
 	}
 
-	deposit = safeSubInt64(deposit, amount)
+	deposit = gnsmath.SafeSubInt64(deposit, amount)
 	if deposit < 0 {
 		deposit = 0
 	}

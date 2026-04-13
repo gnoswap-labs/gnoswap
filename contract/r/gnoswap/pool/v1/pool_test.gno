@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -845,8 +846,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 			afterFees1 := pool.ProtocolFeesToken1()
 
 			// Verify collected amount does not exceed previous balance
-			collected0 := safeConvertToInt64(u256.MustFromDecimal(amount0))
-			collected1 := safeConvertToInt64(u256.MustFromDecimal(amount1))
+			collected0 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount0))
+			collected1 := gnsmath.SafeConvertToInt64(u256.MustFromDecimal(amount1))
 
 			uassert.True(t, collected0 <= beforeFees0,
 				"Collected amount exceeds available fees")
@@ -854,8 +855,8 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 				"Collected amount exceeds available fees")
 
 			// Verify protocol fees are appropriately decreased
-			expectedAfter0 := safeSubInt64(beforeFees0, collected0)
-			expectedAfter1 := safeSubInt64(beforeFees1, collected1)
+			expectedAfter0 := gnsmath.SafeSubInt64(beforeFees0, collected0)
+			expectedAfter1 := gnsmath.SafeSubInt64(beforeFees1, collected1)
 
 			uassert.Equal(t, expectedAfter0, afterFees0)
 			uassert.Equal(t, expectedAfter1, afterFees1)

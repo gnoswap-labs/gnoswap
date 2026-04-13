@@ -8,6 +8,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -163,7 +164,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 			beforeDevOpsBalances := make(map[string]int64)
 			beforeGovStakerBalances := make(map[string]int64)
 
-			for token, _ := range test.depositedBalances {
+			for token := range test.depositedBalances {
 				beforeDevOpsBalances[token] = common.BalanceOf(token, devOpsAddr)
 				beforeGovStakerBalances[token] = common.BalanceOf(token, govStakerAddr)
 			}
@@ -1233,10 +1234,10 @@ func TestSafeAddInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeAddInt64(tt.a, tt.b)
+					gnsmath.SafeAddInt64(tt.a, tt.b)
 				})
 			} else {
-				result := safeAddInt64(tt.a, tt.b)
+				result := gnsmath.SafeAddInt64(tt.a, tt.b)
 				uassert.Equal(t, result, tt.expected)
 			}
 		})
@@ -1322,10 +1323,10 @@ func TestSafeSubInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeSubInt64(tt.a, tt.b)
+					gnsmath.SafeSubInt64(tt.a, tt.b)
 				})
 			} else {
-				result := safeSubInt64(tt.a, tt.b)
+				result := gnsmath.SafeSubInt64(tt.a, tt.b)
 				uassert.Equal(t, result, tt.expected)
 			}
 		})
@@ -1376,7 +1377,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           50,
 			c:           0,
 			shouldPanic: true,
-			panicMsg:    "division by zero in safeMulDiv",
+			panicMsg:    "division by zero in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication overflow (positive * positive)",
@@ -1384,7 +1385,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication overflow in safeMulDiv",
+			panicMsg:    "int64 overflow in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication underflow (positive * negative)",
@@ -1392,7 +1393,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           -2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+			panicMsg:    "int64 overflow in SafeMulDivInt64",
 		},
 		{
 			name:        "panic - multiplication underflow (negative * positive)",
@@ -1400,7 +1401,7 @@ func TestSafeMulDiv(t *testing.T) {
 			b:           2,
 			c:           1,
 			shouldPanic: true,
-			panicMsg:    "int64 multiplication underflow in safeMulDiv",
+			panicMsg:    "int64 overflow in SafeMulDivInt64",
 		},
 	}
 
@@ -1408,10 +1409,10 @@ func TestSafeMulDiv(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					safeMulDiv(tt.a, tt.b, tt.c)
+					gnsmath.SafeMulDivInt64(tt.a, tt.b, tt.c)
 				})
 			} else {
-				result := safeMulDiv(tt.a, tt.b, tt.c)
+				result := gnsmath.SafeMulDivInt64(tt.a, tt.b, tt.c)
 				uassert.Equal(t, result, tt.expected)
 			}
 		})
