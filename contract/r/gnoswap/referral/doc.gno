@@ -32,20 +32,21 @@
 //   - IsEmpty() bool: Returns true if no referral relationships exist.
 //   - GetLastOpTimestamp(addr string) (int64, error): Returns the last
 //     referral operation timestamp for the given user address.
-//   - TryRegister(cur realm, addr address, referral string) bool:
-//     Attempts to register a new referral. Returns true on success.
+//   - TryRegister(cur realm, addr address, referral string) string:
+//     Attempts to register a new referral and returns the effective referrer.
+//     Empty input returns the user's stored referral without attempting registration.
 //
 // ## Workflow
 //
 // Typical usage of this contract follows these steps:
 //
 //  1. An authorized contract (router, staker, etc.) calls TryRegister
-//     to create a referral relationship.
+//     to resolve the effective referrer and optionally create a referral relationship.
 //  2. The keeper validates the caller's permissions via isValidCaller.
 //  3. Address validation ensures both addresses are valid and not
 //     self-referencing.
 //  4. Rate limiting checks prevent operations more than once per 24 hours.
-//  5. The referral is stored in the AVL tree and an event is emitted.
+//  5. The referral is stored in the AVL tree and an event is emitted when registration occurs.
 //
 // ## Authorized Callers
 //
@@ -72,7 +73,7 @@
 // The package emits the following events:
 //
 //   - RegisterReferral: Emitted when a new referral is created
-//   - ReferralRegistrationFailed: Emitted when TryRegister fails
+//   - ReferralRegistrationFailed: Emitted when non-empty referral registration fails
 //
 // ## Error Handling
 //
@@ -100,15 +101,7 @@
 //	    // Get the caller address
 //	    caller := runtime.PreviousRealm().Address()
 //
-//	    // Register the referral if provided
-//	    if referralCode != "" {
-//	        success := referral.TryRegister(cross, caller, referralCode)
-//	        actualReferrer := referralCode
-//	        if !success {
-//	            // Get existing referral if registration failed
-//	            actualReferrer = referral.GetReferral(caller.String())
-//	        }
-//	    }
+//	    actualReferrer := referral.TryRegister(cross, caller, referralCode)
 //
 //	    // Continue with swap logic...
 //	}

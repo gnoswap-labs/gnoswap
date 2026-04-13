@@ -82,7 +82,7 @@ func (gs *govStakerV1) Delegate(
 	gns.TransferFrom(cross, from, currentRealm.Address(), amount)
 	xgns.Mint(cross, from, amount)
 
-	registeredReferrer := registerReferrer(caller, referrer)
+	registeredReferrer := referral.TryRegister(cross, caller, referrer)
 
 	resolver := NewDelegationResolver(delegation)
 
@@ -568,17 +568,4 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 	}
 
 	return totalCollectedAmount, nil
-}
-
-// registerReferrer registers or validates referrer for delegation.
-// Handles referral system integration for delegation operations.
-func registerReferrer(caller address, referrer string) string {
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-
-	if !success {
-		actualReferrer = referral.GetReferral(referrer)
-	}
-
-	return actualReferrer
 }

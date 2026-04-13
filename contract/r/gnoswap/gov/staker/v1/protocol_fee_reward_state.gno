@@ -42,12 +42,24 @@ func (p *ProtocolFeeRewardStateResolver) GetClaimableRewardAmounts(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
 ) (map[string]int64, error) {
-	rewardAmounts, err := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
+	newlyEarnedRewards, err := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
 	if err != nil {
 		return nil, err
 	}
 
-	return rewardAmounts, nil
+	claimableRewards := make(map[string]int64)
+	accumulatedRewards := p.GetAccumulatedRewards()
+	claimedRewards := p.GetClaimedRewards()
+
+	for token, accumulatedReward := range accumulatedRewards {
+		claimableRewards[token] = gnsmath.SafeSubInt64(accumulatedReward, claimedRewards[token])
+	}
+
+	for token, newlyEarnedReward := range newlyEarnedRewards {
+		claimableRewards[token] = gnsmath.SafeAddInt64(claimableRewards[token], newlyEarnedReward)
+	}
+
+	return claimableRewards, nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards for all tokens since the last update.
@@ -65,7 +77,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 ) (map[string]int64, error) {
 	// Don't calculate rewards for past timestamps
 	if p.GetAccumulatedTimestamp() >= currentTimestamp {
-		return p.GetAccumulatedRewards(), nil
+		return make(map[string]int64), nil
 	}
 
 	rewardAmounts := make(map[string]int64)

@@ -68,11 +68,7 @@ func (p *positionV1) Mint(
 	common.AssertIsNotHandleNativeCoin()
 	assertIsNotExpired(deadline)
 
-	success := referral.TryRegister(cross, caller, referrer)
-	actualReferrer := referrer
-	if !success {
-		actualReferrer = referral.GetReferral(caller.String())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	emission.MintAndDistributeGns(cross)
 

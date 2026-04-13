@@ -314,8 +314,10 @@ func (gs *govStakerV1) GetCollectableWithdrawAmount(delegationID int64) int64 {
 	}
 
 	totalAmount := int64(0)
+	currentTime := time.Now().Unix()
 	for _, withdraw := range delegation.Withdraws() {
-		totalAmount += gnsmath.SafeSubInt64(withdraw.UnDelegateAmount(), withdraw.CollectedAmount())
+		resolver := NewDelegationWithdrawResolver(&withdraw)
+		totalAmount = gnsmath.SafeAddInt64(totalAmount, resolver.CollectableAmount(currentTime))
 	}
 
 	return totalAmount

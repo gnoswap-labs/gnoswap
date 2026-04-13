@@ -28,7 +28,7 @@ func isRemovalRequest(refAddr address) bool {
 type ReferralKeeper interface {
 	// register creates or updates a referral relationship between addresses.
 	// Setting refAddr to the contract's own address removes the referral.
-	register(addr, refAddr address) error
+	register(addr, refAddr address) (address, error)
 
 	// has returns true if a referral exists for the given address.
 	has(addr address) bool
