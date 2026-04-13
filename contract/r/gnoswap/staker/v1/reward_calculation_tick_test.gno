@@ -171,7 +171,7 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 			name:   "single accumulation entry",
 			tickID: 100,
 			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(500, u256.NewUint(12345))
+				tick.OutsideAccumulation().Set(500, u256.NewUint(12345).ToString())
 			},
 			queryTimestamp: 1000,
 			expectedIsZero: false,
@@ -180,9 +180,9 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 			name:   "multiple accumulation entries",
 			tickID: 100,
 			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(100, u256.NewUint(1000))
-				tick.OutsideAccumulation().Set(500, u256.NewUint(5000))
-				tick.OutsideAccumulation().Set(1000, u256.NewUint(10000))
+				tick.OutsideAccumulation().Set(100, u256.NewUint(1000).ToString())
+				tick.OutsideAccumulation().Set(500, u256.NewUint(5000).ToString())
+				tick.OutsideAccumulation().Set(1000, u256.NewUint(10000).ToString())
 			},
 			queryTimestamp: 1500,
 			expectedIsZero: false,
@@ -262,7 +262,7 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 
 			// Set up current accumulation
 			if !tt.currentAcc.IsZero() {
-				tick.OutsideAccumulation().Set(tt.timestamp-100, tt.currentAcc)
+				tick.OutsideAccumulation().Set(tt.timestamp-100, tt.currentAcc.ToString())
 			}
 
 			tickResolver := NewTickResolver(tick)

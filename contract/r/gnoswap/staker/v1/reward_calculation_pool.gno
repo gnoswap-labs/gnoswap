@@ -115,11 +115,11 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 	liquidity = u256.Zero()
 
 	self.StakedLiquidity().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		res, ok := value.(*u256.Uint)
+		res, ok := value.(string)
 		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
+			panic(ufmt.Sprintf("failed to cast value to string: %T", value))
 		}
-		liquidity = res
+		liquidity = u256.MustFromDecimal(res)
 		return true
 	})
 	return liquidity
@@ -446,9 +446,10 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 	return nil
 }
 
-// modifyDeposit updates the pool's staked liquidity and returns the new staked liquidity.
+// modifyDeposit updates the pool's staked liquidity.
+// Returns (newGlobalRewardRatioAcc, newStakedLiquidity).
 // updates when there is a change in the staked liquidity(tick cross, stake, unstake)
-func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
+func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) (*u256.Uint, *u256.Uint) {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
 	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
@@ -477,9 +478,9 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
+	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied.ToString())
 
-	return result
+	return result, deltaApplied
 }
 
 // startUnclaimablePeriod starts the unclaimable period.

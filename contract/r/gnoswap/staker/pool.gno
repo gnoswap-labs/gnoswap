@@ -56,7 +56,7 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity *UintTree // uint64 timestamp -> string (decimal representation of *u256.Uint)
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
@@ -205,7 +205,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 
 	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.RewardCache().Set(currentTime, int64(0))
-	pool.StakedLiquidity().Set(currentTime, u256.Zero())
+	pool.StakedLiquidity().Set(currentTime, "0")
 
 	return pool
 }
@@ -622,7 +622,7 @@ type Tick struct {
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> string (decimal representation of *u256.Uint)
 }
 
 // Tick Getter/Setter methods

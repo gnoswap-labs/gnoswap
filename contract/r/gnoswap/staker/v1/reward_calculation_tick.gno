@@ -22,11 +22,11 @@ type TickResolver struct {
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
 	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		v, ok := value.(*u256.Uint)
+		v, ok := value.(string)
 		if !ok {
-			panic("failed to cast value to *u256.Uint")
+			panic("failed to cast value to string")
 		}
-		acc = v
+		acc = u256.MustFromDecimal(v)
 		return true
 	})
 	if acc == nil {
@@ -56,10 +56,12 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 
 // updateCurrentOutsideAccumulation updates the tick's outside accumulation
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
-func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
+// Returns the new outside accumulation value to avoid redundant tree lookups.
+func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) *u256.Uint {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation)
+	self.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
+	return newOutsideAccumulation
 }
 
 func NewTickResolver(tick *sr.Tick) *TickResolver {
@@ -177,7 +179,7 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 
 	// Update pool's cumulative deposit with the liquidity change
 	poolResolver := NewPoolResolver(pool)
-	newAcc := poolResolver.modifyDeposit(liquidityDelta, timestamp, nextTick)
+	newAcc, _ := poolResolver.modifyDeposit(liquidityDelta, timestamp, nextTick)
 
 	// Update the tick's outside accumulation for reward calculations
 	// This ensures proper reward distribution tracking across tick boundaries
@@ -227,7 +229,7 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	// Phase 3: Apply cumulative changes to pool state in a single operation
 	// This is the key optimization - one pool update instead of many
 	poolResolver := NewPoolResolver(batch.Pool())
-	newAcc := poolResolver.modifyDeposit(cumulativeDelta, timestamp, lastTick)
+	newAcc, stakedLiquidity := poolResolver.modifyDeposit(cumulativeDelta, timestamp, lastTick)
 
 	// Phase 4: Update individual tick outside accumulations for reward tracking
 	// While we optimize pool updates, each tick still needs its accumulation updated
@@ -237,20 +239,19 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	for _, tickCross := range batch.Crosses() {
 		tick := batch.Pool().Ticks().Get(tickCross.TickID())
 		tickResolver := NewTickResolver(tick)
-		tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
+		newOutsideAcc := tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
 
 		tickCrossEventInfo := NewTickCrossEventInfo(
 			tickCross.TickID(),
 			tick.StakedLiquidityGross(),
 			tick.StakedLiquidityDelta(),
-			tickResolver.CurrentOutsideAccumulation(timestamp),
+			newOutsideAcc,
 		)
 		tickInfos = append(tickInfos, tickCrossEventInfo.ToString())
 	}
 
 	// Emit event with staker-side tick cross information
 	previousRealm := runtime.PreviousRealm()
-	stakedLiquidity := poolResolver.CurrentStakedLiquidity(timestamp)
 
 	chain.Emit(
 		"SwapTickCross",
