@@ -2,7 +2,8 @@ package position
 
 import (
 	"errors"
-	"gno.land/p/demo/tokens/grc721"
+
+	"gno.land/p/gnoswap/deps/grc721"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
 )

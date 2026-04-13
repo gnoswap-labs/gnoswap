@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/deps/grc721"
 )
 
 // poolPathDivide splits a pool path into token addresses and fee tier.
