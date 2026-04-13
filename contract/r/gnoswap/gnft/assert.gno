@@ -1,7 +1,7 @@
 package gnft
 
 import (
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/deps/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
