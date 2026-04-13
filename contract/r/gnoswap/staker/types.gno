@@ -59,7 +59,7 @@ type IStakerGetter interface {
 	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
 	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
 	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
-	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint
+	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string
 	GetPoolHistoricalTickCount(poolPath string) uint64
 	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
 	GetPoolHistoricalTick(poolPath string, tick uint64) int32

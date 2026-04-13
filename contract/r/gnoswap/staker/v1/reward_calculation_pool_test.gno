@@ -928,13 +928,19 @@ func TestModifyDeposit_StoresHistoricalTickOnlyOnChange(t *testing.T) {
 
 func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 	tests := []struct {
-		name                 string
-		startTime            int64
-		endTime              int64
-		rewardPerSecond      int64
-		liquidity            int64
-		compactHistory       []struct{ at int64; tick int32 }
-		denseHistory         []struct{ at int64; tick int32 }
+		name            string
+		startTime       int64
+		endTime         int64
+		rewardPerSecond int64
+		liquidity       int64
+		compactHistory  []struct {
+			at   int64
+			tick int32
+		}
+		denseHistory []struct {
+			at   int64
+			tick int32
+		}
 		globalAccAtStartMult int64
 		globalAccAtEndMult   int64
 		sampleTimes          []int64
@@ -975,7 +981,10 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			makePoolWithHistory := func(poolPath string, history []struct{ at int64; tick int32 }) *PoolResolver {
+			makePoolWithHistory := func(poolPath string, history []struct {
+				at   int64
+				tick int32
+			}) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 
@@ -985,9 +994,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(t *testing.T) {
 				// Build deterministic global accumulation snapshots.
 				startAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtStartMult), q128)
 				endAcc := u256.Zero().Mul(u256.NewUintFromInt64(tt.globalAccAtEndMult), q128)
-				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc)
-				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc)
-
+				pool.GlobalRewardRatioAccumulation().Set(tt.startTime, startAcc.ToString())
+				pool.GlobalRewardRatioAccumulation().Set(tt.endTime, endAcc.ToString())
 				for _, h := range history {
 					pool.HistoricalTick().Set(h.at, h.tick)
 				}

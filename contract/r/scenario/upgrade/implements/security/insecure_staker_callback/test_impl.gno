@@ -583,7 +583,7 @@ func (t *TestStaker) GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, of
 	return t.instance.GetPoolGlobalRewardRatioAccumulationIDs(poolPath, offset, count)
 }
 
-func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) *u256.Uint {
+func (t *TestStaker) GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string {
 	if !t.isActive("GetPoolGlobalRewardRatioAccumulation") {
 		panic("test implementation: GetPoolGlobalRewardRatioAccumulation not supported")
 	}

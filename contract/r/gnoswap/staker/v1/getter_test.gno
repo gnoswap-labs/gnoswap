@@ -749,9 +749,9 @@ func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 	state := setupBasicTestState(t)
 
 	// Add some accumulation entries (avoiding fixedTimestamp as NewPool initializes with it)
-	acc1 := u256.MustFromDecimal("1000000000000000000")
-	acc2 := u256.MustFromDecimal("2000000000000000000")
-	acc3 := u256.MustFromDecimal("3000000000000000000")
+	acc1 := "1000000000000000000"
+	acc2 := "2000000000000000000"
+	acc3 := "3000000000000000000"
 
 	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+100, acc1)
 	state.pool.GlobalRewardRatioAccumulation().Set(state.fixedTimestamp+200, acc2)
@@ -767,14 +767,14 @@ func TestGetterPoolGlobalRewardRatioAccumulation(t *testing.T) {
 
 	// Test get specific accumulation value
 	accValue := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+100))
-	uassert.Equal(t, acc1.ToString(), accValue.ToString())
+	uassert.Equal(t, acc1, accValue)
 
 	accValue2 := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+300))
-	uassert.Equal(t, acc3.ToString(), accValue2.ToString())
+	uassert.Equal(t, acc3, accValue2)
 
 	// Test non-existent timestamp
 	nonExistent := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, u256.Zero().ToString(), nonExistent.ToString())
+	uassert.Equal(t, "0", nonExistent)
 }
 
 func TestGetterPoolHistoricalTick(t *testing.T) {
