@@ -156,7 +156,7 @@ func (s *stakerV1) tickCrossHook(poolPath string, tickId int32, zeroForOne bool,
 
 	// Immediate processing path: handle tick crosses outside of swap context
 	// This ensures real-time updates for non-swap operations (e.g., position modifications)
-	s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
+	// s.processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
 }
 
 // processTickCrossImmediate processes a single tick cross immediately
