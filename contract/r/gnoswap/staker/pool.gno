@@ -539,7 +539,8 @@ func (t *Ticks) Get(tickId int32) *Tick {
 			id:                   tickId,
 			stakedLiquidityGross: "0",
 			stakedLiquidityDelta: "0",
-			outsideAccumulation:  NewUintTree(),
+			outsideAccumulation:  "0",
+			outsideAccumulationSnapshots: NewUintTree(),
 		}
 		t.tree.Set(EncodeInt(tickId), tick)
 		return tick
@@ -610,7 +611,8 @@ func NewTicks() Ticks {
 // - id (int32): The ID of the tick.
 // - stakedLiquidityGross (string): Total gross staked liquidity at this tick (decimal string of uint256).
 // - stakedLiquidityDelta (string): Net change in staked liquidity at this tick (decimal string of int256).
-// - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
+// - outsideAccumulation (string): Current outside accumulation value, updated in-place on tick cross.
+// - outsideAccumulationSnapshots (*UintTree): Historical snapshots saved at stake/unstake time points.
 type Tick struct {
 	id int32
 
@@ -620,10 +622,13 @@ type Tick struct {
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta string
 
-	// outsideAccumulation is the accumulation of time / TotalStake outside the tick.
-	// Stores snapshots at key time points (stake/unstake/collect).
-	// During tick crosses, the latest entry is updated in-place to avoid tree growth.
-	outsideAccumulation *UintTree // timestamp -> string (decimal representation of *u256.Uint)
+	// outsideAccumulation holds the current outside accumulation value.
+	// Updated in-place during tick crosses (no AVL tree write).
+	outsideAccumulation string
+
+	// outsideAccumulationSnapshots stores historical snapshots at stake/unstake time points.
+	// Used for past-time queries in reward calculation.
+	outsideAccumulationSnapshots *UintTree // timestamp -> string
 }
 
 // Tick Getter/Setter methods
@@ -658,14 +663,26 @@ func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
 	t.stakedLiquidityDelta = stakedLiquidityDelta.ToString()
 }
 
-// OutsideAccumulation returns the outside accumulation tree.
-func (t *Tick) OutsideAccumulation() *UintTree {
+// OutsideAccumulation returns the current outside accumulation value.
+func (t *Tick) OutsideAccumulation() string {
 	return t.outsideAccumulation
 }
 
-// SetOutsideAccumulation sets the outside accumulation tree.
-func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
+// SetOutsideAccumulation sets the current outside accumulation value.
+func (t *Tick) SetOutsideAccumulation(outsideAccumulation string) {
 	t.outsideAccumulation = outsideAccumulation
+}
+
+// OutsideAccumulationSnapshots returns the snapshot tree for historical queries.
+func (t *Tick) OutsideAccumulationSnapshots() *UintTree {
+	return t.outsideAccumulationSnapshots
+}
+
+// SnapshotOutsideAccumulation saves the current outside accumulation value
+// to the snapshot tree at the given timestamp.
+// Called during stake/unstake to preserve historical values for reward calculation.
+func (t *Tick) SnapshotOutsideAccumulation(timestamp int64) {
+	t.outsideAccumulationSnapshots.Set(timestamp, t.outsideAccumulation)
 }
 
 // Clone returns a deep copy of the tick.
@@ -678,7 +695,8 @@ func (t *Tick) Clone() *Tick {
 		id:                   t.id,
 		stakedLiquidityGross: t.stakedLiquidityGross,
 		stakedLiquidityDelta: t.stakedLiquidityDelta,
-		outsideAccumulation:  t.outsideAccumulation.Clone(),
+		outsideAccumulation:  t.outsideAccumulation,
+		outsideAccumulationSnapshots: t.outsideAccumulationSnapshots.Clone(),
 	}
 }
 
@@ -687,7 +705,8 @@ func NewTick(tickId int32) *Tick {
 		id:                   tickId,
 		stakedLiquidityGross: "0",
 		stakedLiquidityDelta: "0",
-		outsideAccumulation:  NewUintTree(),
+		outsideAccumulation:  "0",
+		outsideAccumulationSnapshots: NewUintTree(),
 	}
 }
 

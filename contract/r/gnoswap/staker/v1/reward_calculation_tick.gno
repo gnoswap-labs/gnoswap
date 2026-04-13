@@ -18,26 +18,35 @@ type TickResolver struct {
 	*sr.Tick
 }
 
-// CurrentOutsideAccumulation returns the latest outside accumulation for the tick.
+// CurrentOutsideAccumulation returns the outside accumulation for the tick at the given timestamp.
+// For the latest value, it returns the in-place current value.
+// For past timestamps, it looks up the snapshot tree.
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
+	// First check snapshots for the exact or most recent snapshot <= timestamp
 	acc := u256.Zero()
-	self.Tick.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
+	found := false
+	self.Tick.OutsideAccumulationSnapshots().ReverseIterate(0, timestamp, func(key int64, value any) bool {
 		v, ok := value.(string)
 		if !ok {
 			panic("failed to cast value to string")
 		}
 		acc = u256.MustFromDecimal(v)
+		found = true
 		return true
 	})
-	if acc == nil {
-		acc = u256.Zero()
+	if found {
+		return acc
 	}
-	return acc
+	// No snapshot found — return the current value
+	return u256.MustFromDecimal(self.Tick.OutsideAccumulation())
 }
 
-// modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
+// modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick.
+// Snapshots the current outside accumulation before modifying liquidity.
 func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
-	// update staker side tick info
+	// Snapshot before liquidity change for historical reward queries
+	self.Tick.SnapshotOutsideAccumulation(currentTime)
+
 	self.SetStakedLiquidityGross(common.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
 	if self.StakedLiquidityGross().Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
@@ -45,8 +54,12 @@ func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.
 	self.SetStakedLiquidityDelta(i256.Zero().Add(self.StakedLiquidityDelta(), liquidity))
 }
 
-// modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
+// modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick.
+// Snapshots the current outside accumulation before modifying liquidity.
 func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
+	// Snapshot before liquidity change for historical reward queries
+	self.Tick.SnapshotOutsideAccumulation(currentTime)
+
 	self.SetStakedLiquidityGross(common.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
 	if self.StakedLiquidityGross().Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
@@ -54,13 +67,14 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 	self.SetStakedLiquidityDelta(i256.Zero().Sub(self.StakedLiquidityDelta(), liquidity))
 }
 
-// updateCurrentOutsideAccumulation updates the tick's outside accumulation.
+// updateCurrentOutsideAccumulation updates the tick's outside accumulation in-place.
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation.
+// Only updates the single current value — no AVL tree write.
 // Returns the new outside accumulation value.
-func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) *u256.Uint {
-	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
+func (self *TickResolver) updateCurrentOutsideAccumulation(acc *u256.Uint) *u256.Uint {
+	currentOutsideAccumulation := u256.MustFromDecimal(self.Tick.OutsideAccumulation())
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
-	self.Tick.OutsideAccumulation().Set(timestamp, newOutsideAccumulation.ToString())
+	self.Tick.SetOutsideAccumulation(newOutsideAccumulation.ToString())
 	return newOutsideAccumulation
 }
 
@@ -184,7 +198,7 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 	// Update the tick's outside accumulation for reward calculations
 	// This ensures proper reward distribution tracking across tick boundaries
 	tickResolver := NewTickResolver(tick)
-	tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
+	tickResolver.updateCurrentOutsideAccumulation(newAcc)
 }
 
 // processBatchedTickCrosses processes all accumulated tick crosses at once
@@ -239,7 +253,7 @@ func (s *stakerV1) processBatchedTickCrosses() error {
 	for _, tickCross := range batch.Crosses() {
 		tick := batch.Pool().Ticks().Get(tickCross.TickID())
 		tickResolver := NewTickResolver(tick)
-		newOutsideAcc := tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
+		newOutsideAcc := tickResolver.updateCurrentOutsideAccumulation(newAcc)
 
 		tickCrossEventInfo := NewTickCrossEventInfo(
 			tickCross.TickID(),

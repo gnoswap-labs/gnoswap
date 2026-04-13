@@ -159,32 +159,30 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 		expectedIsZero bool
 	}{
 		{
-			name:   "empty accumulation returns zero",
+			name:   "default accumulation returns zero",
 			tickID: 100,
 			setupFunc: func(tick *sr.Tick) {
-				// No setup - empty accumulation
+				// No setup - default "0"
 			},
 			queryTimestamp:  1000,
 			expectedIsZero: true,
 		},
 		{
-			name:   "single accumulation entry",
+			name:   "snapshot entry found",
 			tickID: 100,
 			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(500, u256.NewUint(12345).ToString())
+				tick.OutsideAccumulationSnapshots().Set(500, u256.NewUint(12345).ToString())
 			},
 			queryTimestamp:  1000,
 			expectedIsZero: false,
 		},
 		{
-			name:   "multiple accumulation entries",
+			name:   "current value used when no snapshot",
 			tickID: 100,
 			setupFunc: func(tick *sr.Tick) {
-				tick.OutsideAccumulation().Set(100, u256.NewUint(1000).ToString())
-				tick.OutsideAccumulation().Set(500, u256.NewUint(5000).ToString())
-				tick.OutsideAccumulation().Set(1000, u256.NewUint(10000).ToString())
+				tick.SetOutsideAccumulation(u256.NewUint(999).ToString())
 			},
-			queryTimestamp:  1500,
+			queryTimestamp:  1000,
 			expectedIsZero: false,
 		},
 	}
@@ -218,7 +216,6 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 		tickID       int32
 		currentAcc   *u256.Uint
 		globalAcc    *u256.Uint
-		timestamp    int64
 		expectedDiff string
 	}{
 		{
@@ -226,7 +223,6 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 			tickID:       100,
 			currentAcc:   u256.Zero(),
 			globalAcc:    u256.NewUint(1000),
-			timestamp:    500,
 			expectedDiff: "1000",
 		},
 		{
@@ -234,7 +230,6 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 			tickID:       100,
 			currentAcc:   u256.NewUint(300),
 			globalAcc:    u256.NewUint(1000),
-			timestamp:    500,
 			expectedDiff: "700",
 		},
 		{
@@ -242,7 +237,6 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 			tickID:       100,
 			currentAcc:   u256.NewUint(500),
 			globalAcc:    u256.NewUint(500),
-			timestamp:    500,
 			expectedDiff: "0",
 		},
 		{
@@ -250,7 +244,6 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 			tickID:       100,
 			currentAcc:   u256.NewUint(600),
 			globalAcc:    u256.NewUint(500),
-			timestamp:    500,
 			expectedDiff: "115792089237316195423570985008687907853269984665640564039457584007913129639836",
 		},
 	}
@@ -260,17 +253,14 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 			ticks := sr.NewTicks()
 			tick := ticks.Get(tt.tickID)
 
-			// Set up current accumulation
-			if !tt.currentAcc.IsZero() {
-				tick.OutsideAccumulation().Set(tt.timestamp-100, tt.currentAcc.ToString())
-			}
+			// Set up current accumulation value
+			tick.SetOutsideAccumulation(tt.currentAcc.ToString())
 
 			tickResolver := NewTickResolver(tick)
-			tickResolver.updateCurrentOutsideAccumulation(tt.timestamp, tt.globalAcc)
+			tickResolver.updateCurrentOutsideAccumulation(tt.globalAcc)
 
-			// Verify the update
-			newAcc := tickResolver.CurrentOutsideAccumulation(tt.timestamp)
-			uassert.Equal(t, tt.expectedDiff, newAcc.ToString())
+			// Verify the update — read current value directly
+			uassert.Equal(t, tt.expectedDiff, tick.OutsideAccumulation())
 		})
 	}
 }
