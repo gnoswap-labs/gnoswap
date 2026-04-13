@@ -84,9 +84,12 @@ func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Div sets z to the quotient x/y and returns z.
-// If y == 0, z is set to 0.
+// It panics if y == 0.
 func (z *Uint) Div(x, y *Uint) *Uint {
-	if y.IsZero() || y.Gt(x) {
+	if y.IsZero() {
+		panic("division by zero")
+	}
+	if y.Gt(x) {
 		return z.Clear()
 	}
 	if x.Eq(y) {
@@ -105,10 +108,13 @@ func (z *Uint) Div(x, y *Uint) *Uint {
 	return z.Set(&quot)
 }
 
-// Mod sets z to the modulus x%y for y != 0 and returns z.
-// If y == 0, z is set to 0 (this differs from big.Int behavior).
+// Mod sets z to the modulus x%y and returns z.
+// It panics if y == 0.
 func (z *Uint) Mod(x, y *Uint) *Uint {
-	if x.IsZero() || y.IsZero() {
+	if y.IsZero() {
+		panic("modulo by zero")
+	}
+	if x.IsZero() {
 		return z.Clear()
 	}
 	switch x.Cmp(y) {
@@ -137,9 +143,12 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 }
 
 // MulMod sets z to (x * y) mod m and returns z.
-// If m == 0, z is set to 0 (this differs from big.Int behavior).
+// It panics if m == 0.
 func (z *Uint) MulMod(x, y, m *Uint) *Uint {
-	if x.IsZero() || y.IsZero() || m.IsZero() {
+	if m.IsZero() {
+		panic("modulo by zero")
+	}
+	if x.IsZero() || y.IsZero() {
 		return z.Clear()
 	}
 	p := umul(x, y)
@@ -169,10 +178,10 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 }
 
 // DivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
-// If y == 0, both z and m are set to 0 (this differs from big.Int behavior).
+// It panics if y == 0.
 func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
-		return z.Clear(), m.Clear()
+		panic("division by zero")
 	}
 
 	switch x.Cmp(y) {
@@ -438,50 +447,4 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	}
 
 	return qh, r
-}
-
-// MustDiv sets z to the quotient x/y and returns z.
-// It panics if y == 0. Used in critical AMM paths where division by zero represents a programming error.
-func (z *Uint) MustDiv(x, y *Uint) *Uint {
-	if y.IsZero() {
-		panic("division by zero")
-	}
-	return z.Div(x, y)
-}
-
-// MustMod sets z to the modulus x%y and returns z.
-// It panics if y == 0. Used in critical AMM paths where modulo by zero represents a programming error.
-func (z *Uint) MustMod(x, y *Uint) *Uint {
-	if y.IsZero() {
-		panic("modulo by zero")
-	}
-	return z.Mod(x, y)
-}
-
-// MustMulMod sets z to (x * y) mod m and returns z.
-// It panics if m == 0. Used in critical AMM paths where modulo by zero represents a programming error.
-func (z *Uint) MustMulMod(x, y, m *Uint) *Uint {
-	if m.IsZero() {
-		panic("modulo by zero")
-	}
-	return z.MulMod(x, y, m)
-}
-
-// MustDivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
-// It panics if y == 0. Used in critical AMM paths where division by zero represents a programming error.
-func (z *Uint) MustDivMod(x, y, m *Uint) (*Uint, *Uint) {
-	if y.IsZero() {
-		panic("division by zero")
-	}
-	return z.DivMod(x, y, m)
-}
-
-// MustMul sets z to the product x*y and returns z.
-// It panics on overflow. Used in critical AMM calculations where overflow represents a programming error.
-func (z *Uint) MustMul(x, y *Uint) *Uint {
-	result, overflow := z.MulOverflow(x, y)
-	if overflow {
-		panic("uint256: multiplication overflow")
-	}
-	return result
 }

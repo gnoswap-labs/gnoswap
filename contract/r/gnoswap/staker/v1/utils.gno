@@ -157,10 +157,6 @@ func safeUint64ToInt64(value uint64) int64 {
 }
 
 func safeMulDivInt64(a, b, c int64) int64 {
-	if c == 0 {
-		panic("division by zero in safeMulDivInt64")
-	}
-
 	if a == 0 || b == 0 {
 		return 0
 	}

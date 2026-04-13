@@ -1525,10 +1525,6 @@ func encodePriceSqrt(reserve1, reserve0 string) *u256.Uint {
 	reserve1Uint := u256.MustFromDecimal(reserve1)
 	reserve0Uint := u256.MustFromDecimal(reserve0)
 
-	if reserve0Uint.IsZero() {
-		panic("division by zero")
-	}
-
 	// numerator = reserve1 * (2^192)
 	two192 := new(u256.Uint).Lsh(u256.NewUint(1), 192)
 	numerator := new(u256.Uint).Mul(reserve1Uint, two192)
