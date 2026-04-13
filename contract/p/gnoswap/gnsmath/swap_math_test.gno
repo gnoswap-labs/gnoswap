@@ -1094,10 +1094,6 @@ func encodePriceSqrtTest(t *testing.T, reserve1, reserve0 string) *u256.Uint {
 	reserve1_uint := u256.MustFromDecimal(reserve1)
 	reserve0_uint := u256.MustFromDecimal(reserve0)
 
-	if reserve0_uint.IsZero() {
-		panic("division by zero")
-	}
-
 	two_192 := new(u256.Uint).Lsh(u256.NewUint(1), 192)
 	numerator := new(u256.Uint).Mul(reserve1_uint, two_192)
 	ratio_x192 := new(u256.Uint).Div(numerator, reserve0_uint)
