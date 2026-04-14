@@ -974,21 +974,21 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [INFO] Testing Exact Out - Small amount
 // [EXPECTED] DrySwap amountIn should be 37948787
 // [EXPECTED] DrySwap amountOut should be 99850
-// [EXPECTED] DrySwap success should be false
+// [EXPECTED] DrySwap success should be true
 // [EXPECTED] Actual amountIn should be 37948787
 // [EXPECTED] Actual amountOut should be -99850
 //
 // [INFO] Testing Exact Out - Medium amount
 // [EXPECTED] DrySwap amountIn should be 3950253991
 // [EXPECTED] DrySwap amountOut should be 9985000
-// [EXPECTED] DrySwap success should be false
+// [EXPECTED] DrySwap success should be true
 // [EXPECTED] Actual amountIn should be 3950253991
 // [EXPECTED] Actual amountOut should be -9985000
 //
 // [INFO] Testing Exact Out - Large amount
 // [EXPECTED] DrySwap amountIn should be 678388481026
 // [EXPECTED] DrySwap amountOut should be 998500000
-// [EXPECTED] DrySwap success should be false
+// [EXPECTED] DrySwap success should be true
 // [EXPECTED] Actual amountIn should be 678388481026
 // [EXPECTED] Actual amountOut should be -998500000
 //
@@ -1034,8 +1034,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 2-hop ExactOut success - in=246 out=-663
 //
 // [INFO] Testing Multi-Hop (2-hop) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop ExactOut fail - in=1718 out=4660 success=false
-// [EXPECTED] ExactOut tolerance check: requested=4663 dryOut=4660 diff=3 tolerance=2 withinTolerance=false
+// [EXPECTED] DrySwap 2-hop ExactOut fail - in=738 out=2000 success=false
+// [EXPECTED] ExactOut tolerance check: requested=2000 dryOut=2000 diff=0 tolerance=2 withinTolerance=true
 // [INFO] DrySwap fail case returned success=false, skipping actual swap
 //
 // [INFO] 2-hop two-route matrix
@@ -1049,8 +1049,8 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 2-hop two-route ExactOut success - in=372 out=-999
 //
 // [INFO] Testing Multi-Hop (2-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=3192 out=8654 success=false
-// [EXPECTED] ExactOut tolerance check: requested=8659 dryOut=8654 diff=5 tolerance=4 withinTolerance=false
+// [EXPECTED] DrySwap 2-hop two-route ExactOut fail - in=1476 out=3998 success=false
+// [EXPECTED] ExactOut tolerance check: requested=3998 dryOut=3998 diff=0 tolerance=4 withinTolerance=true
 // [INFO] DrySwap 2-hop two-route fail case returned success=false
 //
 // [INFO] 3-hop single-route matrix
@@ -1079,6 +1079,6 @@ func testMultiHop_TwoRoute_ThreeHop_ExactOut_Fail() {
 // [EXPECTED] Actual swap 3-hop two-route ExactOut success - in=6 out=-2
 //
 // [INFO] Testing Multi-Hop (3-hop, two-route) Exact Out - Fail
-// [EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=6040 out=13979 success=false
-// [EXPECTED] ExactOut tolerance check: requested=13984 dryOut=13979 diff=5 tolerance=4 withinTolerance=false
+// [EXPECTED] DrySwap 3-hop two-route ExactOut fail - in=962 out=2221 success=false
+// [EXPECTED] ExactOut tolerance check: requested=2219 dryOut=2221 diff=2 tolerance=4 withinTolerance=true
 // [INFO] DrySwap 3-hop two-route fail case returned success=false

@@ -290,7 +290,15 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
+	// For ExactOut, amountSpecified includes the router fee.
+	// Adjust to fee-deducted value so ValidateSwapResults compares correctly.
+	validationAmountSpecified := originalAmountSpecified
+	if swapType == ExactOut {
+		specFee := calculateRouterFee(safeAbsInt64(originalAmountSpecified), swapFee)
+		validationAmountSpecified = safeSubInt64(originalAmountSpecified, specFee)
+	}
+
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, validationAmountSpecified, amountLimit, swapCount)
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.
