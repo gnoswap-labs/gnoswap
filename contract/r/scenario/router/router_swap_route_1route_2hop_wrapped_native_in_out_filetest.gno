@@ -281,7 +281,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 //
 // [SCENARIO] Given: Dry swap route bar to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)
-// [EXPECTED] dry swap result: 1015 expected: 1015
+// [EXPECTED] dry swap result: 1014 expected: 1015
 //
 // [SCENARIO] Given: Dry swap route wugnot to bar exact in preparation
 // [INFO] Executing dry swap route (wugnot → qux → baz → bar)

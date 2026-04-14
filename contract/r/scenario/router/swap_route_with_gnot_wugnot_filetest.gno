@@ -317,8 +317,8 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] inputTokenAmount: 10014 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] outputTokenAmount: -9986 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28
@@ -345,8 +345,8 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] inputTokenAmount: 10014 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] outputTokenAmount: -9986 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28
@@ -373,8 +373,8 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] inputTokenAmount: 10014 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] outputTokenAmount: -9986 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28

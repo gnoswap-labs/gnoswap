@@ -382,23 +382,23 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Exact Out Swap (BAR -> FOO)
 // [INFO] Swapping BAR -> 5000000000 FOO
-// [INFO] Exact Out - In: 4469297080 Out: -5000000000
+// [INFO] Exact Out - In: 4462339342 Out: -4992500000
 // [INFO] After Exact Out Swap
-// [EXPECTED] User BAR balance: 54783003214
-// [EXPECTED] User FOO balance: 45000000000
-// [EXPECTED] Pool BAR balance: 45203097487
-// [EXPECTED] Pool FOO balance: 54992488734
+// [EXPECTED] User BAR balance: 54789960952
+// [EXPECTED] User FOO balance: 44992500000
+// [EXPECTED] Pool BAR balance: 45196139749
+// [EXPECTED] Pool FOO balance: 55000000000
 // [EXPECTED] Router BAR balance: 0
 // [EXPECTED] Router FOO balance: 0
 // [EXPECTED] Protocol fee BAR balance: 13899299
-// [EXPECTED] Protocol fee FOO balance: 7511266
+// [EXPECTED] Protocol fee FOO balance: 7500000
 // [INFO] Validating balance changes for ExactOut
-// [EXPECTED] User BAR change: -4469297080
-// [EXPECTED] User FOO change: 5000000000
-// [EXPECTED] Pool BAR change: 4469297080
-// [EXPECTED] Pool FOO change: -5007511266
+// [EXPECTED] User BAR change: -4462339342
+// [EXPECTED] User FOO change: 4992500000
+// [EXPECTED] Pool BAR change: 4462339342
+// [EXPECTED] Pool FOO change: -5000000000
 // [EXPECTED] Protocol Fee BAR change: 0
-// [EXPECTED] Protocol Fee FOO change: 7511266
+// [EXPECTED] Protocol Fee FOO change: 7500000
 // [EXPECTED] Exact balance conservation verified for ExactOut
 //
 // [SCENARIO] 6. System Balance Conservation Check

@@ -417,48 +417,48 @@ func validateSystemBalance(initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage
 // [INFO] Reverse Swap: Getting 200000000000 FOO back
-// [INFO] Reverse Swap - In: 75286230276 Out: -200000000000
+// [INFO] Reverse Swap - In: 75144872933 Out: -199700000000
 // [INFO] After Reverse Swap
-// [EXPECTED] User BAR balance: 670701631887
-// [EXPECTED] User FOO balance: 250000000000
-// [EXPECTED] Pool BAR balance: 328928832016
-// [EXPECTED] Pool FOO balance: 749699549324
+// [EXPECTED] User BAR balance: 670842989230
+// [EXPECTED] User FOO balance: 249700000000
+// [EXPECTED] Pool BAR balance: 328787474673
+// [EXPECTED] Pool FOO balance: 750000000000
 // [EXPECTED] Router BAR balance: 0
 // [EXPECTED] Router FOO balance: 0
 // [EXPECTED] Protocol fee BAR balance: 369536097
-// [EXPECTED] Protocol fee FOO balance: 300450676
+// [EXPECTED] Protocol fee FOO balance: 300000000
 // [INFO] Validating balance conservation for Large ExactOut
-// [EXPECTED] User BAR change: -75286230276
-// [EXPECTED] User FOO change: 200000000000
-// [EXPECTED] Pool BAR change: 75286230276
-// [EXPECTED] Pool FOO change: -200300450676
+// [EXPECTED] User BAR change: -75144872933
+// [EXPECTED] User FOO change: 199700000000
+// [EXPECTED] Pool BAR change: 75144872933
+// [EXPECTED] Pool FOO change: -200000000000
 // [EXPECTED] Protocol Fee BAR change: 0
-// [EXPECTED] Protocol Fee FOO change: 300450676
+// [EXPECTED] Protocol Fee FOO change: 300000000
 // [EXPECTED] Exact balance conservation verified - all tokens accounted for
 //
 // [SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement
 // [INFO] Small Swap: Swapping 1000000 FOO -> BAR (after extreme movement)
-// [INFO] Small Swap - In: 1000000 Out: -469486
+// [INFO] Small Swap - In: 1000000 Out: -469131
 // [INFO] After Small Swap
-// [EXPECTED] User BAR balance: 670702101373
-// [EXPECTED] User FOO balance: 249999000000
-// [EXPECTED] Pool BAR balance: 328928361825
-// [EXPECTED] Pool FOO balance: 749700549324
+// [EXPECTED] User BAR balance: 670843458361
+// [EXPECTED] User FOO balance: 249699000000
+// [EXPECTED] Pool BAR balance: 328787004838
+// [EXPECTED] Pool FOO balance: 750001000000
 // [EXPECTED] Router BAR balance: 0
 // [EXPECTED] Router FOO balance: 0
-// [EXPECTED] Protocol fee BAR balance: 369536802
-// [EXPECTED] Protocol fee FOO balance: 300450676
+// [EXPECTED] Protocol fee BAR balance: 369536801
+// [EXPECTED] Protocol fee FOO balance: 300000000
 // [INFO] Validating balance conservation for Small ExactIn
-// [EXPECTED] User BAR change: 469486
+// [EXPECTED] User BAR change: 469131
 // [EXPECTED] User FOO change: -1000000
-// [EXPECTED] Pool BAR change: -470191
+// [EXPECTED] Pool BAR change: -469835
 // [EXPECTED] Pool FOO change: 1000000
-// [EXPECTED] Protocol Fee BAR change: 705
+// [EXPECTED] Protocol Fee BAR change: 704
 // [EXPECTED] Protocol Fee FOO change: 0
 // [EXPECTED] Exact balance conservation verified - all tokens accounted for
 // [INFO] Validating small swap impact
 // [EXPECTED] Small swap caused minimal balance change
-// [EXPECTED] User BAR change: 469486
+// [EXPECTED] User BAR change: 469131
 // [EXPECTED] User FOO change: -1000000
 // [EXPECTED] Small swap executed correctly despite extreme price
 //

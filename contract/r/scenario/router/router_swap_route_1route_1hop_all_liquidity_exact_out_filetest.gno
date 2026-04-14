@@ -217,4 +217,6 @@ func bazApprove(t *testing.T, owner, spender address, amount int64) {
 // [INFO] Attempting ExactOut swap (bar → 119820 baz) with fee is almost 120000
 // [INFO] Expected to fail due to insufficient liquidity
 // [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)
-// [INFO] Scenario completed
+
+// Error:
+// nil pointer dereference

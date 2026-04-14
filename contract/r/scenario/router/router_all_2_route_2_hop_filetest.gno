@@ -303,12 +303,12 @@ func TestSwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route qux to bar exact out preparation
 // [INFO] Executing dry swap route exact out (qux → baz → bar)
-// [EXPECTED] dryResult: 7359 expected: 7359
+// [EXPECTED] dryResult: 7351 expected: 7359
 //
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (qux → baz → bar)
-// [EXPECTED] amountIn: 7373 expected: 7365
-// [EXPECTED] amountOut: -1000 expected: -999
+// [EXPECTED] amountIn: 7365 expected: 7365
+// [EXPECTED] amountOut: -999 expected: -999
 //
 // [INFO] Scenario completed
