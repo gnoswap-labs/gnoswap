@@ -196,7 +196,9 @@ func (r *routerV1) finalizeSwap(
 	// Validate exact out amount if applicable
 	// If sqrtPriceLimitX96 is set, slippage check is not needed
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
-		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
+		// For ExactOut, amountSpecified includes the router fee.
+		expectedOut := safeSubInt64(amountSpecified, calculateRouterFee(amountSpecified, r.store.GetSwapFee()))
+		if err := validator.exactOutAmount(resultAmountOutWithoutFee, expectedOut, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}

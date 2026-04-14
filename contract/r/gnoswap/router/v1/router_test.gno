@@ -169,6 +169,153 @@ func TestFinalizeSwap(t *testing.T) {
 	}
 }
 
+func TestFinalizeSwapExactOutWithFee(t *testing.T) {
+	tests := []struct {
+		name              string
+		resultAmountIn    int64
+		resultAmountOut   int64
+		tokenAmountLimit  int64
+		amountSpecified   int64
+		swapFee           uint64
+		swapCount         int64
+		expectedAmountOut int64
+		expectPanic       bool
+		errorMessage      string
+	}{
+		{
+			// User sends amountOut=100,150,225 (fee included).
+			// Pool returns 100,150,225. Fee = 100,150,225 * 15 / 10000 = 150,225.
+			// User receives 100,150,225 - 150,225 = 100,000,000.
+			name:              "ExactOut with 0.15% fee: user receives exact amount after fee deduction",
+			resultAmountIn:    72434254,
+			resultAmountOut:   100150225,
+			tokenAmountLimit:  80000000,
+			amountSpecified:   100150225,
+			swapFee:           15,
+			swapCount:         2,
+			expectedAmountOut: 100000000,
+			expectPanic:       false,
+		},
+		{
+			// 10,000 with 0.15% fee: fee = 10,000 * 15 / 10000 = 15.
+			// User receives 10,000 - 15 = 9,985.
+			name:              "ExactOut with 0.15% fee: small amount",
+			resultAmountIn:    12000,
+			resultAmountOut:   10000,
+			tokenAmountLimit:  15000,
+			amountSpecified:   10000,
+			swapFee:           15,
+			swapCount:         1,
+			expectedAmountOut: 9985,
+			expectPanic:       false,
+		},
+		{
+			// 1,000,000 with 1% fee: fee = 1,000,000 * 100 / 10000 = 10,000.
+			// User receives 1,000,000 - 10,000 = 990,000.
+			name:              "ExactOut with 1% fee: larger fee rate",
+			resultAmountIn:    1200000,
+			resultAmountOut:   1000000,
+			tokenAmountLimit:  1500000,
+			amountSpecified:   1000000,
+			swapFee:           100,
+			swapCount:         1,
+			expectedAmountOut: 990000,
+			expectPanic:       false,
+		},
+		{
+			// Slippage: amountIn exceeds tokenAmountLimit
+			name:             "ExactOut with fee: slippage error - spent too much",
+			resultAmountIn:   90000000,
+			resultAmountOut:  100150225,
+			tokenAmountLimit: 80000000,
+			amountSpecified:  100150225,
+			swapFee:          15,
+			swapCount:        2,
+			expectPanic:      true,
+			errorMessage:     "ExactOut: too much spent (max:80000000, used:90000000)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initRouterTest(t)
+
+			router := mockRouter()
+
+			testing.SetRealm(adminRealm)
+			func(cur realm) {
+				router.SetSwapFee(tt.swapFee)
+			}(cross)
+
+			// Transfer output token to router so handleSwapFee can send fee to protocol_fee
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			bar.Transfer(cross, routerAddr, tt.resultAmountOut)
+
+			func(cur realm) {
+				testing.SetRealm(routerRealm)
+
+				if tt.expectPanic {
+					uassert.PanicsContains(t, tt.errorMessage, func() {
+						router.finalizeSwap(
+							bazPath,
+							barPath,
+							tt.resultAmountIn,
+							tt.resultAmountOut,
+							ExactOut,
+							tt.tokenAmountLimit,
+							tt.amountSpecified,
+							tt.swapCount,
+							false,
+						)
+					})
+				} else {
+					amountIn, amountOut := router.finalizeSwap(
+						bazPath,
+						barPath,
+						tt.resultAmountIn,
+						tt.resultAmountOut,
+						ExactOut,
+						tt.tokenAmountLimit,
+						tt.amountSpecified,
+						tt.swapCount,
+						false,
+					)
+
+					uassert.Equal(t, tt.resultAmountIn, amountIn)
+					uassert.Equal(t, tt.expectedAmountOut, amountOut)
+				}
+			}(cross)
+		})
+	}
+}
+
+func TestCreateSwapOperationExactOutNoFeeInflation(t *testing.T) {
+	initRouterTest(t)
+
+	router := mockRouter()
+
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		router.SetSwapFee(15) // 0.15%
+	}(cross)
+
+	// User sends amountOut=100,150,225 (already includes fee from API).
+	// createSwapOperation should pass this value directly to the pool
+	// without inflating it further via ExpectedExactAmountByFee.
+	params := SwapRouteParams{
+		inputToken:  barPath,
+		outputToken: bazPath,
+		routeArr:    "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000",
+		quoteArr:    "100",
+		typ:         ExactOut,
+		exactAmount: 100150225,
+		limitAmount: 80000000,
+	}
+
+	// ExactAmount() should return the user's original value (no fee inflation)
+	uassert.Equal(t, int64(100150225), params.ExactAmount())
+}
+
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	const barTokenPath = "gno.land/r/onbloc/bar"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"

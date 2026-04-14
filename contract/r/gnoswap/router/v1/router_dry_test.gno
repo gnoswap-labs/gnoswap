@@ -148,8 +148,8 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
 				TokenAmountLimit("100000").
 				Build(),
-			expectedAmountIn:  "2727",
-			expectedAmountOut: "1000",
+			expectedAmountIn:  "2724",
+			expectedAmountOut: "999",
 			expectedSuccess:   true,
 		},
 		{
@@ -286,7 +286,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				TokenAmountLimit("10000").
 				Build(),
 			expectedAmountIn:  "255",
-			expectedAmountOut: "685",
+			expectedAmountOut: "684",
 			expectedSuccess:   false,
 		},
 		{
@@ -302,7 +302,7 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				TokenAmountLimit("10000").
 				Build(),
 			expectedAmountIn:  "294",
-			expectedAmountOut: "787",
+			expectedAmountOut: "786",
 			expectedSuccess:   false,
 		},
 		{

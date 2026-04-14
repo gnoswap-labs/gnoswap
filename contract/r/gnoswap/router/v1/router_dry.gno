@@ -222,9 +222,10 @@ func (r *routerV1) drySwapRoute(
 	originalAmountSpecified := amountSpecified
 
 	// adjust amount sign for exact out swaps
+	// For ExactOut, the user's amountOut already includes the router fee (added by API).
+	// Pass it directly to the pool without further inflation.
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
-		amountSpecified = -amountSpecifiedWithRouterFee
+		amountSpecified = -safeAbsInt64(amountSpecified)
 	}
 
 	// initialize accumulators for swap results

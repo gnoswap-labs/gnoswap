@@ -206,8 +206,7 @@ func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, 
 		pp := NewExactInParams(baseParams, params.ExactAmount(), params.limitAmount)
 		return NewExactInSwapOperation(r, pp), nil
 	case ExactOut:
-		routerFee := r.store.GetSwapFee()
-		pp := NewExactOutParams(baseParams, params.ExpectedExactAmountByFee(routerFee), params.limitAmount)
+		pp := NewExactOutParams(baseParams, params.ExactAmount(), params.limitAmount)
 		return NewExactOutSwapOperation(r, pp), nil
 	default:
 		msg := addDetailToError(errInvalidSwapType, "unknown swap type")
