@@ -625,19 +625,19 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		internalRewardToUser = toUser
 		internalRewardToFee = feeAmount
 		internalRewardPenalty = reward.InternalPenalty
-	}
 
-	chain.Emit(
-		"ProtocolFeeInternalReward",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"fromPositionId", formatUint(positionId),
-		"fromPoolPath", deposit.TargetPoolPath(),
-		"feeTokenPath", GNS_PATH,
-		"feeAmount", formatAnyInt(internalRewardToFee),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(blockHeight),
-	)
+		chain.Emit(
+			"ProtocolFeeInternalReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"fromPositionId", formatUint(positionId),
+			"fromPoolPath", deposit.TargetPoolPath(),
+			"feeTokenPath", GNS_PATH,
+			"feeAmount", formatAnyInt(internalRewardToFee),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
+		)
+	}
 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
 
@@ -691,38 +691,40 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	rewardToUser := formatAnyInt(internalRewardToUser)
 	rewardPenalty := formatAnyInt(internalRewardPenalty)
 
-	poolPath := depositResolver.TargetPoolPath()
-	pool, _ := s.getPools().Get(poolPath)
-	poolResolver := NewPoolResolver(pool)
+	if !skipInternalUpdate {
+		poolPath := depositResolver.TargetPoolPath()
+		pool, _ := s.getPools().Get(poolPath)
+		poolResolver := NewPoolResolver(pool)
 
-	// Get accumulator values for reward calculation tracking
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-	lowerTickResolver := poolResolver.TickResolver(deposit.TickLower())
-	upperTickResolver := poolResolver.TickResolver(deposit.TickUpper())
-	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
-	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
+		// Get accumulator values for reward calculation tracking
+		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
+		lowerTickResolver := poolResolver.TickResolver(deposit.TickLower())
+		upperTickResolver := poolResolver.TickResolver(deposit.TickUpper())
+		lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
+		upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
 
-	chain.Emit(
-		"CollectReward",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"positionId", formatUint(positionId),
-		"poolPath", depositResolver.TargetPoolPath(),
-		"recipient", depositResolver.Owner().String(),
-		"rewardToken", GNS_PATH,
-		"rewardAmount", formatAnyInt(internalRewardToUser),
-		"rewardToUser", rewardToUser,
-		"rewardToFee", formatAnyInt(internalRewardToFee),
-		"rewardPenalty", rewardPenalty,
-		"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(blockHeight),
-		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128,
-		"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
-		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
-	)
+		chain.Emit(
+			"CollectReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"positionId", formatUint(positionId),
+			"poolPath", depositResolver.TargetPoolPath(),
+			"recipient", depositResolver.Owner().String(),
+			"rewardToken", GNS_PATH,
+			"rewardAmount", formatAnyInt(internalRewardToUser),
+			"rewardToUser", rewardToUser,
+			"rewardToFee", formatAnyInt(internalRewardToFee),
+			"rewardPenalty", rewardPenalty,
+			"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
+			"stakedLiquidity", stakedLiquidity.ToString(),
+			"globalRewardRatioAccX128", globalAccX128,
+			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
+			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
+		)
+	}
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
