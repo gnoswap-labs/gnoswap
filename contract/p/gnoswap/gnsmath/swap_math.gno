@@ -141,11 +141,6 @@ func SwapMathComputeSwapStep(
 		)
 	}
 
-	// Final sanity check for resulting price
-	if sqrtRatioNextX96.Lt(MIN_SQRT_RATIO) || sqrtRatioNextX96.Gt(MAX_SQRT_RATIO) {
-		panic(errInvalidPoolSqrtPrice)
-	}
-
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 

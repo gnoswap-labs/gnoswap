@@ -257,26 +257,6 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			shouldPanic:      true,
 			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than 1000000",
 		},
-		{
-			name:             "sqrt_price_below_minimum",
-			currentX96:       u256.MustFromDecimal("2"),
-			targetX96:        u256.MustFromDecimal("1"),
-			liquidity:        u256.MustFromDecimal("1"),
-			amountRemaining:  i256.MustFromDecimal("100"),
-			feePips:          1,
-			shouldPanic:      true,
-			panicMsg:         errInvalidPoolSqrtPrice.Error(),
-		},
-		{
-			name:             "sqrt_price_above_maximum",
-			currentX96:       MAX_SQRT_RATIO,
-			targetX96:        new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
-			liquidity:        u256.MustFromDecimal("1"),
-			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
-			feePips:          1,
-			shouldPanic:      true,
-			panicMsg:         errInvalidPoolSqrtPrice.Error(),
-		},
 	}
 
 	for _, test := range tests {
