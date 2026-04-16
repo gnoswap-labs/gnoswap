@@ -148,7 +148,7 @@
 //   - CastToBool: Casts to bool with error handling
 //   - CastToString: Casts to string with error handling
 //   - CastToAddress: Casts to address with error handling
-//   - CastToTree: Casts to *avl.Tree with error handling
+//   - CastToTree: Casts to *bptree.BPTree with error handling
 //
 // These utilities are used internally by typed getters but can also be used directly.
 //

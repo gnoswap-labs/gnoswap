@@ -1,15 +1,15 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/protocol_fee"
 )
 
 type mockProtocolFeeStore struct {
 	devOpsPct            int64
-	accuToGovStaker      *avl.Tree
-	accuToDevOps         *avl.Tree
+	accuToGovStaker      *bptree.BPTree
+	accuToDevOps         *bptree.BPTree
 	tokenListWithAmounts map[string]int64
 }
 
@@ -38,11 +38,11 @@ func (s *mockProtocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToGovStaker() error {
-	s.accuToGovStaker = avl.NewTree()
+	s.accuToGovStaker = bptree.NewBPTree32()
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetAccuToGovStaker() *avl.Tree {
+func (s *mockProtocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
 	return s.accuToGovStaker
 }
 
@@ -72,11 +72,11 @@ func (s *mockProtocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToDevOps() error {
-	s.accuToDevOps = avl.NewTree()
+	s.accuToDevOps = bptree.NewBPTree32()
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetAccuToDevOps() *avl.Tree {
+func (s *mockProtocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
 	return s.accuToDevOps
 }
 
@@ -137,8 +137,8 @@ func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amou
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:            0,
-		accuToGovStaker:      avl.NewTree(),
-		accuToDevOps:         avl.NewTree(),
+		accuToGovStaker:      bptree.NewBPTree32(),
+		accuToDevOps:         bptree.NewBPTree32(),
 		tokenListWithAmounts: make(map[string]int64),
 	}
 }

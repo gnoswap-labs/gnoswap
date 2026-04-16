@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -82,7 +82,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 			if !ls.HasProjectsKey() {
-				ls.SetProjects(avl.NewTree())
+				ls.SetProjects(bptree.NewBPTree32())
 			}
 
 			testing.SetRealm(tc.callerRealm)
@@ -94,7 +94,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 				ls.GetProjects()
 			}
 
-			err := ls.SetProjects(avl.NewTree())
+			err := ls.SetProjects(bptree.NewBPTree32())
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -115,7 +115,7 @@ func TestStoreSetAndGetProjects(t *testing.T) {
 		{
 			name: "set and get projects successfully",
 			setupFn: func(ls ILaunchpadStore) {
-				projects := avl.NewTree()
+				projects := bptree.NewBPTree32()
 				ls.SetProjects(projects)
 			},
 			testFn: func(t *testing.T, ls ILaunchpadStore) {
@@ -172,7 +172,7 @@ func TestStoreSetAndGetProjectTierRewardManagers(t *testing.T) {
 		{
 			name: "set and get project tier reward managers successfully",
 			setupFn: func(ls ILaunchpadStore) {
-				managers := avl.NewTree()
+				managers := bptree.NewBPTree32()
 				ls.SetProjectTierRewardManagers(managers)
 			},
 			testFn: func(t *testing.T, ls ILaunchpadStore) {
@@ -305,7 +305,7 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 		{
 			name: "set and get deposits successfully",
 			setupFn: func(ls ILaunchpadStore) {
-				deposits := avl.NewTree()
+				deposits := bptree.NewBPTree32()
 				ls.SetDeposits(deposits)
 			},
 			testFn: func(t *testing.T, ls ILaunchpadStore) {
@@ -360,18 +360,18 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 		{
 			name: "set and get all store values",
 			setupFn: func(ls ILaunchpadStore) {
-				projects := avl.NewTree()
+				projects := bptree.NewBPTree32()
 				projects.Set("project1", "data1")
 				ls.SetProjects(projects)
 
-				managers := avl.NewTree()
+				managers := bptree.NewBPTree32()
 				managers.Set("manager1", "mdata1")
 				ls.SetProjectTierRewardManagers(managers)
 
 				counter := &Counter{}
 				ls.SetDepositCounter(counter)
 
-				deposits := avl.NewTree()
+				deposits := bptree.NewBPTree32()
 				deposits.Set("deposit1", "ddata1")
 				ls.SetDeposits(deposits)
 			},

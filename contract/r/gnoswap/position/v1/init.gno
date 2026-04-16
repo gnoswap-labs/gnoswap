@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -29,7 +29,7 @@ func initStoreData(positionStore position.IPositionStore) error {
 	}
 
 	if !positionStore.HasPositionsStoreKey() {
-		err := positionStore.SetPositions(avl.NewTree())
+		err := positionStore.SetPositions(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}

@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -104,7 +104,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 				store := newMockGovernanceStore()
 				voterAddr := address("g1voter00000000000000000000000000000001")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := avl.NewTree()
+				votingInfos := bptree.NewBPTree32()
 				votingInfos.Set(voterAddr.String(), votingInfo)
 				store.SetProposalVotingInfos(1, votingInfos)
 				return store
@@ -117,7 +117,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 			name: "voting info does not exist for user",
 			setupVotingInfos: func() *mockGovernanceStore {
 				store := newMockGovernanceStore()
-				store.SetProposalVotingInfos(1, avl.NewTree())
+				store.SetProposalVotingInfos(1, bptree.NewBPTree32())
 				return store
 			},
 			proposalID:    1,
@@ -140,7 +140,7 @@ func TestGetProposalUserVotingInfo(t *testing.T) {
 				store := newMockGovernanceStore()
 				otherUser := address("g1other00000000000000000000000000000002")
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos := avl.NewTree()
+				votingInfos := bptree.NewBPTree32()
 				votingInfos.Set(otherUser.String(), votingInfo)
 				store.SetProposalVotingInfos(1, votingInfos)
 				return store
@@ -209,7 +209,7 @@ func TestUpdateProposalUserVotes(t *testing.T) {
 			store.SetProposal(tt.proposalID, proposal)
 
 			// Create voting infos
-			votingInfos := avl.NewTree()
+			votingInfos := bptree.NewBPTree32()
 			for i := 0; i < tt.numVotes; i++ {
 				voterAddr := address("g1voter0000000000000000000000000000000" + formatInt(int64(i)))
 				votingInfo := governance.NewVotingInfo(1000)

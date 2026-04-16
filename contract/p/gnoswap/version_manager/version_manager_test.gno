@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -189,7 +189,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/protocol_fee",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            bptree.NewBPTree32(),
 				}
 				return vm, "gno.land/r/gnoswap/protocol_fee/v999"
 			},
@@ -203,7 +203,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/pool",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            bptree.NewBPTree32(),
 				}
 				return vm, ""
 			},
@@ -218,7 +218,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/protocol_fee",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            bptree.NewBPTree32(),
 				}
 				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", "not a function")
 				return vm, "gno.land/r/gnoswap/protocol_fee/v1"
@@ -233,7 +233,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/pool",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            bptree.NewBPTree32(),
 				}
 				vm.initializers.Set("gno.land/r/gnoswap/pool/v1", 42)
 				return vm, "gno.land/r/gnoswap/pool/v1"
@@ -248,7 +248,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/position",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            bptree.NewBPTree32(),
 				}
 				vm.initializers.Set("gno.land/r/gnoswap/position/v1", nil)
 				return vm, "gno.land/r/gnoswap/position/v1"
@@ -425,7 +425,7 @@ func TestChangeImplementation_Success(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            bptree.NewBPTree32(),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}
@@ -459,7 +459,7 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/protocol_fee",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            bptree.NewBPTree32(),
 		}
 
 		vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
@@ -483,7 +483,7 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/pool",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            bptree.NewBPTree32(),
 		}
 
 		versions := []string{"v1", "v2", "v3"}
@@ -512,7 +512,7 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/position",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            bptree.NewBPTree32(),
 		}
 
 		initializers := vm.GetInitializers()
@@ -665,7 +665,7 @@ func TestIsContainDomainPath(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            bptree.NewBPTree32(),
 			}
 
 			result := vm.isContainDomainPath(tt.testPath)
@@ -728,7 +728,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            bptree.NewBPTree32(),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}

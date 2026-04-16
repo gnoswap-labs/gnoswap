@@ -8,7 +8,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -442,7 +442,7 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 
 	incentiveId1 := "addr1:1000:0"
 
-	poolIncentives := avl.NewTree()
+	poolIncentives := bptree.NewBPTree32()
 	incentiveIds := []string{incentiveId1}
 	poolIncentives.Set(poolPath, incentiveIds)
 
@@ -453,9 +453,9 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 		t.Fatal("Expected timestamp entry to exist")
 	}
 
-	poolTree, ok := value.(*avl.Tree)
+	poolTree, ok := value.(*bptree.BPTree)
 	if !ok {
-		t.Fatalf("Expected *avl.Tree, got %T", value)
+		t.Fatalf("Expected *bptree.BPTree, got %T", value)
 	}
 
 	idsValue, exists := poolTree.Get(poolPath)
@@ -475,7 +475,7 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 	tree.Set(timestamp, poolTree)
 
 	value2, _ := tree.Get(timestamp)
-	poolTree2 := value2.(*avl.Tree)
+	poolTree2 := value2.(*bptree.BPTree)
 	idsValue2, _ := poolTree2.Get(poolPath)
 	stored2 := idsValue2.([]string)
 
@@ -493,7 +493,7 @@ func TestExternalIncentivesByCreationTimeSliceStorage(t *testing.T) {
 	tree.Set(timestamp, poolTree2)
 
 	value3, _ := tree.Get(timestamp)
-	poolTree3 := value3.(*avl.Tree)
+	poolTree3 := value3.(*bptree.BPTree)
 	idsValue3, exists := poolTree3.Get(poolPath2)
 	if !exists {
 		t.Fatal("Expected pool2 entry to exist")
@@ -633,7 +633,7 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.IncentivesResolver().create(incentive)
 
-		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
+		// Add to time-based index (2-level structure: timestamp -> *bptree.BPTree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
 		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
 			incentivesByTime = sr.NewUintTree()
@@ -644,12 +644,12 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
 		if !exists {
-			currentPoolIncentiveIdsValue = avl.NewTree()
+			currentPoolIncentiveIdsValue = bptree.NewBPTree32()
 		}
 
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 		if !ok {
-			t.Fatalf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue)
+			t.Fatalf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue)
 		}
 
 		// Get or create incentive list for this pool
@@ -679,9 +679,9 @@ func TestCreateExternalIncentive_SameTimestamp(t *testing.T) {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
 
-	poolMap, ok := poolMapValue.(*avl.Tree)
+	poolMap, ok := poolMapValue.(*bptree.BPTree)
 	if !ok {
-		t.Fatalf("Expected pool map to be *avl.Tree, got %T", poolMapValue)
+		t.Fatalf("Expected pool map to be *bptree.BPTree, got %T", poolMapValue)
 	}
 
 	storedIdsValue, exists := poolMap.Get(poolPath)
@@ -762,7 +762,7 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.IncentivesResolver().create(incentive)
 
-		// Add to time-based index (2-level structure: timestamp -> *avl.Tree -> poolPath -> []string)
+		// Add to time-based index (2-level structure: timestamp -> *bptree.BPTree -> poolPath -> []string)
 		var incentivesByTime *sr.UintTree
 		if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
 			incentivesByTime = sr.NewUintTree()
@@ -773,12 +773,12 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(ts)
 		if !exists {
-			currentPoolIncentiveIdsValue = avl.NewTree()
+			currentPoolIncentiveIdsValue = bptree.NewBPTree32()
 		}
 
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 		if !ok {
-			t.Fatalf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue)
+			t.Fatalf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue)
 		}
 
 		// Get or create incentive list for this pool
@@ -819,10 +819,10 @@ func TestCreateExternalIncentive_TimeBasedIndex(t *testing.T) {
 
 			found := make([]string, 0)
 			incentivesByTime.Iterate(tc.startTime, tc.endTime, func(key int64, value any) bool {
-				// value is *avl.Tree (poolPath -> []string)
-				poolMap, ok := value.(*avl.Tree)
+				// value is *bptree.BPTree (poolPath -> []string)
+				poolMap, ok := value.(*bptree.BPTree)
 				if !ok {
-					t.Fatalf("Expected *avl.Tree at timestamp %d, got %T", key, value)
+					t.Fatalf("Expected *bptree.BPTree at timestamp %d, got %T", key, value)
 				}
 
 				// Get incentive IDs for the target pool
@@ -908,12 +908,12 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		// Get or create pool map at this timestamp
 		currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
 		if !exists {
-			currentPoolIncentiveIdsValue = avl.NewTree()
+			currentPoolIncentiveIdsValue = bptree.NewBPTree32()
 		}
 
-		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+		currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 		if !ok {
-			t.Fatalf("invalid type: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue)
+			t.Fatalf("invalid type: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue)
 		}
 
 		// Get or create incentive list for this pool
@@ -943,9 +943,9 @@ func TestCreateExternalIncentive_SameTimestampDifferentPools(t *testing.T) {
 		t.Fatal("Expected pool map at timestamp to exist")
 	}
 
-	poolMap, ok := poolMapValue.(*avl.Tree)
+	poolMap, ok := poolMapValue.(*bptree.BPTree)
 	if !ok {
-		t.Fatalf("Expected *avl.Tree, got %T", poolMapValue)
+		t.Fatalf("Expected *bptree.BPTree, got %T", poolMapValue)
 	}
 
 	// Verify each pool has exactly 1 incentive
@@ -1780,8 +1780,8 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 				value, exists := incentivesByTime.Get(exp.creationTime)
 				uassert.True(t, exists, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
 
-				poolIncentives, ok := value.(*avl.Tree)
-				uassert.True(t, ok, "Expected value to be *avl.Tree")
+				poolIncentives, ok := value.(*bptree.BPTree)
+				uassert.True(t, ok, "Expected value to be *bptree.BPTree")
 
 				// Get pool entry
 				incentiveIdsValue, exists := poolIncentives.Get(exp.poolPath)
@@ -1903,7 +1903,7 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 			found := make([]string, 0)
 
 			incentivesByTime.Iterate(tt.rangeStart, tt.rangeEnd, func(key int64, value any) bool {
-				poolTree := value.(*avl.Tree)
+				poolTree := value.(*bptree.BPTree)
 				idsValue, exists := poolTree.Get(tt.queryPoolPath)
 				if exists {
 					ids := idsValue.([]string)
@@ -2427,8 +2427,8 @@ func TestRemoveIncentiveIdByCreationTime(t *testing.T) {
 				uassert.True(t, timeExists,
 					ufmt.Sprintf("Time %d should exist", exp.creationTime))
 
-				poolTree, ok := timeValue.(*avl.Tree)
-				uassert.True(t, ok, "Expected value to be *avl.Tree")
+				poolTree, ok := timeValue.(*bptree.BPTree)
+				uassert.True(t, ok, "Expected value to be *bptree.BPTree")
 
 				poolValue, poolExists := poolTree.Get(exp.poolPath)
 

@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -120,7 +120,7 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		setupHistory             func() *avl.Tree
+		setupHistory             func() *bptree.BPTree
 		cutoffTimestamp          int64
 		expectedUserCount        int
 		expectedUser1Entries     int
@@ -128,8 +128,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 	}{
 		{
 			name: "empty history stays empty",
-			setupHistory: func() *avl.Tree {
-				return avl.NewTree()
+			setupHistory: func() *bptree.BPTree {
+				return bptree.NewBPTree32()
 			},
 			cutoffTimestamp:          1000,
 			expectedUserCount:        0,
@@ -138,8 +138,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 		},
 		{
 			name: "user with all entries after cutoff preserved",
-			setupHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			setupHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTree32()
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(2000), int64(500))
 				userHistory.Set(int64(3000), int64(600))
@@ -153,8 +153,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 		},
 		{
 			name: "user with entries before cutoff cleaned",
-			setupHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			setupHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTree32()
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(100), int64(100))
 				userHistory.Set(int64(500), int64(500))
@@ -169,8 +169,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 		},
 		{
 			name: "multiple users cleaned independently",
-			setupHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			setupHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTree32()
 
 				user1History := staker.NewUintTree()
 				user1History.Set(int64(500), int64(500))
@@ -190,8 +190,8 @@ func TestCleanUserDelegationHistory(t *testing.T) {
 		},
 		{
 			name: "user with only old entries gets cutoff value preserved",
-			setupHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			setupHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTree32()
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(100), int64(100))
 				userHistory.Set(int64(500), int64(999))
@@ -237,7 +237,7 @@ func TestCleanUserDelegationHistory_UserRemovedWhenEmpty(t *testing.T) {
 	// User has entries but all are before cutoff and no preserved value
 	// This case: user has no entries at all after cleanup
 	store := newMockGovStakerStore().(*mockGovStakerStore)
-	tree := avl.NewTree()
+	tree := bptree.NewBPTree32()
 	// Empty user history should result in user being removed
 	userHistory := staker.NewUintTree()
 	tree.Set(user1.String(), userHistory)

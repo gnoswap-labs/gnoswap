@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -19,13 +19,13 @@ import (
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockTimestamp -> any
+	tree *bptree.BPTree // blockTimestamp -> any
 }
 
 // NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
 	return &UintTree{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTree32(),
 	}
 }
 

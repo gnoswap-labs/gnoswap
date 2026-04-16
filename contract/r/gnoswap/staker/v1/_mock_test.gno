@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -14,16 +14,16 @@ import (
 type MockStakerStore struct {
 	depositGnsAmount                 int64
 	minimumRewardAmount              int64
-	deposits                         *avl.Tree
-	externalIncentives               *avl.Tree
-	stakers                          *avl.Tree
+	deposits                         *bptree.BPTree
+	externalIncentives               *bptree.BPTree
+	stakers                          *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
-	tokenSpecificMinimumRewards      *avl.Tree
+	tokenSpecificMinimumRewards      *bptree.BPTree
 	unstakingFee                     uint64
-	pools                            *avl.Tree
-	poolTierMemberships              *avl.Tree
+	pools                            *bptree.BPTree
+	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
 	poolTierLastRewardCacheTimestamp int64
@@ -68,11 +68,11 @@ func (s *MockStakerStore) HasDepositsStoreKey() bool {
 	return s.deposits != nil
 }
 
-func (s *MockStakerStore) GetDeposits() *avl.Tree {
+func (s *MockStakerStore) GetDeposits() *bptree.BPTree {
 	return s.deposits
 }
 
-func (s *MockStakerStore) SetDeposits(deposits *avl.Tree) error {
+func (s *MockStakerStore) SetDeposits(deposits *bptree.BPTree) error {
 	s.deposits = deposits
 	return nil
 }
@@ -82,11 +82,11 @@ func (s *MockStakerStore) HasExternalIncentivesStoreKey() bool {
 	return s.externalIncentives != nil
 }
 
-func (s *MockStakerStore) GetExternalIncentives() *avl.Tree {
+func (s *MockStakerStore) GetExternalIncentives() *bptree.BPTree {
 	return s.externalIncentives
 }
 
-func (s *MockStakerStore) SetExternalIncentives(incentives *avl.Tree) error {
+func (s *MockStakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	s.externalIncentives = incentives
 	return nil
 }
@@ -96,11 +96,11 @@ func (s *MockStakerStore) HasStakersStoreKey() bool {
 	return s.stakers != nil
 }
 
-func (s *MockStakerStore) GetStakers() *avl.Tree {
+func (s *MockStakerStore) GetStakers() *bptree.BPTree {
 	return s.stakers
 }
 
-func (s *MockStakerStore) SetStakers(stakers *avl.Tree) error {
+func (s *MockStakerStore) SetStakers(stakers *bptree.BPTree) error {
 	s.stakers = stakers
 	return nil
 }
@@ -157,11 +157,11 @@ func (s *MockStakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.tokenSpecificMinimumRewards != nil
 }
 
-func (s *MockStakerStore) GetTokenSpecificMinimumRewards() *avl.Tree {
+func (s *MockStakerStore) GetTokenSpecificMinimumRewards() *bptree.BPTree {
 	return s.tokenSpecificMinimumRewards
 }
 
-func (s *MockStakerStore) SetTokenSpecificMinimumRewards(rewards *avl.Tree) error {
+func (s *MockStakerStore) SetTokenSpecificMinimumRewards(rewards *bptree.BPTree) error {
 	s.tokenSpecificMinimumRewards = rewards
 	return nil
 }
@@ -185,11 +185,11 @@ func (s *MockStakerStore) HasPoolsStoreKey() bool {
 	return s.pools != nil
 }
 
-func (s *MockStakerStore) GetPools() *avl.Tree {
+func (s *MockStakerStore) GetPools() *bptree.BPTree {
 	return s.pools
 }
 
-func (s *MockStakerStore) SetPools(pools *avl.Tree) error {
+func (s *MockStakerStore) SetPools(pools *bptree.BPTree) error {
 	s.pools = pools
 	return nil
 }
@@ -199,11 +199,11 @@ func (s *MockStakerStore) HasPoolTierMembershipsStoreKey() bool {
 	return s.poolTierMemberships != nil
 }
 
-func (s *MockStakerStore) GetPoolTierMemberships() *avl.Tree {
+func (s *MockStakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	return s.poolTierMemberships
 }
 
-func (s *MockStakerStore) SetPoolTierMemberships(memberships *avl.Tree) error {
+func (s *MockStakerStore) SetPoolTierMemberships(memberships *bptree.BPTree) error {
 	s.poolTierMemberships = memberships
 	return nil
 }
@@ -338,16 +338,16 @@ func newMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            1_000_000_000,
 		minimumRewardAmount:         1_000_000_000,
-		deposits:                    avl.NewTree(),
-		externalIncentives:          avl.NewTree(),
-		stakers:                     avl.NewTree(),
+		deposits:                    bptree.NewBPTree32(),
+		externalIncentives:          bptree.NewBPTree32(),
+		stakers:                     bptree.NewBPTree32(),
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns"},
 		incentiveCounter:            sr.NewCounter(),
-		tokenSpecificMinimumRewards: avl.NewTree(),
+		tokenSpecificMinimumRewards: bptree.NewBPTree32(),
 		unstakingFee:                0,
-		pools:                       avl.NewTree(),
-		poolTierMemberships:         avl.NewTree(),
+		pools:                       bptree.NewBPTree32(),
+		poolTierMemberships:         bptree.NewBPTree32(),
 		poolTierRatio: sr.TierRatio{
 			Tier1: 0,
 			Tier2: 0,

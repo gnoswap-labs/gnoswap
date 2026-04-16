@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -26,12 +26,12 @@ func (pfs *protocolFeeState) GovStakerPct() int64 {
 }
 
 // AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
-func (pfs *protocolFeeState) AccuToGovStaker() *avl.Tree {
+func (pfs *protocolFeeState) AccuToGovStaker() *bptree.BPTree {
 	return pfs.store.GetAccuToGovStaker()
 }
 
 // AccuToDevOps returns the accumulated amounts distributed to DevOps.
-func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
+func (pfs *protocolFeeState) AccuToDevOps() *bptree.BPTree {
 	return pfs.store.GetAccuToDevOps()
 }
 
@@ -165,7 +165,7 @@ func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *pro
 	}
 }
 
-func retrieveAmount(tree *avl.Tree, key string) int64 {
+func retrieveAmount(tree *bptree.BPTree, key string) int64 {
 	amountI, exists := tree.Get(key)
 	if !exists {
 		return 0

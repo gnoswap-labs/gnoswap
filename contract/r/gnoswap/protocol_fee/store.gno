@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -67,10 +67,10 @@ func (s *protocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToGovStaker() error {
-	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetAccuToGovStaker() *avl.Tree {
+func (s *protocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
 	accuToGovStaker, err := s.kvStore.GetTree(StoreKeyAccuToGovStaker.String())
 	if err != nil {
 		panic(err)
@@ -115,10 +115,10 @@ func (s *protocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToDevOps() error {
-	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetAccuToDevOps() *avl.Tree {
+func (s *protocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
 	accuToDevOps, err := s.kvStore.GetTree(StoreKeyAccuToDevOps.String())
 	if err != nil {
 		panic(err)
@@ -163,10 +163,10 @@ func (s *protocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeDistributedToGovStakerHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *avl.Tree {
+func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
 	distributedToGovStakerHistory, err := s.kvStore.GetTree(StoreKeyDistributedToGovStakerHistory.String())
 	if err != nil {
 		panic(err)
@@ -211,10 +211,10 @@ func (s *protocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeDistributedToDevOpsHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *avl.Tree {
+func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
 	distributedToDevOpsHistory, err := s.kvStore.GetTree(StoreKeyDistributedToDevOpsHistory.String())
 	if err != nil {
 		panic(err)

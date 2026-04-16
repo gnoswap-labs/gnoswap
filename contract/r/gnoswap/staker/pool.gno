@@ -7,7 +7,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -225,7 +225,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
 type Incentives struct {
-	incentives *avl.Tree // (incentiveId) => ExternalIncentive
+	incentives *bptree.BPTree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
@@ -235,12 +235,12 @@ type Incentives struct {
 // Incentives Getter/Setter methods
 
 // Incentives returns the incentives tree
-func (i *Incentives) IncentiveTrees() *avl.Tree {
+func (i *Incentives) IncentiveTrees() *bptree.BPTree {
 	return i.incentives
 }
 
 // SetIncentives sets the incentives tree
-func (i *Incentives) SetIncentives(incentives *avl.Tree) {
+func (i *Incentives) SetIncentives(incentives *bptree.BPTree) {
 	i.incentives = incentives
 }
 
@@ -293,7 +293,7 @@ func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
-		incentives:         avl.NewTree(),
+		incentives:         bptree.NewBPTree32(),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
@@ -517,18 +517,18 @@ func NewExternalIncentive(
 
 // Tick mapping for each pool
 type Ticks struct {
-	tree *avl.Tree // int32 tickId -> tick
+	tree *bptree.BPTree // int32 tickId -> tick
 }
 
 // Ticks Getter/Setter methods
 
 // Tree returns the ticks tree
-func (t *Ticks) Tree() *avl.Tree {
+func (t *Ticks) Tree() *bptree.BPTree {
 	return t.tree
 }
 
 // SetTree sets the ticks tree
-func (t *Ticks) SetTree(tree *avl.Tree) {
+func (t *Ticks) SetTree(tree *bptree.BPTree) {
 	t.tree = tree
 }
 
@@ -586,7 +586,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 
 // Clone returns a deep copy of ticks.
 func (t Ticks) Clone() Ticks {
-	cloned := avl.NewTree()
+	cloned := bptree.NewBPTree32()
 	t.tree.Iterate("", "", func(key string, value any) bool {
 		tick, ok := value.(*Tick)
 		if !ok {
@@ -600,7 +600,7 @@ func (t Ticks) Clone() Ticks {
 
 func NewTicks() Ticks {
 	return Ticks{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTree32(),
 	}
 }
 

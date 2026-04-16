@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
@@ -323,7 +323,7 @@ func TestNewPoolTierBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			poolTier := NewPoolTierBy(
-				avl.NewTree(),
+				bptree.NewBPTree32(),
 				TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				tt.tierCounts,
 				tt.lastRewardCacheTimestamp,
@@ -411,7 +411,7 @@ func TestApplyCacheToAllPools(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pools := NewPools()
 			poolTier := &PoolTier{
-				membership:  avl.NewTree(),
+				membership:  bptree.NewBPTree32(),
 				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				counts:      tt.tierCounts,
 				getEmission: func() int64 { return tt.emissionInThisInterval },
@@ -620,7 +620,7 @@ func TestCacheRewardForPool(t *testing.T) {
 			}
 
 			poolTier := NewPoolTierBy(
-				avl.NewTree(),
+				bptree.NewBPTree32(),
 				sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
 				[AllTierCount]uint64{0, 1, 0, 0},
 				tt.lastCacheTs,

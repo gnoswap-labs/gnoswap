@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -1043,8 +1043,8 @@ func createMockLiquidityPool() *pl.Pool {
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
 		tickBitmaps:          make(map[int16]string),
-		ticks:                avl.NewTree(),
-		positions:            avl.NewTree(),
+		ticks:                bptree.NewBPTree32(),
+		positions:            bptree.NewBPTree32(),
 	})
 
 	wordPos, _ := tickBitmapPosition(0)

@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -234,7 +234,7 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 		{
 			name: "set and get deposits successfully",
 			setupFn: func(ss IStakerStore) {
-				deposits := avl.NewTree()
+				deposits := bptree.NewBPTree32()
 				ss.SetDeposits(deposits)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -291,7 +291,7 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 		{
 			name: "set and get external incentives successfully",
 			setupFn: func(ss IStakerStore) {
-				incentives := avl.NewTree()
+				incentives := bptree.NewBPTree32()
 				ss.SetExternalIncentives(incentives)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -348,7 +348,7 @@ func TestStoreSetAndGetStakers(t *testing.T) {
 		{
 			name: "set and get stakers successfully",
 			setupFn: func(ss IStakerStore) {
-				stakers := avl.NewTree()
+				stakers := bptree.NewBPTree32()
 				ss.SetStakers(stakers)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -632,7 +632,7 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		{
 			name: "set and get pools successfully",
 			setupFn: func(ss IStakerStore) {
-				pools := avl.NewTree()
+				pools := bptree.NewBPTree32()
 				ss.SetPools(pools)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -689,7 +689,7 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 		{
 			name: "set and get token specific minimum rewards successfully",
 			setupFn: func(ss IStakerStore) {
-				rewards := avl.NewTree()
+				rewards := bptree.NewBPTree32()
 				ss.SetTokenSpecificMinimumRewards(rewards)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -746,7 +746,7 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 		{
 			name: "set and get pool tier memberships successfully",
 			setupFn: func(ss IStakerStore) {
-				memberships := avl.NewTree()
+				memberships := bptree.NewBPTree32()
 				ss.SetPoolTierMemberships(memberships)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -1330,11 +1330,11 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = ss.SetMinimumRewardAmount(100)
 	uassert.NoError(t, err)
 
-	deposits := avl.NewTree()
+	deposits := bptree.NewBPTree32()
 	err = ss.SetDeposits(deposits)
 	uassert.NoError(t, err)
 
-	stakers := avl.NewTree()
+	stakers := bptree.NewBPTree32()
 	err = ss.SetStakers(stakers)
 	uassert.NoError(t, err)
 

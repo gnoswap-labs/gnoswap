@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -19,13 +19,13 @@ type mockGovStakerStore struct {
 	totalLockedAmount              int64
 
 	// Delegation data
-	delegations      *avl.Tree // map[int64]*staker.Delegation
+	delegations      *bptree.BPTree // map[int64]*staker.Delegation
 	delegationNextID *staker.Counter
-	userDelegations  *avl.Tree
+	userDelegations  *bptree.BPTree
 
 	// New delegation history structures
 	totalDelegationHistory       *staker.UintTree // timestamp -> int64
-	userDelegationHistory        *avl.Tree        // address -> *staker.UintTree[timestamp -> int64]
+	userDelegationHistory        *bptree.BPTree        // address -> *staker.UintTree[timestamp -> int64]
 	hasTotalDelegationHistoryKey bool             // for testing HasTotalDelegationHistoryStoreKey
 
 	// Manager states
@@ -39,11 +39,11 @@ var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
 
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
-		delegations:                  avl.NewTree(),
-		userDelegations:              avl.NewTree(),
+		delegations:                  bptree.NewBPTree32(),
+		userDelegations:              bptree.NewBPTree32(),
 		delegationNextID:             staker.NewCounter(),
 		totalDelegationHistory:       staker.NewUintTree(),
-		userDelegationHistory:        avl.NewTree(),
+		userDelegationHistory:        bptree.NewBPTree32(),
 		hasTotalDelegationHistoryKey: true,
 	}
 }
@@ -110,7 +110,7 @@ func (m *mockGovStakerStore) HasDelegationsStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) SetDelegations(delegations *avl.Tree) error {
+func (m *mockGovStakerStore) SetDelegations(delegations *bptree.BPTree) error {
 	m.delegations = delegations
 	return nil
 }
@@ -138,7 +138,7 @@ func (m *mockGovStakerStore) RemoveDelegation(id int64) error {
 	return nil
 }
 
-func (m *mockGovStakerStore) GetAllDelegations() *avl.Tree {
+func (m *mockGovStakerStore) GetAllDelegations() *bptree.BPTree {
 	return m.delegations
 }
 
@@ -174,11 +174,11 @@ func (m *mockGovStakerStore) HasUserDelegationHistoryStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetUserDelegationHistory() *avl.Tree {
+func (m *mockGovStakerStore) GetUserDelegationHistory() *bptree.BPTree {
 	return m.userDelegationHistory
 }
 
-func (m *mockGovStakerStore) SetUserDelegationHistory(history *avl.Tree) error {
+func (m *mockGovStakerStore) SetUserDelegationHistory(history *bptree.BPTree) error {
 	m.userDelegationHistory = history
 	return nil
 }
@@ -193,7 +193,7 @@ func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
 	return exists
 }
 
-func (m *mockGovStakerStore) SetUserDelegations(delegations *avl.Tree) error {
+func (m *mockGovStakerStore) SetUserDelegations(delegations *bptree.BPTree) error {
 	m.userDelegations = delegations
 	return nil
 }

@@ -3,7 +3,7 @@ package pool
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 func cloneStringSlice(src []string) []string {
@@ -88,19 +88,19 @@ func clonePool(src *Pool) *Pool {
 		feeGrowthGlobal0X128: src.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: src.feeGrowthGlobal1X128.Clone(),
 		liquidity:            src.liquidity.Clone(),
-		ticks:                avl.NewTree(),
+		ticks:                bptree.NewBPTree32(),
 		tickBitmaps:          make(map[int16]string),
-		positions:            avl.NewTree(),
+		positions:            bptree.NewBPTree32(),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }
 
-func clonePoolTicks(src *avl.Tree) *avl.Tree {
+func clonePoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	if src == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 
-	cloned := avl.NewTree()
+	cloned := bptree.NewBPTree32()
 
 	src.Iterate("", "", func(key string, value any) bool {
 		cloned.Set(key, value)

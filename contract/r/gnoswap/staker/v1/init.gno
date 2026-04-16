@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -54,21 +54,21 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasDepositsStoreKey() {
-		err := stakerStore.SetDeposits(avl.NewTree())
+		err := stakerStore.SetDeposits(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasExternalIncentivesStoreKey() {
-		err := stakerStore.SetExternalIncentives(avl.NewTree())
+		err := stakerStore.SetExternalIncentives(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasStakersStoreKey() {
-		err := stakerStore.SetStakers(avl.NewTree())
+		err := stakerStore.SetStakers(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
-		err := stakerStore.SetTokenSpecificMinimumRewards(avl.NewTree())
+		err := stakerStore.SetTokenSpecificMinimumRewards(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}

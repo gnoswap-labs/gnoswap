@@ -3,7 +3,7 @@ package store
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -262,7 +262,7 @@ func TestcastToTree(t *testing.T) {
 		{
 			name: "Success",
 			verifyFn: func(t *testing.T) {
-				tree := avl.NewTree()
+				tree := bptree.NewBPTree32()
 				var value any = tree
 				result, err := castToTree(value)
 				uassert.NoError(t, err)

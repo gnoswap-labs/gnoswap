@@ -3,7 +3,7 @@ package referral
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 const (
@@ -14,8 +14,8 @@ const (
 // keeper implements ReferralKeeper using AVL tree storage.
 // It includes rate limiting to prevent abuse.
 type keeper struct {
-	store   *avl.Tree // address(string) -> referral address(string)
-	lastOps *avl.Tree // address(string) -> last operation timestamp(int64)
+	store   *bptree.BPTree // address(string) -> referral address(string)
+	lastOps *bptree.BPTree // address(string) -> last operation timestamp(int64)
 }
 
 var _ ReferralKeeper = &keeper{}
@@ -23,8 +23,8 @@ var _ ReferralKeeper = &keeper{}
 // NewKeeper creates a new ReferralKeeper instance.
 func NewKeeper() ReferralKeeper {
 	return &keeper{
-		store:   avl.NewTree(),
-		lastOps: avl.NewTree(),
+		store:   bptree.NewBPTree32(),
+		lastOps: bptree.NewBPTree32(),
 	}
 }
 

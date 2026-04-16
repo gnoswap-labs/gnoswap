@@ -2,7 +2,7 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IStaker interface {
@@ -131,18 +131,18 @@ type IStakerStore interface {
 
 	// Deposits
 	HasDepositsStoreKey() bool
-	GetDeposits() *avl.Tree
-	SetDeposits(deposits *avl.Tree) error
+	GetDeposits() *bptree.BPTree
+	SetDeposits(deposits *bptree.BPTree) error
 
 	// ExternalIncentives
 	HasExternalIncentivesStoreKey() bool
-	GetExternalIncentives() *avl.Tree
-	SetExternalIncentives(incentives *avl.Tree) error
+	GetExternalIncentives() *bptree.BPTree
+	SetExternalIncentives(incentives *bptree.BPTree) error
 
 	// Stakers
 	HasStakersStoreKey() bool
-	GetStakers() *avl.Tree
-	SetStakers(stakers *avl.Tree) error
+	GetStakers() *bptree.BPTree
+	SetStakers(stakers *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool
@@ -162,8 +162,8 @@ type IStakerStore interface {
 
 	// TokenSpecificMinimumRewards
 	HasTokenSpecificMinimumRewardsStoreKey() bool
-	GetTokenSpecificMinimumRewards() *avl.Tree
-	SetTokenSpecificMinimumRewards(rewards *avl.Tree) error
+	GetTokenSpecificMinimumRewards() *bptree.BPTree
+	SetTokenSpecificMinimumRewards(rewards *bptree.BPTree) error
 
 	// UnstakingFee
 	HasUnstakingFeeStoreKey() bool
@@ -172,13 +172,13 @@ type IStakerStore interface {
 
 	// Pools
 	HasPoolsStoreKey() bool
-	GetPools() *avl.Tree
-	SetPools(pools *avl.Tree) error
+	GetPools() *bptree.BPTree
+	SetPools(pools *bptree.BPTree) error
 
 	// PoolTierMemberships
 	HasPoolTierMembershipsStoreKey() bool
-	GetPoolTierMemberships() *avl.Tree
-	SetPoolTierMemberships(memberships *avl.Tree) error
+	GetPoolTierMemberships() *bptree.BPTree
+	SetPoolTierMemberships(memberships *bptree.BPTree) error
 
 	// PoolTierRatio
 	HasPoolTierRatioStoreKey() bool

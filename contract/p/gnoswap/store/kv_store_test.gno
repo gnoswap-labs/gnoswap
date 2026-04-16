@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -681,7 +681,7 @@ func TestAllTypedGetters_Success(t *testing.T) {
 	uassert.NoError(t, err)
 	err = store.Set("address_key", domainAddr)
 	uassert.NoError(t, err)
-	tree := avl.NewTree()
+	tree := bptree.NewBPTree32()
 	err = store.Set("tree_key", tree)
 	uassert.NoError(t, err)
 

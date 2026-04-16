@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -123,7 +123,7 @@ func TestStoreSetAndGetPositions(t *testing.T) {
 		{
 			name: "set and get positions successfully",
 			setupFn: func(ps IPositionStore) {
-				positions := avl.NewTree()
+				positions := bptree.NewBPTree32()
 				ps.SetPositions(positions)
 			},
 			testFn: func(t *testing.T, ps IPositionStore) {
@@ -281,7 +281,7 @@ func TestStorePosition(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
-				positions := avl.NewTree()
+				positions := bptree.NewBPTree32()
 				err := ps.SetPositions(positions)
 				uassert.NoError(t, err)
 
@@ -307,7 +307,7 @@ func TestStorePosition(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
-				positions := avl.NewTree()
+				positions := bptree.NewBPTree32()
 				err := ps.SetPositions(positions)
 				uassert.NoError(t, err)
 
@@ -355,7 +355,7 @@ func TestStorePosition(t *testing.T) {
 				resetTestState(t)
 				ps := NewPositionStore(kvStore)
 
-				positions := avl.NewTree()
+				positions := bptree.NewBPTree32()
 				err := ps.SetPositions(positions)
 				uassert.NoError(t, err)
 
@@ -400,7 +400,7 @@ func TestStoreMultiplePositions(t *testing.T) {
 
 	ps := NewPositionStore(kvStore)
 
-	positions := avl.NewTree()
+	positions := bptree.NewBPTree32()
 	err := ps.SetPositions(positions)
 	uassert.NoError(t, err)
 
@@ -453,7 +453,7 @@ func TestStoreUpdatePosition(t *testing.T) {
 
 	ps := NewPositionStore(kvStore)
 
-	positions := avl.NewTree()
+	positions := bptree.NewBPTree32()
 	err := ps.SetPositions(positions)
 	uassert.NoError(t, err)
 

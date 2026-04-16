@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
-	rotree "gno.land/p/nt/avl/v0/rotree"
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -33,7 +33,7 @@ import (
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
-	initializers *avl.Tree
+	initializers *bptree.BPTree
 
 	// domainKVStore is the shared storage layer accessible by all versions
 	// The domain (proxy) realm is the owner and has write permission
@@ -234,7 +234,7 @@ func NewVersionManager(
 		domainPath:              domainPath,
 		domainKVStore:           kvStore,
 		initializeDomainStoreFn: initializeDomainStoreFn,
-		initializers:            avl.NewTree(),
+		initializers:            bptree.NewBPTree32(),
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}

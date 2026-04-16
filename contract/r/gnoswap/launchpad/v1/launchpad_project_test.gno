@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -704,8 +704,8 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 func initLaunchpadProjectTest(t *testing.T) {
 	testing.SetHeight(123)
 	resetTestStore()
-	setTestProjects(new(avl.Tree))
-	setTestProjectTierRewardManagers(new(avl.Tree))
+	setTestProjects(new(bptree.BPTree))
+	setTestProjectTierRewardManagers(new(bptree.BPTree))
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
