@@ -606,6 +606,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		)
 	}
 
+	internalReward := int64(0)
 	internalRewardToUser := int64(0)
 	internalRewardToFee := int64(0)
 	internalRewardPenalty := int64(0)
@@ -622,6 +623,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			panic(err.Error())
 		}
 
+		internalReward = reward.Internal
 		internalRewardToUser = toUser
 		internalRewardToFee = feeAmount
 		internalRewardPenalty = reward.InternalPenalty
@@ -712,7 +714,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"poolPath", depositResolver.TargetPoolPath(),
 			"recipient", depositResolver.Owner().String(),
 			"rewardToken", GNS_PATH,
-			"rewardAmount", formatAnyInt(reward.Internal),
+			"rewardAmount", formatAnyInt(internalReward),
 			"rewardToUser", rewardToUser,
 			"rewardToFee", formatAnyInt(internalRewardToFee),
 			"rewardPenalty", rewardPenalty,
