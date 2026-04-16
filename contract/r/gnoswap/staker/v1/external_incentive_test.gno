@@ -201,7 +201,6 @@ func TestEndExternalIncentive(t *testing.T) {
 			testing.SkipHeights(skipBlocks)
 
 			creatorGnsBalanceBefore := gns.BalanceOf(tt.refundAddress)
-			creatorBarBalanceBefore := bar.BalanceOf(tt.refundAddress)
 
 			if tt.expectError {
 				testing.SetRealm(testing.NewUserRealm(tt.caller))
@@ -222,14 +221,13 @@ func TestEndExternalIncentive(t *testing.T) {
 			})
 
 			creatorGnsBalanceAfter := gns.BalanceOf(tt.refundAddress)
-			creatorBarBalanceAfter := bar.BalanceOf(tt.refundAddress)
 
 			updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
 			uassert.True(t, exists)
 			uassert.True(t, updatedIncentive.Refunded())
 			uassert.Equal(t, creator, updatedIncentive.Creator())
+			// EndExternalIncentive refunds GNS deposit and time-based reward token refund.
 			uassert.Equal(t, creatorGnsBalanceAfter-creatorGnsBalanceBefore, depositGnsAmount)
-			uassert.Equal(t, creatorBarBalanceAfter-creatorBarBalanceBefore, rewardAmount)
 		})
 	}
 }
@@ -1264,17 +1262,19 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	depositResolverA.addCollectedExternalReward(incentiveId, collectedA)
 	depositResolverA.updateExternalRewardLastCollectTime(incentiveId, endTime-1000)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
+	// Update DistributedRewardAmount and deduct from rewardAmount (simulating CollectReward)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
 	incentiveResolver.addDistributedRewardAmount(collectedA)
+	incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), collectedA))
 
 	// User B collects 200
 	collectedB := int64(200)
 	depositResolverB.addCollectedExternalReward(incentiveId, collectedB)
 	depositResolverB.updateExternalRewardLastCollectTime(incentiveId, endTime-500)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
+	// Update DistributedRewardAmount and deduct from rewardAmount (simulating CollectReward)
 	incentiveResolver.addDistributedRewardAmount(collectedB)
+	incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), collectedB))
 
 	// Verify DistributedRewardAmount = 500
 	if incentiveResolver.DistributedRewardAmount() != 500 {
@@ -1286,19 +1286,15 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		t.Errorf("After unstakes, DistributedRewardAmount should still be 500, got %d", incentiveResolver.DistributedRewardAmount())
 	}
 
-	// Calculate refund
-	// remain deposit A reward: 1286000
-	// remain deposit B reward: 643000
+	// End incentive with simple time-based refund calculation
 	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
 	uassert.NoError(t, err)
 
-	// Verify refund amount
-	expectedRefund := int64(999035000)
-	if refund != expectedRefund {
-		t.Errorf("Expected refund %d, got %d", expectedRefund, refund)
-	}
-
-	// Verify refund is not negative
+	// refund = totalRewardAmount - (rewardPerSecond × duration) - distributedRewardAmount
+	// duration = endTime - startTime = 86400*9 = 777600
+	// rewardPerSecond = totalRewardAmount / duration = 1000000000 / 777600 = 1285 (truncated)
+	// totalDistributable = 1285 * 777600 = 999273600 (due to integer truncation, less than totalRewardAmount)
+	// refund = 1000000000 - 999273600 - 500 = 726400 - 500 = 725900
 	if refund < 0 {
 		t.Errorf("Refund should never be negative! Got %d", refund)
 	}

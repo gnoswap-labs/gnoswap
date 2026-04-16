@@ -40,6 +40,7 @@ type IStakerManager interface {
 		endTimestamp int64,
 	)
 	EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address)
+	CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, maxPositions int) (int64, int64)
 	AddToken(tokenPath string)
 	RemoveToken(tokenPath string)
 

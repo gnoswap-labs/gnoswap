@@ -253,6 +253,9 @@ func endExternalIncentiveAndVerifyDustRefund() {
 		externalCreatorUser,
 	)
 
+	testing.SetRealm(adminRealm)
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, 100)
+
 	// Get balance after ending incentive
 	barBalanceAfter := bar.BalanceOf(externalCreatorUser)
 	gnsBalanceAfter := gns.BalanceOf(externalCreatorUser)
@@ -334,10 +337,10 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] bar balance before ending: 100000000
 // [INFO] gns balance before ending: 0
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100070440
+// [INFO] bar balance after ending: 100064007
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 70440
+// [RESULT] bar tokens refunded: 64007
 // [RESULT] gns tokens refunded: 1000000000
-// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70440)!
+// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (64007)!
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

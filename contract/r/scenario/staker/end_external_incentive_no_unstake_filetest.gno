@@ -227,6 +227,9 @@ func endExternalIncentive() {
 		externalCreatorUser,
 	)
 
+	testing.SetRealm(adminRealm)
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", actualIncentiveID, 100)
+
 	println("[INFO] external incentive ended via refund path")
 }
 
@@ -284,8 +287,9 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] external incentive ended via refund path
 //
 // [SCENARIO] 7. User collects after end (should clean up incentive)
-// [INFO] collected 1202687037 GNS after incentive end (incentive should be removed)
+// [INFO] collected 0 GNS after incentive end (incentive should be removed)
 //
 // [SCENARIO] 8. Second collect returns zero (incentive removed)
 // [VERIFY] second collect after end: 0 GNS
 // [VERIFIED] Ended external incentive no longer blocks cleanup or yields rewards
+

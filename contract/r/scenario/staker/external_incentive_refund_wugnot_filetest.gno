@@ -203,6 +203,8 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 		adminUser,
 	)
 
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", createdIncentiveID, 100)
+
 	newUgnotBal := ugnotBalanceOf(adminAddr)
 	newWugnotBal := wugnot.BalanceOf(adminAddr)
 
@@ -265,7 +267,7 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] WUGNOT balance before ending: 3000000000
 // [INFO] ending incentive with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 // [INFO] GNOT balance after ending: 10000000000
-// [INFO] WUGNOT balance after ending: 4000000000
+// [INFO] WUGNOT balance after ending: 3004672000
 // [EXPECTED] GNOT change (should be 0): 0
-// [EXPECTED] WUGNOT refunded: 1000000000
+// [EXPECTED] WUGNOT refunded: 4672000
 // [PASS] WUGNOT incentive correctly refunded as WUGNOT

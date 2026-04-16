@@ -189,8 +189,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	}
 
 	// Mark incentive as refunded and update
-	// After this update, attempts to re-claim GNS or rewards that were deposited
-	// through the `endExternalIncentive` function will be blocked.
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive)
@@ -238,29 +236,162 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	totalReward := int64(0)
+	// Simple time-based refund calculation (no position iteration).
+	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
+	totalDistributable := safeMulInt64(incentiveResolver.RewardPerSecond(), duration)
+	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalDistributable)
+	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
-	// calculate total external reward for the incentive
-	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
+	if refund < 0 {
+		refund = 0
+	}
+
+	return incentiveResolver.ExternalIncentive, refund, nil
+}
+
+// CollectExternalIncentivePenalty collects penalty rewards from staked positions
+// for a specific ended external incentive. Processes up to maxPositions per call.
+// Returns the total penalty collected and the number of positions processed.
+// Must be called repeatedly until all positions are processed.
+func (s *stakerV1) CollectExternalIncentivePenalty(
+	targetPoolPath string,
+	incentiveId string,
+	maxPositions int,
+) (int64, int64) {
+	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := runtime.PreviousRealm().Address()
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) {
+		panic(makeErrorWithDetails(
+			errNoPermission,
+			ufmt.Sprintf("only admin can collect penalty, called from %s", caller),
+		))
+	}
+
+	assertIsPoolExists(s, targetPoolPath)
+
+	pool, exists := s.getPools().Get(targetPoolPath)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
+		))
+	}
+
+	poolResolver := NewPoolResolver(pool)
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	incentiveResolver, exists := incentivesResolver.GetIncentiveResolver(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("incentive(%s) not found", incentiveId),
+		))
+	}
+
+	if !incentiveResolver.Refunded() {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("incentive(%s) must be ended first (call EndExternalIncentive)", incentiveId),
+		))
+	}
+
+	currentTime := time.Now().Unix()
+	totalPenalty := int64(0)
+	processedCount := int64(0)
+
+	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, targetPoolPath, func(positionId uint64, deposit *sr.Deposit) bool {
+		if int(processedCount) >= maxPositions {
+			return true // stop iteration
+		}
+
 		depositResolver := NewDepositResolver(deposit)
-		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
+		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 
+		// Already collected past the incentive end — no penalty to process
 		if lastCollectTime > incentiveResolver.EndTimestamp() {
+			return false // continue to next
+		}
+
+		rewardState := poolResolver.RewardStateOf(deposit)
+		rewards, penalties := rewardState.calculateExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
+
+		penalty := int64(0)
+		for _, p := range penalties {
+			penalty = safeAddInt64(penalty, p)
+		}
+
+		reward := int64(0)
+		for _, r := range rewards {
+			reward = safeAddInt64(reward, r)
+		}
+
+		totalAmount := safeAddInt64(reward, penalty)
+		if totalAmount == 0 {
+			return false // continue
+		}
+
+		incentive := s.getExternalIncentives().get(incentiveId)
+		if incentive == nil {
 			return false
 		}
 
-		rewardState := resolver.RewardStateOf(deposit)
-		calculatedTotalReward := rewardState.calculateCollectableExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
-		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
+		if incentive.RewardAmount() < totalAmount {
+			return false // insufficient, skip
+		}
 
-		return false
+		// Deduct reward + penalty from incentive balance
+		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalAmount))
+		incentiveResolver.addDistributedRewardAmount(reward)
+		depositResolver.addCollectedExternalReward(incentiveId, totalAmount)
+
+		err := depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		if err != nil {
+			panic(err)
+		}
+
+		if depositResolver.ExternalRewardLastCollectTime(incentiveId) > incentiveResolver.EndTimestamp() {
+			deposit.RemoveExternalIncentiveId(incentiveId)
+		}
+
+		s.getExternalIncentives().set(incentiveId, incentive)
+
+		// Transfer reward to position owner
+		if reward > 0 {
+			toUser, _, err := s.handleStakingRewardFee(incentive.RewardToken(), reward, false)
+			if err != nil {
+				panic(err.Error())
+			}
+			if toUser > 0 {
+				common.SafeGRC20Transfer(cross, incentive.RewardToken(), deposit.Owner(), toUser)
+			}
+		}
+
+		totalPenalty = safeAddInt64(totalPenalty, penalty)
+		processedCount++
+
+		return false // continue
 	})
 
-	// calculate refund amount is the difference between the incentive reward amount and the total external reward
-	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
-	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
+	// Transfer collected penalties to community pool
+	if totalPenalty > 0 {
+		communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+		common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), communityPoolAddr, totalPenalty)
+	}
 
-	return incentiveResolver.ExternalIncentive, refund, nil
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
+		"CollectExternalIncentivePenalty",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"targetPoolPath", targetPoolPath,
+		"incentiveId", incentiveId,
+		"penaltyAmount", formatAnyInt(totalPenalty),
+		"processedPositions", formatAnyInt(processedCount),
+	)
+
+	return totalPenalty, processedCount
 }
 
 // addIncentiveIdByCreationTime adds an external incentive to the time-based index.

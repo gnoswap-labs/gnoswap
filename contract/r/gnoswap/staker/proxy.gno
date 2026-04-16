@@ -133,6 +133,11 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundA
 	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
+// CollectExternalIncentivePenalty collects penalty rewards from staked positions
+func CollectExternalIncentivePenalty(cur realm, targetPoolPath, incentiveId string, maxPositions int) (int64, int64) {
+	return getImplementation().CollectExternalIncentivePenalty(targetPoolPath, incentiveId, maxPositions)
+}
+
 // AddToken adds a token to the reward token whitelist.
 func AddToken(cur realm, tokenPath string) {
 	getImplementation().AddToken(tokenPath)

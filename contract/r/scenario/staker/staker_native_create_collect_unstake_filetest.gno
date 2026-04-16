@@ -452,6 +452,8 @@ func endExternalIncentive() {
 		incentiveID,
 		adminUser,
 	)
+
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", incentiveID, 100)
 	testing.SkipHeights(1)
 
 	wugnotBalanceAfter := wugnot.BalanceOf(adminUser)
@@ -605,19 +607,18 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] ugnot balance before end: 20050001005
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
-// [EXPECTED] wugnot balance after end: 55579946
+// [EXPECTED] wugnot balance after end: 10049935003
 // [EXPECTED] ugnot balance after end: 20050001005
-// [EXPECTED] wugnot change: 64002
+// [EXPECTED] wugnot change: 9994419059
 // [EXPECTED] ugnot refund: 0
 //
 // [SCENARIO] 11. Unstake token 01 after external incentive
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 55579946
+// [INFO] wugnot balance before unstake: 10049935003
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token 01 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 10049999005
+// [EXPECTED] wugnot balance after unstake: 10049935003
 // [EXPECTED] ugnot balance after unstake: 20050001005
-// [EXPECTED] wugnot increase from unstake: 9994419059
+// [EXPECTED] wugnot increase from unstake: 0
 // [EXPECTED] ugnot change from unstake: 0
-
