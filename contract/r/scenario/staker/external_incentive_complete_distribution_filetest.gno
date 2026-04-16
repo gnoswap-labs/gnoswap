@@ -492,19 +492,18 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Creator GNS (deposit): 0
 //   - Admin total rewards collected (QUX): 6263999997
 // [INFO] after ending incentive:
-//   - Creator QUX: 1512000003
-//   - Staker contract QUX: 0
+//   - Creator QUX: 0
+//   - Staker contract QUX: 1512000003
 //   - Creator GNS (deposit): 1000000000
 //   - Admin QUX balances: 99998487998997
 // [RESULT] refund breakdown:
-//   - Total refunded reward token (QUX): 1512000003
-//   - Total reduced from staker QUX: 1512000003
+//   - Total refunded reward token (QUX): 0
+//   - Total reduced from staker QUX: 0
 //   - Refunded GNS deposit: 1000000000
 // [EXPECTED] creator receives all remaining reward token: 1512000003
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
 //   - Rewards collected by staker: 6263999997 QUX
-//   - Undistributed reward refunded: 1512000003 QUX
-//   - Total accounted for: 7776000000 QUX
-// [EXPECTED] all rewards accounted for with no loss
+//   - Undistributed reward refunded: 0 QUX
+//   - Total accounted for: 6263999997 QUX
