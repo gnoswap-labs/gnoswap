@@ -40,6 +40,7 @@ type IStakerManager interface {
 		endTimestamp int64,
 	)
 	EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address)
+	CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64
 	AddToken(tokenPath string)
 	RemoveToken(tokenPath string)
 
@@ -72,6 +73,7 @@ type IStakerGetter interface {
 	GetIncentiveTotalRewardAmount(poolPath string, incentiveId string) int64
 	GetIncentiveDistributedRewardAmount(poolPath string, incentiveId string) int64
 	GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64
+	GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64
 	GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64
 	GetIncentiveRefunded(poolPath string, incentiveId string) bool
 	IsIncentiveActive(poolPath string, incentiveId string) bool

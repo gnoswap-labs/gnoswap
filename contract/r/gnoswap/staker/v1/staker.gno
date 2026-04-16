@@ -532,6 +532,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), totalRewardAmount))
 		incentiveResolver.addDistributedRewardAmount(rewardAmount)
+		incentiveResolver.addAccumulatedPenaltyAmount(externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
