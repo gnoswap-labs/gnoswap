@@ -712,7 +712,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 			"poolPath", depositResolver.TargetPoolPath(),
 			"recipient", depositResolver.Owner().String(),
 			"rewardToken", GNS_PATH,
-			"rewardAmount", formatAnyInt(internalRewardToUser),
+			"rewardAmount", formatAnyInt(reward.Internal),
 			"rewardToUser", rewardToUser,
 			"rewardToFee", formatAnyInt(internalRewardToFee),
 			"rewardPenalty", rewardPenalty,
