@@ -73,7 +73,8 @@ func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
 }
 
 func assertIsExistsPools(routePathArr string) {
-	poolPaths, err := parsePoolPathsByRoutePathArr(routePathArr)
+	routes := splitSingleChar(routePathArr, ',')
+	poolPaths, err := parsePoolPathsByRoutePathArr(routes)
 	if err != nil {
 		panic(err)
 	}
