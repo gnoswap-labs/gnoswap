@@ -14,12 +14,44 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/pool"
+	plv1 "gno.land/r/gnoswap/pool/v1"
 )
 
 const (
 	MIN_SQRT_RATIO string = "4295128739"                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
 	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
 )
+
+// Precomputed sqrt price limits per fee tier and direction.
+// TickMathGetSqrtRatioAtTick costs ~2M-2.4M gas per call and only depends on fee tier,
+// so we compute all 8 values (4 fees × 2 directions) once at init and cache them.
+// Callers use the cached pointer read-only (only .ToString() is called on the result).
+var (
+	sqrtPriceLimitForward  = make(map[uint32]*u256.Uint) // zeroForOne=true:  sqrtRatioAtTick(minTick+1) + 1
+	sqrtPriceLimitBackward = make(map[uint32]*u256.Uint) // zeroForOne=false: sqrtRatioAtTick(maxTick-1) - 1
+)
+
+func init() {
+	for _, fee := range []uint32{plv1.FeeTier100, plv1.FeeTier500, plv1.FeeTier3000, plv1.FeeTier10000} {
+		// zeroForOne=true: price must stay above minimum
+		minTick := getMinTick(fee) + 1
+		fwd := common.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
+		if fwd.IsZero() {
+			fwd = u256.MustFromDecimal(MIN_SQRT_RATIO)
+		}
+		fwd.Add(fwd, one) // fwd += 1 in-place
+		sqrtPriceLimitForward[fee] = fwd
+
+		// zeroForOne=false: price must stay below maximum
+		maxTick := getMaxTick(fee) - 1
+		bwd := common.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
+		if bwd.IsZero() {
+			bwd = u256.MustFromDecimal(MAX_SQRT_RATIO)
+		}
+		bwd.Sub(bwd, one) // bwd -= 1 in-place
+		sqrtPriceLimitBackward[fee] = bwd
+	}
+}
 
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
@@ -135,27 +167,22 @@ func (e *DrySwapExecutor) execute(p *SingleSwapParams) (int64, int64) {
 	)
 }
 
-// calculateSqrtPriceLimitForSwap calculates the price limit for a swap operation.
+// calculateSqrtPriceLimitForSwap returns the price limit for a swap operation.
+// If a non-zero limit is provided by the caller, it is returned as-is.
+// Otherwise, returns the precomputed limit for the given fee tier and direction.
+// The returned pointer is shared (read-only — callers must not mutate it).
 func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
 	if !sqrtPriceLimitX96.IsZero() {
 		return sqrtPriceLimitX96
 	}
 
+	// Previously computed per-call (replaced by precomputed map lookup):
+	// zeroForOne=true:  minTick := getMinTick(fee)+1; sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(minTick)); return sqrtPriceLimitX96.Add(sqrtPriceLimitX96, one)
+	// zeroForOne=false: maxTick := getMaxTick(fee)-1; sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(maxTick)); return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, one)
 	if zeroForOne {
-		minTick := getMinTick(fee) + 1
-		sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(minTick))
-		if sqrtPriceLimitX96.IsZero() {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(MIN_SQRT_RATIO)
-		}
-		return u256.Zero().Add(sqrtPriceLimitX96, one)
+		return sqrtPriceLimitForward[fee]
 	}
-
-	maxTick := getMaxTick(fee) - 1
-	sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(maxTick))
-	if sqrtPriceLimitX96.IsZero() {
-		sqrtPriceLimitX96 = u256.MustFromDecimal(MAX_SQRT_RATIO)
-	}
-	return u256.Zero().Sub(sqrtPriceLimitX96, one)
+	return sqrtPriceLimitBackward[fee]
 }
 
 // getMinTick returns the minimum tick value for a given fee tier.
