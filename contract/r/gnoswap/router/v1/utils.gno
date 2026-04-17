@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bytes"
 	"math"
 	"strconv"
 	"strings"
@@ -169,13 +168,11 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 		err                   error
 	)
 
-	// multi-hop routePath
-	if strings.Contains(routePath, POOL_SEPARATOR) {
-		pools := strings.Split(routePath, POOL_SEPARATOR)
-
-		// Get first token from first pool
-		firstPool := pools[0]
-		firstToken, _, _, err = getDataForSinglePathWithError(firstPool)
+	// Split once: len>1 means multi-hop, avoiding a redundant strings.Contains scan.
+	pools := strings.Split(routePath, POOL_SEPARATOR)
+	if len(pools) > 1 {
+		// multi-hop routePath
+		firstToken, _, _, err = getDataForSinglePathWithError(pools[0])
 		if err != nil {
 			return err
 		}
@@ -186,9 +183,7 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 			return err
 		}
 
-		// Get last token from last pool
-		lastPool := pools[len(pools)-1]
-		_, lastToken, _, err = getDataForSinglePathWithError(lastPool)
+		_, lastToken, _, err = getDataForSinglePathWithError(pools[len(pools)-1])
 		if err != nil {
 			return err
 		}
@@ -253,7 +248,16 @@ func splitSingleChar(s string, sep byte) []string {
 		return []string{""}
 	}
 
-	result := make([]string, 0, bytes.Count([]byte(s), []byte{sep})+1)
+	// count := bytes.Count([]byte(s), []byte{sep})
+	// Avoid allocating []byte(s) just for counting — scan string bytes directly.
+	count := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == sep {
+			count++
+		}
+	}
+
+	result := make([]string, 0, count+1)
 	start := 0
 	for i := range s {
 		if s[i] == sep {

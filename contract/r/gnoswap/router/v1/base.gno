@@ -177,13 +177,10 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 }
 
 func (p *SwapRouteParams) SwapCount() int64 {
-	swapCount := int64(0)
-
-	for _, route := range strings.Split(p.routeArr, ",") {
-		swapCount += int64(strings.Count(route, POOL_SEPARATOR) + 1)
-	}
-
-	return swapCount
+	// Total swaps = number_of_routes + total_pool_separators
+	// = (commas + 1) + POOL_SEPARATOR count
+	// Equivalent to the loop: for each route, count = POOL_SEPs_in_route + 1.
+	return int64(strings.Count(p.routeArr, ",")+1) + int64(strings.Count(p.routeArr, POOL_SEPARATOR))
 }
 
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
