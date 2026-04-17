@@ -351,11 +351,13 @@ func safeParseInt64(value string) int64 {
 //
 //	input: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/usdc:gno.land/r/demo/gns:3000"
 //	output: ["gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", "gno.land/r/demo/gns:gno.land/r/demo/usdc:3000"]
-func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
+// parsePoolPathsByRoutePathArr converts pre-split routes into canonical pool paths.
+// The caller is responsible for splitting routePathArr by "," before calling this function.
+func parsePoolPathsByRoutePathArr(routes []string) ([]string, error) {
 	poolPaths := make([]string, 0)
 
-	for _, routePaths := range strings.Split(routePathArr, ",") {
-		for _, routePath := range strings.Split(routePaths, POOL_SEPARATOR) {
+	for _, route := range routes {
+		for _, routePath := range strings.Split(route, POOL_SEPARATOR) {
 			token0Path, token1Path, fee, err := getDataForSinglePathWithError(routePath)
 			if err != nil {
 				return []string{}, err

@@ -73,14 +73,19 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	recipient := runtime.PreviousRealm().Address()
 	pathIndex := getPathIndex(swapType, numHops)
 
-	input, output, fee := getDataForMultiPath(route, pathIndex)
+	// input, output, fee := getDataForMultiPath(route, pathIndex)
+	// Split once here and reuse for both getDataForSinglePath and multiDrySwap/multiDrySwapNegative.
+	pools := strings.Split(route, POOL_SEPARATOR)
+	input, output, fee := getDataForSinglePath(pools[pathIndex])
 	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified)
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(*swapParams, numHops, route)
+		// return p.router.multiDrySwap(*swapParams, numHops, route)
+		return p.router.multiDrySwap(*swapParams, numHops, pools)
 	case ExactOut:
-		return p.router.multiDrySwapNegative(*swapParams, numHops, route)
+		// return p.router.multiDrySwapNegative(*swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(*swapParams, numHops, pools)
 	default:
 		return 0, 0, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}

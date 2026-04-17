@@ -100,14 +100,18 @@ func (op *baseSwapOperation) processRoute(
 	toSwap int64,
 	swapType SwapType,
 ) (amountIn, amountOut int64, err error) {
-	numHops := strings.Count(route, POOL_SEPARATOR) + 1
+	// numHops := strings.Count(route, POOL_SEPARATOR) + 1
+	// Split once here and pass pools down to avoid re-splitting in handleMultiSwap and processForwardSwap
+	pools := strings.Split(route, POOL_SEPARATOR)
+	numHops := len(pools)
 	assertHopsInRange(numHops)
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
 		amountIn, amountOut = r.handleSingleSwap(route, toSwap, op.sqrtPriceLimitX96)
 	default:
-		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap)
+		// amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap)
+		amountIn, amountOut = r.handleMultiSwap(swapType, pools, numHops, toSwap)
 	}
 
 	return amountIn, amountOut, nil
@@ -130,7 +134,8 @@ func (r *routerV1) handleSingleSwap(route string, amountSpecified int64, sqrtPri
 // handleMultiSwap processes multi-hop swaps across multiple pools.
 func (r *routerV1) handleMultiSwap(
 	swapType SwapType,
-	route string,
+	// route string,
+	pools []string,
 	numHops int,
 	amountSpecified int64,
 ) (int64, int64) {
@@ -138,13 +143,17 @@ func (r *routerV1) handleMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		input, output, fee := getDataForMultiPath(route, 0) // first data
+		// input, output, fee := getDataForMultiPath(route, 0) // first data
+		input, output, fee := getDataForSinglePath(pools[0])
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
-		return r.multiSwap(*sp, numHops, route)
+		// return r.multiSwap(*sp, numHops, route)
+		return r.multiSwap(*sp, numHops, pools)
 	case ExactOut:
-		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
+		// input, output, fee := getDataForMultiPath(route, numHops-1) // last data
+		input, output, fee := getDataForSinglePath(pools[numHops-1])
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified)
-		return r.multiSwapNegative(*sp, numHops, route)
+		// return r.multiSwapNegative(*sp, numHops, route)
+		return r.multiSwapNegative(*sp, numHops, pools)
 	default:
 		panic(errInvalidSwapType)
 	}

@@ -1249,7 +1249,7 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parsePoolPathsByRoutePathArr(tt.routePathArr)
+			result, err := parsePoolPathsByRoutePathArr(splitSingleChar(tt.routePathArr, ','))
 
 			if tt.wantError {
 				uassert.True(t, err != nil, "expected error but got none")
