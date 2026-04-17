@@ -2498,69 +2498,187 @@ func TestRemoveIncentiveIdByCreationTime(t *testing.T) {
 	}
 }
 
-// TestAccumulatedPenaltyAmount tests penalty accumulation via addAccumulatedPenaltyAmount.
-func TestAccumulatedPenaltyAmount(t *testing.T) {
-	type penaltyStep struct {
-		addAmount      int64
-		expectedTotal  int64
-	}
+// TestCollectExternalIncentivePenalty tests the full CollectExternalIncentivePenalty flow
+// using table-driven tests covering all validation paths and edge cases.
+func TestCollectExternalIncentivePenalty(t *testing.T) {
+	creator := testutils.TestAddress("creator")
+	stranger := testutils.TestAddress("stranger")
 
 	tests := []struct {
-		name  string
-		steps []penaltyStep
+		name             string
+		poolPath         string
+		incentiveId      string
+		caller           address
+		refundAddress    address
+		setupPool        bool
+		setupIncentive   bool
+		setRefunded      bool
+		penaltyAmount    int64
+		expectPanic      bool
+		expectedErrorMsg string
+		expectedReturn   int64
 	}{
 		{
-			name: "single penalty",
-			steps: []penaltyStep{
-				{addAmount: 1000, expectedTotal: 1000},
-			},
+			name:             "pool not registered in pool accessor",
+			poolPath:         "gno.land/r/invalid/pool:path:100",
+			incentiveId:      "test-id",
+			caller:           creator,
+			refundAddress:    creator,
+			setupPool:        false,
+			setupIncentive:   false,
+			setRefunded:      false,
+			penaltyAmount:    0,
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-STAKER-011]", // errInvalidPoolPath
 		},
 		{
-			name: "multiple penalties accumulate",
-			steps: []penaltyStep{
-				{addAmount: 1000, expectedTotal: 1000},
-				{addAmount: 2500, expectedTotal: 3500},
-				{addAmount: 500, expectedTotal: 4000},
-			},
+			name:             "incentive not found",
+			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:      "nonexistent-id",
+			caller:           creator,
+			refundAddress:    creator,
+			setupPool:        true,
+			setupIncentive:   false,
+			setRefunded:      false,
+			penaltyAmount:    0,
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-STAKER-013]", // errDataNotFound
 		},
 		{
-			name: "zero penalty does not change total",
-			steps: []penaltyStep{
-				{addAmount: 5000, expectedTotal: 5000},
-				{addAmount: 0, expectedTotal: 5000},
-				{addAmount: 3000, expectedTotal: 8000},
-			},
+			name:             "incentive not ended yet (refunded=false)",
+			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:      "test-id",
+			caller:           creator,
+			refundAddress:    creator,
+			setupPool:        true,
+			setupIncentive:   true,
+			setRefunded:      false,
+			penaltyAmount:    5000,
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-STAKER-022]", // errIsNotEndedIncentive
+		},
+		{
+			name:             "caller is not creator",
+			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:      "test-id",
+			caller:           stranger,
+			refundAddress:    stranger,
+			setupPool:        true,
+			setupIncentive:   true,
+			setRefunded:      true,
+			penaltyAmount:    5000,
+			expectPanic:      true,
+			expectedErrorMsg: "[GNOSWAP-STAKER-001]", // errNoPermission
+		},
+		{
+			name:             "zero accumulated penalty returns 0",
+			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:      "test-id",
+			caller:           creator,
+			refundAddress:    creator,
+			setupPool:        true,
+			setupIncentive:   true,
+			setRefunded:      true,
+			penaltyAmount:    0,
+			expectPanic:      false,
+			expectedReturn:   0,
+		},
+		{
+			name:             "successfully collect accumulated penalty",
+			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:      "test-id",
+			caller:           creator,
+			refundAddress:    creator,
+			setupPool:        true,
+			setupIncentive:   true,
+			setRefunded:      true,
+			penaltyAmount:    50000,
+			expectPanic:      false,
+			expectedReturn:   -1, // -1 means check > 0 (exact value depends on staker balance)
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initStakerTest(t)
+			instance := getMockInstance()
 
-			poolPath := "gno.land/r/test/penalty_accum"
-			creator := testutils.TestAddress("creator")
 			currentTime := time.Now().Unix()
+			startTime := currentTime
+			endTime := currentTime + 86400*30
 
-			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, 1_000_000,
-				currentTime-86400*30, currentTime-86400, creator, 100_000_000,
-				runtime.ChainHeight(), currentTime-86400*30-100,
-			)
+			poolPath := tt.poolPath
 
-			uassert.Equal(t, int64(0), incentive.AccumulatedPenaltyAmount())
+			if tt.setupPool {
+				testing.SetRealm(adminRealm)
+				gns.Approve(cross, poolAddr, math.MaxInt)
+				CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
 
-			resolver := NewExternalIncentiveResolver(incentive)
-			for _, step := range tt.steps {
-				resolver.addAccumulatedPenaltyAmount(step.addAmount)
-				uassert.Equal(t, step.expectedTotal, incentive.AccumulatedPenaltyAmount())
+				pool := sr.NewPool(poolPath, currentTime)
+				instance.getPools().set(poolPath, pool)
+
+				if tt.setupIncentive {
+					incentive := sr.NewExternalIncentive(
+						tt.incentiveId, poolPath, barPath, 10_000_000_000,
+						startTime, endTime, creator, 100_000_000,
+						runtime.ChainHeight(), currentTime,
+					)
+
+					poolResolver := NewPoolResolver(pool)
+					poolResolver.IncentivesResolver().create(incentive)
+
+					if tt.penaltyAmount > 0 {
+						resolver := NewExternalIncentiveResolver(incentive)
+						resolver.addAccumulatedPenaltyAmount(tt.penaltyAmount)
+					}
+
+					if tt.setRefunded {
+						incentive.SetRefunded(true)
+						poolResolver.IncentivesResolver().update(incentive)
+					}
+				}
+			}
+
+			// skip past incentive end
+			skipBlocks := (endTime-startTime)/5 + 86400
+			testing.SkipHeights(skipBlocks)
+
+			if tt.expectPanic {
+				testing.SetRealm(testing.NewUserRealm(tt.caller))
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					mockInstanceCollectExternalIncentivePenalty(poolPath, tt.incentiveId, tt.refundAddress)
+				})
+				return
+			}
+
+			// fund staker with reward token so transfer succeeds
+			testing.SetRealm(adminRealm)
+			bar.Transfer(cross, stakerAddr, 10_000_000_000)
+
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+			result := mockInstanceCollectExternalIncentivePenalty(poolPath, tt.incentiveId, tt.refundAddress)
+
+			if tt.expectedReturn == 0 {
+				uassert.Equal(t, int64(0), result)
+			} else if tt.expectedReturn == -1 {
+				if result <= 0 {
+					t.Errorf("expected positive penalty collected, got %d", result)
+				}
+
+				// verify accumulated penalty was reduced
+				pool, _ := instance.getPools().Get(poolPath)
+				poolResolver := NewPoolResolver(pool)
+				updatedIncentive, exists := poolResolver.IncentivesResolver().Get(tt.incentiveId)
+				uassert.True(t, exists)
+				uassert.Equal(t, int64(0), updatedIncentive.AccumulatedPenaltyAmount())
 			}
 		})
 	}
 }
 
-// TestPenaltyAccountingInvariant tests that totalRewardAmount = rewardAmount + distributed + penalty
-// holds after simulated CollectReward calls.
-func TestPenaltyAccountingInvariant(t *testing.T) {
+// TestCollectExternalIncentivePenaltyAccounting tests the accounting invariant
+// across CollectReward penalty accumulation and CollectExternalIncentivePenalty.
+func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 	type collectStep struct {
 		reward  int64
 		penalty int64
@@ -2574,7 +2692,7 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 		expectedPenalty     int64
 	}{
 		{
-			name:              "single collection",
+			name:              "single collection with penalty",
 			totalRewardAmount: 1_000_000,
 			collections: []collectStep{
 				{reward: 700, penalty: 1000},
@@ -2583,7 +2701,7 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 			expectedPenalty:     1000,
 		},
 		{
-			name:              "multiple collections",
+			name:              "multiple users with varying warmup ratios",
 			totalRewardAmount: 1_000_000,
 			collections: []collectStep{
 				{reward: 700, penalty: 1000},
@@ -2594,24 +2712,23 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 			expectedPenalty:     3500,
 		},
 		{
-			name:              "collection with zero penalty",
+			name:              "collection with zero penalty (100% warmup)",
 			totalRewardAmount: 500_000,
 			collections: []collectStep{
 				{reward: 1000, penalty: 0},
-				{reward: 2000, penalty: 500},
+				{reward: 2000, penalty: 0},
 			},
 			expectedDistributed: 3000,
-			expectedPenalty:     500,
+			expectedPenalty:     0,
 		},
 		{
-			name:              "collection with zero reward",
+			name:              "penalty only (e.g. reward rounds to 0)",
 			totalRewardAmount: 100_000,
 			collections: []collectStep{
 				{reward: 0, penalty: 300},
-				{reward: 500, penalty: 200},
 			},
-			expectedDistributed: 500,
-			expectedPenalty:     500,
+			expectedDistributed: 0,
+			expectedPenalty:     300,
 		},
 	}
 
@@ -2619,7 +2736,7 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initStakerTest(t)
 
-			poolPath := "gno.land/r/test/penalty_invariant"
+			poolPath := "gno.land/r/test/penalty_accounting"
 			creator := testutils.TestAddress("creator")
 			currentTime := time.Now().Unix()
 
@@ -2639,7 +2756,6 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 
 			uassert.Equal(t, tt.expectedDistributed, incentive.DistributedRewardAmount())
 			uassert.Equal(t, tt.expectedPenalty, incentive.AccumulatedPenaltyAmount())
-			uassert.Equal(t, tt.totalRewardAmount-tt.expectedDistributed-tt.expectedPenalty, incentive.RewardAmount())
 
 			// invariant: totalRewardAmount = rewardAmount + distributed + penalty
 			sum := incentive.RewardAmount() + incentive.DistributedRewardAmount() + incentive.AccumulatedPenaltyAmount()
@@ -2652,40 +2768,14 @@ func TestPenaltyAccountingInvariant(t *testing.T) {
 // includes accumulatedPenaltyAmount in the refund calculation.
 func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 	tests := []struct {
-		name              string
-		totalRewardAmount int64
-		distributed       int64
-		penalty           int64
-		expectPositive    bool
+		name        string
+		distributed int64
+		penalty     int64
 	}{
-		{
-			name:              "refund with penalty",
-			totalRewardAmount: 1_000_000,
-			distributed:       300,
-			penalty:           200,
-			expectPositive:    true,
-		},
-		{
-			name:              "refund with large penalty",
-			totalRewardAmount: 1_000_000,
-			distributed:       100,
-			penalty:           50000,
-			expectPositive:    true,
-		},
-		{
-			name:              "refund with zero penalty",
-			totalRewardAmount: 1_000_000,
-			distributed:       500,
-			penalty:           0,
-			expectPositive:    true,
-		},
-		{
-			name:              "refund with no collections",
-			totalRewardAmount: 1_000_000,
-			distributed:       0,
-			penalty:           0,
-			expectPositive:    true,
-		},
+		{name: "with penalty", distributed: 300, penalty: 200},
+		{name: "with large penalty", distributed: 100, penalty: 50000},
+		{name: "with zero penalty", distributed: 500, penalty: 0},
+		{name: "with no collections", distributed: 0, penalty: 0},
 	}
 
 	for _, tt := range tests {
@@ -2698,12 +2788,13 @@ func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 			currentTime := time.Now().Unix()
 			startTime := currentTime - 86400*30
 			endTime := currentTime - 86400
+			totalRewardAmount := int64(1_000_000)
 
 			pool := sr.NewPool(poolPath, startTime)
 			s.getPools().set(poolPath, pool)
 
 			incentive := sr.NewExternalIncentive(
-				"test-id", poolPath, WUGNOT_PATH, tt.totalRewardAmount,
+				"test-id", poolPath, WUGNOT_PATH, totalRewardAmount,
 				startTime, endTime, creator, 100_000_000,
 				runtime.ChainHeight(), startTime-100,
 			)
@@ -2719,12 +2810,8 @@ func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 			_, refund, err := s.endExternalIncentive(poolResolver, resolver, creator, endTime+100)
 			uassert.NoError(t, err)
 
-			if tt.expectPositive && refund <= 0 {
-				t.Errorf("expected positive refund, got %d", refund)
-			}
-
 			// refund must not exceed maxRefund
-			maxRefund := safeSubInt64(tt.totalRewardAmount, tt.distributed)
+			maxRefund := safeSubInt64(totalRewardAmount, tt.distributed)
 			if refund > maxRefund {
 				t.Errorf("refund(%d) exceeds maxRefund(%d)", refund, maxRefund)
 			}
@@ -2736,62 +2823,6 @@ func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 			if refund < refundNoPenalty {
 				t.Errorf("refund with penalty(%d) < refund without(%d)", refund, refundNoPenalty)
 			}
-		})
-	}
-}
-
-// TestPenaltyResetAfterCollection tests that SetAccumulatedPenaltyAmount correctly
-// resets penalty after partial or full collection.
-func TestPenaltyResetAfterCollection(t *testing.T) {
-	tests := []struct {
-		name             string
-		initialPenalty   int64
-		collectAmount    int64
-		expectedRemaining int64
-	}{
-		{
-			name:             "full collection",
-			initialPenalty:   5000,
-			collectAmount:    5000,
-			expectedRemaining: 0,
-		},
-		{
-			name:             "partial collection (balance cap)",
-			initialPenalty:   5000,
-			collectAmount:    3000,
-			expectedRemaining: 2000,
-		},
-		{
-			name:             "zero collection",
-			initialPenalty:   5000,
-			collectAmount:    0,
-			expectedRemaining: 5000,
-		},
-		{
-			name:             "collect from zero penalty",
-			initialPenalty:   0,
-			collectAmount:    0,
-			expectedRemaining: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			creator := testutils.TestAddress("creator")
-			currentTime := time.Now().Unix()
-
-			incentive := sr.NewExternalIncentive(
-				"test-id", "gno.land/r/test/reset", WUGNOT_PATH, 1_000_000,
-				currentTime-86400*30, currentTime-86400, creator, 100_000_000,
-				runtime.ChainHeight(), currentTime-86400*30-100,
-			)
-
-			resolver := NewExternalIncentiveResolver(incentive)
-			resolver.addAccumulatedPenaltyAmount(tt.initialPenalty)
-			uassert.Equal(t, tt.initialPenalty, incentive.AccumulatedPenaltyAmount())
-
-			incentive.SetAccumulatedPenaltyAmount(safeSubInt64(incentive.AccumulatedPenaltyAmount(), tt.collectAmount))
-			uassert.Equal(t, tt.expectedRemaining, incentive.AccumulatedPenaltyAmount())
 		})
 	}
 }

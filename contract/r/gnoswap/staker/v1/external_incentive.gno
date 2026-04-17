@@ -301,7 +301,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 
 	if !incentiveResolver.Refunded() {
 		panic(makeErrorWithDetails(
-			errCannotEndIncentive,
+			errIsNotEndedIncentive,
 			ufmt.Sprintf("incentive(%s) must be ended first (call EndExternalIncentive)", incentiveId),
 		))
 	}
@@ -317,17 +317,6 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 
 	penaltyAmount := incentiveResolver.AccumulatedPenaltyAmount()
 	if penaltyAmount == 0 {
-		previousRealm := runtime.PreviousRealm()
-		chain.Emit(
-			"CollectExternalIncentivePenalty",
-			"prevAddr", previousRealm.Address().String(),
-			"prevRealm", previousRealm.PkgPath(),
-			"targetPoolPath", targetPoolPath,
-			"incentiveId", incentiveId,
-			"refundAddress", refundAddress.String(),
-			"penaltyAmount", formatAnyInt(int64(0)),
-		)
-
 		return 0
 	}
 
