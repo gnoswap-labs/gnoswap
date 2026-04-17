@@ -122,6 +122,16 @@ func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, re
 	)
 }
 
+func (t *TestStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+	return t.ExecuteFn(
+		"CollectExternalIncentivePenalty",
+		func(args ...any) any {
+			return t.instance.CollectExternalIncentivePenalty(args[0].(string), args[1].(string), args[2].(address))
+		},
+		targetPoolPath, incentiveId, refundAddress,
+	).(int64)
+}
+
 func (t *TestStaker) AddToken(tokenPath string) {
 	t.ExecuteFn(
 		"AddToken",
@@ -266,6 +276,16 @@ func (t *TestStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiv
 		"GetIncentiveRemainingRewardAmount",
 		func(args ...any) any {
 			return t.instance.GetIncentiveRemainingRewardAmount(args[0].(string), args[1].(string))
+		},
+		poolPath, incentiveId,
+	).(int64)
+}
+
+func (t *TestStaker) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+	return t.ExecuteFn(
+		"GetIncentiveAccumulatedPenaltyAmount",
+		func(args ...any) any {
+			return t.instance.GetIncentiveAccumulatedPenaltyAmount(args[0].(string), args[1].(string))
 		},
 		poolPath, incentiveId,
 	).(int64)
