@@ -37,6 +37,18 @@ func (p *swapMathComputeSwapStepParams) IsValid() bool {
 		return false
 	}
 
+	if p.sqrtRatioCurrentX96.Lt(MIN_SQRT_RATIO) || p.sqrtRatioCurrentX96.Gt(MAX_SQRT_RATIO) {
+		return false
+	}
+
+	if p.sqrtRatioTargetX96.Lt(MIN_SQRT_RATIO) || p.sqrtRatioTargetX96.Gt(MAX_SQRT_RATIO) {
+		return false
+	}
+
+	if p.liquidity.Gt(MAX_UINT128) {
+		return false
+	}
+
 	if p.feePips >= 1_000_000 {
 		return false
 	}

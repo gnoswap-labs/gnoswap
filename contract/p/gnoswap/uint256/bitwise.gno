@@ -3,10 +3,6 @@
 // These operations are crucial for manipulating individual bits within a 256-bit unsigned integer.
 package uint256
 
-import (
-	"math/bits"
-)
-
 // Or sets z to the bitwise OR of x and y and returns z.
 func (z *Uint) Or(x, y *Uint) *Uint {
 	z[0] = x[0] | y[0]
@@ -50,7 +46,7 @@ func (z *Uint) Xor(x, y *Uint) *Uint {
 }
 
 // Lsh sets z to x left-shifted by n bits and returns z.
-// Panics if the shift would cause non-zero bits to overflow.
+// The result is truncated to 256 bits. If n >= 256, z is set to 0.
 func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	if x.IsZero() {
 		return z.Clear()
@@ -60,28 +56,6 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 		return z.Set(x)
 	}
 
-	// overflow check
-	if n >= 256 {
-		panic("Lsh: overflow")
-	}
-
-	// headroom check
-	top := -1
-	for i := 3; i >= 0; i-- {
-		if x[i] != 0 {
-			top = i
-			break
-		}
-	}
-
-	usedBits := bits.Len64(x[top])  // 1..64
-	msbIndex := top*64 + (usedBits - 1) // 0..255
-	headroom := 255 - msbIndex          // 0..255
-	if n > uint(headroom) {
-		panic("Lsh: overflow")
-	}
-
-	// Perform the shift
 	return z.lsh(x, n)
 }
 

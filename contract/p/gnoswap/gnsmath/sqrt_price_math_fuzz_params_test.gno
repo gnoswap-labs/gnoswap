@@ -18,7 +18,7 @@ func (p *getAmount0DeltaParams) IsValid() bool {
 	// Parse parameters
 	sqrtA := u256.MustFromDecimal(p.sqrtRatioAX96)
 	sqrtB := u256.MustFromDecimal(p.sqrtRatioBX96)
-	liquidity := i256.MustFromDecimal(p.liquidity)
+	_ = i256.MustFromDecimal(p.liquidity)
 
 	// getAmount0DeltaHelper will swap if sqrtA > sqrtB
 	if sqrtA.Gt(sqrtB) {
@@ -27,14 +27,6 @@ func (p *getAmount0DeltaParams) IsValid() bool {
 
 	// Check: sqrtRatioAX96 cannot be zero (panic in helper line 216-217)
 	if sqrtA.IsZero() {
-		return false
-	}
-
-	// Check: Lsh overflow - liquidity << 96 must not overflow
-	// This happens when liquidity.Abs() > 2^160 (because 2^160 << 96 = 2^256 which overflows)
-	liquidityAbs := liquidity.Abs()
-	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if liquidityAbs.Gt(max160) {
 		return false
 	}
 
@@ -210,11 +202,6 @@ func (p *nextPriceAmount0AddParams) IsValid() bool {
 	liquidity := u256.MustFromDecimal(p.liquidity)
 	amount := u256.MustFromDecimal(p.amountToAdd)
 
-	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if liquidity.Gt(max160) {
-		return false
-	}
-
 	if amount.IsZero() {
 		liquidityShifted := u256.Zero().Lsh(liquidity, 96)
 		if liquidityShifted.Lte(currentSqrt) {
@@ -358,24 +345,10 @@ type nextPriceAmount1AddParams struct {
 }
 
 func (p *nextPriceAmount1AddParams) IsValid() bool {
-	amount := u256.MustFromDecimal(p.amount)
 	liquidity := u256.MustFromDecimal(p.liquidity)
 
 	if liquidity.IsZero() {
 		return false
-	}
-
-	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if !amount.Lte(max160) {
-		if !liquidity.IsZero() {
-			q96 := u256.Zero().Lsh(u256.One(), Q96_RESOLUTION)
-			max256 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 256), u256.One())
-			maxAmount := u256.Zero().Div(max256, q96)
-
-			if amount.Gt(maxAmount) {
-				return false
-			}
-		}
 	}
 
 	return true
@@ -518,7 +491,7 @@ type amount0DeltaHelperParams struct {
 func (p *amount0DeltaHelperParams) IsValid() bool {
 	sqrtA := u256.MustFromDecimal(p.sqrtRatioAX96)
 	sqrtB := u256.MustFromDecimal(p.sqrtRatioBX96)
-	liquidity := u256.MustFromDecimal(p.liquidity)
+	_ = u256.MustFromDecimal(p.liquidity)
 
 	// getAmount0DeltaHelper will swap if sqrtA > sqrtB
 	if sqrtA.Gt(sqrtB) {
@@ -527,12 +500,6 @@ func (p *amount0DeltaHelperParams) IsValid() bool {
 
 	// Check: sqrtRatioAX96 cannot be zero (panic in helper line 216-217)
 	if sqrtA.IsZero() {
-		return false
-	}
-
-	// Check: Lsh overflow - liquidity << 96 must not overflow (line 213)
-	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if liquidity.Gt(max160) {
 		return false
 	}
 
