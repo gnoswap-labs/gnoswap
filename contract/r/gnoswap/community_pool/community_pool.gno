@@ -34,7 +34,6 @@ func GetBalanceOf(tokenPath string) int64 {
 // Only callable by admin or governance.
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedCommunityPool()
-	halt.AssertIsNotHaltedWithdraw()
 
 	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
