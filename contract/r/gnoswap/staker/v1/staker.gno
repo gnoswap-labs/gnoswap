@@ -480,7 +480,10 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 	toUserExternalPenalty := make(map[string]int64)
 
 	for incentiveId, rewardAmount := range reward.External {
-		if rewardAmount == 0 && reward.ExternalPenalty[incentiveId] == 0 {
+		// Skip when user reward is zero.
+		// Do not update last collect time so the reward accrues until
+		// the next collection where a non-zero amount can be delivered.
+		if rewardAmount == 0 {
 			continue
 		}
 
@@ -604,36 +607,53 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		)
 	}
 
-	// internal reward to user
-	toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
-	if err != nil {
-		panic(err.Error())
-	}
+	internalReward := int64(0)
+	internalRewardToUser := int64(0)
+	internalRewardToFee := int64(0)
+	internalRewardPenalty := int64(0)
 
-	chain.Emit(
-		"ProtocolFeeInternalReward",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"fromPositionId", formatUint(positionId),
-		"fromPoolPath", deposit.TargetPoolPath(),
-		"feeTokenPath", GNS_PATH,
-		"feeAmount", formatAnyInt(feeAmount),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(blockHeight),
-	)
+	// Skip internal reward state update when user reward is zero (only penalty).
+	// Do not update last collect time so the reward accrues until the next
+	// collection where a non-zero amount can be delivered.
+	skipInternalUpdate := reward.Internal == 0
+
+	// internal reward to user
+	if !skipInternalUpdate {
+		toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		internalReward = reward.Internal
+		internalRewardToUser = toUser
+		internalRewardToFee = feeAmount
+		internalRewardPenalty = reward.InternalPenalty
+
+		chain.Emit(
+			"ProtocolFeeInternalReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"fromPositionId", formatUint(positionId),
+			"fromPoolPath", deposit.TargetPoolPath(),
+			"feeTokenPath", GNS_PATH,
+			"feeAmount", formatAnyInt(internalRewardToFee),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
+		)
+	}
 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
 
-	if toUser > 0 {
+	if internalRewardToUser > 0 {
 		// internal reward to user
-		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
+		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardToUser)
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
-	if reward.InternalPenalty > 0 {
+	if internalRewardPenalty > 0 {
 		// internal penalty to community pool
-		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		depositResolver.addCollectedInternalReward(reward.InternalPenalty)
+		totalEmissionSent = safeAddInt64(totalEmissionSent, internalRewardPenalty)
+		depositResolver.addCollectedInternalReward(internalRewardPenalty)
 	}
 
 	// Unclaimable must be processed after regular rewards so that accumulated
@@ -643,67 +663,71 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err = s.store.SetTotalEmissionSent(totalEmissionSent)
+	err := s.store.SetTotalEmissionSent(totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}
 
-	// Update lastCollectTime for internal rewards (GNS emissions)
-	err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
-	if err != nil {
-		panic(err)
+	if !skipInternalUpdate {
+		// Update lastCollectTime for internal rewards (GNS emissions)
+		err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
-	if toUser > 0 {
-		gns.Transfer(cross, deposit.Owner(), toUser)
+	if internalRewardToUser > 0 {
+		gns.Transfer(cross, deposit.Owner(), internalRewardToUser)
 	}
 
-	if reward.InternalPenalty > 0 {
-		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
+	if internalRewardPenalty > 0 {
+		gns.Transfer(cross, communityPoolAddr, internalRewardPenalty)
 	}
 
 	if unClaimableInternal > 0 {
 		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
 
-	rewardToUser := formatAnyInt(toUser)
-	rewardPenalty := formatAnyInt(reward.InternalPenalty)
+	rewardToUser := formatAnyInt(internalRewardToUser)
+	rewardPenalty := formatAnyInt(internalRewardPenalty)
 
-	poolPath := depositResolver.TargetPoolPath()
-	pool, _ := s.getPools().Get(poolPath)
-	poolResolver := NewPoolResolver(pool)
+	if !skipInternalUpdate {
+		poolPath := depositResolver.TargetPoolPath()
+		pool, _ := s.getPools().Get(poolPath)
+		poolResolver := NewPoolResolver(pool)
 
-	// Get accumulator values for reward calculation tracking
-	_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
-	stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
-	lowerTickResolver := poolResolver.TickResolver(deposit.TickLower())
-	upperTickResolver := poolResolver.TickResolver(deposit.TickUpper())
-	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
-	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
+		// Get accumulator values for reward calculation tracking
+		_, globalAccX128 := poolResolver.CurrentGlobalRewardRatioAccumulation(currentTime)
+		stakedLiquidity := poolResolver.CurrentStakedLiquidity(currentTime)
+		lowerTickResolver := poolResolver.TickResolver(deposit.TickLower())
+		upperTickResolver := poolResolver.TickResolver(deposit.TickUpper())
+		lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
+		upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
 
-	chain.Emit(
-		"CollectReward",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"positionId", formatUint(positionId),
-		"poolPath", depositResolver.TargetPoolPath(),
-		"recipient", depositResolver.Owner().String(),
-		"rewardToken", GNS_PATH,
-		"rewardAmount", formatAnyInt(reward.Internal),
-		"rewardToUser", rewardToUser,
-		"rewardToFee", formatAnyInt(reward.Internal-toUser),
-		"rewardPenalty", rewardPenalty,
-		"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
-		"currentTime", formatAnyInt(currentTime),
-		"currentHeight", formatAnyInt(blockHeight),
-		"stakedLiquidity", stakedLiquidity.ToString(),
-		"globalRewardRatioAccX128", globalAccX128,
-		"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
-		"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
-	)
+		chain.Emit(
+			"CollectReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"positionId", formatUint(positionId),
+			"poolPath", depositResolver.TargetPoolPath(),
+			"recipient", depositResolver.Owner().String(),
+			"rewardToken", GNS_PATH,
+			"rewardAmount", formatAnyInt(internalReward),
+			"rewardToUser", rewardToUser,
+			"rewardToFee", formatAnyInt(internalRewardToFee),
+			"rewardPenalty", rewardPenalty,
+			"rewardUnClaimableAmount", formatAnyInt(unClaimableInternal),
+			"currentTime", formatAnyInt(currentTime),
+			"currentHeight", formatAnyInt(blockHeight),
+			"stakedLiquidity", stakedLiquidity.ToString(),
+			"globalRewardRatioAccX128", globalAccX128,
+			"lowerTickOutsideAccX128", lowerOutsideAccX128.ToString(),
+			"upperTickOutsideAccX128", upperOutsideAccX128.ToString(),
+		)
+	}
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
