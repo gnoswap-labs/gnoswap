@@ -69,22 +69,21 @@ func (r *routerV1) SwapCallback(
 
 // transferToPool transfers tokens from router to pool
 func (r *routerV1) transferToPool(token string, amount *u256.Uint, payer address) {
-	amountInt64 := amount.Int64()
+	balance := common.BalanceOf(token, payer)
+
+	if u256.NewUintFromInt64(balance).Lt(amount) {
+		panic(makeErrorWithDetails(
+			errInsufficientBalance,
+			ufmt.Sprintf("token=%s, required=%d, available=%d, payer=%s", token, amount.Int64(), balance, payer.String()),
+		))
+	}
 
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
 	if payer == routerAddr {
-		common.SafeGRC20Transfer(cross, token, poolAddr, amountInt64)
+		common.SafeGRC20Transfer(cross, token, poolAddr, amount.Int64())
 	} else {
-		balance := common.BalanceOf(token, payer)
-		if balance < amountInt64 {
-			panic(makeErrorWithDetails(
-				errInsufficientBalance,
-				ufmt.Sprintf("token=%s, required=%d, available=%d, payer=%s", token, amountInt64, balance, payer.String()),
-			))
-		}
-
-		common.SafeGRC20TransferFrom(cross, token, payer, poolAddr, amountInt64)
+		common.SafeGRC20TransferFrom(cross, token, payer, poolAddr, amount.Int64())
 	}
 }
