@@ -8,9 +8,9 @@ Manages referral relationships between users with cooldown periods to prevent ga
 
 ## Global Functions
 
-### `TryRegister(cur realm, addr address, referral string) bool`
-Attempts to register a referral relationship. Returns true on success, false on failure.
-Emits `ReferralRegistrationFailed` event on error.
+### `TryRegister(cur realm, addr address, referral string) string`
+Attempts to register or remove a referral relationship. Returns the effective referrer string.
+Emits `ReferralRegistrationFailed` on non-empty registration failure.
 
 ### `GetReferral(addr string) string`
 Returns the referral address for the given address. Returns empty string if not found.
@@ -20,6 +20,9 @@ Returns true if the given address has a referral.
 
 ### `IsEmpty() bool`
 Returns true if no referrals exist in the system.
+
+### `GetLastOpTimestamp(addr string) (int64, error)`
+Returns the timestamp of the last successful referral registration, update, or removal.
 
 ### `ContractAddress() string`
 Returns the address of the referral contract. Use this address as the referral parameter in `TryRegister` to remove an existing referral.
@@ -82,7 +85,7 @@ func CheckUserHasReferral(userAddr string) bool {
 ## Security
 
 - One referral per address
-- 24-hour change cooldown
+- 24-hour cooldown for registration, update, and cancellation
 - No self-referrals
-- Immutable during cooldown
+- Successful cancellation refreshes the cooldown timestamp
 - Only authorized callers can modify referrals

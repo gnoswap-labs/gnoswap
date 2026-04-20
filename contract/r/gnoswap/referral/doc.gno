@@ -31,7 +31,8 @@
 //     registered referrer.
 //   - IsEmpty() bool: Returns true if no referral relationships exist.
 //   - GetLastOpTimestamp(addr string) (int64, error): Returns the last
-//     referral operation timestamp for the given user address.
+//     successful referral registration, update, or removal timestamp for
+//     the given user address.
 //   - TryRegister(cur realm, addr address, referral string) string:
 //     Attempts to register a new referral and returns the effective referrer.
 //     Empty input returns the user's stored referral without attempting registration.
@@ -45,8 +46,10 @@
 //  2. The keeper validates the caller's permissions via isValidCaller.
 //  3. Address validation ensures both addresses are valid and not
 //     self-referencing.
-//  4. Rate limiting checks prevent operations more than once per 24 hours.
-//  5. The referral is stored in the AVL tree and an event is emitted when registration occurs.
+//  4. Registration, update, and removal attempts are rate-limited to prevent
+//     rapid referral churn.
+//  5. A successful removal updates the last-operation timestamp.
+//  6. The referral is stored in the AVL tree and an event is emitted when registration occurs.
 //
 // ## Authorized Callers
 //
@@ -65,8 +68,11 @@
 // operations for each address. This means:
 //
 //   - A new referral can only be registered once per 24 hours per address
-//   - Updates and removals are also subject to the same rate limit
-//   - Attempting operations within the cooldown period returns ErrTooManyRequests
+//   - Updates and removals are subject to the same rate limit
+//   - Successful removal updates the last-operation timestamp, so immediate
+//     re-registration is still blocked
+//   - Attempting a referral operation within the cooldown period returns
+//     ErrTooManyRequests
 //
 // ## Events
 //
@@ -136,11 +142,13 @@
 //   - Self-referral is not allowed
 //   - Operations are rate-limited to once per 24 hours per address
 //   - Only authorized contracts can register/update/remove referrals
-//   - Zero address as referrer triggers removal of the referral
+//   - Passing the referral contract address as the referrer triggers
+//     removal of the referral
 //
 // ## Notes
 //
 //   - The contract uses RBAC (Role-Based Access Control) for authorization
-//   - Rate limiting state persists across transactions
+//   - Rate limiting state persists across transactions, including after a
+//     successful removal
 //   - Events are emitted for all state changes for off-chain tracking
 package referral
