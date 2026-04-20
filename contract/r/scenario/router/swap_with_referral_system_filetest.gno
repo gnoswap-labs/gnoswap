@@ -87,7 +87,7 @@ func main() {
 	ufmt.Printf("[EXPECTED] User1 referral after first swap: '%s'\n", afterReferral)
 	println()
 
-	println("[SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)")
+	println("[SCENARIO] 4. Same User Swap with referral contract address (should keep existing referrer during cooldown)")
 	swapWithReferrer(user1Addr, referral.ContractAddress())
 
 	testing.SetRealm(testing.NewUserRealm(user1Addr))
@@ -280,13 +280,13 @@ func swapWithReferrer(userAddr address, referrer string) {
 // [EXPECTED] GNS balance changed: 995078
 // [EXPECTED] User1 referral after first swap: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 //
-// [SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)
+// [SCENARIO] 4. Same User Swap with referral contract address (should keep existing referrer during cooldown)
 // [INFO] Swapping with referrer: 'g1u0p5ld4aq6sk5l26ys27wk8nftj080l3era4wn'
 // [EXPECTED] inputAmount: 1000000
 // [EXPECTED] outputAmount: -989266
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 989266
-// [EXPECTED] User1 referral after swap with empty referrer: ''
+// [EXPECTED] User1 referral after swap with empty referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 //
 // [SCENARIO] 5. Register Referrer Again and Swap with Different Referrer
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
@@ -294,13 +294,13 @@ func swapWithReferrer(userAddr address, referrer string) {
 // [EXPECTED] outputAmount: -983505
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 983505
-// [INFO] User1 referral after re-registration: ''
+// [INFO] User1 referral after re-registration: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyvjlta047h6lta047h6l2tdl74'
 // [EXPECTED] inputAmount: 1000000
 // [EXPECTED] outputAmount: -977795
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 977795
-// [EXPECTED] User1 referral after swap with different referrer: ''
+// [EXPECTED] User1 referral after swap with different referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 //
 // [SCENARIO] 6. New User Swap with Referrer (should register new referrer)
 // [INFO] User g1w4ek2u3jta047h6lta047h6lta047h6l9huexc setup complete - WUGNOT: 100000000
@@ -314,7 +314,7 @@ func swapWithReferrer(userAddr address, referrer string) {
 //
 // [SCENARIO] 7. Rate Limit Expiration - Re-registration After 24 Hours
 // [INFO] Skipped 17280 blocks (24 hours)
-// [INFO] User1 referral before re-registration: ''
+// [INFO] User1 referral before re-registration: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
 // [EXPECTED] inputAmount: 1000000
 // [EXPECTED] outputAmount: -966521
