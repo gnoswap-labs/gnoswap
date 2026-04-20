@@ -307,11 +307,11 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	}
 
 	caller := runtime.PreviousRealm().Address()
-	if caller != incentiveResolver.Creator() {
+	if !access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && caller != incentiveResolver.Creator() {
+		adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 		panic(makeErrorWithDetails(
 			errNoPermission,
-			ufmt.Sprintf("only creator(%s) can collect penalty, called from %s",
-				incentiveResolver.Creator(), caller),
+			ufmt.Sprintf("only creator(%s) or admin(%s) can collect penalty, but called from %s", incentiveResolver.Creator(), adminAddr.String(), caller),
 		))
 	}
 
