@@ -63,7 +63,8 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64  = 1_000_000_000 // 1_000 GNS
+	incentiveID      string = ""
 )
 
 func main() {
@@ -96,6 +97,14 @@ func main() {
 
 	println("[SCENARIO] 7. Wait until incentive ends and verify dust refund")
 	endExternalIncentiveAndVerifyDustRefund()
+	println()
+
+	println("[SCENARIO] 8. Collect reward staked position")
+	collectRewardStakedPosition()
+	println()
+
+	println("[SCENARIO] 9. Collect external incentive penalty")
+	collectExternalIncentivePenalty()
 	println()
 
 	println("[SUCCESS] Test completed - rewardDust mechanism works correctly!")
@@ -243,7 +252,7 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	ufmt.Printf("[INFO] gns balance before ending: %d\n", gnsBalanceBefore)
 
 	// Use the exact incentive ID format with the stored creation time
-	incentiveID := ufmt.Sprintf("%s:%d:1", externalCreatorAddr, incentiveCreationTime)
+	incentiveID = ufmt.Sprintf("%s:%d:1", externalCreatorAddr, incentiveCreationTime)
 
 	println("[INFO] end external incentive")
 	sr.EndExternalIncentive(
@@ -296,6 +305,38 @@ func endExternalIncentiveAndVerifyDustRefund() {
 	}
 }
 
+func collectRewardStakedPosition() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] collect reward staked position")
+	testing.SkipHeights(1)
+
+	beforeBarBalance := bar.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1)
+	afterBarBalance := bar.BalanceOf(adminUser)
+
+	barReward := afterBarBalance - beforeBarBalance
+	ufmt.Printf("[EXPECTED] bar reward: %d\n", barReward)
+}
+
+func collectExternalIncentivePenalty() {
+	testing.SetRealm(externalCreatorRealm)
+
+	println("[INFO] collect external incentive penalty", incentiveID)
+	testing.SkipHeights(1)
+
+	beforeBarBalance := bar.BalanceOf(externalCreatorUser)
+	sr.CollectExternalIncentivePenalty(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", incentiveID, externalCreatorUser)
+	afterBarBalance := bar.BalanceOf(externalCreatorUser)
+
+	barPenalty := afterBarBalance - beforeBarBalance
+
+	stakerBarBalance := bar.BalanceOf(stakerAddr)
+
+	ufmt.Printf("[EXPECTED] bar penalty: %d\n", barPenalty)
+	ufmt.Printf("[EXPECTED] staker bar balance: %d\n", stakerBarBalance)
+}
+
 func positionIdFrom(tokenId uint64) grc721.TokenID {
 	return grc721.TokenID(ufmt.Sprintf("%d", tokenId))
 }
@@ -334,10 +375,19 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] bar balance before ending: 100000000
 // [INFO] gns balance before ending: 0
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100070440
+// [INFO] bar balance after ending: 100070437
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 70440
+// [RESULT] bar tokens refunded: 70437
 // [RESULT] gns tokens refunded: 1000000000
-// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70440)!
+// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70437)!
+//
+// [SCENARIO] 8. Collect reward staked position
+// [INFO] collect reward staked position
+// [EXPECTED] bar reward: 7974942592
+//
+// [SCENARIO] 9. Collect external incentive penalty
+// [INFO] collect external incentive penalty g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
+// [EXPECTED] bar penalty: 1944432000
+// [EXPECTED] staker bar balance: 3
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

@@ -130,6 +130,13 @@ func (s *stakerV1) GetIncentiveRemainingRewardAmount(poolPath string, incentiveI
 	return incentive.RewardAmount()
 }
 
+// GetIncentiveAccumulatedPenaltyAmount returns the accumulated warmup penalty amount of an incentive.
+func (s *stakerV1) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+	incentive := s.getIncentive(poolPath, incentiveId)
+
+	return incentive.AccumulatedPenaltyAmount()
+}
+
 // GetIncentiveDepositGnsAmount returns the deposit GNS amount of an incentive.
 func (s *stakerV1) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
 	incentive := s.getIncentive(poolPath, incentiveId)

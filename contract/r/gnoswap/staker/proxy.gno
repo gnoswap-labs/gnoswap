@@ -133,6 +133,11 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundA
 	getImplementation().EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
+// CollectExternalIncentivePenalty collects accumulated warmup penalties for an ended incentive.
+func CollectExternalIncentivePenalty(cur realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
+	return getImplementation().CollectExternalIncentivePenalty(targetPoolPath, incentiveId, refundAddress)
+}
+
 // AddToken adds a token to the reward token whitelist.
 func AddToken(cur realm, tokenPath string) {
 	getImplementation().AddToken(tokenPath)

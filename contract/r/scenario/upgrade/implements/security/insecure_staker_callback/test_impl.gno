@@ -106,6 +106,13 @@ func (t *TestStaker) EndExternalIncentive(targetPoolPath, incentiveId string, re
 	t.instance.EndExternalIncentive(targetPoolPath, incentiveId, refundAddress)
 }
 
+func (t *TestStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+	if !t.isActive("CollectExternalIncentivePenalty") {
+		panic("test implementation: CollectExternalIncentivePenalty not supported")
+	}
+	return t.instance.CollectExternalIncentivePenalty(targetPoolPath, incentiveId, refundAddress)
+}
+
 func (t *TestStaker) AddToken(tokenPath string) {
 	if !t.isActive("AddToken") {
 		panic("test implementation: AddToken not supported")
@@ -224,6 +231,13 @@ func (t *TestStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiv
 		panic("test implementation: GetIncentiveRemainingRewardAmount not supported")
 	}
 	return t.instance.GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
+}
+
+func (t *TestStaker) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+	if !t.isActive("GetIncentiveAccumulatedPenaltyAmount") {
+		panic("test implementation: GetIncentiveAccumulatedPenaltyAmount not supported")
+	}
+	return t.instance.GetIncentiveAccumulatedPenaltyAmount(poolPath, incentiveId)
 }
 
 func (t *TestStaker) GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
