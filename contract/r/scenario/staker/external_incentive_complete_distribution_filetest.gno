@@ -418,10 +418,6 @@ func endExternalIncentiveAndVerifyNoDust() {
 	// CollectExternalIncentivePenalty.
 	stakerRetainedPenalty := stakerQuxAfter
 	ufmt.Printf("  - Staker-retained penalty QUX: %d\n", stakerRetainedPenalty)
-
-	if totalRewardsCollected+undistributedRewardRefunded+stakerRetainedPenalty == REWARD_AMOUNT {
-		println("[EXPECTED] distributed + refunded + staker-retained penalty equals total reward")
-	}
 }
 
 func positionIdFrom(positionId int) grc721.TokenID {
@@ -519,4 +515,3 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Undistributed reward refunded: 0 QUX
 //   - Total accounted for: 6263999997 QUX
 //   - Staker-retained penalty QUX: 1512000003
-// [EXPECTED] distributed + refunded + staker-retained penalty equals total reward
