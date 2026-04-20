@@ -268,7 +268,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // This function transfers the accumulated penalty to the specified refund address.
 // Returns the penalty amount collected.
 //
-// Only callable by the incentive creator.
+// Only callable by the incentive creator or admin.
 func (s *stakerV1) CollectExternalIncentivePenalty(
 	targetPoolPath string,
 	incentiveId string,
