@@ -4,4 +4,4 @@ import (
 	"chain"
 )
 
-var routerV1Addr = chain.PackageAddress("gno.land/r/gnoswap/router/v1")
+var routerImplementationAddr = chain.PackageAddress("gno.land/r/gnoswap/router/v2026040202")
