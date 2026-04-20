@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -557,6 +558,43 @@ func TestGetUnclaimedFee(t *testing.T) {
 			uassert.Equal(t, tc.expectedFee1, fee1.ToString())
 		})
 	}
+}
+
+func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
+	setupPositionGetter(t)
+
+	position := mockInstance.mustGetPosition(1)
+	position.SetLiquidity(MAX_UINT256)
+	position.SetFeeGrowthInside0LastX128("0")
+	position.SetFeeGrowthInside1LastX128("0")
+	mockInstance.mustUpdatePosition(1, *position)
+
+	storedPool := mustGetStoredTestPool(position.PoolKey())
+	storedPool.SetFeeGrowthGlobal0X128(u256.NewUint(2))
+	storedPool.SetFeeGrowthGlobal1X128(u256.Zero())
+
+	lowerTick, err := storedPool.GetTick(position.TickLower())
+	if err != nil {
+		t.Fatalf("failed to get lower tick: %v", err)
+	}
+	lowerTick.SetFeeGrowthOutside0X128("0")
+	lowerTick.SetFeeGrowthOutside1X128("0")
+	storedPool.SetTick(position.TickLower(), lowerTick)
+
+	upperTick, err := storedPool.GetTick(position.TickUpper())
+	if err != nil {
+		t.Fatalf("failed to get upper tick: %v", err)
+	}
+	upperTick.SetFeeGrowthOutside0X128("0")
+	upperTick.SetFeeGrowthOutside1X128("0")
+	storedPool.SetTick(position.TickUpper(), upperTick)
+
+	expectedFee0 := u256.MulDiv(u256.NewUint(2), u256.MustFromDecimal(MAX_UINT256), q128)
+
+	fee0, fee1 := mockInstance.GetUnclaimedFee(1)
+
+	uassert.Equal(t, expectedFee0.ToString(), fee0.ToString())
+	uassert.Equal(t, "0", fee1.ToString())
 }
 
 func TestMustGetPositionPanic(t *testing.T) {
