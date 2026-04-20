@@ -1,4 +1,4 @@
-// Scenario: Safe Mode keeps protocol fee settlement paths available
+// Scenario: Safe Mode blocks protocol fee distribution while keeping accrual/config paths available
 
 package main
 
@@ -17,9 +17,12 @@ import (
 	"gno.land/r/onbloc/bar"
 )
 
+var t *testing.T
+
 var (
 	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm         = testing.NewUserRealm(adminAddr)
+	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
@@ -39,8 +42,8 @@ func main() {
 	addProtocolFee()
 	println()
 
-	println("[SCENARIO] 4. DistributeProtocolFee remains allowed")
-	distributeProtocolFee()
+	println("[SCENARIO] 4. DistributeProtocolFee is skipped")
+	distributeProtocolFeeSkipped()
 	println()
 
 	println("[SCENARIO] 5. Protocol fee setter remains allowed")
@@ -50,8 +53,8 @@ func main() {
 
 func setupProtocolFeeBalance() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
-	ufmt.Printf("[INFO] protocol fee BAR balance: %d\n", bar.BalanceOf(protocolFeeAddr))
+	bar.Transfer(cross, stakerAddr, 1000)
+	ufmt.Printf("[INFO] staker BAR balance before add: %d\n", bar.BalanceOf(stakerAddr))
 }
 
 func setSafeMode() {
@@ -63,11 +66,19 @@ func setSafeMode() {
 
 func addProtocolFee() {
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	ufmt.Println("[EXPECTED] AddToProtocolFee succeeded in safe mode")
 }
 
 func distributeProtocolFee() {
+	testing.SetRealm(govStakerRealm)
+	pf.DistributeProtocolFee(cross)
+	ufmt.Printf("[EXPECTED] protocol fee BAR balance after distribution: %d\n", bar.BalanceOf(protocolFeeAddr))
+	ufmt.Printf("[EXPECTED] gov staker BAR balance after distribution: %d\n", bar.BalanceOf(govStakerAddr))
+}
+
+func distributeProtocolFeeSkipped() {
 	testing.SetRealm(govStakerRealm)
 	pf.DistributeProtocolFee(cross)
 	ufmt.Printf("[EXPECTED] protocol fee BAR balance after distribution: %d\n", bar.BalanceOf(protocolFeeAddr))
@@ -82,7 +93,7 @@ func setterAllowed() {
 
 // Output:
 // [SCENARIO] 1. Setup protocol fee balance
-// [INFO] protocol fee BAR balance: 1000
+// [INFO] staker BAR balance before add: 1000
 //
 // [SCENARIO] 2. Set safe mode
 // [INFO] ProtocolFee halted: false
@@ -91,9 +102,9 @@ func setterAllowed() {
 // [SCENARIO] 3. AddToProtocolFee remains allowed
 // [EXPECTED] AddToProtocolFee succeeded in safe mode
 //
-// [SCENARIO] 4. DistributeProtocolFee remains allowed
-// [EXPECTED] protocol fee BAR balance after distribution: 0
-// [EXPECTED] gov staker BAR balance after distribution: 1000
+// [SCENARIO] 4. DistributeProtocolFee is skipped
+// [EXPECTED] protocol fee BAR balance after distribution: 1000
+// [EXPECTED] gov staker BAR balance after distribution: 0
 //
 // [SCENARIO] 5. Protocol fee setter remains allowed
 // [EXPECTED] SetDevOpsPct succeeded in safe mode

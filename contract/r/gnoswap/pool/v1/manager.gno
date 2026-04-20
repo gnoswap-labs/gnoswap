@@ -13,7 +13,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"
-	pf "gno.land/r/gnoswap/protocol_fee"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -102,14 +101,15 @@ func (i *poolV1) CreatePool(
 	}
 
 	poolCreationFee := i.store.GetPoolCreationFee()
+	i.tryCollectPendingProtocolFees()
 
 	if poolCreationFee > 0 {
-		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-
 		previousRealm := runtime.PreviousRealm()
 		previousRealmAddr := previousRealm.Address()
-		gns.TransferFrom(cross, previousRealmAddr, protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
+		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
+		gns.TransferFrom(cross, previousRealmAddr, poolAddr, poolCreationFee)
+		i.addPendingProtocolFee(GNS_PATH, poolCreationFee)
+		i.tryCollectPendingProtocolFees()
 
 		chain.Emit(
 			"PoolCreationFee",

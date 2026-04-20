@@ -99,10 +99,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParam
 # stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
 # stdout 'EVENTS:     \[{\"type\":\"ProposeParameterChange\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"poolcreationfee\"},{\"key\":\"description\",\"value\":\"set\"},{\"key\":\"numToExecute\",\"value\":\"1\"},{\"key\":\"executions\",\"value\":\"gno.land/r/gnoswap/pool\*EXE\*SetPoolCreationFee\*EXE\*0\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"[0-9]+\"},{\"key\":\"maxVotingWeight\",\"value\":\"[0-9]+\"},{\"key\":\"configVersion\",\"value\":\"[0-9]+\"},{\"key\":\"createdAt\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
-### Wait for a few blocks to ensure the reconfiguration is processed and delegation is counted
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetTitleByProposalId(1)"
 # stdout '"poolcreationfee"'
 

@@ -74,8 +74,8 @@ func testDepositAllowed() {
 	gns.Transfer(cross, userAddr, 2_000_000)
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 	gns.Approve(cross, launchpadAddr, 1_000_000)
-	launchpad.DepositGns(cross, "gno.land/r/onbloc/obl:123:30", 1_000_000, "")
-	ufmt.Println("[EXPECTED] deposit succeeded in safe mode")
+	depositID := launchpad.DepositGns(cross, "gno.land/r/onbloc/obl:123:30", 1_000_000, "")
+	ufmt.Printf("[EXPECTED] deposit succeeded in safe mode: %s\n", depositID)
 }
 
 // Output:
@@ -87,4 +87,4 @@ func testDepositAllowed() {
 // [EXPECTED] create project succeeded in safe mode
 //
 // [SCENARIO] 3. DepositGns remains allowed
-// [EXPECTED] deposit succeeded in safe mode
+// [EXPECTED] deposit succeeded in safe mode: 1

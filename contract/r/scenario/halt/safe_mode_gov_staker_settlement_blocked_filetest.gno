@@ -66,8 +66,9 @@ func delegateToBob() {
 
 func setupProtocolFee() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	bar.Transfer(cross, stakerAddr, 1000)
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	testing.SkipHeights(10)
 	testing.SetRealm(govStakerRealm)

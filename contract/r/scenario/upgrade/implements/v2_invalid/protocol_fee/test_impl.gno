@@ -58,11 +58,11 @@ func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
 	t.instance.SetGovStakerPct(pct)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
+func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
 	if !t.isActive("AddToProtocolFee") {
 		panic("test implementation: AddToProtocolFee not supported")
 	}
-	t.instance.AddToProtocolFee(tokenPath, amount)
+	return t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
 // IProtocolFeeGetter interface
@@ -127,4 +127,32 @@ func (t *TestProtocolFee) GetTokenList() []string {
 		panic("test implementation: GetTokenList not supported")
 	}
 	return t.instance.GetTokenList()
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStaker() map[string]int64 {
+	if !t.isActive("GetActualDistributedToGovStaker") {
+		panic("test implementation: GetActualDistributedToGovStaker not supported")
+	}
+	return t.instance.GetActualDistributedToGovStaker()
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOps() map[string]int64 {
+	if !t.isActive("GetActualDistributedToDevOps") {
+		panic("test implementation: GetActualDistributedToDevOps not supported")
+	}
+	return t.instance.GetActualDistributedToDevOps()
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
+	if !t.isActive("GetActualDistributedToGovStakerByTokenPath") {
+		panic("test implementation: GetActualDistributedToGovStakerByTokenPath not supported")
+	}
+	return t.instance.GetActualDistributedToGovStakerByTokenPath(path)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
+	if !t.isActive("GetActualDistributedToDevOpsByTokenPath") {
+		panic("test implementation: GetActualDistributedToDevOpsByTokenPath not supported")
+	}
+	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }

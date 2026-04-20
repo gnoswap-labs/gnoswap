@@ -27,7 +27,16 @@ var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
+
+func fundAndApproveBarFromStaker(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerRealm.Address(), amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] Testing protocol fee distribution with different DevOps percentages")
@@ -62,8 +71,7 @@ func testCase0Percent() {
 	pf.SetDevOpsPct(cross, 0)
 
 	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	fundAndApproveBarFromStaker(1000)
 
 	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
@@ -86,8 +94,7 @@ func testCase25Percent() {
 	pf.SetDevOpsPct(cross, 2500)
 
 	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	fundAndApproveBarFromStaker(1000)
 
 	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
@@ -110,8 +117,7 @@ func testCase50Percent() {
 	pf.SetDevOpsPct(cross, 5000)
 
 	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	fundAndApproveBarFromStaker(1000)
 
 	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
@@ -134,8 +140,7 @@ func testCase100Percent() {
 	pf.SetDevOpsPct(cross, 10000)
 
 	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	fundAndApproveBarFromStaker(1000)
 
 	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
@@ -158,8 +163,7 @@ func testCase3333Percent() {
 	pf.SetDevOpsPct(cross, 3333)
 
 	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	fundAndApproveBarFromStaker(1000)
 
 	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")

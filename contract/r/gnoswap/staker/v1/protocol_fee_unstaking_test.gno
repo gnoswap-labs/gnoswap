@@ -69,7 +69,7 @@ func TestHandleStakingRewardFee(t *testing.T) {
 			}
 
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				testing.SetRealm(testing.NewUserRealm(stakerAddr))
+				testing.SetRealm(stakerRealm)
 				return getMockInstance().handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 			}
 
@@ -352,7 +352,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 				}
 			}
 
-			testing.SetRealm(testing.NewUserRealm(stakerAddr))
+			testing.SetRealm(stakerRealm)
 			netAmount, feeAmount, err := instance.handleStakingRewardFee(tt.tokenPath, tt.amount, tt.internal)
 
 			if tt.expectError {

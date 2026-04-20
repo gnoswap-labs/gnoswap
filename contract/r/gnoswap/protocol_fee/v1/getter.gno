@@ -78,3 +78,47 @@ func (pf *protocolFeeV1) GetAccuTransferToGovStakerByTokenPath(path string) int6
 func (pf *protocolFeeV1) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetAccuTransferToDevOpsByTokenPath(path)
 }
+
+// GetActualDistributedToGovStaker returns all actual transfers to gov/staker.
+func (pf *protocolFeeV1) GetActualDistributedToGovStaker() map[string]int64 {
+	actualDistributed := make(map[string]int64)
+
+	pf.getProtocolFeeState().ActualDistributedToGovStaker().Iterate("", "", func(key string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			return false
+		}
+
+		actualDistributed[key] = amount
+		return false
+	})
+
+	return actualDistributed
+}
+
+// GetActualDistributedToDevOps returns all actual transfers to devOps.
+func (pf *protocolFeeV1) GetActualDistributedToDevOps() map[string]int64 {
+	actualDistributed := make(map[string]int64)
+
+	pf.getProtocolFeeState().ActualDistributedToDevOps().Iterate("", "", func(key string, value any) bool {
+		amount, ok := value.(int64)
+		if !ok {
+			return false
+		}
+
+		actualDistributed[key] = amount
+		return false
+	})
+
+	return actualDistributed
+}
+
+// GetActualDistributedToGovStakerByTokenPath returns the actual transfer to gov/staker by token path.
+func (pf *protocolFeeV1) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
+	return pf.getProtocolFeeState().GetActualDistributedToGovStakerByTokenPath(path)
+}
+
+// GetActualDistributedToDevOpsByTokenPath returns the actual transfer to devOps by token path.
+func (pf *protocolFeeV1) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
+	return pf.getProtocolFeeState().GetActualDistributedToDevOpsByTokenPath(path)
+}

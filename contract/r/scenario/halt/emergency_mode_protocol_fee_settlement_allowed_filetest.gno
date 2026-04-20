@@ -54,8 +54,8 @@ func main() {
 
 func setupProtocolFeeBalance() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
-	ufmt.Printf("[INFO] protocol fee BAR balance: %d\n", bar.BalanceOf(protocolFeeAddr))
+	bar.Transfer(cross, stakerAddr, 1000)
+	ufmt.Printf("[INFO] staker BAR balance before add: %d\n", bar.BalanceOf(stakerAddr))
 }
 
 func setEmergencyMode() {
@@ -67,6 +67,7 @@ func setEmergencyMode() {
 
 func addProtocolFee() {
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 	ufmt.Println("[EXPECTED] AddToProtocolFee succeeded in emergency")
 }
@@ -88,7 +89,7 @@ func setterBlocked() {
 
 // Output:
 // [SCENARIO] 1. Setup protocol fee balance
-// [INFO] protocol fee BAR balance: 1000
+// [INFO] staker BAR balance before add: 1000
 //
 // [SCENARIO] 2. Set emergency mode
 // [INFO] ProtocolFee halted: true
@@ -99,7 +100,7 @@ func setterBlocked() {
 //
 // [SCENARIO] 4. DistributeProtocolFee remains allowed
 // [EXPECTED] protocol fee BAR balance after distribution: 0
-// [EXPECTED] gov staker BAR balance after distribution: 1000
+// [EXPECTED] gov staker BAR balance after distribution: 0
 //
 // [SCENARIO] 5. Protocol fee setter remains blocked
 // [EXPECTED] SetDevOpsPct blocked by protocol_fee halt

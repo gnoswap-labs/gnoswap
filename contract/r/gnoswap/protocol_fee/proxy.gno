@@ -29,8 +29,8 @@ func SetGovStakerPct(cur realm, pct int64) {
 // Parameters:
 //   - tokenPath: path of the token
 //   - amount: amount to add
-func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
-	getImplementation().AddToProtocolFee(tokenPath, amount)
+func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
+	return getImplementation().AddToProtocolFee(tokenPath, amount)
 }
 
 // GetDevOpsPct returns the DevOps fee percentage.
@@ -76,4 +76,24 @@ func GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 // GetAccuTransferToDevOpsByTokenPath returns accumulated DevOps transfer for a token.
 func GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return getImplementation().GetAccuTransferToDevOpsByTokenPath(tokenPath)
+}
+
+// GetActualDistributedToGovStaker returns actual transfers completed to GovStaker.
+func GetActualDistributedToGovStaker() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetActualDistributedToGovStaker())
+}
+
+// GetActualDistributedToDevOps returns actual transfers completed to DevOps.
+func GetActualDistributedToDevOps() map[string]int64 {
+	return cloneStringInt64Map(getImplementation().GetActualDistributedToDevOps())
+}
+
+// GetActualDistributedToGovStakerByTokenPath returns actual GovStaker transfer for a token.
+func GetActualDistributedToGovStakerByTokenPath(tokenPath string) int64 {
+	return getImplementation().GetActualDistributedToGovStakerByTokenPath(tokenPath)
+}
+
+// GetActualDistributedToDevOpsByTokenPath returns actual DevOps transfer for a token.
+func GetActualDistributedToDevOpsByTokenPath(tokenPath string) int64 {
+	return getImplementation().GetActualDistributedToDevOpsByTokenPath(tokenPath)
 }

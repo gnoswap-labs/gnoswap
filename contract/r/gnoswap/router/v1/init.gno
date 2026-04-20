@@ -25,7 +25,17 @@ func registerRouterV1() {
 
 func initStoreData(routerStore router.IRouterStore) error {
 	if !routerStore.HasSwapFeeKey() {
-		return routerStore.SetSwapFee(defaultSwapFeeBPS)
+		err := routerStore.SetSwapFee(defaultSwapFeeBPS)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !routerStore.HasPendingProtocolFeesKey() {
+		err := routerStore.SetPendingProtocolFees(make(map[string]int64))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

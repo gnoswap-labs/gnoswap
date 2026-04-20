@@ -76,6 +76,8 @@ func (r *routerV1) handleSwapFee(
 	outputToken string,
 	amount int64,
 ) int64 {
+	r.tryCollectPendingProtocolFees()
+
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
 		return amount
@@ -84,11 +86,8 @@ func (r *routerV1) handleSwapFee(
 	currentTokenPath := outputToken
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
-
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
-
-	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
+	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
+	r.tryCollectPendingProtocolFees()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -100,6 +99,51 @@ func (r *routerV1) handleSwapFee(
 	)
 
 	return safeSubInt64(amount, feeAmountInt64)
+}
+
+func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	pendingProtocolFees := clonePendingProtocolFees(r.store.GetPendingProtocolFees())
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func (r *routerV1) tryCollectPendingProtocolFees() {
+	pendingProtocolFees := clonePendingProtocolFees(r.store.GetPendingProtocolFees())
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			delete(pendingProtocolFees, tokenPath)
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			return
+		}
+		delete(pendingProtocolFees, tokenPath)
+	}
+
+	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func clonePendingProtocolFees(src map[string]int64) map[string]int64 {
+	clone := make(map[string]int64, len(src))
+	for key, value := range src {
+		clone[key] = value
+	}
+	return clone
 }
 
 func calculateRouterFee(amount int64, swapFee uint64) int64 {
