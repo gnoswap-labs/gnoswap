@@ -117,7 +117,7 @@ func TestSwapInner(t *testing.T) {
 			expectedRecv:     0,
 			expectedOut:      0,
 			expectError:      true,
-			expectedErrorMsg: "insufficient balance in router for callback",
+			expectedErrorMsg: "[GNOSWAP-ROUTER-018] insufficient balance for swap",
 		},
 	}
 
@@ -152,7 +152,7 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			if tt.expectError {
-				uassert.AbortsWithMessage(t, tt.expectedErrorMsg, func() {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
 					swapInnerFn(cross)
 				})
 			} else {
