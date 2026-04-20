@@ -9,9 +9,14 @@
 // SCENARIO:
 // This test verifies external incentive refund behavior after CollectReward changes.
 // It validates that:
-// 1. External reward penalty is NOT sent to community pool during CollectReward
-// 2. EndExternalIncentive refunds all undistributed reward (including penalty share) to creator
-// 3. Reward accounting remains consistent (distributed + refunded = total reward)
+// 1. External reward penalty is NOT sent to community pool during CollectReward;
+//    the penalty share stays in the staker contract as accumulated penalty.
+// 2. EndExternalIncentive refunds only the GNS deposit to the creator and does
+//    NOT refund the accumulated penalty QUX (it remains in the staker contract
+//    until CollectExternalIncentivePenalty is called separately).
+// 3. Reward accounting: distributed rewards + staker-retained penalty QUX
+//    equals the total reward amount. "Undistributed reward refunded" is 0 here
+//    because the leftover QUX is retained as penalty, not refunded on end.
 
 package main
 
@@ -408,8 +413,14 @@ func endExternalIncentiveAndVerifyNoDust() {
 	totalDistributed := totalRewardsCollected + undistributedRewardRefunded
 	ufmt.Printf("  - Total accounted for: %d QUX\n", totalDistributed)
 
-	if totalDistributed == REWARD_AMOUNT {
-		println("[EXPECTED] all rewards accounted for with no loss")
+	// Leftover QUX retained in the staker contract (accumulated penalty share).
+	// This is NOT refunded by EndExternalIncentive; it must be collected via
+	// CollectExternalIncentivePenalty.
+	stakerRetainedPenalty := stakerQuxAfter
+	ufmt.Printf("  - Staker-retained penalty QUX: %d\n", stakerRetainedPenalty)
+
+	if totalRewardsCollected+undistributedRewardRefunded+stakerRetainedPenalty == REWARD_AMOUNT {
+		println("[EXPECTED] distributed + refunded + staker-retained penalty equals total reward")
 	}
 }
 
@@ -507,3 +518,5 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - Rewards collected by staker: 6263999997 QUX
 //   - Undistributed reward refunded: 0 QUX
 //   - Total accounted for: 6263999997 QUX
+//   - Staker-retained penalty QUX: 1512000003
+// [EXPECTED] distributed + refunded + staker-retained penalty equals total reward

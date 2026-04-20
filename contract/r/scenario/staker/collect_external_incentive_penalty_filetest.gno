@@ -5,8 +5,10 @@
 // 1. Create pool and external incentive (QUX reward, 90 days)
 // 2. Stake position and collect rewards multiple times (accumulates warmup penalty)
 // 3. End external incentive
-// 4. Admin collects accumulated penalty → community pool
+// 4. External creator collects accumulated penalty → refunded to creator
 // 5. Verify penalty is transferred and accumulatedPenaltyAmount is reset
+// 6. Further CollectReward calls accrue new penalty, which a subsequent
+//    CollectExternalIncentivePenalty call can collect again
 
 package main
 
@@ -106,7 +108,7 @@ func main() {
 	collectRewards()
 	println()
 
-	println("[SCENARIO] 9. Verify second penalty collection")
+	println("[SCENARIO] 9. Verify new penalty accrues and can be collected again")
 	collectPenaltyAgain()
 	println()
 }
@@ -287,8 +289,8 @@ func collectPenaltyAgain() {
 
 	ufmt.Printf("[INFO] second collection returned: %d\n", collected)
 
-	if collected == 0 {
-		println("[EXPECTED] second collection returns 0 (no more penalty)")
+	if collected > 0 {
+		println("[EXPECTED] new penalty accrued after later CollectReward is collected again")
 	}
 
 	ufmt.Printf("[EXPECTED] staker gns balance: %d\n", gns.BalanceOf(stakerAddr))
@@ -341,7 +343,8 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //   - distributedRewardAmount: 7250615998
 // [EXPECTED] penalty accumulated during CollectReward
 //
-// [SCENARIO] 9. Verify second penalty collection
+// [SCENARIO] 9. Verify new penalty accrues and can be collected again
 // [INFO] second collection returned: 449841600
+// [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
 // [EXPECTED] staker qux balance: 2
