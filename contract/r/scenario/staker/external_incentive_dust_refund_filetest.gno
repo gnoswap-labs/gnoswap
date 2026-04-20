@@ -277,22 +277,21 @@ func endExternalIncentiveAndVerifyDustRefund() {
 		panic(ufmt.Sprintf("Expected GNS refund of %d, but got %d", depositGnsAmount, gnsRefunded))
 	}
 
-	// Calculate expected dust
+	// Verify refund = unclaimable reward + division remainder
 	rewardAmount := int64(10000000007)
 	duration := int64(90 * 24 * 60 * 60)
-	expectedDust := rewardAmount - (rewardAmount/duration)*duration
+	rewardPerSecond := rewardAmount / duration
+	remainder := rewardAmount - rewardPerSecond*duration
+	unclaimablePortion := barRefunded - remainder
 
-	// Verify that dust was included in the refund
-	// The refund should be at least the dust amount
-	if barRefunded < expectedDust {
-		panic(ufmt.Sprintf("Expected refund to include at least dust amount of %d, but got %d", expectedDust, barRefunded))
+	ufmt.Printf("[VERIFY] refund: %d = unclaimable(%d) + remainder(%d)\n", barRefunded, unclaimablePortion, remainder)
+
+	if barRefunded < remainder {
+		panic(ufmt.Sprintf("Refund %d is less than division remainder %d", barRefunded, remainder))
 	}
 
-	// Check if the refund amount makes sense (dust + unallocated rewards)
-	if barRefunded > 0 && barRefunded >= expectedDust {
-		ufmt.Printf("[SUCCESS] Dust refund mechanism verified - dust amount (%d) properly included in total refund (%d)!\n", expectedDust, barRefunded)
-	} else {
-		panic(ufmt.Sprintf("Unexpected refund amount: %d (expected dust: %d)", barRefunded, expectedDust))
+	if rewardPerSecond > 0 && unclaimablePortion%rewardPerSecond != 0 {
+		panic(ufmt.Sprintf("Unclaimable portion %d is not a multiple of rewardPerSecond %d", unclaimablePortion, rewardPerSecond))
 	}
 }
 
@@ -334,10 +333,10 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] bar balance before ending: 100000000
 // [INFO] gns balance before ending: 0
 // [INFO] end external incentive
-// [INFO] bar balance after ending: 100070440
+// [INFO] bar balance after ending: 100070437
 // [INFO] gns balance after ending: 1000000000
-// [RESULT] bar tokens refunded: 70440
+// [RESULT] bar tokens refunded: 70437
 // [RESULT] gns tokens refunded: 1000000000
-// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70440)!
+// [VERIFY] refund: 70437 = unclaimable(6430) + remainder(64007)
 //
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

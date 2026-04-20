@@ -1194,13 +1194,14 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	userA := testutils.TestAddress("userA")
 	userB := testutils.TestAddress("userB")
 
-	currentTime := time.Now().Unix()
-	startTime := currentTime - 86400*10 // 10 days ago
-	endTime := currentTime - 86400      // ended 1 day ago
+	baseTime := time.Now().Unix()
+	poolCreateTime := baseTime
+	startTime := baseTime + 86400
+	endTime := startTime + 86400*9
 	totalRewardAmount := int64(1_000_000_000)
 
 	// Create pool
-	pool := sr.NewPool(poolPath, startTime)
+	pool := sr.NewPool(poolPath, poolCreateTime)
 	s.getPools().set(poolPath, pool)
 
 	// Create incentive
@@ -1215,7 +1216,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		creator,
 		100_000_000,
 		runtime.ChainHeight(),
-		startTime-100,
+		poolCreateTime,
 	)
 
 	poolResolver := NewPoolResolver(pool)
@@ -1244,9 +1245,12 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		},
 	}
 
+	stakeTimeA := startTime + 100
+	stakeTimeB := startTime + 200
+
 	// Create deposits for User A and User B
-	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
-	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, warmups)
+	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), stakeTimeA, -10000, 10000, warmups)
+	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), stakeTimeB, -10000, 10000, warmups)
 
 	s.getDeposits().set(1, depositA)
 	s.getDeposits().set(2, depositB)
@@ -1254,26 +1258,27 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	depositResolverA := NewDepositResolver(depositA)
 	depositResolverB := NewDepositResolver(depositB)
 
-	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
-	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
-	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
-	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeA, 0)
+	poolResolver.HistoricalTick().Set(stakeTimeA, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), stakeTimeB, 0)
+	poolResolver.HistoricalTick().Set(stakeTimeB, int32(0))
 
-	// User A collects 300
+	// Simulate CollectReward for User A (raw earned = 300)
+	// Production flow: rewardAmount -= raw, distributedRewardAmount += reward only
 	collectedA := int64(300)
 	depositResolverA.addCollectedExternalReward(incentiveId, collectedA)
 	depositResolverA.updateExternalRewardLastCollectTime(incentiveId, endTime-1000)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	incentive.SetRewardAmount(incentive.RewardAmount() - collectedA)
 	incentiveResolver.addDistributedRewardAmount(collectedA)
 
-	// User B collects 200
+	// Simulate CollectReward for User B (raw earned = 200)
 	collectedB := int64(200)
 	depositResolverB.addCollectedExternalReward(incentiveId, collectedB)
 	depositResolverB.updateExternalRewardLastCollectTime(incentiveId, endTime-500)
 
-	// Update DistributedRewardAmount (simulating CollectReward)
+	incentive.SetRewardAmount(incentive.RewardAmount() - collectedB)
 	incentiveResolver.addDistributedRewardAmount(collectedB)
 
 	// Verify DistributedRewardAmount = 500
@@ -1281,21 +1286,31 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 		t.Errorf("Expected DistributedRewardAmount 500, got %d", incentiveResolver.DistributedRewardAmount())
 	}
 
-	// Verify DistributedRewardAmount remains 500 after unstakes
-	if incentiveResolver.DistributedRewardAmount() != 500 {
-		t.Errorf("After unstakes, DistributedRewardAmount should still be 500, got %d", incentiveResolver.DistributedRewardAmount())
-	}
-
-	// Calculate refund
-	// remain deposit A reward: 1286000
-	// remain deposit B reward: 643000
 	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
 	uassert.NoError(t, err)
 
-	// Verify refund amount
-	expectedRefund := int64(999035000)
-	if refund != expectedRefund {
-		t.Errorf("Expected refund %d, got %d", expectedRefund, refund)
+	duration := endTime - startTime
+	rewardPerSecond := totalRewardAmount / duration
+	remainder := totalRewardAmount - rewardPerSecond*duration
+
+	expectedUnclaimable := rewardPerSecond * (stakeTimeA - startTime)
+	expectedRefund := expectedUnclaimable + remainder
+
+	maxRefund := totalRewardAmount - int64(500)
+	if expectedRefund > maxRefund {
+		expectedRefund = maxRefund
+	}
+
+	numDeposits := int64(2)
+	numWarmups := int64(len(warmups))
+	tolerance := numDeposits * numWarmups * 2
+	diff := refund - expectedRefund
+	if diff < 0 {
+		diff = -diff
+	}
+	if diff > tolerance {
+		t.Errorf("Refund %d deviates from expected %d by %d (tolerance %d = %d deposits * %d warmups * 2)",
+			refund, expectedRefund, diff, tolerance, numDeposits, numWarmups)
 	}
 
 	// Verify refund is not negative

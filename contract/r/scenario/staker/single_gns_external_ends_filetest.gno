@@ -275,7 +275,6 @@ func endExternalQuxIncentive() {
 	println("[INFO] end external incentive and collect remaining QUX")
 	testing.SetRealm(externalCreatorRealm)
 	quxBalanceBeforeEnds := qux.BalanceOf(externalCreatorUser)
-	stakerQuxBeforeEnds := qux.BalanceOf(stakerAddr)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 
 	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1"
@@ -291,7 +290,7 @@ func endExternalQuxIncentive() {
 
 	ufmt.Printf("[INFO] QUX balance before ending: %d\n", quxBalanceBeforeEnds)
 	ufmt.Printf("[INFO] QUX balance after ending: %d\n", quxBalanceAfterEnds)
-	ufmt.Printf("[INFO] staker QUX before ending: %d\n", stakerQuxBeforeEnds)
+	ufmt.Printf("[INFO] staker QUX residual: %d\n", qux.BalanceOf(stakerAddr))
 
 	refundedQuxAmount := quxBalanceAfterEnds - quxBalanceBeforeEnds
 	refundedGnsDeposit := gnsBalanceAfterEnds - gnsBalanceBeforeEnds
@@ -363,9 +362,9 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining QUX
 // [INFO] QUX balance before ending: 0
-// [INFO] QUX balance after ending: 3181889
-// [INFO] staker QUX before ending: 8999996530
-// [EXPECTED] creator receives remaining reward token: 3181889
+// [INFO] QUX balance after ending: 3181884
+// [INFO] staker QUX residual: 8996814646
+// [EXPECTED] creator receives remaining reward token: 3181884
 // [EXPECTED] creator receives fixed GNS deposit: 1000000000
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends

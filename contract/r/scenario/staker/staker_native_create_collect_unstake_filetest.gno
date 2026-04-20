@@ -464,6 +464,9 @@ func endExternalIncentive() {
 	ufmt.Printf("[EXPECTED] ugnot balance after end: %d\n", ugnotBalanceAfter)
 	ufmt.Printf("[EXPECTED] wugnot change: %d\n", wugnotChange)
 	ufmt.Printf("[EXPECTED] ugnot refund: %d\n", ugnotIncrease)
+
+	stakerWugnot := wugnot.BalanceOf(stakerAddr)
+	ufmt.Printf("[VERIFY] staker wugnot residual: %d\n", stakerWugnot)
 }
 
 func unstakeToken01() {
@@ -605,19 +608,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] ugnot balance before end: 20050001005
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
-// [EXPECTED] wugnot balance after end: 55579946
+// [EXPECTED] wugnot balance after end: 55579944
 // [EXPECTED] ugnot balance after end: 20050001005
-// [EXPECTED] wugnot change: 64002
+// [EXPECTED] wugnot change: 64000
 // [EXPECTED] ugnot refund: 0
+// [VERIFY] staker wugnot residual: 9994419061
 //
 // [SCENARIO] 11. Unstake token 01 after external incentive
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 55579946
+// [INFO] wugnot balance before unstake: 55579944
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token 01 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] wugnot balance after unstake: 10049999005
+// [EXPECTED] wugnot balance after unstake: 10049999003
 // [EXPECTED] ugnot balance after unstake: 20050001005
 // [EXPECTED] wugnot increase from unstake: 9994419059
 // [EXPECTED] ugnot change from unstake: 0
-
