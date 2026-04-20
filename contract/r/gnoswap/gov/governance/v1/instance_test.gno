@@ -53,6 +53,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 		currentTime            int64
 		expectedRemainingCount int
 		expectedRemainingIDs   []int64
+		expectedHasActive      bool
 	}{
 		{
 			name:                   "No proposals for user",
@@ -60,6 +61,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            baseCreatedAt,
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
+			expectedHasActive:      false,
 		},
 		{
 			name: "All proposals are active - none should be removed",
@@ -77,6 +79,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
 			expectedRemainingCount: 1,
 			expectedRemainingIDs:   []int64{1},
+			expectedHasActive:      true,
 		},
 		{
 			name: "All proposals are expired - all should be removed",
@@ -94,6 +97,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            expiredTime + 100, // after expired
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
+			expectedHasActive:      false,
 		},
 		{
 			name: "Mixed active and inactive proposals - only inactive should be removed",
@@ -124,6 +128,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            expiredTime + 50 + config.VotingStartDelay + 50, // during new proposal's voting period
 			expectedRemainingCount: 1,
 			expectedRemainingIDs:   []int64{2},
+			expectedHasActive:      true,
 		},
 		{
 			name: "Canceled proposal should be removed",
@@ -145,6 +150,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            baseCreatedAt + 50,
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
+			expectedHasActive:      false,
 		},
 		{
 			name: "Multiple expired proposals - all should be removed",
@@ -164,6 +170,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            expiredTime + 100,
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
+			expectedHasActive:      false,
 		},
 		{
 			name: "Multiple active proposals - none should be removed",
@@ -183,6 +190,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
 			expectedRemainingCount: 3,
 			expectedRemainingIDs:   []int64{1, 2, 3},
+			expectedHasActive:      true,
 		},
 	}
 
@@ -200,6 +208,7 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 
 			proposals := gv.getUserProposals(proposerAddr.String())
 			uassert.Equal(t, len(proposals), tc.expectedRemainingCount)
+			uassert.Equal(t, gv.hasActiveProposal(proposerAddr), tc.expectedHasActive)
 
 			// Verify remaining proposal IDs
 			if tc.expectedRemainingIDs != nil {

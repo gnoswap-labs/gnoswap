@@ -99,7 +99,7 @@ func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 	return proposals
 }
 
-func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64) bool {
+func (g *governanceV1) hasActiveProposal(proposerAddress address) bool {
 	proposals := g.getUserProposals(proposerAddress.String())
 
 	return len(proposals) > 0
