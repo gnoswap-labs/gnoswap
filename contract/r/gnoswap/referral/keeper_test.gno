@@ -3,6 +3,7 @@ package referral
 import (
 	"chain/runtime"
 	"testing"
+	"time"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -273,7 +274,7 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		uassert.False(t, HasReferral(user.String()), "Referral should not exist after removal")
 	})
 
-	t.Run("Contract address removal is not rate limited", func(t *testing.T) {
+	t.Run("Contract address removal is rate limited", func(t *testing.T) {
 		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
@@ -286,10 +287,11 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		uassert.True(t, HasReferral(user.String()))
 
 		// Immediately try to remove with contract address (no time passage)
-		// This should succeed because contract address removal bypasses rate limit
+		// This should fail because contract address removal now respects the cooldown
 		result = TryRegister(cross, user, contractAddress().String())
-		uassert.Equal(t, "", result, "Contract address removal should bypass rate limit")
-		uassert.False(t, HasReferral(user.String()))
+		uassert.Equal(t, referrer.String(), result, "Blocked removal should fall back to the stored referral")
+		uassert.True(t, HasReferral(user.String()))
+		uassert.Equal(t, referrer.String(), GetReferral(user.String()))
 	})
 
 	t.Run("Re-register after contract address removal", func(t *testing.T) {
@@ -305,13 +307,22 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		uassert.Equal(t, referrer1.String(), result)
 		uassert.Equal(t, referrer1.String(), GetReferral(user.String()))
 
-		// Remove with contract address (bypasses rate limit)
+		k := gReferralKeeper.(*keeper)
+		k.lastOps.Set(user.String(), int64(0))
+
+		beforeRemoval := time.Now().Unix()
+
+		// Remove with contract address after cooldown has elapsed
 		result = TryRegister(cross, user, contractAddress().String())
 		uassert.Equal(t, "", result)
 		uassert.False(t, HasReferral(user.String()))
 
-		// Re-register with new referrer should be rate limited
-		// because lastOps was set during first registration
+		lastOp, err := GetLastOpTimestamp(user.String())
+		uassert.NoError(t, err)
+		uassert.True(t, lastOp >= beforeRemoval)
+
+		// Re-register with new referrer should still be rate limited,
+		// but now relative to the removal timestamp.
 		result = TryRegister(cross, user, referrer2.String())
 		uassert.Equal(t, "", result, "Re-registration should be rate limited")
 	})
@@ -328,7 +339,7 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 		uassert.False(t, HasReferral(user.String()))
 	})
 
-	t.Run("Multiple contract address removals are allowed", func(t *testing.T) {
+	t.Run("Second contract address removal is blocked during cooldown", func(t *testing.T) {
 		cleanup(t)
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
@@ -337,11 +348,14 @@ func TestKeeper_ContractAddressRemoval(t *testing.T) {
 
 		// Register
 		TryRegister(cross, user, referrer.String())
+		k := gReferralKeeper.(*keeper)
+		k.lastOps.Set(user.String(), int64(0))
 
-		// Multiple contract address calls should all succeed
-		for i := 0; i < 3; i++ {
-			result := TryRegister(cross, user, contractAddress().String())
-			uassert.Equal(t, "", result, "Multiple contract address calls should succeed")
-		}
+		result := TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result)
+		uassert.False(t, HasReferral(user.String()))
+
+		result = TryRegister(cross, user, contractAddress().String())
+		uassert.Equal(t, "", result, "Immediate second removal should be blocked during cooldown")
 	})
 }

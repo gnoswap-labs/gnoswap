@@ -38,19 +38,21 @@ func (k *keeper) register(addr, refAddr address) (address, error) {
 	addrStr := addr.String()
 	refAddrStr := refAddr.String()
 
+	if err := k.checkRateLimit(addrStr); err != nil {
+		return zeroAddress, err
+	}
+
 	if isRemovalRequest(refAddr) {
 		if k.has(addr) {
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
 				return zeroAddress, ErrNotFound
 			}
+
+			k.lastOps.Set(addrStr, time.Now().Unix())
 		}
 
 		return zeroAddress, nil
-	}
-
-	if err := k.checkRateLimit(addrStr); err != nil {
-		return zeroAddress, err
 	}
 
 	k.store.Set(addrStr, refAddrStr)

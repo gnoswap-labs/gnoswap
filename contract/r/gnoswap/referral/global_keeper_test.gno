@@ -350,6 +350,33 @@ func TestGlobalKeeper_GetLastOpTimestamp(t *testing.T) {
 	}
 }
 
+func TestGlobalKeeper_GetLastOpTimestampAfterRemoval(t *testing.T) {
+	cleanup(t)
+	testing.SetRealm(routerRealm)
+
+	userAddr := testutils.TestAddress("user-removal")
+	refAddr := testutils.TestAddress("referrer-removal")
+
+	uassert.Equal(t, refAddr.String(), TryRegister(cross, userAddr, refAddr.String()))
+	uassert.True(t, HasReferral(userAddr.String()))
+
+	uassert.Equal(t, refAddr.String(), TryRegister(cross, userAddr, contractAddress().String()))
+	uassert.True(t, HasReferral(userAddr.String()))
+
+	k := gReferralKeeper.(*keeper)
+	k.lastOps.Set(userAddr.String(), int64(0))
+	beforeRemoval := time.Now().Unix()
+	uassert.Equal(t, "", TryRegister(cross, userAddr, contractAddress().String()))
+
+	got, err := GetLastOpTimestamp(userAddr.String())
+	uassert.NoError(t, err)
+	uassert.True(t, got >= beforeRemoval)
+	uassert.False(t, HasReferral(userAddr.String()))
+
+	result := TryRegister(cross, userAddr, testutils.TestAddress("ref-next").String())
+	uassert.Equal(t, "", result)
+}
+
 func TestGlobalKeeper_TryRegisterFallbacks(t *testing.T) {
 	tests := []struct {
 		name             string

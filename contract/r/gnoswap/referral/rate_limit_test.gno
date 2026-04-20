@@ -69,20 +69,41 @@ func TestRateLimit_IsAddressSpecific(t *testing.T) {
 	uassert.True(t, k.has(user2))
 }
 
-func TestRateLimit_ContractAddressNotRateLimited(t *testing.T) {
+func TestRateLimit_ContractAddressRateLimited(t *testing.T) {
 	cleanup := setupValidCaller(t)
 	defer cleanup()
 	k := setupRateLimitKeeper(t)
 
 	userAddr := testutils.TestAddress("user1")
+	referrerAddr := testutils.TestAddress("referrer1")
 
-	// contract address registration (removal) is not rate limited
-	for i := 0; i < 3; i++ {
-		_, err := k.register(userAddr, contractAddress())
-		uassert.NoError(t, err)
-	}
+	_, err := k.register(userAddr, referrerAddr)
+	uassert.NoError(t, err)
 
+	_, err = k.register(userAddr, contractAddress())
+	uassert.ErrorIs(t, err, ErrTooManyRequests)
+	uassert.True(t, k.has(userAddr))
+}
+
+func TestRateLimit_ContractAddressAllowedAfterCooldown(t *testing.T) {
+	cleanup := setupValidCaller(t)
+	defer cleanup()
+	k := setupRateLimitKeeper(t)
+
+	userAddr := testutils.TestAddress("user2")
+	referrerAddr := testutils.TestAddress("referrer2")
+
+	_, err := k.register(userAddr, referrerAddr)
+	uassert.NoError(t, err)
+
+	k.lastOps.Set(userAddr.String(), time.Now().Unix()-MinTimeBetweenUpdates)
+
+	_, err = k.register(userAddr, contractAddress())
+	uassert.NoError(t, err)
 	uassert.False(t, k.has(userAddr))
+	lastOp, err := k.getLastOpTimestamp(userAddr)
+	uassert.NoError(t, err)
+	uassert.True(t, lastOp > 0)
 }
 
 func TestRateLimit_TimeBoundaries(t *testing.T) {
