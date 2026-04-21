@@ -607,28 +607,24 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		)
 	}
 
-	internalReward := int64(0)
-	internalRewardToUser := int64(0)
-	internalRewardToFee := int64(0)
-	internalRewardPenalty := int64(0)
 	totalEmissionSent := s.store.GetTotalEmissionSent()
 
 	// Skip internal reward state update when user reward is zero (only penalty).
 	// Do not update last collect time so the reward accrues until the next
 	// collection where a non-zero amount can be delivered.
-	skipInternalUpdate := reward.Internal == 0
+	hasInternalReward := reward.Internal > 0
 
 	// internal reward to user
-	if !skipInternalUpdate {
+	if hasInternalReward {
 		toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		internalReward = reward.Internal
-		internalRewardToUser = toUser
-		internalRewardToFee = feeAmount
-		internalRewardPenalty = reward.InternalPenalty
+		internalReward := reward.Internal
+		internalRewardToUser := toUser
+		internalRewardToFee := feeAmount
+		internalRewardPenalty := reward.InternalPenalty
 
 		chain.Emit(
 			"ProtocolFeeInternalReward",
@@ -745,7 +741,7 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
 
-	return formatAnyInt(internalRewardToUser), formatAnyInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
+	return "0", "0", toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
