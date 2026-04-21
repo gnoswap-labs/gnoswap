@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/onbloc/bar"
 )
 
@@ -43,6 +45,7 @@ func TestHandleSwapFee(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router := mockRouter()
+			protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
@@ -51,6 +54,8 @@ func TestHandleSwapFee(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			bar.Transfer(cross, routerAddr, tt.amount)
+			testing.SetRealm(routerRealm)
+			bar.Approve(cross, protocolFeeAddr, tt.amount)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
