@@ -16,6 +16,16 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
+type feeCollection struct {
+	positionId            uint64
+	amount0WithoutFeeStr string
+	amount1WithoutFeeStr string
+	poolKey              string
+	amount0              string
+	amount1              string
+	position             *position.Position
+}
+
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
@@ -345,7 +355,7 @@ func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, stri
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
-func (p *positionV1) collectFee(positionId uint64, caller address) collectFeeResult {
+func (p *positionV1) collectFee(positionId uint64, caller address) feeCollection {
 	// verify position
 	position := p.mustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.PoolKey())
@@ -429,8 +439,8 @@ func (p *positionV1) collectFee(positionId uint64, caller address) collectFeeRes
 		"amount1WithoutFee", amount1WithoutFeeStr,
 	)
 
-	return collectFeeResult{
-		positionId:           positionId,
+	return feeCollection{
+		positionId:            positionId,
 		amount0WithoutFeeStr: amount0WithoutFeeStr,
 		amount1WithoutFeeStr: amount1WithoutFeeStr,
 		poolKey:              position.PoolKey(),

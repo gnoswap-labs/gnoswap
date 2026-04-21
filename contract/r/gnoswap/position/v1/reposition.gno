@@ -70,7 +70,7 @@ func (p *positionV1) Reposition(
 
 	poolKey := position.PoolKey()
 
-	liquidity, amount0, amount1 := p.addLiquidity(
+	change := p.addLiquidity(
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      tickLower,
@@ -88,14 +88,10 @@ func (p *positionV1) Reposition(
 	position.SetTickLower(tickLower)
 	position.SetTickUpper(tickUpper)
 
-	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
-	if err != nil {
-		panic(newErrorWithDetail(err, "failed to get current fee growth"))
-	}
-	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
-	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
+	position.SetFeeGrowthInside0LastX128(change.feeGrowthInside0LastX128Str)
+	position.SetFeeGrowthInside1LastX128(change.feeGrowthInside1LastX128Str)
 
-	position.SetLiquidity(liquidity.ToString())
+	position.SetLiquidity(change.liquidity.ToString())
 
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
@@ -119,9 +115,9 @@ func (p *positionV1) Reposition(
 		"lpPositionId", formatUint(positionId),
 		"tickLower", formatInt(tickLower),
 		"tickUpper", formatInt(tickUpper),
-		"liquidityDelta", liquidity.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
+		"liquidityDelta", change.liquidity.ToString(),
+		"amount0", change.amount0.ToString(),
+		"amount1", change.amount1.ToString(),
 		"prevTickLower", formatInt(oldTickLower),
 		"prevTickUpper", formatInt(oldTickUpper),
 		"poolPath", poolKey,
@@ -136,5 +132,5 @@ func (p *positionV1) Reposition(
 		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
-	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+	return positionId, change.liquidity.ToString(), tickLower, tickUpper, change.amount0.ToString(), change.amount1.ToString()
 }

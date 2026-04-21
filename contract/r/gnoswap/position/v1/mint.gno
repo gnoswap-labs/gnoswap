@@ -13,7 +13,7 @@ import (
 // Panics if position ID already exists or adding liquidity fails.
 func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
-	liquidity, amount0, amount1 := p.addLiquidity(
+	change := p.addLiquidity(
 		AddLiquidityParams{
 			poolKey:        poolKey,
 			tickLower:      params.tickLower,
@@ -25,7 +25,9 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 			caller:         params.caller,
 		},
 	)
+
 	// Ensure liquidity is not zero before minting NFT
+	liquidity := change.liquidity
 	if liquidity.IsZero() {
 		panic(newErrorWithDetail(
 			errZeroLiquidity,
@@ -44,16 +46,13 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 
 	p.nftAccessor.Mint(params.mintTo, positionIdFrom(id))
 
-	positionKey := computePositionKey(params.tickLower, params.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
-
 	position := position.NewPosition(
 		poolKey,
 		params.tickLower,
 		params.tickUpper,
 		liquidity.ToString(),
-		feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128,
+		change.feeGrowthInside0LastX128Str,
+		change.feeGrowthInside1LastX128Str,
 		0,
 		0,
 		false,
@@ -64,7 +63,7 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 	p.mustUpdatePosition(id, *position)
 	p.incrementNextId()
 
-	return id, liquidity, amount0, amount1
+	return id, liquidity, change.amount0, change.amount1
 }
 
 // processMintInput processes and validates user input for minting liquidity.
@@ -110,7 +109,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
 
-	liquidity, amount0, amount1 := p.addLiquidity(
+	change := p.addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.PoolKey(),
 			tickLower:      position.TickLower(),
@@ -123,17 +122,14 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		},
 	)
 
-	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
-
 	feeGrowth := FeeGrowthInside{
-		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128Str),
-		feeGrowthInside1LastX128: u256.MustFromDecimal(feeGrowthInside1LastX128Str),
+		feeGrowthInside0LastX128: u256.MustFromDecimal(change.feeGrowthInside0LastX128Str),
+		feeGrowthInside1LastX128: u256.MustFromDecimal(change.feeGrowthInside1LastX128Str),
 	}
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
 	posLiquidity := u256.MustFromDecimal(position.Liquidity())
-	liquidityAmount, overflow := u256.Zero().AddOverflow(posLiquidity, liquidity)
+	liquidityAmount, overflow := u256.Zero().AddOverflow(posLiquidity, change.liquidity)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
@@ -141,8 +137,8 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
 
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128Str)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
+	position.SetFeeGrowthInside0LastX128(change.feeGrowthInside0LastX128Str)
+	position.SetFeeGrowthInside1LastX128(change.feeGrowthInside1LastX128Str)
 
 	position.SetLiquidity(liquidityAmount.ToString())
 	position.SetBurned(false)
@@ -155,7 +151,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		)
 	}
 
-	return params.positionId, liquidity, amount0, amount1, position.PoolKey(), nil
+	return params.positionId, change.liquidity, change.amount0, change.amount1, position.PoolKey(), nil
 }
 
 // validateTokenPath validates token paths are not identical, not conflicting, and in valid format.

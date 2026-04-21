@@ -19,8 +19,16 @@ type AddLiquidityParams struct {
 	caller         address    // address to call the function
 }
 
+type liquidityChange struct {
+	liquidity                   *u256.Uint
+	amount0                     *u256.Uint
+	amount1                     *u256.Uint
+	feeGrowthInside0LastX128Str string
+	feeGrowthInside1LastX128Str string
+}
+
 // addLiquidity calculates liquidity amounts and mints position tokens to a pool.
-func (p *positionV1) addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
+func (p *positionV1) addLiquidity(params AddLiquidityParams) liquidityChange {
 	sqrtPriceX96 := u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(params.poolKey))
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
@@ -60,5 +68,14 @@ func (p *positionV1) addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.
 		))
 	}
 
-	return liquidity, amount0, amount1
+	positionKey := computePositionKey(params.tickLower, params.tickUpper)
+	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(params.poolKey, positionKey)
+
+	return liquidityChange{
+		liquidity:                   liquidity,
+		amount0:                     amount0,
+		amount1:                     amount1,
+		feeGrowthInside0LastX128Str: feeGrowthInside0LastX128Str,
+		feeGrowthInside1LastX128Str: feeGrowthInside1LastX128Str,
+	}
 }

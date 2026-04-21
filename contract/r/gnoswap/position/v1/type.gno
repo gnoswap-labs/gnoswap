@@ -2,8 +2,6 @@ package v1
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/position"
 )
 
 // 2 ** 128
@@ -101,14 +99,4 @@ type ProcessedMintInput struct {
 type FeeGrowthInside struct {
 	feeGrowthInside0LastX128 *u256.Uint
 	feeGrowthInside1LastX128 *u256.Uint
-}
-
-type collectFeeResult struct {
-	positionId           uint64
-	amount0WithoutFeeStr string
-	amount1WithoutFeeStr string
-	poolKey              string
-	amount0              string
-	amount1              string
-	position             *position.Position
 }

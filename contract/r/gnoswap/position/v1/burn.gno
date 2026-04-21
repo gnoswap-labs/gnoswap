@@ -17,10 +17,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
-	collectFeeResult := p.collectFee(params.positionId, params.caller)
-	fee0Str := collectFeeResult.amount0WithoutFeeStr
-	fee1Str := collectFeeResult.amount1WithoutFeeStr
-	position := collectFeeResult.position
+	collection := p.collectFee(params.positionId, params.caller)
+	fee0Str := collection.amount0WithoutFeeStr
+	fee1Str := collection.amount1WithoutFeeStr
+	position := collection.position
 	positionLiquidity := u256.MustFromDecimal(position.Liquidity())
 	if positionLiquidity.IsZero() {
 		return params.positionId,

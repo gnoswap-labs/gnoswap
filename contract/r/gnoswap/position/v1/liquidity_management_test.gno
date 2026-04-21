@@ -329,9 +329,9 @@ func TestLiquidityManagement_addLiquidity(t *testing.T) {
 					})
 				}
 			} else {
-				_, amount0, amount1 := mockInstance.addLiquidity(tt.params)
-				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
-				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
+				result := mockInstance.addLiquidity(tt.params)
+				uassert.Equal(t, tt.expectedAmount0, result.amount0.ToString())
+				uassert.Equal(t, tt.expectedAmount1, result.amount1.ToString())
 			}
 		})
 	}
