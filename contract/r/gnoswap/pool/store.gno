@@ -175,10 +175,11 @@ func (s *poolStore) HasSwapStartHook() bool {
 }
 
 // GetSwapStartHook retrieves the swap start hook function.
+// Returns nil if no hook is set.
 func (s *poolStore) GetSwapStartHook() func(cur realm, poolPath string, timestamp int64) {
 	result, err := s.kvStore.Get(StoreKeySwapStartHook.String())
 	if err != nil {
-		panic(err)
+		return nil
 	}
 
 	swapStartHook, ok := result.(func(cur realm, poolPath string, timestamp int64))
@@ -200,10 +201,11 @@ func (s *poolStore) HasSwapEndHook() bool {
 }
 
 // GetSwapEndHook retrieves the swap end hook function.
+// Returns nil if no hook is set.
 func (s *poolStore) GetSwapEndHook() func(cur realm, poolPath string) error {
 	result, err := s.kvStore.Get(StoreKeySwapEndHook.String())
 	if err != nil {
-		panic(err)
+		return nil
 	}
 
 	swapEndHook, ok := result.(func(cur realm, poolPath string) error)
