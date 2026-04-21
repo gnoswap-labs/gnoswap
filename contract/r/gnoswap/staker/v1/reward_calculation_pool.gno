@@ -358,13 +358,12 @@ func (self *RewardState) calculateCollectableExternalReward(startTime, endTime i
 		panic(err)
 	}
 
-	currentReward := u256.Zero()
-
+	var currentReward int64
 	for i := range self.rewards {
-		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
+		currentReward = safeAddInt64(currentReward, self.rewards[i])
 	}
 
-	return safeConvertToInt64(currentReward)
+	return currentReward
 }
 
 // calculateExternalReward calculates the external reward for the deposit.
