@@ -3,8 +3,8 @@ package v1
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -334,37 +334,104 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 	}
 }
 
-// Test claimRewards
+// Test claimRewards including idempotent no-op cases.
 func TestEmissionRewardState_claimRewards(t *testing.T) {
 	tests := []struct {
-		name                     string
-		setupState               func(*EmissionRewardStateResolver)
-		currentHeight            int64
-		expectError              bool
-		expectedClaimedAmount    int64
-		expectedNewClaimedHeight int64
+		name                         string
+		setupState                   func(*EmissionRewardStateResolver)
+		currentHeight                int64
+		expectError                  bool
+		expectedClaimedAmount        int64
+		expectedNewClaimedHeight     int64
+		expectedClaimedRewardAmount  int64
+		expectedAccumulatedRewardAmt int64
 	}{
 		{
-			name: "Claim when not claimable",
-			setupState: func(s *EmissionRewardStateResolver) {
-				s.SetClaimedTimestamp(100)
-				s.SetAccumulatedRewardAmount(1000)
-				s.SetClaimedRewardAmount(500)
-			},
-			currentHeight: 100,
-			expectError:   true,
-		},
-		{
-			name: "Successful claim",
+			name: "Successful claim advances claimedRewardAmount and timestamp",
 			setupState: func(s *EmissionRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedRewardAmount(1000)
 				s.SetClaimedRewardAmount(300)
 			},
-			currentHeight:            100,
-			expectError:              false,
-			expectedClaimedAmount:    700, // Previous claimed amount
-			expectedNewClaimedHeight: 100,
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        700,
+			expectedNewClaimedHeight:     100,
+			expectedClaimedRewardAmount:  1000,
+			expectedAccumulatedRewardAmt: 1000,
+		},
+		{
+			name: "First-ever claim when never claimed before",
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(0)
+				s.SetAccumulatedRewardAmount(500)
+				s.SetClaimedRewardAmount(0)
+			},
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        500,
+			expectedNewClaimedHeight:     100,
+			expectedClaimedRewardAmount:  500,
+			expectedAccumulatedRewardAmt: 500,
+		},
+		{
+			name: "Claim with zero accumulated and zero claimed is a valid no-op claim",
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(50)
+				s.SetAccumulatedRewardAmount(0)
+				s.SetClaimedRewardAmount(0)
+			},
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        0,
+			expectedNewClaimedHeight:     100,
+			expectedClaimedRewardAmount:  0,
+			expectedAccumulatedRewardAmt: 0,
+		},
+		{
+			name: "Idempotent no-op when claimedTimestamp equals currentTimestamp (already fully claimed)",
+			setupState: func(s *EmissionRewardStateResolver) {
+				// Simulates state after a previous successful claim at the same timestamp.
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedRewardAmount(1000)
+				s.SetClaimedRewardAmount(1000)
+			},
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        0,
+			expectedNewClaimedHeight:     100,
+			expectedClaimedRewardAmount:  1000,
+			expectedAccumulatedRewardAmt: 1000,
+		},
+		{
+			name: "Idempotent no-op preserves unclaimed accumulated delta when called in the same second",
+			setupState: func(s *EmissionRewardStateResolver) {
+				// Pathological state where accumulated > claimed but claimedTimestamp is already
+				// at currentTimestamp. The idempotent skip must not silently advance claimed.
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedRewardAmount(1000)
+				s.SetClaimedRewardAmount(400)
+			},
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        0,
+			expectedNewClaimedHeight:     100,
+			expectedClaimedRewardAmount:  400, // must NOT advance
+			expectedAccumulatedRewardAmt: 1000,
+		},
+		{
+			name: "Idempotent no-op when claimedTimestamp is in the future",
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(200)
+				s.SetAccumulatedRewardAmount(800)
+				s.SetClaimedRewardAmount(800)
+			},
+			currentHeight:                100,
+			expectError:                  false,
+			expectedClaimedAmount:        0,
+			expectedNewClaimedHeight:     200, // untouched
+			expectedClaimedRewardAmount:  800,
+			expectedAccumulatedRewardAmt: 800,
 		},
 	}
 
@@ -381,14 +448,56 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 			// Then: Check result
 			if tt.expectError {
 				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				uassert.Equal(t, claimedAmount, tt.expectedClaimedAmount)
-				uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.expectedNewClaimedHeight)
-				uassert.Equal(t, resolver.GetClaimedRewardAmount(), resolver.GetAccumulatedRewardAmount())
+				return
 			}
+
+			uassert.NoError(t, err)
+			uassert.Equal(t, claimedAmount, tt.expectedClaimedAmount)
+			uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.expectedNewClaimedHeight)
+			uassert.Equal(t, resolver.GetClaimedRewardAmount(), tt.expectedClaimedRewardAmount)
+			uassert.Equal(t, resolver.GetAccumulatedRewardAmount(), tt.expectedAccumulatedRewardAmt)
 		})
 	}
+}
+
+// Test that consecutive claimRewards calls within the same Unix second
+// are idempotent. The first call captures the full delta; subsequent
+// calls must return 0, leave state untouched, and never error.
+func TestEmissionRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T) {
+	state := staker.NewEmissionRewardState(u256.NewUint(0))
+	resolver := NewEmissionRewardStateResolver(state)
+
+	resolver.SetClaimedTimestamp(50)
+	resolver.SetAccumulatedRewardAmount(1000)
+	resolver.SetClaimedRewardAmount(200)
+
+	// First claim at ts=100 captures the pending delta (800).
+	first, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, first, int64(800))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1000))
+
+	// Second and third calls at the same ts=100 must be no-ops.
+	second, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, second, int64(0))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1000))
+
+	third, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, third, int64(0))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1000))
+
+	// Advancing to ts=101 with newly accumulated rewards is claimable again.
+	resolver.SetAccumulatedRewardAmount(1500)
+	fourth, err := resolver.claimRewards(101)
+	uassert.NoError(t, err)
+	uassert.Equal(t, fourth, int64(500))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(101))
+	uassert.Equal(t, resolver.GetClaimedRewardAmount(), int64(1500))
 }
 
 // Test updateRewardDebtX128
@@ -559,15 +668,18 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 			expectedClaimedAmount:         300, // Previous claimed amount
 		},
 		{
-			name: "Claim with update when not claimable",
+			name: "Claim with update when not claimable is an idempotent no-op",
 			setupState: func(s *EmissionRewardStateResolver) {
+				// Simulate state after a previous claim at the same timestamp.
 				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedTimestamp(100)
 				s.SetAccumulatedRewardAmount(500)
-				s.SetClaimedRewardAmount(200)
+				s.SetClaimedRewardAmount(500)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
 			currentHeight:                 100,
-			expectError:                   true,
+			expectError:                   false,
+			expectedClaimedAmount:         0,
 		},
 	}
 
