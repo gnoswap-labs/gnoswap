@@ -108,7 +108,9 @@ func (i *poolV1) CreatePool(
 
 		previousRealm := runtime.PreviousRealm()
 		previousRealmAddr := previousRealm.Address()
-		gns.TransferFrom(cross, previousRealmAddr, protocolFeeAddr, poolCreationFee)
+		poolAddr := runtime.CurrentRealm().Address()
+		gns.TransferFrom(cross, previousRealmAddr, poolAddr, poolCreationFee)
+		gns.Approve(cross, protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
 		chain.Emit(
