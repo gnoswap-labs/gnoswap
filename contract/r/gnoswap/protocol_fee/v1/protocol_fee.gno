@@ -25,7 +25,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
@@ -177,7 +177,7 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 // Only callable by pool, router or staker contracts.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
@@ -188,13 +188,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 			ufmt.Sprintf("amount(%d) should not be negative", amount),
 		))
 	}
-
-	if amount == 0 {
-		return
-	}
-
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 
 	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
 	if !exists {
@@ -213,7 +206,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 // Only callable by gov/staker contract.
 // Note: Should be called after successful distribution.
 func (pf *protocolFeeV1) ClearTokenListWithAmount() {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
@@ -231,7 +224,7 @@ func (pf *protocolFeeV1) ClearTokenListWithAmount() {
 // Only callable by gov/staker contract.
 // Note: Should be called after reading accumulated amounts.
 func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)

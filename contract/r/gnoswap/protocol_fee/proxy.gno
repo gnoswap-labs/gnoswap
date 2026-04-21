@@ -33,16 +33,6 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	getImplementation().AddToProtocolFee(tokenPath, amount)
 }
 
-// ClearTokenListWithAmount clears the token list with amounts.
-func ClearTokenListWithAmount(cur realm) {
-	getImplementation().ClearTokenListWithAmount()
-}
-
-// ClearAccuTransferToGovStaker clears accumulated transfers to GovStaker.
-func ClearAccuTransferToGovStaker(cur realm) {
-	getImplementation().ClearAccuTransferToGovStaker()
-}
-
 // GetDevOpsPct returns the DevOps fee percentage.
 func GetDevOpsPct() int64 {
 	return getImplementation().GetDevOpsPct()

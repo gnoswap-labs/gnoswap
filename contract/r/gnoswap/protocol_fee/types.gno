@@ -12,8 +12,6 @@ type IProtocolFeeManager interface {
 	SetDevOpsPct(pct int64)
 	SetGovStakerPct(pct int64)
 	AddToProtocolFee(tokenPath string, amount int64)
-	ClearTokenListWithAmount()
-	ClearAccuTransferToGovStaker()
 }
 
 type IProtocolFeeGetter interface {

@@ -24,7 +24,6 @@ var (
 	errInvalidRouteLastToken  = errors.New("[GNOSWAP-ROUTER-015] invalid route last token")
 	errInvalidSwapAmount      = errors.New("[GNOSWAP-ROUTER-016] invalid swap amount")
 	errRouteHopDisconnected   = errors.New("[GNOSWAP-ROUTER-017] route hop disconnected")
-	errInsufficientBalance    = errors.New("[GNOSWAP-ROUTER-018] insufficient balance for swap")
 )
 
 // addDetailToError adds detail to an error message.
