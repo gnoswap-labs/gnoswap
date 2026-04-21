@@ -254,11 +254,6 @@ func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
 		penalties: make([]int64, warmups),
 	}
 
-	for i := range result.rewards {
-		result.rewards[i] = 0
-		result.penalties[i] = 0
-	}
-
 	return result
 }
 
