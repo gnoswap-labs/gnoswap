@@ -585,6 +585,20 @@ func TestValidateExecutions(t *testing.T) {
 			expectedErrorContains: "invalid address",
 		},
 		{
+			name:                  "Failure - pool CollectProtocol invalid amount0Requested",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100",
+			expectedError:         true,
+			expectedErrorContains: "invalid int64 value: invalid",
+		},
+		{
+			name:                  "Failure - pool CollectProtocol negative amount1Requested",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",100,-1",
+			expectedError:         true,
+			expectedErrorContains: "amount1Requested must be non-negative",
+		},
+		{
 			name:                  "Failure - rbac RegisterRole empty role address",
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
@@ -592,11 +606,32 @@ func TestValidateExecutions(t *testing.T) {
 			expectedErrorContains: "invalid address",
 		},
 		{
+			name:                  "Failure - rbac RegisterRole empty role name",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
+			expectedError:         true,
+			expectedErrorContains: "role name is empty",
+		},
+		{
 			name:                  "Failure - rbac UpdateRoleAddress empty role address",
 			numToExecute:          1,
 			executions:            "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - rbac UpdateRoleAddress admin role",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
+			expectedError:         true,
+			expectedErrorContains: "admin role cannot be updated",
+		},
+		{
+			name:                  "Failure - rbac RemoveRole system role",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*admin",
+			expectedError:         true,
+			expectedErrorContains: "system role cannot be removed",
 		},
 		{
 			name:                  "Failure - launchpad CreateProject empty recipient",
