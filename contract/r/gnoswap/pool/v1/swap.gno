@@ -194,10 +194,17 @@ func (i *poolV1) Swap(
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
 	amounts := i256.MustFromDecimal(amountSpecified)
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
-	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
+	feeGrowthGlobal0X128 := pool.FeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := pool.FeeGrowthGlobal1X128()
+	cache := newSwapCache(
+		feeProtocol,
+		pool.Liquidity(),
+		blockTimestamp,
+		feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128,
+	)
+	state := newSwapState(amounts, getFeeGrowthGlobal(cache, zeroForOne), cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
 		AmountSpecified:   amounts,
@@ -308,10 +315,17 @@ func (i *poolV1) DrySwap(
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
 	amounts := i256.MustFromDecimal(amountSpecified)
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), time.Now().Unix())
-	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
+	feeGrowthGlobal0X128 := poolSnapshot.FeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := poolSnapshot.FeeGrowthGlobal1X128()
+	cache := newSwapCache(
+		feeProtocol,
+		poolSnapshot.Liquidity(),
+		time.Now().Unix(),
+		feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128,
+	)
+	state := newSwapState(amounts, getFeeGrowthGlobal(cache, zeroForOne), cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
 		AmountSpecified:   amounts,
@@ -384,12 +398,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation) (*SwapResult, 
 		if state.protocolFee.Gt(zero) {
 			result.NewProtocolFees.SetToken0(safeAddInt64(result.NewProtocolFees.Token0(), safeConvertToInt64(state.protocolFee)))
 		}
-		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128.Clone()
+		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 	} else {
 		if state.protocolFee.Gt(zero) {
 			result.NewProtocolFees.SetToken1(safeAddInt64(result.NewProtocolFees.Token1(), safeConvertToInt64(state.protocolFee)))
 		}
-		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128.Clone()
+		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128
 	}
 
 	return result, nil
@@ -460,11 +474,11 @@ func getFeeProtocol(slot0 pl.Slot0, zeroForOne bool) uint8 {
 }
 
 // getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one.
-func getFeeGrowthGlobal(pool *pl.Pool, zeroForOne bool) *u256.Uint {
+func getFeeGrowthGlobal(cache *SwapCache, zeroForOne bool) *u256.Uint {
 	if zeroForOne {
-		return pool.FeeGrowthGlobal0X128().Clone()
+		return cache.feeGrowthGlobal0X128
 	}
-	return pool.FeeGrowthGlobal1X128().Clone()
+	return cache.feeGrowthGlobal1X128
 }
 
 // shouldContinueSwap checks if swap should continue based on remaining amount and price limit.
@@ -484,7 +498,7 @@ func (i *poolV1) computeSwapStep(
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
 	// determining the price target for this step
-	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne).Clone()
+	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
 
 	// computing the amounts to be swapped at this step
 	var (
@@ -696,9 +710,9 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 
 		if zeroForOne {
 			fee0 = state.feeGrowthGlobalX128
-			fee1 = pool.FeeGrowthGlobal1X128()
+			fee1 = cache.feeGrowthGlobal1X128
 		} else {
-			fee0 = pool.FeeGrowthGlobal0X128()
+			fee0 = cache.feeGrowthGlobal0X128
 			fee1 = state.feeGrowthGlobalX128
 		}
 

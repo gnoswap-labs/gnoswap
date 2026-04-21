@@ -317,8 +317,10 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 					liquidity:                mockPool.Liquidity(),
 				},
 				Cache: &SwapCache{
-					feeProtocol:    0,
-					liquidityStart: mockPool.Liquidity(),
+					feeProtocol:          0,
+					liquidityStart:       mockPool.Liquidity(),
+					feeGrowthGlobal0X128: mockPool.FeeGrowthGlobal0X128(),
+					feeGrowthGlobal1X128: mockPool.FeeGrowthGlobal1X128(),
 				},
 			}
 
@@ -1337,10 +1339,17 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	// computeSwap should return amount0=0, amount1=2
 	slot0Start := pool.Slot0()
 	amounts := i256.MustFromDecimal(amountSpecified)
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0)
-	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
+	feeGrowthGlobal0X128 := pool.FeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := pool.FeeGrowthGlobal1X128()
+	cache := newSwapCache(
+		feeProtocol,
+		pool.Liquidity(),
+		0,
+		feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128,
+	)
+	state := newSwapState(amounts, getFeeGrowthGlobal(cache, zeroForOne), cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
 		AmountSpecified:   amounts,

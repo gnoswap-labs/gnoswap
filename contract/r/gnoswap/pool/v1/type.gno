@@ -62,6 +62,8 @@ type SwapCache struct {
 	feeProtocol                       uint8      // protocol fee for the input token
 	liquidityStart                    *u256.Uint // liquidity at the beginning of the swap
 	blockTimestamp                    int64      // current block timestamp
+	feeGrowthGlobal0X128              *u256.Uint // fee growth global for token0 at swap start
+	feeGrowthGlobal1X128              *u256.Uint // fee growth global for token1 at swap start
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
@@ -71,11 +73,15 @@ func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
 	blockTimestamp int64,
+	feeGrowthGlobal0X128 *u256.Uint,
+	feeGrowthGlobal1X128 *u256.Uint,
 ) *SwapCache {
 	return &SwapCache{
 		feeProtocol:                       feeProtocol,
 		liquidityStart:                    liquidityStart,
 		blockTimestamp:                    blockTimestamp,
+		feeGrowthGlobal0X128:              feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128:              feeGrowthGlobal1X128,
 		tickCumulative:                    0,
 		secondsPerLiquidityCumulativeX128: u256.Zero(),
 		computedLatestObservation:         false,
@@ -113,7 +119,7 @@ func newSwapState(
 }
 
 func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
-	s.sqrtPriceX96 = sqrtPriceX96.Clone()
+	s.sqrtPriceX96 = sqrtPriceX96
 }
 
 func (s *SwapState) setTick(tick int32) {
