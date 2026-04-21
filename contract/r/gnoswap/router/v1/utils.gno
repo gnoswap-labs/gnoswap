@@ -358,7 +358,7 @@ func safeParseInt64(value string) int64 {
 // parsePoolPathsByRoutePathArr converts pre-split routes into canonical pool paths.
 // The caller is responsible for splitting routePathArr by "," before calling this function.
 func parsePoolPathsByRoutePathArr(routes []string) ([]string, error) {
-	poolPaths := make([]string, 0)
+	poolPaths := make([]string, 0, len(routes))
 
 	for _, route := range routes {
 		for _, routePath := range strings.Split(route, POOL_SEPARATOR) {

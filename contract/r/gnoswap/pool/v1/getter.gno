@@ -263,7 +263,7 @@ func (i *poolV1) GetPoolCount() int {
 // GetPoolPaths returns a paginated list of pool paths.
 func (i *poolV1) GetPoolPaths(offset, count int) []string {
 	pools := i.store.GetPools()
-	poolPaths := make([]string, 0)
+	poolPaths := make([]string, 0, count)
 
 	pools.IterateByOffset(offset, count, func(key string, _ any) bool {
 		poolPaths = append(poolPaths, key)
@@ -295,7 +295,7 @@ func (i *poolV1) GetPoolPositionKeys(poolPath string, offset, count int) []strin
 		return []string{}
 	}
 
-	positionKeys := make([]string, 0)
+	positionKeys := make([]string, 0, count)
 
 	pool.Positions().IterateByOffset(offset, count, func(key string, _ any) bool {
 		positionKeys = append(positionKeys, key)

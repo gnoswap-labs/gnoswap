@@ -24,7 +24,7 @@ func (lp *launchpadV1) GetProjectIDs(offset, count int) []string {
 	}
 
 	projects := lp.store.GetProjects()
-	projectIDs := make([]string, 0)
+	projectIDs := make([]string, 0, count)
 
 	projects.IterateByOffset(offset, count, func(key string, value any) bool {
 		projectIDs = append(projectIDs, key)
@@ -296,7 +296,7 @@ func (lp *launchpadV1) GetProjectTierDepositIDs(projectId string, tier int64, of
 		return []string{}
 	}
 
-	depositIDs := make([]string, 0)
+	depositIDs := make([]string, 0, count)
 
 	rewardManager.Rewards().IterateByOffset(offset, count, func(key string, value any) bool {
 		depositIDs = append(depositIDs, key)

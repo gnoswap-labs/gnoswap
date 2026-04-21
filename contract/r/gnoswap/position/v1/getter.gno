@@ -32,7 +32,7 @@ func (p *positionV1) GetPositionCount() int {
 // GetPositionIDs returns a paginated list of position IDs.
 func (p *positionV1) GetPositionIDs(offset, count int) []uint64 {
 	positions := p.store.GetPositions()
-	positionIDs := make([]uint64, 0)
+	positionIDs := make([]uint64, 0, count)
 
 	positions.IterateByOffset(offset, count, func(key string, _ any) bool {
 		id, err := strconv.ParseUint(key, 10, 64)
