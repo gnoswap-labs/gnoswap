@@ -125,6 +125,20 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
 		},
 		{
+			name:                 "Failure - ParameterChange invalid CollectProtocol amount",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100"}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[4]: invalid int64 value: invalid",
+		},
+		{
+			name:                 "Failure - ParameterChange invalid RBAC admin update",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String()}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[0]: admin role cannot be updated: admin",
+		},
+		{
 			name:                 "Failure - ParameterChange max execution count takes precedence over mismatch",
 			proposalType:         governance.ParameterChange,
 			execution:            governance.NewExecutionInfo(11, []string{"pkg1*EXE*func1*EXE*param1"}),
