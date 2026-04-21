@@ -17,9 +17,10 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
-	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.caller)
-
-	position := p.mustGetPosition(params.positionId)
+	collectFeeResult := p.collectFee(params.positionId, params.caller)
+	fee0Str := collectFeeResult.amount0WithoutFeeStr
+	fee1Str := collectFeeResult.amount1WithoutFeeStr
+	position := collectFeeResult.position
 	positionLiquidity := u256.MustFromDecimal(position.Liquidity())
 	if positionLiquidity.IsZero() {
 		return params.positionId,
@@ -59,9 +60,6 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		panic(errUnderflow)
 	}
 
-	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128Str, feeGrowthInside1LastX128Str := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
-
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0 := safeAddInt64(position.TokensOwed0(), burnedAmount0)
 	tokensOwed1 := safeAddInt64(position.TokensOwed1(), burnedAmount1)
@@ -73,8 +71,6 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	position.SetTokensOwed0(tokensOwed0)
 	position.SetTokensOwed1(tokensOwed1)
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128Str)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128Str)
 	position.SetLiquidity(newLiquidity.ToString())
 
 	p.mustUpdatePosition(params.positionId, *position)

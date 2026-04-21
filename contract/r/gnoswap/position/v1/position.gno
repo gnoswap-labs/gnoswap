@@ -335,11 +335,17 @@ func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, stri
 
 	emission.MintAndDistributeGns(cross)
 
-	return p.collectFee(positionId, caller)
+	result := p.collectFee(positionId, caller)
+	return result.positionId,
+		result.amount0WithoutFeeStr,
+		result.amount1WithoutFeeStr,
+		result.poolKey,
+		result.amount0,
+		result.amount1
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
-func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, string, string, string, string, string) {
+func (p *positionV1) collectFee(positionId uint64, caller address) collectFeeResult {
 	// verify position
 	position := p.mustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.PoolKey())
@@ -423,7 +429,15 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 		"amount1WithoutFee", amount1WithoutFeeStr,
 	)
 
-	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.PoolKey(), amount0, amount1
+	return collectFeeResult{
+		positionId:           positionId,
+		amount0WithoutFeeStr: amount0WithoutFeeStr,
+		amount1WithoutFeeStr: amount1WithoutFeeStr,
+		poolKey:              position.PoolKey(),
+		amount0:              amount0,
+		amount1:              amount1,
+		position:             position,
+	}
 }
 
 // SetPositionOperator sets an operator for a position.
