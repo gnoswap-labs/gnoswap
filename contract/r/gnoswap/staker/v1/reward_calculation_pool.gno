@@ -401,9 +401,8 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		return nil
 	}
 
-	// Cache startTime's tick — updated at end of each iteration to avoid re-querying
-	// the same time value that was already resolved as the previous iteration's endTick.
 	startTick := self.pool.CurrentTick(startTime)
+	startRaw := self.pool.CalculateRawRewardForPosition(startTime, startTick, self.deposit.Deposit)
 
 	for i, warmup := range self.deposit.Warmups() {
 		if startTime >= warmup.NextWarmupTime {
@@ -412,13 +411,9 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		if endTime < warmup.NextWarmupTime {
-			rewardAcc := self.pool.CalculateRewardForPosition(
-				startTime,
-				startTick,
-				endTime,
-				self.pool.CurrentTick(endTime),
-				self.deposit.Deposit,
-			)
+			endTick := self.pool.CurrentTick(endTime)
+			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
@@ -428,13 +423,8 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
-		rewardAcc := self.pool.CalculateRewardForPosition(
-			startTime,
-			startTick,
-			warmup.NextWarmupTime,
-			endTick,
-			self.deposit.Deposit,
-		)
+		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
@@ -442,6 +432,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		startTime = warmup.NextWarmupTime
 		startTick = endTick
+		startRaw = endRaw
 	}
 
 	return nil
