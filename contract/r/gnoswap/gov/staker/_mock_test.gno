@@ -95,14 +95,6 @@ func (m *MockGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) GetEmissionRewardBalance() int64 {
-	res, ok := m.Response.Get("GetEmissionRewardBalance")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
-}
-
 func (m *MockGovStaker) GetTotalxGnsSupply() int64 {
 	res, ok := m.Response.Get("GetTotalxGnsSupply")
 	if !ok {
