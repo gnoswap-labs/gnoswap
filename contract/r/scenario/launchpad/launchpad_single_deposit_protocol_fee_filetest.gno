@@ -159,12 +159,10 @@ func simulateSwapFee(barAmount, quxAmount int64) {
 	println("[INFO] Simulating swap fee from router")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross, protocolFeeAddr, barAmount)
+	qux.Transfer(cross, protocolFeeAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 
@@ -176,12 +174,10 @@ func simulatePoolCreationFee(barAmount, quxAmount int64) {
 	println("[INFO] Simulating pool creation fee")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross, protocolFeeAddr, barAmount)
+	qux.Transfer(cross, protocolFeeAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 
@@ -193,12 +189,10 @@ func simulateWithdrawalFee(barAmount, quxAmount int64) {
 	println("[INFO] Simulating withdrawal fee from LP position")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross, protocolFeeAddr, barAmount)
+	qux.Transfer(cross, protocolFeeAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 
@@ -210,12 +204,10 @@ func simulateUnstakingFee(barAmount, quxAmount int64) {
 	println("[INFO] Simulating unstaking fee from staker rewards")
 
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross, protocolFeeAddr, barAmount)
+	qux.Transfer(cross, protocolFeeAddr, quxAmount)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 

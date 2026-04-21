@@ -118,21 +118,6 @@ func verifyTestImplementation() {
 	})
 	ufmt.Println("[EXPECTED] SetGovStakerPct panics correctly")
 
-	// Test ClearTokenListWithAmount - should panic with test implementation message
-	ufmt.Println("[INFO] Testing ClearTokenListWithAmount function panics correctly")
-	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ClearTokenListWithAmount not supported", func() {
-		protocolFee.ClearTokenListWithAmount(cross)
-	})
-	ufmt.Println("[EXPECTED] ClearTokenListWithAmount panics correctly")
-
-	// Test ClearAccuTransferToGovStaker - should panic with test implementation message
-	ufmt.Println("[INFO] Testing ClearAccuTransferToGovStaker function panics correctly")
-	testing.SetRealm(adminRealm)
-	uassert.AbortsWithMessage(t, "test implementation: ClearAccuTransferToGovStaker not supported", func() {
-		protocolFee.ClearAccuTransferToGovStaker(cross)
-	})
-	ufmt.Println("[EXPECTED] ClearAccuTransferToGovStaker panics correctly")
 }
 
 // Output:
@@ -155,7 +140,3 @@ func verifyTestImplementation() {
 // [EXPECTED] AddToProtocolFee panics correctly
 // [INFO] Testing SetGovStakerPct function panics correctly
 // [EXPECTED] SetGovStakerPct panics correctly
-// [INFO] Testing ClearTokenListWithAmount function panics correctly
-// [EXPECTED] ClearTokenListWithAmount panics correctly
-// [INFO] Testing ClearAccuTransferToGovStaker function panics correctly
-// [EXPECTED] ClearAccuTransferToGovStaker panics correctly

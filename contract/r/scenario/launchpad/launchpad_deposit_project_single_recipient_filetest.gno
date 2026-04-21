@@ -157,15 +157,13 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 
 	// admin > protocol_fee
 	// send qux, bar for testing
-	println("[INFO] Admin transferring tokens to staker")
+	println("[INFO] Admin transferring tokens to protocol fee")
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, barAmount)
-	qux.Transfer(cross, stakerAddr, quxAmount)
+	bar.Transfer(cross, protocolFeeAddr, barAmount)
+	qux.Transfer(cross, protocolFeeAddr, quxAmount)
 
 	println("[INFO] Adding tokens to protocol fee")
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, barAmount)
-	qux.Approve(cross, protocolFeeAddr, quxAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
 	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 	testing.SkipHeights(1)
@@ -290,7 +288,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 2. Protocol fee setup
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to protocol fee
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
@@ -312,7 +310,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 4. Protocol fee setup 2
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to protocol fee
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
@@ -344,7 +342,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 7. Protocol fee setup 3
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to protocol fee
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000

@@ -271,6 +271,11 @@ func TestNewEmergencyConfig(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, govHalted, false)
 
+	// Protocol fee should be halted
+	protocolFeeHalted, err := config.get(OpTypeProtocolFee)
+	uassert.NoError(t, err)
+	uassert.Equal(t, protocolFeeHalted, true)
+
 	// Withdraw should not be halted
 	withdrawHalted, err := config.get(OpTypeWithdraw)
 	uassert.NoError(t, err)
@@ -278,7 +283,7 @@ func TestNewEmergencyConfig(t *testing.T) {
 
 	// All other operations should be halted
 	haltedOperations := []OpType{
-		OpTypePool, OpTypePosition, OpTypeProtocolFee, OpTypeRouter,
+		OpTypePool, OpTypePosition, OpTypeRouter,
 		OpTypeStaker, OpTypeLaunchpad, OpTypeGovStaker,
 		OpTypeXGns, OpTypeCommunityPool, OpTypeEmission,
 	}
@@ -340,6 +345,7 @@ func TestConfig_AllConfigLevelsIntegration(t *testing.T) {
 			expectedState: map[OpType]bool{
 				OpTypePool:       true,
 				OpTypeGovernance: false,
+				OpTypeProtocolFee:true,
 				OpTypeRouter:     true,
 				OpTypeWithdraw:   false,
 			},

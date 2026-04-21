@@ -47,11 +47,11 @@ func main() {
 func setupTokens() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] Transferring bar tokens to staker")
-	bar.Transfer(cross, stakerAddr, 1000)
+	println("[INFO] Transferring bar tokens to protocol_fee")
+	bar.Transfer(cross, protocolFeeAddr, 1000)
 
-	println("[INFO] Transferring qux tokens to staker")
-	qux.Transfer(cross, stakerAddr, 1000)
+	println("[INFO] Transferring qux tokens to protocol_fee")
+	qux.Transfer(cross, protocolFeeAddr, 1000)
 
 	println("[EXPECTED] Bar balance of protocol_fee:",
 		bar.BalanceOf(protocolFeeAddr))
@@ -61,8 +61,6 @@ func setupTokens() {
 
 func recordProtocolFees() {
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 1000)
 
 	println("[INFO] Recording bar protocol fee")
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
@@ -85,10 +83,10 @@ func distributeProtocolFees() {
 
 // Output:
 // [SCENARIO] 1. Setup: Transfer tokens to protocol fee
-// [INFO] Transferring bar tokens to staker
-// [INFO] Transferring qux tokens to staker
-// [EXPECTED] Bar balance of protocol_fee: 0
-// [EXPECTED] Qux balance of protocol_fee: 0
+// [INFO] Transferring bar tokens to protocol_fee
+// [INFO] Transferring qux tokens to protocol_fee
+// [EXPECTED] Bar balance of protocol_fee: 1000
+// [EXPECTED] Qux balance of protocol_fee: 1000
 //
 // [SCENARIO] 2. Record protocol fees
 // [INFO] Recording bar protocol fee

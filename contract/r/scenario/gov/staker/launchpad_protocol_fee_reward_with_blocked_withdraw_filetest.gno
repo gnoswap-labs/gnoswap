@@ -108,12 +108,10 @@ func createLaunchpadProject() {
 func setupProtocolFeeDeposit() {
 	// mock protocol fee deposit (bar, qux)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 

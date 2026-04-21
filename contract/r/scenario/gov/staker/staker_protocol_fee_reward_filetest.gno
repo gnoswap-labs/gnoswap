@@ -86,11 +86,9 @@ func adminDelegateToAlice() {
 
 func mockProtocolFeeDeposit() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	print("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
@@ -108,11 +106,9 @@ func bobDelegateToBob() {
 
 func mockProtocolFeeDepositAgain() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	bar.Transfer(cross, protocolFeeAddr, 1000)
+	qux.Transfer(cross, protocolFeeAddr, 2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	println("[INFO] protocol fee deposited again: bar(1000), qux(2500)")

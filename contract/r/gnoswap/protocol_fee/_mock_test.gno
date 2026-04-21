@@ -59,14 +59,6 @@ func (m *MockProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	m.Response.Get("AddToProtocolFee")
 }
 
-func (m *MockProtocolFee) ClearTokenListWithAmount() {
-	m.Response.Get("ClearTokenListWithAmount")
-}
-
-func (m *MockProtocolFee) ClearAccuTransferToGovStaker() {
-	m.Response.Get("ClearAccuTransferToGovStaker")
-}
-
 func (m *MockProtocolFee) GetDevOpsPct() int64 {
 	res, ok := m.Response.Get("GetDevOpsPct")
 	if !ok {

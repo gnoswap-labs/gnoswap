@@ -65,20 +65,6 @@ func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
-func (t *TestProtocolFee) ClearTokenListWithAmount() {
-	if !t.isActive("ClearTokenListWithAmount") {
-		panic("test implementation: ClearTokenListWithAmount not supported")
-	}
-	t.instance.ClearTokenListWithAmount()
-}
-
-func (t *TestProtocolFee) ClearAccuTransferToGovStaker() {
-	if !t.isActive("ClearAccuTransferToGovStaker") {
-		panic("test implementation: ClearAccuTransferToGovStaker not supported")
-	}
-	t.instance.ClearAccuTransferToGovStaker()
-}
-
 // IProtocolFeeGetter interface
 func (t *TestProtocolFee) GetDevOpsPct() int64 {
 	if !t.isActive("GetDevOpsPct") {

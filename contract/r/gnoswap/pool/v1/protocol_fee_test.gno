@@ -200,9 +200,6 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				TokenApprove(t, barPath, adminAddr, poolAddr, 10000000000)
 				TokenApprove(t, bazPath, adminAddr, poolAddr, 1000000000)
-				testing.SetRealm(testing.NewCodeRealm(poolPath))
-				bar.Approve(cross, protocolFeeAddr, 10000000000)
-				baz.Approve(cross, protocolFeeAddr, 1000000000)
 				testing.SetRealm(posRealm)
 				return mockInstanceHandleWithdrawalFee(barPath, "1000", bazPath, "1000", adminAddr)
 			},

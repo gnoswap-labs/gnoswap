@@ -6,8 +6,6 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 
 	_ "gno.land/r/gnoswap/rbac"
@@ -62,7 +60,6 @@ func TestHandleStakingRewardFee(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initStakerTest(t)
-			protocolFeeAddr, _ := access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
 			getMockInstance().store.SetUnstakingFee(uint64(tc.expectedFee)) // Set the fee globally for the test
 
@@ -71,13 +68,8 @@ func TestHandleStakingRewardFee(t *testing.T) {
 				gns.Transfer(cross, stakerAddr, tc.stakerBalance)
 			}
 
-			if tc.expectedFee > 0 {
-				testing.SetRealm(stakerRealm)
-				gns.Approve(cross, protocolFeeAddr, tc.expectedFee)
-			}
-
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				testing.SetRealm(stakerRealm)
+				testing.SetRealm(testing.NewUserRealm(stakerAddr))
 				return getMockInstance().handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 			}
 

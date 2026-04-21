@@ -40,14 +40,6 @@ func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
 	t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
-func (t *TestProtocolFee) ClearTokenListWithAmount() {
-	t.instance.ClearTokenListWithAmount()
-}
-
-func (t *TestProtocolFee) ClearAccuTransferToGovStaker() {
-	t.instance.ClearAccuTransferToGovStaker()
-}
-
 // IProtocolFeeGetter interface
 func (t *TestProtocolFee) GetDevOpsPct() int64 {
 	return t.instance.GetDevOpsPct()
