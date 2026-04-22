@@ -29,6 +29,7 @@ const (
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
 	StoreKeyPoolTierCounts                   StoreKey = "poolTierCounts"
+	StoreKeyPoolTierLeftAmount              StoreKey = "poolTierLeftAmount"
 	StoreKeyPoolTierLastRewardCacheTimestamp StoreKey = "poolTierLastRewardCacheTimestamp"
 	StoreKeyPoolTierCurrentEmission          StoreKey = "poolTierCurrentEmission"
 	StoreKeyPoolTierGetEmission              StoreKey = "poolTierGetEmission"
@@ -367,6 +368,29 @@ func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
 
 func (s *stakerStore) SetPoolTierCounts(counts [AllTierCount]uint64) error {
 	return s.kvStore.Set(StoreKeyPoolTierCounts.String(), counts)
+}
+
+// PoolTierLeftAmount
+func (s *stakerStore) HasPoolTierLeftAmountStoreKey() bool {
+	return s.kvStore.Has(StoreKeyPoolTierLeftAmount.String())
+}
+
+func (s *stakerStore) GetPoolTierLeftAmount() [AllTierCount]int64 {
+	result, err := s.kvStore.Get(StoreKeyPoolTierLeftAmount.String())
+	if err != nil {
+		panic(err)
+	}
+
+	leftAmount, ok := result.([AllTierCount]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to [AllTierCount]int64: %T", result))
+	}
+
+	return leftAmount
+}
+
+func (s *stakerStore) SetPoolTierLeftAmount(leftAmount [AllTierCount]int64) error {
+	return s.kvStore.Set(StoreKeyPoolTierLeftAmount.String(), leftAmount)
 }
 
 // PoolTierLastRewardCacheTimestamp

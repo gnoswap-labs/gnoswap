@@ -26,6 +26,7 @@ type MockStakerStore struct {
 	poolTierMemberships              *avl.Tree
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
+	poolTierLeftAmount               [sr.AllTierCount]int64
 	poolTierLastRewardCacheTimestamp int64
 	poolTierCurrentEmission          int64
 	poolTierGetEmission              func() int64
@@ -236,6 +237,20 @@ func (s *MockStakerStore) SetPoolTierCounts(counts [sr.AllTierCount]uint64) erro
 	return nil
 }
 
+// PoolTierLeftAmount
+func (s *MockStakerStore) HasPoolTierLeftAmountStoreKey() bool {
+	return s.poolTierLeftAmount != [sr.AllTierCount]int64{}
+}
+
+func (s *MockStakerStore) GetPoolTierLeftAmount() [sr.AllTierCount]int64 {
+	return s.poolTierLeftAmount
+}
+
+func (s *MockStakerStore) SetPoolTierLeftAmount(leftAmount [sr.AllTierCount]int64) error {
+	s.poolTierLeftAmount = leftAmount
+	return nil
+}
+
 // PoolTierLastRewardCacheTimestamp
 func (s *MockStakerStore) HasPoolTierLastRewardCacheTimestampStoreKey() bool {
 	return s.poolTierLastRewardCacheTimestamp != 0
@@ -354,6 +369,7 @@ func newMockStakerStore() *MockStakerStore {
 			Tier3: 0,
 		},
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
+		poolTierLeftAmount:               [sr.AllTierCount]int64{},
 		poolTierLastRewardCacheTimestamp: 0,
 		poolTierCurrentEmission:          0,
 		poolTierGetEmission:              func() int64 { return 0 },

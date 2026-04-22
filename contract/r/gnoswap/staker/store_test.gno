@@ -910,6 +910,65 @@ func TestStoreSetAndGetPoolTierCounts(t *testing.T) {
 	}
 }
 
+func TestStoreSetAndGetPoolTierLeftAmount(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupFn      func(IStakerStore)
+		testFn       func(*testing.T, IStakerStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get pool tier left amount successfully",
+			setupFn: func(ss IStakerStore) {
+				leftAmount := [AllTierCount]int64{0, 11, 22, 33}
+				ss.SetPoolTierLeftAmount(leftAmount)
+			},
+			testFn: func(t *testing.T, ss IStakerStore) {
+				uassert.True(t, ss.HasPoolTierLeftAmountStoreKey(), "should have pool tier left amount after setting")
+				retrieved := ss.GetPoolTierLeftAmount()
+				uassert.Equal(t, int64(11), retrieved[1])
+				uassert.Equal(t, int64(22), retrieved[2])
+				uassert.Equal(t, int64(33), retrieved[3])
+			},
+		},
+		{
+			name: "should not have pool tier left amount initially",
+			testFn: func(t *testing.T, ss IStakerStore) {
+				uassert.False(t, ss.HasPoolTierLeftAmountStoreKey(), "should not have pool tier left amount initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized pool tier left amount",
+			testFn: func(t *testing.T, ss IStakerStore) {
+				ss.GetPoolTierLeftAmount()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized pool tier left amount",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ss := NewStakerStore(kvStore)
+
+			if tt.setupFn != nil {
+				tt.setupFn(ss)
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
+
+			tt.testFn(t, ss)
+		})
+	}
+}
+
 func TestStoreSetAndGetPoolTierLastRewardCacheTimestamp(t *testing.T) {
 	tests := []struct {
 		name         string
