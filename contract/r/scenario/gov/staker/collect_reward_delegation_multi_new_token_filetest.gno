@@ -35,26 +35,26 @@ var (
 
 	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
-	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = testing.NewUserRealm(aliceAddr)
+	aliceAddr = testutils.TestAddress("alice")
+	bobAddr   = testutils.TestAddress("bob")
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 )
 
 func main() {
-	println("[SCENARIO] 1. Admin delegates before any protocol fee token exists")
-	delegateWithMint(adminAddr, 1_000_000)
+	println("[SCENARIO] 1. Alice delegates before any protocol fee token exists")
+	delegateWithMint(aliceAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 2. Deposit bar before alice delegation")
+	println("[SCENARIO] 2. Deposit bar before bob delegation")
 	depositProtocolFee(barPath, 1000)
 	testing.SkipHeights(1)
 	println()
 
-	println("[SCENARIO] 3. Alice delegates after bar already exists")
-	delegateWithMint(aliceAddr, 1_000_000)
+	println("[SCENARIO] 3. Bob delegates after bar already exists")
+	delegateWithMint(bobAddr, 1_000_000)
 	testing.SkipHeights(1)
 	println()
 
@@ -67,12 +67,12 @@ func main() {
 	checkClaimableRewards()
 	println()
 
-	println("[SCENARIO] 6. Collect protocol fee reward for admin")
-	collectAndCheck(adminAddr, 999, 249)
+	println("[SCENARIO] 6. Collect protocol fee reward for alice")
+	collectAndCheck(aliceAddr, 999, 249)
 	println()
 
-	println("[SCENARIO] 7. Collect protocol fee reward for alice")
-	collectAndCheck(aliceAddr, 0, 249)
+	println("[SCENARIO] 7. Collect protocol fee reward for bob")
+	collectAndCheck(bobAddr, 0, 249)
 	println()
 
 	println("[SCENARIO] 8. Check remaining gov/staker balances")
@@ -114,20 +114,20 @@ func checkClaimableRewards() {
 	testing.SetRealm(gnoStakerRealm)
 	pf.DistributeProtocolFee(cross)
 
-	adminEmission, adminProtocolFees, _ := staker.GetClaimableRewardByAddress(adminAddr)
 	aliceEmission, aliceProtocolFees, _ := staker.GetClaimableRewardByAddress(aliceAddr)
+	bobEmission, bobProtocolFees, _ := staker.GetClaimableRewardByAddress(bobAddr)
 
-	assertInt64Equal(adminEmission, 0, "admin emission reward")
 	assertInt64Equal(aliceEmission, 0, "alice emission reward")
-	assertInt64Equal(adminProtocolFees[barPath], 999, "admin claimable bar")
-	assertInt64Equal(adminProtocolFees[quxPath], 249, "admin claimable qux")
-	assertInt64Equal(aliceProtocolFees[barPath], 0, "alice claimable bar")
+	assertInt64Equal(bobEmission, 0, "bob emission reward")
+	assertInt64Equal(aliceProtocolFees[barPath], 999, "alice claimable bar")
 	assertInt64Equal(aliceProtocolFees[quxPath], 249, "alice claimable qux")
+	assertInt64Equal(bobProtocolFees[barPath], 0, "bob claimable bar")
+	assertInt64Equal(bobProtocolFees[quxPath], 249, "bob claimable qux")
 
-	ufmt.Printf("[EXPECTED] admin claimable bar: %d\n", adminProtocolFees[barPath])
-	ufmt.Printf("[EXPECTED] admin claimable qux: %d\n", adminProtocolFees[quxPath])
 	ufmt.Printf("[EXPECTED] alice claimable bar: %d\n", aliceProtocolFees[barPath])
 	ufmt.Printf("[EXPECTED] alice claimable qux: %d\n", aliceProtocolFees[quxPath])
+	ufmt.Printf("[EXPECTED] bob claimable bar: %d\n", bobProtocolFees[barPath])
+	ufmt.Printf("[EXPECTED] bob claimable qux: %d\n", bobProtocolFees[quxPath])
 }
 
 func collectAndCheck(user address, expectedBar, expectedQux int64) {
@@ -165,31 +165,31 @@ func assertInt64Equal(actual, expected int64, label string) {
 }
 
 // Output:
-// [SCENARIO] 1. Admin delegates before any protocol fee token exists
-// [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [SCENARIO] 1. Alice delegates before any protocol fee token exists
+// [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 //
-// [SCENARIO] 2. Deposit bar before alice delegation
+// [SCENARIO] 2. Deposit bar before bob delegation
 // [INFO] protocol fee deposited: gno.land/r/onbloc/bar(1000)
 //
-// [SCENARIO] 3. Alice delegates after bar already exists
-// [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
+// [SCENARIO] 3. Bob delegates after bar already exists
+// [INFO] delegated 1000000 GNS from g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu to g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
 //
 // [SCENARIO] 4. Deposit qux after both delegations exist
 // [INFO] protocol fee deposited: gno.land/r/onbloc/qux(500)
 //
 // [SCENARIO] 5. Distribute protocol fee and check claimable rewards
-// [EXPECTED] admin claimable bar: 999
-// [EXPECTED] admin claimable qux: 249
-// [EXPECTED] alice claimable bar: 0
+// [EXPECTED] alice claimable bar: 999
 // [EXPECTED] alice claimable qux: 249
+// [EXPECTED] bob claimable bar: 0
+// [EXPECTED] bob claimable qux: 249
 //
-// [SCENARIO] 6. Collect protocol fee reward for admin
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 collected bar: 999
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 collected qux: 249
-//
-// [SCENARIO] 7. Collect protocol fee reward for alice
-// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 0
+// [SCENARIO] 6. Collect protocol fee reward for alice
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected bar: 999
 // [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh collected qux: 249
+//
+// [SCENARIO] 7. Collect protocol fee reward for bob
+// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected bar: 0
+// [EXPECTED] g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu collected qux: 249
 //
 // [SCENARIO] 8. Check remaining gov/staker balances
 // [EXPECTED] remaining bar reward: 1
