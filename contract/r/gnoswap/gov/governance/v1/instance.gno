@@ -99,6 +99,7 @@ func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 	return proposals
 }
 
+// hasActiveProposal assumes removeInactiveUserProposals has already pruned stale proposals.
 func (g *governanceV1) hasActiveProposal(proposerAddress address) bool {
 	proposals := g.getUserProposals(proposerAddress.String())
 

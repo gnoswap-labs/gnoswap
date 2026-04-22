@@ -64,6 +64,24 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			expectedHasActive:      false,
 		},
 		{
+			name: "Upcoming proposal should remain active",
+			setup: func(gv *governanceV1) {
+				proposal := governance.NewProposal(
+					1,
+					NewProposalStatus(config, 1000, false, baseCreatedAt),
+					governance.NewProposalMetadata("Test Title", "Test Description"),
+					NewProposalTextData(),
+					proposerAddr, 1, baseCreatedAt,
+					100,
+				)
+				gv.addProposal(proposal)
+			},
+			currentTime:            baseCreatedAt + config.VotingStartDelay - 10,
+			expectedRemainingCount: 1,
+			expectedRemainingIDs:   []int64{1},
+			expectedHasActive:      true,
+		},
+		{
 			name: "All proposals are active - none should be removed",
 			setup: func(gv *governanceV1) {
 				proposal := governance.NewProposal(
@@ -151,6 +169,33 @@ func TestInstance_RemoveInactiveUserProposals(t *testing.T) {
 			expectedRemainingCount: 0,
 			expectedRemainingIDs:   nil,
 			expectedHasActive:      false,
+		},
+		{
+			name: "Executable proposal should remain active",
+			setup: func(gv *governanceV1) {
+				proposal := governance.NewProposal(
+					1,
+					NewProposalStatus(config, 1000, true, baseCreatedAt),
+					governance.NewProposalMetadata("Test Title", "Test Description"),
+					NewProposalCommunityPoolSpendData(
+						"gno.land/r/gnoswap/gns",
+						testutils.TestAddress("recipient"),
+						100,
+						"gno.land/r/gnoswap/community_pool",
+					),
+					proposerAddr, 1, baseCreatedAt,
+					100,
+				)
+
+				proposalResolver := NewProposalResolver(proposal)
+				_ = proposalResolver.Vote(true, 600)
+
+				gv.addProposal(proposal)
+			},
+			currentTime:            baseCreatedAt + config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay + 50,
+			expectedRemainingCount: 1,
+			expectedRemainingIDs:   []int64{1},
+			expectedHasActive:      true,
 		},
 		{
 			name: "Multiple expired proposals - all should be removed",
