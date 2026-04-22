@@ -15,7 +15,6 @@ import (
 	en "gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/protocol_fee"
 
-	"gno.land/r/gnoswap/gns"
 )
 
 const GNS_PATH string = "gno.land/r/gnoswap/gns"
@@ -109,8 +108,8 @@ func (i *poolV1) CreatePool(
 		previousRealm := runtime.PreviousRealm()
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := runtime.CurrentRealm().Address()
-		gns.TransferFrom(cross, previousRealmAddr, poolAddr, poolCreationFee)
-		gns.Approve(cross, protocolFeeAddr, poolCreationFee)
+		common.SafeGRC20TransferFrom(cross, GNS_PATH, previousRealmAddr, poolAddr, poolCreationFee)
+		common.SafeGRC20Approve(cross, GNS_PATH, protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
 		chain.Emit(
