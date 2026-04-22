@@ -320,6 +320,12 @@ func TestValidateExecutions(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name:          "Success - pool CollectProtocol one-sided zero request",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoland/wugnot,3000," + testutils.TestAddress("recipient").String() + ",0,1000000",
+			expectedError: false,
+		},
+		{
 			name:          "Success - pool SetFeeProtocol",
 			numToExecute:  1,
 			executions:    "gno.land/r/gnoswap/pool*EXE*SetFeeProtocol*EXE*1,2",

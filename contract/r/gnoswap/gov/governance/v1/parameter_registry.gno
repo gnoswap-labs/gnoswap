@@ -940,7 +940,7 @@ func roleNameValidator(s string) error {
 func updatableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
-		if err := roleNameValidator(s); err != nil {
+		if err := roleNameValidator(roleName); err != nil {
 			panic(err)
 		}
 
@@ -953,7 +953,7 @@ func updatableRoleNameValidator(s string) error {
 func removableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
-		if err := roleNameValidator(s); err != nil {
+		if err := roleNameValidator(roleName); err != nil {
 			panic(err)
 		}
 

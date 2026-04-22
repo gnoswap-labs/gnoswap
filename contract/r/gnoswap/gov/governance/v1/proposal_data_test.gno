@@ -97,6 +97,12 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name:          "Success - Valid ParameterChange proposal with one-sided CollectProtocol",
+			proposalType:  governance.ParameterChange,
+			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",0,100"}),
+			expectedError: false,
+		},
+		{
 			name:                 "Failure - CommunityPoolSpend with invalid address",
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), validTokenPath, 1000),
