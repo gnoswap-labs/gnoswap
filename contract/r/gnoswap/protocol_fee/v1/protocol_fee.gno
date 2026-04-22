@@ -51,12 +51,8 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			continue
 		}
 
-		// Distribute only the recorded amount, not the entire balance
+		// Distribute only the recorded amount, not the entire balance.
 		distributeAmount := amount
-		if distributeAmount > balance {
-			// This should not happen due to the check above, but safeguard anyway
-			distributeAmount = balance
-		}
 
 		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
 		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
@@ -168,13 +164,14 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 	)
 }
 
-// AddToProtocolFee adds the amount to the tokenListWithAmount.
+// AddToProtocolFee pulls the approved amount into protocol fee accounting.
 //
 // Parameters:
 //   - tokenPath: token contract path
 //   - amount: fee amount to add
 //
 // Only callable by pool, router or staker contracts.
+// Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	halt.AssertIsNotHaltedProtocolFee()

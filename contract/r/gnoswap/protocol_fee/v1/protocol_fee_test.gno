@@ -250,10 +250,11 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 func TestAddToProtocolFee(t *testing.T) {
 	tests := []struct {
-		name      string
-		tokenPath string
-		amount    int64
-		want      int64
+		name          string
+		tokenPath     string
+		initialAmount int64
+		amount        int64
+		want          int64
 	}{
 		{
 			name:      "add bar to protocol fee",
@@ -268,20 +269,29 @@ func TestAddToProtocolFee(t *testing.T) {
 			want:      50,
 		},
 		{
-			name:      "add more qux to protocol fee",
-			tokenPath: "gno.land/r/onbloc/qux",
-			amount:    10,
-			want:      60,
+			name:          "add more qux to protocol fee",
+			tokenPath:     "gno.land/r/onbloc/qux",
+			initialAmount: 50,
+			amount:        10,
+			want:          60,
 		},
 	}
 
-	// Create fresh instance once for all subtests
-	pf := createTestProtocolFee(t)
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			pf := createTestProtocolFee(t)
 			poolRealm := testing.NewCodeRealm(poolPath)
 			protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
+
+			if test.initialAmount > 0 {
+				fundRealmAndApproveProtocolFee(t, poolRealm, test.tokenPath, test.initialAmount)
+				testing.SetRealm(poolRealm)
+				func(cur realm) {
+					testing.SetRealm(protocolFeeRealm)
+					pf.AddToProtocolFee(test.tokenPath, test.initialAmount)
+				}(cross)
+			}
+
 			beforeBalance := common.BalanceOf(test.tokenPath, protocolFeeAddr)
 
 			fundRealmAndApproveProtocolFee(t, poolRealm, test.tokenPath, test.amount)
@@ -383,6 +393,8 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(t *testing.T) {
 		{
 			name:      "success - large amount",
 			tokenPath: "gno.land/r/onbloc/bar",
+			// Keep this within the test token supply now that AddToProtocolFee
+			// performs a real TransferFrom from the caller realm.
 			amount:    1_000_000,
 		},
 	}
