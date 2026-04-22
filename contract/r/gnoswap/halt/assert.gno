@@ -15,6 +15,15 @@ func AssertIsNotHaltedProtocolFee() {
 	AssertIsNotHaltedOperation(OpTypeProtocolFee)
 }
 
+// AssertIsNotHaltedProtocolFeeOrWithdraw allows protocol fee settlement during withdraw-enabled emergency mode.
+// It panics only when both protocol fee and withdraw are halted.
+func AssertIsNotHaltedProtocolFeeOrWithdraw() {
+	if isHaltedOperation(OpTypeProtocolFee) && isHaltedOperation(OpTypeWithdraw) {
+		panic(makeErrorWithDetails(errHalted, OpTypeProtocolFee.String()+" and "+OpTypeWithdraw.String()))
+	}
+	return
+}
+
 // AssertIsNotHaltedRouter panics if router operations are halted.
 func AssertIsNotHaltedRouter() {
 	AssertIsNotHaltedOperation(OpTypeRouter)

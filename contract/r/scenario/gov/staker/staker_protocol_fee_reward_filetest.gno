@@ -34,6 +34,7 @@ var (
 	stakerRealm = testing.NewUserRealm(stakerAddr)
 
 	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 
 	gnoStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	gnoStakerRealm = testing.NewUserRealm(gnoStakerAddr)
@@ -45,6 +46,22 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 )
+
+func fundAndApproveProtocolFeeCallerBar(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerAddr, amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
+
+func fundAndApproveProtocolFeeCallerQux(amount int64) {
+	testing.SetRealm(adminRealm)
+	qux.Transfer(cross, stakerAddr, amount)
+	testing.SetRealm(stakerRealm)
+	qux.Approve(cross, protocolFeeAddr, amount)
+	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] 1. Admin delegates GNS to Alice")
@@ -85,12 +102,9 @@ func adminDelegateToAlice() {
 }
 
 func mockProtocolFeeDeposit() {
-	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	fundAndApproveProtocolFeeCallerBar(1000)
+	fundAndApproveProtocolFeeCallerQux(2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	print("[INFO] protocol fee deposited: bar(1000), qux(2500)\n")
@@ -107,12 +121,9 @@ func bobDelegateToBob() {
 }
 
 func mockProtocolFeeDepositAgain() {
-	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
-	qux.Transfer(cross, stakerAddr, 2500)
+	fundAndApproveProtocolFeeCallerBar(1000)
+	fundAndApproveProtocolFeeCallerQux(2500)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	println("[INFO] protocol fee deposited again: bar(1000), qux(2500)")

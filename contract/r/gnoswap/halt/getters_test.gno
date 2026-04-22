@@ -280,6 +280,7 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 		{"Pool in None", OpTypePool, HaltLevelNone, false},
 		{"Pool in Emergency", OpTypePool, HaltLevelEmergency, true},
 		{"Governance in Emergency", OpTypeGovernance, HaltLevelEmergency, false},
+		{"Protocol fee in Emergency", OpTypeProtocolFee, HaltLevelEmergency, true},
 		{"Withdraw in SafeMode", OpTypeWithdraw, HaltLevelSafeMode, true},
 	}
 

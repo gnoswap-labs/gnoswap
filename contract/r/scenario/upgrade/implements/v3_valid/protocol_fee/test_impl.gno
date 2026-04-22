@@ -36,16 +36,8 @@ func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
 	t.instance.SetGovStakerPct(pct)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
-	t.instance.AddToProtocolFee(tokenPath, amount)
-}
-
-func (t *TestProtocolFee) ClearTokenListWithAmount() {
-	t.instance.ClearTokenListWithAmount()
-}
-
-func (t *TestProtocolFee) ClearAccuTransferToGovStaker() {
-	t.instance.ClearAccuTransferToGovStaker()
+func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+	return t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
 // IProtocolFeeGetter interface
@@ -83,4 +75,20 @@ func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int
 
 func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	return t.instance.GetAccuTransferToDevOpsByTokenPath(path)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStaker() map[string]int64 {
+	return t.instance.GetActualDistributedToGovStaker()
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOps() map[string]int64 {
+	return t.instance.GetActualDistributedToDevOps()
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
+	return t.instance.GetActualDistributedToGovStakerByTokenPath(path)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
+	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }

@@ -22,6 +22,7 @@ type MockStakerStore struct {
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      *avl.Tree
 	unstakingFee                     uint64
+	pendingProtocolFees              map[string]int64
 	pools                            *avl.Tree
 	poolTierMemberships              *avl.Tree
 	poolTierRatio                    sr.TierRatio
@@ -177,6 +178,19 @@ func (s *MockStakerStore) GetUnstakingFee() uint64 {
 
 func (s *MockStakerStore) SetUnstakingFee(fee uint64) error {
 	s.unstakingFee = fee
+	return nil
+}
+
+func (s *MockStakerStore) HasPendingProtocolFeesStoreKey() bool {
+	return s.pendingProtocolFees != nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFees() map[string]int64 {
+	return s.pendingProtocolFees
+}
+
+func (s *MockStakerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	s.pendingProtocolFees = fees
 	return nil
 }
 
@@ -346,6 +360,7 @@ func newMockStakerStore() *MockStakerStore {
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: avl.NewTree(),
 		unstakingFee:                0,
+		pendingProtocolFees:         make(map[string]int64),
 		pools:                       avl.NewTree(),
 		poolTierMemberships:         avl.NewTree(),
 		poolTierRatio: sr.TierRatio{

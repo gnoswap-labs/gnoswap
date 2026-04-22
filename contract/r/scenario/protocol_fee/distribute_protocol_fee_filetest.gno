@@ -28,7 +28,24 @@ var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
+
+func fundAndApproveBarFromStaker(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerRealm.Address(), amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
+
+func fundAndApproveQuxFromStaker(amount int64) {
+	testing.SetRealm(adminRealm)
+	qux.Transfer(cross, stakerRealm.Address(), amount)
+	testing.SetRealm(stakerRealm)
+	qux.Approve(cross, protocolFeeAddr, amount)
+	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] 1. Setup: Transfer tokens to protocol fee")
@@ -45,24 +62,18 @@ func main() {
 }
 
 func setupTokens() {
-	testing.SetRealm(adminRealm)
+	println("[INFO] Funding and approving bar tokens from staker")
+	fundAndApproveBarFromStaker(1000)
 
-	println("[INFO] Transferring bar tokens to staker")
-	bar.Transfer(cross, stakerAddr, 1000)
+	println("[INFO] Funding and approving qux tokens from staker")
+	fundAndApproveQuxFromStaker(1000)
 
-	println("[INFO] Transferring qux tokens to staker")
-	qux.Transfer(cross, stakerAddr, 1000)
-
-	println("[EXPECTED] Bar balance of protocol_fee:",
-		bar.BalanceOf(protocolFeeAddr))
-	println("[EXPECTED] Qux balance of protocol_fee:",
-		qux.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Bar balance of protocol_fee:", bar.BalanceOf(protocolFeeAddr))
+	println("[EXPECTED] Qux balance of protocol_fee:", qux.BalanceOf(protocolFeeAddr))
 }
 
 func recordProtocolFees() {
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	qux.Approve(cross, protocolFeeAddr, 1000)
 
 	println("[INFO] Recording bar protocol fee")
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
@@ -85,8 +96,8 @@ func distributeProtocolFees() {
 
 // Output:
 // [SCENARIO] 1. Setup: Transfer tokens to protocol fee
-// [INFO] Transferring bar tokens to staker
-// [INFO] Transferring qux tokens to staker
+// [INFO] Funding and approving bar tokens from staker
+// [INFO] Funding and approving qux tokens from staker
 // [EXPECTED] Bar balance of protocol_fee: 0
 // [EXPECTED] Qux balance of protocol_fee: 0
 //

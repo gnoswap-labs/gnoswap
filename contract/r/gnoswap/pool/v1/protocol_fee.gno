@@ -39,8 +39,8 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.tryCollectPendingProtocolFees()
 
 	// only position contract can call this function
 	previousRealm := runtime.PreviousRealm()
@@ -56,16 +56,58 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0Int64 := safeConvertToInt64(fee0)
 	fee1Int64 := safeConvertToInt64(fee1)
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Approve(cross, token0Path, protocolFeeAddr, fee0Int64)
-	common.SafeGRC20Approve(cross, token1Path, protocolFeeAddr, fee1Int64)
-
-	pf.AddToProtocolFee(cross, token0Path, fee0Int64)
-	pf.AddToProtocolFee(cross, token1Path, fee1Int64)
+	i.addPendingProtocolFee(token0Path, fee0Int64)
+	i.addPendingProtocolFee(token1Path, fee1Int64)
+	i.tryCollectPendingProtocolFees()
 	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
+}
+
+func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	pendingProtocolFees := cloneStringInt64Map(i.store.GetPendingProtocolFees())
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := i.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func (i *poolV1) tryCollectPendingProtocolFees() {
+	pendingProtocolFees := cloneStringInt64Map(i.store.GetPendingProtocolFees())
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			delete(pendingProtocolFees, tokenPath)
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			return
+		}
+		delete(pendingProtocolFees, tokenPath)
+	}
+
+	if err := i.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func cloneStringInt64Map(src map[string]int64) map[string]int64 {
+	clone := make(map[string]int64, len(src))
+	for key, value := range src {
+		clone[key] = value
+	}
+	return clone
 }
 
 // SetPoolCreationFee sets the poolCreationFee.

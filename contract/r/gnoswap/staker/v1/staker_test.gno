@@ -11,6 +11,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
@@ -674,6 +675,121 @@ func TestUnStakeToken(t *testing.T) {
 		"lower tick liquidity should be reduced")
 	uassert.True(t, finalUpperLiquidity.Lt(initialUpperLiquidity) || finalUpperLiquidity.IsZero(),
 		"upper tick liquidity should be reduced")
+}
+
+func TestUnStakeToken_EmergencyHaltAllowsRecovery(t *testing.T) {
+	initStakerTest(t)
+
+	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(poolPath, 1)
+	mockInstanceAddToken(barPath)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	TokenFaucet(t, barPath, addr01)
+	TokenFaucet(t, bazPath, addr01)
+	TokenFaucet(t, gnsPath, addr01)
+	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+
+	positionId, _, _, _ := MintPosition(
+		t,
+		barPath,
+		bazPath,
+		fee3000,
+		-18000,
+		18000,
+		"10000000",
+		"10000000",
+		"0",
+		"0",
+		max_timeout,
+		addr01,
+		addr01,
+	)
+
+	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
+	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockInstanceStakeToken(positionId, "")
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(t, addr01, stakerAddr, 1000000000)
+	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	mockInstanceCreateExternalIncentive(poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	testing.SkipHeights(100)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	uassert.NotPanics(t, func() {
+		resultPoolPath := mockInstanceUnStakeToken(positionId)
+		uassert.Equal(t, poolPath, resultPoolPath)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
+func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(t *testing.T) {
+	initStakerTest(t)
+
+	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(poolPath, 1)
+	mockInstanceAddToken(barPath)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	TokenFaucet(t, barPath, addr01)
+	TokenFaucet(t, bazPath, addr01)
+	TokenFaucet(t, gnsPath, addr01)
+	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+
+	positionId, _, _, _ := MintPosition(
+		t,
+		barPath,
+		bazPath,
+		fee3000,
+		-18000,
+		18000,
+		"10000000",
+		"10000000",
+		"0",
+		"0",
+		max_timeout,
+		addr01,
+		addr01,
+	)
+
+	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
+	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockInstanceStakeToken(positionId, "")
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	barApprove(t, addr01, stakerAddr, rewardMinimumAmount)
+	gnsApprove(t, addr01, stakerAddr, 1000000000)
+	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	mockInstanceCreateExternalIncentive(poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	testing.SkipHeights(100)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	uassert.NotPanics(t, func() {
+		mockInstanceCollectReward(positionId)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 }
 
 // TestStakeToken_EmptyIncentiveList tests that after staking,

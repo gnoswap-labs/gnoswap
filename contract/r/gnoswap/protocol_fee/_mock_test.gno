@@ -55,16 +55,12 @@ func (m *MockProtocolFee) SetGovStakerPct(pct int64) {
 	m.Response.Get("SetGovStakerPct")
 }
 
-func (m *MockProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
-	m.Response.Get("AddToProtocolFee")
-}
-
-func (m *MockProtocolFee) ClearTokenListWithAmount() {
-	m.Response.Get("ClearTokenListWithAmount")
-}
-
-func (m *MockProtocolFee) ClearAccuTransferToGovStaker() {
-	m.Response.Get("ClearAccuTransferToGovStaker")
+func (m *MockProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+	res, ok := m.Response.Get("AddToProtocolFee")
+	if !ok || len(res) == 0 || res[0] == nil {
+		return nil
+	}
+	return res[0].(error)
 }
 
 func (m *MockProtocolFee) GetDevOpsPct() int64 {
@@ -133,6 +129,38 @@ func (m *MockProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int
 
 func (m *MockProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	res, ok := m.Response.Get("GetAccuTransferToDevOpsByTokenPath")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) GetActualDistributedToGovStaker() map[string]int64 {
+	res, ok := m.Response.Get("GetActualDistributedToGovStaker")
+	if !ok {
+		return nil
+	}
+	return res[0].(map[string]int64)
+}
+
+func (m *MockProtocolFee) GetActualDistributedToDevOps() map[string]int64 {
+	res, ok := m.Response.Get("GetActualDistributedToDevOps")
+	if !ok {
+		return nil
+	}
+	return res[0].(map[string]int64)
+}
+
+func (m *MockProtocolFee) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
+	res, ok := m.Response.Get("GetActualDistributedToGovStakerByTokenPath")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
+	res, ok := m.Response.Get("GetActualDistributedToDevOpsByTokenPath")
 	if !ok {
 		return 0
 	}
