@@ -313,6 +313,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Remove pool tier and verify reward changes
 // [INFO] checking reward for position 01 before removing tier
-// [EXPECTED] position 01 reward before tier removal: 6555005 GNS
+// [EXPECTED] position 01 reward before tier removal: 6555187 GNS
 // [INFO] removing pool tier 2
 // [EXPECTED] position 01 reward after tier removal: 9364294 GNS

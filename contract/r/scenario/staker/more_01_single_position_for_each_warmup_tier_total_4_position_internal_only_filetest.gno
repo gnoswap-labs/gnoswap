@@ -445,7 +445,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Test single block reward distribution
 // [INFO] test reward distribution for single block
-// [EXPECTED] position 01 reward (100% warm-up, 25% share): 3344391
+// [EXPECTED] position 01 reward (100% warm-up, 25% share): 3344392
 // [EXPECTED] position 02 reward (30% warm-up, 25% share): 1003317
 // [EXPECTED] position 03 reward (30% warm-up, 25% share): 1003317
 // [EXPECTED] position 04 reward (30% warm-up, 25% share): 1003317

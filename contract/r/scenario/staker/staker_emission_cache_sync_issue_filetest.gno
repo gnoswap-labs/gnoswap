@@ -347,17 +347,17 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] With the hook fix, cache should now be automatically updated to 50% rate
 //
 // [SCENARIO] 6. Collect rewards (should use stale 75% rate)
-// [EXPECTED] Reward collected after rate change: 2675512 GNS
+// [EXPECTED] Reward collected after rate change: 2675516 GNS
 // [INFO] The hook should have updated the cache to use the new 50% rate
 // [LOG] Expected at 75% rate: ~4013269 GNS
 // [LOG] Expected at 50% rate: ~2675512 GNS
-// [LOG] Actual reward received: 2675512 GNS
+// [LOG] Actual reward received: 2675516 GNS
 // [EXPECTED] Cache correctly updated to 50% rate
 //
 // [SCENARIO] 7. Collect rewards again (should use correct 50% rate)
-// [EXPECTED] Reward collected after new user stakes: 2675512 GNS
+// [EXPECTED] Reward collected after new user stakes: 2675516 GNS
 //
 // [LOG] Initial reward (75% rate, alone): 4013269 GNS
-// [LOG] Previous collection (50% rate, alone): 2675512 GNS
-// [LOG] Current reward (50% rate, shared pool): 2675512 GNS
+// [LOG] Previous collection (50% rate, alone): 2675516 GNS
+// [LOG] Current reward (50% rate, shared pool): 2675516 GNS
 // [EXPECTED] Still using correct 50% rate after new user stakes

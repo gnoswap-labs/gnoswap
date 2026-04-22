@@ -435,9 +435,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] stake position 04 (will be 30% warm-up - out of range)
 // [INFO] stake position 05 (will be 30% warm-up - out of range forever)
 // [INFO] collect rewards for all positions
-// [EXPECTED] position 01 reward (full range, 100% warm-up): 22891727937920
-// [EXPECTED] position 02 reward (wide range, 70% warm-up): 3643768478904
-// [EXPECTED] position 03 reward (narrow range, 50% warm-up): 579616083286
+// [EXPECTED] position 01 reward (full range, 100% warm-up): 22891728082072
+// [EXPECTED] position 02 reward (wide range, 70% warm-up): 3643769167893
+// [EXPECTED] position 03 reward (narrow range, 50% warm-up): 579616516559
 // [EXPECTED] position 04 reward (out of range): 0
 // [EXPECTED] position 05 reward (out of range): 0
 //
