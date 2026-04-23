@@ -97,36 +97,6 @@ func TestAssert_AssertIsNotHaltedProtocolFee(t *testing.T) {
 	}
 }
 
-func TestAssert_AssertIsNotHaltedProtocolFeeOrWithdraw(t *testing.T) {
-	tests := []struct {
-		name        string
-		haltLevel   HaltLevel
-		shouldPanic bool
-	}{
-		{"None level - no panic", HaltLevelNone, false},
-		{"SafeMode - no panic", HaltLevelSafeMode, false},
-		{"Emergency - no panic", HaltLevelEmergency, false},
-		{"Complete - should panic", HaltLevelComplete, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, "halted: protocol_fee and withdraw", func() {
-					AssertIsNotHaltedProtocolFeeOrWithdraw()
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					AssertIsNotHaltedProtocolFeeOrWithdraw()
-				})
-			}
-		})
-	}
-}
-
 func TestAssert_AssertIsNotHaltedRouter(t *testing.T) {
 	tests := []struct {
 		name        string

@@ -218,38 +218,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 	return nil
 }
 
-// ClearTokenListWithAmount clears the tokenListWithAmount.
-//
-// Resets all accumulated token amounts to zero.
-// Only callable by gov/staker contract.
-// Note: Should be called after successful distribution.
-func (pf *protocolFeeV1) ClearTokenListWithAmount() {
-	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
-
-	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
-		panic(err)
-	}
-}
-
-// ClearAccuTransferToGovStaker clears the accuToGovStaker.
-//
-// Resets accumulated transfer tracking for gov/staker.
-// This allows gov/staker to track distributions between calls.
-//
-// Only callable by gov/staker contract.
-// Note: Should be called after reading accumulated amounts.
-func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
-	halt.AssertIsNotHaltedProtocolFeeOrWithdraw()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
-
-	pf.store.InitializeAccuToGovStaker()
-}
-
 func makeEventString(tokenPath string, amount int64) string {
 	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
 }
@@ -274,7 +242,11 @@ func (pf *protocolFeeV1) bookCollectedProtocolFees() error {
 		}
 	}
 
-	return pfs.clearTokenListWithAmount()
+	if err := pfs.clearTokenListWithAmount(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (pf *protocolFeeV1) getOutstandingDistributionTokens() []string {
