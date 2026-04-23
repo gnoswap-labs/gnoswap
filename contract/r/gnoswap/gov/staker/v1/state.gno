@@ -250,48 +250,51 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	}
 }
 
+// latestBefore returns the most recent (timestamp, value) in [0, cutoff] of tree.
+// Returns (0, nil, false) when no entry exists in that range.
+func latestBefore(tree *staker.UintTree, cutoff int64) (int64, any, bool) {
+	var (
+		ts    int64
+		val   any
+		found bool
+	)
+
+	tree.ReverseIterate(0, cutoff, func(key int64, value any) bool {
+		ts, val, found = key, value, true
+		return true
+	})
+
+	return ts, val, found
+}
+
 // getLatestTotalDelegation gets the latest total delegation amount from history.
 func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
-	if history.Size() == 0 {
+	_, v, ok := latestBefore(history, math.MaxInt64)
+	if !ok {
 		return 0
 	}
 
-	latestTotal := int64(0)
+	total, ok := v.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("invalid total type: %T", v))
+	}
 
-	history.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
-		totalInt, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("invalid total type: %T", value))
-		}
-
-		latestTotal = totalInt
-
-		return true // stop after first (most recent) entry
-	})
-
-	return latestTotal
+	return total
 }
 
 // getLatestUserDelegation gets the latest delegation amount for a user from their history.
 func (g *govStakerV1) getLatestUserDelegation(userHistory *staker.UintTree) int64 {
-	if userHistory.Size() == 0 {
+	_, v, ok := latestBefore(userHistory, math.MaxInt64)
+	if !ok {
 		return 0
 	}
 
-	latestAmount := int64(0)
+	amount, ok := v.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("invalid amount type: %T", v))
+	}
 
-	userHistory.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
-		amountInt, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("invalid amount type: %T", value))
-		}
-
-		latestAmount = amountInt
-
-		return true // stop after first (most recent) entry
-	})
-
-	return latestAmount
+	return amount
 }
 
 // addStakeEmissionReward adds stake to emission reward tracking for an address.

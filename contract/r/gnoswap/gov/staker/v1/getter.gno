@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"math"
 	"strconv"
 	"time"
 
@@ -144,34 +143,18 @@ func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 //   - bool: true if snapshot was exists, false otherwise
 func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	history := gs.store.GetTotalDelegationHistory()
-	if history.Size() == 0 {
+
+	_, v, ok := latestBefore(history, snapshotTime)
+	if !ok {
 		return 0, false
 	}
 
-	toTimestamp := snapshotTime
-	if toTimestamp < math.MaxInt64 {
-		toTimestamp = toTimestamp + 1
+	amount, ok := v.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("invalid amount type: %T", v))
 	}
 
-	var (
-		totalAmount int64
-		exists      bool
-	)
-
-	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	history.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
-		amountInt, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("invalid amount type: %T", value))
-		}
-
-		totalAmount = amountInt
-		exists = true
-
-		return true // stop after first (most recent) entry
-	})
-
-	return totalAmount, exists
+	return amount, true
 }
 
 // GetUserDelegationAmountAtSnapshot returns the delegation amount for a specific user at a specific snapshot time.
@@ -188,41 +171,24 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	history := gs.store.GetUserDelegationHistory()
 
-	// Get user's history tree
 	userHistoryRaw, userHistoryExists := history.Get(userAddr.String())
 	if !userHistoryExists {
 		return 0, false
 	}
 
 	userHistory := userHistoryRaw.(*staker.UintTree)
-	if userHistory.Size() == 0 {
+
+	_, v, ok := latestBefore(userHistory, snapshotTime)
+	if !ok {
 		return 0, false
 	}
 
-	toTimestamp := snapshotTime
-	if toTimestamp < math.MaxInt64 {
-		toTimestamp = toTimestamp + 1
+	amount, ok := v.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("invalid amount type: %T", v))
 	}
 
-	var (
-		userAmount int64
-		exists     bool
-	)
-
-	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	userHistory.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
-		amountInt, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("invalid amount type: %T", value))
-		}
-
-		userAmount = amountInt
-		exists = true
-
-		return true // stop after first (most recent) entry
-	})
-
-	return userAmount, exists
+	return amount, true
 }
 
 // GetClaimableRewardByAddress returns claimable reward for address.
