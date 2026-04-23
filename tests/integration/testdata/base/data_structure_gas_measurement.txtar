@@ -1,3 +1,18 @@
+# Gas measurement baseline for data structures (Gno realm, current VM).
+#
+# B+Tree fanout sweep takeaways (see GAS USED lines below for raw values):
+#   - size < ~32 (N=10):      fanout has no effect (tree depth = 1)
+#   - size ~100:              fanout 64 ≈ -8% vs 32, fanout 128 ≈ -16% vs 32
+#   - size ~1000:             fanout 64 ≈ -8% vs 32, fanout 128 ≈ -9% vs 32
+#
+# Guideline: 32→64 is nearly free ~8% for any tree that exceeds a single
+# leaf; 64→128 pays off most in the 100-item range and diminishes past
+# 1000. Small trees (N<32) do not benefit from raising fanout.
+#
+# The Map vs B+Tree columns are also informative: Map is ~5× cheaper for
+# point queries and iteration, so only use B+Tree when ordering, range
+# queries, or deterministic iteration are required.
+
 loadpkg gno.land/p/nt/bptree/v0
 
 ## start a new node
@@ -8,148 +23,220 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/datastructgas -gas-f
 ### Baseline ###
 # Empty function (baseline)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1564561'
+# stdout 'GAS USED:   1621521'
 
 ### B+Tree Operations (fanout 32) ###
 ## Insert
-# B+Tree Insert 10 items
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3953922'
+# B+Tree32 Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3940838'
 
-# B+Tree Insert 100 items
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   13214552'
+# B+Tree32 Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13201468'
 
-# B+Tree Insert 1000 items
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   148293945'
+# B+Tree32 Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   148280861'
 
 ## Get (from pre-populated tree)
-# B+Tree Get from 10 items (single lookup)
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3985298'
+# B+Tree32 Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3972214'
 
-# B+Tree Get from 100 items (single lookup)
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   13266530'
+# B+Tree32 Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13253426'
 
-# B+Tree Get from 1000 items (single lookup)
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   148372824'
+# B+Tree32 Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   148359740'
 
 ## Iterate
-# B+Tree Iterate 10 items
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4211075'
+# B+Tree32 Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Iterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4197991'
 
-# B+Tree Iterate 100 items
-gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   14421415'
+# B+Tree32 Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Iterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   14408331'
+
+### B+Tree Operations (fanout 64) ###
+## Insert
+# B+Tree64 Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Insert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3941439'
+
+# B+Tree64 Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Insert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   12137595'
+
+# B+Tree64 Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Insert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   136919902'
+
+## Get (from pre-populated tree)
+# B+Tree64 Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Get10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3972815'
+
+# B+Tree64 Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   12195595'
+
+# B+Tree64 Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   136984206'
+
+## Iterate
+# B+Tree64 Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Iterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4198501'
+
+# B+Tree64 Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree64Iterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13268326'
+
+### B+Tree Operations (fanout 128) ###
+## Insert
+# B+Tree128 Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Insert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3942449'
+
+# B+Tree128 Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Insert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   11077671'
+
+# B+Tree128 Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Insert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   134992168'
+
+## Get (from pre-populated tree)
+# B+Tree128 Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Get10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3973825'
+
+# B+Tree128 Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   11121661'
+
+# B+Tree128 Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   135056963'
+
+## Iterate
+# B+Tree128 Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Iterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4199511'
+
+# B+Tree128 Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree128Iterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   12130333'
 
 ### Map Operations ###
 ## Insert
 # Map Insert 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1820648'
+# stdout 'GAS USED:   1877608'
 
 # Map Insert 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2802488'
+# stdout 'GAS USED:   2859448'
 
 # Map Insert 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   31330139'
+# stdout 'GAS USED:   31387099'
 
 ## Get (from pre-populated map)
 # Map Get from 10 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1821162'
+# stdout 'GAS USED:   1878122'
 
 # Map Get from 100 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2803002'
+# stdout 'GAS USED:   2859962'
 
 # Map Get from 1000 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   31330653'
+# stdout 'GAS USED:   31387613'
 
 ## Iterate
 # Map Iterate 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1824647'
+# stdout 'GAS USED:   1881607'
 
 # Map Iterate 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2836097'
+# stdout 'GAS USED:   2893057'
 
 ### Slice Operations ###
 ## Append (no pre-allocation)
 # Slice Append 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1614133'
+# stdout 'GAS USED:   1671093'
 
 # Slice Append 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2256235'
+# stdout 'GAS USED:   2313195'
 
 # Slice Append 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   29443425'
+# stdout 'GAS USED:   29500385'
 
 ## Pre-allocated (make with capacity)
 # Slice PreAlloc 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1614710'
+# stdout 'GAS USED:   1671670'
 
 # Slice PreAlloc 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2013697'
+# stdout 'GAS USED:   2070657'
 
 # Slice PreAlloc 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   6002032'
+# stdout 'GAS USED:   6058992'
 
 ### Struct Copy vs Pointer ###
 # Small struct copy (3 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1639233'
+# stdout 'GAS USED:   1696193'
 
 # Small struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1640081'
+# stdout 'GAS USED:   1697041'
 
 # Large struct copy (10 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1643389'
+# stdout 'GAS USED:   1700349'
 
 # Large struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1644103'
+# stdout 'GAS USED:   1701063'
 
 # XLarge struct copy (20 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1649355'
+# stdout 'GAS USED:   1706315'
 
 # XLarge struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1649905'
+# stdout 'GAS USED:   1706865'
 
 ### Multiple struct operations (100 iterations) ###
 # Small struct copy x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1951705'
+# stdout 'GAS USED:   2008665'
 
 # Small struct pointer x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1940673'
+# stdout 'GAS USED:   1997633'
 
 # Large struct copy x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2261870'
+# stdout 'GAS USED:   2318830'
 
 # Large struct pointer x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2244071'
+# stdout 'GAS USED:   2301031'
 
 -- gnomod.toml --
 module = "gno.land/r/test/datastructgas"
@@ -188,56 +275,53 @@ func Empty(cur realm) {
 
 // ============ B+Tree Operations (fanout 32) ============
 
-func BPTreeInsert10(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Insert10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 10; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
 }
 
-func BPTreeInsert100(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Insert100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 100; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
 }
 
-func BPTreeInsert1000(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Insert1000(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 1000; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
 }
 
-func BPTreeGet10(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Get10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 10; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
-	// Single lookup (middle element)
 	_, _ = tree.Get("5")
 }
 
-func BPTreeGet100(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Get100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 100; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
-	// Single lookup (middle element)
 	_, _ = tree.Get("50")
 }
 
-func BPTreeGet1000(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Get1000(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 1000; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
-	// Single lookup (middle element)
 	_, _ = tree.Get("500")
 }
 
-func BPTreeIterate10(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Iterate10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 10; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
@@ -248,8 +332,150 @@ func BPTreeIterate10(cur realm) {
 	})
 }
 
-func BPTreeIterate100(cur realm) {
-	tree := bptree.NewBPTree32()
+func BPTree32Iterate100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+// ============ B+Tree Operations (fanout 64) ============
+
+func BPTree64Insert10(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree64Insert100(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree64Insert1000(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree64Get10(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("5")
+}
+
+func BPTree64Get100(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("50")
+}
+
+func BPTree64Get1000(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("500")
+}
+
+func BPTree64Iterate10(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func BPTree64Iterate100(cur realm) {
+	tree := bptree.NewBPTreeN(64)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+// ============ B+Tree Operations (fanout 128) ============
+
+func BPTree128Insert10(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree128Insert100(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree128Insert1000(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree128Get10(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("5")
+}
+
+func BPTree128Get100(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("50")
+}
+
+func BPTree128Get1000(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	_, _ = tree.Get("500")
+}
+
+func BPTree128Iterate10(cur realm) {
+	tree := bptree.NewBPTreeN(128)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func BPTree128Iterate100(cur realm) {
+	tree := bptree.NewBPTreeN(128)
 	for i := 0; i < 100; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
@@ -288,7 +514,6 @@ func MapGet10(cur realm) {
 	for i := 0; i < 10; i++ {
 		m[strconv.Itoa(i)] = i
 	}
-	// Single lookup
 	_ = m["5"]
 }
 
@@ -297,7 +522,6 @@ func MapGet100(cur realm) {
 	for i := 0; i < 100; i++ {
 		m[strconv.Itoa(i)] = i
 	}
-	// Single lookup
 	_ = m["50"]
 }
 
@@ -306,7 +530,6 @@ func MapGet1000(cur realm) {
 	for i := 0; i < 1000; i++ {
 		m[strconv.Itoa(i)] = i
 	}
-	// Single lookup
 	_ = m["500"]
 }
 
@@ -440,7 +663,6 @@ func XLargeStructPointer(cur realm) {
 	_ = processXLargeStructPointer(s)
 }
 
-// Multiple iterations to see accumulated difference
 func SmallStructCopy100(cur realm) {
 	s := SmallStruct{A: 1, B: 2, C: 3}
 	sum := 0
