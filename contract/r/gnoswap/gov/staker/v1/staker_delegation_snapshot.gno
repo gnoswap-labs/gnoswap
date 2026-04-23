@@ -111,6 +111,7 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetUserDelegationHistory()
 
+	toRemove := make([]string, 0)
 	history.Iterate("", "", func(addrStr string, value any) bool {
 		userHistory := value.(*staker.UintTree)
 
@@ -119,12 +120,16 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 			panic("cleanUserDelegationHistory: entries removed without checkpoint")
 		}
 
-		if userHistory.Size() > 0 {
-			history.Set(addrStr, userHistory)
+		if userHistory.Size() == 0 {
+			toRemove = append(toRemove, addrStr)
 		}
 
 		return false
 	})
+
+	for _, addrStr := range toRemove {
+		history.Remove(addrStr)
+	}
 
 	if err := gs.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)

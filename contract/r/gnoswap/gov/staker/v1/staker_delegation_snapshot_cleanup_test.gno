@@ -247,7 +247,6 @@ func TestCleanUserDelegationHistory_UserRemovedWhenEmpty(t *testing.T) {
 	gs.cleanUserDelegationHistory(1000)
 
 	// User should be removed since history is empty
-	result, exists := store.userDelegationHistory.Get(user1.String())
-	uassert.True(t, exists)
-	uassert.Equal(t, 0, result.(*staker.UintTree).Size())
+	_, exists := store.userDelegationHistory.Get(user1.String())
+	uassert.False(t, exists)
 }
