@@ -20,18 +20,16 @@ type TickResolver struct {
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
-	acc := u256.Zero()
-	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		v, ok := value.(*u256.Uint)
-		if !ok {
-			panic("failed to cast value to *u256.Uint")
-		}
-		acc = v
-		return true
-	})
-	if acc == nil {
-		acc = u256.Zero()
+	_, v, ok := latestBefore(self.OutsideAccumulation(), timestamp)
+	if !ok {
+		return u256.Zero()
 	}
+
+	acc, ok := v.(*u256.Uint)
+	if !ok {
+		panic("failed to cast value to *u256.Uint")
+	}
+
 	return acc
 }
 

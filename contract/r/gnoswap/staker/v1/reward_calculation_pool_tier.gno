@@ -284,14 +284,7 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 	}
 
 	// Find the latest reward cache timestamp for this pool.
-	lastTimestamp := int64(0)
-	hasLast := false
-	pool.RewardCache().ReverseIterate(0, currentTimestamp, func(key int64, _ any) bool {
-		lastTimestamp = key
-		hasLast = true
-		return true
-	})
-
+	lastTimestamp, _, hasLast := latestBefore(pool.RewardCache(), currentTimestamp)
 	if !hasLast {
 		// Fallback to global tier cache cursor.
 		lastTimestamp = self.lastRewardCacheTimestamp
