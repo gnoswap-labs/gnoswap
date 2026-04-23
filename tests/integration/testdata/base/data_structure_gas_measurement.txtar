@@ -8,148 +8,148 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/datastructgas -gas-f
 ### Baseline ###
 # Empty function (baseline)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   546366'
+# stdout 'GAS USED:   1564561'
 
 ### B+Tree Operations (fanout 32) ###
 ## Insert
 # B+Tree Insert 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   3953922'
 
 # B+Tree Insert 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   13214552'
 
 # B+Tree Insert 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   148293945'
 
 ## Get (from pre-populated tree)
 # B+Tree Get from 10 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   3985298'
 
 # B+Tree Get from 100 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   13266530'
 
 # B+Tree Get from 1000 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   148372824'
 
 ## Iterate
 # B+Tree Iterate 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   4211075'
 
 # B+Tree Iterate 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   14421415'
 
 ### Map Operations ###
 ## Insert
 # Map Insert 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2303943'
+# stdout 'GAS USED:   1820648'
 
 # Map Insert 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3037723'
+# stdout 'GAS USED:   2802488'
 
 # Map Insert 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   22758533'
+# stdout 'GAS USED:   31330139'
 
 ## Get (from pre-populated map)
 # Map Get from 10 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2304199'
+# stdout 'GAS USED:   1821162'
 
 # Map Get from 100 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3037979'
+# stdout 'GAS USED:   2803002'
 
 # Map Get from 1000 items (single lookup)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   22758789'
+# stdout 'GAS USED:   31330653'
 
 ## Iterate
 # Map Iterate 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2306892'
+# stdout 'GAS USED:   1824647'
 
 # Map Iterate 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3059572'
+# stdout 'GAS USED:   2836097'
 
 ### Slice Operations ###
 ## Append (no pre-allocation)
 # Slice Append 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   575660'
+# stdout 'GAS USED:   1614133'
 
 # Slice Append 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   1007130'
+# stdout 'GAS USED:   2256235'
 
 # Slice Append 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   23141740'
+# stdout 'GAS USED:   29443425'
 
 ## Pre-allocated (make with capacity)
 # Slice PreAlloc 10 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   574078'
+# stdout 'GAS USED:   1614710'
 
 # Slice PreAlloc 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   790628'
+# stdout 'GAS USED:   2013697'
 
 # Slice PreAlloc 1000 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2956038'
+# stdout 'GAS USED:   6002032'
 
 ### Struct Copy vs Pointer ###
 # Small struct copy (3 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   549708'
+# stdout 'GAS USED:   1639233'
 
 # Small struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   549612'
+# stdout 'GAS USED:   1640081'
 
 # Large struct copy (10 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   551710'
+# stdout 'GAS USED:   1643389'
 
 # Large struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   551054'
+# stdout 'GAS USED:   1644103'
 
 # XLarge struct copy (20 fields)
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   554580'
+# stdout 'GAS USED:   1649355'
 
 # XLarge struct pointer
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   553124'
+# stdout 'GAS USED:   1649905'
 
 ### Multiple struct operations (100 iterations) ###
 # Small struct copy x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   768635'
+# stdout 'GAS USED:   1951705'
 
 # Small struct pointer x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   738443'
+# stdout 'GAS USED:   1940673'
 
 # Large struct copy x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   893298'
+# stdout 'GAS USED:   2261870'
 
 # Large struct pointer x100
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   834826'
+# stdout 'GAS USED:   2244071'
 
 -- gnomod.toml --
 module = "gno.land/r/test/datastructgas"
