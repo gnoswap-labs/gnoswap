@@ -248,9 +248,9 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/staker/v1 
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (2|3)[0-9]{7}ugnot'
 
-### deploy gov/governance (expected gas fee: 70918ugnot, gas wanted: 70918000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance/v1 -pkgpath gno.land/r/gnoswap/gov/governance/v1 -gas-fee 106377ugnot -gas-wanted 106377000 -broadcast -chainid=tendermint_test test1
-# stdout 'GAS USED:   74[0-9]{6}'
+### deploy gov/governance (expected gas fee: 110000ugnot, gas wanted: 110000000)
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance/v1 -pkgpath gno.land/r/gnoswap/gov/governance/v1 -gas-fee 165000ugnot -gas-wanted 165000000 -broadcast -chainid=tendermint_test test1
+# stdout 'GAS USED:   1[0-1][0-9]{7}'
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (2|3)[0-9]{7}ugnot'
 
