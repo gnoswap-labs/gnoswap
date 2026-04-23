@@ -103,6 +103,11 @@ func (m *MockStaker) EndExternalIncentive(targetPoolPath, incentiveId string, re
 	m.Response.Get("EndExternalIncentive")
 }
 
+func (m *MockStaker) CollectExternalIncentivePenalty(targetPoolPath, incentiveId string, refundAddress address) int64 {
+	m.Response.Get("CollectExternalIncentivePenalty")
+	return 0
+}
+
 func (m *MockStaker) AddToken(tokenPath string) {
 	m.Response.Get("AddToken")
 }
@@ -206,6 +211,14 @@ func (m *MockStaker) GetIncentiveDistributedRewardAmount(poolPath string, incent
 
 func (m *MockStaker) GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int64 {
 	res, ok := m.Response.Get("GetIncentiveRemainingRewardAmount")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockStaker) GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+	res, ok := m.Response.Get("GetIncentiveAccumulatedPenaltyAmount")
 	if !ok {
 		return 0
 	}

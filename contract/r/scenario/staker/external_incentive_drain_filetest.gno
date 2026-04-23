@@ -311,10 +311,10 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive FIRST TIME and collect remaining GNS
 // [INFO] FIRST END - Staker GNS balance before: 20000000000
-// [INFO] FIRST END - Staker GNS balance after: 18996826213
+// [INFO] FIRST END - Staker GNS balance after: 18996826215
 // [INFO] FIRST END - Creator GNS balance before: 0
-// [INFO] FIRST END - Creator GNS balance after: 1003173787
-// [INFO] FIRST END - Creator received: 1003173787 GNS
+// [INFO] FIRST END - Creator GNS balance after: 1003173785
+// [INFO] FIRST END - Creator received: 1003173785 GNS
 //
 // [SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times
 // [FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times
@@ -322,7 +322,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 //
 // [SCENARIO] 9. Final verification
 // [RESULT] Final balances after fix:
-//   - Staker GNS balance: 18996826213
-//   - Creator GNS balance: 1003173787
+//   - Staker GNS balance: 18996826215
+//   - Creator GNS balance: 1003173785
 // [VERIFIED] Staker was NOT drained - only one GNS deposit was refunded
 // [VERIFIED] The vulnerability has been successfully fixed

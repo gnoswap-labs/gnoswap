@@ -303,19 +303,20 @@ func NewIncentives(targetPoolPath string) *Incentives {
 }
 
 type ExternalIncentive struct {
-	incentiveId             string  // incentive id
-	startTimestamp          int64   // start time for external reward
-	endTimestamp            int64   // end time for external reward
-	createdHeight           int64   // block height when the incentive was created
-	createdTimestamp        int64   // timestamp when the incentive was created
-	depositGnsAmount        int64   // deposited gns amount
-	targetPoolPath          string  // external reward target pool path
-	rewardToken             string  // external reward token path
-	totalRewardAmount       int64   // total reward amount
-	rewardAmount            int64   // to be distributed reward amount
-	rewardPerSecond         int64   // reward per second
-	distributedRewardAmount int64   // distributed reward amount, when un-staked and refunded
-	creator                 address // creator address
+	incentiveId              string  // incentive id
+	startTimestamp           int64   // start time for external reward
+	endTimestamp             int64   // end time for external reward
+	createdHeight            int64   // block height when the incentive was created
+	createdTimestamp         int64   // timestamp when the incentive was created
+	depositGnsAmount         int64   // deposited gns amount
+	targetPoolPath           string  // external reward target pool path
+	rewardToken              string  // external reward token path
+	totalRewardAmount        int64   // total reward amount
+	rewardAmount             int64   // to be distributed reward amount
+	rewardPerSecond          int64   // reward per second
+	distributedRewardAmount  int64   // distributed reward amount, when un-staked and refunded
+	accumulatedPenaltyAmount int64   // accumulated warmup penalty from CollectReward
+	creator                  address // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
@@ -442,6 +443,16 @@ func (e *ExternalIncentive) SetDistributedRewardAmount(distributedRewardAmount i
 	e.distributedRewardAmount = distributedRewardAmount
 }
 
+// AccumulatedPenaltyAmount returns the accumulated warmup penalty amount
+func (e *ExternalIncentive) AccumulatedPenaltyAmount() int64 {
+	return e.accumulatedPenaltyAmount
+}
+
+// SetAccumulatedPenaltyAmount sets the accumulated warmup penalty amount
+func (e *ExternalIncentive) SetAccumulatedPenaltyAmount(accumulatedPenaltyAmount int64) {
+	e.accumulatedPenaltyAmount = accumulatedPenaltyAmount
+}
+
 // Creator returns the creator address
 func (e *ExternalIncentive) Creator() address {
 	return e.creator
@@ -464,20 +475,21 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
 	return &ExternalIncentive{
-		incentiveId:             e.incentiveId,
-		startTimestamp:          e.startTimestamp,
-		endTimestamp:            e.endTimestamp,
-		createdHeight:           e.createdHeight,
-		createdTimestamp:        e.createdTimestamp,
-		depositGnsAmount:        e.depositGnsAmount,
-		targetPoolPath:          e.targetPoolPath,
-		rewardToken:             e.rewardToken,
-		totalRewardAmount:       e.totalRewardAmount,
-		rewardAmount:            e.rewardAmount,
-		rewardPerSecond:         e.rewardPerSecond,
-		creator:                 e.creator,
-		refunded:                e.refunded,
-		distributedRewardAmount: e.distributedRewardAmount,
+		incentiveId:              e.incentiveId,
+		startTimestamp:           e.startTimestamp,
+		endTimestamp:             e.endTimestamp,
+		createdHeight:            e.createdHeight,
+		createdTimestamp:         e.createdTimestamp,
+		depositGnsAmount:         e.depositGnsAmount,
+		targetPoolPath:           e.targetPoolPath,
+		rewardToken:              e.rewardToken,
+		totalRewardAmount:        e.totalRewardAmount,
+		rewardAmount:             e.rewardAmount,
+		rewardPerSecond:          e.rewardPerSecond,
+		creator:                  e.creator,
+		refunded:                 e.refunded,
+		distributedRewardAmount:  e.distributedRewardAmount,
+		accumulatedPenaltyAmount: e.accumulatedPenaltyAmount,
 	}
 }
 
@@ -498,20 +510,21 @@ func NewExternalIncentive(
 	rewardPerSecond := rewardAmount / incentiveDuration
 
 	return &ExternalIncentive{
-		incentiveId:             incentiveId,
-		targetPoolPath:          targetPoolPath,
-		rewardToken:             rewardToken,
-		totalRewardAmount:       rewardAmount,
-		rewardAmount:            rewardAmount,
-		startTimestamp:          startTimestamp,
-		endTimestamp:            endTimestamp,
-		rewardPerSecond:         rewardPerSecond,
-		distributedRewardAmount: 0,
-		creator:                 creator,
-		createdHeight:           createdHeight,
-		createdTimestamp:        currentTime,
-		depositGnsAmount:        depositGnsAmount,
-		refunded:                false,
+		incentiveId:              incentiveId,
+		targetPoolPath:           targetPoolPath,
+		rewardToken:              rewardToken,
+		totalRewardAmount:        rewardAmount,
+		rewardAmount:             rewardAmount,
+		startTimestamp:           startTimestamp,
+		endTimestamp:             endTimestamp,
+		rewardPerSecond:          rewardPerSecond,
+		distributedRewardAmount:  0,
+		accumulatedPenaltyAmount: 0,
+		creator:                  creator,
+		createdHeight:            createdHeight,
+		createdTimestamp:         currentTime,
+		depositGnsAmount:         depositGnsAmount,
+		refunded:                 false,
 	}
 }
 
