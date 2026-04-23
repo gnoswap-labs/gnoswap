@@ -704,8 +704,8 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 func initLaunchpadProjectTest(t *testing.T) {
 	testing.SetHeight(123)
 	resetTestStore()
-	setTestProjects(new(bptree.BPTree))
-	setTestProjectTierRewardManagers(new(bptree.BPTree))
+	setTestProjects(bptree.NewBPTree32())
+	setTestProjectTierRewardManagers(bptree.NewBPTree32())
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {

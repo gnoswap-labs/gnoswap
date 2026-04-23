@@ -205,7 +205,7 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 
-			// when - convert map to AVL tree
+			// when - convert map to B+Tree
 			userDelegationsTree := bptree.NewBPTree32()
 			for delegator, delegatees := range tc.delegations {
 				delegateesTree := bptree.NewBPTree32()
