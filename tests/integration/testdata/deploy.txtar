@@ -9,6 +9,7 @@
 # The paths in `deploy.mk` are configured based on the gnoswap directory, so the contents of the two files may differ.
 
 loadpkg gno.land/p/nt/bptree/v0
+loadpkg gno.land/p/nt/bptree/v0/rotree
 loadpkg gno.land/p/nt/ufmt/v0
 loadpkg gno.land/p/onbloc/json
 loadpkg gno.land/p/nt/ownable/v0
