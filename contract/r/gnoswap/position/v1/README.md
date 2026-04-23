@@ -139,7 +139,7 @@ tokenId, liquidity, amount0, amount1 := Mint(
 )
 
 // Add liquidity
-positionId, liquidity, amount0, amount1, refund := IncreaseLiquidity(
+positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
     tokenId,
     "500000",
     "1000000000",
@@ -149,9 +149,8 @@ positionId, liquidity, amount0, amount1, refund := IncreaseLiquidity(
 )
 
 // Collect fees
-positionId, token0Path, token1Path, fee0, fee1, poolPath := CollectFee(
+positionId, collected0, collected1, poolPath, totalAmount0, totalAmount1 := CollectFee(
     tokenId,
-    false,  // unwrapResult
 )
 
 // Reposition to new range (requires cleared position)
