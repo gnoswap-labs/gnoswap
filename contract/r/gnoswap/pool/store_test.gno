@@ -462,12 +462,11 @@ func TestStoreSetAndGetSwapStartHook(t *testing.T) {
 			},
 		},
 		{
-			name: "panic when getting uninitialized swap start hook",
+			name: "return nil when getting uninitialized swap start hook",
 			testFn: func(t *testing.T, ps IPoolStore) {
-				ps.GetSwapStartHook()
+				retrieved := ps.GetSwapStartHook()
+				uassert.Equal(t, nil, retrieved)
 			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized swap start hook",
 		},
 	}
 
@@ -519,12 +518,11 @@ func TestStoreSetAndGetSwapEndHook(t *testing.T) {
 			},
 		},
 		{
-			name: "panic when getting uninitialized swap end hook",
+			name: "return nil when getting uninitialized swap end hook",
 			testFn: func(t *testing.T, ps IPoolStore) {
-				ps.GetSwapEndHook()
+				retrieved := ps.GetSwapEndHook()
+				uassert.Equal(t, nil, retrieved)
 			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized swap end hook",
 		},
 	}
 
