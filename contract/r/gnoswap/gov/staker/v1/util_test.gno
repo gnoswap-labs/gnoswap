@@ -139,7 +139,7 @@ func TestUtil_marshal(t *testing.T) {
 	}
 }
 
-// TestUtil_getUint64FromTree tests retrieving uint64 from AVL tree
+// TestUtil_getUint64FromTree tests retrieving uint64 from B+Tree
 func TestUtil_getUint64FromTree(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -204,7 +204,7 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 	}
 }
 
-// TestUtil_updateUint64InTree tests updating uint64 in AVL tree
+// TestUtil_updateUint64InTree tests updating uint64 in B+Tree
 func TestUtil_updateUint64InTree(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -298,7 +298,7 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 	}
 }
 
-// TestUtil_getOrCreateInnerTree tests getting or creating inner AVL tree
+// TestUtil_getOrCreateInnerTree tests getting or creating inner B+Tree
 func TestUtil_getOrCreateInnerTree(t *testing.T) {
 	tests := []struct {
 		name                 string

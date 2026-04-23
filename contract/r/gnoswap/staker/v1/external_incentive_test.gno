@@ -1003,7 +1003,7 @@ func TestLazySync_DuplicatePrevention(t *testing.T) {
 	deposit.AddExternalIncentiveId(incentiveId)
 	deposit.AddExternalIncentiveId(incentiveId)
 
-	// Verify it's only added once (AVL Tree property)
+	// Verify it's only added once (B+Tree property)
 	count := len(deposit.GetExternalIncentiveIdList())
 	if count != 1 {
 		t.Errorf("Expected 1 incentive (no duplicates), got %d", count)

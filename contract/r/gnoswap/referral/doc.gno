@@ -15,8 +15,8 @@
 //     staker, or launchpad contracts).
 //  3. **type.gno**: Defines the ReferralKeeper interface and event type
 //     constants for register, update, and remove operations.
-//  4. **keeper.gno**: Implements the ReferralKeeper interface using an
-//     AVL tree for storage. Includes rate limiting (24-hour cooldown)
+//  4. **keeper.gno**: Implements the ReferralKeeper interface using a
+//     B+Tree for storage. Includes rate limiting (24-hour cooldown)
 //     to prevent abuse of referral operations.
 //  5. **global_keeper.gno**: Exposes the public API functions that
 //     external contracts can use to interact with the referral system.
@@ -46,7 +46,7 @@
 //  3. Address validation ensures both addresses are valid and not
 //     self-referencing.
 //  4. Rate limiting checks prevent operations more than once per 24 hours.
-//  5. The referral is stored in the AVL tree and an event is emitted when registration occurs.
+//  5. The referral is stored in the B+Tree and an event is emitted when registration occurs.
 //
 // ## Authorized Callers
 //
