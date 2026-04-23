@@ -11,7 +11,7 @@ const (
 	MinTimeBetweenUpdates int64 = 24 * 60 * 60
 )
 
-// keeper implements ReferralKeeper using AVL tree storage.
+// keeper implements ReferralKeeper using B+Tree storage.
 // It includes rate limiting to prevent abuse.
 type keeper struct {
 	store   *bptree.BPTree // address(string) -> referral address(string)

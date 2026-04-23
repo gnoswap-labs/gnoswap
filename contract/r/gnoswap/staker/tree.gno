@@ -8,7 +8,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// UintTree is a wrapper around an AVL tree for storing block timestamps as strings.
+// UintTree is a wrapper around a B+Tree for storing block timestamps as strings.
 // Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
 //
 // Methods:

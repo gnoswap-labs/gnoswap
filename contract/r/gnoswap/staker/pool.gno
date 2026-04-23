@@ -214,7 +214,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //
 // Fields:
 //
-//   - incentives: AVL tree storing ExternalIncentive objects indexed by incentiveId
+//   - incentives: B+Tree storing ExternalIncentive objects indexed by incentiveId
 //     The incentiveId serves as the key to efficiently lookup incentive details
 //
 //   - targetPoolPath: String identifier for the pool this incentive collection belongs to

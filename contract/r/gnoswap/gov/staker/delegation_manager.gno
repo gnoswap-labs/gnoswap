@@ -8,12 +8,12 @@ import (
 // It provides efficient lookup and management of user delegations organized by delegator and delegatee addresses.
 type DelegationManager struct {
 	// userDelegations maps delegator address -> *bptree.BPTree (delegatee address -> list of delegation IDs)
-	// Using AVL tree instead of map to handle unbounded growth of delegators efficiently
+	// Using B+Tree instead of map to handle unbounded growth of delegators efficiently
 	userDelegations *bptree.BPTree
 }
 
 // NewDelegationManager creates a new instance of DelegationManager.
-// This factory function initializes the AVL tree structure for tracking user delegations.
+// This factory function initializes the B+Tree structure for tracking user delegations.
 func NewDelegationManager() *DelegationManager {
 	return &DelegationManager{
 		userDelegations: bptree.NewBPTree32(),

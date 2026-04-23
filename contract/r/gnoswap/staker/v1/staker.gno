@@ -199,7 +199,7 @@ func (self *Stakers) removeDeposit(address address, depositId uint64) {
 	depositTree.Remove(EncodeUint(depositId))
 }
 
-// retrieveDepositTree safely casts data to AVL tree type.
+// retrieveDepositTree safely casts data to B+Tree type.
 func retrieveDepositTree(data any) *bptree.BPTree {
 	depositTree, ok := data.(*bptree.BPTree)
 	if !ok {

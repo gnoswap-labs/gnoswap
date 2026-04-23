@@ -20,7 +20,7 @@ const (
 	StoreKeyDelegationNextID = "delegationNextID"
 
 	// Complex data structures
-	StoreKeyDelegations            = "delegations"            // AVL tree of delegations
+	StoreKeyDelegations            = "delegations"            // bptree.BPTree of delegations
 	StoreKeyTotalDelegationHistory = "totalDelegationHistory" // UintTree: timestamp -> int64 (cumulative total)
 	StoreKeyUserDelegationHistory  = "userDelegationHistory"  // bptree.BPTree: address -> *UintTree[timestamp -> int64]
 

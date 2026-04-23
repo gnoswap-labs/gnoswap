@@ -165,7 +165,7 @@ func (vm *versionManager) GetDomainPath() string {
 	return vm.domainPath
 }
 
-// GetInitializers returns the AVL tree containing all registered initializer functions.
+// GetInitializers returns the B+Tree containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
 func (vm *versionManager) GetInitializers() *rotree.ReadOnlyTree {
@@ -241,7 +241,7 @@ func NewVersionManager(
 }
 
 // makeInitializerSafe creates a safe copy of an initializer function for read-only tree access.
-// This is used by GetInitializers to wrap the internal AVL tree in a read-only view,
+// This is used by GetInitializers to wrap the internal B+Tree in a read-only view,
 // preventing external modification of registered initializers.
 func makeInitializerSafe(data any) any {
 	fn, ok := data.(func(store any) any)

@@ -19,13 +19,13 @@ const (
 	StoreKeyConfigCounter   StoreKey = "configCounter"   // Config version counter
 	StoreKeyProposalCounter StoreKey = "proposalCounter" // Proposal ID counter
 
-	StoreKeyConfigs StoreKey = "configs" // Configurations AVL tree
+	StoreKeyConfigs StoreKey = "configs" // Configurations B+Tree
 
-	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
+	StoreKeyProposals StoreKey = "proposals" // Proposals B+Tree
 
-	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
+	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos B+Tree
 
-	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping AVL tree
+	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping B+Tree
 )
 
 type governanceStore struct {

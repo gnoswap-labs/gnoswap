@@ -65,7 +65,7 @@ func DecodeInt64(s string) int64 {
 	return num
 }
 
-// UintTree is a wrapper around an AVL tree for storing block timestamps as strings.
+// UintTree is a wrapper around a B+Tree for storing block timestamps as strings.
 // Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
 //
 // Methods:
