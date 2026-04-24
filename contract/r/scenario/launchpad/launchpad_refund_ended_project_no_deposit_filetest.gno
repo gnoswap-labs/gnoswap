@@ -22,6 +22,11 @@ import (
 )
 
 var (
+	blockTimeSeconds      int64 = 5
+	secondsInDay          int64 = 24 * 60 * 60
+	skipBlocks180Day      int64 = 180 * secondsInDay / blockTimeSeconds
+	endProjectGraceBlocks int64 = 6
+
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
@@ -39,8 +44,8 @@ func main() {
 
 	// [SCENARIO] 2. Skip blocks to end project
 	println("[SCENARIO] 2. Skip blocks to end project")
-	println("[INFO] Skipping 7776000 + 6 blocks to end project")
-	testing.SkipHeights(7776000 + 6) // End project
+	println("[INFO] Skipping 180 days plus grace blocks to end project")
+	testing.SkipHeights(skipBlocks180Day + endProjectGraceBlocks) // End project
 	println()
 
 	// [SCENARIO] 3. Refund ended project without deposit
@@ -153,7 +158,7 @@ func refundEndedProjectWithoutDeposit() {
 // [EXPECTED] Tier 180 amount: 700000000
 //
 // [SCENARIO] 2. Skip blocks to end project
-// [INFO] Skipping 7776000 + 6 blocks to end project
+// [INFO] Skipping 180 days plus grace blocks to end project
 //
 // [SCENARIO] 3. Refund ended project without deposit
 // [INFO] Checking project status before refund
