@@ -187,9 +187,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
-
 	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
 	if !exists {
 		currentAmount = 0
@@ -199,6 +196,9 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	addedAmount := safeAddInt64(currentAmount, amount)
 
 	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
