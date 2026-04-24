@@ -254,11 +254,6 @@ func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
 		penalties: make([]int64, warmups),
 	}
 
-	for i := range result.rewards {
-		result.rewards[i] = 0
-		result.penalties[i] = 0
-	}
-
 	return result
 }
 
@@ -406,6 +401,9 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		return nil
 	}
 
+	startTick := self.pool.CurrentTick(startTime)
+	startRaw := self.pool.CalculateRawRewardForPosition(startTime, startTick, self.deposit.Deposit)
+
 	for i, warmup := range self.deposit.Warmups() {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup
@@ -413,13 +411,9 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		if endTime < warmup.NextWarmupTime {
-			rewardAcc := self.pool.CalculateRewardForPosition(
-				startTime,
-				self.pool.CurrentTick(startTime),
-				endTime,
-				self.pool.CurrentTick(endTime),
-				self.deposit.Deposit,
-			)
+			endTick := self.pool.CurrentTick(endTime)
+			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
@@ -428,19 +422,17 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			break
 		}
 
-		rewardAcc := self.pool.CalculateRewardForPosition(
-			startTime,
-			self.pool.CurrentTick(startTime),
-			warmup.NextWarmupTime,
-			self.pool.CurrentTick(warmup.NextWarmupTime),
-			self.deposit.Deposit,
-		)
+		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
+		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.Liquidity())
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
+		startTick = endTick
+		startRaw = endRaw
 	}
 
 	return nil
