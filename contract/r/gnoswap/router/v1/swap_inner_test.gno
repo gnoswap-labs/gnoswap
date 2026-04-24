@@ -64,6 +64,84 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 	}
 }
 
+func TestMustGetSqrtPriceLimit(t *testing.T) {
+	tests := []struct {
+		name        string
+		limits      map[uint32]*u256.Uint
+		fee         uint32
+		expected    *u256.Uint
+		expectPanic bool
+	}{
+		{
+			name:     "forward limit fee 100",
+			limits:   sqrtPriceLimitForward,
+			fee:      100,
+			expected: sqrtPriceLimitForward[100],
+		},
+		{
+			name:     "forward limit fee 500",
+			limits:   sqrtPriceLimitForward,
+			fee:      500,
+			expected: sqrtPriceLimitForward[500],
+		},
+		{
+			name:     "forward limit fee 3000",
+			limits:   sqrtPriceLimitForward,
+			fee:      3000,
+			expected: sqrtPriceLimitForward[3000],
+		},
+		{
+			name:     "forward limit fee 10000",
+			limits:   sqrtPriceLimitForward,
+			fee:      10000,
+			expected: sqrtPriceLimitForward[10000],
+		},
+		{
+			name:     "backward limit fee 100",
+			limits:   sqrtPriceLimitBackward,
+			fee:      100,
+			expected: sqrtPriceLimitBackward[100],
+		},
+		{
+			name:     "backward limit fee 500",
+			limits:   sqrtPriceLimitBackward,
+			fee:      500,
+			expected: sqrtPriceLimitBackward[500],
+		},
+		{
+			name:     "backward limit fee 3000",
+			limits:   sqrtPriceLimitBackward,
+			fee:      3000,
+			expected: sqrtPriceLimitBackward[3000],
+		},
+		{
+			name:     "backward limit fee 10000",
+			limits:   sqrtPriceLimitBackward,
+			fee:      10000,
+			expected: sqrtPriceLimitBackward[10000],
+		},
+		{
+			name:        "unknown fee panics",
+			limits:      sqrtPriceLimitForward,
+			fee:         9999,
+			expectPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				uassert.PanicsContains(t, "unknown fee", func() {
+					mustGetSqrtPriceLimit(tt.limits, tt.fee)
+				})
+			} else {
+				result := mustGetSqrtPriceLimit(tt.limits, tt.fee)
+				uassert.Equal(t, result.ToString(), tt.expected.ToString())
+			}
+		})
+	}
+}
+
 func TestSwapInner(t *testing.T) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())

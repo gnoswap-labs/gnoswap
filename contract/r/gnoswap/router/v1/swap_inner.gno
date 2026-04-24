@@ -177,16 +177,13 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	}
 
 	if zeroForOne {
-		limit, ok := sqrtPriceLimitForward[fee]
-		if !ok {
-			panic(addDetailToError(
-				errInvalidPoolFeeTier,
-				ufmt.Sprintf("unknown fee(%d)", fee),
-			))
-		}
-		return limit
+		return mustGetSqrtPriceLimit(sqrtPriceLimitForward, fee)
 	}
-	limit, ok := sqrtPriceLimitBackward[fee]
+	return mustGetSqrtPriceLimit(sqrtPriceLimitBackward, fee)
+}
+
+func mustGetSqrtPriceLimit(limits map[uint32]*u256.Uint, fee uint32) *u256.Uint {
+	limit, ok := limits[fee]
 	if !ok {
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
