@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -27,8 +26,6 @@ import (
 )
 
 var (
-	t *testing.T
-
 	adminAddr  = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm = testing.NewUserRealm(adminAddr)
 
@@ -61,12 +58,12 @@ func main() {
 	})
 	println()
 
-	println("[SCENARIO] 4. Not available to claim protocol fee reward in same block")
+	println("[SCENARIO] 4. Second claim in the same block is an idempotent no-op")
 	createPoolByAdmin(barPath, quxPath, 100)
-	uassert.AbortsContains(t, "not claimable", func() {
+	checkBalanceFn(gnsPath, aliceAddr, func() {
 		collectProtocolFee(aliceAddr)
 	})
-	println("[EXPECTED] not claimable protocol fee reward twice in same block")
+	println("[EXPECTED] second claim in the same block returns zero additional reward")
 }
 
 func delegateWithMint(from, to address, amount int64) {
@@ -122,6 +119,8 @@ func checkBalanceFn(tokenPath string, addr address, fn func()) {
 // [INFO] collected protocol fee reward for  g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
 // [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns: 200000000
 //
-// [SCENARIO] 4. Not available to claim protocol fee reward in same block
+// [SCENARIO] 4. Second claim in the same block is an idempotent no-op
 // [INFO] created gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 pool (poolCreationFee: 100000000)
-// [EXPECTED] not claimable protocol fee reward twice in same block
+// [INFO] collected protocol fee reward for  g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
+// [EXPECTED] g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh's balance of gno.land/r/gnoswap/gns: 0
+// [EXPECTED] second claim in the same block returns zero additional reward
