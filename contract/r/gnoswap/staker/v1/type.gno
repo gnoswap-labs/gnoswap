@@ -28,6 +28,13 @@ func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) 
 	self.SetDistributedRewardAmount(distributedRewardAmount)
 }
 
+// addAccumulatedPenaltyAmount adds the given amount to the accumulated penalty amount.
+// Called during CollectReward to track warmup penalties for later collection.
+func (self *ExternalIncentiveResolver) addAccumulatedPenaltyAmount(amount int64) {
+	accumulatedPenaltyAmount := safeAddInt64(self.AccumulatedPenaltyAmount(), amount)
+	self.SetAccumulatedPenaltyAmount(accumulatedPenaltyAmount)
+}
+
 // NewExternalIncentive creates a new external incentive
 func NewExternalIncentiveResolver(
 	externalIncentive *sr.ExternalIncentive,

@@ -66,6 +66,11 @@ func GetIncentiveRemainingRewardAmount(poolPath string, incentiveId string) int6
 	return getImplementation().GetIncentiveRemainingRewardAmount(poolPath, incentiveId)
 }
 
+// GetIncentiveAccumulatedPenaltyAmount returns the accumulated warmup penalty amount of an incentive.
+func GetIncentiveAccumulatedPenaltyAmount(poolPath string, incentiveId string) int64 {
+	return getImplementation().GetIncentiveAccumulatedPenaltyAmount(poolPath, incentiveId)
+}
+
 // GetIncentiveDepositGnsAmount returns the deposited GNS amount of an incentive.
 func GetIncentiveDepositGnsAmount(poolPath string, incentiveId string) int64 {
 	return getImplementation().GetIncentiveDepositGnsAmount(poolPath, incentiveId)

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/r/onbloc/bar"
@@ -136,6 +137,138 @@ func TestSetSwapFee_MultipleChanges(t *testing.T) {
 		if actualFee != expectedFee {
 			t.Errorf("After setting fee to %d, GetSwapFee() = %d", expectedFee, actualFee)
 		}
+	}
+}
+
+// TestExactOutRoundTrip verifies that for ExactOut swaps, the gross-up and
+// fee-deduction round-trip delivers exactly the user-requested amount.
+//
+// Flow: userAmount → calculateExactOutWithRouterFee → poolAmount
+//
+//	poolAmount → calculateRouterFee → feeAmount
+//	poolAmount - feeAmount == userAmount (must hold)
+func TestExactOutRoundTrip(t *testing.T) {
+	tests := []struct {
+		name       string
+		userAmount int64
+		swapFee    uint64
+	}{
+		{"0.15% fee, 1M tokens", 1000000, 15},
+		{"0.15% fee, 100 tokens", 100, 15},
+		{"0.15% fee, 1 token", 1, 15},
+		{"1% fee, 1M tokens", 1000000, 100},
+		{"1% fee, 100 tokens", 100, 100},
+		{"1% fee, 1 token", 1, 100},
+		{"10% fee (max), 1M tokens", 1000000, 1000},
+		{"10% fee (max), 1 token", 1, 1000},
+		{"0.01% fee, 1M tokens", 1000000, 1},
+		{"0.15% fee, large amount (1B)", 1000000000, 15},
+		{"0.15% fee, near-int64-max safe", 4611686018427387903, 15}, // ~int64max/2
+		{"0.15% fee, int64-max safe", 9209536978799493643, 15},      // int64max - 0.15% fee
+		{"0.15% fee, int64-max safe", math.MaxInt64, 0},             // int64max with no fee
+		{"zero fee", 1000000, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
+			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
+			userReceives := poolAmount - feeAmount
+
+			if userReceives != tt.userAmount {
+				t.Errorf("round-trip mismatch: user requested %d, pool fetched %d, fee %d, user receives %d",
+					tt.userAmount, poolAmount, feeAmount, userReceives)
+			}
+		})
+	}
+}
+
+// TestExactOutFeeAccounting verifies that:
+// 1. poolAmount > userAmount (pool provides more than user gets)
+// 2. feeAmount == poolAmount - userAmount (fee is the exact difference)
+// 3. protocolFee == poolAmount * feeRate / 10000 (fee formula is correct)
+func TestExactOutFeeAccounting(t *testing.T) {
+	tests := []struct {
+		name         string
+		userAmount   int64
+		swapFee      uint64
+		expectedPool int64
+		expectedFee  int64
+	}{
+		{
+			name:         "0.15% fee on 1M",
+			userAmount:   1000000,
+			swapFee:      15,
+			expectedPool: 1001502, // 1000000 * 10000 / 9985
+			expectedFee:  1502,    // 1001502 * 15 / 10000
+		},
+		{
+			name:         "1% fee on 1M",
+			userAmount:   1000000,
+			swapFee:      100,
+			expectedPool: 1010101, // 1000000 * 10000 / 9900
+			expectedFee:  10101,   // 1010101 * 100 / 10000
+		},
+		{
+			name:         "0.15% fee on 10",
+			userAmount:   10,
+			swapFee:      15,
+			expectedPool: 10, // 10 * 10000 / 9985 = 10.015 → truncated to 10
+			expectedFee:  0,  // 10 * 15 / 10000 = 0.015 → truncated to 0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
+			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
+
+			if poolAmount != tt.expectedPool {
+				t.Errorf("poolAmount = %d, want %d", poolAmount, tt.expectedPool)
+			}
+			if feeAmount != tt.expectedFee {
+				t.Errorf("feeAmount = %d, want %d", feeAmount, tt.expectedFee)
+			}
+		})
+	}
+}
+
+// TestExactOutSmallAmountRounding verifies rounding behavior at boundaries
+// where the fee truncates to zero, meaning user gets the same amount as pool.
+func TestExactOutSmallAmountRounding(t *testing.T) {
+	tests := []struct {
+		name       string
+		userAmount int64
+		swapFee    uint64
+		expectLoss bool // true if user receives less than requested due to rounding
+	}{
+		{"1 token, 0.15% fee", 1, 15, false},
+		{"2 tokens, 0.15% fee", 2, 15, false},
+		{"10 tokens, 0.15% fee", 10, 15, false},
+		{"100 tokens, 0.15% fee", 100, 15, false},
+		{"666 tokens, 0.15% fee", 666, 15, false},
+		{"667 tokens, 0.15% fee", 667, 15, false},
+		{"1 token, 1% fee", 1, 100, false},
+		{"99 tokens, 1% fee", 99, 100, false},
+		{"100 tokens, 1% fee", 100, 100, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolAmount := calculateExactOutWithRouterFee(tt.userAmount, tt.swapFee)
+			feeAmount := calculateRouterFee(poolAmount, tt.swapFee)
+			userReceives := poolAmount - feeAmount
+
+			if tt.expectLoss {
+				if userReceives >= tt.userAmount {
+					t.Errorf("expected rounding loss but user receives %d >= requested %d", userReceives, tt.userAmount)
+				}
+			} else {
+				if userReceives != tt.userAmount {
+					t.Errorf("user receives %d != requested %d (pool=%d, fee=%d)", userReceives, tt.userAmount, poolAmount, feeAmount)
+				}
+			}
+		})
 	}
 }
 

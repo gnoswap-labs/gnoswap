@@ -507,6 +507,15 @@ func mockInstanceEndExternalIncentive(poolPath string, incentiveId string, refun
 	}(cross)
 }
 
+func mockInstanceCollectExternalIncentivePenalty(poolPath string, incentiveId string, refundAddress address) int64 {
+	var result int64
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		result = getMockInstance().CollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+	}(cross)
+	return result
+}
+
 func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
 	return pn.GetPositionOperator(positionId)
