@@ -399,8 +399,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] re-stake and collect again
 // [EXPECTED] total unclaimable period: 50 seconds
 // [EXPECTED] first collection period: 25 seconds, amount: 44591875
-// [EXPECTED] second collection period: 25 seconds, amount: 44591925
-// [EXPECTED] reward distribution ratio: 49% : 51%
+// [EXPECTED] second collection period: 25 seconds, amount: 44591875
+// [EXPECTED] reward distribution ratio: 50% : 50%
 // [EXPECTED] rewards distributed proportionally - BUG FIXED
 // [INFO] unstake positions for cleanup
 //

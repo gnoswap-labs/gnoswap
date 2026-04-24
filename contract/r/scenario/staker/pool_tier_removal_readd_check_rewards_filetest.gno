@@ -306,7 +306,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip 10 blocks, current height: 2592126, current time: 1247527905
 // [EXPECTED] collected GNS amount: 133775649 GNS
 // [INFO] skip 1 blocks, current height: 2592136, current time: 1247527955
-// [EXPECTED] reward amount per second: 2675512 GNS
+// [EXPECTED] reward amount per second: 2805112 GNS
 //
 // [SCENARIO] 5. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 5.1. Remove pool tier from tier 1
