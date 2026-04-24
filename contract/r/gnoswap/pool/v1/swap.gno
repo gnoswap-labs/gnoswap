@@ -173,7 +173,11 @@ func (i *poolV1) Swap(
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
-		i.store.GetSwapStartHook()(cross, pool.PoolPath(), blockTimestamp)
+		swapStartHook := i.store.GetSwapStartHook()
+
+		if swapStartHook != nil {
+			swapStartHook(cross, pool.PoolPath(), blockTimestamp)
+		}
 	}
 
 	defer func() {
@@ -183,8 +187,13 @@ func (i *poolV1) Swap(
 		pool.SetSlot0(slot0End)
 
 		if i.store.HasSwapEndHook() {
-			if err := i.store.GetSwapEndHook()(cross, pool.PoolPath()); err != nil {
-				panic(err)
+			swapEndHook := i.store.GetSwapEndHook()
+
+			if swapEndHook != nil {
+				err := swapEndHook(cross, pool.PoolPath())
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}()
