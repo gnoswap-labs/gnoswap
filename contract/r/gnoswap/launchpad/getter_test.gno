@@ -1,16 +1,16 @@
 package launchpad
 
 import (
-	avl "gno.land/p/nt/avl/v0"
-	u256 "gno.land/p/gnoswap/uint256"
-	uassert "gno.land/p/nt/uassert/v0"
 	"testing"
+
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 func newLaunchpadDeposit() *Deposit {
-	deposit := NewDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
-	deposit.SetWithdrawnHeight(40)
-	deposit.SetWithdrawnTime(50)
+	deposit := NewDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 20, 30)
+	deposit.SetWithdrawn(50)
 	return deposit
 }
 
@@ -64,8 +64,8 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		assertRaw func(t *testing.T, m *MockLaunchpad)
 	}{
 		{
-			name: "GetProjectIDs",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectIDs", []string{"project-1", "project-2"}) },
+			name:   "GetProjectIDs",
+			setup:  func(m *MockLaunchpad) { m.Response.Set("GetProjectIDs", []string{"project-1", "project-2"}) },
 			getter: func(t *testing.T) any { return GetProjectIDs(0, 10) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -79,7 +79,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProject",
+			name:  "GetProject",
 			setup: func(m *MockLaunchpad) { m.Response.Set("GetProject", newLaunchpadProject(), nil) },
 			getter: func(t *testing.T) any {
 				value, err := GetProject("project-1")
@@ -112,7 +112,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProjectCondition",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectCondition", NewProjectCondition("token-path", 500), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetProjectCondition", NewProjectCondition("token-path", 500), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectCondition("project-1", "token-path")
 				uassert.NoError(t, err)
@@ -161,7 +163,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProjectTiersRatios",
+			name:  "GetProjectTiersRatios",
 			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTiersRatios", map[int64]int64{30: 25, 90: 75}, nil) },
 			getter: func(t *testing.T) any {
 				values, err := GetProjectTiersRatios("project-1")
@@ -182,7 +184,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProjectTierDistributeAmountPerSecondX128",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierDistributeAmountPerSecondX128", u256.MustFromDecimal("100"), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetProjectTierDistributeAmountPerSecondX128", u256.MustFromDecimal("100"), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectTierDistributeAmountPerSecondX128("project-1", 30)
 				uassert.NoError(t, err)
@@ -195,8 +199,8 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetProjectTierDepositIDs",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierDepositIDs", []string{"deposit-1", "deposit-2"}) },
+			name:   "GetProjectTierDepositIDs",
+			setup:  func(m *MockLaunchpad) { m.Response.Set("GetProjectTierDepositIDs", []string{"deposit-1", "deposit-2"}) },
 			getter: func(t *testing.T) any { return GetProjectTierDepositIDs("project-1", 30, 0, 10) },
 			mutate: func(result any) {
 				values := result.([]string)
@@ -210,7 +214,7 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetDeposit",
+			name:  "GetDeposit",
 			setup: func(m *MockLaunchpad) { m.Response.Set("GetDeposit", newLaunchpadDeposit(), nil) },
 			getter: func(t *testing.T) any {
 				value, err := GetDeposit("deposit-1")
@@ -223,10 +227,8 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				deposit.SetProjectID("mutated-project")
 				deposit.SetTier(90)
 				deposit.SetDepositAmount(2000)
-				deposit.SetCreatedHeight(99)
 				deposit.SetCreatedAt(88)
-				deposit.SetWithdrawnHeight(77)
-				deposit.SetWithdrawnTime(66)
+				deposit.SetWithdrawn(66)
 				deposit.SetEndTime(55)
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
@@ -235,16 +237,16 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 				uassert.Equal(t, "project-1", deposit.ProjectID())
 				uassert.Equal(t, int64(30), deposit.Tier())
 				uassert.Equal(t, int64(1000), deposit.DepositAmount())
-				uassert.Equal(t, int64(10), deposit.CreatedHeight())
 				uassert.Equal(t, int64(20), deposit.CreatedAt())
-				uassert.Equal(t, int64(40), deposit.WithdrawnHeight())
 				uassert.Equal(t, int64(50), deposit.WithdrawnTime())
 				uassert.Equal(t, int64(30), deposit.EndTime())
 			},
 		},
 		{
 			name: "GetRewardState",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetRewardState", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetRewardState", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetRewardState("project-1:30", "deposit-1")
 				uassert.NoError(t, err)
@@ -275,7 +277,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProjectTierRewardManager",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierRewardManager", newLaunchpadRewardManager(), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetProjectTierRewardManager", newLaunchpadRewardManager(), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectTierRewardManager("project-1:30")
 				uassert.NoError(t, err)
@@ -326,7 +330,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProjectTierRewardDistributeAmountPerSecondX128",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierRewardDistributeAmountPerSecondX128", u256.MustFromDecimal("300"), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetProjectTierRewardDistributeAmountPerSecondX128", u256.MustFromDecimal("300"), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectTierRewardDistributeAmountPerSecondX128("project-1:30")
 				uassert.NoError(t, err)
@@ -340,7 +346,9 @@ func TestMutableLaunchpadGetterIsolation(t *testing.T) {
 		},
 		{
 			name: "GetProjectTierRewardAccumulatedRewardPerDepositX128",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetProjectTierRewardAccumulatedRewardPerDepositX128", u256.MustFromDecimal("500"), nil) },
+			setup: func(m *MockLaunchpad) {
+				m.Response.Set("GetProjectTierRewardAccumulatedRewardPerDepositX128", u256.MustFromDecimal("500"), nil)
+			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectTierRewardAccumulatedRewardPerDepositX128("project-1:30")
 				uassert.NoError(t, err)

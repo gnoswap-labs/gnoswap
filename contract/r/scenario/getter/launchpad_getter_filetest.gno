@@ -392,26 +392,12 @@ func testDepositGetters(depositId1, depositId2 string) {
 	}
 	println("[EXPECTED] Deposit 1 amount:", amount1)
 
-	// GetDepositWithdrawnHeight
-	withdrawnHeight1, err := launchpad.GetDepositWithdrawnHeight(depositId1)
-	if err != nil {
-		panic(err)
-	}
-	println("[EXPECTED] Deposit 1 withdrawn height:", withdrawnHeight1)
-
 	// GetDepositWithdrawnTime
 	withdrawnTime1, err := launchpad.GetDepositWithdrawnTime(depositId1)
 	if err != nil {
 		panic(err)
 	}
 	println("[EXPECTED] Deposit 1 withdrawn time:", withdrawnTime1)
-
-	// GetDepositCreatedHeight
-	createdHeight1, err := launchpad.GetDepositCreatedHeight(depositId1)
-	if err != nil {
-		panic(err)
-	}
-	println("[EXPECTED] Deposit 1 created height:", createdHeight1)
 
 	// GetDepositCreatedAt
 	createdAt1, err := launchpad.GetDepositCreatedAt(depositId1)
@@ -636,9 +622,7 @@ func testRewardStateGetters(projectTierId, depositId string) {
 // [EXPECTED] Deposit 1 tier: 30
 // [EXPECTED] Deposit 1 project tier ID: gno.land/r/onbloc/obl:123:30
 // [EXPECTED] Deposit 1 amount: 2000000
-// [EXPECTED] Deposit 1 withdrawn height: 0
 // [EXPECTED] Deposit 1 withdrawn time: 0
-// [EXPECTED] Deposit 1 created height: 121083
 // [EXPECTED] Deposit 1 created at: 1235172690
 // [EXPECTED] Deposit 1 end time: 1237764690
 //

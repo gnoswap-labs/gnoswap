@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/uassert/v0"
 )
 
 // Test for NewCounter, next, and Get methods.

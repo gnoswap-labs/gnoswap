@@ -68,9 +68,7 @@ type ILaunchpadGetter interface {
 	GetDepositTier(depositId string) (int64, error)
 	GetDepositProjectTierID(depositId string) (string, error)
 	GetDepositAmount(depositId string) (int64, error)
-	GetDepositWithdrawnHeight(depositId string) (int64, error)
 	GetDepositWithdrawnTime(depositId string) (int64, error)
-	GetDepositCreatedHeight(depositId string) (int64, error)
 	GetDepositCreatedAt(depositId string) (int64, error)
 	GetDepositEndTime(depositId string) (int64, error)
 

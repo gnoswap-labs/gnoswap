@@ -97,7 +97,6 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 					30,
 					ownerAddr,
 					1000000,
-					100,
 					time.Now().Unix(),
 					time.Now().Unix()+1000,
 				)
@@ -128,7 +127,6 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 					30,
 					ownerAddr,
 					1000000,
-					100,
 					time.Now().Unix(),
 					time.Now().Unix()+1000,
 				)
