@@ -431,6 +431,190 @@ func TestSwapMath_PriceBounds(t *testing.T) {
 	}
 }
 
+func TestSwapMath_ResultStaysWithinCurrentTargetInterval(t *testing.T) {
+	tests := []struct {
+		name      string
+		current   *u256.Uint
+		target    *u256.Uint
+		liquidity *u256.Uint
+		amount    *i256.Int
+		feePips   uint64
+	}{
+		{
+			name:      "exact_in_partial_move_one_for_zero",
+			current:   encodePriceSqrtTest(t, "1", "1"),
+			target:    encodePriceSqrtTest(t, "121", "100"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			amount:    i256.MustFromDecimal("100000000000000000"),
+			feePips:   600,
+		},
+		{
+			name:      "exact_in_partial_move_zero_for_one",
+			current:   encodePriceSqrtTest(t, "121", "100"),
+			target:    encodePriceSqrtTest(t, "1", "1"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			amount:    i256.MustFromDecimal("100000000000000000"),
+			feePips:   600,
+		},
+		{
+			name:      "exact_out_partial_move_one_for_zero",
+			current:   encodePriceSqrtTest(t, "1", "1"),
+			target:    encodePriceSqrtTest(t, "121", "100"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			amount:    i256.MustFromDecimal("-50000000000000000"),
+			feePips:   3000,
+		},
+		{
+			name:      "exact_out_partial_move_zero_for_one",
+			current:   encodePriceSqrtTest(t, "121", "100"),
+			target:    encodePriceSqrtTest(t, "1", "1"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			amount:    i256.MustFromDecimal("-100000000000000000"),
+			feePips:   3000,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			sqrtNext, _, _, _ := SwapMathComputeSwapStep(
+				test.current, test.target, test.liquidity, test.amount, test.feePips,
+			)
+
+			lowerBound := test.current
+			upperBound := test.target
+			if test.current.Gt(test.target) {
+				lowerBound = test.target
+				upperBound = test.current
+			}
+
+			uassert.True(t, sqrtNext.Gte(lowerBound),
+				"sqrtNext should stay above lower bound: got %s, lower %s, current %s, target %s",
+				sqrtNext.ToString(), lowerBound.ToString(), test.current.ToString(), test.target.ToString(),
+			)
+			uassert.True(t, sqrtNext.Lte(upperBound),
+				"sqrtNext should stay below upper bound: got %s, upper %s, current %s, target %s",
+				sqrtNext.ToString(), upperBound.ToString(), test.current.ToString(), test.target.ToString(),
+			)
+		})
+	}
+}
+
+func TestSwapMath_TargetThresholdBehavior(t *testing.T) {
+	tests := []struct {
+		name      string
+		current   *u256.Uint
+		target    *u256.Uint
+		liquidity *u256.Uint
+		feePips   uint64
+		exactIn   bool
+	}{
+		{
+			name:      "exact_in_threshold_one_for_zero",
+			current:   encodePriceSqrtTest(t, "1", "1"),
+			target:    encodePriceSqrtTest(t, "121", "100"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			feePips:   600,
+			exactIn:   true,
+		},
+		{
+			name:      "exact_in_threshold_zero_for_one",
+			current:   encodePriceSqrtTest(t, "121", "100"),
+			target:    encodePriceSqrtTest(t, "1", "1"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			feePips:   600,
+			exactIn:   true,
+		},
+		{
+			name:      "exact_out_threshold_one_for_zero",
+			current:   encodePriceSqrtTest(t, "1", "1"),
+			target:    encodePriceSqrtTest(t, "121", "100"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			feePips:   3000,
+			exactIn:   false,
+		},
+		{
+			name:      "exact_out_threshold_zero_for_one",
+			current:   encodePriceSqrtTest(t, "121", "100"),
+			target:    encodePriceSqrtTest(t, "1", "1"),
+			liquidity: u256.MustFromDecimal("2000000000000000000"),
+			feePips:   3000,
+			exactIn:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			lowerBound, upperBound := intervalBounds(test.current, test.target)
+
+			if test.exactIn {
+				amountInToTarget := amountInToReachTarget(test.current, test.target, test.liquidity)
+				threshold := exactInAmountToReachTarget(amountInToTarget, test.feePips)
+
+				belowThreshold := new(u256.Uint).Sub(threshold, u256.One())
+				belowAmount := i256.FromUint256(belowThreshold)
+				belowNext, _, _, _ := SwapMathComputeSwapStep(
+					test.current, test.target, test.liquidity, belowAmount, test.feePips,
+				)
+				assertWithinInterval(t, belowNext, lowerBound, upperBound, test.current, test.target)
+				uassert.True(t, belowNext.Neq(test.target),
+					"below threshold should remain inside interval without hitting target: got %s target %s",
+					belowNext.ToString(), test.target.ToString(),
+				)
+
+				atAmount := i256.FromUint256(threshold)
+				atNext, _, _, _ := SwapMathComputeSwapStep(
+					test.current, test.target, test.liquidity, atAmount, test.feePips,
+				)
+				uassert.True(t, atNext.Eq(test.target),
+					"at threshold should hit target exactly: got %s target %s",
+					atNext.ToString(), test.target.ToString(),
+				)
+
+				aboveAmount := i256.FromUint256(new(u256.Uint).Add(threshold, u256.One()))
+				aboveNext, _, _, _ := SwapMathComputeSwapStep(
+					test.current, test.target, test.liquidity, aboveAmount, test.feePips,
+				)
+				uassert.True(t, aboveNext.Eq(test.target),
+					"above threshold should still stop at target without overshoot: got %s target %s",
+					aboveNext.ToString(), test.target.ToString(),
+				)
+				return
+			}
+
+			amountOutToTarget := amountOutToReachTarget(test.current, test.target, test.liquidity)
+
+			belowAmountU256 := new(u256.Uint).Sub(amountOutToTarget, u256.One())
+			belowAmount := i256.Zero().Neg(i256.FromUint256(belowAmountU256))
+			belowNext, _, _, _ := SwapMathComputeSwapStep(
+				test.current, test.target, test.liquidity, belowAmount, test.feePips,
+			)
+			assertWithinInterval(t, belowNext, lowerBound, upperBound, test.current, test.target)
+			uassert.True(t, belowNext.Neq(test.target),
+				"below threshold should remain inside interval without hitting target: got %s target %s",
+				belowNext.ToString(), test.target.ToString(),
+			)
+
+			atAmount := i256.Zero().Neg(i256.FromUint256(amountOutToTarget))
+			atNext, _, _, _ := SwapMathComputeSwapStep(
+				test.current, test.target, test.liquidity, atAmount, test.feePips,
+			)
+			uassert.True(t, atNext.Eq(test.target),
+				"at threshold should hit target exactly: got %s target %s",
+				atNext.ToString(), test.target.ToString(),
+			)
+
+			aboveAmount := i256.Zero().Neg(i256.FromUint256(new(u256.Uint).Add(amountOutToTarget, u256.One())))
+			aboveNext, _, _, _ := SwapMathComputeSwapStep(
+				test.current, test.target, test.liquidity, aboveAmount, test.feePips,
+			)
+			uassert.True(t, aboveNext.Eq(test.target),
+				"above threshold should still stop at target without overshoot: got %s target %s",
+				aboveNext.ToString(), test.target.ToString(),
+			)
+		})
+	}
+}
+
 func TestSwapMath_Symmetry(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1098,4 +1282,43 @@ func sqrtTest(t *testing.T, x *u256.Uint) *u256.Uint {
 		y.Add(z, temp).Rsh(y, 1)
 	}
 	return z
+}
+
+func intervalBounds(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
+	if a.Gt(b) {
+		return b, a
+	}
+	return a, b
+}
+
+func assertWithinInterval(t *testing.T, actual, lowerBound, upperBound, current, target *u256.Uint) {
+	t.Helper()
+
+	uassert.True(t, actual.Gte(lowerBound),
+		"sqrtNext should stay above lower bound: got %s, lower %s, current %s, target %s",
+		actual.ToString(), lowerBound.ToString(), current.ToString(), target.ToString(),
+	)
+	uassert.True(t, actual.Lte(upperBound),
+		"sqrtNext should stay below upper bound: got %s, upper %s, current %s, target %s",
+		actual.ToString(), upperBound.ToString(), current.ToString(), target.ToString(),
+	)
+}
+
+func amountInToReachTarget(current, target, liquidity *u256.Uint) *u256.Uint {
+	if current.Gte(target) {
+		return getAmount0DeltaHelper(target, current, liquidity, true)
+	}
+	return getAmount1DeltaHelper(current, target, liquidity, true)
+}
+
+func amountOutToReachTarget(current, target, liquidity *u256.Uint) *u256.Uint {
+	if current.Gte(target) {
+		return getAmount1DeltaHelper(target, current, liquidity, false)
+	}
+	return getAmount0DeltaHelper(current, target, liquidity, false)
+}
+
+func exactInAmountToReachTarget(amountIn *u256.Uint, feePips uint64) *u256.Uint {
+	withoutFeeRateInPips := u256.NewUint(denominator - feePips)
+	return u256.MulDivRoundingUp(amountIn, u256.NewUint(denominator), withoutFeeRateInPips)
 }
