@@ -108,8 +108,8 @@ func (i *poolV1) CreatePool(
 		previousRealm := runtime.PreviousRealm()
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := runtime.CurrentRealm().Address()
-		common.SafeGRC20TransferFrom(cross, GNS_PATH, previousRealmAddr, poolAddr, poolCreationFee)
 		common.SafeGRC20Approve(cross, GNS_PATH, protocolFeeAddr, poolCreationFee)
+		common.SafeGRC20TransferFrom(cross, GNS_PATH, previousRealmAddr, poolAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
 		chain.Emit(
