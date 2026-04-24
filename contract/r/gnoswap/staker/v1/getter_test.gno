@@ -320,6 +320,14 @@ func TestGetterDepositBasicProperties(t *testing.T) {
 	}
 }
 
+func TestGetterDepositInternalLastCollectFallbackToStakeTime(t *testing.T) {
+	state := setupBasicTestState(t)
+	state.deposit.SetInternalRewardLastCollectTime(0)
+
+	lastCollectTime := state.instance.GetDepositInternalRewardLastCollectTimestamp(state.positionId)
+	uassert.Equal(t, state.fixedTimestamp, lastCollectTime)
+}
+
 func TestGetterDepositLiquidity(t *testing.T) {
 	state := setupBasicTestState(t)
 
