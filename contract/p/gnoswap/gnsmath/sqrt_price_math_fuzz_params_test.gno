@@ -345,9 +345,27 @@ type nextPriceAmount1AddParams struct {
 }
 
 func (p *nextPriceAmount1AddParams) IsValid() bool {
+	sqrtP := u256.MustFromDecimal(p.sqrtPX96)
 	liquidity := u256.MustFromDecimal(p.liquidity)
+	amount := u256.MustFromDecimal(p.amount)
 
 	if liquidity.IsZero() {
+		return false
+	}
+
+	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
+	var quotient *u256.Uint
+
+	if amount.Lte(max160) {
+		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
+		quotient = u256.Zero().Div(shifted, liquidity)
+	} else {
+		q96 := u256.Zero().Lsh(u256.One(), Q96_RESOLUTION)
+		quotient = u256.MulDiv(amount, q96, liquidity)
+	}
+
+	result, overflow := u256.Zero().AddOverflow(sqrtP, quotient)
+	if overflow || result.Gt(max160) {
 		return false
 	}
 

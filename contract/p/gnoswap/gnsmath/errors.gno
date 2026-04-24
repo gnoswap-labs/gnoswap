@@ -6,6 +6,7 @@ import (
 
 var (
 	errInvalidPoolSqrtPrice     = errors.New("invalid pool sqrt price calculation: product/amount != sqrtPX96 or numerator1 <= product")
+	errSqrtPriceOverflow        = errors.New("sqrt price overflow")
 	errSqrtPriceExceedsQuotient = errors.New("sqrt price exceeds calculated quotient")
 	errSqrtPriceZero            = errors.New("sqrtPX96 should not be zero")
 	errLiquidityZero            = errors.New("liquidity should not be zero")
