@@ -23,3 +23,16 @@ func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(t *testing.T) {
 	uassert.Equal(t, secondStoreAllowedTokens[0], GNS_PATH)
 	uassert.Equal(t, secondStoreAllowedTokens[1], WUGNOT_PATH)
 }
+
+func TestMockStakerStore_PoolTierLeftAmountTracksKeyPresenceSeparatelyFromZeroValue(t *testing.T) {
+	store := &MockStakerStore{}
+	uassert.Equal(t, false, store.HasPoolTierLeftAmountStoreKey())
+
+	err := store.SetPoolTierLeftAmount([AllTierCount]int64{})
+	uassert.Nil(t, err)
+	uassert.Equal(t, true, store.HasPoolTierLeftAmountStoreKey())
+	leftAmount := store.GetPoolTierLeftAmount()
+	for i := 0; i < AllTierCount; i++ {
+		uassert.Equal(t, int64(0), leftAmount[i])
+	}
+}

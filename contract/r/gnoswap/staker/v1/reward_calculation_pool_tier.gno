@@ -190,6 +190,9 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 			panic("counts underflow: removing from empty tier")
 		}
 		self.counts[currentTier]--
+		if self.counts[currentTier] == 0 {
+			self.tierLeftAmount[currentTier] = 0
+		}
 	}
 
 	if nextTier == 0 {
@@ -300,6 +303,9 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 		// Fallback to global tier cache cursor.
 		lastTimestamp = self.lastRewardCacheTimestamp
 	}
+	if lastTimestamp < self.lastRewardCacheTimestamp {
+		lastTimestamp = self.lastRewardCacheTimestamp
+	}
 
 	if currentTimestamp <= lastTimestamp {
 		return
@@ -308,16 +314,18 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 	// Determine halving boundaries since the pool's last cached reward timestamp.
 	halvingTimestamps, halvingEmissions := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
 	poolResolver := NewPoolResolver(pool)
+	// Lazy single-pool caching intentionally keeps carryover local to this call.
+	// The authoritative tier carryover is persisted only through cacheReward/applyCacheToAllPools.
 	localTierLeftAmount := self.tierLeftAmount
+	currentEmission := self.currentEmission
 
 	if len(halvingTimestamps) == 0 {
 		// No emission change within the range => use current emission.
-		self.applyCacheToPool(poolResolver, tierNum, lastTimestamp, currentTimestamp, self.currentEmission, &localTierLeftAmount)
+		self.applyCacheToPool(poolResolver, tierNum, lastTimestamp, currentTimestamp, currentEmission, &localTierLeftAmount)
 		return
 	}
 
 	// Apply caching at every halving boundary.
-	currentEmission := self.currentEmission
 	for i, hvTimestamp := range halvingTimestamps {
 		currentEmission = halvingEmissions[i]
 		self.applyCacheToPool(poolResolver, tierNum, lastTimestamp, hvTimestamp, currentEmission, &localTierLeftAmount)
@@ -458,12 +466,16 @@ func calculatePoolRewardForInterval(emission int64, tierRatio int64, tierCount i
 	}
 
 	tierReward := safeMulDivInt64(emission, tierRatio, 100)
-	tierRewardForInterval := safeAddInt64(safeMulInt64(tierReward, intervalDuration), carryover)
 	poolIntervalDivisor := safeMulInt64(tierCount, intervalDuration)
-	poolReward := tierRewardForInterval / poolIntervalDivisor
-	distributedReward := safeMulInt64(safeMulInt64(poolReward, tierCount), intervalDuration)
+	basePoolReward := tierReward / tierCount
+	remainderPerBlock := safeSubInt64(tierReward, safeMulInt64(basePoolReward, tierCount))
+	// carryover is the non-negative remainder that was not distributable in prior intervals.
+	remainderForInterval := safeAddInt64(safeMulInt64(remainderPerBlock, intervalDuration), carryover)
+	extraPoolReward := remainderForInterval / poolIntervalDivisor
+	poolReward := safeAddInt64(basePoolReward, extraPoolReward)
+	distributedReward := safeMulInt64(extraPoolReward, poolIntervalDivisor)
 
-	return poolReward, safeSubInt64(tierRewardForInterval, distributedReward)
+	return poolReward, safeSubInt64(remainderForInterval, distributedReward)
 }
 
 func (self *PoolTier) computeTierRewardsForInterval(startTimestamp, endTimestamp, emission int64, tierLeftAmount [AllTierCount]int64) (map[uint64]int64, [AllTierCount]int64) {

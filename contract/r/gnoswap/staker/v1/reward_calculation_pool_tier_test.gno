@@ -141,6 +141,23 @@ func TestPoolTierChangeTier(t *testing.T) {
 	}
 }
 
+func TestPoolTierChangeTier_ClearsDustWhenTierBecomesEmpty(t *testing.T) {
+	pools := NewPools()
+	currentTime := int64(100000)
+	testPool := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
+
+	poolTier := NewPoolTier(pools, currentTime, testPool,
+		func() int64 { return 100 },
+		func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier.tierLeftAmount[Tier1] = 10
+
+	poolTier.changeTier(currentTime+1, pools, testPool, 0)
+
+	uassert.Equal(t, int64(0), poolTier.tierLeftAmount[Tier1])
+	poolTier.changeTier(currentTime+2, pools, testPool, 1)
+	uassert.Equal(t, int64(0), poolTier.tierLeftAmount[Tier1])
+}
+
 func TestCurrentAllTierCounts(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
@@ -385,6 +402,16 @@ func TestCalculatePoolRewardForInterval(t *testing.T) {
 			intervalDuration: 1,
 			carryover:        2,
 			expectedReward:   34,
+			expectedCarry:    0,
+		},
+		{
+			name:             "large interval avoids overflow in interval math",
+			emission:         10000000000000000,
+			tierRatio:        100,
+			tierCount:        1,
+			intervalDuration: 1000,
+			carryover:        0,
+			expectedReward:   10000000000000000,
 			expectedCarry:    0,
 		},
 	}
