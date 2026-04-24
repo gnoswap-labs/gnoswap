@@ -41,11 +41,6 @@ func calculateClaimableReward(r *launchpad.RewardState, accumRewardPerDepositX12
 		return 0
 	}
 
-	// Return 0 if accumulated reward is less than price debt
-	if accumRewardPerDepositX128.Lt(r.PriceDebtX128()) {
-		return 0
-	}
-
 	reward := calculateReward(r, accumRewardPerDepositX128)
 	claimedAmount := r.ClaimedAmount()
 

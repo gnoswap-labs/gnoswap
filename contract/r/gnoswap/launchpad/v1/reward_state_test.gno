@@ -137,6 +137,21 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
+func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
+	state := launchpad.NewRewardState(
+		u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+		1,
+		100,
+		200,
+		100,
+	)
+
+	reward := calculateReward(state, q128.Clone())
+	claimable := calculateClaimableReward(state, q128.Clone())
+	uassert.Equal(t, int64(1), reward)
+	uassert.Equal(t, int64(1), claimable)
+}
+
 func TestRewardState_newRewardState(t *testing.T) {
 	tests := []struct {
 		name                string
