@@ -172,8 +172,8 @@ func (i *poolV1) Swap(
 	blockTimestamp := time.Now().Unix()
 
 	// Call swap start hook if set
-	if swapStartHook := i.store.GetSwapStartHook(); swapStartHook != nil {
-		swapStartHook(cross, pool.PoolPath(), blockTimestamp)
+	if i.store.HasSwapStartHook() {
+		i.store.GetSwapStartHook()(cross, pool.PoolPath(), blockTimestamp)
 	}
 
 	defer func() {
@@ -182,9 +182,8 @@ func (i *poolV1) Swap(
 		slot0End.SetUnlocked(true)
 		pool.SetSlot0(slot0End)
 
-		if swapEndHook := i.store.GetSwapEndHook(); swapEndHook != nil {
-			err := swapEndHook(cross, pool.PoolPath())
-			if err != nil {
+		if i.store.HasSwapEndHook() {
+			if err := i.store.GetSwapEndHook()(cross, pool.PoolPath()); err != nil {
 				panic(err)
 			}
 		}
