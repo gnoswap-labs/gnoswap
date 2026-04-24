@@ -6,8 +6,11 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	testutils "gno.land/p/nt/testutils/v0"
-	uassert "gno.land/p/nt/uassert/v0"
+
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/uassert/v0"
+	"gno.land/p/nt/ufmt/v0"
+
 	"gno.land/r/gnoswap/staker"
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -1084,6 +1087,94 @@ func TestPoolsIterateAll(t *testing.T) {
 			})
 
 			uassert.Equal(t, tt.numPools, count)
+		})
+	}
+}
+
+// TestRewardScalerPrecision verifies that using MulDiv with a combined
+// (liquidity * rewardPerSecond) scaler avoids the silent wrapping that
+// occurs when Mul(rewardAcc, liquidity) exceeds 256 bits.
+//
+// Old approach (wraps):
+//
+//	temp = Mul(rewardAcc, liquidity)          // 256-bit, wraps on overflow
+//	result = MulDiv(temp, rewardPerSecond, q128)
+//
+// New approach (512-bit safe):
+//
+//	scaler = Mul(liquidity, rewardPerSecond)  // ≤ 191 bits, never overflows
+//	result = MulDiv(rewardAcc, scaler, q128)  // 512-bit intermediate
+func TestRewardScalerPrecision(t *testing.T) {
+	tests := []struct {
+		name         string
+		rewardAcc    *u256.Uint
+		liquidity    *u256.Uint
+		rewardPerSec int64
+		expected     *u256.Uint
+		// oldWraps indicates that the old Mul-based approach would silently
+		// wrap the intermediate product, producing a wrong result.
+		oldWraps bool
+	}{
+		{
+			// rewardAcc * liquidity = 2^160, fits in 256 bits.
+			// Both approaches yield the same result.
+			name:         "normal range, both approaches agree",
+			rewardAcc:    u256.Zero().Lsh(u256.NewUint(1), 100), // 2^100
+			liquidity:    u256.Zero().Lsh(u256.NewUint(1), 60),  // 2^60
+			rewardPerSec: 100,
+			// (2^100 * 2^60 * 100) / 2^128 = 100 * 2^32 = 429496729600
+			expected: u256.NewUint(429496729600),
+			oldWraps: false,
+		},
+		{
+			// rewardAcc * liquidity = 2^280, exceeds 256 bits.
+			// Old Mul wraps: 2^280 mod 2^256 = 0 → final result 0.
+			// New MulDiv:    floor(2^200 * 2^80 / 2^128) = 2^152.
+			name:         "large accumulation, Mul wraps to zero",
+			rewardAcc:    u256.Zero().Lsh(u256.NewUint(1), 200), // 2^200
+			liquidity:    u256.Zero().Lsh(u256.NewUint(1), 80),  // 2^80
+			rewardPerSec: 1,
+			expected:     u256.Zero().Lsh(u256.NewUint(1), 152), // 2^152
+			oldWraps:     true,
+		},
+		{
+			// (2^200 + 1) * 2^80 = 2^280 + 2^80.
+			// Old Mul wraps: mod 2^256 → 2^80, then MulDiv(2^80, 1, 2^128) = 0.
+			// New MulDiv:    floor((2^280 + 2^80) / 2^128) = 2^152.
+			name:         "large accumulation with residual, Mul loses high bits",
+			rewardAcc:    u256.Zero().Add(u256.Zero().Lsh(u256.NewUint(1), 200), u256.NewUint(1)),
+			liquidity:    u256.Zero().Lsh(u256.NewUint(1), 80),
+			rewardPerSec: 1,
+			expected:     u256.Zero().Lsh(u256.NewUint(1), 152), // 2^152 (residual truncated by floor)
+			oldWraps:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rps := u256.NewUintFromInt64(tt.rewardPerSec)
+
+			// --- new approach (current implementation) ---
+			rewardScaler := u256.Zero().Mul(tt.liquidity.Clone(), rps)
+			newResult := u256.MulDiv(tt.rewardAcc.Clone(), rewardScaler, q128)
+
+			uassert.True(t, tt.expected.Eq(newResult),
+				ufmt.Sprintf("new approach: expected %s, got %s",
+					tt.expected.ToString(), newResult.ToString()))
+
+			// --- old approach (Mul then MulDiv) ---
+			oldIntermediate := u256.Zero().Mul(tt.rewardAcc.Clone(), tt.liquidity.Clone())
+			oldResult := u256.MulDiv(oldIntermediate, rps, q128)
+
+			if tt.oldWraps {
+				uassert.False(t, tt.expected.Eq(oldResult),
+					ufmt.Sprintf("old approach should diverge due to wrapping but got correct result %s",
+						oldResult.ToString()))
+			} else {
+				uassert.True(t, tt.expected.Eq(oldResult),
+					ufmt.Sprintf("old approach: expected %s, got %s",
+						tt.expected.ToString(), oldResult.ToString()))
+			}
 		})
 	}
 }
