@@ -141,6 +141,23 @@ func TestPoolTierChangeTier(t *testing.T) {
 	}
 }
 
+func TestPoolTierChangeTier_ClearsDustWhenTierBecomesEmpty(t *testing.T) {
+	pools := NewPools()
+	currentTime := int64(100000)
+	testPool := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
+
+	poolTier := NewPoolTier(pools, currentTime, testPool,
+		func() int64 { return 100 },
+		func(start, end int64) ([]int64, []int64) { return nil, nil })
+	poolTier.tierLeftAmount[Tier1] = 10
+
+	poolTier.changeTier(currentTime+1, pools, testPool, 0)
+
+	uassert.Equal(t, int64(0), poolTier.tierLeftAmount[Tier1])
+	poolTier.changeTier(currentTime+2, pools, testPool, 1)
+	uassert.Equal(t, int64(0), poolTier.tierLeftAmount[Tier1])
+}
+
 func TestCurrentAllTierCounts(t *testing.T) {
 	pools := NewPools()
 	currentTime := int64(100000)
@@ -303,18 +320,21 @@ func TestNewPoolTierBy(t *testing.T) {
 	tests := []struct {
 		name                     string
 		tierCounts               [AllTierCount]uint64
+		tierLeftAmount           [AllTierCount]int64
 		lastRewardCacheTimestamp int64
 		currentEmission          int64
 	}{
 		{
 			name:                     "create with default values",
 			tierCounts:               [AllTierCount]uint64{0, 1, 0, 0},
+			tierLeftAmount:           [AllTierCount]int64{0, 0, 0, 0},
 			lastRewardCacheTimestamp: 100,
 			currentEmission:          1000000,
 		},
 		{
 			name:                     "create with multiple tiers",
 			tierCounts:               [AllTierCount]uint64{0, 2, 3, 1},
+			tierLeftAmount:           [AllTierCount]int64{0, 1, 2, 3},
 			lastRewardCacheTimestamp: 200,
 			currentEmission:          500000,
 		},
@@ -326,6 +346,7 @@ func TestNewPoolTierBy(t *testing.T) {
 				avl.NewTree(),
 				TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
 				tt.tierCounts,
+				tt.tierLeftAmount,
 				tt.lastRewardCacheTimestamp,
 				tt.currentEmission,
 				func() int64 { return tt.currentEmission },
@@ -335,8 +356,122 @@ func TestNewPoolTierBy(t *testing.T) {
 			uassert.NotNil(t, poolTier)
 			uassert.Equal(t, tt.lastRewardCacheTimestamp, poolTier.lastRewardCacheTimestamp)
 			uassert.Equal(t, tt.currentEmission, poolTier.currentEmission)
+			for tierNum := 0; tierNum < AllTierCount; tierNum++ {
+				uassert.Equal(t, tt.tierLeftAmount[tierNum], poolTier.tierLeftAmount[tierNum])
+			}
 		})
 	}
+}
+
+func TestCalculatePoolRewardForInterval(t *testing.T) {
+	tests := []struct {
+		name             string
+		emission         int64
+		tierRatio        int64
+		tierCount        int64
+		intervalDuration int64
+		carryover        int64
+		expectedReward   int64
+		expectedCarry    int64
+	}{
+		{
+			name:             "carry forward preserves interval dust",
+			emission:         100,
+			tierRatio:        100,
+			tierCount:        3,
+			intervalDuration: 10,
+			carryover:        0,
+			expectedReward:   33,
+			expectedCarry:    10,
+		},
+		{
+			name:             "carryover is reused on next interval",
+			emission:         100,
+			tierRatio:        100,
+			tierCount:        3,
+			intervalDuration: 10,
+			carryover:        10,
+			expectedReward:   33,
+			expectedCarry:    20,
+		},
+		{
+			name:             "small interval consumes carry when possible",
+			emission:         100,
+			tierRatio:        100,
+			tierCount:        3,
+			intervalDuration: 1,
+			carryover:        2,
+			expectedReward:   34,
+			expectedCarry:    0,
+		},
+		{
+			name:             "large interval avoids overflow in interval math",
+			emission:         10000000000000000,
+			tierRatio:        100,
+			tierCount:        1,
+			intervalDuration: 1000,
+			carryover:        0,
+			expectedReward:   10000000000000000,
+			expectedCarry:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reward, carryover := calculatePoolRewardForInterval(tt.emission, tt.tierRatio, tt.tierCount, tt.intervalDuration, tt.carryover)
+			uassert.Equal(t, tt.expectedReward, reward)
+			uassert.Equal(t, tt.expectedCarry, carryover)
+		})
+	}
+}
+
+func TestComputeTierRewardsForInterval_CarryForward(t *testing.T) {
+	poolTier := &PoolTier{
+		tierRatio: sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+		counts:    [AllTierCount]uint64{0, 3, 0, 0},
+	}
+
+	firstRewards, firstLeftAmount := poolTier.computeTierRewardsForInterval(100, 110, 100, [AllTierCount]int64{})
+	uassert.Equal(t, int64(33), firstRewards[Tier1])
+	uassert.Equal(t, int64(10), firstLeftAmount[Tier1])
+
+	secondRewards, secondLeftAmount := poolTier.computeTierRewardsForInterval(110, 111, 100, firstLeftAmount)
+	uassert.Equal(t, int64(36), secondRewards[Tier1])
+	uassert.Equal(t, int64(2), secondLeftAmount[Tier1])
+}
+
+func TestComputeTierRewardsForInterval_DustCanAccumulateLarge(t *testing.T) {
+	poolTier := &PoolTier{
+		tierRatio: sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+		counts:    [AllTierCount]uint64{0, 97, 0, 0},
+	}
+
+	leftAmount := [AllTierCount]int64{}
+	for i := 0; i < 31; i++ {
+		_, leftAmount = poolTier.computeTierRewardsForInterval(int64(100+i*100), int64(200+i*100), 1000, leftAmount)
+	}
+
+	// Long intervals with a large tier count can build a materially large stored left amount.
+	uassert.Equal(t, int64(5700), leftAmount[Tier1])
+}
+
+func TestComputeTierRewardsForInterval_AccumulatedDustIsDistributedNext(t *testing.T) {
+	poolTier := &PoolTier{
+		tierRatio: sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
+		counts:    [AllTierCount]uint64{0, 97, 0, 0},
+	}
+
+	leftAmount := [AllTierCount]int64{}
+	for i := 0; i < 31; i++ {
+		_, leftAmount = poolTier.computeTierRewardsForInterval(int64(100+i*100), int64(200+i*100), 1000, leftAmount)
+	}
+
+	rewards, nextLeftAmount := poolTier.computeTierRewardsForInterval(3200, 3201, 1000, leftAmount)
+
+	// Base 1-block reward without stored left amount is floor(1000 / 97) = 10.
+	// The much larger payout proves the stored left amount was consumed and distributed.
+	uassert.Equal(t, int64(69), rewards[Tier1])
+	uassert.Equal(t, int64(7), nextLeftAmount[Tier1])
 }
 
 // Test CurrentCount edge cases
@@ -435,7 +570,7 @@ func TestApplyCacheToAllPools(t *testing.T) {
 			}
 
 			// This should not panic
-			poolTier.applyCacheToAllPools(pools, currentTime, tt.emissionInThisInterval)
+			poolTier.applyCacheToAllPools(pools, currentTime-10, currentTime, tt.emissionInThisInterval)
 		})
 	}
 }
@@ -508,7 +643,8 @@ func TestApplyCacheToPool(t *testing.T) {
 				counts:    tt.counts,
 			}
 
-			poolTier.applyCacheToPool(poolResolver, tt.tierNum, tt.currentTimestamp, tt.emission)
+			carryovers := [AllTierCount]int64{}
+			poolTier.applyCacheToPool(poolResolver, tt.tierNum, currentTime, tt.currentTimestamp, tt.emission, &carryovers)
 			uassert.Equal(t, tt.expectedRewardAtQuery, poolResolver.CurrentReward(tt.currentTimestamp))
 		})
 	}
@@ -623,6 +759,7 @@ func TestCacheRewardForPool(t *testing.T) {
 				avl.NewTree(),
 				sr.TierRatio{Tier1: 100, Tier2: 0, Tier3: 0},
 				[AllTierCount]uint64{0, 1, 0, 0},
+				[AllTierCount]int64{},
 				tt.lastCacheTs,
 				tt.initialEmission,
 				func() int64 { return tt.initialEmission },

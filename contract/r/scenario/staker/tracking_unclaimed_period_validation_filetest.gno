@@ -383,7 +383,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] wait 10 blocks while pool is claimable
 // [INFO] collect reward while pool is claimable
 // [EXPECTED] collection time: 1234568155
-// [EXPECTED] unclaimable sent during claimable: 78035777
+// [EXPECTED] unclaimable sent during claimable: 78035812
 // [INFO] unstake to enter unclaimable period
 // [INFO] wait 10 blocks during unclaimable
 // [INFO] stake again and collect

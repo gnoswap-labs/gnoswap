@@ -192,6 +192,11 @@ type IStakerStore interface {
 	GetPoolTierCounts() [AllTierCount]uint64
 	SetPoolTierCounts(counts [AllTierCount]uint64) error
 
+	// PoolTierLeftAmount
+	HasPoolTierLeftAmountStoreKey() bool
+	GetPoolTierLeftAmount() [AllTierCount]int64
+	SetPoolTierLeftAmount(leftAmount [AllTierCount]int64) error
+
 	// PoolTierLastRewardCacheTimestamp
 	HasPoolTierLastRewardCacheTimestampStoreKey() bool
 	GetPoolTierLastRewardCacheTimestamp() int64

@@ -155,6 +155,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasPoolTierLeftAmountStoreKey() {
+		err := stakerStore.SetPoolTierLeftAmount(initializedPoolTier.tierLeftAmount)
+		if err != nil {
+			return err
+		}
+	}
+
 	if !stakerStore.HasPoolTierLastRewardCacheTimestampStoreKey() {
 		err := stakerStore.SetPoolTierLastRewardCacheTimestamp(initializedPoolTier.lastRewardCacheTimestamp)
 		if err != nil {

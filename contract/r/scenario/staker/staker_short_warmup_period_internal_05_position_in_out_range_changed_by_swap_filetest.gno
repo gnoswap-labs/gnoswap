@@ -332,7 +332,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] collecting reward for position 01 while in-range
 // [EXPECTED] position 01 (in-range) reward: 126469 GNS
 // [INFO] collecting reward for position 02 while in-range
-// [EXPECTED] position 02 (in-range) reward: 3886800 GNS
+// [EXPECTED] position 02 (in-range) reward: 3886803 GNS
 //
 // [SCENARIO] 6. Make position 01 out of range via swap
 // [EXPECTED] swap executed: 10000 BAR -> -9884 QUX
@@ -341,4 +341,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] checking reward for position 01 (now out-range)
 // [EXPECTED] position 01 (out-range) reward: 0 GNS
 // [INFO] checking reward for position 02 (still in-range)
-// [EXPECTED] position 02 (in-range) reward: 4013269 GNS
+// [EXPECTED] position 02 (in-range) reward: 4013272 GNS

@@ -223,7 +223,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 		poolTier.currentEmission = emissionAmountPerSecond
 
 		// Now apply the new emission rate to each pool individually
-		poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
+		poolTier.applyCacheToAllPools(pools, currentTime, currentTime, emissionAmountPerSecond)
 
 		s.updatePoolTier(poolTier)
 	}
