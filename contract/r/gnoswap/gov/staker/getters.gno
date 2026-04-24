@@ -24,11 +24,6 @@ func GetUnDelegationLockupPeriod() int64 {
 	return getImplementation().GetUnDelegationLockupPeriod()
 }
 
-// GetEmissionRewardBalance returns the current emission reward balance.
-func GetEmissionRewardBalance() int64 {
-	return getImplementation().GetEmissionRewardBalance()
-}
-
 // GetDelegationCount returns the total number of delegations.
 func GetDelegationCount() int {
 	return getImplementation().GetDelegationCount()
