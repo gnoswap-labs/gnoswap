@@ -34,7 +34,6 @@ type IGovStakerReward interface {
 type IGovStakerGetter interface {
 	// Store data getters
 	GetUnDelegationLockupPeriod() int64
-	GetEmissionRewardBalance() int64
 
 	// Delegation getters
 	GetTotalxGnsSupply() int64
@@ -87,10 +86,6 @@ type IGovStakerStore interface {
 	HasUnDelegationLockupPeriodStoreKey() bool
 	GetUnDelegationLockupPeriod() int64
 	SetUnDelegationLockupPeriod(period int64) error
-
-	HasEmissionRewardBalanceStoreKey() bool
-	GetEmissionRewardBalance() int64
-	SetEmissionRewardBalance(balance int64) error
 
 	HasTotalDelegatedAmountStoreKey() bool
 	GetTotalDelegatedAmount() int64
