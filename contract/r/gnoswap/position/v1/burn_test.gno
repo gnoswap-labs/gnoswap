@@ -45,12 +45,12 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			shouldPanic:                     false,
 		},
 		{
-			name:                            "Underflow - current less than last",
-			feeGrowthInsideLastX128:         u256.MustFromDecimal("500000000000000000000000000000000000"),
-			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1000000000000000000000000000000000000"),
-			positionLiquidity:               u256.MustFromDecimal("1000000"),
-			expectedPanicMessage:            "[GNOSWAP-POSITION-013] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
-			shouldPanic:                     true,
+			name:                            "Wrapped underflow computes modular delta",
+			feeGrowthInsideLastX128:         q128.Clone(),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+			positionLiquidity:               u256.One(),
+			expected:                        u256.One(),
+			shouldPanic:                     false,
 		},
 		{
 			name:                            "Large numbers",
@@ -77,12 +77,12 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			shouldPanic:                     false,
 		},
 		{
-			name:                            "Underflow with zero current",
+			name:                            "Wrapped underflow with zero current",
 			feeGrowthInsideLastX128:         u256.Zero(),
-			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1"),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
 			positionLiquidity:               u256.MustFromDecimal("1000000"),
-			expectedPanicMessage:            "[GNOSWAP-POSITION-013] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
-			shouldPanic:                     true,
+			expected:                        u256.Zero(),
+			shouldPanic:                     false,
 		},
 	}
 
@@ -185,6 +185,31 @@ func TestBurn_CalculateFees(t *testing.T) {
 			},
 			expectedTokensOwed0: 0,
 			expectedTokensOwed1: 0,
+			shouldPanic:         false,
+		},
+		{
+			name: "Wrapped fee growth adds one token owed",
+			setupPosition: func() *position.Position {
+				pos := position.NewPosition(
+					"pool:key",
+					int32(-887220),
+					int32(887220),
+					q128.ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
+					7,
+					9,
+					false,
+					"",
+				)
+				return pos
+			},
+			feeGrowthInside: FeeGrowthInside{
+				feeGrowthInside0LastX128: q128.Clone(),
+				feeGrowthInside1LastX128: q128.Clone(),
+			},
+			expectedTokensOwed0: 8,
+			expectedTokensOwed1: 10,
 			shouldPanic:         false,
 		},
 		{
