@@ -12,7 +12,6 @@ import (
 const (
 	// Basic configuration
 	StoreKeyUnDelegationLockupPeriod = "unDelegationLockupPeriod"
-	StoreKeyEmissionRewardBalance    = "emissionRewardBalance"
 	StoreKeyTotalDelegatedAmount     = "totalDelegatedAmount"
 	StoreKeyTotalLockedAmount        = "totalLockedAmount"
 
@@ -66,28 +65,6 @@ func (s *govStakerStore) GetUnDelegationLockupPeriod() int64 {
 
 func (s *govStakerStore) SetUnDelegationLockupPeriod(period int64) error {
 	return s.kvStore.Set(StoreKeyUnDelegationLockupPeriod, period)
-}
-
-func (s *govStakerStore) HasEmissionRewardBalanceStoreKey() bool {
-	return s.kvStore.Has(StoreKeyEmissionRewardBalance)
-}
-
-func (s *govStakerStore) GetEmissionRewardBalance() int64 {
-	result, err := s.kvStore.Get(StoreKeyEmissionRewardBalance)
-	if err != nil {
-		panic(err)
-	}
-
-	balance, ok := result.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
-	}
-
-	return balance
-}
-
-func (s *govStakerStore) SetEmissionRewardBalance(balance int64) error {
-	return s.kvStore.Set(StoreKeyEmissionRewardBalance, balance)
 }
 
 func (s *govStakerStore) HasTotalDelegatedAmountStoreKey() bool {

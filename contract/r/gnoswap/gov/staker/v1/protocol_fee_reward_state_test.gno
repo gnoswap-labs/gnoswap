@@ -309,40 +309,20 @@ func TestProtocolFeeRewardState_removeStake(t *testing.T) {
 	}
 }
 
-// Test claimRewards
+// Test claimRewards including idempotent no-op cases.
 func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 	tests := []struct {
-		name                  string
-		setupState            func(*ProtocolFeeRewardStateResolver)
-		currentTimestamp      int64
-		expectError           bool
-		expectedClaimedLength int
+		name                      string
+		setupState                func(*ProtocolFeeRewardStateResolver)
+		currentTimestamp          int64
+		expectError               bool
+		expectedClaimedLength     int
+		expectedClaimedPerToken   map[string]int64 // expected returned amounts; nil = skip check
+		expectedNewClaimedTs      int64
+		expectedClaimedStateAfter map[string]int64 // expected resolver.GetClaimedRewards after call; nil = skip check
 	}{
 		{
-			name: "Claim when not claimable",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-			},
-			currentTimestamp: 100,
-			expectError:      true,
-		},
-		{
-			name: "Claim when accumulated height is less than current height",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(50)
-				s.SetAccumulatedTimestamp(50)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-			},
-			currentTimestamp: 100,
-			expectError:      true, // Must update reward debt before claiming
-		},
-		{
-			name: "Successful claim",
+			name: "Successful claim advances claimed rewards and timestamp",
 			setupState: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
@@ -358,6 +338,113 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			currentTimestamp:      100,
 			expectError:           false,
 			expectedClaimedLength: 2,
+			expectedClaimedPerToken: map[string]int64{
+				"token1": 700,
+				"token2": 500,
+			},
+			expectedNewClaimedTs: 100,
+			expectedClaimedStateAfter: map[string]int64{
+				"token1": 1000,
+				"token2": 500,
+			},
+		},
+		{
+			name: "First-ever claim with no prior claimedRewards",
+			setupState: func(s *ProtocolFeeRewardStateResolver) {
+				s.SetClaimedTimestamp(0)
+				s.SetAccumulatedTimestamp(100)
+				s.SetAccumulatedRewards(map[string]int64{
+					"tokenA": 250,
+				})
+			},
+			currentTimestamp:      100,
+			expectError:           false,
+			expectedClaimedLength: 1,
+			expectedClaimedPerToken: map[string]int64{
+				"tokenA": 250,
+			},
+			expectedNewClaimedTs: 100,
+			expectedClaimedStateAfter: map[string]int64{
+				"tokenA": 250,
+			},
+		},
+		{
+			name: "Claim when accumulated timestamp is less than current (reward debt stale)",
+			setupState: func(s *ProtocolFeeRewardStateResolver) {
+				s.SetClaimedTimestamp(50)
+				s.SetAccumulatedTimestamp(50)
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
+			},
+			currentTimestamp: 100,
+			expectError:      true, // Must update reward debt before claiming
+		},
+		{
+			name: "Idempotent no-op when claimedTimestamp equals currentTimestamp",
+			setupState: func(s *ProtocolFeeRewardStateResolver) {
+				// Simulates state after a previous successful claim at the same ts.
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedTimestamp(100)
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 1000,
+				})
+			},
+			currentTimestamp:      100,
+			expectError:           false,
+			expectedClaimedLength: 0,
+			expectedNewClaimedTs:  100,
+			expectedClaimedStateAfter: map[string]int64{
+				"token1": 1000,
+			},
+		},
+		{
+			name: "Idempotent no-op preserves unclaimed delta when called in the same second",
+			setupState: func(s *ProtocolFeeRewardStateResolver) {
+				// Pathological state where accumulated > claimed but the claim already
+				// ran in this Unix second. The skip must NOT silently advance claimed.
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedTimestamp(100)
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 1000,
+					"token2": 500,
+				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 400,
+					"token2": 0,
+				})
+			},
+			currentTimestamp:      100,
+			expectError:           false,
+			expectedClaimedLength: 0,
+			expectedNewClaimedTs:  100,
+			expectedClaimedStateAfter: map[string]int64{
+				"token1": 400,
+				"token2": 0,
+			},
+		},
+		{
+			name: "Idempotent no-op when claimedTimestamp is in the future",
+			setupState: func(s *ProtocolFeeRewardStateResolver) {
+				s.SetClaimedTimestamp(200)
+				s.SetAccumulatedTimestamp(200)
+				s.SetAccumulatedRewards(map[string]int64{
+					"token1": 800,
+				})
+				s.SetClaimedRewards(map[string]int64{
+					"token1": 800,
+				})
+			},
+			currentTimestamp:      100,
+			expectError:           false,
+			expectedClaimedLength: 0,
+			expectedNewClaimedTs:  200, // untouched
+			expectedClaimedStateAfter: map[string]int64{
+				"token1": 800,
+			},
 		},
 	}
 
@@ -375,14 +462,80 @@ func TestProtocolFeeRewardState_claimRewards(t *testing.T) {
 			if tt.expectError {
 				uassert.Error(t, err)
 				uassert.Equal(t, claimedRewards, nil)
-			} else {
-				uassert.NoError(t, err)
-				uassert.NotEqual(t, claimedRewards, nil)
-				uassert.Equal(t, len(claimedRewards), tt.expectedClaimedLength)
-				uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.currentTimestamp)
+				return
+			}
+
+			uassert.NoError(t, err)
+			uassert.NotEqual(t, claimedRewards, nil)
+			uassert.Equal(t, len(claimedRewards), tt.expectedClaimedLength)
+			uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.expectedNewClaimedTs)
+
+			if tt.expectedClaimedPerToken != nil {
+				for token, expected := range tt.expectedClaimedPerToken {
+					uassert.Equal(t, claimedRewards[token], expected)
+				}
+			}
+
+			if tt.expectedClaimedStateAfter != nil {
+				actualClaimed := resolver.GetClaimedRewards()
+				for token, expected := range tt.expectedClaimedStateAfter {
+					uassert.Equal(t, actualClaimed[token], expected)
+				}
 			}
 		})
 	}
+}
+
+// Test that consecutive claimRewards calls within the same Unix second
+func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(t *testing.T) {
+	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+	resolver := NewProtocolFeeRewardStateResolver(state)
+
+	resolver.SetClaimedTimestamp(50)
+	resolver.SetAccumulatedTimestamp(100)
+	resolver.SetAccumulatedRewards(map[string]int64{
+		"token1": 1000,
+		"token2": 300,
+	})
+	resolver.SetClaimedRewards(map[string]int64{
+		"token1": 200,
+		"token2": 0,
+	})
+
+	// First claim at ts=100 captures the pending delta.
+	first, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, first["token1"], int64(800))
+	uassert.Equal(t, first["token2"], int64(300))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+
+	// Second and third calls at the same ts=100 must be no-ops.
+	second, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, len(second), 0)
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+
+	third, err := resolver.claimRewards(100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, len(third), 0)
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+
+	// State must remain exactly as the first claim left it.
+	claimedAfter := resolver.GetClaimedRewards()
+	uassert.Equal(t, claimedAfter["token1"], int64(1000))
+	uassert.Equal(t, claimedAfter["token2"], int64(300))
+
+	// Advancing to ts=101 with newly accumulated rewards is claimable again.
+	resolver.SetAccumulatedTimestamp(101)
+	resolver.SetAccumulatedRewards(map[string]int64{
+		"token1": 1500,
+		"token2": 300,
+	})
+	fourth, err := resolver.claimRewards(101)
+	uassert.NoError(t, err)
+	uassert.Equal(t, fourth["token1"], int64(500))
+	uassert.Equal(t, fourth["token2"], int64(0))
+	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(101))
 }
 
 // Test updateRewardDebtX128
@@ -544,7 +697,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 			description: "Should handle nil reward debt for new tokens",
 		},
 		{
-			name: "Multiple claim attempts",
+			name: "Multiple claim attempts in the same second are idempotent",
 			setupTest: func(s *ProtocolFeeRewardStateResolver) {
 				s.SetClaimedTimestamp(50)
 				s.SetAccumulatedTimestamp(100)
@@ -555,18 +708,22 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 					"token1": 0,
 				})
 
-				// First claim
+				// First claim returns the full accumulated reward
 				rewards1, err1 := s.claimRewards(100)
 				uassert.NoError(t, err1)
 				if rewards1["token1"] != 1000 {
 					t.Errorf("Expected 1000, got %d", rewards1["token1"])
 				}
 
-				// Second claim should fail (same height)
-				_, err2 := s.claimRewards(100)
-				uassert.Error(t, err2)
+				// Second claim at the same timestamp is an idempotent no-op:
+				// it must not error, and must return no additional rewards.
+				rewards2, err2 := s.claimRewards(100)
+				uassert.NoError(t, err2)
+				if rewards2["token1"] != 0 {
+					t.Errorf("Expected 0 on second claim, got %d", rewards2["token1"])
+				}
 			},
-			description: "Should handle multiple claim attempts correctly",
+			description: "Second claim in the same Unix second must be a no-op, not an error",
 		},
 		{
 			name: "Zero staked amount calculation",

@@ -96,13 +96,6 @@ func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return t.instance.GetUnDelegationLockupPeriod()
 }
 
-func (t *TestGovStaker) GetEmissionRewardBalance() int64 {
-	if !t.isActive("GetEmissionRewardBalance") {
-		panic("test implementation: GetEmissionRewardBalance not supported")
-	}
-	return t.instance.GetEmissionRewardBalance()
-}
-
 func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	if !t.isActive("GetTotalxGnsSupply") {
 		panic("test implementation: GetTotalxGnsSupply not supported")
