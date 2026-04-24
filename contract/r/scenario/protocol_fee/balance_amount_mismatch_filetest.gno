@@ -54,6 +54,15 @@ func main() {
 	println()
 }
 
+func prepareRecordedProtocolFee(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerAddr, amount)
+
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
+}
+
 func testExactMatch() {
 	resetBalances()
 
@@ -61,13 +70,8 @@ func testExactMatch() {
 	testing.SetRealm(adminRealm)
 	pf.SetDevOpsPct(cross, 2000)
 
-	println("[INFO] Admin transfers 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
-
 	println("[INFO] Recording 1000 bar protocol fee")
-	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -85,16 +89,13 @@ func testExternalTransfer() {
 	testing.SetRealm(adminRealm)
 	pf.SetDevOpsPct(cross, 2000)
 
-	println("[INFO] Admin transfers 1000 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
+	println("[INFO] Admin transfers 1000 bar tokens to staker for recording")
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] External user sends additional 500 bar tokens")
 	bar.Transfer(cross, protocolFeeAddr, 500)
 
 	println("[INFO] Recording only 1000 bar protocol fee (not including external 500)")
-	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
 
 	println("[INFO] Balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -113,9 +114,8 @@ func testMultipleExternalTransfers() {
 	testing.SetRealm(adminRealm)
 	pf.SetDevOpsPct(cross, 1000)
 
-	println("[INFO] Admin transfers 100 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 100)
+	println("[INFO] Admin transfers 100 bar tokens to staker for recording")
+	prepareRecordedProtocolFee(100)
 
 	println("[INFO] Multiple external transfers: 200 + 300 + 400 = 900 bar tokens")
 	bar.Transfer(cross, protocolFeeAddr, 200)
@@ -123,9 +123,6 @@ func testMultipleExternalTransfers() {
 	bar.Transfer(cross, protocolFeeAddr, 400)
 
 	println("[INFO] Recording only 100 bar protocol fee")
-
-	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 100)
 
 	println("[INFO] Balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -167,16 +164,13 @@ func test100PercentToDevOps() {
 	testing.SetRealm(adminRealm)
 	pf.SetDevOpsPct(cross, 10000)
 
-	println("[INFO] Admin transfers 800 bar tokens to protocol_fee")
-	testing.SetOriginCaller(adminAddr)
-	bar.Transfer(cross, protocolFeeAddr, 800)
+	println("[INFO] Admin transfers 800 bar tokens to staker for recording")
+	prepareRecordedProtocolFee(800)
 
 	println("[INFO] External transfer of 200 bar tokens")
 	bar.Transfer(cross, protocolFeeAddr, 200)
 
 	println("[INFO] Recording 800 bar protocol fee")
-	testing.SetRealm(stakerRealm)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 800)
 
 	println("[INFO] Balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -210,7 +204,6 @@ func resetBalances() {
 //
 // [TEST CASE 1] Exact match - balance equals recorded amount
 // [INFO] Setting DevOps percentage to 20%
-// [INFO] Admin transfers 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
@@ -218,7 +211,7 @@ func resetBalances() {
 //
 // [TEST CASE 2] External transfer - balance exceeds recorded amount
 // [INFO] Setting DevOps percentage to 20%
-// [INFO] Admin transfers 1000 bar tokens to protocol_fee
+// [INFO] Admin transfers 1000 bar tokens to staker for recording
 // [INFO] External user sends additional 500 bar tokens
 // [INFO] Recording only 1000 bar protocol fee (not including external 500)
 // [INFO] Balances - protocol_fee: 1500 devOps: 0 govStaker: 0
@@ -228,7 +221,7 @@ func resetBalances() {
 //
 // [TEST CASE 3] Multiple external transfers - only recorded amount distributed
 // [INFO] Setting DevOps percentage to 10%
-// [INFO] Admin transfers 100 bar tokens to protocol_fee
+// [INFO] Admin transfers 100 bar tokens to staker for recording
 // [INFO] Multiple external transfers: 200 + 300 + 400 = 900 bar tokens
 // [INFO] Recording only 100 bar protocol fee
 // [INFO] Balances - protocol_fee: 1000 devOps: 0 govStaker: 0
@@ -247,7 +240,7 @@ func resetBalances() {
 //
 // [TEST CASE 5] 100% to DevOps with external transfer
 // [INFO] Setting DevOps percentage to 100%
-// [INFO] Admin transfers 800 bar tokens to protocol_fee
+// [INFO] Admin transfers 800 bar tokens to staker for recording
 // [INFO] External transfer of 200 bar tokens
 // [INFO] Recording 800 bar protocol fee
 // [INFO] Balances - protocol_fee: 1000 devOps: 0 govStaker: 0

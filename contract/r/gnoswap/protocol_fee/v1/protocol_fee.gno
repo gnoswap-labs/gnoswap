@@ -51,16 +51,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			continue
 		}
 
-		// Distribute only the recorded amount, not the entire balance
-		distributeAmount := amount
-		if distributeAmount > balance {
-			// This should not happen due to the check above, but safeguard anyway
-			distributeAmount = balance
-		}
-
 		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
-		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
-		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount) // default 100%
+		toDevOpsAmount := safeMulDiv(amount, devOpsPct, 10000)    // default 0%
+		toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount) // default 100%
 
 		// Distribute to DevOps
 		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -168,13 +161,14 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 	)
 }
 
-// AddToProtocolFee adds the amount to the tokenListWithAmount.
+// AddToProtocolFee pulls the approved amount into protocol fee accounting.
 //
 // Parameters:
 //   - tokenPath: token contract path
 //   - amount: fee amount to add
 //
 // Only callable by pool, router or staker contracts.
+// Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	halt.AssertIsNotHaltedProtocolFee()
@@ -189,6 +183,10 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 		))
 	}
 
+	if amount == 0 {
+		return
+	}
+
 	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
 	if !exists {
 		currentAmount = 0
@@ -198,6 +196,9 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	addedAmount := safeAddInt64(currentAmount, amount)
 
 	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
