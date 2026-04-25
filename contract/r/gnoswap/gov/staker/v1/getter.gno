@@ -32,11 +32,6 @@ func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
 	return gs.store.GetUnDelegationLockupPeriod()
 }
 
-// GetEmissionRewardBalance returns the current emission reward balance.
-func (gs *govStakerV1) GetEmissionRewardBalance() int64 {
-	return gs.store.GetEmissionRewardBalance()
-}
-
 // GetDelegationCount returns the total number of delegations.
 func (gs *govStakerV1) GetDelegationCount() int {
 	delegations := gs.store.GetAllDelegations()

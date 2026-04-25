@@ -127,8 +127,8 @@ func delegateDummyToDummy() {
 func depositProtocolFeePre() {
 	// protocol fee deposit (bar, qux, wugnot)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
-	qux.Transfer(cross, protocolFeeAddr, 2500)
+	bar.Transfer(cross, stakerAddr, 1000)
+	qux.Transfer(cross, stakerAddr, 2500)
 
 	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
@@ -139,9 +139,12 @@ func depositProtocolFeePre() {
 
 func depositProtocolFeePost() {
 	testing.SetRealm(adminRealm)
-	wugnot.Transfer(cross, protocolFeeAddr, 10000)
+	wugnot.Transfer(cross, stakerAddr, 10000)
 
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
+	qux.Approve(cross, protocolFeeAddr, 2500)
+	wugnot.Approve(cross, protocolFeeAddr, 10000)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	pf.AddToProtocolFee(cross, wugnotPath, 10000)
@@ -164,10 +167,12 @@ func depositProtocolFeeAdditional() {
 	// additional protocol fee deposit (bar, qux)
 	testing.SetRealm(adminRealm)
 
-	bar.Transfer(cross, protocolFeeAddr, 2500)
-	qux.Transfer(cross, protocolFeeAddr, 4000)
+	bar.Transfer(cross, stakerAddr, 2500)
+	qux.Transfer(cross, stakerAddr, 4000)
 
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 2500)
+	qux.Approve(cross, protocolFeeAddr, 4000)
 	pf.AddToProtocolFee(cross, barPath, 2500)
 	pf.AddToProtocolFee(cross, quxPath, 4000)
 

@@ -348,8 +348,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 				stringValidator,  // token1Path
 				uint64Validator,  // fee
 				addressValidator, // recipient
-				nil,              // amount0Requested (validated in pool logic)
-				nil,              // amount1Requested (validated in pool logic)
+				nonNegativeInt64Validator("amount0Requested"),
+				nonNegativeInt64Validator("amount1Requested"),
 			},
 			handlerFunc: func(params []string) error {
 				pl.CollectProtocol(
@@ -618,7 +618,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RegisterRole",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator,  // roleName
+				roleNameValidator,
 				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -636,7 +636,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "UpdateRoleAddress",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator,  // roleName
+				updatableRoleNameValidator,
 				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -654,7 +654,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RemoveRole",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				stringValidator, // roleName
+				removableRoleNameValidator,
 			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
@@ -924,6 +924,52 @@ func uint8RangeValidator(name string) paramValidator {
 			value := parseInt64(s)
 			if value < 0 || value > 255 {
 				panic(ufmt.Sprintf("%s out of range: %d", name, value))
+			}
+		})
+	}
+}
+
+func roleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if roleName == "" {
+			panic(ufmt.Sprintf("role name is empty: %q", s))
+		}
+	})
+}
+
+func updatableRoleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if err := roleNameValidator(roleName); err != nil {
+			panic(err)
+		}
+
+		if roleName == prbac.ROLE_ADMIN.String() {
+			panic(ufmt.Sprintf("admin role cannot be updated: %s", roleName))
+		}
+	})
+}
+
+func removableRoleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if err := roleNameValidator(roleName); err != nil {
+			panic(err)
+		}
+
+		if prbac.IsSystemRole(roleName) {
+			panic(ufmt.Sprintf("system role cannot be removed: %s", roleName))
+		}
+	})
+}
+
+func nonNegativeInt64Validator(name string) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseInt64(s)
+			if value < 0 {
+				panic(ufmt.Sprintf("%s must be non-negative: %d", name, value))
 			}
 		})
 	}

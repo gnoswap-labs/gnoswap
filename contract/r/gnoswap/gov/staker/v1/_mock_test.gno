@@ -14,7 +14,6 @@ type mockGovStakerStore struct {
 	// Basic configuration
 	unDelegationLockupPeriod       int64
 	hasUnDelegationLockupPeriodKey bool
-	emissionRewardBalance          int64
 	totalDelegatedAmount           int64
 	totalLockedAmount              int64
 
@@ -63,19 +62,6 @@ func (m *mockGovStakerStore) GetUnDelegationLockupPeriod() int64 {
 func (m *mockGovStakerStore) SetUnDelegationLockupPeriod(period int64) error {
 	m.unDelegationLockupPeriod = period
 	m.hasUnDelegationLockupPeriodKey = true
-	return nil
-}
-
-func (m *mockGovStakerStore) HasEmissionRewardBalanceStoreKey() bool {
-	return true // Always available in mock
-}
-
-func (m *mockGovStakerStore) GetEmissionRewardBalance() int64 {
-	return m.emissionRewardBalance
-}
-
-func (m *mockGovStakerStore) SetEmissionRewardBalance(balance int64) error {
-	m.emissionRewardBalance = balance
 	return nil
 }
 

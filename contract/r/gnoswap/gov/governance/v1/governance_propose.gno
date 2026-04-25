@@ -58,7 +58,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -167,7 +167,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -274,7 +274,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 

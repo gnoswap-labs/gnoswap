@@ -213,62 +213,6 @@ func TestStoreSetAndGetUnDelegationLockupPeriod(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetEmissionRewardBalance(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IGovStakerStore)
-		testFn       func(*testing.T, IGovStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get emission reward balance successfully",
-			setupFn: func(gs IGovStakerStore) {
-				gs.SetEmissionRewardBalance(1000000)
-			},
-			testFn: func(t *testing.T, gs IGovStakerStore) {
-				uassert.True(t, gs.HasEmissionRewardBalanceStoreKey(), "should have emission reward balance after setting")
-				retrieved := gs.GetEmissionRewardBalance()
-				uassert.Equal(t, int64(1000000), retrieved)
-			},
-		},
-		{
-			name: "should not have emission reward balance initially",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
-				uassert.False(t, gs.HasEmissionRewardBalanceStoreKey(), "should not have emission reward balance initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized emission reward balance",
-			testFn: func(t *testing.T, gs IGovStakerStore) {
-				gs.GetEmissionRewardBalance()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized emission reward balance",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			gs := NewGovStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(gs)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, gs)
-		})
-	}
-}
-
 func TestStoreSetAndGetTotalDelegatedAmount(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -912,7 +856,6 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 			name: "set and get all store values",
 			setupFn: func(gs IGovStakerStore) {
 				gs.SetUnDelegationLockupPeriod(86400)
-				gs.SetEmissionRewardBalance(1000000)
 				gs.SetTotalDelegatedAmount(500000)
 				gs.SetTotalLockedAmount(250000)
 
@@ -933,7 +876,6 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 			},
 			verifyFn: func(t *testing.T, gs IGovStakerStore) {
 				uassert.True(t, gs.HasUnDelegationLockupPeriodStoreKey())
-				uassert.True(t, gs.HasEmissionRewardBalanceStoreKey())
 				uassert.True(t, gs.HasTotalDelegatedAmountStoreKey())
 				uassert.True(t, gs.HasTotalLockedAmountStoreKey())
 				uassert.True(t, gs.HasDelegationsStoreKey())
@@ -942,7 +884,6 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				uassert.True(t, gs.HasUserDelegationHistoryStoreKey())
 
 				uassert.Equal(t, int64(86400), gs.GetUnDelegationLockupPeriod())
-				uassert.Equal(t, int64(1000000), gs.GetEmissionRewardBalance())
 				uassert.Equal(t, int64(500000), gs.GetTotalDelegatedAmount())
 				uassert.Equal(t, int64(250000), gs.GetTotalLockedAmount())
 				uassert.Equal(t, int64(5), gs.GetDelegationCounter().Get())
