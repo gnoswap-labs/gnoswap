@@ -3,6 +3,7 @@ package v1
 import (
 	"strings"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
