@@ -468,8 +468,15 @@ func (p *createProjectParams) validateDepositAmount() error {
 	return nil
 }
 
-// validateRatio checks if the sum of the tier ratios equals 100.
+// validateRatio checks if each tier ratio is non-negative and the sum equals 100.
 func (p *createProjectParams) validateRatio() error {
+	if p.tier30Ratio < 0 || p.tier90Ratio < 0 || p.tier180Ratio < 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("tier ratios must be non-negative (30:%d, 90:%d, 180:%d)", p.tier30Ratio, p.tier90Ratio, p.tier180Ratio),
+		)
+	}
+
 	sum := p.tier30Ratio + p.tier90Ratio + p.tier180Ratio
 	if sum != 100 {
 		return makeErrorWithDetails(

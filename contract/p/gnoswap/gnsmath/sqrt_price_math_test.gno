@@ -13,6 +13,7 @@ var (
 	Q96         = u256.MustFromDecimal("79228162514264337593543950336") // 2^96
 	MAX_UINT256 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
 	MAX_UINT160 = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+	UINT160_MAX = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
 )
 
 // TestGetNextPriceAmount0Add tests the internal helper for adding token0
@@ -358,9 +359,9 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 		{
 			name:      "amount_gt_max160",
 			sqrtPX96:  Q96,
-			liquidity: u256.MustFromDecimal("1000000000000000000"),
+			liquidity: u256.Zero().Lsh(u256.One(), 200),
 			amount:    new(u256.Uint).Add(MAX_UINT160, u256.MustFromDecimal("1000000000000000000")),
-			expected:  u256.MustFromDecimal("115787736929662111563370814583278000176356624084966981749664"),
+			expected:  u256.MustFromDecimal("79228162514336392479134175740"),
 		},
 		{
 			name:      "very_small_liquidity",
@@ -389,6 +390,22 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 			liquidity: u256.MustFromDecimal("1000000"),
 			amount:    u256.MustFromDecimal("100"),
 			expected:  u256.MustFromDecimal("7922816251426438054483134"),
+		},
+		{
+			name:        "panic_when_result_exceeds_uint160_range",
+			sqrtPX96:    UINT160_MAX,
+			liquidity:   Q96,
+			amount:      u256.One(),
+			shouldPanic: true,
+			panicMsg:    errSqrtPriceOverflow.Error(),
+		},
+		{
+			name:        "panic_when_uint256_add_overflows",
+			sqrtPX96:    u256.Zero().SetAllOne(),
+			liquidity:   Q96,
+			amount:      u256.One(),
+			shouldPanic: true,
+			panicMsg:    errSqrtPriceOverflow.Error(),
 		},
 	}
 
@@ -425,6 +442,12 @@ func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
 			sqrtPX96:  Q96,
 			liquidity: MAX_UINT160,
 			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+		},
+		{
+			name:      "sum_exactly_at_uint160_max_boundary",
+			sqrtPX96:  new(u256.Uint).Sub(UINT160_MAX, u256.One()),
+			liquidity: Q96,
+			amount:    u256.One(),
 		},
 	}
 

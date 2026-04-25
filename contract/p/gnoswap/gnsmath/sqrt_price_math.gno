@@ -105,7 +105,12 @@ func getNextPriceAmount1Add(
 		quotient = u256.MulDiv(amount, q96, liquidity)
 	}
 
-	return u256.Zero().Add(sqrtPX96, quotient)
+	result, overflow := u256.Zero().AddOverflow(sqrtPX96, quotient)
+	if overflow || result.Gt(max160) {
+		panic(errSqrtPriceOverflow)
+	}
+
+	return result
 }
 
 // getNextPriceAmount1Remove calculates the next sqrt price when removing token1,
