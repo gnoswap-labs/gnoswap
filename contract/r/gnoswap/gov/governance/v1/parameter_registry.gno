@@ -162,6 +162,8 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
 // This registry allows proposals to execute parameter changes across different system contracts.
+// TODO: consider map — Get/Set only, no Iterate, N<100.
+// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
 type ParameterRegistry struct {
 	handlers *bptree.BPTree // Tree storing handler configurations keyed by package:function
 }

@@ -75,6 +75,8 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
+	// TODO: consider map — Get/Set only, no Iterate in production code.
+	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x)
 	if !governanceStore.HasUserProposalsStoreKey() {
 		err := governanceStore.SetUserProposals(bptree.NewBPTree32())
 		if err != nil {

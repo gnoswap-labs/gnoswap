@@ -1,17 +1,20 @@
-# Gas measurement baseline for data structures (Gno realm, current VM).
+# Ephemeral data-structure cost — fanout sweep and raw operation baselines.
 #
-# B+Tree fanout sweep takeaways (see GAS USED lines below for raw values):
-#   - size < ~32 (N=10):      fanout has no effect (tree depth = 1)
-#   - size ~100:              fanout 64 ≈ -8% vs 32, fanout 128 ≈ -16% vs 32
-#   - size ~1000:             fanout 64 ≈ -8% vs 32, fanout 128 ≈ -9% vs 32
+# PURPOSE: Measure INSERT / GET / ITERATE cost in local (non-persistent)
+# variables.  Useful for comparing fanout 32 vs 64 vs 128 and for
+# understanding one-time populate cost.
 #
-# Guideline: 32→64 is nearly free ~8% for any tree that exceeds a single
-# leaf; 64→128 pays off most in the 100-item range and diminishes past
-# 1000. Small trees (N<32) do not benefit from raising fanout.
+# IMPORTANT: These numbers do NOT include realm persistence (serialization)
+# cost.  For "which data structure should I use?" decisions, refer to
+# persistent_data_structure_benchmark.txtar instead.
 #
-# The Map vs B+Tree columns are also informative: Map is ~5× cheaper for
-# point queries and iteration, so only use B+Tree when ordering, range
-# queries, or deterministic iteration are required.
+# Fanout sweep results (ephemeral, int values):
+#   N=10:   fanout has no effect (single leaf)
+#   N=100:  64 ≈ -8% vs 32,  128 ≈ -16% vs 32
+#   N=1000: 64 ≈ -8% vs 32,  128 ≈  -9% vs 32
+#
+# Guideline: 32→64 is nearly free ~8% past a single leaf.
+# 64→128 pays off most in the 100-item range, diminishes past 1000.
 
 loadpkg gno.land/p/nt/bptree/v0
 

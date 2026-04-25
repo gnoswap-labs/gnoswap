@@ -153,6 +153,8 @@ type Stakers struct {
 }
 
 // NewStakers creates a new Stakers instance.
+// TODO: consider NewBPTreeN(64) — Iterate used, N=1k~100k addresses.
+// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 func NewStakers() *Stakers {
 	return &Stakers{
 		tree: bptree.NewBPTree32(),

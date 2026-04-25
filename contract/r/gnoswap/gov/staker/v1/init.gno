@@ -58,6 +58,8 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) — Get/Set/Remove, N=1k~10k.
+	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 	if !store.HasDelegationsStoreKey() {
 		err := store.SetDelegations(bptree.NewBPTree32())
 		if err != nil {

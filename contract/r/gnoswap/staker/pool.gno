@@ -611,6 +611,8 @@ func (t Ticks) Clone() Ticks {
 	return Ticks{tree: cloned}
 }
 
+// TODO: consider NewBPTreeN(64) — full-iterated for reward calc, N=100~10000.
+// persistent benchmark (N=1000): BPTree64 Iterate -4.6% vs BPTree32
 func NewTicks() Ticks {
 	return Ticks{
 		tree: bptree.NewBPTree32(),

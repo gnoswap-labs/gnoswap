@@ -13,7 +13,8 @@ type DelegationManager struct {
 }
 
 // NewDelegationManager creates a new instance of DelegationManager.
-// This factory function initializes the B+Tree structure for tracking user delegations.
+// TODO: consider NewBPTreeN(64) — Iterate used, N=unbounded (delegators).
+// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 func NewDelegationManager() *DelegationManager {
 	return &DelegationManager{
 		userDelegations: bptree.NewBPTree32(),

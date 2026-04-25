@@ -221,6 +221,8 @@ func NewPool(
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newTokenPair(),
 		liquidity:            u256.Zero(),
+		// TODO: consider NewBPTreeN(64) — range-iterated in swap loop, N=100~5000.
+		// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4%, Iterate -4.6% vs BPTree32
 		ticks:                bptree.NewBPTree32(),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTree32(),

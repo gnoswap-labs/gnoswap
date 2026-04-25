@@ -53,6 +53,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) — range-iterated, N=100k+.
+	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 	if !stakerStore.HasDepositsStoreKey() {
 		err := stakerStore.SetDeposits(bptree.NewBPTree32())
 		if err != nil {
@@ -97,6 +99,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider map — Get/Set/Remove only, no Iterate, N<100.
+	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
 		err := stakerStore.SetTokenSpecificMinimumRewards(bptree.NewBPTree32())
 		if err != nil {

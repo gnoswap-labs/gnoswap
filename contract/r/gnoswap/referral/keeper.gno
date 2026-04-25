@@ -21,6 +21,9 @@ type keeper struct {
 var _ ReferralKeeper = &keeper{}
 
 // NewKeeper creates a new ReferralKeeper instance.
+// TODO: consider NewBPTreeN(64) — Get/Set/Remove only, N=10k~100k.
+// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32.
+// At N>=500, BPTree outperforms Map for persistent state (2-3x cheaper).
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   bptree.NewBPTree32(),
