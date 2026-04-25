@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -28,7 +28,7 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 	return nil, false
 }
 
-func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) {
+func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
 	value, ok := tree.Get(id)
 	if !ok {
 		return nil, false

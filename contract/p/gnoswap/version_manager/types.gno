@@ -1,6 +1,6 @@
 package version_manager
 
-import "gno.land/p/nt/avl/v0/rotree"
+import "gno.land/p/nt/bptree/v0/rotree"
 
 // VersionManager defines the interface for managing multiple versioned implementations of a domain.
 // It enables the Strategy Pattern at the package level, allowing runtime switching between

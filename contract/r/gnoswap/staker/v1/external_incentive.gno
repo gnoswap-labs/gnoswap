@@ -6,7 +6,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -383,12 +383,12 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 
 	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
 	if !exists {
-		currentPoolIncentiveIdsValue = avl.NewTree()
+		currentPoolIncentiveIdsValue = bptree.NewBPTree32()
 	}
 
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
 	}
 
 	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
@@ -422,9 +422,9 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 		return
 	}
 
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
 	}
 
 	// check if pool path exists at this time

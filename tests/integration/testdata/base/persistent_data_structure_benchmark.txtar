@@ -1,0 +1,490 @@
+# Persistent data-structure benchmark — authoritative gas evidence for GnoSwap.
+#
+# PURPOSE: Measure per-operation gas cost on PERSISTENT realm state with
+# realistic struct values.  This is the single source of truth for
+# "BPTree vs Map" decisions in GnoSwap.
+#
+# Methodology
+# ===========
+# - Package-level variables → realm persistence (serialize/deserialize each tx)
+# - Populate in tx1, measure individual operations in tx2+ (isolated cost)
+# - Values: 8-field struct (~200 bytes, matching TickInfo/Position)
+# - Keys: 10-byte zero-padded (matching pool tick encoding)
+# - Determinism: verified identical gas across 2 runs
+#
+# Baseline: Empty() = 1,386,261 gas (fixed per-tx overhead)
+#
+# ┌─────────────────────────────────────────────────────────────────────┐
+# │                    RESULTS (net = gross - baseline)                 │
+# ├──────────────┬───────────┬───────────┬───────────┬─────────────────┤
+# │ Operation    │ BPTree32  │ BPTree64  │   Map     │ Winner          │
+# ├──────────────┼───────────┼───────────┼───────────┼─────────────────┤
+# │         N=100 (protocol_fee, small staker pools)                   │
+# ├──────────────┼───────────┼───────────┼───────────┼─────────────────┤
+# │ Populate     │  24.59M   │  23.72M   │  11.50M   │ Map   2.1x     │
+# │ Single Get   │   2.70M   │   2.89M   │   0.96M   │ Map   2.8x     │
+# │ Single Set   │   3.36M   │   3.55M   │   2.11M   │ Map   1.6x     │
+# │ Iterate(10)  │   4.68M   │   4.87M   │    N/A    │ BPTree only    │
+# │ RevIter(1)   │   2.72M   │   2.82M   │    N/A    │ BPTree only    │
+# ├──────────────┼───────────┼───────────┼───────────┼─────────────────┤
+# │         N=1000 (pool ticks, positions, referral)                   │
+# ├──────────────┼───────────┼───────────┼───────────┼─────────────────┤
+# │ Populate     │ 237.32M   │ 232.00M   │ 108.82M   │ Map   2.2x     │
+# │ Single Get   │   3.09M   │   2.97M   │   6.30M   │ BPTree 2.0x    │
+# │ Single Set   │   3.76M   │   3.63M   │  11.98M   │ BPTree 3.2x    │
+# │ Iterate(10)  │   5.98M   │   5.71M   │    N/A    │ BPTree only    │
+# │ RevIter(1)   │   3.12M   │   2.99M   │    N/A    │ BPTree only    │
+# └──────────────┴───────────┴───────────┴───────────┴─────────────────┘
+#
+# ┌─────────────────────────────────────────────────────────────────────┐
+# │              INCREMENTAL ADD (insert 1 new key, per-tx)            │
+# │              This is the actual initialization pattern.            │
+# ├──────────────┬───────────┬───────────┬─────────────────────────────┤
+# │ Add 1 to     │ BPTree32  │   Map     │ Winner                      │
+# ├──────────────┼───────────┼───────────┼─────────────────────────────┤
+# │ N=100        │   3.38M   │   1.94M   │ Map   1.7x                  │
+# │ N=1000       │   3.92M   │  11.85M   │ BPTree 3.0x                 │
+# └──────────────┴───────────┴───────────┴─────────────────────────────┘
+#
+# Key finding: At N>=~500, Map's per-tx deserialization cost exceeds
+# BPTree's tree-walk cost.  BPTree wins 2-3x for ALL operations
+# (Get, Set, AND insert) on large persistent state.  Map only wins at N<~200.
+#
+# Decision rules
+# ==============
+# RULE 1: N < ~200 AND no ordering needed → Map
+#         (protocol_fee, param_registry handlers, version_manager, etc.)
+# RULE 2: N < ~200 AND ordering needed    → BPTree32
+#         (fanout 64 has no benefit at this size)
+# RULE 3: N >= ~200 (any access pattern)  → BPTree
+#         (BPTree cheaper even for pure point queries due to persistence)
+#         Use fanout 64 for ~4% saving at N>=1000.
+# RULE 4: Iterate/ReverseIterate needed   → BPTree (only option).
+
+loadpkg gno.land/p/nt/bptree/v0
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/persistbench -gas-fee 100000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### ============================================================ ###
+### Baseline: Empty function (fixed per-tx overhead)             ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1386261'
+
+### ============================================================ ###
+### BPTree32 @ N=100                                             ###
+### ============================================================ ###
+# Populate 100 items (struct values, zero-padded keys)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Populate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   25974148'
+
+# Single Get (from persisted tree of 100, middle key)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4085163'
+
+# Single Set/Update (existing key in persisted tree of 100)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Set100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4742332'
+
+# Iterate 10 items from middle of persisted tree of 100
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Iterate10From100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   6061299'
+
+# ReverseIterate to find latest (from persisted tree of 100)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_RevIter1From100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4105498'
+
+# Reset for next data structure
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   33962891'
+
+### ============================================================ ###
+### BPTree64 @ N=100                                             ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Populate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   25109337'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4275312'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Set100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4932481'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Iterate10From100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   6251693'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_RevIter1From100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4203440'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   33293757'
+
+### ============================================================ ###
+### Map @ N=100                                                  ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Populate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   12885362'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2347538'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Set100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3494510'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   22817551'
+
+### ============================================================ ###
+### BPTree32 @ N=1000                                            ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Populate1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   238711257'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4479009'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Set1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   5141550'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Iterate10From1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7371038'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_RevIter1From1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4502499'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   301167691'
+
+### ============================================================ ###
+### BPTree64 @ N=1000                                            ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Populate1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   233390016'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4355177'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Set1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   5012513'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_Iterate10From1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7097632'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT64_RevIter1From1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4375267'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   293922800'
+
+### ============================================================ ###
+### Map @ N=1000                                                 ###
+### ============================================================ ###
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Populate1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   110206340'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7689567'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Set1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13367172'
+
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   196937467'
+
+### ============================================================ ###
+### Incremental Add: insert ONE new key into tree/map of size N  ###
+### This is the ACTUAL initialization pattern in GnoSwap —       ###
+### items added one at a time across separate transactions.      ###
+### ============================================================ ###
+
+# BPTree32: add 1 new item to tree of 100 (101st item)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Populate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   26002111'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Add1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4768786'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   34276934'
+
+# Map: add 1 new item to map of 100
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Populate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   12902716'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Add1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3329880'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   23030162'
+
+# BPTree32: add 1 new item to tree of 1000 (1001st item)
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Populate1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   238866923'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func BPT32_Add1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   5309041'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   301632337'
+
+# Map: add 1 new item to map of 1000
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Populate1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   110315494'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Map_Add1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   13235729'
+gnokey maketx call -pkgpath gno.land/r/test/persistbench -func Reset -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   197258203'
+
+-- gnomod.toml --
+module = "gno.land/r/test/persistbench"
+gno = "0.9"
+-- main.gno --
+package persistbench
+
+import (
+	bptree "gno.land/p/nt/bptree/v0"
+)
+
+// ================================================================
+// Realistic value type — mirrors GnoSwap's TickInfo / Position size
+// 8 fields, mix of string (uint256 hex) and int64, ~200 bytes total
+// ================================================================
+type Entry struct {
+	Field0 string // e.g. feeGrowthOutside0X128  (64-char hex)
+	Field1 string // e.g. feeGrowthOutside1X128  (64-char hex)
+	Field2 string // e.g. liquidity              (decimal string)
+	Field3 int64  // e.g. tickCumulativeOutside
+	Field4 int64  // e.g. secondsPerLiquidityOutsideX128
+	Field5 int64  // e.g. secondsOutside
+	Field6 int64  // e.g. tokensOwed0
+	Field7 bool   // e.g. initialized
+}
+
+func makeEntry(i int) *Entry {
+	return &Entry{
+		Field0: "00000000000000000000000000000000000000000000000000000000000000ff",
+		Field1: "00000000000000000000000000000000000000000000000000000000000000ab",
+		Field2: "1000000000000000000",
+		Field3: int64(i * 100),
+		Field4: int64(i * 200),
+		Field5: int64(i * 10),
+		Field6: int64(i),
+		Field7: true,
+	}
+}
+
+// ================================================================
+// Key encoding — 10-byte zero-padded (matches pool tick encoding)
+// ================================================================
+func encodeKey(v int) string {
+	n := v + 900000 // shift to positive (like tick + MAX_TICK)
+	buf := make([]byte, 10)
+	for i := 9; i >= 0; i-- {
+		buf[i] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(buf)
+}
+
+// ================================================================
+// Package-level state — PERSISTED across transactions
+// This is the critical difference from v1 benchmarks
+// ================================================================
+var (
+	tree *bptree.BPTree
+	m    map[string]*Entry
+)
+
+func Empty(cur realm) {}
+
+func Reset(cur realm) {
+	tree = nil
+	m = nil
+}
+
+// ================================================================
+// BPTree32 operations
+// ================================================================
+
+func BPT32_Populate100(cur realm) {
+	tree = bptree.NewBPTreeN(32)
+	for i := 0; i < 100; i++ {
+		tree.Set(encodeKey(i), makeEntry(i))
+	}
+}
+
+func BPT32_Populate1000(cur realm) {
+	tree = bptree.NewBPTreeN(32)
+	for i := 0; i < 1000; i++ {
+		tree.Set(encodeKey(i), makeEntry(i))
+	}
+}
+
+func BPT32_Get100(cur realm) {
+	_, _ = tree.Get(encodeKey(50))
+}
+
+func BPT32_Get1000(cur realm) {
+	_, _ = tree.Get(encodeKey(500))
+}
+
+func BPT32_Set100(cur realm) {
+	tree.Set(encodeKey(50), makeEntry(9999))
+}
+
+func BPT32_Set1000(cur realm) {
+	tree.Set(encodeKey(500), makeEntry(9999))
+}
+
+func BPT32_Iterate10From100(cur realm) {
+	start := encodeKey(45)
+	count := 0
+	tree.Iterate(start, "", func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		count++
+		return count >= 10
+	})
+}
+
+func BPT32_Iterate10From1000(cur realm) {
+	start := encodeKey(495)
+	count := 0
+	tree.Iterate(start, "", func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		count++
+		return count >= 10
+	})
+}
+
+func BPT32_RevIter1From100(cur realm) {
+	end := encodeKey(75)
+	tree.ReverseIterate("", end, func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		return true // stop after first
+	})
+}
+
+func BPT32_RevIter1From1000(cur realm) {
+	end := encodeKey(750)
+	tree.ReverseIterate("", end, func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		return true
+	})
+}
+
+// ================================================================
+// BPTree64 operations
+// ================================================================
+
+func BPT64_Populate100(cur realm) {
+	tree = bptree.NewBPTreeN(64)
+	for i := 0; i < 100; i++ {
+		tree.Set(encodeKey(i), makeEntry(i))
+	}
+}
+
+func BPT64_Populate1000(cur realm) {
+	tree = bptree.NewBPTreeN(64)
+	for i := 0; i < 1000; i++ {
+		tree.Set(encodeKey(i), makeEntry(i))
+	}
+}
+
+func BPT64_Get100(cur realm) {
+	_, _ = tree.Get(encodeKey(50))
+}
+
+func BPT64_Get1000(cur realm) {
+	_, _ = tree.Get(encodeKey(500))
+}
+
+func BPT64_Set100(cur realm) {
+	tree.Set(encodeKey(50), makeEntry(9999))
+}
+
+func BPT64_Set1000(cur realm) {
+	tree.Set(encodeKey(500), makeEntry(9999))
+}
+
+func BPT64_Iterate10From100(cur realm) {
+	start := encodeKey(45)
+	count := 0
+	tree.Iterate(start, "", func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		count++
+		return count >= 10
+	})
+}
+
+func BPT64_Iterate10From1000(cur realm) {
+	start := encodeKey(495)
+	count := 0
+	tree.Iterate(start, "", func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		count++
+		return count >= 10
+	})
+}
+
+func BPT64_RevIter1From100(cur realm) {
+	end := encodeKey(75)
+	tree.ReverseIterate("", end, func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		return true
+	})
+}
+
+func BPT64_RevIter1From1000(cur realm) {
+	end := encodeKey(750)
+	tree.ReverseIterate("", end, func(key string, value interface{}) bool {
+		_ = value.(*Entry)
+		return true
+	})
+}
+
+// ================================================================
+// Map operations
+// ================================================================
+
+func Map_Populate100(cur realm) {
+	m = make(map[string]*Entry)
+	for i := 0; i < 100; i++ {
+		m[encodeKey(i)] = makeEntry(i)
+	}
+}
+
+func Map_Populate1000(cur realm) {
+	m = make(map[string]*Entry)
+	for i := 0; i < 1000; i++ {
+		m[encodeKey(i)] = makeEntry(i)
+	}
+}
+
+func Map_Get100(cur realm) {
+	_ = m[encodeKey(50)]
+}
+
+func Map_Get1000(cur realm) {
+	_ = m[encodeKey(500)]
+}
+
+func Map_Set100(cur realm) {
+	m[encodeKey(50)] = makeEntry(9999)
+}
+
+func Map_Set1000(cur realm) {
+	m[encodeKey(500)] = makeEntry(9999)
+}
+
+// ================================================================
+// Incremental Add — insert a NEW key (not update existing).
+// Measures the actual per-item initialization cost.
+// Uses tree.Size() as the new key to guarantee a fresh insert.
+// ================================================================
+
+func BPT32_Add1(cur realm) {
+	newKey := encodeKey(tree.Size()) // guaranteed new key
+	tree.Set(newKey, makeEntry(tree.Size()))
+}
+
+func Map_Add1(cur realm) {
+	newKey := encodeKey(len(m)) // guaranteed new key
+	m[newKey] = makeEntry(len(m))
+}

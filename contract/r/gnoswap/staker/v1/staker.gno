@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -32,13 +32,13 @@ const ZERO_ADDRESS = address("")
 
 // Deposits manages all staked positions.
 type Deposits struct {
-	tree *avl.Tree
+	tree *bptree.BPTree
 }
 
 // NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: avl.NewTree(), // positionId -> *Deposit
+		tree: bptree.NewBPTree32(), // positionId -> *Deposit
 	}
 }
 
@@ -104,13 +104,13 @@ func (self *Deposits) remove(positionId uint64) {
 
 // ExternalIncentives manages external incentive programs.
 type ExternalIncentives struct {
-	tree *avl.Tree
+	tree *bptree.BPTree
 }
 
 // NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTree32(),
 	}
 }
 
@@ -149,13 +149,15 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 
 // Stakers manages deposits by staker address.
 type Stakers struct {
-	tree *avl.Tree // address -> depositId -> *Deposit
+	tree *bptree.BPTree // address -> depositId -> *Deposit
 }
 
 // NewStakers creates a new Stakers instance.
+// TODO: consider NewBPTreeN(64) — Iterate used, N=1k~100k addresses.
+// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 func NewStakers() *Stakers {
 	return &Stakers{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTree32(),
 	}
 }
 
@@ -179,7 +181,7 @@ func (self *Stakers) IterateAll(address address, fn func(depositId uint64, depos
 func (self *Stakers) addDeposit(address address, depositId uint64, deposit *sr.Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
-		depositTree := avl.NewTree()
+		depositTree := bptree.NewBPTree32()
 		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
@@ -199,11 +201,11 @@ func (self *Stakers) removeDeposit(address address, depositId uint64) {
 	depositTree.Remove(EncodeUint(depositId))
 }
 
-// retrieveDepositTree safely casts data to AVL tree type.
-func retrieveDepositTree(data any) *avl.Tree {
-	depositTree, ok := data.(*avl.Tree)
+// retrieveDepositTree safely casts data to B+Tree type.
+func retrieveDepositTree(data any) *bptree.BPTree {
+	depositTree, ok := data.(*bptree.BPTree)
 	if !ok {
-		panic("failed to cast depositTree to *avl.Tree")
+		panic("failed to cast depositTree to *bptree.BPTree")
 	}
 	return depositTree
 }

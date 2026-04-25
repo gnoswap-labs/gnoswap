@@ -3,7 +3,7 @@ package v1
 import (
 	"strconv"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -50,7 +50,7 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 
 	// Initialize Configs with default configuration if not already set
 	if !governanceStore.HasConfigsStoreKey() {
-		configs := avl.NewTree()
+		configs := bptree.NewBPTree32()
 		nextConfigVersion := governanceStore.GetConfigCounter().Next()
 
 		configs.Set(formatConfigKey(nextConfigVersion), defaultConfig)
@@ -62,21 +62,23 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 	}
 
 	if !governanceStore.HasProposalsStoreKey() {
-		err := governanceStore.SetProposals(avl.NewTree())
+		err := governanceStore.SetProposals(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
-		err := governanceStore.SetProposalUserVotingInfos(avl.NewTree())
+		err := governanceStore.SetProposalUserVotingInfos(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
+	// TODO: consider map — Get/Set only, no Iterate in production code.
+	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x)
 	if !governanceStore.HasUserProposalsStoreKey() {
-		err := governanceStore.SetUserProposals(avl.NewTree())
+		err := governanceStore.SetUserProposals(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}

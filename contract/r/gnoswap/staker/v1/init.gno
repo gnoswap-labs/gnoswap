@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -53,22 +53,24 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) — range-iterated, N=100k+.
+	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 	if !stakerStore.HasDepositsStoreKey() {
-		err := stakerStore.SetDeposits(avl.NewTree())
+		err := stakerStore.SetDeposits(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasExternalIncentivesStoreKey() {
-		err := stakerStore.SetExternalIncentives(avl.NewTree())
+		err := stakerStore.SetExternalIncentives(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
 	}
 
 	if !stakerStore.HasStakersStoreKey() {
-		err := stakerStore.SetStakers(avl.NewTree())
+		err := stakerStore.SetStakers(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
@@ -97,8 +99,10 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider map — Get/Set/Remove only, no Iterate, N<100.
+	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
-		err := stakerStore.SetTokenSpecificMinimumRewards(avl.NewTree())
+		err := stakerStore.SetTokenSpecificMinimumRewards(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}

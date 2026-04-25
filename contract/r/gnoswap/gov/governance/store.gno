@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -19,13 +19,13 @@ const (
 	StoreKeyConfigCounter   StoreKey = "configCounter"   // Config version counter
 	StoreKeyProposalCounter StoreKey = "proposalCounter" // Proposal ID counter
 
-	StoreKeyConfigs StoreKey = "configs" // Configurations AVL tree
+	StoreKeyConfigs StoreKey = "configs" // Configurations B+Tree
 
-	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
+	StoreKeyProposals StoreKey = "proposals" // Proposals B+Tree
 
-	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
+	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos B+Tree
 
-	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping AVL tree
+	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping B+Tree
 )
 
 type governanceStore struct {
@@ -82,21 +82,21 @@ func (s *governanceStore) HasConfigsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyConfigs.String())
 }
 
-func (s *governanceStore) GetConfigs() *avl.Tree {
+func (s *governanceStore) GetConfigs() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyConfigs.String())
 	if err != nil {
 		panic(err)
 	}
 
-	configs, ok := result.(*avl.Tree)
+	configs, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return configs
 }
 
-func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
+func (s *governanceStore) SetConfigs(configs *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
 
@@ -131,21 +131,21 @@ func (s *governanceStore) HasProposalsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyProposals.String())
 }
 
-func (s *governanceStore) GetProposals() *avl.Tree {
+func (s *governanceStore) GetProposals() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyProposals.String())
 	if err != nil {
 		panic(err)
 	}
 
-	proposals, ok := result.(*avl.Tree)
+	proposals, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return proposals
 }
 
-func (s *governanceStore) SetProposals(proposals *avl.Tree) error {
+func (s *governanceStore) SetProposals(proposals *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
 }
 
@@ -179,32 +179,32 @@ func (s *governanceStore) HasProposalUserVotingInfosStoreKey() bool {
 	return s.kvStore.Has(StoreKeyProposalUserVotingInfos.String())
 }
 
-func (s *governanceStore) GetProposalUserVotingInfos() *avl.Tree {
+func (s *governanceStore) GetProposalUserVotingInfos() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyProposalUserVotingInfos.String())
 	if err != nil {
 		panic(err)
 	}
 
-	votingInfos, ok := result.(*avl.Tree)
+	votingInfos, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return votingInfos
 }
 
-func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {
+func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
-func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
+func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
 	votingInfo, ok := votingInfos.Get(formatInt64Key(proposalID))
 	if !ok {
 		return nil, false
 	}
 
-	votingInfoTree, ok := votingInfo.(*avl.Tree)
+	votingInfoTree, ok := votingInfo.(*bptree.BPTree)
 	if !ok {
 		return nil, false
 	}
@@ -212,7 +212,7 @@ func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, b
 	return votingInfoTree, true
 }
 
-func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
+func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error {
 	if !s.HasProposalUserVotingInfosStoreKey() {
 		return errors.New("proposal user voting infos store key not found")
 	}
@@ -228,25 +228,25 @@ func (s *governanceStore) HasUserProposalsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUserProposals.String())
 }
 
-func (s *governanceStore) GetUserProposals() *avl.Tree {
+func (s *governanceStore) GetUserProposals() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyUserProposals.String())
 	if err != nil {
 		panic(err)
 	}
 
-	userProposals, ok := result.(*avl.Tree)
+	userProposals, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return userProposals
 }
 
-func (s *governanceStore) SetUserProposals(userProposals *avl.Tree) error {
+func (s *governanceStore) SetUserProposals(userProposals *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
 }
 
-func (s *governanceStore) GetUserProposalsTree() *avl.Tree {
+func (s *governanceStore) GetUserProposalsTree() *bptree.BPTree {
 	return s.GetUserProposals()
 }
 

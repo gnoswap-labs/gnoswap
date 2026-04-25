@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -51,8 +51,10 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) — Get/Set/Remove, N=1k~10k.
+	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
 	if !store.HasDelegationsStoreKey() {
-		err := store.SetDelegations(avl.NewTree())
+		err := store.SetDelegations(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}
@@ -68,7 +70,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 
 	// Initialize user delegation history (address -> *UintTree[timestamp -> int64])
 	if !store.HasUserDelegationHistoryStoreKey() {
-		err := store.SetUserDelegationHistory(avl.NewTree())
+		err := store.SetUserDelegationHistory(bptree.NewBPTree32())
 		if err != nil {
 			return err
 		}

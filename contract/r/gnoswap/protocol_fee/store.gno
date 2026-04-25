@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -67,10 +67,10 @@ func (s *protocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToGovStaker() error {
-	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetAccuToGovStaker() *avl.Tree {
+func (s *protocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
 	accuToGovStaker, err := s.kvStore.GetTree(StoreKeyAccuToGovStaker.String())
 	if err != nil {
 		panic(err)
@@ -115,10 +115,10 @@ func (s *protocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToDevOps() error {
-	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetAccuToDevOps() *avl.Tree {
+func (s *protocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
 	accuToDevOps, err := s.kvStore.GetTree(StoreKeyAccuToDevOps.String())
 	if err != nil {
 		panic(err)
@@ -158,15 +158,17 @@ func (s *protocolFeeStore) SetAccuToDevOpsItem(tokenPath string, amount int64) e
 }
 
 // handle distributedToGovStakerHistory store data
+// TODO: consider map — Get/Set only, no Iterate, N<50.
+// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
 func (s *protocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDistributedToGovStakerHistory.String())
 }
 
 func (s *protocolFeeStore) InitializeDistributedToGovStakerHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *avl.Tree {
+func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
 	distributedToGovStakerHistory, err := s.kvStore.GetTree(StoreKeyDistributedToGovStakerHistory.String())
 	if err != nil {
 		panic(err)
@@ -206,15 +208,17 @@ func (s *protocolFeeStore) SetDistributedToGovStakerHistoryItem(tokenPath string
 }
 
 // handle distributedToDevOpsHistory store data
+// TODO: consider map — Get/Set only, no Iterate, N<50.
+// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
 func (s *protocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDistributedToDevOpsHistory.String())
 }
 
 func (s *protocolFeeStore) InitializeDistributedToDevOpsHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), bptree.NewBPTree32())
 }
 
-func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *avl.Tree {
+func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
 	distributedToDevOpsHistory, err := s.kvStore.GetTree(StoreKeyDistributedToDevOpsHistory.String())
 	if err != nil {
 		panic(err)

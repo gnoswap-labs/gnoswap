@@ -8,7 +8,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -258,10 +258,10 @@ var (
 // initTestStore initializes a new test store
 func initTestStore() {
 	testStore = &testLaunchpadStore{
-		projects:                  avl.NewTree(),
-		projectTierRewardManagers: avl.NewTree(),
+		projects:                  bptree.NewBPTree32(),
+		projectTierRewardManagers: bptree.NewBPTree32(),
 		depositCounter:            launchpad.NewCounter(),
-		deposits:                  avl.NewTree(),
+		deposits:                  bptree.NewBPTree32(),
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -275,24 +275,24 @@ func resetTestStore() {
 }
 
 type testLaunchpadStore struct {
-	projects                  *avl.Tree
-	projectTierRewardManagers *avl.Tree
+	projects                  *bptree.BPTree
+	projectTierRewardManagers *bptree.BPTree
 	depositCounter            *launchpad.Counter
-	deposits                  *avl.Tree
+	deposits                  *bptree.BPTree
 }
 
 func (s *testLaunchpadStore) HasProjectsKey() bool {
 	return s.projects != nil
 }
 
-func (s *testLaunchpadStore) GetProjects() *avl.Tree {
+func (s *testLaunchpadStore) GetProjects() *bptree.BPTree {
 	if s.projects == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 	return s.projects
 }
 
-func (s *testLaunchpadStore) SetProjects(projects *avl.Tree) error {
+func (s *testLaunchpadStore) SetProjects(projects *bptree.BPTree) error {
 	s.projects = projects
 	return nil
 }
@@ -301,14 +301,14 @@ func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
 	return s.projectTierRewardManagers != nil
 }
 
-func (s *testLaunchpadStore) GetProjectTierRewardManagers() *avl.Tree {
+func (s *testLaunchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 	if s.projectTierRewardManagers == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 	return s.projectTierRewardManagers
 }
 
-func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
+func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *bptree.BPTree) error {
 	s.projectTierRewardManagers = managers
 	return nil
 }
@@ -334,14 +334,14 @@ func (s *testLaunchpadStore) HasDepositsKey() bool {
 	return s.deposits != nil
 }
 
-func (s *testLaunchpadStore) GetDeposits() *avl.Tree {
+func (s *testLaunchpadStore) GetDeposits() *bptree.BPTree {
 	if s.deposits == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 	return s.deposits
 }
 
-func (s *testLaunchpadStore) SetDeposits(deposits *avl.Tree) error {
+func (s *testLaunchpadStore) SetDeposits(deposits *bptree.BPTree) error {
 	s.deposits = deposits
 	return nil
 }
@@ -349,15 +349,15 @@ func (s *testLaunchpadStore) SetDeposits(deposits *avl.Tree) error {
 // Test helper functions to access state
 
 // getTestProjects returns the projects tree
-func getTestProjects() *avl.Tree {
+func getTestProjects() *bptree.BPTree {
 	if testStore == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 	return testStore.GetProjects()
 }
 
 // setTestProjects sets the projects tree
-func setTestProjects(tree *avl.Tree) {
+func setTestProjects(tree *bptree.BPTree) {
 	if testStore == nil {
 		initTestStore()
 	}
@@ -368,15 +368,15 @@ func setTestProjects(tree *avl.Tree) {
 }
 
 // getTestProjectTierRewardManagers returns the projectTierRewardManagers tree
-func getTestProjectTierRewardManagers() *avl.Tree {
+func getTestProjectTierRewardManagers() *bptree.BPTree {
 	if testStore == nil {
-		return avl.NewTree()
+		return bptree.NewBPTree32()
 	}
 	return testStore.GetProjectTierRewardManagers()
 }
 
 // setTestProjectTierRewardManagers sets the projectTierRewardManagers tree
-func setTestProjectTierRewardManagers(tree *avl.Tree) {
+func setTestProjectTierRewardManagers(tree *bptree.BPTree) {
 	if testStore == nil {
 		initTestStore()
 	}

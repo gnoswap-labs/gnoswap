@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gov/staker"
@@ -96,33 +95,10 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
 
-	toTimestamp := cutoffTimestamp
-	if cutoffTimestamp < math.MaxInt64 {
-		toTimestamp = safeAddInt64(toTimestamp, 1)
+	removed, checkpointed := compactHistoryAtCutoff(history, cutoffTimestamp)
+	if removed > 0 && !checkpointed {
+		panic("cleanTotalDelegationHistory: entries removed without checkpoint")
 	}
-
-	// First, find the most recent entry before cutoff to preserve state
-	var lastValue any
-
-	hasLastValue := false
-
-	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
-		lastValue = value
-		hasLastValue = true
-
-		return true // stop after first (most recent)
-	})
-
-	// If there was a value before cutoff, set it at cutoff time to preserve continuity
-	if hasLastValue {
-		history.Set(cutoffTimestamp, lastValue)
-	}
-
-	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
-		history.Remove(timestamp)
-
-		return false // continue
-	})
 
 	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
@@ -135,48 +111,62 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetUserDelegationHistory()
 
-	// Iterate over all users and clean each user's history
+	toRemove := make([]string, 0)
 	history.Iterate("", "", func(addrStr string, value any) bool {
 		userHistory := value.(*staker.UintTree)
 
-		toTimestamp := cutoffTimestamp
-		if cutoffTimestamp < math.MaxInt64 {
-			toTimestamp = safeAddInt64(toTimestamp, 1)
+		removed, checkpointed := compactHistoryAtCutoff(userHistory, cutoffTimestamp)
+		if removed > 0 && !checkpointed {
+			panic("cleanUserDelegationHistory: entries removed without checkpoint")
 		}
 
-		// Find the most recent entry before cutoff to preserve state
-		var lastValue any
-
-		hasLastValue := false
-
-		userHistory.ReverseIterate(0, toTimestamp, func(_ int64, val any) bool {
-			lastValue = val
-			hasLastValue = true
-
-			return true // stop after first (most recent)
-		})
-
-		// If there was a value before cutoff, set it at cutoff time to preserve continuity
-		if hasLastValue {
-			userHistory.Set(cutoffTimestamp, lastValue)
+		if userHistory.Size() == 0 {
+			toRemove = append(toRemove, addrStr)
 		}
 
-		// Copy all entries at or after cutoff time
-		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
-			userHistory.Remove(key)
-
-			return false // continue
-		})
-
-		// Only keep users with history entries
-		if userHistory.Size() > 0 {
-			history.Set(addrStr, userHistory)
-		}
-
-		return false // continue to next user
+		return false
 	})
+
+	for _, addrStr := range toRemove {
+		history.Remove(addrStr)
+	}
 
 	if err := gs.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)
 	}
+}
+
+// compactHistoryAtCutoff folds every entry in [0, cutoff) into a single entry at cutoff,
+// carrying forward the most recent value so state continuity is preserved across the prune.
+// Entries at or after cutoff are left untouched.
+//
+// Returns the number of entries removed and whether a checkpoint was written at cutoff,
+// so callers can explicitly verify the postcondition.
+//
+// Note: bptree forbids Set/Remove during Iterate (leaf slice shifts skip entries),
+// so keys to remove are collected first and deleted in a separate pass. (See: btree/nt/v0/tree.go:Iterate)
+func compactHistoryAtCutoff(tree *staker.UintTree, cutoff int64) (removed int, checkpointed bool) {
+	var lastValue any
+
+	tree.ReverseIterate(0, cutoff, func(_ int64, value any) bool {
+		lastValue = value
+		checkpointed = true
+		return true
+	})
+
+	if checkpointed {
+		tree.Set(cutoff, lastValue)
+	}
+
+	toRemove := make([]int64, 0)
+	tree.Iterate(0, cutoff, func(key int64, _ any) bool {
+		toRemove = append(toRemove, key)
+		return false
+	})
+
+	for _, key := range toRemove {
+		tree.Remove(key)
+	}
+
+	return len(toRemove), checkpointed
 }

@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -139,7 +139,7 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		{
 			name: "set and get pools successfully",
 			setupFn: func(ps IPoolStore) {
-				pools := avl.NewTree()
+				pools := bptree.NewBPTree32()
 				pools.Set("pool1", "data1")
 				ps.SetPools(pools)
 			},
@@ -615,7 +615,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 		{
 			name: "set and get all store values",
 			setupFn: func(ps IPoolStore) {
-				pools := avl.NewTree()
+				pools := bptree.NewBPTree32()
 				pools.Set("pool1", "data1")
 				ps.SetPools(pools)
 

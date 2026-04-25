@@ -170,7 +170,7 @@ gnft.Burn(cur, tokenId)
 ### State Variables
 
 - `nft *grc721.AdminToken`: GRC721 token instance
-- `tokenURIs avl.Tree`: TokenID → parameter string mapping
+- `tokenURIs tree`: TokenID → parameter string mapping
 
 ### Access Control
 

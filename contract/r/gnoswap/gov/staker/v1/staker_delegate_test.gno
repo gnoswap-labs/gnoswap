@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -1152,10 +1152,10 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	// Reset delegation state
 	mockStore := gs.store.(*mockGovStakerStore)
 	mockStore.delegationNextID = staker.NewCounter()
-	mockStore.delegations = avl.NewTree()
+	mockStore.delegations = bptree.NewBPTree32()
 	mockStore.totalDelegationHistory = staker.NewUintTree()
-	mockStore.userDelegationHistory = avl.NewTree()
-	mockStore.userDelegations = avl.NewTree()
+	mockStore.userDelegationHistory = bptree.NewBPTree32()
+	mockStore.userDelegations = bptree.NewBPTree32()
 
 	// Reset managers in store
 	mockStore.delegationManager = staker.NewDelegationManager()

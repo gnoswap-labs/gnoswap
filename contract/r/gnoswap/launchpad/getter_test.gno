@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 	"testing"
@@ -21,7 +21,7 @@ func newLaunchpadRewardManager() *RewardManager {
 	manager.SetTotalClaimedAmount(300)
 	manager.SetAccumulatedDistributeAmount(400)
 	manager.SetAccumulatedTime(600)
-	rewards := avl.NewTree()
+	rewards := bptree.NewBPTree32()
 	rewards.Set("deposit-1", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100))
 	manager.SetRewards(rewards)
 	return manager
@@ -39,7 +39,7 @@ func newLaunchpadProject() *Project {
 	return project
 }
 
-func firstRewardState(t *testing.T, rewards *avl.Tree) *RewardState {
+func firstRewardState(t *testing.T, rewards *bptree.BPTree) *RewardState {
 	t.Helper()
 
 	var rewardState *RewardState

@@ -50,7 +50,7 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []i
 		return delegationIDs
 	}
 
-	// Collect delegation IDs from all delegatees by iterating the AVL tree
+	// Collect delegation IDs from all delegatees by iterating the B+Tree
 	delegations.Iterate("", "", func(key string, value interface{}) bool {
 		if toDelegations, ok := value.([]int64); ok {
 			delegationIDs = append(delegationIDs, toDelegations...)

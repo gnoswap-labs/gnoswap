@@ -2,7 +2,7 @@
 package mock
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	governance "gno.land/r/gnoswap/gov/governance"
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
@@ -193,8 +193,8 @@ func (t *TestGovernance) GetCurrentVotingWeightSnapshot() (int64, int64, error) 
 }
 
 type stakerAccessor struct {
-	userDelegationAmounts  map[address]*avl.Tree
-	totalDelegationAmounts *avl.Tree
+	userDelegationAmounts  map[address]*bptree.BPTree
+	totalDelegationAmounts *bptree.BPTree
 }
 
 func (s *stakerAccessor) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
@@ -230,7 +230,7 @@ func (s *stakerAccessor) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) 
 
 func newStakerAccessor() *stakerAccessor {
 	return &stakerAccessor{
-		userDelegationAmounts:  make(map[address]*avl.Tree),
-		totalDelegationAmounts: avl.NewTree(),
+		userDelegationAmounts:  make(map[address]*bptree.BPTree),
+		totalDelegationAmounts: bptree.NewBPTree32(),
 	}
 }

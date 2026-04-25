@@ -3,7 +3,7 @@ package referral
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 const (
@@ -11,20 +11,23 @@ const (
 	MinTimeBetweenUpdates int64 = 24 * 60 * 60
 )
 
-// keeper implements ReferralKeeper using AVL tree storage.
+// keeper implements ReferralKeeper using B+Tree storage.
 // It includes rate limiting to prevent abuse.
 type keeper struct {
-	store   *avl.Tree // address(string) -> referral address(string)
-	lastOps *avl.Tree // address(string) -> last operation timestamp(int64)
+	store   *bptree.BPTree // address(string) -> referral address(string)
+	lastOps *bptree.BPTree // address(string) -> last operation timestamp(int64)
 }
 
 var _ ReferralKeeper = &keeper{}
 
 // NewKeeper creates a new ReferralKeeper instance.
+// TODO: consider NewBPTreeN(64) — Get/Set/Remove only, N=10k~100k.
+// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32.
+// At N>=500, BPTree outperforms Map for persistent state (2-3x cheaper).
 func NewKeeper() ReferralKeeper {
 	return &keeper{
-		store:   avl.NewTree(),
-		lastOps: avl.NewTree(),
+		store:   bptree.NewBPTree32(),
+		lastOps: bptree.NewBPTree32(),
 	}
 }
 

@@ -1,29 +1,29 @@
 package staker
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // LaunchpadProjectDeposits manages deposit amounts for launchpad projects.
 // It tracks the total staked amount for each project identified by owner address.
 type LaunchpadProjectDeposits struct {
 	// deposits maps owner address to deposit amount
-	deposits *avl.Tree // string -> int64
+	deposits *bptree.BPTree // string -> int64
 }
 
 // NewLaunchpadProjectDeposits creates a new instance of LaunchpadProjectDeposits.
 func NewLaunchpadProjectDeposits() *LaunchpadProjectDeposits {
 	return &LaunchpadProjectDeposits{
-		deposits: avl.NewTree(),
+		deposits: bptree.NewBPTree32(),
 	}
 }
 
 // GetDeposits returns the entire deposits tree.
-func (lpd *LaunchpadProjectDeposits) GetDeposits() *avl.Tree {
+func (lpd *LaunchpadProjectDeposits) GetDeposits() *bptree.BPTree {
 	return lpd.deposits
 }
 
 // SetDeposits sets the entire deposits tree.
-func (lpd *LaunchpadProjectDeposits) SetDeposits(deposits *avl.Tree) {
+func (lpd *LaunchpadProjectDeposits) SetDeposits(deposits *bptree.BPTree) {
 	lpd.deposits = deposits
 }

@@ -1,7 +1,7 @@
 package pool
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -234,8 +234,8 @@ type IPoolGetter interface {
 // and modify pool state, ensuring data consistency across versions.
 type IPoolStore interface {
 	HasPools() bool
-	GetPools() *avl.Tree
-	SetPools(pools *avl.Tree) error
+	GetPools() *bptree.BPTree
+	SetPools(pools *bptree.BPTree) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32

@@ -2,7 +2,7 @@ package launchpad
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type ILaunchpad interface {
@@ -92,12 +92,12 @@ type ILaunchpadGetter interface {
 
 type ILaunchpadStore interface {
 	HasProjectsKey() bool
-	GetProjects() *avl.Tree
-	SetProjects(projects *avl.Tree) error
+	GetProjects() *bptree.BPTree
+	SetProjects(projects *bptree.BPTree) error
 
 	HasProjectTierRewardManagersKey() bool
-	GetProjectTierRewardManagers() *avl.Tree
-	SetProjectTierRewardManagers(managers *avl.Tree) error
+	GetProjectTierRewardManagers() *bptree.BPTree
+	SetProjectTierRewardManagers(managers *bptree.BPTree) error
 
 	// DepositCounter
 	HasDepositCounterStoreKey() bool
@@ -106,6 +106,6 @@ type ILaunchpadStore interface {
 	NextDepositID() string
 
 	HasDepositsKey() bool
-	GetDeposits() *avl.Tree
-	SetDeposits(deposits *avl.Tree) error
+	GetDeposits() *bptree.BPTree
+	SetDeposits(deposits *bptree.BPTree) error
 }

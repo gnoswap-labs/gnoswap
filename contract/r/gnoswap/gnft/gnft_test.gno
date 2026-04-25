@@ -799,13 +799,13 @@ func TestBurn(t *testing.T) {
 			} else {
 				Burn(cross, tid(tt.tokenIdToBurn))
 
-				// Verify complete AVL tree cleanup after burn
+				// Verify complete B+Tree cleanup after burn
 				// 1. OwnerOf should return error for burned token
 				_, err := OwnerOf(tid(tt.tokenIdToBurn))
 				uassert.Error(t, err)
 				uassert.Equal(t, errInvalidTokenId, err.Error())
 
-				// 2. Exists should return false (token completely removed from AVL tree)
+				// 2. Exists should return false (token completely removed from B+Tree)
 				exists := Exists(tid(tt.tokenIdToBurn))
 				uassert.False(t, exists)
 

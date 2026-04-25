@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -135,7 +135,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 			if !gs.HasDelegationsStoreKey() {
-				gs.SetDelegations(avl.NewTree())
+				gs.SetDelegations(bptree.NewBPTree32())
 			}
 
 			testing.SetRealm(tc.callerRealm)
@@ -147,7 +147,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 				gs.GetAllDelegations()
 			}
 
-			err := gs.SetDelegations(avl.NewTree())
+			err := gs.SetDelegations(bptree.NewBPTree32())
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -336,7 +336,7 @@ func TestStoreSetAndGetDelegations(t *testing.T) {
 		{
 			name: "set and get delegations successfully",
 			setupFn: func(gs IGovStakerStore) {
-				delegations := avl.NewTree()
+				delegations := bptree.NewBPTree32()
 				gs.SetDelegations(delegations)
 			},
 			testFn: func(t *testing.T, gs IGovStakerStore) {
@@ -393,7 +393,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovStakerStore(kvStore)
 
-				delegations := avl.NewTree()
+				delegations := bptree.NewBPTree32()
 				err := gs.SetDelegations(delegations)
 				uassert.NoError(t, err)
 
@@ -419,7 +419,7 @@ func TestStoreSetAndGetDelegation(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovStakerStore(kvStore)
 
-				delegations := avl.NewTree()
+				delegations := bptree.NewBPTree32()
 				err := gs.SetDelegations(delegations)
 				uassert.NoError(t, err)
 
@@ -572,7 +572,7 @@ func TestStoreSetAndGetUserDelegationHistory(t *testing.T) {
 		{
 			name: "set and get user delegation history successfully",
 			setupFn: func(gs IGovStakerStore) {
-				history := avl.NewTree()
+				history := bptree.NewBPTree32()
 				gs.SetUserDelegationHistory(history)
 			},
 			testFn: func(t *testing.T, gs IGovStakerStore) {
@@ -859,7 +859,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				gs.SetTotalDelegatedAmount(500000)
 				gs.SetTotalLockedAmount(250000)
 
-				delegations := avl.NewTree()
+				delegations := bptree.NewBPTree32()
 				gs.SetDelegations(delegations)
 
 				counter := NewCounter()
@@ -871,7 +871,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				totalHistory := NewUintTree()
 				gs.SetTotalDelegationHistory(totalHistory)
 
-				userHistory := avl.NewTree()
+				userHistory := bptree.NewBPTree32()
 				gs.SetUserDelegationHistory(userHistory)
 			},
 			verifyFn: func(t *testing.T, gs IGovStakerStore) {

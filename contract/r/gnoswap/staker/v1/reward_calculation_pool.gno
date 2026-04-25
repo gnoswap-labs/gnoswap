@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -17,12 +17,12 @@ var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pools represents the global pool storage
 type Pools struct {
-	tree *avl.Tree // string poolPath -> pool
+	tree *bptree.BPTree // string poolPath -> pool
 }
 
 func NewPools() *Pools {
 	return &Pools{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTree32(),
 	}
 }
 
@@ -76,52 +76,66 @@ func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 	return NewIncentivesResolver(self.Incentives())
 }
 
-// Get the latest global reward ratio accumulation in [0, currentTime] range.
-// Returns the time and the accumulation.
-func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc string) {
-	acc = "0"
+// latestBefore returns the most recent (timestamp, value) in [0, cutoff] of tree.
+// Returns (0, nil, false) when no entry exists in that range.
+func latestBefore(tree *sr.UintTree, cutoff int64) (int64, any, bool) {
+	var (
+		ts    int64
+		val   any
+		found bool
+	)
 
-	self.GlobalRewardRatioAccumulation().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		time = key
-
-		valueStr, ok := value.(string)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to string: %T", value))
-		}
-
-		acc = valueStr
-
+	tree.ReverseIterate(0, cutoff, func(key int64, value any) bool {
+		ts, val, found = key, value, true
 		return true
 	})
 
-	return time, acc
+	return ts, val, found
+}
+
+// Get the latest global reward ratio accumulation in [0, currentTime] range.
+// Returns the time and the accumulation.
+func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (int64, string) {
+	ts, v, ok := latestBefore(self.GlobalRewardRatioAccumulation(), currentTime)
+	if !ok {
+		return 0, "0"
+	}
+
+	acc, ok := v.(string)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to string: %T", v))
+	}
+
+	return ts, acc
 }
 
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
-func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
-	self.HistoricalTick().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		res, ok := value.(int32)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int32: %T", value))
-		}
-		tick = res
-		return true
-	})
+func (self *PoolResolver) CurrentTick(currentTime int64) int32 {
+	_, v, ok := latestBefore(self.HistoricalTick(), currentTime)
+	if !ok {
+		return 0
+	}
+
+	tick, ok := v.(int32)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to int32: %T", v))
+	}
+
 	return tick
 }
 
-func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
-	liquidity = u256.Zero()
+func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) *u256.Uint {
+	_, v, ok := latestBefore(self.StakedLiquidity(), currentTime)
+	if !ok {
+		return u256.Zero()
+	}
 
-	self.StakedLiquidity().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		res, ok := value.(*u256.Uint)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
-		}
-		liquidity = res
-		return true
-	})
+	liquidity, ok := v.(*u256.Uint)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", v))
+	}
+
 	return liquidity
 }
 
@@ -153,26 +167,25 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 
 // Get the latest reward in [0, currentTime] range.
 // Returns the reward.
-func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
-	self.RewardCache().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		res, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
-		}
-		reward = res
-		return true
-	})
+func (self *PoolResolver) CurrentReward(currentTime int64) int64 {
+	_, v, ok := latestBefore(self.RewardCache(), currentTime)
+	if !ok {
+		return 0
+	}
+
+	reward, ok := v.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to int64: %T", v))
+	}
+
 	return reward
 }
 
-func (self *PoolResolver) isChangedTick(currentTime int64, currentTick int32) bool {
+func (self *PoolResolver) isChangedTick(currentTime int64, newTick int32) bool {
 	if self.HistoricalTick().Size() == 0 {
 		return true
 	}
-
-	previousTick := self.CurrentTick(currentTime)
-
-	return previousTick != currentTick
+	return self.CurrentTick(currentTime) != newTick
 }
 
 // cacheReward sets the current reward for the pool

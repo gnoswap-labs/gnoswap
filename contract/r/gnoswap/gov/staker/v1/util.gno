@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/onbloc/json"
 )
@@ -31,7 +31,7 @@ func formatInt(v int64) string {
 }
 
 // getUint64FromTree returns the uint64 value from the tree
-func getUint64FromTree(tree *avl.Tree, key string) uint64 {
+func getUint64FromTree(tree *bptree.BPTree, key string) uint64 {
 	value, exists := tree.Get(key)
 	if !exists {
 		return 0
@@ -46,7 +46,7 @@ func getUint64FromTree(tree *avl.Tree, key string) uint64 {
 }
 
 // updateUint64InTree updates the uint64 value in the tree
-func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint64 {
+func updateUint64InTree(tree *bptree.BPTree, key string, delta uint64, add bool) uint64 {
 	current := getUint64FromTree(tree, key)
 	var newValue uint64
 	if add {
@@ -67,17 +67,17 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 }
 
 // getOrCreateInnerTree returns the inner tree for the given key
-func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
+func getOrCreateInnerTree(tree *bptree.BPTree, key string) *bptree.BPTree {
 	value, exists := tree.Get(key)
 	if !exists {
-		innerTree := avl.NewTree()
+		innerTree := bptree.NewBPTree32()
 		tree.Set(key, innerTree)
 		return innerTree
 	}
 
-	v, ok := value.(*avl.Tree)
+	v, ok := value.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast value to *avl.Tree: %T", value))
+		panic(ufmt.Sprintf("failed to cast value to *bptree.BPTree: %T", value))
 	}
 
 	return v
