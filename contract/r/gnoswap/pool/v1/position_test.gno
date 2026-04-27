@@ -1417,6 +1417,12 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 			description: "Large liquidity below maxLiquidityPerTick should be accepted",
 		},
 		{
+			name:        "Liquidity exactly maxLiquidityPerTick",
+			liquidity:   "1917569901783203986719870431555990", // exact maxLiquidityPerTick for tickSpacing=10
+			shouldPanic: false,
+			description: "Liquidity exactly at maxLiquidityPerTick should be accepted",
+		},
+		{
 			name:        "Liquidity exceeds maxLiquidityPerTick",
 			liquidity:   "1917569901783203986719870431556000", // Above maxLiquidityPerTick
 			shouldPanic: true,
@@ -1459,6 +1465,33 @@ func TestPosition_LiquidityBoundaryEdgeCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPosition_LiquidityBoundaryExistingPositionUpdate(t *testing.T) {
+	pool := setupPoolAtPrice(t, 0)
+	maxLiquidityPerTick := u256.MustFromDecimal("1917569901783203986719870431555990")
+	initialLiquidity := new(u256.Uint).Sub(maxLiquidityPerTick, u256.One())
+
+	params := ModifyPositionParams{
+		owner:          positionAddr,
+		tickLower:      -60,
+		tickUpper:      60,
+		liquidityDelta: safeConvertToInt128(initialLiquidity),
+	}
+
+	position, _, _, err := modifyPosition(pool, params)
+	uassert.NoError(t, err)
+	uassert.Equal(t, initialLiquidity.ToString(), position.Liquidity())
+
+	params.liquidityDelta = i256.MustFromDecimal("1")
+	position, _, _, err = modifyPosition(pool, params)
+	uassert.NoError(t, err)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), position.Liquidity())
+
+	params.liquidityDelta = i256.MustFromDecimal("1")
+	uassert.PanicsContains(t, "maxLiquidity", func() {
+		modifyPosition(pool, params)
+	})
 }
 
 func TestPosition_AmountOverflowEdgeCases(t *testing.T) {
