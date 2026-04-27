@@ -20,7 +20,6 @@ func TestInit_initStoreData(t *testing.T) {
 
 		// verify all keys are set
 		hasUnDelegationLockup := store.HasUnDelegationLockupPeriodStoreKey()
-		hasEmissionRewardBalance := store.HasEmissionRewardBalanceStoreKey()
 		hasTotalDelegated := store.HasTotalDelegatedAmountStoreKey()
 		hasTotalLocked := store.HasTotalLockedAmountStoreKey()
 		hasDelegationCounter := store.HasDelegationCounterStoreKey()
@@ -33,7 +32,6 @@ func TestInit_initStoreData(t *testing.T) {
 		hasDelegationManager := store.HasDelegationManagerStoreKey()
 
 		uassert.True(t, hasUnDelegationLockup)
-		uassert.True(t, hasEmissionRewardBalance)
 		uassert.True(t, hasTotalDelegated)
 		uassert.True(t, hasTotalLocked)
 		uassert.True(t, hasDelegationCounter)

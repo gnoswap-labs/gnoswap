@@ -100,10 +100,6 @@ func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return t.instance.GetUnDelegationLockupPeriod()
 }
 
-func (t *TestGovStaker) GetEmissionRewardBalance() int64 {
-	return t.instance.GetEmissionRewardBalance()
-}
-
 func (t *TestGovStaker) GetDelegationCount() int {
 	return t.instance.GetDelegationCount()
 }

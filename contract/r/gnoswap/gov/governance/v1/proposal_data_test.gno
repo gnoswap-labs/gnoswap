@@ -97,6 +97,12 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name:          "Success - Valid ParameterChange proposal with one-sided CollectProtocol",
+			proposalType:  governance.ParameterChange,
+			execution:     governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",0,100"}),
+			expectedError: false,
+		},
+		{
 			name:                 "Failure - CommunityPoolSpend with invalid address",
 			proposalType:         governance.CommunityPoolSpend,
 			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), validTokenPath, 1000),
@@ -123,6 +129,20 @@ func TestProposalData_Validation(t *testing.T) {
 			execution:            governance.NewExecutionInfo(0, []string{}),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || numToExecute is less than or equal to 0",
+		},
+		{
+			name:                 "Failure - ParameterChange invalid CollectProtocol amount",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/pool*EXE*CollectProtocol*EXE*gno.land/r/gnoswap/gns,gno.land/r/gnoswap/test_token/foo,500," + testutils.TestAddress("recipient").String() + ",invalid,100"}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[4]: invalid int64 value: invalid",
+		},
+		{
+			name:                 "Failure - ParameterChange invalid RBAC admin update",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String()}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[0]: admin role cannot be updated: admin",
 		},
 		{
 			name:                 "Failure - ParameterChange max execution count takes precedence over mismatch",
