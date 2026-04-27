@@ -614,8 +614,8 @@ func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get lower tick: %v", err)
 	}
-	lowerTick.SetFeeGrowthOutside0X128("115792089237316195423570985008687907853269984665640564039457584007913129639932") // MAX-3
-	lowerTick.SetFeeGrowthOutside1X128("115792089237316195423570985008687907853269984665640564039457584007913129639933") // MAX-2
+	lowerTick.SetFeeGrowthOutside0X128(maxUint256Minus3)
+	lowerTick.SetFeeGrowthOutside1X128(maxUint256Minus2)
 	storedPool.SetTick(position.TickLower(), lowerTick)
 
 	upperTick, err := storedPool.GetTick(position.TickUpper())
