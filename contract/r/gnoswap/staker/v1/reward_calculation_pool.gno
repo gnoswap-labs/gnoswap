@@ -561,18 +561,3 @@ func (self *PoolResolver) CalculateRawRewardForPosition(currentTime int64, curre
 
 	return rewardAcc
 }
-
-// Calculate actual reward in [startTime, endTime) for a position by
-// subtracting the startTime's raw reward from the endTime's raw reward
-func (self *PoolResolver) CalculateRewardForPosition(
-	startTime int64,
-	startTick int32,
-	endTime int64,
-	endTick int32,
-	deposit *sr.Deposit,
-) *u256.Uint {
-	rewardAcc := self.CalculateRawRewardForPosition(endTime, endTick, deposit)
-	debtAcc := self.CalculateRawRewardForPosition(startTime, startTick, deposit)
-
-	return u256.Zero().Sub(rewardAcc, debtAcc)
-}
