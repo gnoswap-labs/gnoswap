@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"time"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -72,11 +70,12 @@ type SwapCache struct {
 func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
+	blockTimestamp int64,
 ) *SwapCache {
 	return &SwapCache{
 		feeProtocol:                       feeProtocol,
 		liquidityStart:                    liquidityStart,
-		blockTimestamp:                    time.Now().Unix(),
+		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    0,
 		secondsPerLiquidityCumulativeX128: u256.Zero(),
 		computedLatestObservation:         false,
