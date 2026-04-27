@@ -343,6 +343,60 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 	}
 }
 
+func TestSwap_TickTransitionLiquidityBoundary(t *testing.T) {
+	maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
+
+	t.Run("tick crossing can raise active liquidity to uint128 max", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+		state := SwapState{
+			amountSpecifiedRemaining: i256.Zero(),
+			amountCalculated:         i256.Zero(),
+			sqrtPriceX96:             pool.Slot0SqrtPriceX96(),
+			tick:                     0,
+			feeGrowthGlobalX128:      u256.Zero(),
+			protocolFee:              u256.Zero(),
+			liquidity:                new(u256.Uint).Sub(maxUint128, u256.One()),
+		}
+		cache := &SwapCache{}
+
+		setMockPoolTick(pool, 1, mockTickInfo{
+			liquidityGross: u256.One(),
+			liquidityNet:   i256.One(),
+			initialized:    true,
+		})
+
+		step := StepComputations{initialized: true, tickNext: 1}
+		newState := getMockInstance().tickTransition(step, false, state, pool, cache)
+
+		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
+	})
+
+	t.Run("tick crossing panics when active liquidity would exceed uint128 max", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+		state := SwapState{
+			amountSpecifiedRemaining: i256.Zero(),
+			amountCalculated:         i256.Zero(),
+			sqrtPriceX96:             pool.Slot0SqrtPriceX96(),
+			tick:                     0,
+			feeGrowthGlobalX128:      u256.Zero(),
+			protocolFee:              u256.Zero(),
+			liquidity:                maxUint128.Clone(),
+		}
+		cache := &SwapCache{}
+
+		setMockPoolTick(pool, 1, mockTickInfo{
+			liquidityGross: u256.One(),
+			liquidityNet:   i256.One(),
+			initialized:    true,
+		})
+
+		step := StepComputations{initialized: true, tickNext: 1}
+		uassert.PanicsContains(t, "result exceeds uint128 range", func() {
+			getMockInstance().tickTransition(step, false, state, pool, cache)
+		})
+	})
+}
+
 func TestDrySwap_ValidationAndFailures(t *testing.T) {
 	// Given: Pool setup
 	_ = NewPoolTestEnv(t).

@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -300,6 +301,35 @@ func TestGetPositionTokenBalances(t *testing.T) {
 			uassert.True(t, tc.testFunc())
 		})
 	}
+}
+
+func TestGetPositionTokenBalances_LiquidityBoundaries(t *testing.T) {
+	t.Run("large bounded stored liquidity remains readable", func(t *testing.T) {
+		setupPositionGetter(t)
+		positionId := uint64(1)
+
+		pos := mockInstance.mustGetPosition(positionId)
+		pos.SetLiquidity("1000000000000")
+		mockInstance.mustUpdatePosition(positionId, *pos)
+
+		balance0, balance1 := mockInstance.GetPositionTokenBalances(positionId)
+		uassert.True(t, balance0 >= 0)
+		uassert.True(t, balance1 >= 0)
+		uassert.True(t, balance0 != 0 || balance1 != 0)
+	})
+
+	t.Run("maxLiquidityPerTick-sized stored liquidity fails at int64 conversion, not earlier", func(t *testing.T) {
+		setupPositionGetter(t)
+		positionId := uint64(1)
+
+		pos := mockInstance.mustGetPosition(positionId)
+		pos.SetLiquidity(u256.MustFromDecimal("1917569901783203986719870431555990").ToString())
+		mockInstance.mustUpdatePosition(positionId, *pos)
+
+		uassert.PanicsContains(t, "overflows int64 range", func() {
+			mockInstance.GetPositionTokenBalances(positionId)
+		})
+	})
 }
 
 func TestGetPositionExistence(t *testing.T) {
