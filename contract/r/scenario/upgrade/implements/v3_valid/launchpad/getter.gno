@@ -360,17 +360,6 @@ func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
 	return deposit.DepositAmount(), nil
 }
 
-// GetDepositWithdrawnHeight returns the withdrawn height of a deposit by its ID.
-// Returns 0 and error if deposit not found.
-func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error) {
-	deposit, err := lp.GetDeposit(depositId)
-	if err != nil {
-		return 0, err
-	}
-
-	return deposit.WithdrawnHeight(), nil
-}
-
 // GetDepositWithdrawnTime returns the withdrawn time of a deposit by its ID.
 // Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) {
@@ -380,17 +369,6 @@ func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) 
 	}
 
 	return deposit.WithdrawnTime(), nil
-}
-
-// GetDepositCreatedHeight returns the created height of a deposit by its ID.
-// Returns 0 and error if deposit not found.
-func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) {
-	deposit, err := lp.GetDeposit(depositId)
-	if err != nil {
-		return 0, err
-	}
-
-	return deposit.CreatedHeight(), nil
 }
 
 // GetDepositCreatedAt returns the created time of a deposit by its ID.
@@ -513,7 +491,6 @@ func (lp *launchpadV1) GetProjectTierRewardAccumulatedDistributeAmount(projectTi
 
 	return manager.AccumulatedDistributeAmount(), nil
 }
-
 
 // GetProjectTierRewardAccumulatedTime returns the accumulated time of a reward manager.
 // Returns 0 and error if reward manager not found.

@@ -251,7 +251,7 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 
 			if tt.withdrawTwice {
 				// First withdrawal should succeed
-				_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+				_, _, err = lp.withdrawDeposit(deposit, currentTime)
 				uassert.NoError(t, err)
 
 				// Refresh deposit to get updated state
@@ -260,7 +260,7 @@ func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 			}
 
 			// Execute withdrawal (or second withdrawal for withdrawTwice case)
-			_, amount, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, amount, err := lp.withdrawDeposit(deposit, currentTime)
 
 			if tt.expectedErr {
 				uassert.Error(t, err)
@@ -509,7 +509,7 @@ func TestLaunchpadWithdraw_RewardStateRemoval(t *testing.T) {
 			// Perform withdrawal
 			testing.SkipHeights(tt.skipHeight)
 			currentTime := time.Now().Unix()
-			_, _, err = lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, _, err = lp.withdrawDeposit(deposit, currentTime)
 			uassert.NoError(t, err)
 
 			// Verify reward state is removed after withdrawal
@@ -616,7 +616,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(t *testing.T) 
 			withdrawDepositID := depositIDs[tt.withdrawDepositIndex]
 			deposit, _ := getDeposit(withdrawDepositID)
 			currentTime = time.Now().Unix()
-			_, _, err := lp.withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
+			_, _, err := lp.withdrawDeposit(deposit, currentTime)
 			uassert.NoError(t, err)
 
 			// Verify reward state count after withdrawal

@@ -13,29 +13,29 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	tests := []struct {
 		name                string
 		claimableTime       int64
-		currentHeight       int64
+		currentTime         int64
 		expectedIsClaimable bool
 		expectedHasError    bool
 		expectedError       string
 	}{
 		{
-			name:                "is claimable return false when current height is before claimable height",
+			name:                "is claimable return false when current time is before claimable time",
 			claimableTime:       100,
-			currentHeight:       50,
+			currentTime:         50,
 			expectedIsClaimable: false,
 			expectedHasError:    false,
 		},
 		{
-			name:                "is claimable return true when current height equals claimable height",
+			name:                "is claimable return true when current time equals claimable time",
 			claimableTime:       100,
-			currentHeight:       100,
+			currentTime:         100,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
 		},
 		{
-			name:                "is claimable return true when current height is after claimable height",
+			name:                "is claimable return true when current time is after claimable time",
 			claimableTime:       100,
-			currentHeight:       150,
+			currentTime:         150,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
 		},
@@ -47,7 +47,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 			state := launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
 
 			// Execute
-			result := isRewardStateClaimable(state, tt.currentHeight)
+			result := isRewardStateClaimable(state, tt.currentTime)
 
 			// Verify
 			uassert.Equal(t, result, tt.expectedIsClaimable)

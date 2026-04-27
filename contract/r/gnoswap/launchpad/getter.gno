@@ -197,19 +197,9 @@ func GetDepositAmount(depositId string) (int64, error) {
 	return getImplementation().GetDepositAmount(depositId)
 }
 
-// GetDepositWithdrawnHeight returns the withdrawn height of a deposit by its ID.
-func GetDepositWithdrawnHeight(depositId string) (int64, error) {
-	return getImplementation().GetDepositWithdrawnHeight(depositId)
-}
-
 // GetDepositWithdrawnTime returns the withdrawn time of a deposit by its ID.
 func GetDepositWithdrawnTime(depositId string) (int64, error) {
 	return getImplementation().GetDepositWithdrawnTime(depositId)
-}
-
-// GetDepositCreatedHeight returns the created height of a deposit by its ID.
-func GetDepositCreatedHeight(depositId string) (int64, error) {
-	return getImplementation().GetDepositCreatedHeight(depositId)
 }
 
 // GetDepositCreatedAt returns the created time of a deposit by its ID.
