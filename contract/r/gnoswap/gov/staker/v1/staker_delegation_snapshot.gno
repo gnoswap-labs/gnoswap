@@ -108,6 +108,11 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 // cleanUserDelegationHistory removes user delegation history entries older than cutoff time.
 // Structure: address -> *UintTree[timestamp -> int64]
 // Keeps the most recent entry before cutoff for each user to preserve state continuity.
+//
+// SCALING WARNING: full Iterate over outer userDelegationHistory tree.
+// Cost grows O(N_delegators). At 100k delegators, approaches block gas limit.
+// Phase 2: convert to lazy cleanup (per-user on vote/undelegate) or
+// batched IterateByOffset with cursor.
 func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetUserDelegationHistory()
 

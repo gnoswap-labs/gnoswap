@@ -13,8 +13,8 @@ type DelegationManager struct {
 }
 
 // NewDelegationManager creates a new instance of DelegationManager.
-// TODO: consider NewBPTreeN(64) — Iterate used, N=unbounded (delegators).
-// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
+// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used, N=unbounded (delegators).
+// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%. BPT128 is WORSE.
 func NewDelegationManager() *DelegationManager {
 	return &DelegationManager{
 		userDelegations: bptree.NewBPTree32(),
@@ -65,6 +65,7 @@ func (dm *DelegationManager) GetDelegationIDs(delegator, delegatee string) ([]in
 func (dm *DelegationManager) SetDelegationIDs(delegator, delegatee string, ids []int64) {
 	delegations, exists := dm.GetDelegatorDelegations(delegator)
 	if !exists {
+		// Inner tree: per-delegator delegatee list, N=small (tens). Fanout 32 OK per RULE 4.
 		delegations = bptree.NewBPTree32()
 		dm.userDelegations.Set(delegator, delegations)
 	}

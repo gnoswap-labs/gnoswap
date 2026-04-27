@@ -293,6 +293,8 @@ func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
+		// Per-pool external incentives, N=tens~hundreds (active+ended).
+		// Iterate hot path (reward calc). RULE 4: stay 32 unless N>=1000.
 		incentives:         bptree.NewBPTree32(),
 	}
 
@@ -611,8 +613,8 @@ func (t Ticks) Clone() Ticks {
 	return Ticks{tree: cloned}
 }
 
-// TODO: consider NewBPTreeN(64) — full-iterated for reward calc, N=100~10000.
-// persistent benchmark (N=1000): BPTree64 Iterate -4.6% vs BPTree32
+// TODO: consider NewBPTreeN(64) (RULE 4) — full-iterated for reward calc, N=100~10000.
+// Benchmark (N=1000): BPT64 Iterate -4.5%. BPT128 Iterate -11% but Get/Set WORSE.
 func NewTicks() Ticks {
 	return Ticks{
 		tree: bptree.NewBPTree32(),

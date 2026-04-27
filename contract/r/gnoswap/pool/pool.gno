@@ -221,11 +221,11 @@ func NewPool(
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newTokenPair(),
 		liquidity:            u256.Zero(),
-		// TODO: consider NewBPTreeN(64) — range-iterated in swap loop, N=100~5000.
-		// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4%, Iterate -4.6% vs BPTree32
+		// TODO: consider NewBPTreeN(64) (RULE 4) — range-iterated in swap loop, N=100~5000.
+		// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%. BPT128 is WORSE (+12% Get).
 		ticks:                bptree.NewBPTree32(),
 		tickBitmaps:          make(map[int16]string),
-		positions:            bptree.NewBPTree32(),
+		positions:            bptree.NewBPTree32(), // TODO: consider 64 (RULE 4) — per-pool LPs, N=100~1000+.
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }

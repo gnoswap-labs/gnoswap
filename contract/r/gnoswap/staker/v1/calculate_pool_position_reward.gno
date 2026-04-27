@@ -122,7 +122,10 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	incentivesResolver := poolResolver.IncentivesResolver()
 
-	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
+	// TODO(critical): O(N_incentives × 4_warmups) cost — iterates ALL external incentives on this deposit.
+	// Gas grows linearly with incentive count. Also deserializes 3 maps in Deposit (O(N) each).
+	// Mitigations: (1) eager cleanup of ended incentives, (2) merge 3 deposit maps into struct slice,
+	// (3) per-incentive accumulator pattern for O(1) calculation.
 	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {

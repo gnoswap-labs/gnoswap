@@ -178,6 +178,7 @@ func NewRewardManager(
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),
 		rewardClaimableDuration:         rewardCollectableDuration,
+		// TODO: consider NewBPTreeN(64) (RULE 4) — full-iterated in Clone, N=deposits.
 		rewards:                         bptree.NewBPTree32(),
 	}
 }

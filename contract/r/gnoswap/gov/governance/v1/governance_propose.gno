@@ -89,6 +89,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	// Per-proposal voter tree: N=voters (tens~thousands). RULE 4: 32 default, 64 if N>=1000.
 	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTree32())
 	if err != nil {
 		panic(err)
@@ -198,6 +199,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	// Per-proposal voter tree: N=voters (tens~thousands). RULE 4: 32 default, 64 if N>=1000.
 	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTree32())
 	if err != nil {
 		panic(err)
@@ -305,6 +307,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
+	// Per-proposal voter tree: N=voters (tens~thousands). RULE 4: 32 default, 64 if N>=1000.
 	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTree32())
 	if err != nil {
 		panic(err)

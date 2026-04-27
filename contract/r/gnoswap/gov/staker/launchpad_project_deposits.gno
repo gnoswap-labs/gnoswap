@@ -12,6 +12,7 @@ type LaunchpadProjectDeposits struct {
 }
 
 // NewLaunchpadProjectDeposits creates a new instance of LaunchpadProjectDeposits.
+// TODO: consider NewBPTreeN(64) (RULE 4) — per-project participants, N grows with deposits.
 func NewLaunchpadProjectDeposits() *LaunchpadProjectDeposits {
 	return &LaunchpadProjectDeposits{
 		deposits: bptree.NewBPTree32(),

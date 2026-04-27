@@ -61,6 +61,7 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
+	// NOTE: proposals — Iterate used, N grows over time. BPTree32 OK (paginated reads, N<1000 near-term).
 	if !governanceStore.HasProposalsStoreKey() {
 		err := governanceStore.SetProposals(bptree.NewBPTree32())
 		if err != nil {
@@ -68,6 +69,9 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used (voter enumeration).
+	// Outer N=proposals (hundreds+), inner voter trees N=hundreds~thousands per popular proposal.
+	// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%.
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
 		err := governanceStore.SetProposalUserVotingInfos(bptree.NewBPTree32())
 		if err != nil {
@@ -75,8 +79,8 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
-	// TODO: consider map — Get/Set only, no Iterate in production code.
-	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x)
+	// TODO: consider map (RULE 1) — Get/Set only, no Iterate in production.
+	// Benchmark (N=100): BPT32 Get 2.70M vs Map 0.96M (2.8x). Determinism: no iteration.
 	if !governanceStore.HasUserProposalsStoreKey() {
 		err := governanceStore.SetUserProposals(bptree.NewBPTree32())
 		if err != nil {

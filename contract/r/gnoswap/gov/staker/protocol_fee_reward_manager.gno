@@ -29,6 +29,8 @@ type ProtocolFeeRewardManager struct {
 //
 // Returns:
 //   - *ProtocolFeeRewardManager: new protocol fee reward manager instance
+// TODO: rewardStates — consider NewBPTreeN(64) (RULE 4). Per-user, N grows with delegators.
+// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%.
 func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 	return &ProtocolFeeRewardManager{
 		rewardStates:                       bptree.NewBPTree32(),

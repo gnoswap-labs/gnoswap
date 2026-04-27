@@ -23,6 +23,9 @@ type UintTree struct {
 }
 
 // NewUintTree creates a new UintTree instance.
+// TODO: consider NewBPTreeN(64) (RULE 4) — Range+ReverseIterate hot path, N=100~1000.
+// 7+ instances (stakedLiquidity, rewardCache, historicalTick, etc.).
+// Benchmark (N=1000): BPT64 RevIter -4.1%. BPT128 RevIter WORSE (+12%).
 func NewUintTree() *UintTree {
 	return &UintTree{
 		tree: bptree.NewBPTree32(),

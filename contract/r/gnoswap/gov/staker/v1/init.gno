@@ -51,8 +51,8 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	// TODO: consider NewBPTreeN(64) — Get/Set/Remove, N=1k~10k.
-	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
+	// TODO: consider NewBPTreeN(64) (RULE 4) — Get/Set/Remove, N=1k~10k.
+	// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%. BPT128 is WORSE.
 	if !store.HasDelegationsStoreKey() {
 		err := store.SetDelegations(bptree.NewBPTree32())
 		if err != nil {
@@ -68,6 +68,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) (RULE 4) — outer N grows with delegator count.
 	// Initialize user delegation history (address -> *UintTree[timestamp -> int64])
 	if !store.HasUserDelegationHistoryStoreKey() {
 		err := store.SetUserDelegationHistory(bptree.NewBPTree32())

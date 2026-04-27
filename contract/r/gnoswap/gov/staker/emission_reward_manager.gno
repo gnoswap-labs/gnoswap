@@ -27,6 +27,8 @@ type EmissionRewardManager struct {
 // NewEmissionRewardManager creates a new instance of EmissionRewardManager.
 // This factory function initializes all tracking structures for emission reward management.
 // NewEmissionRewardManager creates new emission reward manager instance.
+// TODO: rewardStates — consider NewBPTreeN(64) (RULE 4). Per-user, N grows with delegators.
+// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%.
 func NewEmissionRewardManager() *EmissionRewardManager {
 	return &EmissionRewardManager{
 		accumulatedRewardX128PerStake: u256.NewUint(0),

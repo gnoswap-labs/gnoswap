@@ -95,6 +95,8 @@ type PoolTier struct {
 // - *PoolTier: The new PoolTier instance.
 func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
 	result := &PoolTier{
+		// PoolTier membership: poolPath→tier. N=pools (tens~200). Full Iterate on rebalance.
+		// RULE 4: stay 32 (well below 1000).
 		membership:               bptree.NewBPTree32(),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
 		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),

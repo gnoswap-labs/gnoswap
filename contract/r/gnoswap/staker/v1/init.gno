@@ -53,8 +53,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
-	// TODO: consider NewBPTreeN(64) — range-iterated, N=100k+.
-	// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
+	// TODO: consider NewBPTreeN(64) (RULE 4) — range-iterated, N=100k+.
+	// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%. BPT128 is WORSE.
 	if !stakerStore.HasDepositsStoreKey() {
 		err := stakerStore.SetDeposits(bptree.NewBPTree32())
 		if err != nil {
@@ -62,6 +62,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used, N=hundreds~thousands (active+ended).
 	if !stakerStore.HasExternalIncentivesStoreKey() {
 		err := stakerStore.SetExternalIncentives(bptree.NewBPTree32())
 		if err != nil {
@@ -69,6 +70,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used, N=1k~100k addresses.
 	if !stakerStore.HasStakersStoreKey() {
 		err := stakerStore.SetStakers(bptree.NewBPTree32())
 		if err != nil {
@@ -99,8 +101,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
-	// TODO: consider map — Get/Set/Remove only, no Iterate, N<100.
-	// persistent benchmark (N=100): BPTree32 Get 2.70M vs Map Get 0.96M (2.8x), Set 3.36M vs 2.11M (1.6x)
+	// TODO: consider map (RULE 1) — Get/Set/Remove only, no Iterate, N<100.
+	// Benchmark (N=100): BPT32 Get 2.70M vs Map 0.96M (2.8x). Determinism: no iteration in production.
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
 		err := stakerStore.SetTokenSpecificMinimumRewards(bptree.NewBPTree32())
 		if err != nil {

@@ -302,6 +302,11 @@ type RewardState struct {
 
 // calculateInternalReward calculates the internal reward for the deposit.
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
+//
+// TODO(critical): O(N) cost — iterates RewardCache entries between startTime~endTime.
+// Gas grows linearly with tier change events since last collection.
+// Mitigations: (1) compact consecutive same-value entries, (2) accumulator pattern for O(1),
+// (3) cap max entries per tx with pagination.
 func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
 	currentReward := self.pool.CurrentReward(startTime)
 

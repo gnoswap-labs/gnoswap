@@ -55,6 +55,9 @@ func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint6
 	})
 }
 
+// SCALING WARNING: scans ALL deposits then filters by poolPath.
+// Cost grows O(total_active_positions) regardless of target pool size.
+// Phase 2: add per-pool index tree for O(pool_positions) instead of O(all_positions).
 func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *sr.Deposit) bool) {
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
 		deposit := retrieveDeposit(depositI)
@@ -108,6 +111,8 @@ type ExternalIncentives struct {
 }
 
 // NewExternalIncentives creates a new ExternalIncentives instance.
+// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used (getter hot path), N accumulates over time.
+// Active+ended combined can reach hundreds~thousands. Benchmark (N=1000): BPT64 Get -3.4%.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
 		tree: bptree.NewBPTree32(),
@@ -153,8 +158,8 @@ type Stakers struct {
 }
 
 // NewStakers creates a new Stakers instance.
-// TODO: consider NewBPTreeN(64) — Iterate used, N=1k~100k addresses.
-// persistent benchmark (N=1000): BPTree64 Get -4%, Set -3.4% vs BPTree32
+// TODO: consider NewBPTreeN(64) (RULE 4) — Iterate used, N=1k~100k addresses.
+// Benchmark (N=1000): BPT64 Get -3.4%, Set -3.4%. BPT128 is WORSE.
 func NewStakers() *Stakers {
 	return &Stakers{
 		tree: bptree.NewBPTree32(),

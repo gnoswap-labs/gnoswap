@@ -80,6 +80,8 @@ type UintTree struct {
 }
 
 // NewUintTree creates a new UintTree instance.
+// TODO: consider NewBPTreeN(64) (RULE 4) — Range+ReverseIterate, N=100~1000.
+// Used for emissionUpdates timestamps. Benchmark (N=1000): BPT64 RevIter -4.1%.
 func NewUintTree() *UintTree {
 	return &UintTree{
 		tree: bptree.NewBPTree32(),
