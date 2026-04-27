@@ -9,6 +9,10 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
+func wrappedPriceDebtForDelta(deltaX128 *u256.Uint) *u256.Uint {
+	return u256.Zero().Neg(deltaX128)
+}
+
 func TestRewardState_IsClaimable(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -150,6 +154,77 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	claimable := calculateClaimableReward(state, q128.Clone())
 	uassert.Equal(t, int64(1), reward)
 	uassert.Equal(t, int64(1), claimable)
+}
+
+func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testing.T) {
+	tests := []struct {
+		name              string
+		deltaX128         *u256.Uint
+		depositAmount     int64
+		claimedAmount     int64
+		expectedReward    int64
+		expectedClaimable int64
+	}{
+		{
+			name:              "wrapped delta returns 13 reward",
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    13,
+			expectedClaimable: 13,
+		},
+		{
+			name:              "wrapped delta returns 16 reward",
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(16)),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    16,
+			expectedClaimable: 16,
+		},
+		{
+			name:              "wrapped delta is floored to zero reward",
+			deltaX128:         u256.Zero().Sub(q128.Clone(), u256.One()),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    0,
+			expectedClaimable: 0,
+		},
+		{
+			name:              "wrapped delta subtracts claimed amount",
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			depositAmount:     1,
+			claimedAmount:     5,
+			expectedReward:    13,
+			expectedClaimable: 8,
+		},
+		{
+			name:              "wrapped delta equal to claimed amount yields zero claimable",
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
+			depositAmount:     1,
+			claimedAmount:     13,
+			expectedReward:    13,
+			expectedClaimable: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := launchpad.NewRewardState(
+				wrappedPriceDebtForDelta(tt.deltaX128),
+				tt.depositAmount,
+				100,
+				200,
+				100,
+			)
+			state.SetClaimedAmount(tt.claimedAmount)
+
+			reward := calculateReward(state, u256.Zero())
+			claimable := calculateClaimableReward(state, u256.Zero())
+
+			uassert.Equal(t, tt.expectedReward, reward)
+			uassert.Equal(t, tt.expectedClaimable, claimable)
+		})
+	}
 }
 
 func TestRewardState_newRewardState(t *testing.T) {
