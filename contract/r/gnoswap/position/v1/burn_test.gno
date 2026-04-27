@@ -53,6 +53,22 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			shouldPanic:                     false,
 		},
 		{
+			name:                            "Wrapped underflow computes upstream overflow-boundary value 16",
+			feeGrowthInsideLastX128:         u256.MustFromDecimal("15"),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+			positionLiquidity:               q128.Clone(),
+			expected:                        u256.MustFromDecimal("16"),
+			shouldPanic:                     false,
+		},
+		{
+			name:                            "Wrapped underflow computes upstream overflow-boundary value 13",
+			feeGrowthInsideLastX128:         u256.Zero(),
+			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639923"),
+			positionLiquidity:               q128.Clone(),
+			expected:                        u256.MustFromDecimal("13"),
+			shouldPanic:                     false,
+		},
+		{
 			name:                            "Large numbers",
 			feeGrowthInsideLastX128:         u256.MustFromDecimal("99999999999999999999999999999999999999999999999999"),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1"),
@@ -194,7 +210,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 					"pool:key",
 					int32(-887220),
 					int32(887220),
-					q128.ToString(),
+					"1",
 					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
 					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
 					7,
@@ -210,6 +226,56 @@ func TestBurn_CalculateFees(t *testing.T) {
 			},
 			expectedTokensOwed0: 8,
 			expectedTokensOwed1: 10,
+			shouldPanic:         false,
+		},
+		{
+			name: "Wrapped fee growth mirrors upstream overflow boundary values",
+			setupPosition: func() *position.Position {
+				pos := position.NewPosition(
+					"pool:key",
+					int32(-887220),
+					int32(887220),
+					q128.ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639923").ToString(),
+					0,
+					0,
+					false,
+					"",
+				)
+				return pos
+			},
+			feeGrowthInside: FeeGrowthInside{
+				feeGrowthInside0LastX128: u256.MustFromDecimal("15"),
+				feeGrowthInside1LastX128: u256.Zero(),
+			},
+			expectedTokensOwed0: 16,
+			expectedTokensOwed1: 13,
+			shouldPanic:         false,
+		},
+		{
+			name: "Wrapped fee growth adds overflow-boundary deltas on top of existing tokens owed",
+			setupPosition: func() *position.Position {
+				pos := position.NewPosition(
+					"pool:key",
+					int32(-887220),
+					int32(887220),
+					q128.ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935").ToString(),
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639923").ToString(),
+					7,
+					9,
+					false,
+					"",
+				)
+				return pos
+			},
+			feeGrowthInside: FeeGrowthInside{
+				feeGrowthInside0LastX128: u256.MustFromDecimal("15"),
+				feeGrowthInside1LastX128: u256.Zero(),
+			},
+			expectedTokensOwed0: 23,
+			expectedTokensOwed1: 22,
 			shouldPanic:         false,
 		},
 		{

@@ -597,6 +597,41 @@ func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
 	uassert.Equal(t, "0", fee1.ToString())
 }
 
+func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(t *testing.T) {
+	setupPositionGetter(t)
+
+	position := mockInstance.mustGetPosition(1)
+	position.SetLiquidity(q128.ToString())
+	position.SetFeeGrowthInside0LastX128("0")
+	position.SetFeeGrowthInside1LastX128("0")
+	mockInstance.mustUpdatePosition(1, *position)
+
+	storedPool := mustGetStoredTestPool(position.PoolKey())
+	storedPool.SetFeeGrowthGlobal0X128(u256.NewUint(15))
+	storedPool.SetFeeGrowthGlobal1X128(u256.NewUint(15))
+
+	lowerTick, err := storedPool.GetTick(position.TickLower())
+	if err != nil {
+		t.Fatalf("failed to get lower tick: %v", err)
+	}
+	lowerTick.SetFeeGrowthOutside0X128("115792089237316195423570985008687907853269984665640564039457584007913129639932") // MAX-3
+	lowerTick.SetFeeGrowthOutside1X128("115792089237316195423570985008687907853269984665640564039457584007913129639933") // MAX-2
+	storedPool.SetTick(position.TickLower(), lowerTick)
+
+	upperTick, err := storedPool.GetTick(position.TickUpper())
+	if err != nil {
+		t.Fatalf("failed to get upper tick: %v", err)
+	}
+	upperTick.SetFeeGrowthOutside0X128("3")
+	upperTick.SetFeeGrowthOutside1X128("5")
+	storedPool.SetTick(position.TickUpper(), upperTick)
+
+	fee0, fee1 := mockInstance.GetUnclaimedFee(1)
+
+	uassert.Equal(t, "16", fee0.ToString())
+	uassert.Equal(t, "13", fee1.ToString())
+}
+
 func TestMustGetPositionPanic(t *testing.T) {
 	testCases := []struct {
 		name        string
