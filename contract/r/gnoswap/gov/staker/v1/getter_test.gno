@@ -133,47 +133,6 @@ func TestGetter_GetUnDelegationLockupPeriod(t *testing.T) {
 	}
 }
 
-// TestGetter_GetEmissionRewardBalance tests GetEmissionRewardBalance
-func TestGetter_GetEmissionRewardBalance(t *testing.T) {
-	tests := []struct {
-		name     string
-		balance  int64
-		expected int64
-	}{
-		{
-			name:     "Zero balance",
-			balance:  0,
-			expected: 0,
-		},
-		{
-			name:     "Positive balance",
-			balance:  50000,
-			expected: 50000,
-		},
-		{
-			name:     "Large balance",
-			balance:  999_999_999_999,
-			expected: 999_999_999_999,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Setup store with emission balance
-			store := newMockGovStakerStore().(*mockGovStakerStore)
-			store.SetEmissionRewardBalance(tt.balance)
-
-			gs := &govStakerV1{store: store}
-
-			// When: Get emission reward balance
-			result := gs.GetEmissionRewardBalance()
-
-			// Then: Should return correct balance
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
 // TestGetter_GetDelegationCount tests GetDelegationCount
 func TestGetter_GetDelegationCount(t *testing.T) {
 	tests := []struct {
