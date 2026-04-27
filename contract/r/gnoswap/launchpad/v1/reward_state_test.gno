@@ -9,6 +9,8 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
+const maxUint256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
 func wrappedPriceDebtForDelta(deltaX128 *u256.Uint) *u256.Uint {
 	return u256.Zero().Neg(deltaX128)
 }
@@ -143,7 +145,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 
 func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
 	state := launchpad.NewRewardState(
-		u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+		u256.MustFromDecimal(maxUint256),
 		1,
 		100,
 		200,
