@@ -1,7 +1,7 @@
 package governance
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IGovernance interface {
@@ -117,28 +117,28 @@ type IGovernanceStore interface {
 
 	// Config methods
 	HasConfigsStoreKey() bool
-	SetConfigs(configs *avl.Tree) error
+	SetConfigs(configs *bptree.BPTree) error
 	SetConfig(version int64, config Config) error
 	GetConfig(version int64) (Config, bool)
 
 	// Proposal methods
 	HasProposalsStoreKey() bool
-	GetProposals() *avl.Tree
+	GetProposals() *bptree.BPTree
 	GetProposal(proposalID int64) (*Proposal, bool)
 	SetProposal(proposalID int64, proposal *Proposal) error
-	SetProposals(proposals *avl.Tree) error
+	SetProposals(proposals *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool
-	GetProposalUserVotingInfos() *avl.Tree
-	SetProposalUserVotingInfos(votingInfos *avl.Tree) error
-	GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool)
-	SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error
+	GetProposalUserVotingInfos() *bptree.BPTree
+	SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error
+	GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool)
+	SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
-	SetUserProposals(userProposals *avl.Tree) error
+	SetUserProposals(userProposals *bptree.BPTree) error
 	AddUserProposal(user string, proposalID int64) error
 	RemoveUserProposal(user string, proposalID int64) error
 }

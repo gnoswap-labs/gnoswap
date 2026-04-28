@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	cp "gno.land/r/gnoswap/community_pool"
@@ -164,7 +164,7 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
 // This registry allows proposals to execute parameter changes across different system contracts.
 type ParameterRegistry struct {
-	handlers *avl.Tree // Tree storing handler configurations keyed by package:function
+	handlers *bptree.BPTree // Tree storing handler configurations keyed by package:function
 }
 
 // register adds a new parameter handler to the registry.
@@ -207,7 +207,7 @@ func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 // Returns:
 //   - *ParameterRegistry: new registry instance
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{handlers: avl.NewTree()}
+	return &ParameterRegistry{handlers: bptree.NewBPTreeN(16)}
 }
 
 // makeHandlerKey creates a unique identifier for a handler based on package path and function.
