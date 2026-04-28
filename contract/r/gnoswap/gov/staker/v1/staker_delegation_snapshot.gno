@@ -118,11 +118,15 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 		history.Set(cutoffTimestamp, lastValue)
 	}
 
+	// Collect keys to remove (cannot modify tree during iteration)
+	var keysToRemove []int64
 	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
-		history.Remove(timestamp)
-
+		keysToRemove = append(keysToRemove, timestamp)
 		return false // continue
 	})
+	for _, key := range keysToRemove {
+		history.Remove(key)
+	}
 
 	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
@@ -161,12 +165,15 @@ func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
 			userHistory.Set(cutoffTimestamp, lastValue)
 		}
 
-		// Copy all entries at or after cutoff time
+		// Collect keys to remove (cannot modify tree during iteration)
+		var userKeysToRemove []int64
 		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
-			userHistory.Remove(key)
-
+			userKeysToRemove = append(userKeysToRemove, key)
 			return false // continue
 		})
+		for _, key := range userKeysToRemove {
+			userHistory.Remove(key)
+		}
 
 		// Only keep users with history entries
 		if userHistory.Size() > 0 {
