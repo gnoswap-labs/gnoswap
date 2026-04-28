@@ -747,7 +747,7 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 		{
 			name: "set and get pool tier memberships successfully",
 			setupFn: func(ss IStakerStore) {
-				memberships := avl.NewTree()
+				memberships := bptree.NewBPTreeN(16)
 				ss.SetPoolTierMemberships(memberships)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {

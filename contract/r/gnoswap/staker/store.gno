@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -306,21 +305,21 @@ func (s *stakerStore) HasPoolTierMembershipsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierMemberships.String())
 }
 
-func (s *stakerStore) GetPoolTierMemberships() *avl.Tree {
+func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPoolTierMemberships.String())
 	if err != nil {
 		panic(err)
 	}
 
-	memberships, ok := result.(*avl.Tree)
+	memberships, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return memberships
 }
 
-func (s *stakerStore) SetPoolTierMemberships(memberships *avl.Tree) error {
+func (s *stakerStore) SetPoolTierMemberships(memberships *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyPoolTierMemberships.String(), memberships)
 }
 
@@ -508,7 +507,7 @@ func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
 }
 
 // ExternalIncentivesByCreationTime
-// key: timestamp -> value: *avl.Tree (poolPath -> []string)
+// key: timestamp -> value: *bptree.BPTree (poolPath -> []string)
 func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
 }

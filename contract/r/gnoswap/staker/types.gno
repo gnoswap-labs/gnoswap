@@ -2,7 +2,6 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -180,8 +179,8 @@ type IStakerStore interface {
 
 	// PoolTierMemberships
 	HasPoolTierMembershipsStoreKey() bool
-	GetPoolTierMemberships() *avl.Tree
-	SetPoolTierMemberships(memberships *avl.Tree) error
+	GetPoolTierMemberships() *bptree.BPTree
+	SetPoolTierMemberships(memberships *bptree.BPTree) error
 
 	// PoolTierRatio
 	HasPoolTierRatioStoreKey() bool

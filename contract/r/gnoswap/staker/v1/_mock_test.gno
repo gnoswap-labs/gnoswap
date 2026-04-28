@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
@@ -24,7 +23,7 @@ type MockStakerStore struct {
 	tokenSpecificMinimumRewards      *bptree.BPTree
 	unstakingFee                     uint64
 	pools                            *bptree.BPTree
-	poolTierMemberships              *avl.Tree
+	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
 	poolTierLastRewardCacheTimestamp int64
@@ -200,11 +199,11 @@ func (s *MockStakerStore) HasPoolTierMembershipsStoreKey() bool {
 	return s.poolTierMemberships != nil
 }
 
-func (s *MockStakerStore) GetPoolTierMemberships() *avl.Tree {
+func (s *MockStakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	return s.poolTierMemberships
 }
 
-func (s *MockStakerStore) SetPoolTierMemberships(memberships *avl.Tree) error {
+func (s *MockStakerStore) SetPoolTierMemberships(memberships *bptree.BPTree) error {
 	s.poolTierMemberships = memberships
 	return nil
 }
@@ -348,7 +347,7 @@ func newMockStakerStore() *MockStakerStore {
 		tokenSpecificMinimumRewards: bptree.NewBPTreeN(16),
 		unstakingFee:                0,
 		pools:                       bptree.NewBPTreeN(16),
-		poolTierMemberships:         avl.NewTree(),
+		poolTierMemberships:         bptree.NewBPTreeN(16),
 		poolTierRatio: sr.TierRatio{
 			Tier1: 0,
 			Tier2: 0,
