@@ -3,7 +3,7 @@ package v1
 import (
 	"math"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/emission"
@@ -129,13 +129,13 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - user: user's address
 //
 // Returns:
-//   - *avl.Tree: tree of user's delegations
-func (g *govStakerV1) getUserDelegations(user address) *avl.Tree {
+//   - *bptree.BPTree: tree of user's delegations
+func (g *govStakerV1) getUserDelegations(user address) *bptree.BPTree {
 	delegationManager := g.store.GetDelegationManager()
 
 	userDelegations, exists := delegationManager.GetDelegatorDelegations(user.String())
 	if !exists {
-		return avl.NewTree()
+		return bptree.NewBPTreeN(16)
 	}
 
 	return userDelegations

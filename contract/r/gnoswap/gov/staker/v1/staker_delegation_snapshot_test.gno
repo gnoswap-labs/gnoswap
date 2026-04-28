@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/gov/staker"
@@ -152,7 +152,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			userHistory.Set(200, int64(2000))
 			userHistory.Set(math.MaxInt64-1, int64(3000))
 
-			history := avl.NewTree()
+			history := bptree.NewBPTreeN(16)
 			history.Set(aliceAddr, userHistory)
 			err := gs.store.SetUserDelegationHistory(history)
 			if err != nil {
@@ -216,7 +216,7 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 			userHistory.Set(math.MaxInt64-1000, int64(2000))
 			userHistory.Set(math.MaxInt64-500, int64(3000))
 
-			history := avl.NewTree()
+			history := bptree.NewBPTreeN(16)
 			history.Set(aliceAddr, userHistory)
 			err := gs.store.SetUserDelegationHistory(history)
 			if err != nil {

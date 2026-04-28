@@ -1,42 +1,42 @@
 package staker
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // DelegationManager manages the mapping between users and their delegation IDs.
 // It provides efficient lookup and management of user delegations organized by delegator and delegatee addresses.
 type DelegationManager struct {
-	// userDelegations maps delegator address -> *avl.Tree (delegatee address -> list of delegation IDs)
-	// Using AVL tree instead of map to handle unbounded growth of delegators efficiently
-	userDelegations *avl.Tree
+	// userDelegations maps delegator address -> *bptree.BPTree (delegatee address -> list of delegation IDs)
+	// Using BPTree instead of map to handle unbounded growth of delegators efficiently
+	userDelegations *bptree.BPTree
 }
 
 // NewDelegationManager creates a new instance of DelegationManager.
-// This factory function initializes the AVL tree structure for tracking user delegations.
+// This factory function initializes the BPTree structure for tracking user delegations.
 func NewDelegationManager() *DelegationManager {
 	return &DelegationManager{
-		userDelegations: avl.NewTree(),
+		userDelegations: bptree.NewBPTreeN(16),
 	}
 }
 
 // GetUserDelegations returns the entire user delegations tree.
-func (dm *DelegationManager) GetUserDelegations() *avl.Tree {
+func (dm *DelegationManager) GetUserDelegations() *bptree.BPTree {
 	return dm.userDelegations
 }
 
 // SetUserDelegations sets the entire user delegations tree.
-func (dm *DelegationManager) SetUserDelegations(userDelegations *avl.Tree) {
+func (dm *DelegationManager) SetUserDelegations(userDelegations *bptree.BPTree) {
 	dm.userDelegations = userDelegations
 }
 
 // GetDelegatorDelegations returns all delegations for a specific delegator.
-func (dm *DelegationManager) GetDelegatorDelegations(delegator string) (*avl.Tree, bool) {
+func (dm *DelegationManager) GetDelegatorDelegations(delegator string) (*bptree.BPTree, bool) {
 	delegations, exists := dm.userDelegations.Get(delegator)
 	if !exists {
 		return nil, false
 	}
-	delegationsTree, ok := delegations.(*avl.Tree)
+	delegationsTree, ok := delegations.(*bptree.BPTree)
 	if !ok {
 		return nil, false
 	}
@@ -64,7 +64,7 @@ func (dm *DelegationManager) GetDelegationIDs(delegator, delegatee string) ([]in
 func (dm *DelegationManager) SetDelegationIDs(delegator, delegatee string, ids []int64) {
 	delegations, exists := dm.GetDelegatorDelegations(delegator)
 	if !exists {
-		delegations = avl.NewTree()
+		delegations = bptree.NewBPTreeN(16)
 		dm.userDelegations.Set(delegator, delegations)
 	}
 	delegations.Set(delegatee, ids)

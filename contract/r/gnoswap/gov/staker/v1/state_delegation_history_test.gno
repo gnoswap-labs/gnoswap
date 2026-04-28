@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -235,7 +235,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		initialHistory func() *avl.Tree
+		initialHistory func() *bptree.BPTree
 		delegatee      address
 		amount         int64
 		timestamp      int64
@@ -243,8 +243,8 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 	}{
 		{
 			name: "first entry for new user",
-			initialHistory: func() *avl.Tree {
-				return avl.NewTree()
+			initialHistory: func() *bptree.BPTree {
+				return bptree.NewBPTreeN(16)
 			},
 			delegatee:      user1,
 			amount:         1000,
@@ -253,8 +253,8 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "add to existing user amount",
-			initialHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			initialHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTreeN(16)
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(50), int64(500))
 				tree.Set(user1.String(), userHistory)
@@ -267,8 +267,8 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "subtract from existing user amount",
-			initialHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			initialHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTreeN(16)
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(50), int64(500))
 				tree.Set(user1.String(), userHistory)
@@ -281,8 +281,8 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "negative result clamps to zero",
-			initialHistory: func() *avl.Tree {
-				tree := avl.NewTree()
+			initialHistory: func() *bptree.BPTree {
+				tree := bptree.NewBPTreeN(16)
 				userHistory := staker.NewUintTree()
 				userHistory.Set(int64(50), int64(500))
 				tree.Set(user1.String(), userHistory)

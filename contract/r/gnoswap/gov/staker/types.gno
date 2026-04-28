@@ -2,7 +2,7 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // Main interface that combines all sub-interfaces
@@ -102,8 +102,8 @@ type IGovStakerStore interface {
 	RemoveDelegation(id int64) error
 
 	HasDelegationsStoreKey() bool
-	SetDelegations(delegations *avl.Tree) error
-	GetAllDelegations() *avl.Tree
+	SetDelegations(delegations *bptree.BPTree) error
+	GetAllDelegations() *bptree.BPTree
 
 	HasDelegationCounterStoreKey() bool
 	GetDelegationCounter() *Counter
@@ -116,8 +116,8 @@ type IGovStakerStore interface {
 
 	// User delegation history (address -> *UintTree[timestamp -> int64])
 	HasUserDelegationHistoryStoreKey() bool
-	GetUserDelegationHistory() *avl.Tree
-	SetUserDelegationHistory(history *avl.Tree) error
+	GetUserDelegationHistory() *bptree.BPTree
+	SetUserDelegationHistory(history *bptree.BPTree) error
 
 	// Manager states
 	HasEmissionRewardManagerStoreKey() bool

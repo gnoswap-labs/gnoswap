@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/p/onbloc/json"
 )
@@ -139,19 +139,19 @@ func TestUtil_marshal(t *testing.T) {
 	}
 }
 
-// TestUtil_getUint64FromTree tests retrieving uint64 from AVL tree
+// TestUtil_getUint64FromTree tests retrieving uint64 from BPTree
 func TestUtil_getUint64FromTree(t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func() (*avl.Tree, string)
+		setup                func() (*bptree.BPTree, string)
 		expected             uint64
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
 			name: "get existing value",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(12345))
 				return tree, "key1"
 			},
@@ -159,16 +159,16 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 		},
 		{
 			name: "get non-existent value returns zero",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
 				return tree, "nonexistent"
 			},
 			expected: 0,
 		},
 		{
 			name: "get zero value",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(0))
 				return tree, "key1"
 			},
@@ -176,8 +176,8 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 		},
 		{
 			name: "panics on wrong type",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", int64(100)) // Wrong type (int64 instead of uint64)
 				return tree, "key1"
 			},
@@ -204,19 +204,19 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 	}
 }
 
-// TestUtil_updateUint64InTree tests updating uint64 in AVL tree
+// TestUtil_updateUint64InTree tests updating uint64 in BPTree
 func TestUtil_updateUint64InTree(t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func() (*avl.Tree, string, uint64, bool)
+		setup                func() (*bptree.BPTree, string, uint64, bool)
 		expected             uint64
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
 			name: "add to existing value",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(100))
 				return tree, "key1", 50, true
 			},
@@ -224,16 +224,16 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 		},
 		{
 			name: "add to non-existent value",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				return tree, "key1", 100, true
 			},
 			expected: 100,
 		},
 		{
 			name: "subtract from existing value",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(100))
 				return tree, "key1", 50, false
 			},
@@ -241,8 +241,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 		},
 		{
 			name: "subtract to zero",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(100))
 				return tree, "key1", 100, false
 			},
@@ -250,8 +250,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 		},
 		{
 			name: "update with zero delta",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(100))
 				return tree, "key1", 0, true
 			},
@@ -259,8 +259,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 		},
 		{
 			name: "overflow on add",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				maxUint64 := uint64(18446744073709551615)
 				tree.Set("key1", maxUint64-1)
 				return tree, "key1", 10, true
@@ -270,8 +270,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 		},
 		{
 			name: "panics on insufficient balance",
-			setup: func() (*avl.Tree, string, uint64, bool) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string, uint64, bool) {
+				tree := bptree.NewBPTreeN(16)
 				tree.Set("key1", uint64(50))
 				return tree, "key1", 100, false
 			},
@@ -298,26 +298,26 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 	}
 }
 
-// TestUtil_getOrCreateInnerTree tests getting or creating inner AVL tree
+// TestUtil_getOrCreateInnerTree tests getting or creating inner BPTree
 func TestUtil_getOrCreateInnerTree(t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func() (*avl.Tree, string)
+		setup                func() (*bptree.BPTree, string)
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
 			name: "create new inner tree",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
 				return tree, "key1"
 			},
 		},
 		{
 			name: "get existing inner tree",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
-				innerTree := avl.NewTree()
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
+				innerTree := bptree.NewBPTreeN(16)
 				innerTree.Set("innerKey", "innerValue")
 				tree.Set("key1", innerTree)
 				return tree, "key1"
@@ -325,13 +325,13 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 		},
 		{
 			name: "panics on wrong type",
-			setup: func() (*avl.Tree, string) {
-				tree := avl.NewTree()
-				tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *avl.Tree)
+			setup: func() (*bptree.BPTree, string) {
+				tree := bptree.NewBPTreeN(16)
+				tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *bptree.BPTree)
 				return tree, "key1"
 			},
 			expectedHasPanic:     true,
-			expectedPanicMessage: "failed to cast value to *avl.Tree: uint64",
+			expectedPanicMessage: "failed to cast value to *bptree.BPTree: uint64",
 		},
 	}
 
@@ -342,7 +342,7 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 
 			// when/then
 			if tc.expectedHasPanic {
-				uassert.PanicsWithMessage(t, "failed to cast value to *avl.Tree: uint64", func() {
+				uassert.PanicsWithMessage(t, "failed to cast value to *bptree.BPTree: uint64", func() {
 					getOrCreateInnerTree(tree, "key1")
 				})
 			} else {

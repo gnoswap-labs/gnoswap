@@ -1,7 +1,7 @@
 package staker
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -12,7 +12,7 @@ import (
 // separate tracking and distribution mechanisms for each token type.
 type ProtocolFeeRewardManager struct {
 	// rewardStates maps address to ProtocolFeeRewardState for tracking individual staker rewards
-	rewardStates *avl.Tree // address -> ProtocolFeeRewardState
+	rewardStates *bptree.BPTree // address -> ProtocolFeeRewardState
 
 	// accumulatedProtocolFeeX128PerStake maps token path to accumulated fee per stake with 128-bit precision
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
@@ -31,7 +31,7 @@ type ProtocolFeeRewardManager struct {
 //   - *ProtocolFeeRewardManager: new protocol fee reward manager instance
 func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 	return &ProtocolFeeRewardManager{
-		rewardStates:                       avl.NewTree(),
+		rewardStates:                       bptree.NewBPTreeN(16),
 		protocolFeeAmounts:                 make(map[string]int64),
 		accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
 		accumulatedTimestamp:               0,
@@ -82,7 +82,7 @@ func (p *ProtocolFeeRewardManager) GetTotalStakedAmount() int64 {
 
 /* Setters */
 
-func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *avl.Tree) {
+func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 	p.rewardStates = rewardStates
 }
 
