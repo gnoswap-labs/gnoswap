@@ -5,7 +5,6 @@ import (
 	"chain/runtime"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

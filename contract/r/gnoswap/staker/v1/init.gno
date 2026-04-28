@@ -3,7 +3,6 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 

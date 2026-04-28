@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -174,7 +174,7 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 
 	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
 		// Value is a slice of incentive IDs (handles timestamp collisions)
-		poolIncentiveIds, ok := value.(*avl.Tree)
+		poolIncentiveIds, ok := value.(*bptree.BPTree)
 		if !ok {
 			return false
 		}
