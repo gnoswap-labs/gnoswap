@@ -39,7 +39,7 @@ func registerPoolV1() {
 
 func initStoreData(poolStore pool.IPoolStore) error {
 	if !poolStore.HasPools() {
-		err := poolStore.SetPools(bptree.NewBPTreeN(16))
+		err := poolStore.SetPools(bptree.NewBPTreeN(32))
 		if err != nil {
 			return err
 		}

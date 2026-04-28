@@ -139,7 +139,7 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		{
 			name: "set and get pools successfully",
 			setupFn: func(ps IPoolStore) {
-				pools := bptree.NewBPTreeN(16)
+				pools := bptree.NewBPTreeN(32)
 				pools.Set("pool1", "data1")
 				ps.SetPools(pools)
 			},
@@ -615,7 +615,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 		{
 			name: "set and get all store values",
 			setupFn: func(ps IPoolStore) {
-				pools := bptree.NewBPTreeN(16)
+				pools := bptree.NewBPTreeN(32)
 				pools.Set("pool1", "data1")
 				ps.SetPools(pools)
 

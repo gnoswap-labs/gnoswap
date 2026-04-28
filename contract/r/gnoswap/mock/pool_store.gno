@@ -157,7 +157,7 @@ func NewMockPoolStoreWithHook(
 	}
 
 	return &MockPoolStore{
-		pools:                bptree.NewBPTreeN(16),
+		pools:                bptree.NewBPTreeN(32),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
