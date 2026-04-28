@@ -7,7 +7,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -531,18 +530,18 @@ func NewExternalIncentive(
 
 // Tick mapping for each pool
 type Ticks struct {
-	tree *avl.Tree // int32 tickId -> tick
+	tree *bptree.BPTree // int32 tickId -> tick
 }
 
 // Ticks Getter/Setter methods
 
 // Tree returns the ticks tree
-func (t *Ticks) Tree() *avl.Tree {
+func (t *Ticks) Tree() *bptree.BPTree {
 	return t.tree
 }
 
 // SetTree sets the ticks tree
-func (t *Ticks) SetTree(tree *avl.Tree) {
+func (t *Ticks) SetTree(tree *bptree.BPTree) {
 	t.tree = tree
 }
 
@@ -600,7 +599,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 
 // Clone returns a deep copy of ticks.
 func (t Ticks) Clone() Ticks {
-	cloned := avl.NewTree()
+	cloned := bptree.NewBPTreeN(16)
 	t.tree.Iterate("", "", func(key string, value any) bool {
 		tick, ok := value.(*Tick)
 		if !ok {
@@ -614,7 +613,7 @@ func (t Ticks) Clone() Ticks {
 
 func NewTicks() Ticks {
 	return Ticks{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTreeN(16),
 	}
 }
 
