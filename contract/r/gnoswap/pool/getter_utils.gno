@@ -88,7 +88,7 @@ func clonePool(src *Pool) *Pool {
 		feeGrowthGlobal0X128: src.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: src.feeGrowthGlobal1X128.Clone(),
 		liquidity:            src.liquidity.Clone(),
-		ticks:                bptree.NewBPTreeN(16),
+		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTreeN(16),
 		observationState:     NewObservationState(time.Now().Unix()),
@@ -97,10 +97,10 @@ func clonePool(src *Pool) *Pool {
 
 func clonePoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	if src == nil {
-		return bptree.NewBPTreeN(16)
+		return bptree.NewBPTreeN(32)
 	}
 
-	cloned := bptree.NewBPTreeN(16)
+	cloned := bptree.NewBPTreeN(32)
 
 	src.Iterate("", "", func(key string, value any) bool {
 		cloned.Set(key, value)

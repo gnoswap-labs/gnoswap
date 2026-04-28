@@ -40,7 +40,7 @@ func testInitData(t *testing.T) {
 	}
 	mockPool := makeMockPool(params)
 
-	mockTicks := bptree.NewBPTreeN(16)
+	mockTicks := bptree.NewBPTreeN(32)
 
 	tickInfo := pl.TickInfo{}
 	tickInfo.SetLiquidityGross("1000000")

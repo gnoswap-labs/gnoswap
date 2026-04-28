@@ -1097,7 +1097,7 @@ func createMockLiquidityPool() *pl.Pool {
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
 		tickBitmaps:          make(map[int16]string),
-		ticks:                bptree.NewBPTreeN(16),
+		ticks:                bptree.NewBPTreeN(32),
 		positions:            bptree.NewBPTreeN(16),
 	})
 

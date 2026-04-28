@@ -221,7 +221,7 @@ func NewPool(
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newTokenPair(),
 		liquidity:            u256.Zero(),
-		ticks:                bptree.NewBPTreeN(16),
+		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTreeN(16),
 		observationState:     NewObservationState(time.Now().Unix()),
