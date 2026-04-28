@@ -21,7 +21,7 @@ type MockStakerStore struct {
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
-	tokenSpecificMinimumRewards      *avl.Tree
+	tokenSpecificMinimumRewards      *bptree.BPTree
 	unstakingFee                     uint64
 	pools                            *avl.Tree
 	poolTierMemberships              *avl.Tree
@@ -158,11 +158,11 @@ func (s *MockStakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.tokenSpecificMinimumRewards != nil
 }
 
-func (s *MockStakerStore) GetTokenSpecificMinimumRewards() *avl.Tree {
+func (s *MockStakerStore) GetTokenSpecificMinimumRewards() *bptree.BPTree {
 	return s.tokenSpecificMinimumRewards
 }
 
-func (s *MockStakerStore) SetTokenSpecificMinimumRewards(rewards *avl.Tree) error {
+func (s *MockStakerStore) SetTokenSpecificMinimumRewards(rewards *bptree.BPTree) error {
 	s.tokenSpecificMinimumRewards = rewards
 	return nil
 }
@@ -345,7 +345,7 @@ func newMockStakerStore() *MockStakerStore {
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns"},
 		incentiveCounter:            sr.NewCounter(),
-		tokenSpecificMinimumRewards: avl.NewTree(),
+		tokenSpecificMinimumRewards: bptree.NewBPTreeN(16),
 		unstakingFee:                0,
 		pools:                       avl.NewTree(),
 		poolTierMemberships:         avl.NewTree(),

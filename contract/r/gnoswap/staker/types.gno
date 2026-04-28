@@ -165,8 +165,8 @@ type IStakerStore interface {
 
 	// TokenSpecificMinimumRewards
 	HasTokenSpecificMinimumRewardsStoreKey() bool
-	GetTokenSpecificMinimumRewards() *avl.Tree
-	SetTokenSpecificMinimumRewards(rewards *avl.Tree) error
+	GetTokenSpecificMinimumRewards() *bptree.BPTree
+	SetTokenSpecificMinimumRewards(rewards *bptree.BPTree) error
 
 	// UnstakingFee
 	HasUnstakingFeeStoreKey() bool
