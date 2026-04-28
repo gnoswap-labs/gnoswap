@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -31,22 +31,22 @@ func (s *launchpadStore) HasProjectsKey() bool {
 }
 
 // GetProjects retrieves the projects tree.
-func (s *launchpadStore) GetProjects() *avl.Tree {
+func (s *launchpadStore) GetProjects() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyProjects.String())
 	if err != nil {
 		panic(err)
 	}
 
-	projects, ok := result.(*avl.Tree)
+	projects, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return projects
 }
 
 // SetProjects stores the projects tree.
-func (s *launchpadStore) SetProjects(projects *avl.Tree) error {
+func (s *launchpadStore) SetProjects(projects *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyProjects.String(), projects)
 }
 
@@ -56,22 +56,22 @@ func (s *launchpadStore) HasProjectTierRewardManagersKey() bool {
 }
 
 // GetProjectTierRewardManagers retrieves the project tier reward managers tree.
-func (s *launchpadStore) GetProjectTierRewardManagers() *avl.Tree {
+func (s *launchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyProjectTierRewardManagers.String())
 	if err != nil {
 		panic(err)
 	}
 
-	managers, ok := result.(*avl.Tree)
+	managers, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return managers
 }
 
 // SetProjectTierRewardManagers stores the project tier reward managers tree.
-func (s *launchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
+func (s *launchpadStore) SetProjectTierRewardManagers(managers *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyProjectTierRewardManagers.String(), managers)
 }
 
@@ -112,22 +112,22 @@ func (s *launchpadStore) HasDepositsKey() bool {
 }
 
 // GetDeposits retrieves the deposits tree.
-func (s *launchpadStore) GetDeposits() *avl.Tree {
+func (s *launchpadStore) GetDeposits() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyDeposits.String())
 	if err != nil {
 		panic(err)
 	}
 
-	deposits, ok := result.(*avl.Tree)
+	deposits, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return deposits
 }
 
 // SetDeposits stores the deposits tree.
-func (s *launchpadStore) SetDeposits(deposits *avl.Tree) error {
+func (s *launchpadStore) SetDeposits(deposits *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
 }
 
