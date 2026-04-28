@@ -4,6 +4,7 @@ import (
 	"time"
 
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/emission"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -54,7 +55,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasDepositsStoreKey() {
-		err := stakerStore.SetDeposits(avl.NewTree())
+		err := stakerStore.SetDeposits(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -234,7 +235,7 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 		{
 			name: "set and get deposits successfully",
 			setupFn: func(ss IStakerStore) {
-				deposits := avl.NewTree()
+				deposits := bptree.NewBPTreeN(16)
 				ss.SetDeposits(deposits)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -1330,7 +1331,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = ss.SetMinimumRewardAmount(100)
 	uassert.NoError(t, err)
 
-	deposits := avl.NewTree()
+	deposits := bptree.NewBPTreeN(16)
 	err = ss.SetDeposits(deposits)
 	uassert.NoError(t, err)
 

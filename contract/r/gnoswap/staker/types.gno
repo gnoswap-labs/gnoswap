@@ -3,6 +3,7 @@ package staker
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IStaker interface {
@@ -133,8 +134,8 @@ type IStakerStore interface {
 
 	// Deposits
 	HasDepositsStoreKey() bool
-	GetDeposits() *avl.Tree
-	SetDeposits(deposits *avl.Tree) error
+	GetDeposits() *bptree.BPTree
+	SetDeposits(deposits *bptree.BPTree) error
 
 	// ExternalIncentives
 	HasExternalIncentivesStoreKey() bool

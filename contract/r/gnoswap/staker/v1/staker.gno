@@ -6,6 +6,7 @@ import (
 	"time"
 
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -32,13 +33,13 @@ const ZERO_ADDRESS = address("")
 
 // Deposits manages all staked positions.
 type Deposits struct {
-	tree *avl.Tree
+	tree *bptree.BPTree
 }
 
 // NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: avl.NewTree(), // positionId -> *Deposit
+		tree: bptree.NewBPTreeN(16), // positionId -> *Deposit
 	}
 }
 

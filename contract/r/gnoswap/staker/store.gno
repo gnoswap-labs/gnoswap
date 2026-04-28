@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/store"
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -93,21 +94,21 @@ func (s *stakerStore) HasDepositsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDeposits.String())
 }
 
-func (s *stakerStore) GetDeposits() *avl.Tree {
+func (s *stakerStore) GetDeposits() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyDeposits.String())
 	if err != nil {
 		panic(err)
 	}
 
-	deposits, ok := result.(*avl.Tree)
+	deposits, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return deposits
 }
 
-func (s *stakerStore) SetDeposits(deposits *avl.Tree) error {
+func (s *stakerStore) SetDeposits(deposits *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
 }
 

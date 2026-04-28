@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/tokens/grc721"
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -14,7 +15,7 @@ import (
 type MockStakerStore struct {
 	depositGnsAmount                 int64
 	minimumRewardAmount              int64
-	deposits                         *avl.Tree
+	deposits                         *bptree.BPTree
 	externalIncentives               *avl.Tree
 	stakers                          *avl.Tree
 	totalEmissionSent                int64
@@ -68,11 +69,11 @@ func (s *MockStakerStore) HasDepositsStoreKey() bool {
 	return s.deposits != nil
 }
 
-func (s *MockStakerStore) GetDeposits() *avl.Tree {
+func (s *MockStakerStore) GetDeposits() *bptree.BPTree {
 	return s.deposits
 }
 
-func (s *MockStakerStore) SetDeposits(deposits *avl.Tree) error {
+func (s *MockStakerStore) SetDeposits(deposits *bptree.BPTree) error {
 	s.deposits = deposits
 	return nil
 }
@@ -338,7 +339,7 @@ func newMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            1_000_000_000,
 		minimumRewardAmount:         1_000_000_000,
-		deposits:                    avl.NewTree(),
+		deposits:                    bptree.NewBPTreeN(16),
 		externalIncentives:          avl.NewTree(),
 		stakers:                     avl.NewTree(),
 		totalEmissionSent:           0,
