@@ -139,8 +139,8 @@ type IStakerStore interface {
 
 	// ExternalIncentives
 	HasExternalIncentivesStoreKey() bool
-	GetExternalIncentives() *avl.Tree
-	SetExternalIncentives(incentives *avl.Tree) error
+	GetExternalIncentives() *bptree.BPTree
+	SetExternalIncentives(incentives *bptree.BPTree) error
 
 	// Stakers
 	HasStakersStoreKey() bool

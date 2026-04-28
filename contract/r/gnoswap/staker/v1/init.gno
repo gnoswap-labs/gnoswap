@@ -62,7 +62,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasExternalIncentivesStoreKey() {
-		err := stakerStore.SetExternalIncentives(avl.NewTree())
+		err := stakerStore.SetExternalIncentives(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

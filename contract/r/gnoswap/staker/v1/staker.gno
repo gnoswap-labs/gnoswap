@@ -105,13 +105,13 @@ func (self *Deposits) remove(positionId uint64) {
 
 // ExternalIncentives manages external incentive programs.
 type ExternalIncentives struct {
-	tree *avl.Tree
+	tree *bptree.BPTree
 }
 
 // NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTreeN(16),
 	}
 }
 

@@ -292,7 +292,7 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 		{
 			name: "set and get external incentives successfully",
 			setupFn: func(ss IStakerStore) {
-				incentives := avl.NewTree()
+				incentives := bptree.NewBPTreeN(16)
 				ss.SetExternalIncentives(incentives)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {

@@ -117,21 +117,21 @@ func (s *stakerStore) HasExternalIncentivesStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentives.String())
 }
 
-func (s *stakerStore) GetExternalIncentives() *avl.Tree {
+func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyExternalIncentives.String())
 	if err != nil {
 		panic(err)
 	}
 
-	incentives, ok := result.(*avl.Tree)
+	incentives, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return incentives
 }
 
-func (s *stakerStore) SetExternalIncentives(incentives *avl.Tree) error {
+func (s *stakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentives.String(), incentives)
 }
 
