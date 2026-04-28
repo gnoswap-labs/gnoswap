@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -97,7 +97,7 @@ func setupBasicTestState(t *testing.T) *testState {
 
 	// Setup stakers tree (address -> depositId -> *Deposit)
 	stakersTree := state.instance.store.GetStakers()
-	depositTree := avl.NewTree()
+	depositTree := bptree.NewBPTreeN(16)
 	depositTree.Set(sr.EncodeUint(state.positionId), state.deposit)
 	stakersTree.Set(state.owner.String(), depositTree)
 
@@ -518,7 +518,7 @@ func TestGetterStakedUserCounts(t *testing.T) {
 	)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(uint64(2)), deposit2)
 
-	depositTree2 := avl.NewTree()
+	depositTree2 := bptree.NewBPTreeN(16)
 	depositTree2.Set(sr.EncodeUint(uint64(2)), deposit2)
 	state.instance.store.GetStakers().Set(addr02.String(), depositTree2)
 
@@ -598,7 +598,7 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 	// Update stakers tree
 	stakersTree := state.instance.store.GetStakers()
 	depositTreeI, _ := stakersTree.Get(state.owner.String())
-	depositTree := depositTreeI.(*avl.Tree)
+	depositTree := depositTreeI.(*bptree.BPTree)
 	depositTree.Set(sr.EncodeUint(positionId2), deposit2)
 
 	positionsPage1 := state.instance.GetStakedPositionsByUser(state.owner, 0, 1)

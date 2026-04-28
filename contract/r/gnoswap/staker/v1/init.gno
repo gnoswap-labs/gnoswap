@@ -69,7 +69,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasStakersStoreKey() {
-		err := stakerStore.SetStakers(avl.NewTree())
+		err := stakerStore.SetStakers(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

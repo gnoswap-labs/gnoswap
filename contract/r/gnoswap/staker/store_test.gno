@@ -349,7 +349,7 @@ func TestStoreSetAndGetStakers(t *testing.T) {
 		{
 			name: "set and get stakers successfully",
 			setupFn: func(ss IStakerStore) {
-				stakers := avl.NewTree()
+				stakers := bptree.NewBPTreeN(16)
 				ss.SetStakers(stakers)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -1335,7 +1335,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = ss.SetDeposits(deposits)
 	uassert.NoError(t, err)
 
-	stakers := avl.NewTree()
+	stakers := bptree.NewBPTreeN(16)
 	err = ss.SetStakers(stakers)
 	uassert.NoError(t, err)
 

@@ -17,7 +17,7 @@ type MockStakerStore struct {
 	minimumRewardAmount              int64
 	deposits                         *bptree.BPTree
 	externalIncentives               *bptree.BPTree
-	stakers                          *avl.Tree
+	stakers                          *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
@@ -97,11 +97,11 @@ func (s *MockStakerStore) HasStakersStoreKey() bool {
 	return s.stakers != nil
 }
 
-func (s *MockStakerStore) GetStakers() *avl.Tree {
+func (s *MockStakerStore) GetStakers() *bptree.BPTree {
 	return s.stakers
 }
 
-func (s *MockStakerStore) SetStakers(stakers *avl.Tree) error {
+func (s *MockStakerStore) SetStakers(stakers *bptree.BPTree) error {
 	s.stakers = stakers
 	return nil
 }
@@ -341,7 +341,7 @@ func newMockStakerStore() *MockStakerStore {
 		minimumRewardAmount:         1_000_000_000,
 		deposits:                    bptree.NewBPTreeN(16),
 		externalIncentives:          bptree.NewBPTreeN(16),
-		stakers:                     avl.NewTree(),
+		stakers:                     bptree.NewBPTreeN(16),
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns"},
 		incentiveCounter:            sr.NewCounter(),

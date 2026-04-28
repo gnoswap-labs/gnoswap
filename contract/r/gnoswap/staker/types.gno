@@ -144,8 +144,8 @@ type IStakerStore interface {
 
 	// Stakers
 	HasStakersStoreKey() bool
-	GetStakers() *avl.Tree
-	SetStakers(stakers *avl.Tree) error
+	GetStakers() *bptree.BPTree
+	SetStakers(stakers *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool

@@ -140,21 +140,21 @@ func (s *stakerStore) HasStakersStoreKey() bool {
 	return s.kvStore.Has(StoreKeyStakers.String())
 }
 
-func (s *stakerStore) GetStakers() *avl.Tree {
+func (s *stakerStore) GetStakers() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyStakers.String())
 	if err != nil {
 		panic(err)
 	}
 
-	stakers, ok := result.(*avl.Tree)
+	stakers, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return stakers
 }
 
-func (s *stakerStore) SetStakers(stakers *avl.Tree) error {
+func (s *stakerStore) SetStakers(stakers *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyStakers.String(), stakers)
 }
 

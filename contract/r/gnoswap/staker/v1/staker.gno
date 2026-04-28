@@ -150,13 +150,13 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 
 // Stakers manages deposits by staker address.
 type Stakers struct {
-	tree *avl.Tree // address -> depositId -> *Deposit
+	tree *bptree.BPTree // address -> depositId -> *Deposit
 }
 
 // NewStakers creates a new Stakers instance.
 func NewStakers() *Stakers {
 	return &Stakers{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTreeN(16),
 	}
 }
 
@@ -180,7 +180,7 @@ func (self *Stakers) IterateAll(address address, fn func(depositId uint64, depos
 func (self *Stakers) addDeposit(address address, depositId uint64, deposit *sr.Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
-		depositTree := avl.NewTree()
+		depositTree := bptree.NewBPTreeN(16)
 		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
@@ -200,11 +200,11 @@ func (self *Stakers) removeDeposit(address address, depositId uint64) {
 	depositTree.Remove(EncodeUint(depositId))
 }
 
-// retrieveDepositTree safely casts data to AVL tree type.
-func retrieveDepositTree(data any) *avl.Tree {
-	depositTree, ok := data.(*avl.Tree)
+// retrieveDepositTree safely casts data to BPTree type.
+func retrieveDepositTree(data any) *bptree.BPTree {
+	depositTree, ok := data.(*bptree.BPTree)
 	if !ok {
-		panic("failed to cast depositTree to *avl.Tree")
+		panic("failed to cast depositTree to *bptree.BPTree")
 	}
 	return depositTree
 }
