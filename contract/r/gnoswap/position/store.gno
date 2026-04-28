@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -28,21 +28,21 @@ func (s *positionStore) HasPositionsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPositions.String())
 }
 
-func (s *positionStore) GetPositions() *avl.Tree {
+func (s *positionStore) GetPositions() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPositions.String())
 	if err != nil {
 		panic(err)
 	}
 
-	positions, ok := result.(*avl.Tree)
+	positions, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return positions
 }
 
-func (s *positionStore) SetPositions(positions *avl.Tree) error {
+func (s *positionStore) SetPositions(positions *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyPositions.String(), positions)
 }
 
