@@ -175,8 +175,8 @@ type IStakerStore interface {
 
 	// Pools
 	HasPoolsStoreKey() bool
-	GetPools() *avl.Tree
-	SetPools(pools *avl.Tree) error
+	GetPools() *bptree.BPTree
+	SetPools(pools *bptree.BPTree) error
 
 	// PoolTierMemberships
 	HasPoolTierMembershipsStoreKey() bool

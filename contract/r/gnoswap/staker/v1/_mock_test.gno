@@ -23,7 +23,7 @@ type MockStakerStore struct {
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      *bptree.BPTree
 	unstakingFee                     uint64
-	pools                            *avl.Tree
+	pools                            *bptree.BPTree
 	poolTierMemberships              *avl.Tree
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
@@ -186,11 +186,11 @@ func (s *MockStakerStore) HasPoolsStoreKey() bool {
 	return s.pools != nil
 }
 
-func (s *MockStakerStore) GetPools() *avl.Tree {
+func (s *MockStakerStore) GetPools() *bptree.BPTree {
 	return s.pools
 }
 
-func (s *MockStakerStore) SetPools(pools *avl.Tree) error {
+func (s *MockStakerStore) SetPools(pools *bptree.BPTree) error {
 	s.pools = pools
 	return nil
 }
@@ -347,7 +347,7 @@ func newMockStakerStore() *MockStakerStore {
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: bptree.NewBPTreeN(16),
 		unstakingFee:                0,
-		pools:                       avl.NewTree(),
+		pools:                       bptree.NewBPTreeN(16),
 		poolTierMemberships:         avl.NewTree(),
 		poolTierRatio: sr.TierRatio{
 			Tier1: 0,

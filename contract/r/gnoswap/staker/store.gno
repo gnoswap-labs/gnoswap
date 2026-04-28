@@ -283,21 +283,21 @@ func (s *stakerStore) HasPoolsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPools.String())
 }
 
-func (s *stakerStore) GetPools() *avl.Tree {
+func (s *stakerStore) GetPools() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
 		panic(err)
 	}
 
-	pools, ok := result.(*avl.Tree)
+	pools, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return pools
 }
 
-func (s *stakerStore) SetPools(pools *avl.Tree) error {
+func (s *stakerStore) SetPools(pools *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 

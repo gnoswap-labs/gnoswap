@@ -633,7 +633,7 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		{
 			name: "set and get pools successfully",
 			setupFn: func(ss IStakerStore) {
-				pools := avl.NewTree()
+				pools := bptree.NewBPTreeN(16)
 				ss.SetPools(pools)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
