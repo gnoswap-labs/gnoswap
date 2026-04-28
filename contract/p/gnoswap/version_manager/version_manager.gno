@@ -17,8 +17,7 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
-	rotree "gno.land/p/nt/avl/v0/rotree"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -33,7 +32,7 @@ import (
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
-	initializers *avl.Tree
+	initializers *bptree.BPTree
 
 	// domainKVStore is the shared storage layer accessible by all versions
 	// The domain (proxy) realm is the owner and has write permission
@@ -165,11 +164,11 @@ func (vm *versionManager) GetDomainPath() string {
 	return vm.domainPath
 }
 
-// GetInitializers returns the AVL tree containing all registered initializer functions.
+// GetInitializers returns the BPTree containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
-func (vm *versionManager) GetInitializers() *rotree.ReadOnlyTree {
-	return rotree.Wrap(vm.initializers, makeInitializerSafe)
+func (vm *versionManager) GetInitializers() *bptree.BPTree {
+	return vm.initializers
 }
 
 // GetCurrentPackagePath returns the package path of the currently active implementation.
@@ -234,15 +233,14 @@ func NewVersionManager(
 		domainPath:              domainPath,
 		domainKVStore:           kvStore,
 		initializeDomainStoreFn: initializeDomainStoreFn,
-		initializers:            avl.NewTree(),
+		initializers:            bptree.NewBPTreeN(16),
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}
 }
 
-// makeInitializerSafe creates a safe copy of an initializer function for read-only tree access.
-// This is used by GetInitializers to wrap the internal AVL tree in a read-only view,
-// preventing external modification of registered initializers.
+// makeInitializerSafe creates a safe copy of an initializer function.
+// Used to verify stored initializer types during inspection.
 func makeInitializerSafe(data any) any {
 	fn, ok := data.(func(store any) any)
 	if !ok {
