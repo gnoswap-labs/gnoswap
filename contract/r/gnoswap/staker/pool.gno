@@ -8,7 +8,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	avl "gno.land/p/nt/avl/v0"
-ufmt "gno.land/p/nt/ufmt/v0"
+	bptree "gno.land/p/nt/bptree/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 const AllTierCount = 4 // 0, 1, 2, 3
@@ -225,7 +226,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
 type Incentives struct {
-	incentives *avl.Tree // (incentiveId) => ExternalIncentive
+	incentives *bptree.BPTree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
@@ -235,12 +236,12 @@ type Incentives struct {
 // Incentives Getter/Setter methods
 
 // Incentives returns the incentives tree
-func (i *Incentives) IncentiveTrees() *avl.Tree {
+func (i *Incentives) IncentiveTrees() *bptree.BPTree {
 	return i.incentives
 }
 
 // SetIncentives sets the incentives tree
-func (i *Incentives) SetIncentives(incentives *avl.Tree) {
+func (i *Incentives) SetIncentives(incentives *bptree.BPTree) {
 	i.incentives = incentives
 }
 
@@ -293,7 +294,7 @@ func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTreeN(64),
-		incentives:         avl.NewTree(),
+		incentives:         bptree.NewBPTreeN(16),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
