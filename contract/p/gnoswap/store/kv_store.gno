@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // kvStore represents a domain-specific key-value storage
@@ -125,6 +126,17 @@ func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
 	}
 
 	return castToTree(result)
+}
+
+// GetBPTree retrieves a value by key and casts it to *bptree.BPTree
+// Returns ErrFailedCast if the value is not of type *bptree.BPTree
+func (k *kvStore) GetBPTree(key string) (*bptree.BPTree, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return castToBPTree(result)
 }
 
 // Set stores a value with the given key
