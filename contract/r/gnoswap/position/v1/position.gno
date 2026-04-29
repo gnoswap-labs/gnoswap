@@ -45,7 +45,6 @@ func (p *positionV1) Mint(
 	halt.AssertIsNotHaltedPosition()
 
 	previousRealm := runtime.PreviousRealm()
-	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()
 	return p.mintWithInput(MintInput{
