@@ -31,16 +31,16 @@ var (
 )
 
 func main() {
-	println("[SCENARIO] 1. Setup protocol fee balance")
-	setupProtocolFeeBalance()
+	println("[SCENARIO] 1. Setup collected protocol fee before emergency")
+	setupCollectedProtocolFee()
 	println()
 
 	println("[SCENARIO] 2. Set emergency mode")
 	setEmergencyMode()
 	println()
 
-	println("[SCENARIO] 3. AddToProtocolFee remains allowed")
-	addProtocolFee()
+	println("[SCENARIO] 3. New AddToProtocolFee returns error during emergency")
+	addProtocolFeeReturnsError()
 	println()
 
 	println("[SCENARIO] 4. DistributeProtocolFee remains allowed")
@@ -52,10 +52,18 @@ func main() {
 	println()
 }
 
-func setupProtocolFeeBalance() {
+func setupCollectedProtocolFee() {
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, 1000)
+	bar.Transfer(cross, stakerAddr, 1500)
 	ufmt.Printf("[INFO] staker BAR balance before add: %d\n", bar.BalanceOf(stakerAddr))
+
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
+	err := pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] protocol fee BAR balance before emergency: %d\n", bar.BalanceOf(protocolFeeAddr))
 }
 
 func setEmergencyMode() {
@@ -65,11 +73,12 @@ func setEmergencyMode() {
 	ufmt.Printf("[INFO] Withdraw halted: %t\n", halt.IsHaltedWithdraw())
 }
 
-func addProtocolFee() {
+func addProtocolFeeReturnsError() {
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, 1000)
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
-	ufmt.Println("[EXPECTED] AddToProtocolFee succeeded in emergency")
+	bar.Approve(cross, protocolFeeAddr, 500)
+	err := pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 500)
+	uassert.Error(t, err)
+	ufmt.Println("[EXPECTED] AddToProtocolFee returned protocol fee halted error in emergency")
 }
 
 func distributeProtocolFee() {
@@ -88,19 +97,20 @@ func setterBlocked() {
 }
 
 // Output:
-// [SCENARIO] 1. Setup protocol fee balance
-// [INFO] staker BAR balance before add: 1000
+// [SCENARIO] 1. Setup collected protocol fee before emergency
+// [INFO] staker BAR balance before add: 1500
+// [INFO] protocol fee BAR balance before emergency: 1000
 //
 // [SCENARIO] 2. Set emergency mode
 // [INFO] ProtocolFee halted: true
 // [INFO] Withdraw halted: false
 //
-// [SCENARIO] 3. AddToProtocolFee remains allowed
-// [EXPECTED] AddToProtocolFee succeeded in emergency
+// [SCENARIO] 3. New AddToProtocolFee returns error during emergency
+// [EXPECTED] AddToProtocolFee returned protocol fee halted error in emergency
 //
 // [SCENARIO] 4. DistributeProtocolFee remains allowed
 // [EXPECTED] protocol fee BAR balance after distribution: 0
-// [EXPECTED] gov staker BAR balance after distribution: 0
+// [EXPECTED] gov staker BAR balance after distribution: 1000
 //
 // [SCENARIO] 5. Protocol fee setter remains blocked
 // [EXPECTED] SetDevOpsPct blocked by protocol_fee halt
