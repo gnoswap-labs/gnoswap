@@ -169,7 +169,7 @@ const (
 )
 
 // userHistoryTimestampWidth is the zero-padded width that fits the maximum
-const userHistoryTimestampWidth = 10
+const userHistoryTimestampWidth = 20
 
 // makeUserHistoryKey builds the composite key "addr|paddedTimestamp" used in the user delegation history BPTree.
 func makeUserHistoryKey(addrStr string, timestamp int64) string {
