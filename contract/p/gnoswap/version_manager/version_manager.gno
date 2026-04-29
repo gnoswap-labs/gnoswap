@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"gno.land/p/gnoswap/store"
-	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -32,7 +31,7 @@ import (
 type versionManager struct {
 	// initializers stores registered initializer functions keyed by package path
 	// Each initializer bootstraps a specific version's implementation
-	initializers *bptree.BPTree
+	initializers map[string]func(store any) any
 
 	// domainKVStore is the shared storage layer accessible by all versions
 	// The domain (proxy) realm is the owner and has write permission
@@ -86,12 +85,12 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	}
 
 	// Check if this package path has already been registered
-	if vm.initializers.Has(targetPackagePath) {
+	if _, ok := vm.initializers[targetPackagePath]; ok {
 		return errors.New("version_manager: initializer already registered")
 	}
 
 	// Register the initializer function for this package path
-	vm.initializers.Set(targetPackagePath, initializer)
+	vm.initializers[targetPackagePath] = initializer
 
 	chain.Emit(
 		"RegisterInitializer",
@@ -127,20 +126,13 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 // Returns:
 //   - error: If target version is not registered or initializer is invalid
 func (vm *versionManager) ChangeImplementation(packagePath string) error {
-	// Verify the target implementation has been registered
-	if !vm.initializers.Has(packagePath) {
-		return errors.New("version_manager: initializer not found for package path:" + packagePath)
-	}
-
 	// Retrieve the registered initializer function
-	result, ok := vm.initializers.Get(packagePath)
+	initializer, ok := vm.initializers[packagePath]
 	if !ok {
 		return errors.New("version_manager: initializer not found for package path:" + packagePath)
 	}
 
-	// Type-assert to ensure it's the expected function signature
-	initializer, ok := result.(func(store any) any)
-	if !ok {
+	if initializer == nil {
 		return errors.New("version_manager: initializer is not a function")
 	}
 
@@ -164,10 +156,10 @@ func (vm *versionManager) GetDomainPath() string {
 	return vm.domainPath
 }
 
-// GetInitializers returns the BPTree containing all registered initializer functions.
+// GetInitializers returns the map containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
-func (vm *versionManager) GetInitializers() *bptree.BPTree {
+func (vm *versionManager) GetInitializers() map[string]func(store any) any {
 	return vm.initializers
 }
 
@@ -233,7 +225,7 @@ func NewVersionManager(
 		domainPath:              domainPath,
 		domainKVStore:           kvStore,
 		initializeDomainStoreFn: initializeDomainStoreFn,
-		initializers:            bptree.NewBPTreeN(16),
+		initializers:            make(map[string]func(store any) any),
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}

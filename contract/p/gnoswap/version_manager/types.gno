@@ -1,7 +1,5 @@
 package version_manager
 
-import bptree "gno.land/p/nt/bptree/v0"
-
 // VersionManager defines the interface for managing multiple versioned implementations of a domain.
 // It enables the Strategy Pattern at the package level, allowing runtime switching between
 // different versions (v1, v2, v3, etc.) without requiring data migration.
@@ -31,7 +29,7 @@ type VersionManager interface {
 	GetDomainPath() string
 
 	// GetInitializers returns all registered version initializers
-	GetInitializers() *bptree.BPTree
+	GetInitializers() map[string]func(store any) any
 
 	// GetCurrentPackagePath returns the package path of the active implementation
 	GetCurrentPackagePath() string
