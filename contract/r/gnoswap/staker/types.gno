@@ -141,10 +141,10 @@ type IStakerStore interface {
 	GetExternalIncentives() *bptree.BPTree
 	SetExternalIncentives(incentives *bptree.BPTree) error
 
-	// Stakers
-	HasStakersStoreKey() bool
-	GetStakers() *bptree.BPTree
-	SetStakers(stakers *bptree.BPTree) error
+	// UserDeposits
+	HasUserDepositsStoreKey() bool
+	GetUserDeposits() *bptree.BPTree
+	SetUserDeposits(tree *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool

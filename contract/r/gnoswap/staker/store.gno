@@ -19,7 +19,7 @@ const (
 	StoreKeyMinimumRewardAmount              StoreKey = "minimumRewardAmount"
 	StoreKeyDeposits                         StoreKey = "deposits"
 	StoreKeyExternalIncentives               StoreKey = "externalIncentives"
-	StoreKeyStakers                          StoreKey = "stakers"
+	StoreKeyUserDeposits                     StoreKey = "userDeposits"
 	StoreKeyTotalEmissionSent                StoreKey = "totalEmissionSent"
 	StoreKeyAllowedTokens                    StoreKey = "allowedTokens"
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
@@ -134,27 +134,27 @@ func (s *stakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentives.String(), incentives)
 }
 
-// Stakers
-func (s *stakerStore) HasStakersStoreKey() bool {
-	return s.kvStore.Has(StoreKeyStakers.String())
+// UserDeposits
+func (s *stakerStore) HasUserDepositsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUserDeposits.String())
 }
 
-func (s *stakerStore) GetStakers() *bptree.BPTree {
-	result, err := s.kvStore.Get(StoreKeyStakers.String())
+func (s *stakerStore) GetUserDeposits() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUserDeposits.String())
 	if err != nil {
 		panic(err)
 	}
 
-	stakers, ok := result.(*bptree.BPTree)
+	tree, ok := result.(*bptree.BPTree)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
-	return stakers
+	return tree
 }
 
-func (s *stakerStore) SetStakers(stakers *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyStakers.String(), stakers)
+func (s *stakerStore) SetUserDeposits(tree *bptree.BPTree) error {
+	return s.kvStore.Set(StoreKeyUserDeposits.String(), tree)
 }
 
 // TotalEmissionSent

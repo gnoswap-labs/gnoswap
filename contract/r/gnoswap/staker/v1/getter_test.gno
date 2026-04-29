@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -95,11 +94,8 @@ func setupBasicTestState(t *testing.T) *testState {
 	state.deposit.AddExternalIncentiveId(state.incentiveId)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(state.positionId), state.deposit)
 
-	// Setup stakers tree (address -> depositId -> *Deposit)
-	stakersTree := state.instance.store.GetStakers()
-	depositTree := bptree.NewBPTreeN(4)
-	depositTree.Set(sr.EncodeUint(state.positionId), state.deposit)
-	stakersTree.Set(state.owner.String(), depositTree)
+	// Setup stakers tree via Stakers helper (composite-keyed BPTree)
+	state.instance.getUserDeposits().addDeposit(state.owner, state.positionId)
 
 	// Setup pool tier
 	state.instance.store.GetPoolTierMemberships().Set(state.poolPath, uint64(1))
@@ -518,9 +514,7 @@ func TestGetterStakedUserCounts(t *testing.T) {
 	)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(uint64(2)), deposit2)
 
-	depositTree2 := bptree.NewBPTreeN(4)
-	depositTree2.Set(sr.EncodeUint(uint64(2)), deposit2)
-	state.instance.store.GetStakers().Set(addr02.String(), depositTree2)
+	state.instance.getUserDeposits().addDeposit(addr02, uint64(2))
 
 	userCount = state.instance.GetTotalStakedUserCount()
 	uassert.Equal(t, uint64(2), userCount)
@@ -595,11 +589,8 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 	positionId2 := uint64(2)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(positionId2), deposit2)
 
-	// Update stakers tree
-	stakersTree := state.instance.store.GetStakers()
-	depositTreeI, _ := stakersTree.Get(state.owner.String())
-	depositTree := depositTreeI.(*bptree.BPTree)
-	depositTree.Set(sr.EncodeUint(positionId2), deposit2)
+	// Update stakers tree via Stakers helper
+	state.instance.getUserDeposits().addDeposit(state.owner, positionId2)
 
 	positionsPage1 := state.instance.GetStakedPositionsByUser(state.owner, 0, 1)
 	positionsPage2 := state.instance.GetStakedPositionsByUser(state.owner, 1, 1)

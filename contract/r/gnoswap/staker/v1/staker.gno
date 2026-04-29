@@ -147,67 +147,6 @@ func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
-// Stakers manages deposits by staker address.
-type Stakers struct {
-	tree *bptree.BPTree // address -> depositId -> *Deposit
-}
-
-// NewStakers creates a new Stakers instance.
-func NewStakers() *Stakers {
-	return &Stakers{
-		tree: bptree.NewBPTreeN(16),
-	}
-}
-
-// IterateAll traverses all deposits for a specific address.
-func (self *Stakers) IterateAll(address address, fn func(depositId uint64, deposit *sr.Deposit) bool) {
-	depositTreeI, ok := self.tree.Get(address.String())
-	if !ok {
-		return
-	}
-	depositTree := retrieveDepositTree(depositTreeI)
-	depositTree.Iterate("", "", func(depositId string, depositI any) bool {
-		deposit, ok := depositI.(*sr.Deposit)
-		if !ok {
-			panic("failed to cast value to *Deposit")
-		}
-		return fn(DecodeUint(depositId), deposit)
-	})
-}
-
-// addDeposit adds a deposit for a staker address.
-func (self *Stakers) addDeposit(address address, depositId uint64, deposit *sr.Deposit) {
-	depositTreeI, ok := self.tree.Get(address.String())
-	if !ok {
-		depositTree := bptree.NewBPTreeN(4)
-		self.tree.Set(address.String(), depositTree)
-		depositTreeI = depositTree
-	}
-
-	depositTree := retrieveDepositTree(depositTreeI)
-	depositTree.Set(EncodeUint(depositId), deposit)
-}
-
-// removeDeposit removes a deposit for a staker address.
-func (self *Stakers) removeDeposit(address address, depositId uint64) {
-	depositTreeI, ok := self.tree.Get(address.String())
-	if !ok {
-		return
-	}
-
-	depositTree := retrieveDepositTree(depositTreeI)
-	depositTree.Remove(EncodeUint(depositId))
-}
-
-// retrieveDepositTree safely casts data to BPTree type.
-func retrieveDepositTree(data any) *bptree.BPTree {
-	depositTree, ok := data.(*bptree.BPTree)
-	if !ok {
-		panic("failed to cast depositTree to *bptree.BPTree")
-	}
-	return depositTree
-}
-
 // emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
 func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
@@ -324,7 +263,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
-	s.getStakers().addDeposit(caller, positionId, deposit)
+	s.getUserDeposits().addDeposit(caller, positionId)
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
@@ -835,7 +774,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	s.getDeposits().remove(positionId)
-	s.getStakers().removeDeposit(deposit.Owner(), positionId)
+	s.getUserDeposits().removeDeposit(deposit.Owner(), positionId)
 
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	caller := runtime.PreviousRealm().Address()

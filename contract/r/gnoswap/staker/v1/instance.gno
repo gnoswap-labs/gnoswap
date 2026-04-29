@@ -70,10 +70,8 @@ func (s *stakerV1) getDeposits() *Deposits {
 	}
 }
 
-func (s *stakerV1) getStakers() *Stakers {
-	return &Stakers{
-		tree: s.store.GetStakers(),
-	}
+func (s *stakerV1) getUserDeposits() *UserDepositsResolver {
+	return NewUserDepositsResolver(s.store.GetUserDeposits())
 }
 
 func (s *stakerV1) getExternalIncentives() *ExternalIncentives {
