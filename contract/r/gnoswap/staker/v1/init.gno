@@ -98,7 +98,7 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 	}
 
 	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
-		err := stakerStore.SetTokenSpecificMinimumRewards(bptree.NewBPTreeN(16))
+		err := stakerStore.SetTokenSpecificMinimumRewards(make(map[string]int64))
 		if err != nil {
 			return err
 		}

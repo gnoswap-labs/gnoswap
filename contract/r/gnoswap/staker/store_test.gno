@@ -689,7 +689,7 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 		{
 			name: "set and get token specific minimum rewards successfully",
 			setupFn: func(ss IStakerStore) {
-				rewards := bptree.NewBPTreeN(16)
+				rewards := make(map[string]int64)
 				ss.SetTokenSpecificMinimumRewards(rewards)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {

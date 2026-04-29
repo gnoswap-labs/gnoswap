@@ -24,12 +24,8 @@ func (s *stakerV1) GetMinimumRewardAmount() int64 {
 
 // GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
 func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
-	amountI, found := s.store.GetTokenSpecificMinimumRewards().Get(tokenPath)
+	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if found {
-		amount, ok := amountI.(int64)
-		if !ok {
-			panic("failed to cast amount to int64")
-		}
 		return amount
 	}
 	// Fallback to default if not found
@@ -38,15 +34,11 @@ func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 
 // GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
 func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
-	amountI, found := s.store.GetTokenSpecificMinimumRewards().Get(tokenPath)
+	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if !found {
 		return 0, false
 	}
-	v, ok := amountI.(int64)
-	if !ok {
-		panic("failed to cast amount to int64")
-	}
-	return v, true
+	return amount, true
 }
 
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
@@ -124,10 +116,10 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 	if amount64 == 0 {
 		// Only attempt removal if an entry actually existed
 		if found {
-			s.store.GetTokenSpecificMinimumRewards().Remove(tokenPath)
+			delete(s.store.GetTokenSpecificMinimumRewards(), tokenPath)
 		}
 	} else {
-		s.store.GetTokenSpecificMinimumRewards().Set(tokenPath, amount64)
+		s.store.GetTokenSpecificMinimumRewards()[tokenPath] = amount64
 	}
 
 	chain.Emit(

@@ -236,21 +236,21 @@ func (s *stakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTokenSpecificMinimumRewards.String())
 }
 
-func (s *stakerStore) GetTokenSpecificMinimumRewards() *bptree.BPTree {
+func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 	result, err := s.kvStore.Get(StoreKeyTokenSpecificMinimumRewards.String())
 	if err != nil {
 		panic(err)
 	}
 
-	rewards, ok := result.(*bptree.BPTree)
+	rewards, ok := result.(map[string]int64)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
 	}
 
 	return rewards
 }
 
-func (s *stakerStore) SetTokenSpecificMinimumRewards(rewards *bptree.BPTree) error {
+func (s *stakerStore) SetTokenSpecificMinimumRewards(rewards map[string]int64) error {
 	return s.kvStore.Set(StoreKeyTokenSpecificMinimumRewards.String(), rewards)
 }
 
