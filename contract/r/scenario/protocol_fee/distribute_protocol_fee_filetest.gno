@@ -74,6 +74,8 @@ func setupTokens() {
 
 func recordProtocolFees() {
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
+	qux.Approve(cross, protocolFeeAddr, 1000)
 
 	println("[INFO] Recording bar protocol fee")
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)

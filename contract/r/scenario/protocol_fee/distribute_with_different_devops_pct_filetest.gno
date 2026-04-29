@@ -63,19 +63,20 @@ func main() {
 	println()
 }
 
+func prepareRecordedProtocolFee(amount int64) {
+	fundAndApproveBarFromStaker(amount)
+	testing.SetRealm(stakerRealm)
+	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
+}
+
 func testCase0Percent() {
 	resetBalances()
 
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 0%")
 	pf.SetDevOpsPct(cross, 0)
-
-	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	fundAndApproveBarFromStaker(1000)
-
-	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -92,13 +93,8 @@ func testCase25Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 25%")
 	pf.SetDevOpsPct(cross, 2500)
-
-	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	fundAndApproveBarFromStaker(1000)
-
-	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -115,13 +111,8 @@ func testCase50Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 50%")
 	pf.SetDevOpsPct(cross, 5000)
-
-	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	fundAndApproveBarFromStaker(1000)
-
-	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -138,13 +129,8 @@ func testCase100Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 100%")
 	pf.SetDevOpsPct(cross, 10000)
-
-	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	fundAndApproveBarFromStaker(1000)
-
-	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -161,13 +147,8 @@ func testCase3333Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 33.33%")
 	pf.SetDevOpsPct(cross, 3333)
-
-	println("[INFO] Transferring 1000 bar tokens to protocol_fee")
-	fundAndApproveBarFromStaker(1000)
-
-	testing.SetRealm(stakerRealm)
 	println("[INFO] Recording 1000 bar protocol fee")
-	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", 1000)
+	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] Initial balances - protocol_fee:", bar.BalanceOf(protocolFeeAddr), "devOps:", bar.BalanceOf(devOpsAddr), "govStaker:", bar.BalanceOf(govStakerAddr))
 
@@ -201,7 +182,6 @@ func resetBalances() {
 //
 // [TEST CASE 1] 0% to DevOps (default)
 // [INFO] Setting DevOps percentage to 0%
-// [INFO] Transferring 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
@@ -209,7 +189,6 @@ func resetBalances() {
 //
 // [TEST CASE 2] 25% to DevOps
 // [INFO] Setting DevOps percentage to 25%
-// [INFO] Transferring 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
@@ -217,7 +196,6 @@ func resetBalances() {
 //
 // [TEST CASE 3] 50% to DevOps
 // [INFO] Setting DevOps percentage to 50%
-// [INFO] Transferring 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
@@ -225,7 +203,6 @@ func resetBalances() {
 //
 // [TEST CASE 4] 100% to DevOps
 // [INFO] Setting DevOps percentage to 100%
-// [INFO] Transferring 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees
@@ -233,7 +210,6 @@ func resetBalances() {
 //
 // [TEST CASE 5] 33.33% to DevOps
 // [INFO] Setting DevOps percentage to 33.33%
-// [INFO] Transferring 1000 bar tokens to protocol_fee
 // [INFO] Recording 1000 bar protocol fee
 // [INFO] Initial balances - protocol_fee: 1000 devOps: 0 govStaker: 0
 // [INFO] Distributing protocol fees

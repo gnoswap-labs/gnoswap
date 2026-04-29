@@ -169,14 +169,14 @@ func (i *poolV1) Swap(
 	slot0Start.SetUnlocked(false)
 	pool.SetSlot0(slot0Start)
 	startTick := pool.Slot0Tick()
+	blockTimestamp := time.Now().Unix()
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
 		swapStartHook := i.store.GetSwapStartHook()
 
 		if swapStartHook != nil {
-			currentTime := time.Now().Unix()
-			swapStartHook(cross, pool.PoolPath(), currentTime)
+			swapStartHook(cross, pool.PoolPath(), blockTimestamp)
 		}
 	}
 
@@ -204,7 +204,7 @@ func (i *poolV1) Swap(
 	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone())
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart.Clone(), slot0Start)
 
 	comp := SwapComputation{
@@ -223,9 +223,7 @@ func (i *poolV1) Swap(
 
 	// Update oracle BEFORE applying swap result (using pre-swap state)
 	if result.NewTick != pool.Slot0Tick() {
-		currentTime := time.Now().Unix()
-
-		err := writeObservationByPool(pool, currentTime, pool.Slot0Tick(), pool.Liquidity())
+		err := writeObservationByPool(pool, cache.blockTimestamp, pool.Slot0Tick(), pool.Liquidity())
 		if err != nil {
 			panic(err)
 		}
@@ -320,7 +318,7 @@ func (i *poolV1) DrySwap(
 	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone())
+	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), time.Now().Unix())
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
@@ -731,8 +729,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 		if i.store.HasTickCrossHook() {
 			tickCrossHook := i.store.GetTickCrossHook()
 
-			currentTime := time.Now().Unix()
-			tickCrossHook(cross, pool.PoolPath(), step.tickNext, zeroForOne, currentTime)
+			tickCrossHook(cross, pool.PoolPath(), step.tickNext, zeroForOne, cache.blockTimestamp)
 		}
 	}
 

@@ -1086,6 +1086,48 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 	}
 }
 
+func TestSwapMath_MaxUint128Liquidity_PartialMovePaths(t *testing.T) {
+	maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
+	withoutFeeRateInPips := u256.NewUint(1000000 - 600)
+
+	t.Run("exact input zero-for-one partial move stays bounded", func(t *testing.T) {
+		currentX96 := encodePriceSqrtTest(t, "121", "100")
+		targetX96 := encodePriceSqrtTest(t, "1", "1")
+		amountRemainingAbs := u256.MustFromDecimal("100000000000000000")
+
+		sqrtNext, amountIn := handleExactIn(
+			true,
+			currentX96,
+			targetX96,
+			maxUint128,
+			amountRemainingAbs,
+			withoutFeeRateInPips,
+		)
+
+		uassert.True(t, sqrtNext.Lt(currentX96), "partial move should decrease price")
+		uassert.True(t, sqrtNext.Gt(targetX96), "partial move should stay above target")
+		uassert.True(t, amountIn.Gt(u256.Zero()), "amountIn should remain positive")
+	})
+
+	t.Run("exact output one-for-zero partial move stays bounded", func(t *testing.T) {
+		currentX96 := encodePriceSqrtTest(t, "1", "1")
+		targetX96 := encodePriceSqrtTest(t, "121", "100")
+		amountRemainingAbs := u256.MustFromDecimal("50000000000000000")
+
+		sqrtNext, amountOut := handleExactOut(
+			false,
+			currentX96,
+			targetX96,
+			maxUint128,
+			amountRemainingAbs,
+		)
+
+		uassert.True(t, sqrtNext.Gt(currentX96), "partial move should increase price")
+		uassert.True(t, sqrtNext.Lt(targetX96), "partial move should stay below target")
+		uassert.True(t, amountOut.Gt(u256.Zero()), "amountOut should remain positive")
+	})
+}
+
 // Helper functions
 
 func encodePriceSqrtTest(t *testing.T, reserve1, reserve0 string) *u256.Uint {

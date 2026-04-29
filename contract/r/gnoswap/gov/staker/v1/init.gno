@@ -29,13 +29,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	if !store.HasEmissionRewardBalanceStoreKey() {
-		err := store.SetEmissionRewardBalance(int64(0))
-		if err != nil {
-			return err
-		}
-	}
-
 	if !store.HasTotalDelegatedAmountStoreKey() {
 		err := store.SetTotalDelegatedAmount(int64(0))
 		if err != nil {

@@ -127,6 +127,8 @@ func setupProtocolFeeDeposit() {
 	fundAndApproveProtocolFeeCallerBar(1000)
 	fundAndApproveProtocolFeeCallerQux(2500)
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
+	qux.Approve(cross, protocolFeeAddr, 2500)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 

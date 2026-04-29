@@ -64,6 +64,84 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 	}
 }
 
+func TestMustGetSqrtPriceLimit(t *testing.T) {
+	tests := []struct {
+		name        string
+		limits      map[uint32]*u256.Uint
+		fee         uint32
+		expected    *u256.Uint
+		expectPanic bool
+	}{
+		{
+			name:     "forward limit fee 100",
+			limits:   sqrtPriceLimitForward,
+			fee:      100,
+			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
+		},
+		{
+			name:     "forward limit fee 500",
+			limits:   sqrtPriceLimitForward,
+			fee:      500,
+			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
+		},
+		{
+			name:     "forward limit fee 3000",
+			limits:   sqrtPriceLimitForward,
+			fee:      3000,
+			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
+		},
+		{
+			name:     "forward limit fee 10000",
+			limits:   sqrtPriceLimitForward,
+			fee:      10000,
+			expected: u256.Zero().Add(common.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
+		},
+		{
+			name:     "backward limit fee 100",
+			limits:   sqrtPriceLimitBackward,
+			fee:      100,
+			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
+		},
+		{
+			name:     "backward limit fee 500",
+			limits:   sqrtPriceLimitBackward,
+			fee:      500,
+			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
+		},
+		{
+			name:     "backward limit fee 3000",
+			limits:   sqrtPriceLimitBackward,
+			fee:      3000,
+			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
+		},
+		{
+			name:     "backward limit fee 10000",
+			limits:   sqrtPriceLimitBackward,
+			fee:      10000,
+			expected: u256.Zero().Sub(common.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
+		},
+		{
+			name:        "unknown fee panics",
+			limits:      sqrtPriceLimitForward,
+			fee:         9999,
+			expectPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectPanic {
+				uassert.PanicsContains(t, "unknown fee", func() {
+					mustGetSqrtPriceLimit(tt.limits, tt.fee)
+				})
+			} else {
+				result := mustGetSqrtPriceLimit(tt.limits, tt.fee)
+				uassert.Equal(t, result.ToString(), tt.expected.ToString())
+			}
+		})
+	}
+}
+
 func TestSwapInner(t *testing.T) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())

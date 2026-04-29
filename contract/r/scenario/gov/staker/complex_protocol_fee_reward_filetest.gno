@@ -152,8 +152,8 @@ func delegateDummyToDummy() {
 func depositProtocolFeePre() {
 	// protocol fee deposit (bar, qux, wugnot)
 	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, protocolFeeAddr, 1000)
-	qux.Transfer(cross, protocolFeeAddr, 2500)
+	bar.Transfer(cross, stakerAddr, 1000)
+	qux.Transfer(cross, stakerAddr, 2500)
 
 	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
@@ -163,10 +163,11 @@ func depositProtocolFeePre() {
 }
 
 func depositProtocolFeePost() {
-	fundAndApproveProtocolFeeCallerBar(1000)
-	fundAndApproveProtocolFeeCallerQux(2500)
 	fundAndApproveProtocolFeeCallerWugnot(10000)
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 1000)
+	qux.Approve(cross, protocolFeeAddr, 2500)
+	wugnot.Approve(cross, protocolFeeAddr, 10000)
 	pf.AddToProtocolFee(cross, barPath, 1000)
 	pf.AddToProtocolFee(cross, quxPath, 2500)
 	pf.AddToProtocolFee(cross, wugnotPath, 10000)
@@ -190,6 +191,8 @@ func depositProtocolFeeAdditional() {
 	fundAndApproveProtocolFeeCallerBar(2500)
 	fundAndApproveProtocolFeeCallerQux(4000)
 	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, 2500)
+	qux.Approve(cross, protocolFeeAddr, 4000)
 	pf.AddToProtocolFee(cross, barPath, 2500)
 	pf.AddToProtocolFee(cross, quxPath, 4000)
 
@@ -242,7 +245,7 @@ func unDelegateAndCollectRewardByAdmin() {
 // [INFO] delegated 5000000 GNS from dummy to dummy
 //
 // [SCENARIO] 4. Protocol fee deposit
-// [INFO] protocol fee deposited: bar(2000), qux(5000), wugnot(10000)
+// [INFO] protocol fee deposited: bar(1000), qux(2500), wugnot(10000)
 //
 // [SCENARIO] 5. Skip blocks and distribute emission/protocol fee
 // [INFO] skipped 10+1 blocks and distributed emission/protocol fee
@@ -251,7 +254,7 @@ func unDelegateAndCollectRewardByAdmin() {
 // [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083)
 //
 // [SCENARIO] 7. Additional protocol fee deposit
-// [INFO] protocol fee deposited: bar(3500), qux(6500), wugnot(0)
+// [INFO] protocol fee deposited: bar(2500), qux(4000), wugnot(0)
 //
 // [SCENARIO] 8. Collect rewards after additional protocol fee
 // [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333)

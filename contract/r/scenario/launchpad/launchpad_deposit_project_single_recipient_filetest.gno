@@ -154,7 +154,6 @@ func createOBLProject() {
 // Mock protocol fee setup
 func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Setting up mock protocol fees")
-
 	// admin > staker, protocol_fee pulls from caller via TransferFrom
 	println("[INFO] Admin transferring tokens to staker caller")
 	testing.SetRealm(adminRealm)

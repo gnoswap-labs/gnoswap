@@ -575,6 +575,27 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 			tier180Ratio:  60,
 			expectedError: errInvalidInput,
 		},
+		{
+			name:          "ratio is invalid by negative tier30 ratio",
+			tier30Ratio:   -10,
+			tier90Ratio:   20,
+			tier180Ratio:  90,
+			expectedError: errInvalidInput,
+		},
+		{
+			name:          "ratio is invalid by negative tier90 ratio",
+			tier30Ratio:   20,
+			tier90Ratio:   -10,
+			tier180Ratio:  90,
+			expectedError: errInvalidInput,
+		},
+		{
+			name:          "ratio is invalid by negative tier180 ratio",
+			tier30Ratio:   20,
+			tier90Ratio:   90,
+			tier180Ratio:  -10,
+			expectedError: errInvalidInput,
+		},
 	}
 
 	for _, test := range tests {

@@ -9,12 +9,12 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	gns "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"
 
-	"gno.land/r/gnoswap/gns"
 )
 
 const GNS_PATH string = "gno.land/r/gnoswap/gns"
