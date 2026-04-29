@@ -97,7 +97,7 @@ func setupBasicTestState(t *testing.T) *testState {
 
 	// Setup stakers tree (address -> depositId -> *Deposit)
 	stakersTree := state.instance.store.GetStakers()
-	depositTree := bptree.NewBPTreeN(16)
+	depositTree := bptree.NewBPTreeN(4)
 	depositTree.Set(sr.EncodeUint(state.positionId), state.deposit)
 	stakersTree.Set(state.owner.String(), depositTree)
 
@@ -518,7 +518,7 @@ func TestGetterStakedUserCounts(t *testing.T) {
 	)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(uint64(2)), deposit2)
 
-	depositTree2 := bptree.NewBPTreeN(16)
+	depositTree2 := bptree.NewBPTreeN(4)
 	depositTree2.Set(sr.EncodeUint(uint64(2)), deposit2)
 	state.instance.store.GetStakers().Set(addr02.String(), depositTree2)
 

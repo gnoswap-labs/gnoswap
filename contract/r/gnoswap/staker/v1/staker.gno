@@ -179,7 +179,7 @@ func (self *Stakers) IterateAll(address address, fn func(depositId uint64, depos
 func (self *Stakers) addDeposit(address address, depositId uint64, deposit *sr.Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
-		depositTree := bptree.NewBPTreeN(16)
+		depositTree := bptree.NewBPTreeN(4)
 		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
