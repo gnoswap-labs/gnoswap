@@ -25,12 +25,9 @@ import (
 //   - amount0Desired, amount1Desired: desired token amounts
 //   - amount0Min, amount1Min: minimum acceptable amounts
 //   - deadline: transaction deadline
-//   - mintTo: NFT recipient address
-//   - caller: transaction initiator
 //   - referrer: referral address
 //
 // Returns tokenId, liquidity, amount0, amount1.
-// Only callable by users or staker contract.
 // Note: Slippage protection via amount0Min/amount1Min.
 func (p *positionV1) Mint(
 	token0 string,
@@ -43,35 +40,15 @@ func (p *positionV1) Mint(
 	amount0Min string,
 	amount1Min string,
 	deadline int64,
-	mintTo address,
-	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 
 	previousRealm := runtime.PreviousRealm()
-	prevRealmAddr := previousRealm.Address()
-	if !previousRealm.IsUser() {
-		access.AssertIsStaker(prevRealmAddr)
-	} else {
-		assertEqualsAddress(prevRealmAddr, mintTo)
-		assertEqualsAddress(prevRealmAddr, caller)
-	}
+	access.AssertIsUser(previousRealm)
 
-	assertValidNumberString(amount0Desired)
-	assertValidNumberString(amount1Desired)
-	assertValidNumberString(amount0Min)
-	assertValidNumberString(amount1Min)
-
-	// assert that the user has sent the correct amount of native coin
-	common.AssertIsNotHandleNativeCoin()
-	assertIsNotExpired(deadline)
-
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
-
-	emission.MintAndDistributeGns(cross)
-
-	mintInput := MintInput{
+	caller := previousRealm.Address()
+	return p.mintWithInput(MintInput{
 		token0:         token0,
 		token1:         token1,
 		fee:            fee,
@@ -82,9 +59,67 @@ func (p *positionV1) Mint(
 		amount0Min:     amount0Min,
 		amount1Min:     amount1Min,
 		deadline:       deadline,
-		mintTo:         mintTo,
+		mintTo:         caller,
 		caller:         caller,
-	}
+	}, referrer)
+}
+
+// MintFromStaker creates a new liquidity position NFT owned by the staker realm.
+// Only the staker contract can call this path; caller is the original user whose
+// balances, allowances, and referral attribution are used for the mint.
+func (p *positionV1) MintFromStaker(
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
+	deadline int64,
+	caller address,
+	referrer string,
+) (uint64, string, string, string) {
+	halt.AssertIsNotHaltedPosition()
+
+	previousRealm := runtime.PreviousRealm()
+	prevRealmAddr := previousRealm.Address()
+	access.AssertIsStaker(prevRealmAddr)
+
+	return p.mintWithInput(MintInput{
+		token0:         token0,
+		token1:         token1,
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		mintTo:         prevRealmAddr,
+		caller:         caller,
+	}, referrer)
+}
+
+func (p *positionV1) mintWithInput(mintInput MintInput, referrer string) (uint64, string, string, string) {
+	previousRealm := runtime.PreviousRealm()
+	prevRealmAddr := previousRealm.Address()
+
+	assertValidNumberString(mintInput.amount0Desired)
+	assertValidNumberString(mintInput.amount1Desired)
+	assertValidNumberString(mintInput.amount0Min)
+	assertValidNumberString(mintInput.amount1Min)
+
+	// assert that the user has sent the correct amount of native coin
+	common.AssertIsNotHandleNativeCoin()
+	assertIsNotExpired(mintInput.deadline)
+
+	actualReferrer := referral.TryRegister(cross, mintInput.caller, referrer)
+
+	emission.MintAndDistributeGns(cross)
+
 	processedInput, err := p.processMintInput(mintInput)
 	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, err.Error()))
@@ -105,8 +140,8 @@ func (p *positionV1) Mint(
 		"tickLower", formatInt(processedInput.tickLower),
 		"tickUpper", formatInt(processedInput.tickUpper),
 		"poolPath", processedInput.poolPath,
-		"mintTo", mintTo.String(),
-		"caller", caller.String(),
+		"mintTo", mintInput.mintTo.String(),
+		"caller", mintInput.caller.String(),
 		"lpPositionId", formatUint(id),
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),

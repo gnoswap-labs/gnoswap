@@ -13,8 +13,6 @@ package position
 //   - amount0Min: minimum amount of token0
 //   - amount1Min: minimum amount of token1
 //   - deadline: transaction deadline
-//   - mintTo: recipient address for the position NFT
-//   - caller: caller address
 //   - referrer: referrer address for reward tracking
 //
 // Returns:
@@ -34,11 +32,29 @@ func Mint(
 	amount0Min string,
 	amount1Min string,
 	deadline int64,
-	mintTo address,
+	referrer string,
+) (uint64, string, string, string) {
+	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, referrer)
+}
+
+// MintFromStaker creates a new liquidity position NFT owned by staker.
+// Only staker can call the implementation path; caller is the original user.
+func MintFromStaker(
+	cur realm,
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
+	deadline int64,
 	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
-	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, caller, referrer)
+	return getImplementation().MintFromStaker(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, caller, referrer)
 }
 
 // IncreaseLiquidity adds liquidity to an existing position.
