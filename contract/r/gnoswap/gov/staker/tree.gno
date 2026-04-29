@@ -25,7 +25,7 @@ type UintTree struct {
 // NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
 	return &UintTree{
-		tree: bptree.NewBPTreeN(16),
+		tree: bptree.NewBPTreeN(64),
 	}
 }
 
