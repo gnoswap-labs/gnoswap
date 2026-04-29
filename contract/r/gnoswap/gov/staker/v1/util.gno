@@ -163,7 +163,10 @@ func safeSubUint64(a, b uint64) uint64 {
 }
 
 // userHistoryKeySeparator is chosen to be lexicographically smaller than any
-const userHistoryKeySeparator = "|"
+const (
+	userHistoryKeySeparator         = "|"
+	userHistoryKeySeparatorNextWord = string(int32('|') + 1)
+)
 
 // userHistoryTimestampWidth is the zero-padded width that fits the maximum
 const userHistoryTimestampWidth = 10
@@ -176,7 +179,7 @@ func makeUserHistoryKey(addrStr string, timestamp int64) string {
 // userHistoryKeyRange returns the half-open prefix range that covers all composite keys belonging to addrStr.
 func userHistoryKeyRange(addrStr string) (lo, hi string) {
 	lo = addrStr + userHistoryKeySeparator
-	hi = addrStr + string(userHistoryKeySeparator[0]+1)
+	hi = addrStr + userHistoryKeySeparatorNextWord
 
 	return lo, hi
 }
