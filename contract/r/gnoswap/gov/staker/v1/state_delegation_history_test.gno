@@ -255,9 +255,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "add to existing user amount",
 			initialHistory: func() *bptree.BPTree {
 				tree := bptree.NewBPTreeN(16)
-				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
-				tree.Set(user1.String(), userHistory)
+				tree.Set(makeUserHistoryKey(user1.String(), 50), int64(500))
 				return tree
 			},
 			delegatee:      user1,
@@ -269,9 +267,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "subtract from existing user amount",
 			initialHistory: func() *bptree.BPTree {
 				tree := bptree.NewBPTreeN(16)
-				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
-				tree.Set(user1.String(), userHistory)
+				tree.Set(makeUserHistoryKey(user1.String(), 50), int64(500))
 				return tree
 			},
 			delegatee:      user1,
@@ -283,9 +279,7 @@ func TestUpdateUserDelegationHistory_Comprehensive(t *testing.T) {
 			name: "negative result clamps to zero",
 			initialHistory: func() *bptree.BPTree {
 				tree := bptree.NewBPTreeN(16)
-				userHistory := staker.NewUintTree()
-				userHistory.Set(int64(50), int64(500))
-				tree.Set(user1.String(), userHistory)
+				tree.Set(makeUserHistoryKey(user1.String(), 50), int64(500))
 				return tree
 			},
 			delegatee:      user1,
@@ -369,38 +363,50 @@ func TestGetLatestTotalDelegation(t *testing.T) {
 	}
 }
 
-func TestGetLatestUserDelegation(t *testing.T) {
+func TestGetLatestUserDelegationByAddress(t *testing.T) {
+	addr := "g1user0000000000000000000000000000000001"
+
 	tests := []struct {
 		name           string
-		setupHistory   func() *staker.UintTree
+		setupHistory   func() *bptree.BPTree
 		expectedAmount int64
 	}{
 		{
 			name: "empty history returns zero",
-			setupHistory: func() *staker.UintTree {
-				return staker.NewUintTree()
+			setupHistory: func() *bptree.BPTree {
+				return bptree.NewBPTreeN(16)
 			},
 			expectedAmount: 0,
 		},
 		{
 			name: "single entry returns that value",
-			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
-				h.Set(int64(100), int64(500))
+			setupHistory: func() *bptree.BPTree {
+				h := bptree.NewBPTreeN(16)
+				h.Set(makeUserHistoryKey(addr, 100), int64(500))
 				return h
 			},
 			expectedAmount: 500,
 		},
 		{
 			name: "multiple entries returns latest",
-			setupHistory: func() *staker.UintTree {
-				h := staker.NewUintTree()
-				h.Set(int64(100), int64(500))
-				h.Set(int64(200), int64(1000))
-				h.Set(int64(300), int64(1500))
+			setupHistory: func() *bptree.BPTree {
+				h := bptree.NewBPTreeN(16)
+				h.Set(makeUserHistoryKey(addr, 100), int64(500))
+				h.Set(makeUserHistoryKey(addr, 200), int64(1000))
+				h.Set(makeUserHistoryKey(addr, 300), int64(1500))
 				return h
 			},
 			expectedAmount: 1500,
+		},
+		{
+			name: "other addresses are ignored",
+			setupHistory: func() *bptree.BPTree {
+				h := bptree.NewBPTreeN(16)
+				h.Set(makeUserHistoryKey(addr, 100), int64(500))
+				h.Set(makeUserHistoryKey("g1someoneelse", 999), int64(99999))
+				return h
+			},
+			expectedAmount: 500,
 		},
 	}
 
@@ -409,7 +415,7 @@ func TestGetLatestUserDelegation(t *testing.T) {
 			gs := &govStakerV1{store: newMockGovStakerStore()}
 			history := tt.setupHistory()
 
-			result := gs.getLatestUserDelegation(history)
+			result := gs.getLatestUserDelegationByAddress(history, addr)
 
 			uassert.Equal(t, tt.expectedAmount, result)
 		})

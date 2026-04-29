@@ -77,7 +77,7 @@ type IGovStakerGetter interface {
 
 // Admin interface for administrative functions
 type IGovStakerAdmin interface {
-	CleanStakerDelegationSnapshotByAdmin(snapshotTime int64)
+	CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, target address)
 	SetUnDelegationLockupPeriodByAdmin(period int64)
 }
 

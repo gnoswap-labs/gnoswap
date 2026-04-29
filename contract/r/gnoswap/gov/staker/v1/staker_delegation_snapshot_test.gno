@@ -7,7 +7,6 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Test CleanStakerDelegationSnapshotByAdmin function
@@ -41,19 +40,21 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 			// Given: Setup test environment
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
+			target := testutils.TestAddress("alice")
+
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
 					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
 					}(cross)
 				})
 			} else {
 				func(cur realm) {
 					// Should not panic for admin
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
-					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold, target)
 				}(cross)
 			}
 		})
@@ -143,27 +144,25 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
 
-		aliceAddr := testutils.TestAddress("alice").String()
+		alice := testutils.TestAddress("alice")
+		aliceAddr := alice.String()
 
-		// Set up user delegation history
+		// Set up user delegation history (single composite-keyed BPTree)
 		func(cur realm) {
-			userHistory := staker.NewUintTree()
-			userHistory.Set(100, int64(1000))
-			userHistory.Set(200, int64(2000))
-			userHistory.Set(math.MaxInt64-1, int64(3000))
-
 			history := bptree.NewBPTreeN(16)
-			history.Set(aliceAddr, userHistory)
+			history.Set(makeUserHistoryKey(aliceAddr, 100), int64(1000))
+			history.Set(makeUserHistoryKey(aliceAddr, 200), int64(2000))
+			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-1), int64(3000))
+
 			err := gs.store.SetUserDelegationHistory(history)
 			if err != nil {
 				panic(err)
 			}
 		}(cross)
 
-		// when: clean user history with MaxInt64 cutoff (uses safeAddInt64 at line 136)
-		// This should NOT panic because the code checks cutoffTimestamp < math.MaxInt64
+		// when: clean user history with MaxInt64 cutoff
 		func(cur realm) {
-			gs.cleanUserDelegationHistory(math.MaxInt64)
+			gs.cleanUserDelegationHistoryForAddress(alice, math.MaxInt64)
 		}(cross)
 
 		// then: should succeed without overflow
@@ -207,27 +206,26 @@ func TestStakerDelegationSnapshot_BoundaryConditions(t *testing.T) {
 		gs := createTestGovStaker()
 		testing.SetRealm(testing.NewUserRealm(admin))
 
-		aliceAddr := testutils.TestAddress("alice").String()
+		alice := testutils.TestAddress("alice")
+		aliceAddr := alice.String()
 
-		// Set up user delegation history
+		// Set up user delegation history (single composite-keyed BPTree)
 		func(cur realm) {
-			userHistory := staker.NewUintTree()
-			userHistory.Set(100, int64(1000))
-			userHistory.Set(math.MaxInt64-1000, int64(2000))
-			userHistory.Set(math.MaxInt64-500, int64(3000))
-
 			history := bptree.NewBPTreeN(16)
-			history.Set(aliceAddr, userHistory)
+			history.Set(makeUserHistoryKey(aliceAddr, 100), int64(1000))
+			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-1000), int64(2000))
+			history.Set(makeUserHistoryKey(aliceAddr, math.MaxInt64-500), int64(3000))
+
 			err := gs.store.SetUserDelegationHistory(history)
 			if err != nil {
 				panic(err)
 			}
 		}(cross)
 
-		// when: clean user history with near-max cutoff (uses safeAddInt64)
+		// when: clean user history with near-max cutoff
 		cutoff := int64(math.MaxInt64 - 100)
 		func(cur realm) {
-			gs.cleanUserDelegationHistory(cutoff)
+			gs.cleanUserDelegationHistoryForAddress(alice, cutoff)
 		}(cross)
 
 		// then: should preserve user history

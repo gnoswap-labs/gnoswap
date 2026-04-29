@@ -161,3 +161,54 @@ func safeSubUint64(a, b uint64) uint64 {
 
 	return a - b
 }
+
+// userHistoryKeySeparator is chosen to be lexicographically smaller than any
+const userHistoryKeySeparator = "|"
+
+// userHistoryTimestampWidth is the zero-padded width that fits the maximum
+const userHistoryTimestampWidth = 10
+
+// makeUserHistoryKey builds the composite key "addr|paddedTimestamp" used in the user delegation history BPTree.
+func makeUserHistoryKey(addrStr string, timestamp int64) string {
+	return addrStr + userHistoryKeySeparator + padTimestamp(timestamp)
+}
+
+// userHistoryKeyRange returns the half-open prefix range that covers all composite keys belonging to addrStr.
+func userHistoryKeyRange(addrStr string) (lo, hi string) {
+	lo = addrStr + userHistoryKeySeparator
+	hi = addrStr + string(userHistoryKeySeparator[0]+1)
+
+	return lo, hi
+}
+
+// padTimestamp left-pads timestamp with zeros to userHistoryTimestampWidth so
+// that lexicographic ordering of the resulting strings matches numeric order.
+func padTimestamp(timestamp int64) string {
+	s := strconv.FormatInt(timestamp, 10)
+	if len(s) >= userHistoryTimestampWidth {
+		return s
+	}
+
+	pad := make([]byte, userHistoryTimestampWidth-len(s))
+	for i := range pad {
+		pad[i] = '0'
+	}
+
+	return string(pad) + s
+}
+
+// parseUserHistoryKey splits a composite key produced by makeUserHistoryKey back into its address and timestamp components.
+func parseUserHistoryKey(key string) (addrStr string, timestamp int64, ok bool) {
+	for i := len(key) - 1; i >= 0; i-- {
+		if key[i] == userHistoryKeySeparator[0] {
+			ts, err := strconv.ParseInt(key[i+1:], 10, 64)
+			if err != nil {
+				return "", 0, false
+			}
+
+			return key[:i], ts, true
+		}
+	}
+
+	return "", 0, false
+}

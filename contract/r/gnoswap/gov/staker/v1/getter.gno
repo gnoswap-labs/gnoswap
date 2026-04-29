@@ -170,8 +170,8 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 }
 
 // GetUserDelegationAmountAtSnapshot returns the delegation amount for a specific user at a specific snapshot time.
-// Structure: address -> *UintTree[timestamp -> int64]
-// Uses ReverseIterate to find the most recent entry at or before the snapshot time.
+// Structure: single BPTree keyed by composite key "addrStr|paddedTimestamp" -> int64
+// Uses ReverseIterate over the user's prefix range to find the most recent entry at or before the snapshot time.
 //
 // Parameters:
 //   - userAddr: address of the user to get delegation amount for
@@ -183,29 +183,18 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	history := gs.store.GetUserDelegationHistory()
 
-	// Get user's history tree
-	userHistoryRaw, userHistoryExists := history.Get(userAddr.String())
-	if !userHistoryExists {
-		return 0, false
-	}
-
-	userHistory := userHistoryRaw.(*staker.UintTree)
-	if userHistory.Size() == 0 {
-		return 0, false
-	}
-
-	toTimestamp := snapshotTime
-	if toTimestamp < math.MaxInt64 {
-		toTimestamp = toTimestamp + 1
-	}
+	addrStr := userAddr.String()
+	lo, _ := userHistoryKeyRange(addrStr)
+	// Inclusive upper bound: largest key for this address at or before snapshotTime.
+	hi := makeUserHistoryKey(addrStr, snapshotTime)
 
 	var (
 		userAmount int64
 		exists     bool
 	)
 
-	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
-	userHistory.ReverseIterate(0, toTimestamp, func(key int64, value any) bool {
+	// ReverseIterate from hi down to lo to find the most recent entry at or before snapshotTime
+	history.ReverseIterate(lo, hi, func(_ string, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))

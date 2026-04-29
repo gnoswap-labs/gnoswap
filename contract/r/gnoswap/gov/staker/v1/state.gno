@@ -210,7 +210,7 @@ func (g *govStakerV1) updateTotalDelegationHistory(amount int64, timestamp int64
 }
 
 // updateUserDelegationHistory updates the user delegation history with cumulative values.
-// Structure: address -> *UintTree[timestamp -> int64]
+// Structure: single BPTree keyed by composite key "addrStr|paddedTimestamp" -> int64
 //
 // Parameters:
 //   - delegateeAddr: address of the delegatee
@@ -220,30 +220,15 @@ func (g *govStakerV1) updateUserDelegationHistory(delegateeAddr address, amount 
 	history := g.store.GetUserDelegationHistory()
 	addrStr := delegateeAddr.String()
 
-	// Get or create user's timestamp tree
-	var userHistory *staker.UintTree
-
-	if existingHistory, exists := history.Get(addrStr); exists {
-		userHistoryInt, ok := existingHistory.(*staker.UintTree)
-		if !ok {
-			panic(ufmt.Sprintf("invalid user history type: %T", existingHistory))
-		}
-
-		userHistory = userHistoryInt
-	} else {
-		userHistory = staker.NewUintTree()
-	}
-
-	// Get current amount from the most recent entry
-	currentAmount := g.getLatestUserDelegation(userHistory)
+	// Get current amount from the most recent entry for this user
+	currentAmount := g.getLatestUserDelegationByAddress(history, addrStr)
 	newAmount := safeAddInt64(currentAmount, amount)
 	if newAmount < 0 {
 		newAmount = 0
 	}
 
-	// Store new cumulative value at this timestamp
-	userHistory.Set(timestamp, newAmount)
-	history.Set(addrStr, userHistory)
+	// Store new cumulative value under composite key
+	history.Set(makeUserHistoryKey(addrStr, timestamp), newAmount)
 
 	if err := g.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)
@@ -272,15 +257,14 @@ func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
 	return latestTotal
 }
 
-// getLatestUserDelegation gets the latest delegation amount for a user from their history.
-func (g *govStakerV1) getLatestUserDelegation(userHistory *staker.UintTree) int64 {
-	if userHistory.Size() == 0 {
-		return 0
-	}
+// getLatestUserDelegationByAddress gets the latest delegation amount for a user
+// from the composite-keyed user delegation history.
+func (g *govStakerV1) getLatestUserDelegationByAddress(history *bptree.BPTree, addrStr string) int64 {
+	lo, hi := userHistoryKeyRange(addrStr)
 
 	latestAmount := int64(0)
 
-	userHistory.ReverseIterate(0, math.MaxInt64, func(key int64, value any) bool {
+	history.ReverseIterate(lo, hi, func(_ string, value any) bool {
 		amountInt, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("invalid amount type: %T", value))

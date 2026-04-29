@@ -286,11 +286,11 @@ func (t *TestGovStaker) GetEmissionAccumulatedTimestamp() int64 {
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
 	if !t.isActive("CleanStakerDelegationSnapshotByAdmin") {
 		panic("test implementation: CleanStakerDelegationSnapshotByAdmin not supported")
 	}
-	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold)
+	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold, target)
 }
 
 func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {

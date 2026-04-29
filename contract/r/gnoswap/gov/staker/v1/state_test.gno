@@ -297,16 +297,15 @@ func TestAddDelegationRecord(t *testing.T) {
 			// Then: Should update user delegation history
 			userHistoryTree := gs.store.GetUserDelegationHistory()
 			var userAmount int64
-			// New structure: address -> *UintTree[timestamp -> int64]
-			if userHistoryRaw, exists := userHistoryTree.Get(delegatee.String()); exists {
-				userHistory := userHistoryRaw.(*staker.UintTree)
-				userHistory.ReverseIterate(0, timestamp+1, func(key int64, value any) bool {
-					if amount, ok := value.(int64); ok {
-						userAmount = amount
-					}
-					return true
-				})
-			}
+			// New structure: single BPTree keyed by composite key "addrStr|paddedTimestamp"
+			lo, _ := userHistoryKeyRange(delegatee.String())
+			hi := makeUserHistoryKey(delegatee.String(), timestamp)
+			userHistoryTree.ReverseIterate(lo, hi, func(_ string, value any) bool {
+				if amount, ok := value.(int64); ok {
+					userAmount = amount
+				}
+				return true
+			})
 			uassert.Equal(t, userAmount, int64(1000))
 		})
 	}
