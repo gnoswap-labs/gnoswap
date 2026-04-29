@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	cp "gno.land/r/gnoswap/community_pool"
@@ -164,7 +163,7 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
 // This registry allows proposals to execute parameter changes across different system contracts.
 type ParameterRegistry struct {
-	handlers *bptree.BPTree // Tree storing handler configurations keyed by package:function
+	handlers map[string]ParameterHandlerOptions // Map storing handler configurations keyed by package:function
 }
 
 // register adds a new parameter handler to the registry.
@@ -173,7 +172,7 @@ type ParameterRegistry struct {
 // Parameters:
 //   - handler: parameter handler configuration to register
 func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
-	r.handlers.Set(handler.HandlerKey(), handler)
+	r.handlers[handler.HandlerKey()] = handler
 }
 
 // handler retrieves a parameter handler by package path and function name.
@@ -188,15 +187,9 @@ func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
 //   - error: error if handler not found or casting fails
 func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 	// Retrieve handler from registry
-	h, exists := r.handlers.Get(key)
+	handler, exists := r.handlers[key]
 	if !exists {
 		return nil, ufmt.Errorf("handler not found for %s", key)
-	}
-
-	// Cast to correct type
-	handler, ok := h.(ParameterHandlerOptions)
-	if !ok {
-		return nil, ufmt.Errorf("failed to cast handler %s to ParameterHandler", key)
 	}
 
 	return &handler, nil
@@ -207,7 +200,7 @@ func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 // Returns:
 //   - *ParameterRegistry: new registry instance
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{handlers: bptree.NewBPTreeN(16)}
+	return &ParameterRegistry{handlers: make(map[string]ParameterHandlerOptions)}
 }
 
 // makeHandlerKey creates a unique identifier for a handler based on package path and function.
