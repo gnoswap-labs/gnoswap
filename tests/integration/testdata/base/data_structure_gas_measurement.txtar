@@ -1,4 +1,5 @@
 loadpkg gno.land/p/nt/avl/v0
+loadpkg gno.land/p/nt/bptree/v0
 
 ## start a new node
 gnoland start
@@ -45,6 +46,78 @@ gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLIterate10 -in
 # AVL Iterate 100 items
 gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   33828593'
+
+### B+ Tree Operations (fanout 16) ###
+## Insert
+# BPTree Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Get (from pre-populated tree)
+# BPTree Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Iterate
+# BPTree Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTreeIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### B+ Tree Operations (fanout 32) ###
+## Insert
+# BPTree32 Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree32 Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree32 Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Insert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Get (from pre-populated tree)
+# BPTree32 Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree32 Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree32 Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Get1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Iterate
+# BPTree32 Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Iterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# BPTree32 Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func BPTree32Iterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
 
 ### Map Operations ###
 ## Insert
@@ -161,6 +234,7 @@ import (
 	"strconv"
 
 	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // Structs for testing
@@ -250,6 +324,154 @@ func AVLIterate10(cur realm) {
 
 func AVLIterate100(cur realm) {
 	tree := avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+// ============ B+ Tree Operations (fanout 16) ============
+
+func BPTreeInsert10(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTreeInsert100(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTreeInsert1000(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTreeGet10(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("5")
+}
+
+func BPTreeGet100(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("50")
+}
+
+func BPTreeGet1000(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("500")
+}
+
+func BPTreeIterate10(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func BPTreeIterate100(cur realm) {
+	tree := bptree.NewBPTreeN(16)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+// ============ B+ Tree Operations (fanout 32) ============
+
+func BPTree32Insert10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree32Insert100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree32Insert1000(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func BPTree32Get10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("5")
+}
+
+func BPTree32Get100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("50")
+}
+
+func BPTree32Get1000(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("500")
+}
+
+func BPTree32Iterate10(cur realm) {
+	tree := bptree.NewBPTreeN(32)
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func BPTree32Iterate100(cur realm) {
+	tree := bptree.NewBPTreeN(32)
 	for i := 0; i < 100; i++ {
 		tree.Set(strconv.Itoa(i), i)
 	}
