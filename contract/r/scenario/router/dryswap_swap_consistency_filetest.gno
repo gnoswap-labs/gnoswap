@@ -193,16 +193,16 @@ func initPoolMultiPosition() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 	qux.Approve(cross, poolAddr, INT64_MAX)
 
-	pn.Mint(cross, barPath, fooPath, fee, -6930, 6930, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee, -6930, 6930, "3000000000", "3000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee, -1050, 950, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee, -887270, 887270, "5000000000", "5000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee, -44260, -19070, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee, 62160, 69060, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, bazPath, fee, 9000, 11000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, bazPath, fooPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, fooPath, quxPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, quxPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	pn.Mint(cross, barPath, fooPath, fee, -6930, 6930, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee, -6930, 6930, "3000000000", "3000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee, -1050, 950, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee, -887270, 887270, "5000000000", "5000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee, -44260, -19070, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee, 62160, 69060, "1000000000", "1000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, bazPath, fee, 9000, 11000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, bazPath, fooPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, fooPath, quxPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, quxPath, fee, -1000, 1000, "5000000000000", "5000000000000", "0", "0", time.Now().Unix()+3600, "")
 }
 
 // EXACT IN TESTS

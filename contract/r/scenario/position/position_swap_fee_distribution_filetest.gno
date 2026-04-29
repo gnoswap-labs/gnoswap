@@ -103,8 +103,6 @@ func mintWidePosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -132,8 +130,6 @@ func mintTightPosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 

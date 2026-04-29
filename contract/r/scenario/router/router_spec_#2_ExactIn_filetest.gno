@@ -63,7 +63,7 @@ func main() {
 	pl.CreatePool(cross, barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 
 	println("[INFO] Minting position in bar-foo pool")
-	pn.Mint(cross, barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, "")
 
 	pool, _ := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()

@@ -73,7 +73,7 @@ func main() {
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool (tick range: 8000-12000)")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, "")
 
 	println("[EXPECTED] positionId:", positionId, "expected: 1")
 	println("[EXPECTED] liquidity:", liquidity, "expected: 637408")

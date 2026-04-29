@@ -123,7 +123,7 @@ func testFeeTier100() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
@@ -136,7 +136,7 @@ func testFeeTier100() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
@@ -149,7 +149,7 @@ func testFeeTier100() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
@@ -180,7 +180,7 @@ func testFeeTier500() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
@@ -193,7 +193,7 @@ func testFeeTier500() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
@@ -206,7 +206,7 @@ func testFeeTier500() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
@@ -237,7 +237,7 @@ func testFeeTier3000() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
@@ -250,7 +250,7 @@ func testFeeTier3000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
@@ -263,7 +263,7 @@ func testFeeTier3000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
@@ -294,7 +294,7 @@ func testFeeTier10000() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
@@ -307,7 +307,7 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
@@ -320,7 +320,7 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 
@@ -335,7 +335,7 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId4, liq4, amt0_4, amt1_4)
 }

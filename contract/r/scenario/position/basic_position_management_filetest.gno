@@ -135,8 +135,6 @@ func initializePoolAndCreatePosition() {
 		"0",
 		"0",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -175,8 +173,6 @@ func testPositionCreationAndRetrieval() {
 		"45000",
 		"45000",
 		max_timeout,
-		bobAddr,
-		bobAddr,
 		"",
 	)
 
@@ -218,8 +214,6 @@ func testPositionModification() {
 		"27000",
 		"27000",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -269,8 +263,6 @@ func testPositionDeletion() {
 		"9000",
 		"9000",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

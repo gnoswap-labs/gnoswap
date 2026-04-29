@@ -195,9 +195,7 @@ func startAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))

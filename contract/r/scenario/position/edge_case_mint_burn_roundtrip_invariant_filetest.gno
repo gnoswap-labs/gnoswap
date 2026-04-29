@@ -116,7 +116,7 @@ func testRoundTripUltraTight() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
+		"",
 	)
 
 	ufmt.Printf("[MINT] Position %d created\n", positionId)
@@ -218,7 +218,7 @@ func testRoundTripVariousAmounts() {
 			amount, amount,
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		// Burn
@@ -283,7 +283,7 @@ func testRoundTripPriceBoundaries() {
 			"1000000", "1000000",
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		// Burn
@@ -329,7 +329,7 @@ func testMultipleRoundTrips() {
 			"1000000", "1000000",
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		// Burn

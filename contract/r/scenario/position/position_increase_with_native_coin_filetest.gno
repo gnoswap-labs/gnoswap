@@ -120,8 +120,6 @@ func mintInitialPositionWithNativeCoin() {
 		amount0Min,
 		amount1Min,
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 

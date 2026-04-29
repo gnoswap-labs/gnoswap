@@ -98,8 +98,8 @@ func setup() {
 	pl.CreatePool(cross, bazPath, fooPath, 3000, "79228162514264337593543950336")
 
 	// Mint deep liquidity in both pools
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
-	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, "")
+	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, "")
 
 	println("[INFO] created bar:baz:3000 and baz:foo:3000 pools with 100M liquidity each")
 }

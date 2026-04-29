@@ -182,9 +182,7 @@ func createPoolsAndMintPosition() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[VERIFY] position ID: %d, liquidity: %s\n", tokenId, liquidity)

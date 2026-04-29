@@ -72,11 +72,18 @@ func (t *TestPosition) isActive(fnName string) bool {
 }
 
 // IPositionManager interface
-func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, caller address, referrer string) (uint64, string, string, string) {
+func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, referrer string) (uint64, string, string, string) {
 	if !t.isActive("Mint") {
 		panic("test implementation: Mint not supported")
 	}
-	return t.instance.Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, caller, referrer)
+	return t.instance.Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, referrer)
+}
+
+func (t *TestPosition) MintFromStaker(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, caller address, referrer string) (uint64, string, string, string) {
+	if !t.isActive("MintFromStaker") {
+		panic("test implementation: MintFromStaker not supported")
+	}
+	return t.instance.MintFromStaker(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, caller, referrer)
 }
 
 func (t *TestPosition) IncreaseLiquidity(positionId uint64, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, string, string, string) {

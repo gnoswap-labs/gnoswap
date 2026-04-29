@@ -212,10 +212,8 @@ func mintPositionWithGnot() BalanceSnapshot {
 		"50000000",   // amount1Desired (GNOT)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout,  // deadline
-		userAddr,     // recipient
-		userAddr,     // operator
-		"",           // hookData
+		max_timeout, // deadline
+		"",
 	)
 
 	println("[INFO] Minted position ID:", tokenId)

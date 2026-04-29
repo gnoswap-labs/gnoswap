@@ -126,7 +126,7 @@ func mintPosition(barPath, fooPath string, fee uint32, tickLower, tickUpper int3
 	bar.Approve(cross, poolAddr, math.MaxInt64)
 	foo.Approve(cross, poolAddr, math.MaxInt64)
 
-	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, recipient, operator, "")
+	positionId, liquidity, amount0, amount1 := position.Mint(cross, barPath, fooPath, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, "")
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)

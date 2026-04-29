@@ -76,14 +76,26 @@ func (t *TestPosition) ExecuteFn(fnName string, actualFn func(args ...any) any, 
 }
 
 // IPositionManager interface
-func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, mintTo address, caller address, referrer string) (uint64, string, string, string) {
+func (t *TestPosition) Mint(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, referrer string) (uint64, string, string, string) {
 	result := t.ExecuteFn(
 		"Mint",
 		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.Mint(args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(address), args[11].(address), args[12].(string))
+			r1, r2, r3, r4 := t.instance.Mint(args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(string))
 			return []any{r1, r2, r3, r4}
 		},
-		token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, caller, referrer,
+		token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, referrer,
+	).([]any)
+	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string)
+}
+
+func (t *TestPosition) MintFromStaker(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, caller address, referrer string) (uint64, string, string, string) {
+	result := t.ExecuteFn(
+		"MintFromStaker",
+		func(args ...any) any {
+			r1, r2, r3, r4 := t.instance.MintFromStaker(args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(address), args[11].(string))
+			return []any{r1, r2, r3, r4}
+		},
+		token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, caller, referrer,
 	).([]any)
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string)
 }

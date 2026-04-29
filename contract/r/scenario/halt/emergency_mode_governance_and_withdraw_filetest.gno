@@ -221,8 +221,6 @@ func createPoolAndPosition() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -285,8 +283,6 @@ func testPositionMintBlocked() {
 			"0",
 			"0",
 			time.Now().Unix()+3600,
-			aliceAddr,
-			aliceAddr,
 			"",
 		)
 	})

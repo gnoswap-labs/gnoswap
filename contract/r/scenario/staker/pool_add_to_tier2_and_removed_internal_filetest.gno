@@ -133,9 +133,7 @@ func mintAndStakePosition() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[EXPECTED] position ID: %d\n", positionId)

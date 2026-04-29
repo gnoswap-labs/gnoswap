@@ -54,11 +54,31 @@ func (m *MockPosition) Mint(
 	amount0Min string,
 	amount1Min string,
 	deadline int64,
-	mintTo address,
-	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
 	res, ok := m.Response.Get("Mint")
+	if !ok {
+		return 0, "", "", ""
+	}
+
+	return res[0].(uint64), res[1].(string), res[2].(string), res[3].(string)
+}
+
+func (m *MockPosition) MintFromStaker(
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
+	deadline int64,
+	caller address,
+	referrer string,
+) (uint64, string, string, string) {
+	res, ok := m.Response.Get("MintFromStaker")
 	if !ok {
 		return 0, "", "", ""
 	}

@@ -186,9 +186,7 @@ func mintAndStakePositions() {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
-		adminUser,
-		"",
+		adminUser.String(),
 	)
 
 	// Mint position 2
@@ -204,9 +202,7 @@ func mintAndStakePositions() {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
-		adminUser,
-		"",
+		adminUser.String(),
 	)
 
 	// Stake both positions

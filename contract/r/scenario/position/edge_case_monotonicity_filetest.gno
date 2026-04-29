@@ -122,7 +122,7 @@ func testMonotonicityUltraTight() {
 			amount, amount,
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		liq := u256.MustFromDecimal(liquidity)
@@ -197,7 +197,7 @@ func testMonotonicityScales() {
 			scale.base, scale.base,
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		// Position with incremented amount
@@ -208,7 +208,7 @@ func testMonotonicityScales() {
 			scale.inc, scale.base,
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		liquidity1 := u256.MustFromDecimal(liq1)
@@ -269,7 +269,7 @@ func testMonotonicityBoundaries() {
 				amount, amount,
 				"0", "0",
 				9999999999,
-				aliceAddr, aliceAddr, "",
+				"",
 			)
 
 			liquidity := u256.MustFromDecimal(liq)
@@ -319,7 +319,7 @@ func testNoDiscontinuousJumps() {
 			ufmt.Sprintf("%d", amount), // Use symmetric amounts
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
+			"",
 		)
 
 		liquidity := u256.MustFromDecimal(liq)

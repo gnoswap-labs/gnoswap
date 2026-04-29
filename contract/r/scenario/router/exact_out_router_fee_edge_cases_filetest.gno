@@ -72,7 +72,7 @@ func setup() {
 
 	// Create pool at 1:1 with very deep liquidity for large amount tests
 	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950336")
-	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "50000000000000", "50000000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick, "50000000000000", "50000000000000", "0", "0", max_timeout, "")
 
 	println("[INFO] created bar:baz:3000 pool with 50T liquidity")
 }

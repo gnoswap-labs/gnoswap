@@ -191,9 +191,7 @@ func mintPosition() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[INFO] minted position - tokenId: %d, liquidity: %s\n", lpTokenId, liquidity)

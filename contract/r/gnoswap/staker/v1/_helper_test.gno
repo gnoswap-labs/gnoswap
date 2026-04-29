@@ -138,8 +138,6 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 }
@@ -242,6 +240,9 @@ func MintPosition(t *testing.T,
 	caller address,
 ) (uint64, string, string, string) {
 	t.Helper()
+	if mintTo != caller {
+		panic("mintTo must match caller")
+	}
 	testing.SetRealm(testing.NewUserRealm(caller))
 
 	return pn.Mint(
@@ -256,8 +257,6 @@ func MintPosition(t *testing.T,
 		amount0Min,
 		amount1Min,
 		deadline,
-		mintTo,
-		caller,
 		"",
 	)
 }

@@ -153,8 +153,6 @@ func testAddLiquiditySuccess() {
 		"400000",
 		"800000",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -206,8 +204,6 @@ func testAddLiquidityWithInvalidSlippage() {
 		"400000",
 		"800000",
 		max_timeout,
-		bobAddr,
-		bobAddr,
 		"",
 	)
 
@@ -247,8 +243,6 @@ func testAddLiquidityWithZeroLiquidity() {
 		"0",
 		"0",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -288,8 +282,6 @@ func testAddLiquidityWithInvalidTickRange() {
 		"400000",
 		"800000",
 		max_timeout,
-		bobAddr,
-		bobAddr,
 		"",
 	)
 
@@ -367,8 +359,6 @@ func testDecreaseLiquiditySuccess() {
 		"9000",
 		"9000",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -431,8 +421,6 @@ func testDecreaseLiquidityWithOverRemoval() {
 		"4500",
 		"4500",
 		max_timeout,
-		bobAddr,
-		bobAddr,
 		"",
 	)
 
@@ -474,8 +462,6 @@ func testDecreaseLiquidityWithZeroLiquidity() {
 		"900",
 		"900",
 		max_timeout,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

@@ -109,9 +109,7 @@ func (e *TestEnv) AndLiquidityProvided(provider address, params PositionParams) 
 		params.amount0Min.ToString(),
 		params.amount1Min.ToString(),
 		9999999999, // deadline
-		provider,
-		provider,
-		"", // data
+		"",       // referrer
 	)
 
 	e.positions[tokenId] = true

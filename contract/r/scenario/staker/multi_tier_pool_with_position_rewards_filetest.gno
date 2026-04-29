@@ -208,9 +208,7 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		user1Addr,
-		user1Addr,
-		"",
+		user1Addr.String(),
 	)
 	position1 = uint64(p1)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position1))
@@ -234,9 +232,7 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
-		user2Addr,
-		"",
+		user2Addr.String(),
 	)
 	position2 = uint64(p2)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position2))
@@ -260,9 +256,7 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 	position3 = uint64(p3)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position3))
@@ -281,9 +275,7 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 	position4 = uint64(p4)
 

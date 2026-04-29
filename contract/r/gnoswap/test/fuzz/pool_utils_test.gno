@@ -216,8 +216,6 @@ func setupMintPosition(
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
-		adminAddr,
 		"",
 	)
 }

@@ -117,22 +117,22 @@ func setup() {
 	// Pool 1: bar:baz fee 3000 (0.3%)
 	pl.CreatePool(cross, barPath, bazPath, 3000, sqrtPrice1to1)
 	pn.Mint(cross, barPath, bazPath, 3000, min_tick, max_tick,
-		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+		"20000000000000", "20000000000000", "0", "0", max_timeout, "")
 
 	// Pool 2: baz:foo fee 3000 (0.3%)
 	pl.CreatePool(cross, bazPath, fooPath, 3000, sqrtPrice1to1)
 	pn.Mint(cross, bazPath, fooPath, 3000, min_tick, max_tick,
-		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+		"20000000000000", "20000000000000", "0", "0", max_timeout, "")
 
 	// Pool 3: foo:qux fee 3000 (0.3%)
 	pl.CreatePool(cross, fooPath, quxPath, 3000, sqrtPrice1to1)
 	pn.Mint(cross, fooPath, quxPath, 3000, min_tick, max_tick,
-		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+		"20000000000000", "20000000000000", "0", "0", max_timeout, "")
 
 	// Pool 4: bar:baz fee 500 (0.05%) — second pool for split route
 	pl.CreatePool(cross, barPath, bazPath, 500, sqrtPrice1to1)
 	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick,
-		"20000000000000", "20000000000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+		"20000000000000", "20000000000000", "0", "0", max_timeout, "")
 
 	println("[INFO] created 4 pools: bar:baz:3000, baz:foo:3000, foo:qux:3000, bar:baz:500")
 	println("[INFO] all pools at 1:1 price with 20T liquidity each")

@@ -118,8 +118,6 @@ func mintInRangePosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -146,8 +144,6 @@ func mintLowerRangePosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -174,8 +170,6 @@ func mintUpperRangePosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 
