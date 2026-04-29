@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -95,17 +94,12 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, 
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
 
-	toTimestamp := cutoffTimestamp
-	if cutoffTimestamp < math.MaxInt64 {
-		toTimestamp = safeAddInt64(toTimestamp, 1)
-	}
-
 	// First, find the most recent entry before cutoff to preserve state
 	var lastValue any
 
 	hasLastValue := false
 
-	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
+	history.ReverseIterate(0, cutoffTimestamp, func(timestamp int64, value any) bool {
 		lastValue = value
 		hasLastValue = true
 
@@ -141,17 +135,11 @@ func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(target address, cuto
 		return
 	}
 
-	toTimestamp := cutoffTimestamp
-	if cutoffTimestamp < math.MaxInt64 {
-		toTimestamp = safeAddInt64(toTimestamp, 1)
-	}
-
 	history := gs.store.GetUserDelegationHistory()
 
 	addrStr := target.String()
 	iterationStartKey, _ := userHistoryKeyRange(addrStr)
-	iterationEndKey := makeUserHistoryKey(addrStr, toTimestamp)
-	cutoffKey := makeUserHistoryKey(addrStr, cutoffTimestamp)
+	iterationEndKey := makeUserHistoryKey(addrStr, cutoffTimestamp)
 
 	// First, find the most recent entry before cutoff to preserve state
 	var lastValue any
@@ -165,15 +153,15 @@ func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(target address, cuto
 		return true // stop after first (most recent)
 	})
 
-	if hasLastValue && !history.Has(cutoffKey) {
-		history.Set(cutoffKey, lastValue)
+	if hasLastValue && !history.Has(iterationEndKey) {
+		history.Set(iterationEndKey, lastValue)
 	}
 
 	// Collect all keys strictly before preserveKey within this address prefix.
 	// Iterate's end is exclusive, so [lo, preserveKey) skips the preserved entry.
 	var keysToRemove []string
 
-	history.Iterate(iterationStartKey, cutoffKey, func(key string, _ any) bool {
+	history.Iterate(iterationStartKey, iterationEndKey, func(key string, _ any) bool {
 		keysToRemove = append(keysToRemove, key)
 
 		return false
