@@ -1003,7 +1003,7 @@ func TestLazySync_DuplicatePrevention(t *testing.T) {
 	deposit.AddExternalIncentiveId(incentiveId)
 	deposit.AddExternalIncentiveId(incentiveId)
 
-	// Verify it's only added once (AVL Tree property)
+	// Verify it's only added once (tree property)
 	count := len(deposit.GetExternalIncentiveIdList())
 	if count != 1 {
 		t.Errorf("Expected 1 incentive (no duplicates), got %d", count)
@@ -2571,30 +2571,30 @@ func TestCollectExternalIncentivePenalty(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-STAKER-001]", // errNoPermission
 		},
 		{
-			name:             "zero accumulated penalty returns 0",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-			incentiveId:      "test-id",
-			caller:           creator,
-			refundAddress:    creator,
-			setupPool:        true,
-			setupIncentive:   true,
-			setRefunded:      true,
-			penaltyAmount:    0,
-			expectPanic:      false,
-			expectedReturn:   0,
+			name:           "zero accumulated penalty returns 0",
+			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:    "test-id",
+			caller:         creator,
+			refundAddress:  creator,
+			setupPool:      true,
+			setupIncentive: true,
+			setRefunded:    true,
+			penaltyAmount:  0,
+			expectPanic:    false,
+			expectedReturn: 0,
 		},
 		{
-			name:             "successfully collect accumulated penalty",
-			poolPath:         "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-			incentiveId:      "test-id",
-			caller:           creator,
-			refundAddress:    creator,
-			setupPool:        true,
-			setupIncentive:   true,
-			setRefunded:      true,
-			penaltyAmount:    50000,
-			expectPanic:      false,
-			expectedReturn:   -1, // -1 means check > 0 (exact value depends on staker balance)
+			name:           "successfully collect accumulated penalty",
+			poolPath:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+			incentiveId:    "test-id",
+			caller:         creator,
+			refundAddress:  creator,
+			setupPool:      true,
+			setupIncentive: true,
+			setRefunded:    true,
+			penaltyAmount:  50000,
+			expectPanic:    false,
+			expectedReturn: -1, // -1 means check > 0 (exact value depends on staker balance)
 		},
 	}
 
@@ -2685,9 +2685,9 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		totalRewardAmount int64
-		collections       []collectStep
+		name                string
+		totalRewardAmount   int64
+		collections         []collectStep
 		expectedDistributed int64
 		expectedPenalty     int64
 	}{

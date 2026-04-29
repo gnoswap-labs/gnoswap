@@ -95,8 +95,8 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 
 	timeDiff := int64(0)
 
-	// Find unclaimable periods that end before or at incentive start
-	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp(), func(startTimestamp int64, value any) bool {
+	// Find unclaimable periods that end before or at incentive start, reverse iterate is inclusive of the end key
+	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp()-1, func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")

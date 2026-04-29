@@ -209,7 +209,6 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	return amountByAddress, nil
 }
 
-
 func transferToTarget(targets map[address]int64) error {
 	for address, amount := range targets {
 		gns.Transfer(cross, address, amount)
@@ -326,7 +325,7 @@ func ClearDistributedToGovStaker(cur realm) {
 }
 
 // setDistributionBpsPct changes percentage of each target for how much GNS it will get by emission.
-// Creates new AVL tree if nil.
+// Creates new map if nil.
 func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = make(map[int]int64)
