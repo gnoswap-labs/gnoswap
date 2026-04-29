@@ -11,8 +11,8 @@ import (
 
 const maxUint256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
-func wrappedPriceDebtForDelta(deltaX128 *u256.Uint) *u256.Uint {
-	return u256.Zero().Neg(deltaX128)
+func wrappedPriceDebtForCurrentAndDelta(currentAccumX128, deltaX128 *u256.Uint) *u256.Uint {
+	return u256.Zero().Sub(currentAccumX128, deltaX128)
 }
 
 func TestRewardState_IsClaimable(t *testing.T) {
@@ -144,23 +144,9 @@ func TestRewardState_CalculateReward(t *testing.T) {
 }
 
 func TestRewardState_CalculateClaimableRewardWrappedAccumulator(t *testing.T) {
-	state := launchpad.NewRewardState(
-		u256.MustFromDecimal(maxUint256),
-		1,
-		100,
-		200,
-		100,
-	)
-
-	reward := calculateReward(state, q128.Clone())
-	claimable := calculateClaimableReward(state, q128.Clone())
-	uassert.Equal(t, int64(1), reward)
-	uassert.Equal(t, int64(1), claimable)
-}
-
-func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testing.T) {
 	tests := []struct {
 		name              string
+		currentAccumX128  *u256.Uint
 		deltaX128         *u256.Uint
 		depositAmount     int64
 		claimedAmount     int64
@@ -168,7 +154,17 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testi
 		expectedClaimable int64
 	}{
 		{
-			name:              "wrapped delta returns 13 reward",
+			name:              "zero current with unit wrapped delta returns 1 reward",
+			currentAccumX128:  q128.Clone(),
+			deltaX128:         q128.Clone(),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    1,
+			expectedClaimable: 1,
+		},
+		{
+			name:              "zero current with 13q wrapped delta returns 13 reward",
+			currentAccumX128:  u256.Zero(),
 			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     0,
@@ -176,23 +172,17 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testi
 			expectedClaimable: 13,
 		},
 		{
-			name:              "wrapped delta returns 16 reward",
-			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(16)),
+			name:              "non-zero current with wrapped delta returns 13 reward",
+			currentAccumX128:  u256.Zero().Mul(q128.Clone(), u256.NewUint(5)),
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     0,
-			expectedReward:    16,
-			expectedClaimable: 16,
+			expectedReward:    13,
+			expectedClaimable: 13,
 		},
 		{
-			name:              "wrapped delta is floored to zero reward",
-			deltaX128:         u256.Zero().Sub(q128.Clone(), u256.One()),
-			depositAmount:     1,
-			claimedAmount:     0,
-			expectedReward:    0,
-			expectedClaimable: 0,
-		},
-		{
-			name:              "wrapped delta subtracts claimed amount",
+			name:              "wrapped delta subtracts claimed amount with non-zero current",
+			currentAccumX128:  u256.Zero().Mul(q128.Clone(), u256.NewUint(5)),
 			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     5,
@@ -200,7 +190,26 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testi
 			expectedClaimable: 8,
 		},
 		{
-			name:              "wrapped delta equal to claimed amount yields zero claimable",
+			name:              "zero current with 16q wrapped delta returns 16 reward",
+			currentAccumX128:  u256.Zero(),
+			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(16)),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    16,
+			expectedClaimable: 16,
+		},
+		{
+			name:              "zero current with wrapped delta below q128 floors to zero reward",
+			currentAccumX128:  u256.Zero(),
+			deltaX128:         u256.Zero().Sub(q128.Clone(), u256.One()),
+			depositAmount:     1,
+			claimedAmount:     0,
+			expectedReward:    0,
+			expectedClaimable: 0,
+		},
+		{
+			name:              "zero current with wrapped delta equal to claimed amount yields zero claimable",
+			currentAccumX128:  u256.Zero(),
 			deltaX128:         u256.Zero().Mul(q128.Clone(), u256.NewUint(13)),
 			depositAmount:     1,
 			claimedAmount:     13,
@@ -212,7 +221,7 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testi
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := launchpad.NewRewardState(
-				wrappedPriceDebtForDelta(tt.deltaX128),
+				wrappedPriceDebtForCurrentAndDelta(tt.currentAccumX128, tt.deltaX128),
 				tt.depositAmount,
 				100,
 				200,
@@ -220,8 +229,8 @@ func TestRewardState_CalculateClaimableRewardWrappedAccumulatorVariants(t *testi
 			)
 			state.SetClaimedAmount(tt.claimedAmount)
 
-			reward := calculateReward(state, u256.Zero())
-			claimable := calculateClaimableReward(state, u256.Zero())
+			reward := calculateReward(state, tt.currentAccumX128)
+			claimable := calculateClaimableReward(state, tt.currentAccumX128)
 
 			uassert.Equal(t, tt.expectedReward, reward)
 			uassert.Equal(t, tt.expectedClaimable, claimable)
