@@ -1,7 +1,6 @@
 package store
 
 import (
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -48,17 +47,6 @@ func castToString(result any) (string, error) {
 	}
 
 	return v, nil
-}
-
-// castToTree safely casts an any value to *avl.Tree
-// Returns ErrFailedCast if the value is not of type *avl.Tree
-func castToTree(result any) (*avl.Tree, error) {
-	tree, ok := result.(*avl.Tree)
-	if !ok {
-		return nil, ufmt.Errorf("%s: %s", ErrFailedCast.Error(), ufmt.Sprintf("cast %T to *avl.Tree", result))
-	}
-
-	return tree, nil
 }
 
 // castToBPTree safely casts an any value to *bptree.BPTree

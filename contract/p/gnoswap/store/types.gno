@@ -1,7 +1,6 @@
 package store
 
 import (
-	avl "gno.land/p/nt/avl/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -41,9 +40,6 @@ type KVStore interface {
 
 	// GetAddress retrieves an address value by key
 	GetAddress(key string) (address, error)
-
-	// GetTree retrieves a tree value by key
-	GetTree(key string) (*avl.Tree, error)
 
 	// GetBPTree retrieves a B+ tree value by key
 	GetBPTree(key string) (*bptree.BPTree, error)

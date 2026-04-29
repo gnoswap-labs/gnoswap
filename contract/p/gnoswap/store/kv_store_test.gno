@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -412,9 +412,9 @@ func TestKeyNotFound(t *testing.T) {
 			},
 		},
 		{
-			name: "GetTree",
+			name: "GetBPTree",
 			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetTree("nonexistent")
+				_, err := store.GetBPTree("nonexistent")
 				uassert.ErrorIs(t, err, ErrKeyNotFound)
 			},
 		},
@@ -488,12 +488,12 @@ func TestTypedGetters_TypeMismatch(t *testing.T) {
 			},
 		},
 		{
-			name: "tree_type_mismatch",
+			name: "bptree_type_mismatch",
 			setupFn: func(store KVStore) {
 				store.Set("key", "not a tree")
 			},
 			verifyFn: func(t *testing.T, store KVStore) {
-				_, err := store.GetTree("key")
+				_, err := store.GetBPTree("key")
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -681,8 +681,7 @@ func TestAllTypedGetters_Success(t *testing.T) {
 	uassert.NoError(t, err)
 	err = store.Set("address_key", domainAddr)
 	uassert.NoError(t, err)
-	tree := avl.NewTree()
-	err = store.Set("tree_key", tree)
+	err = store.Set("bptree_key", bptree.NewBPTreeN(16))
 	uassert.NoError(t, err)
 
 	i64, err := store.GetInt64("int64_key")
@@ -705,7 +704,7 @@ func TestAllTypedGetters_Success(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, domainAddr, addr)
 
-	retrievedTree, err := store.GetTree("tree_key")
+	retrievedTree, err := store.GetBPTree("bptree_key")
 	uassert.NoError(t, err)
 	uassert.NotEqual(t, nil, retrievedTree)
 }
