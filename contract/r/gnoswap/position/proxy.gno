@@ -138,8 +138,8 @@ func Reposition(
 //   - string: amount of token0 collected
 //   - string: amount of token1 collected
 //   - string: pool path
-//   - string: token0 path
-//   - string: token1 path
+//   - string: raw token0 amount before withdrawal fee
+//   - string: raw token1 amount before withdrawal fee
 func CollectFee(
 	cur realm,
 	positionId uint64,

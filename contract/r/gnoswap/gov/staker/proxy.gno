@@ -24,7 +24,7 @@ func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 //   - amount: The amount of xGNS.
 //
 // Returns:
-//   - tokenId: The ID of the position.
+//   - amount: The amount of GNS moved into undelegation lockup.
 func Undelegate(cur realm, from address, amount int64) int64 {
 	return getImplementation().Undelegate(from, amount)
 }
@@ -68,18 +68,18 @@ func CollectReward(cur realm) {
 //
 // Parameters:
 //   - cur: Pass `cross` as argument.
-//   - to: The address to delegate.
+//   - to: The recipient project wallet address.
 func CollectRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectRewardFromLaunchPad(to)
 }
 
-// SetAmountByProjectWallet sets reward amount for a project wallet.
+// SetAmountByProjectWallet adjusts launchpad-backed stake and xGNS accounting for a project wallet.
 // Only callable by launchpad contract.
 //
 // Parameters:
 //   - cur: Pass `cross` as argument.
 //   - addr: project wallet address
-//   - amount: reward amount
+//   - amount: stake amount delta to add or remove
 //   - add: true to add, false to subtract
 func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 	getImplementation().SetAmountByProjectWallet(addr, amount, add)
