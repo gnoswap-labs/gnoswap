@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/runtime"
 	"time"
@@ -421,7 +422,7 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 		totalAtCurrent = 0
 	}
 
-	totalVotingWeight := safeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
+	totalVotingWeight := gnsmath.SafeAddInt64(totalAtSnapshot, totalAtCurrent) / 2
 	if totalVotingWeight <= 0 {
 		return 0, snapshotTime, errNotEnoughVotingWeight
 	}

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/runtime"
 	"time"
@@ -45,7 +46,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
-	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
+	assertIsValidIncentiveDuration(gnsmath.SafeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
 	common.AssertIsNotHandleNativeCoin()
 
@@ -254,13 +255,13 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
 
-	duration := safeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
-	distributable := safeMulInt64(incentiveResolver.RewardPerSecond(), duration)
-	remainder := safeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
+	duration := gnsmath.SafeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
+	distributable := gnsmath.SafeMulInt64(incentiveResolver.RewardPerSecond(), duration)
+	remainder := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), distributable)
 
-	refund := safeAddInt64(unclaimableReward, remainder)
+	refund := gnsmath.SafeAddInt64(unclaimableReward, remainder)
 
-	maxRefund := safeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
+	maxRefund := gnsmath.SafeSubInt64(incentiveResolver.TotalRewardAmount(), incentiveResolver.DistributedRewardAmount())
 	if refund > maxRefund {
 		refund = maxRefund
 	}
@@ -354,7 +355,7 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	}
 
 	// Reset accumulated penalty
-	incentiveResolver.SetAccumulatedPenaltyAmount(safeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
+	incentiveResolver.SetAccumulatedPenaltyAmount(gnsmath.SafeSubInt64(incentiveResolver.AccumulatedPenaltyAmount(), penaltyAmount))
 	incentivesResolver.update(incentiveResolver.ExternalIncentive)
 
 	// Transfer penalty to refund address

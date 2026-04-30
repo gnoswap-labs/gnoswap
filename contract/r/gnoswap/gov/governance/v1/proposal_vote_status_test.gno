@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -63,7 +64,7 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -115,7 +116,7 @@ func TestNewProposalVoteStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorum, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 
@@ -315,7 +316,7 @@ func TestProposalVoteStatus_QuorumCalculation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			quorumAmount := safeMulDiv(tc.maxVotingWeight, tc.quorumPercentage, 100)
+			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorumPercentage, 100)
 			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
 			resolver := NewProposalVoteStatusResolver(status)
 

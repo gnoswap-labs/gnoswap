@@ -3,9 +3,8 @@ package v1
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
-
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -111,29 +110,29 @@ func TestAssertValidNumberString(t *testing.T) {
 
 func TestPositionIdFrom(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       uint64
-		expected    string
+		name     string
+		input    uint64
+		expected string
 	}{
 		{
-			name:        "positionIdFrom preserves uint64 min",
-			input:       uint64(0),
-			expected:    "0",
+			name:     "positionIdFrom preserves uint64 min",
+			input:    uint64(0),
+			expected: "0",
 		},
 		{
-			name:        "positionIdFrom is success by uint64",
-			input:       uint64(1),
-			expected:    "1",
+			name:     "positionIdFrom is success by uint64",
+			input:    uint64(1),
+			expected: "1",
 		},
 		{
-			name:        "positionIdFrom preserves uint64 1<<63",
-			input:       uint64(9223372036854775808),
-			expected:    "9223372036854775808",
+			name:     "positionIdFrom preserves uint64 1<<63",
+			input:    uint64(9223372036854775808),
+			expected: "9223372036854775808",
 		},
 		{
-			name:        "positionIdFrom preserves uint64 max",
-			input:       uint64(18446744073709551615),
-			expected:    "18446744073709551615",
+			name:     "positionIdFrom preserves uint64 max",
+			input:    uint64(18446744073709551615),
+			expected: "18446744073709551615",
 		},
 	}
 	for _, tc := range tests {
@@ -370,84 +369,6 @@ func TestSplitOf(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToInt64(t *testing.T) {
-	tests := []struct {
-		name          string
-		value         *u256.Uint
-		expected      int64
-		shouldPanic   bool
-		expectedError string
-	}{
-		{
-			name:        "Normal case: small positive value",
-			value:       u256.NewUint(1000),
-			expected:    1000,
-			shouldPanic: false,
-		},
-		{
-			name:        "Normal case: zero",
-			value:       u256.NewUint(0),
-			expected:    0,
-			shouldPanic: false,
-		},
-		{
-			name:        "Boundary: int64 max",
-			value:       u256.MustFromDecimal("9223372036854775807"),
-			expected:    9223372036854775807,
-			shouldPanic: false,
-		},
-		{
-			name:          "Overflow: int64 max + 1",
-			value:         u256.MustFromDecimal("9223372036854775808"),
-			shouldPanic:   true,
-			expectedError: "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
-		},
-		{
-			name:          "Overflow: uint64 max (2^64 - 1)",
-			value:         u256.MustFromDecimal("18446744073709551615"),
-			shouldPanic:   true,
-			expectedError: "amount(18446744073709551615) overflows int64 range (max: 9223372036854775807)",
-		},
-		{
-			name:          "Overflow: beyond uint64 (2^64)",
-			value:         u256.MustFromDecimal("18446744073709551616"),
-			shouldPanic:   true,
-			expectedError: "amount(18446744073709551616) overflows int64 range (max: 9223372036854775807)",
-		},
-		{
-			name:          "Overflow: large value in uint64 range but beyond int64",
-			value:         u256.MustFromDecimal("10000000000000000000"),
-			shouldPanic:   true,
-			expectedError: "amount(10000000000000000000) overflows int64 range (max: 9223372036854775807)",
-		},
-		{
-			name:        "Normal case: typical token amount",
-			value:       u256.MustFromDecimal("1000000000000000000"),
-			expected:    1000000000000000000,
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					if r == nil {
-						t.Errorf("expected panic but got none")
-					} else if r != tt.expectedError {
-						t.Errorf("expected panic %v, got %v", tt.expectedError, r)
-					}
-				}()
-				safeConvertToInt64(tt.value)
-			} else {
-				result := safeConvertToInt64(tt.value)
-				uassert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
 func legacySubUint256ForTest(x, y *u256.Uint) *u256.Uint {
 	if x.Cmp(y) < 0 {
 		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
@@ -480,21 +401,25 @@ func TestSubUint256EquivalenceWithLegacyFormula(t *testing.T) {
 		// additional boundary and domain cases
 		{name: "zero_minus_two", x: "0", y: "2"},
 		{name: "underflow_by_one", x: "100", y: "101"},
-		{name: "underflow_by_one_at_uint128_boundary",
-			x: "340282366920938463463374607431768211455", // 2^128 - 1
-			y: "340282366920938463463374607431768211456", // 2^128
+		{
+			name: "underflow_by_one_at_uint128_boundary",
+			x:    "340282366920938463463374607431768211455", // 2^128 - 1
+			y:    "340282366920938463463374607431768211456", // 2^128
 		},
-		{name: "normal_sub_at_q128",
-			x: "680564733841876926926749214863536422912", // 2 * 2^128
-			y: "340282366920938463463374607431768211456", // 2^128
+		{
+			name: "normal_sub_at_q128",
+			x:    "680564733841876926926749214863536422912", // 2 * 2^128
+			y:    "340282366920938463463374607431768211456", // 2^128
 		},
 		{name: "zero_minus_max", x: "0", y: MAX_UINT256},
-		{name: "one_minus_max_minus_one",
-			x: "1",
-			y: "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
+		{
+			name: "one_minus_max_minus_one",
+			x:    "1",
+			y:    "115792089237316195423570985008687907853269984665640564039457584007913129639934", // MAX-1
 		},
 		{name: "equal_mid_range", x: "12345678901234567890", y: "12345678901234567890"},
-		{name: "fee_growth_typical_underflow",
+		{
+			name: "fee_growth_typical_underflow",
 			// realistic fee growth accumulator: global < position snapshot means new epoch
 			x: "1000000000000000000000000000000000000", // ~1e36 (small accumulator)
 			y: "999999999999999999999999999999999999999",

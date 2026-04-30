@@ -1,6 +1,7 @@
 package v1
 
 import (
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"math"
 	"testing"
@@ -1265,7 +1266,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	// Update DistributedRewardAmount and deduct from rewardAmount (simulating CollectReward)
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
 	incentiveResolver.addDistributedRewardAmount(collectedA)
-	incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), collectedA))
+	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), collectedA))
 
 	// User B collects 200
 	collectedB := int64(200)
@@ -1274,7 +1275,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 
 	// Update DistributedRewardAmount and deduct from rewardAmount (simulating CollectReward)
 	incentiveResolver.addDistributedRewardAmount(collectedB)
-	incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), collectedB))
+	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), collectedB))
 
 	// Verify DistributedRewardAmount = 500
 	if incentiveResolver.DistributedRewardAmount() != 500 {
@@ -2751,7 +2752,7 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 			for _, c := range tt.collections {
 				resolver.addDistributedRewardAmount(c.reward)
 				resolver.addAccumulatedPenaltyAmount(c.penalty)
-				incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), c.reward+c.penalty))
+				incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), c.reward+c.penalty))
 			}
 
 			uassert.Equal(t, tt.expectedDistributed, incentive.DistributedRewardAmount())
@@ -2805,13 +2806,13 @@ func TestEndExternalIncentiveRefundWithPenalty(t *testing.T) {
 			resolver := NewExternalIncentiveResolver(incentive)
 			resolver.addDistributedRewardAmount(tt.distributed)
 			resolver.addAccumulatedPenaltyAmount(tt.penalty)
-			incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), tt.distributed+tt.penalty))
+			incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), tt.distributed+tt.penalty))
 
 			_, refund, err := s.endExternalIncentive(poolResolver, resolver, creator, endTime+100)
 			uassert.NoError(t, err)
 
 			// refund must not exceed maxRefund
-			maxRefund := safeSubInt64(totalRewardAmount, tt.distributed)
+			maxRefund := gnsmath.SafeSubInt64(totalRewardAmount, tt.distributed)
 			if refund > maxRefund {
 				t.Errorf("refund(%d) exceeds maxRefund(%d)", refund, maxRefund)
 			}

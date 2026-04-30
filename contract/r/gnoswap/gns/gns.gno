@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc20"
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/demo/defi/grc20reg"
@@ -103,8 +104,8 @@ func MintGns(cur realm, address address) int64 {
 	}
 
 	setLastMintedTimestamp(currentTime)
-	setMintedEmissionAmount(safeAddInt64(MintedEmissionAmount(), amountToMint))
-	setLeftEmissionAmount(safeSubInt64(LeftEmissionAmount(), amountToMint))
+	setMintedEmissionAmount(gnsmath.SafeAddInt64(MintedEmissionAmount(), amountToMint))
+	setLeftEmissionAmount(gnsmath.SafeSubInt64(LeftEmissionAmount(), amountToMint))
 
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
@@ -221,14 +222,14 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 		}
 
 		amountPerSecond := state.getHalvingYearAmountPerSecond(year)
-		yearAmountToMint := safeMulInt64(amountPerSecond, seconds)
+		yearAmountToMint := gnsmath.SafeMulInt64(amountPerSecond, seconds)
 
 		if currentToTimestamp >= yearEndTimestamp {
-			leftover := safeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
-			yearAmountToMint = safeAddInt64(yearAmountToMint, leftover)
+			leftover := gnsmath.SafeSubInt64(state.getHalvingYearLeftAmount(year), yearAmountToMint)
+			yearAmountToMint = gnsmath.SafeAddInt64(yearAmountToMint, leftover)
 		}
 
-		totalAmountToMint = safeAddInt64(totalAmountToMint, yearAmountToMint)
+		totalAmountToMint = gnsmath.SafeAddInt64(totalAmountToMint, yearAmountToMint)
 
 		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
 		if err != nil {

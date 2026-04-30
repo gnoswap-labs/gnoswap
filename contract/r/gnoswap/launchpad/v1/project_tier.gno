@@ -1,34 +1,34 @@
 package v1
 
 import (
-	"gno.land/r/gnoswap/launchpad"
-
+	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 func getTierCurrentDepositCount(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDepositCount(), t.TotalWithdrawCount())
+	return gnsmath.SafeSubInt64(t.TotalDepositCount(), t.TotalWithdrawCount())
 }
 
 func getTierCurrentDepositAmount(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDepositAmount(), t.TotalWithdrawAmount())
+	return gnsmath.SafeSubInt64(t.TotalDepositAmount(), t.TotalWithdrawAmount())
 }
 
 func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
-	return safeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
+	return gnsmath.SafeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
 func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
-	totalDepositAmount := safeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
-	totalDepositCount := safeAddInt64(t.TotalDepositCount(), 1)
+	totalDepositAmount := gnsmath.SafeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
+	totalDepositCount := gnsmath.SafeAddInt64(t.TotalDepositCount(), 1)
 
 	t.SetTotalDepositAmount(totalDepositAmount)
 	t.SetTotalDepositCount(totalDepositCount)
 }
 
 func withdrawToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
-	totalWithdrawAmount := safeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
-	totalWithdrawCount := safeAddInt64(t.TotalWithdrawCount(), 1)
+	totalWithdrawAmount := gnsmath.SafeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
+	totalWithdrawCount := gnsmath.SafeAddInt64(t.TotalWithdrawCount(), 1)
 
 	t.SetTotalWithdrawAmount(totalWithdrawAmount)
 	t.SetTotalWithdrawCount(totalWithdrawCount)
