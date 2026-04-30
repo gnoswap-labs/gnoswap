@@ -531,10 +531,6 @@ func TestGetApproved(t *testing.T) {
 }
 
 func TestTransferFrom(t *testing.T) {
-	resetObject(t)
-	testing.SetRealm(positionRealm)
-	Mint(cross, addr01, tid(1))
-
 	tests := []struct {
 		name              string
 		setup             func(cur realm)
@@ -557,15 +553,33 @@ func TestTransferFrom(t *testing.T) {
 		},
 		{
 			name:              "transfer token owned by other user without approval",
-			callerRealm:       stakerRealm,
+			callerRealm:       addr02Realm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "caller is not token owner or approved || caller g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
+			panicMsg:          "caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
 		},
 		{
-			name: "transfer token owned by other user with approval",
+			name: "approved user transfers token",
+			setup: func(cur realm) {
+				testing.SetRealm(addr01Realm)
+				Approve(cross, addr02, tid(1))
+			},
+			callerRealm:       addr02Realm,
+			fromAddr:          addr01,
+			toAddr:            addr02,
+			tokenIdToTransfer: 1,
+		},
+		{
+			name:        "owner transfers own token",
+			callerRealm: addr01Realm,
+			fromAddr:    addr01,
+			toAddr:      addr02,
+			tokenIdToTransfer: 1,
+		},
+		{
+			name: "approved staker transfer still works",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
 				Approve(cross, stakerRealm.Address(), tid(1))
@@ -573,17 +587,6 @@ func TestTransferFrom(t *testing.T) {
 			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
-			tokenIdToTransfer: 1,
-		},
-		{
-			name: "transfer token owned by caller",
-			setup: func(cur realm) {
-				testing.SetRealm(addr02Realm)
-				Approve(cross, stakerRealm.Address(), tid(1))
-			},
-			callerRealm:       stakerRealm,
-			fromAddr:          addr02,
-			toAddr:            addr01,
 			tokenIdToTransfer: 1,
 		},
 		{
@@ -605,15 +608,6 @@ func TestTransferFrom(t *testing.T) {
 			panicMsg:          "[GNOSWAP-GNFT-002] invalid address || to address (this_is_invalid_address)",
 		},
 		{
-			name:              "not-staker contract transfer",
-			callerRealm:       addr01Realm,
-			fromAddr:          addr01,
-			toAddr:            addr02,
-			tokenIdToTransfer: 1,
-			shouldPanic:       true,
-			panicMsg:          "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
-		},
-		{
 			name: "transfer to self",
 			setup: func(cur realm) {
 				testing.SetRealm(positionRealm)
@@ -632,6 +626,10 @@ func TestTransferFrom(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			testing.SetRealm(positionRealm)
+			Mint(cross, addr01, tid(1))
+
 			if tt.setup != nil {
 				tt.setup(cross)
 			}
@@ -903,10 +901,6 @@ func TestMustOwnerOf(t *testing.T) {
 }
 
 func TestSafeTransferFrom(t *testing.T) {
-	resetObject(t)
-	testing.SetRealm(positionRealm)
-	Mint(cross, addr01, tid(1))
-
 	tests := []struct {
 		name        string
 		setup       func(cur realm)
@@ -918,7 +912,15 @@ func TestSafeTransferFrom(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "owner transfers own token",
+			name:        "owner safe-transfers own token",
+			callerRealm: addr01Realm,
+			from:        addr01,
+			to:          addr02,
+			tokenId:     1,
+			shouldPanic: false,
+		},
+		{
+			name: "approved staker safe-transfers token",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
 				Approve(cross, stakerRealm.Address(), tid(1))
@@ -932,15 +934,15 @@ func TestSafeTransferFrom(t *testing.T) {
 		{
 			name: "non-owner transfers without approval",
 			setup: func(cur realm) {
-				testing.SetRealm(addr02Realm)
-				Approve(cross, stakerRealm.Address(), tid(1))
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(2))
 			},
-			callerRealm: stakerRealm,
+			callerRealm: addr02Realm,
 			from:        addr01,
 			to:          addr02,
-			tokenId:     1,
+			tokenId:     2,
 			shouldPanic: true,
-			panicMsg:    "transfer from incorrect owner || from g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not the owner g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at of token 1",
+			panicMsg:    "caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 2",
 		},
 		{
 			name:        "transfer non-existent token",
@@ -961,15 +963,6 @@ func TestSafeTransferFrom(t *testing.T) {
 			panicMsg:    "[GNOSWAP-GNFT-002] invalid address || to address ()",
 		},
 		{
-			name:        "not-staker contract transfer",
-			callerRealm: addr01Realm,
-			from:        addr01,
-			to:          addr02,
-			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
-		},
-		{
 			name: "safe transfer to self",
 			setup: func(cur realm) {
 				testing.SetRealm(positionRealm)
@@ -988,6 +981,10 @@ func TestSafeTransferFrom(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			testing.SetRealm(positionRealm)
+			Mint(cross, addr01, tid(1))
+
 			if tt.setup != nil {
 				tt.setup(cross)
 			}

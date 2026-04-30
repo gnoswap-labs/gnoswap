@@ -94,12 +94,8 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - tid: token ID to transfer
 //
 // Returns error if transfer fails.
-// Only callable by staker contract.
 func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
@@ -117,12 +113,8 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 //   - tid: token ID
 //
 // Returns error if transfer fails.
-// Only callable by staker contract.
 func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
