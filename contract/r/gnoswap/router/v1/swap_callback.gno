@@ -5,6 +5,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -71,7 +72,10 @@ func (r *routerV1) transferToPool(token string, amount *u256.Uint, payer address
 	balance := common.BalanceOf(token, payer)
 
 	if u256.NewUintFromInt64(balance).Lt(amount) {
-		panic("insufficient balance in router for callback")
+		panic(makeErrorWithDetails(
+			errInsufficientBalance,
+			ufmt.Sprintf("token=%s, required=%d, available=%d, payer=%s", token, amount.Int64(), balance, payer.String()),
+		))
 	}
 
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
