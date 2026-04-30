@@ -4,13 +4,13 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/tokens/grc721"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/position"
 )
 
 // Mock Position Store
 type mockPositionStore struct {
-	positions *avl.Tree
+	positions *bptree.BPTree
 	nextID    uint64
 }
 
@@ -18,11 +18,11 @@ func (s *mockPositionStore) HasPositionsStoreKey() bool {
 	return false
 }
 
-func (s *mockPositionStore) GetPositions() *avl.Tree {
+func (s *mockPositionStore) GetPositions() *bptree.BPTree {
 	return s.positions
 }
 
-func (s *mockPositionStore) SetPositions(positions *avl.Tree) error {
+func (s *mockPositionStore) SetPositions(positions *bptree.BPTree) error {
 	s.positions = positions
 	return nil
 }
@@ -105,7 +105,7 @@ func newMockPosition() *positionV1 {
 }
 
 func newMockPositionStore() *mockPositionStore {
-	store := &mockPositionStore{positions: avl.NewTree(), nextID: 1}
+	store := &mockPositionStore{positions: bptree.NewBPTreeN(16), nextID: 1}
 	return store
 }
 

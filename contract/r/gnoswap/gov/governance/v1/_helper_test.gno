@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -66,10 +66,10 @@ func createMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
 		configCounter:           governance.NewCounter(),
 		proposalCounter:         governance.NewCounter(),
-		configs:                 avl.NewTree(),
-		proposals:               avl.NewTree(),
-		proposalUserVotingInfos: avl.NewTree(),
-		userProposals:           avl.NewTree(),
+		configs:                 bptree.NewBPTreeN(16),
+		proposals:               bptree.NewBPTreeN(16),
+		proposalUserVotingInfos: bptree.NewBPTreeN(16),
+		userProposals:           bptree.NewBPTreeN(16),
 	}
 }
 

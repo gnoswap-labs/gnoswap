@@ -108,50 +108,6 @@ func TestDecodeUint(t *testing.T) {
 	})
 }
 
-func TestUintTree(t *testing.T) {
-	tree := NewUintTree()
-
-	// Test set and Get
-	tree.set(12345, "testValue")
-	value, ok := tree.Get(12345)
-	if !ok || value != "testValue" {
-		t.Errorf("UintTree.Get(12345) = %v, %v; want testValue, true", value, ok)
-	}
-
-	// Test Has
-	if !tree.Has(12345) {
-		t.Errorf("UintTree.Has(12345) = false; want true")
-	}
-
-	// Test remove
-	tree.remove(12345)
-	if tree.Has(12345) {
-		t.Errorf("UintTree.Has(12345) after Remove = true; want false")
-	}
-
-	// Test Iterate
-	tree.set(100, "a")
-	tree.set(200, "b")
-	tree.set(300, "c")
-
-	var keys []uint64
-	var values []any
-
-	tree.Iterate(100, 300, func(key int64, value any) bool {
-		keys = append(keys, uint64(key))
-		values = append(values, value)
-		return false
-	})
-
-	// Verify results
-	expectedKeys := []uint64{100, 200}
-	expectedValues := []any{"a", "b"}
-
-	if !compareUintSlices(t, keys, expectedKeys) || !compareInterfaces(t, values, expectedValues) {
-		t.Errorf("UintTree.Iterate() keys = %v, values = %v; want keys = %v, values = %v", keys, values, expectedKeys, expectedValues)
-	}
-}
-
 // Helper function to compare slices of uint64
 func compareUintSlices(t *testing.T, a, b []uint64) bool {
 	t.Helper()

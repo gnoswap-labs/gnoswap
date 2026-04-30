@@ -2,7 +2,7 @@ package position
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IPosition interface {
@@ -100,8 +100,8 @@ type IPositionGetter interface {
 
 type IPositionStore interface {
 	HasPositionsStoreKey() bool
-	GetPositions() *avl.Tree
-	SetPositions(positions *avl.Tree) error
+	GetPositions() *bptree.BPTree
+	SetPositions(positions *bptree.BPTree) error
 
 	HasPositionNextIDStoreKey() bool
 	GetPositionNextID() uint64

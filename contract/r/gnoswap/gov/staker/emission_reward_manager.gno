@@ -1,7 +1,7 @@
 package staker
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -12,7 +12,7 @@ var errFailedToCastRewardState = "failed to cast rewardStates's element to *Emis
 // EmissionRewardManager manages the distribution of emission rewards to stakers.
 type EmissionRewardManager struct {
 	// rewardStates maps address to EmissionRewardState for tracking individual staker rewards
-	rewardStates *avl.Tree // address -> EmissionRewardState
+	rewardStates *bptree.BPTree // address -> EmissionRewardState
 
 	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision
 	accumulatedRewardX128PerStake *u256.Uint
@@ -33,7 +33,7 @@ func NewEmissionRewardManager() *EmissionRewardManager {
 		accumulatedTimestamp:          0,
 		totalStakedAmount:             0,
 		distributedAmount:             0,
-		rewardStates:                  avl.NewTree(),
+		rewardStates:                  bptree.NewBPTreeN(16),
 	}
 }
 
@@ -71,7 +71,7 @@ func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardStat
 
 /* Setters */
 
-func (e *EmissionRewardManager) SetRewardStates(rewardStates *avl.Tree) {
+func (e *EmissionRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 	e.rewardStates = rewardStates
 }
 

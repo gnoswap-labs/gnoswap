@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -810,7 +810,7 @@ func setupTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Pro
 
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {
-		gov.store.SetProposalVotingInfos(proposal.ID(), avl.NewTree())
+		gov.store.SetProposalVotingInfos(proposal.ID(), bptree.NewBPTreeN(16))
 	}
 }
 
@@ -835,7 +835,7 @@ func setupTestVotingInfo(t *testing.T, gov *governanceV1, proposalID int64, vote
 	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
 
 	if !exists {
-		votingInfos = avl.NewTree()
+		votingInfos = bptree.NewBPTreeN(16)
 	}
 	votingInfos.Set(voter, votingInfo)
 

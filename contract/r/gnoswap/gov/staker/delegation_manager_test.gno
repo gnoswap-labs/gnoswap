@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -205,10 +205,10 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 
-			// when - convert map to AVL tree
-			userDelegationsTree := avl.NewTree()
+			// when - convert map to BPTree
+			userDelegationsTree := bptree.NewBPTreeN(16)
 			for delegator, delegatees := range tc.delegations {
-				delegateesTree := avl.NewTree()
+				delegateesTree := bptree.NewBPTreeN(16)
 				for delegatee, ids := range delegatees {
 					delegateesTree.Set(delegatee, ids)
 				}
@@ -222,7 +222,7 @@ func TestDelegationManager_SetUserDelegations(t *testing.T) {
 			for delegator, delegatees := range tc.delegations {
 				resultDelegatees, exists := result.Get(delegator)
 				uassert.True(t, exists)
-				resultTree, ok := resultDelegatees.(*avl.Tree)
+				resultTree, ok := resultDelegatees.(*bptree.BPTree)
 				uassert.True(t, ok)
 				uassert.Equal(t, resultTree.Size(), len(delegatees))
 			}

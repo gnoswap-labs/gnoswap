@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -82,7 +82,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 			if !gs.HasConfigsStoreKey() {
-				gs.SetConfigs(avl.NewTree())
+				gs.SetConfigs(bptree.NewBPTreeN(16))
 			}
 
 			testing.SetRealm(tc.callerRealm)
@@ -94,7 +94,7 @@ func TestStore_AuthorizedCallers(t *testing.T) {
 				gs.GetConfig(1)
 			}
 
-			err := gs.SetConfigs(avl.NewTree())
+			err := gs.SetConfigs(bptree.NewBPTreeN(16))
 			if tc.expectedErrorWithWrite {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
@@ -233,7 +233,7 @@ func TestStoreSetAndGetConfigs(t *testing.T) {
 		{
 			name: "set configs successfully",
 			setupFn: func(gs IGovernanceStore) {
-				configs := avl.NewTree()
+				configs := bptree.NewBPTreeN(16)
 				gs.SetConfigs(configs)
 			},
 			testFn: func(t *testing.T, gs IGovernanceStore) {
@@ -288,7 +288,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				configs := avl.NewTree()
+				configs := bptree.NewBPTreeN(16)
 				err := gs.SetConfigs(configs)
 				uassert.NoError(t, err)
 
@@ -321,7 +321,7 @@ func TestStoreSetAndGetConfig(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				configs := avl.NewTree()
+				configs := bptree.NewBPTreeN(16)
 				err := gs.SetConfigs(configs)
 				uassert.NoError(t, err)
 
@@ -364,7 +364,7 @@ func TestStoreSetAndGetProposals(t *testing.T) {
 		{
 			name: "set proposals successfully",
 			setupFn: func(gs IGovernanceStore) {
-				proposals := avl.NewTree()
+				proposals := bptree.NewBPTreeN(16)
 				gs.SetProposals(proposals)
 			},
 			testFn: func(t *testing.T, gs IGovernanceStore) {
@@ -419,7 +419,7 @@ func TestStoreSetAndGetProposal(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				proposals := avl.NewTree()
+				proposals := bptree.NewBPTreeN(16)
 				err := gs.SetProposals(proposals)
 				uassert.NoError(t, err)
 
@@ -475,7 +475,7 @@ func TestStoreSetAndGetProposalUserVotingInfos(t *testing.T) {
 		{
 			name: "set and get proposal user voting infos successfully",
 			setupFn: func(gs IGovernanceStore) {
-				votingInfos := avl.NewTree()
+				votingInfos := bptree.NewBPTreeN(16)
 				gs.SetProposalUserVotingInfos(votingInfos)
 			},
 			testFn: func(t *testing.T, gs IGovernanceStore) {
@@ -540,14 +540,14 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				votingInfos := avl.NewTree()
+				votingInfos := bptree.NewBPTreeN(16)
 				err := gs.SetProposalUserVotingInfos(votingInfos)
 				uassert.NoError(t, err)
 
 				_, exists := gs.GetProposalVotingInfos(1)
 				uassert.False(t, exists, "proposal voting infos for proposal 1 should not exist")
 
-				proposalVotingInfo := avl.NewTree()
+				proposalVotingInfo := bptree.NewBPTreeN(16)
 				proposalVotingInfo.Set("user1", "vote_data")
 
 				err = gs.SetProposalVotingInfos(1, proposalVotingInfo)
@@ -568,7 +568,7 @@ func TestStoreSetAndGetProposalVotingInfos(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				votingInfo := avl.NewTree()
+				votingInfo := bptree.NewBPTreeN(16)
 				err := gs.SetProposalVotingInfos(1, votingInfo)
 				uassert.ErrorContains(t, err, "proposal user voting infos store key not found")
 			},
@@ -593,7 +593,7 @@ func TestStoreSetAndGetUserProposals(t *testing.T) {
 		{
 			name: "set user proposals successfully",
 			setupFn: func(gs IGovernanceStore) {
-				userProposals := avl.NewTree()
+				userProposals := bptree.NewBPTreeN(16)
 				gs.SetUserProposals(userProposals)
 			},
 			testFn: func(t *testing.T, gs IGovernanceStore) {
@@ -646,7 +646,7 @@ func TestStoreGetUserProposalIDs(t *testing.T) {
 		{
 			name: "user with no proposals",
 			setupFn: func(gs IGovernanceStore) {
-				userProposals := avl.NewTree()
+				userProposals := bptree.NewBPTreeN(16)
 				gs.SetUserProposals(userProposals)
 			},
 			verifyFn: func(t *testing.T, gs IGovernanceStore) {
@@ -657,7 +657,7 @@ func TestStoreGetUserProposalIDs(t *testing.T) {
 		{
 			name: "user with multiple proposals",
 			setupFn: func(gs IGovernanceStore) {
-				userProposals := avl.NewTree()
+				userProposals := bptree.NewBPTreeN(16)
 				proposalIDs := []int64{1, 2, 3}
 				userProposals.Set("user1", proposalIDs)
 				gs.SetUserProposals(userProposals)
@@ -695,7 +695,7 @@ func TestStoreAddUserProposal(t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				userProposals := avl.NewTree()
+				userProposals := bptree.NewBPTreeN(16)
 				err := gs.SetUserProposals(userProposals)
 				uassert.NoError(t, err)
 
@@ -751,19 +751,19 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = gs.SetProposalCounter(proposalCounter)
 	uassert.NoError(t, err)
 
-	configs := avl.NewTree()
+	configs := bptree.NewBPTreeN(16)
 	err = gs.SetConfigs(configs)
 	uassert.NoError(t, err)
 
-	proposals := avl.NewTree()
+	proposals := bptree.NewBPTreeN(16)
 	err = gs.SetProposals(proposals)
 	uassert.NoError(t, err)
 
-	votingInfos := avl.NewTree()
+	votingInfos := bptree.NewBPTreeN(16)
 	err = gs.SetProposalUserVotingInfos(votingInfos)
 	uassert.NoError(t, err)
 
-	userProposals := avl.NewTree()
+	userProposals := bptree.NewBPTreeN(16)
 	err = gs.SetUserProposals(userProposals)
 	uassert.NoError(t, err)
 

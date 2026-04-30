@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -28,7 +28,7 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 	return nil, false
 }
 
-func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) {
+func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
 	value, ok := tree.Get(id)
 	if !ok {
 		return nil, false
@@ -95,8 +95,8 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 
 	timeDiff := int64(0)
 
-	// Find unclaimable periods that end before or at incentive start
-	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp(), func(startTimestamp int64, value any) bool {
+	// Find unclaimable periods that end before or at incentive start, reverse iterate is inclusive of the end key
+	self.UnclaimablePeriods().ReverseIterate(0, incentive.StartTimestamp()-1, func(startTimestamp int64, value any) bool {
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")

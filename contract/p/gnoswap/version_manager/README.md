@@ -233,7 +233,7 @@ manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 - Storage access controlled via realm context (`runtime.CurrentRealm()`)
 - No data migration required - all versions share the same storage
 - Type assertions required when retrieving current implementation
-- AVL tree used for efficient initializer storage and lookup
+- Map used for efficient initializer storage and lookup
 
 ## Limitations
 
@@ -245,4 +245,3 @@ manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 ## Related Packages
 
 - `gno.land/p/gnoswap/store`: KVStore with permission-based access control
-- `gno.land/p/nt/avl`: AVL tree for initializer storage

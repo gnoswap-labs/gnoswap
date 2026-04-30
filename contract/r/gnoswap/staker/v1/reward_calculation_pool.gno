@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -17,12 +17,12 @@ var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Pools represents the global pool storage
 type Pools struct {
-	tree *avl.Tree // string poolPath -> pool
+	tree *bptree.BPTree // string poolPath -> pool
 }
 
 func NewPools() *Pools {
 	return &Pools{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTreeN(16),
 	}
 }
 

@@ -76,13 +76,15 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 
 // Admin functions
 
-// CleanStakerDelegationSnapshotByAdmin removes old delegation snapshots.
+// CleanStakerDelegationSnapshotByAdmin removes old delegation snapshots for the
+// total history and the user history of a single target address.
 // Only callable by admin.
 //
 // Parameters:
 //   - threshold: timestamp threshold for cleanup
-func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
-	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold)
+//   - target: user address whose delegation history to clean
+func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target address) {
+	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold, target)
 }
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.

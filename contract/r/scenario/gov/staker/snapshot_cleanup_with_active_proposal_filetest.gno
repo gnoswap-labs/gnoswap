@@ -140,7 +140,7 @@ func createProposal() int64 {
 func cleanupSnapshots(cleanupTime int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	gs.CleanStakerDelegationSnapshotByAdmin(cross, cleanupTime)
+	gs.CleanStakerDelegationSnapshotByAdmin(cross, cleanupTime, aliceAddr)
 	ufmt.Printf("[INFO] cleaned snapshots older than %d\n", cleanupTime)
 	println("[EXPECTED] snapshot cleanup succeeded")
 }

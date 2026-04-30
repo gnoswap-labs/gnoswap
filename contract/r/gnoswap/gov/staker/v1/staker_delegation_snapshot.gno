@@ -3,10 +3,8 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -60,14 +58,13 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 //
 // Parameters:
 //   - snapshotTime: cutoff timestamp (records older than this will be removed)
+//   - target: the user address whose delegation history should be cleaned
 //
 // Panics:
 //   - if caller is not admin
 //   - if snapshotTime is invalid (negative or too recent)
 //   - if active proposals have snapshotTime older than the cleanup threshold
-//
-// Note: This operation is irreversible and will permanently remove historical data
-func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
+func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, target address) {
 	halt.AssertIsNotHaltedGovStaker()
 
 	previousRealm := runtime.PreviousRealm()
@@ -81,13 +78,14 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 	gs.cleanTotalDelegationHistory(snapshotTime)
 
 	// Clean user delegation history
-	gs.cleanUserDelegationHistory(snapshotTime)
+	gs.cleanUserDelegationHistoryForAddress(target, snapshotTime)
 
 	chain.Emit(
 		"CleanStakerDelegationSnapshot",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"snapshotTime", formatInt(snapshotTime),
+		"target", target.String(),
 	)
 }
 
@@ -96,17 +94,12 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) 
 func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
 
-	toTimestamp := cutoffTimestamp
-	if cutoffTimestamp < math.MaxInt64 {
-		toTimestamp = safeAddInt64(toTimestamp, 1)
-	}
-
 	// First, find the most recent entry before cutoff to preserve state
 	var lastValue any
 
 	hasLastValue := false
 
-	history.ReverseIterate(0, toTimestamp, func(timestamp int64, value any) bool {
+	history.ReverseIterate(0, cutoffTimestamp, func(timestamp int64, value any) bool {
 		lastValue = value
 		hasLastValue = true
 
@@ -114,67 +107,69 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(cutoffTimestamp int64) {
 	})
 
 	// If there was a value before cutoff, set it at cutoff time to preserve continuity
-	if hasLastValue {
+	if hasLastValue && !history.Has(cutoffTimestamp) {
 		history.Set(cutoffTimestamp, lastValue)
 	}
 
+	// Collect keys to remove (cannot modify tree during iteration)
+	var keysToRemove []int64
 	history.Iterate(0, cutoffTimestamp, func(timestamp int64, _ any) bool {
-		history.Remove(timestamp)
-
+		keysToRemove = append(keysToRemove, timestamp)
 		return false // continue
 	})
+	for _, key := range keysToRemove {
+		history.Remove(key)
+	}
 
 	if err := gs.store.SetTotalDelegationHistory(history); err != nil {
 		panic(err)
 	}
 }
 
-// cleanUserDelegationHistory removes user delegation history entries older than cutoff time.
-// Structure: address -> *UintTree[timestamp -> int64]
-// Keeps the most recent entry before cutoff for each user to preserve state continuity.
-func (gs *govStakerV1) cleanUserDelegationHistory(cutoffTimestamp int64) {
+// cleanUserDelegationHistoryForAddress removes user delegation history entries
+// older than cutoff time for a single target address.
+// Keeps the most recent entry strictly before cutoff
+// in place so range-based snapshot lookups continue to resolve correctly.
+func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(target address, cutoffTimestamp int64) {
+	if cutoffTimestamp <= 0 {
+		return
+	}
+
 	history := gs.store.GetUserDelegationHistory()
 
-	// Iterate over all users and clean each user's history
-	history.Iterate("", "", func(addrStr string, value any) bool {
-		userHistory := value.(*staker.UintTree)
+	addrStr := target.String()
+	iterationStartKey, _ := userHistoryKeyRange(addrStr)
+	iterationEndKey := makeUserHistoryKey(addrStr, cutoffTimestamp)
 
-		toTimestamp := cutoffTimestamp
-		if cutoffTimestamp < math.MaxInt64 {
-			toTimestamp = safeAddInt64(toTimestamp, 1)
-		}
+	// First, find the most recent entry before cutoff to preserve state
+	var lastValue any
 
-		// Find the most recent entry before cutoff to preserve state
-		var lastValue any
+	hasLastValue := false
 
-		hasLastValue := false
+	history.ReverseIterate(iterationStartKey, iterationEndKey, func(key string, value any) bool {
+		lastValue = value
+		hasLastValue = true
 
-		userHistory.ReverseIterate(0, toTimestamp, func(_ int64, val any) bool {
-			lastValue = val
-			hasLastValue = true
-
-			return true // stop after first (most recent)
-		})
-
-		// If there was a value before cutoff, set it at cutoff time to preserve continuity
-		if hasLastValue {
-			userHistory.Set(cutoffTimestamp, lastValue)
-		}
-
-		// Copy all entries at or after cutoff time
-		userHistory.Iterate(0, cutoffTimestamp, func(key int64, val any) bool {
-			userHistory.Remove(key)
-
-			return false // continue
-		})
-
-		// Only keep users with history entries
-		if userHistory.Size() > 0 {
-			history.Set(addrStr, userHistory)
-		}
-
-		return false // continue to next user
+		return true // stop after first (most recent)
 	})
+
+	if hasLastValue && !history.Has(iterationEndKey) {
+		history.Set(iterationEndKey, lastValue)
+	}
+
+	// Collect all keys strictly before preserveKey within this address prefix.
+	// Iterate's end is exclusive, so [lo, preserveKey) skips the preserved entry.
+	var keysToRemove []string
+
+	history.Iterate(iterationStartKey, iterationEndKey, func(key string, _ any) bool {
+		keysToRemove = append(keysToRemove, key)
+
+		return false
+	})
+
+	for _, key := range keysToRemove {
+		history.Remove(key)
+	}
 
 	if err := gs.store.SetUserDelegationHistory(history); err != nil {
 		panic(err)

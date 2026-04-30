@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"strings"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// UintTree is a wrapper around an AVL tree for storing block timestamps as strings.
+// UintTree is a wrapper around a BPTree for storing block timestamps as strings.
 // Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
 //
 // Methods:
@@ -19,13 +19,13 @@ import (
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockTimestamp -> any
+	tree *bptree.BPTree // blockTimestamp -> any
 }
 
 // NewUintTree creates a new UintTree instance.
 func NewUintTree() *UintTree {
 	return &UintTree{
-		tree: avl.NewTree(),
+		tree: bptree.NewBPTreeN(64),
 	}
 }
 

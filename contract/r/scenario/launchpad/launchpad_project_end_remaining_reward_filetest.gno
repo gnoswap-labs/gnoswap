@@ -29,6 +29,10 @@ import (
 )
 
 var (
+	blockTimeSeconds int64 = 5
+	secondsInDay     int64 = 24 * 60 * 60
+	skipBlocks180Day int64 = 180 * secondsInDay / blockTimeSeconds
+
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
@@ -68,9 +72,9 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Skip blocks to end project")
-	println("[INFO] Project duration is 180 days (7776000 blocks at 5 sec/block)")
-	println("[INFO] Skipping remaining blocks to end project")
-	testing.SkipHeights(7776000)
+	ufmt.Printf("[INFO] Project duration is 180 days (%d blocks at %d sec/block)\n", skipBlocks180Day, blockTimeSeconds)
+	println("[INFO] Skipping 180 days worth of blocks to ensure project ended")
+	testing.SkipHeights(skipBlocks180Day)
 	println()
 
 	println("[SCENARIO] 6. Depositors collect final rewards after project ends")
@@ -258,8 +262,8 @@ func transferRemainingRewards(projectId string) {
 // [INFO] Reward collected: 5000096
 //
 // [SCENARIO] 5. Skip blocks to end project
-// [INFO] Project duration is 180 days (7776000 blocks at 5 sec/block)
-// [INFO] Skipping remaining blocks to end project
+// [INFO] Project duration is 180 days (3110400 blocks at 5 sec/block)
+// [INFO] Skipping 180 days worth of blocks to ensure project ended
 //
 // [SCENARIO] 6. Depositors collect final rewards after project ends
 // [INFO] Alice collecting final reward

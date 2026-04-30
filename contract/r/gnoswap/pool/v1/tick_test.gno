@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
@@ -63,7 +63,7 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 func TestCalculateFeeGrowthInside(t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
-		ticks: avl.NewTree(),
+		ticks: bptree.NewBPTreeN(32),
 	})
 
 	makeTickInfo := func(
@@ -250,7 +250,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 
 func TestTickUpdate(t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
-		ticks: avl.NewTree(),
+		ticks: bptree.NewBPTreeN(32),
 	})
 
 	tests := []struct {
@@ -481,7 +481,7 @@ func TestTickUpdate(t *testing.T) {
 
 func TestTickCross(t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
-		ticks: avl.NewTree(),
+		ticks: bptree.NewBPTreeN(32),
 	})
 
 	// Setup initial tick state
@@ -534,7 +534,7 @@ func TestTickCross(t *testing.T) {
 func TestGetTick(t *testing.T) {
 	pool := &pl.Pool{}
 
-	ticks := avl.NewTree()
+	ticks := bptree.NewBPTreeN(32)
 	tickInfo := mockTickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
