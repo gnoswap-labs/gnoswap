@@ -12,7 +12,6 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 | `calculate_pool_position_reward.gno` | Per-position reward calculation |
 | `mint_stake.gno` | Combined mint + stake flow |
 | `type.gno` | Type definitions |
-| `wrap_unwrap.gno` | Token wrapping utilities |
 
 ## Rules
 
@@ -31,6 +30,7 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - `refunded` flag prevents double-claim on `EndExternalIncentive`. Set atomically.
 - `lastCollectTime` tracked **per incentive** (not shared). Updated only after successful transfer.
 - `rewardPerSecond = totalReward / duration` — integer truncation leaves dust. Verify dust does not accumulate into locked balance.
+- External incentive ending currently refunds reward tokens and the GNS deposit to the explicit `refundAddress` argument, not implicitly to the creator.
 
 ### Warmup
 - Final warmup tier must be `math.MaxInt64`. Finite value → panic when block time passes it.
@@ -47,3 +47,4 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - `lastCollectTime` shared across incentives → wrong reward amounts.
 - `referrer` not forwarded → lost referral attribution.
 - `rewardPerSecond` dust not handled → small balance permanently locked.
+- Documenting incentive refunds as creator-only → wrong operator/admin expectations when `refundAddress` is supplied.

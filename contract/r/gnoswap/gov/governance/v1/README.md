@@ -8,14 +8,14 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 
 ## Configuration
 
-The `governance.Config` type defines the core governance parameters. All values can be modified through governance proposals. This type can be found in the [config.gno](../contract/r/gnoswap/gov/governance/config.gno) file.
+The `governance.Config` type defines the core governance parameters. All values can be modified through governance proposals. This type can be found in [../config.gno](../config.gno).
 
 | Field | Description | Default |
 |-------|-------------|---------|
 | `VotingStartDelay` | Delay before voting starts after proposal creation | 1 day |
 | `VotingPeriod` | Duration for collecting votes | 7 days |
 | `VotingWeightSmoothingDuration` | Period for averaging voting weight (prevents flash loans) | 1 day |
-| `Quorum` | Percentage of active xGNS required for proposal passage | 50% |
+| `Quorum` | Percentage of the proposal's snapshotted maximum voting weight required for passage | 50% |
 | `ProposalCreationThreshold` | Minimum GNS balance required to create a proposal | 1,000 GNS |
 | `ExecutionDelay` | Waiting period after voting ends before execution | 1 day |
 | `ExecutionWindow` | Time window during which an approved proposal can be executed | 30 days |
@@ -29,7 +29,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 ```
 
 1. Stake GNS to receive equal xGNS
-2. Delegate voting power (can be self)
+2. Delegate voting power through the `gov/staker` package (can be self)
 3. Vote on proposals with delegated power
 4. 7-day lockup for undelegation
 
@@ -57,7 +57,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 A proposal is considered valid and executable when:
 - The voting period has ended
-- Total votes meet the quorum threshold (50% of xGNS total supply)
+- Total votes meet the quorum threshold computed from the proposal's snapshotted maximum voting weight
 - `YES` votes strictly exceed `NO` votes (ties do not pass)
 - The execution delay period (configured via `ExecutionDelay` default: 24 hours) has passed after voting ends
 - Within the execution window period (configured via `ExecutionWindow` default: 30 days)
@@ -78,11 +78,11 @@ voteWeight = (snapshot1 + snapshot2) / 2
 ### Quorum Calculation
 
 ```go
-activeXGNS = totalXGNS - launchpadXGNS
-quorumAmount = activeXGNS * quorumPercent / 100  // quorumPercent defaults to 50
+maxVotingWeightSnapshot = averageVotingWeightAtProposalCreation
+quorumAmount = maxVotingWeightSnapshot * quorumPercent / 100  // quorumPercent defaults to 50
 ```
 
-The quorum threshold is calculated based on the `Quorum` percentage (default: 50%) of the active xGNS supply at the time of proposal creation. A proposal passes only when total votes reach quorum and the accumulated `YES` votes strictly exceed the accumulated `NO` votes.
+The quorum threshold is calculated by applying the `Quorum` percentage (default: 50%) to the proposal's snapshotted maximum voting weight at creation time. A proposal passes only when total votes reach quorum and the accumulated `YES` votes strictly exceed the accumulated `NO` votes.
 
 ### Rewards Distribution
 
@@ -95,12 +95,12 @@ userShare = (userXGNS / totalXGNS) * protocolFees
 ## Usage
 
 ```go
-// Stake GNS for xGNS
-Delegate(amount, delegateTo)
+// Through gov/staker: delegate GNS for xGNS voting power
+Delegate(delegateTo, amount, "g1referrer...")
 
 // Create proposal
-ProposeText(title, description, body)
-ProposeCommunityPoolSpend(recipient, amount)
+ProposeText(title, description)
+ProposeCommunityPoolSpend(title, description, recipient, tokenPath, amount)
 ProposeParameterChange(title, description, numToExecute, executions)
 
 // Vote on proposal
@@ -110,8 +110,8 @@ Vote(proposalId, false) // NO
 // Execute after timelock
 Execute(proposalId)
 
-// Undelegate (7-day lockup)
-Undelegate()
+// Through gov/staker: undelegate (7-day lockup)
+Undelegate(delegateTo, amount)
 ```
 
 ## Security
@@ -120,4 +120,4 @@ Undelegate()
 - Sybil resistance through stake weighting
 - Timelock prevents rushed execution
 - Single proposal limit per address
-- Dynamic quorum excludes inactive xGNS
+- Proposal quorum is fixed from the creation-time voting-weight snapshot

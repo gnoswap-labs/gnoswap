@@ -3,7 +3,7 @@ package protocol_fee
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
 //
 // Returns:
-//   - map[string]int64: amounts distributed per token
+//   - amountsByToken: amounts distributed per token
 func DistributeProtocolFee(cur realm) map[string]int64 {
 	return cloneStringInt64Map(getImplementation().DistributeProtocolFee())
 }
@@ -11,7 +11,7 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
 //
 // Parameters:
-//   - pct: percentage (0-100)
+//   - pct: percentage in basis points (0-10000)
 func SetDevOpsPct(cur realm, pct int64) {
 	getImplementation().SetDevOpsPct(pct)
 }
@@ -19,7 +19,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 // SetGovStakerPct sets the percentage of protocol fees allocated to GovStaker.
 //
 // Parameters:
-//   - pct: percentage (0-100)
+//   - pct: percentage in basis points (0-10000)
 func SetGovStakerPct(cur realm, pct int64) {
 	getImplementation().SetGovStakerPct(pct)
 }
@@ -44,46 +44,82 @@ func ClearAccuTransferToGovStaker(cur realm) {
 }
 
 // GetDevOpsPct returns the DevOps fee percentage.
+//
+// Returns:
+//   - pct: DevOps fee percentage (0-100)
 func GetDevOpsPct() int64 {
 	return getImplementation().GetDevOpsPct()
 }
 
 // GetGovStakerPct returns the GovStaker fee percentage.
+//
+// Returns:
+//   - pct: GovStaker fee percentage (0-100)
 func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
 }
 
 // GetTokenListWithAmount returns the list of tokens with their amounts.
+//
+// Returns:
+//   - tokenAmounts: map of token paths to their amounts
 func GetTokenListWithAmount() map[string]int64 {
 	return cloneStringInt64Map(getImplementation().GetTokenListWithAmount())
 }
 
 // GetTokenList returns the list of token paths without amounts.
+//
+// Returns:
+//   - tokenPaths: slice of token paths
 func GetTokenList() []string {
 	return cloneStringSlice(getImplementation().GetTokenList())
 }
 
 // GetAmountOfToken returns the amount of a specific token.
+//
+// Parameters:
+//   - tokenPath: path of the token
+//
+// Returns:
+//   - amount: token amount in the protocol fee pool
 func GetAmountOfToken(tokenPath string) int64 {
 	return getImplementation().GetAmountOfToken(tokenPath)
 }
 
 // GetAccuTransfersToGovStaker returns accumulated transfers to GovStaker.
+//
+// Returns:
+//   - transfers: map of token paths to accumulated amounts
 func GetAccuTransfersToGovStaker() map[string]int64 {
 	return cloneStringInt64Map(getImplementation().GetAccuTransfersToGovStaker())
 }
 
 // GetAccuTransfersToDevOps returns accumulated transfers to DevOps.
+//
+// Returns:
+//   - transfers: map of token paths to accumulated amounts
 func GetAccuTransfersToDevOps() map[string]int64 {
 	return cloneStringInt64Map(getImplementation().GetAccuTransfersToDevOps())
 }
 
 // GetAccuTransferToGovStakerByTokenPath returns accumulated GovStaker transfer for a token.
+//
+// Parameters:
+//   - tokenPath: path of the token
+//
+// Returns:
+//   - amount: accumulated transfer amount
 func GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 	return getImplementation().GetAccuTransferToGovStakerByTokenPath(tokenPath)
 }
 
 // GetAccuTransferToDevOpsByTokenPath returns accumulated DevOps transfer for a token.
+//
+// Parameters:
+//   - tokenPath: path of the token
+//
+// Returns:
+//   - amount: accumulated transfer amount
 func GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return getImplementation().GetAccuTransferToDevOpsByTokenPath(tokenPath)
 }
