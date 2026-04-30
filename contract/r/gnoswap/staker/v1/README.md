@@ -25,9 +25,10 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 
 ### External Rewards (User Incentives)
 - Created for specific pools
-- Constant reward per block
+- Constant reward per second over the configured incentive window
 - Proportional to staked liquidity
-- Unclaimed rewards and the GNS deposit are refunded to the explicit refund address passed when ending the incentive
+- `EndExternalIncentive` refunds the remaining reward balance and the GNS deposit to the explicit refund address
+- Accumulated warmup penalties are collected separately through `CollectExternalIncentivePenalty`
 
 ### Warmup Periods
 Every staked position progresses through warmup periods:
@@ -51,7 +52,10 @@ Collects accumulated rewards without unstaking.
 Creates external reward program for specific pool.
 
 ### `EndExternalIncentive`
-Ends incentive program and returns unused rewards.
+Ends incentive program and refunds remaining rewards to the provided refund address.
+
+### `CollectExternalIncentivePenalty`
+Collects accumulated warmup penalties for an ended incentive to the provided refund address.
 
 ## Reward Calculation Logic
 
@@ -165,6 +169,10 @@ CreateExternalIncentive(
 
 // Collect rewards without unstaking
 CollectReward(123)
+
+// End an incentive and collect remaining penalties
+EndExternalIncentive(poolPath, incentiveId, refundAddress)
+CollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
 
 // Unstake and collect all rewards
 UnStakeToken(123)
