@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -234,7 +234,7 @@ func TestStoreSetAndGetDeposits(t *testing.T) {
 		{
 			name: "set and get deposits successfully",
 			setupFn: func(ss IStakerStore) {
-				deposits := avl.NewTree()
+				deposits := bptree.NewBPTreeN(16)
 				ss.SetDeposits(deposits)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -291,7 +291,7 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 		{
 			name: "set and get external incentives successfully",
 			setupFn: func(ss IStakerStore) {
-				incentives := avl.NewTree()
+				incentives := bptree.NewBPTreeN(16)
 				ss.SetExternalIncentives(incentives)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -337,7 +337,7 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetStakers(t *testing.T) {
+func TestStoreSetAndGetUserDeposits(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFn      func(IStakerStore)
@@ -346,30 +346,30 @@ func TestStoreSetAndGetStakers(t *testing.T) {
 		panicMessage string
 	}{
 		{
-			name: "set and get stakers successfully",
+			name: "set and get user deposits successfully",
 			setupFn: func(ss IStakerStore) {
-				stakers := avl.NewTree()
-				ss.SetStakers(stakers)
+				userDeposits := bptree.NewBPTreeN(16)
+				ss.SetUserDeposits(userDeposits)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasStakersStoreKey(), "should have stakers after setting")
-				retrieved := ss.GetStakers()
+				uassert.True(t, ss.HasUserDepositsStoreKey(), "should have user deposits after setting")
+				retrieved := ss.GetUserDeposits()
 				uassert.NotEqual(t, nil, retrieved)
 			},
 		},
 		{
-			name: "should not have stakers initially",
+			name: "should not have user deposits initially",
 			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasStakersStoreKey(), "should not have stakers initially")
+				uassert.False(t, ss.HasUserDepositsStoreKey(), "should not have user deposits initially")
 			},
 		},
 		{
-			name: "panic when getting uninitialized stakers",
+			name: "panic when getting uninitialized user deposits",
 			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetStakers()
+				ss.GetUserDeposits()
 			},
 			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized stakers",
+			panicMessage: "should panic when getting uninitialized user deposits",
 		},
 	}
 
@@ -632,7 +632,7 @@ func TestStoreSetAndGetPools(t *testing.T) {
 		{
 			name: "set and get pools successfully",
 			setupFn: func(ss IStakerStore) {
-				pools := avl.NewTree()
+				pools := bptree.NewBPTreeN(16)
 				ss.SetPools(pools)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -689,7 +689,7 @@ func TestStoreSetAndGetTokenSpecificMinimumRewards(t *testing.T) {
 		{
 			name: "set and get token specific minimum rewards successfully",
 			setupFn: func(ss IStakerStore) {
-				rewards := avl.NewTree()
+				rewards := make(map[string]int64)
 				ss.SetTokenSpecificMinimumRewards(rewards)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -746,7 +746,7 @@ func TestStoreSetAndGetPoolTierMemberships(t *testing.T) {
 		{
 			name: "set and get pool tier memberships successfully",
 			setupFn: func(ss IStakerStore) {
-				memberships := avl.NewTree()
+				memberships := bptree.NewBPTreeN(16)
 				ss.SetPoolTierMemberships(memberships)
 			},
 			testFn: func(t *testing.T, ss IStakerStore) {
@@ -1330,12 +1330,12 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = ss.SetMinimumRewardAmount(100)
 	uassert.NoError(t, err)
 
-	deposits := avl.NewTree()
+	deposits := bptree.NewBPTreeN(16)
 	err = ss.SetDeposits(deposits)
 	uassert.NoError(t, err)
 
-	stakers := avl.NewTree()
-	err = ss.SetStakers(stakers)
+	userDeposits := bptree.NewBPTreeN(16)
+	err = ss.SetUserDeposits(userDeposits)
 	uassert.NoError(t, err)
 
 	err = ss.SetTotalEmissionSent(50000)
@@ -1351,7 +1351,7 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	uassert.True(t, ss.HasDepositGnsAmountStoreKey())
 	uassert.True(t, ss.HasMinimumRewardAmountStoreKey())
 	uassert.True(t, ss.HasDepositsStoreKey())
-	uassert.True(t, ss.HasStakersStoreKey())
+	uassert.True(t, ss.HasUserDepositsStoreKey())
 	uassert.True(t, ss.HasTotalEmissionSentStoreKey())
 	uassert.True(t, ss.HasAllowedTokensStoreKey())
 	uassert.True(t, ss.HasUnstakingFeeStoreKey())

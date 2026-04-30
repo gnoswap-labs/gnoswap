@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	_ "gno.land/p/gnoswap/rbac"
@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func countDelegationIDs(tree *avl.Tree) int {
+func countDelegationIDs(tree *bptree.BPTree) int {
 	total := 0
 	tree.Iterate("", "", func(_ string, value interface{}) bool {
 		delegationIDs, ok := value.([]int64)
@@ -297,16 +297,15 @@ func TestAddDelegationRecord(t *testing.T) {
 			// Then: Should update user delegation history
 			userHistoryTree := gs.store.GetUserDelegationHistory()
 			var userAmount int64
-			// New structure: address -> *UintTree[timestamp -> int64]
-			if userHistoryRaw, exists := userHistoryTree.Get(delegatee.String()); exists {
-				userHistory := userHistoryRaw.(*staker.UintTree)
-				userHistory.ReverseIterate(0, timestamp+1, func(key int64, value any) bool {
-					if amount, ok := value.(int64); ok {
-						userAmount = amount
-					}
-					return true
-				})
-			}
+			// New structure: single BPTree keyed by composite key "addrStr|paddedTimestamp"
+			lo, _ := userHistoryKeyRange(delegatee.String())
+			hi := makeUserHistoryKey(delegatee.String(), timestamp)
+			userHistoryTree.ReverseIterate(lo, hi, func(_ string, value any) bool {
+				if amount, ok := value.(int64); ok {
+					userAmount = amount
+				}
+				return true
+			})
 			uassert.Equal(t, userAmount, int64(1000))
 		})
 	}

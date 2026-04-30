@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -127,11 +127,11 @@ func (g *governanceV1) removeInactiveUserProposals(proposerAddress address, curr
 }
 
 // Proposal voting info methods
-func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*avl.Tree, bool) {
+func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *avl.Tree) error {
+func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos *bptree.BPTree) error {
 	return g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
 }
 

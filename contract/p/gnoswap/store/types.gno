@@ -1,6 +1,8 @@
 package store
 
-import avl "gno.land/p/nt/avl/v0"
+import (
+	bptree "gno.land/p/nt/bptree/v0"
+)
 
 type Permission uint8
 
@@ -39,8 +41,8 @@ type KVStore interface {
 	// GetAddress retrieves an address value by key
 	GetAddress(key string) (address, error)
 
-	// GetTree retrieves a tree value by key
-	GetTree(key string) (*avl.Tree, error)
+	// GetBPTree retrieves a B+ tree value by key
+	GetBPTree(key string) (*bptree.BPTree, error)
 
 	// Set stores a value with the given key
 	Set(key string, value any) error

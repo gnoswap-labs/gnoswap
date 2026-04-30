@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -64,7 +64,7 @@ func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) sr.TierRatio
 // - CurrentReward: Retrieves the reward for a tier at a specific timestamp.
 // - changeTier: Updates the tier of a pool and recalculates ratios.
 type PoolTier struct {
-	membership *avl.Tree // poolPath -> tier(1, 2, 3)
+	membership *bptree.BPTree // poolPath -> tier(1, 2, 3)
 
 	tierRatio sr.TierRatio
 
@@ -95,7 +95,7 @@ type PoolTier struct {
 // - *PoolTier: The new PoolTier instance.
 func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
 	result := &PoolTier{
-		membership:               avl.NewTree(),
+		membership:               bptree.NewBPTreeN(16),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
 		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),
 		getEmission:              getEmission,
@@ -109,7 +109,7 @@ func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmi
 }
 
 func NewPoolTierBy(
-	membership *avl.Tree,
+	membership *bptree.BPTree,
 	tierRatio sr.TierRatio,
 	counts [AllTierCount]uint64,
 	lastRewardCacheTimestamp int64,
