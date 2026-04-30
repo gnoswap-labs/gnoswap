@@ -165,9 +165,7 @@ func mintAndStakeMultiplePositions() {
 			"1",
 			"1",
 			maxTimeout,
-			adminAddr,
-			adminAddr,
-			"",
+			adminAddr.String(),
 		)
 
 		if i <= 5 || i == 50 {

@@ -102,10 +102,10 @@ func initPoolsWithDifferentFees() {
 
 	// Add same liquidity to all pools for fair comparison
 	liquidityAmount := "100000000000"
-	pn.Mint(cross, barPath, fooPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	pn.Mint(cross, barPath, fooPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	pn.Mint(cross, barPath, fooPath, fee100, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee500, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee3000, -9960, 9960, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, "")
+	pn.Mint(cross, barPath, fooPath, fee10000, -10000, 10000, liquidityAmount, liquidityAmount, "0", "0", time.Now().Unix()+3600, "")
 }
 
 func testFeeCalculation100() {

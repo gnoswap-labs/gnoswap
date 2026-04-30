@@ -148,9 +148,7 @@ func createPoolAndPosition() {
 		"1",
 		"1",
 		max_timeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[EXPECTED] Position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
@@ -266,9 +264,7 @@ func newUserStakes() {
 		"1",
 		"1",
 		max_timeout,
-		user1Addr,
-		user1Addr,
-		"",
+		user1Addr.String(),
 	)
 
 	// Stake triggers cache update

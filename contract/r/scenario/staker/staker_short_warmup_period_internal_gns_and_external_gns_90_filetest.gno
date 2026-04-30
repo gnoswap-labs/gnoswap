@@ -140,9 +140,7 @@ func mintBarQux100_1() {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
-		adminUser,
-		"",
+		adminUser.String(),
 	)
 
 	if positionId != 1 {

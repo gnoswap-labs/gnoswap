@@ -191,9 +191,7 @@ func user1MintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		user1Addr,
-		user1Addr,
-		"",
+		user1Addr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
@@ -221,9 +219,7 @@ func user2MintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
-		user2Addr,
-		"",
+		user2Addr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
@@ -279,9 +275,7 @@ func user3MintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		user3Addr,
-		user3Addr,
-		"",
+		user3Addr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))

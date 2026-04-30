@@ -217,8 +217,6 @@ func TestMint(t *testing.T) {
 		amount0Min     string
 		amount1Min     string
 		deadline       int64
-		mintTo         address
-		caller         address
 		referrer       string
 		callerRealm    runtime.Realm
 	}{
@@ -240,8 +238,6 @@ func TestMint(t *testing.T) {
 			amount0Min:     "900000",
 			amount1Min:     "900000",
 			deadline:       9999999999,
-			mintTo:         "gno1...",
-			caller:         "gno1...",
 			referrer:       "",
 			callerRealm:    testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
@@ -258,7 +254,7 @@ func TestMint(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Mint(cross, tt.token0, tt.token1, tt.fee, tt.tickLower, tt.tickUpper, tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min, tt.deadline, tt.mintTo, tt.caller, tt.referrer)
+		Mint(cross, tt.token0, tt.token1, tt.fee, tt.tickLower, tt.tickUpper, tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min, tt.deadline, tt.referrer)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)

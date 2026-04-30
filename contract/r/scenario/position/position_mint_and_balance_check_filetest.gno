@@ -153,8 +153,6 @@ func mintAlicePosition() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -182,8 +180,6 @@ func mintBobPosition() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		bobAddr,
-		bobAddr,
 		"",
 	)
 

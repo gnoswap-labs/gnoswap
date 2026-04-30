@@ -70,7 +70,7 @@ func main() {
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)

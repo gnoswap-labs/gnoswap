@@ -59,7 +59,7 @@ func main() {
 	baz.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, "")
 
 	println("[INFO] Approving tokens for swap")
 	bar.Approve(cross, routerAddr, 1000000)

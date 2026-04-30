@@ -111,15 +111,15 @@ func initPools() {
 	baz.Approve(cross, poolAddr, INT64_MAX)
 
 	// Add concentrated liquidity around current price
-	position.Mint(cross, barPath, fooPath, fee500, -100, 100, "10000000000", "10000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	position.Mint(cross, barPath, fooPath, fee500, -1000, 1000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
-	position.Mint(cross, barPath, fooPath, fee500, -10000, 10000, "100000000000", "100000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	position.Mint(cross, barPath, fooPath, fee500, -100, 100, "10000000000", "10000000000", "0", "0", time.Now().Unix()+3600, "")
+	position.Mint(cross, barPath, fooPath, fee500, -1000, 1000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, "")
+	position.Mint(cross, barPath, fooPath, fee500, -10000, 10000, "100000000000", "100000000000", "0", "0", time.Now().Unix()+3600, "")
 
 	// Add liquidity to 0.3% pool
-	position.Mint(cross, barPath, fooPath, fee3000, -6000, 6000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	position.Mint(cross, barPath, fooPath, fee3000, -6000, 6000, "50000000000", "50000000000", "0", "0", time.Now().Unix()+3600, "")
 
 	// Add liquidity for multi-hop
-	position.Mint(cross, fooPath, bazPath, fee500, -5000, 5000, "30000000000", "30000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	position.Mint(cross, fooPath, bazPath, fee500, -5000, 5000, "30000000000", "30000000000", "0", "0", time.Now().Unix()+3600, "")
 
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, routerAddr, INT64_MAX)

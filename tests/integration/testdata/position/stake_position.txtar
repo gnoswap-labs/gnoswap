@@ -133,7 +133,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/
 # stdout 'data: \(true bool\)'
 
 # Mint position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args "5000000" -args "5000000" -args "1" -args "1" -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args "5000000" -args "5000000" -args "1" -args "1" -args 9999999999 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 'OK!'
 # stdout 'GAS USED:   8[0-9]{7}'
 # stdout 'STORAGE DELTA:  5[0-9]{4} bytes'

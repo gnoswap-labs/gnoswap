@@ -137,9 +137,7 @@ func testInitialTierInternalRewards() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
@@ -252,9 +250,7 @@ func testInitialTierExternalRewards() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))

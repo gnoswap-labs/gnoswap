@@ -128,9 +128,7 @@ func mintAndStakePosition() uint64 {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
-		adminUser,
-		"",
+		adminUser.String(),
 	)
 
 	ufmt.Printf("[INFO] Minted position %d with liquidity %s\n", positionId, liquidity)

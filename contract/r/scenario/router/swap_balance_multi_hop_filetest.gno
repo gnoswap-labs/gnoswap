@@ -182,17 +182,17 @@ func setupPoolsAndPositions() BalanceSnapshot {
 	// Create Pool 1: BAR-FOO
 	println("[INFO] Creating BAR-FOO pool")
 	pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, barPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, userAddr, "")
+	pn.Mint(cross, barPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, "")
 
 	// Create Pool 2: FOO-BAZ
 	println("[INFO] Creating FOO-BAZ pool")
 	pl.CreatePool(cross, bazPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, userAddr, "")
+	pn.Mint(cross, bazPath, fooPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, "")
 
 	// Create Pool 3: BAZ-QUX
 	println("[INFO] Creating BAZ-QUX pool")
 	pl.CreatePool(cross, bazPath, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-	pn.Mint(cross, bazPath, quxPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, userAddr, userAddr, "")
+	pn.Mint(cross, bazPath, quxPath, fee500, int32(-10000), int32(10000), "100000000000", "100000000000", "0", "0", max_timeout, "")
 
 	println("[INFO] All pools and positions created")
 

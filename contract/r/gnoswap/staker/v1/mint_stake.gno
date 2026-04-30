@@ -2,10 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-
-	prbac "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 
 	pn "gno.land/r/gnoswap/position"
@@ -46,9 +42,7 @@ func (s *stakerV1) MintAndStake(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
-	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-
-	positionId, liquidity, amount0, amount1 := pn.Mint(
+	positionId, liquidity, amount0, amount1 := pn.MintFromStaker(
 		cross,
 		token0,
 		token1,
@@ -60,7 +54,6 @@ func (s *stakerV1) MintAndStake(
 		amount0Min,
 		amount1Min,
 		deadline,
-		stakerAddr,
 		runtime.PreviousRealm().Address(),
 		referrer,
 	)

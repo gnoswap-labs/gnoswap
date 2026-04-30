@@ -119,8 +119,6 @@ func testSingleTickRange() {
 		"0",
 		"0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -150,8 +148,6 @@ func testMultipleUltraTightPositions() {
 		"500000000",
 		"0", "0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -166,8 +162,6 @@ func testMultipleUltraTightPositions() {
 		"500000000",
 		"0", "0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -200,8 +194,6 @@ func testLargeAmountsMinimalRange() {
 		"0",
 		"0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -230,8 +222,6 @@ func testLiquidityPrecision() {
 		baseAmount,
 		"0", "0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -246,8 +236,6 @@ func testLiquidityPrecision() {
 		baseAmount,
 		"0", "0",
 		9999999999,
-		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

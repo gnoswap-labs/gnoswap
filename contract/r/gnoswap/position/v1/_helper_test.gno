@@ -233,8 +233,6 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 			"0",
 			"0",
 			max_timeout,
-			adminAddr,
-			adminAddr,
 			"",
 		)
 	}(cross)
@@ -518,8 +516,6 @@ func mockInstanceMint(
 			amount0Min,
 			amount1Min,
 			deadline,
-			mintTo,
-			caller,
 			referrer,
 		)
 	}(cross)

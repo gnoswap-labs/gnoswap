@@ -231,9 +231,7 @@ func mintPos01InRange() {
 		"0",
 		"0",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[EXPECTED] position ID: %d, liquidity: %s\n", positionId, liquidity)
@@ -274,9 +272,7 @@ func mintPositions02To06() {
 		"0",
 		"0",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	testing.SkipHeights(1)
@@ -299,9 +295,7 @@ func mintPositions02To06() {
 			"0",
 			"0",
 			maxTimeout,
-			adminAddr,
-			adminAddr,
-			"",
+			adminAddr.String(),
 		)
 
 		testing.SkipHeights(1)
@@ -558,4 +552,3 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
-

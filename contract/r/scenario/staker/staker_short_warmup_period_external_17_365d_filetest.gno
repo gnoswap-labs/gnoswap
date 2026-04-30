@@ -115,12 +115,10 @@ func mintBarBaz3000_1_4() {
 	bar.Approve(cross, poolAddr, maxInt64)
 	baz.Approve(cross, poolAddr, maxInt64)
 
-	anoAdmin := adminUser
-
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
-	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
+	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, "")
+	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, "")
+	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, "")
+	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, "")
 	testing.SkipHeights(1)
 
 	t1Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(1))

@@ -169,9 +169,7 @@ func userACreatePosition() {
 		"1",
 		"1",
 		maxTimeout,
-		user1Addr,
-		user1Addr,
-		"",
+		user1Addr.String(),
 	)
 	positionA = uint64(positionId)
 
@@ -229,9 +227,7 @@ func userBCreatePosition() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
-		user2Addr,
-		"",
+		user2Addr.String(),
 	)
 	positionB = uint64(positionId)
 

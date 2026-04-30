@@ -90,7 +90,7 @@ func testPositionMint() {
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross, barPath, bazPath, FEE_MEDIUM,
 		int32(-887220), int32(887220), "100000000", "100000000",
-		"0", "0", max_timeout, adminAddr, adminAddr, "",
+		"0", "0", max_timeout, "",
 	)
 
 	println("[INFO] Minting result - liquidity:", liquidity)

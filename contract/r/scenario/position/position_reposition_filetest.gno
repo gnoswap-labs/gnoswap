@@ -116,8 +116,6 @@ func mintInitialPosition() {
 		"0",
 		"0",
 		9999999999,
-		adminAddr,
-		adminAddr,
 		"",
 	)
 

@@ -64,9 +64,9 @@ func main() {
 	qux.Approve(cross, poolAddr, maxApprove)
 
 	println("[INFO] Minting positions in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, "")
 	println("[INFO] Minting positions in baz-qux pool")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, "")
 
 	println("[INFO] Executing test scenarios")
 	println()

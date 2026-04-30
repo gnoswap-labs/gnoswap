@@ -133,10 +133,8 @@ func testMintPositionWithGnot() {
 		"100000000",  // amount1Desired (GNOT - will be wrapped)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout,  // deadline
-		userAddr,     // recipient
-		userAddr,     // operator
-		"",           // hookData
+		max_timeout, // deadline
+		"",
 	)
 
 	// Check balances after mint

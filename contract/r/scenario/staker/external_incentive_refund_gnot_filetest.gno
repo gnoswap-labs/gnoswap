@@ -134,9 +134,7 @@ func mintPosition() {
 		"0",
 		"0",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 
 	ufmt.Printf("[INFO] position ID: %d\n", tokenId)

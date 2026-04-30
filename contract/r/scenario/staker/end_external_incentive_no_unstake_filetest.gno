@@ -199,9 +199,7 @@ func userMintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		userAddr,
-		userAddr,
-		"",
+		userAddr.String(),
 	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))

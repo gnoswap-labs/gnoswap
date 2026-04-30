@@ -160,9 +160,7 @@ func mintBarQuxPosition01() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 }
 
@@ -187,9 +185,7 @@ func mintBarQuxPosition02() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
+		adminAddr.String(),
 	)
 }
 

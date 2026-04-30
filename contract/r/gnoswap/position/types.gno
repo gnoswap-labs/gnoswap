@@ -22,7 +22,20 @@ type IPositionManager interface {
 		amount0Min string,
 		amount1Min string,
 		deadline int64,
-		mintTo address,
+		referrer string,
+	) (uint64, string, string, string)
+
+	MintFromStaker(
+		token0 string,
+		token1 string,
+		fee uint32,
+		tickLower int32,
+		tickUpper int32,
+		amount0Desired string,
+		amount1Desired string,
+		amount0Min string,
+		amount1Min string,
+		deadline int64,
 		caller address,
 		referrer string,
 	) (uint64, string, string, string)
