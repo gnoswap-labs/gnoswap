@@ -49,10 +49,6 @@ Only callable by emission contract.
 Mints new tokens per emission schedule. Only callable by emission contract.
 Calculates tokens to mint based on elapsed time and updates halving year state.
 
-### `Burn`
-
-Burns tokens from supply.
-
 ## Usage
 
 ```go

@@ -11,7 +11,7 @@ func DistributeProtocolFee(cur realm) {
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
 //
 // Parameters:
-//   - pct: percentage (0-100)
+//   - pct: percentage in basis points (0-10000)
 func SetDevOpsPct(cur realm, pct int64) {
 	getImplementation().SetDevOpsPct(pct)
 }
@@ -19,7 +19,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 // SetGovStakerPct sets the percentage of protocol fees allocated to GovStaker.
 //
 // Parameters:
-//   - pct: percentage (0-100)
+//   - pct: percentage in basis points (0-10000)
 func SetGovStakerPct(cur realm, pct int64) {
 	getImplementation().SetGovStakerPct(pct)
 }
