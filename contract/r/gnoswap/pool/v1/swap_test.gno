@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -341,6 +341,60 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 			t.Logf("✓ %s: %s", test.description, test.engineContext)
 		})
 	}
+}
+
+func TestSwap_TickTransitionLiquidityBoundary(t *testing.T) {
+	maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
+
+	t.Run("tick crossing can raise active liquidity to uint128 max", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+		state := SwapState{
+			amountSpecifiedRemaining: i256.Zero(),
+			amountCalculated:         i256.Zero(),
+			sqrtPriceX96:             pool.Slot0SqrtPriceX96(),
+			tick:                     0,
+			feeGrowthGlobalX128:      u256.Zero(),
+			protocolFee:              u256.Zero(),
+			liquidity:                new(u256.Uint).Sub(maxUint128, u256.One()),
+		}
+		cache := &SwapCache{}
+
+		setMockPoolTick(pool, 1, mockTickInfo{
+			liquidityGross: u256.One(),
+			liquidityNet:   i256.One(),
+			initialized:    true,
+		})
+
+		step := StepComputations{initialized: true, tickNext: 1}
+		newState := getMockInstance().tickTransition(step, false, state, pool, cache)
+
+		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
+	})
+
+	t.Run("tick crossing panics when active liquidity would exceed uint128 max", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+		state := SwapState{
+			amountSpecifiedRemaining: i256.Zero(),
+			amountCalculated:         i256.Zero(),
+			sqrtPriceX96:             pool.Slot0SqrtPriceX96(),
+			tick:                     0,
+			feeGrowthGlobalX128:      u256.Zero(),
+			protocolFee:              u256.Zero(),
+			liquidity:                maxUint128.Clone(),
+		}
+		cache := &SwapCache{}
+
+		setMockPoolTick(pool, 1, mockTickInfo{
+			liquidityGross: u256.One(),
+			liquidityNet:   i256.One(),
+			initialized:    true,
+		})
+
+		step := StepComputations{initialized: true, tickNext: 1}
+		uassert.PanicsContains(t, "result exceeds uint128 range", func() {
+			getMockInstance().tickTransition(step, false, state, pool, cache)
+		})
+	})
 }
 
 func TestDrySwap_ValidationAndFailures(t *testing.T) {
@@ -1043,8 +1097,8 @@ func createMockLiquidityPool() *pl.Pool {
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
 		tickBitmaps:          make(map[int16]string),
-		ticks:                avl.NewTree(),
-		positions:            avl.NewTree(),
+		ticks:                bptree.NewBPTreeN(32),
+		positions:            bptree.NewBPTreeN(16),
 	})
 
 	wordPos, _ := tickBitmapPosition(0)
@@ -1339,7 +1393,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone())
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{

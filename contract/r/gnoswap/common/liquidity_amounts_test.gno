@@ -526,6 +526,15 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 			expectedAmount0: "875000",
 			expectedAmount1: "0",
 		},
+		{
+			name:            "Max uint128 liquidity at lower bound stays computable",
+			sqrtRatioX96:    q96,
+			sqrtRatioAX96:   q96,
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(2)),
+			liquidity:       u256.MustFromDecimal(MAX_UINT128),
+			expectedAmount0: "170141183460469231731687303715884105727",
+			expectedAmount1: "0",
+		},
 	}
 
 	for _, tt := range tests {

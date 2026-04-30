@@ -86,7 +86,7 @@ func (r *routerV1) handleSwapFee(
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
+	common.SafeGRC20Approve(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
 

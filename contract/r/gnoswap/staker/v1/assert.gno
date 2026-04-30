@@ -89,15 +89,7 @@ func assertIsValidPoolTier(tier uint64) {
 func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
 	minReward := s.getMinimumRewardAmount()
 
-	if minRewardI, found := s.store.GetTokenSpecificMinimumRewards().Get(rewardToken); found {
-		minRewardInt64, ok := minRewardI.(int64)
-		if !ok {
-			panic(makeErrorWithDetails(
-				errInvalidInput,
-				ufmt.Sprintf("rewardToken(%s) is not int64", rewardToken),
-			))
-		}
-
+	if minRewardInt64, found := s.store.GetTokenSpecificMinimumRewards()[rewardToken]; found {
 		minReward = minRewardInt64
 	}
 

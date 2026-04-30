@@ -3,7 +3,7 @@ package v1
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/protocol_fee"
@@ -657,14 +657,14 @@ func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
-		verifyFn func(t *testing.T, tree *avl.Tree)
+		verifyFn func(t *testing.T, tree *bptree.BPTree)
 	}{
 		{
 			name: "success - get empty tree",
 			setupFn: func() *protocolFeeState {
 				return newProtocolFeeStateInternal(t)
 			},
-			verifyFn: func(t *testing.T, tree *avl.Tree) {
+			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
 				uassert.NotNil(t, tree)
 				uassert.Equal(t, tree.Size(), 0)
 			},
@@ -677,7 +677,7 @@ func TestProtocolFeeState_AccuToGovStaker(t *testing.T) {
 				pfs.store.SetAccuToGovStakerItem("token2", 2000)
 				return pfs
 			},
-			verifyFn: func(t *testing.T, tree *avl.Tree) {
+			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
 				uassert.NotNil(t, tree)
 				uassert.Equal(t, tree.Size(), 2)
 			},
@@ -697,14 +697,14 @@ func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeState
-		verifyFn func(t *testing.T, tree *avl.Tree)
+		verifyFn func(t *testing.T, tree *bptree.BPTree)
 	}{
 		{
 			name: "success - get empty tree",
 			setupFn: func() *protocolFeeState {
 				return newProtocolFeeStateInternal(t)
 			},
-			verifyFn: func(t *testing.T, tree *avl.Tree) {
+			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
 				uassert.NotNil(t, tree)
 				uassert.Equal(t, tree.Size(), 0)
 			},
@@ -717,7 +717,7 @@ func TestProtocolFeeState_AccuToDevOps(t *testing.T) {
 				pfs.store.SetAccuToDevOpsItem("token2", 1500)
 				return pfs
 			},
-			verifyFn: func(t *testing.T, tree *avl.Tree) {
+			verifyFn: func(t *testing.T, tree *bptree.BPTree) {
 				uassert.NotNil(t, tree)
 				uassert.Equal(t, tree.Size(), 2)
 			},

@@ -56,13 +56,12 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0Int64 := safeConvertToInt64(fee0)
 	fee1Int64 := safeConvertToInt64(fee1)
 
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	common.SafeGRC20Approve(cross, token0Path, protocolFeeAddr, fee0Int64)
+	common.SafeGRC20Approve(cross, token1Path, protocolFeeAddr, fee1Int64)
+
 	pf.AddToProtocolFee(cross, token0Path, fee0Int64)
 	pf.AddToProtocolFee(cross, token1Path, fee1Int64)
-
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-
-	common.SafeGRC20Transfer(cross, token0Path, protocolFeeAddr, fee0Int64)
-	common.SafeGRC20Transfer(cross, token1Path, protocolFeeAddr, fee1Int64)
 	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
 

@@ -88,8 +88,8 @@ func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, ma
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
-	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold)
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
+	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold, target)
 }
 
 func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
@@ -98,10 +98,6 @@ func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {
 
 func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return t.instance.GetUnDelegationLockupPeriod()
-}
-
-func (t *TestGovStaker) GetEmissionRewardBalance() int64 {
-	return t.instance.GetEmissionRewardBalance()
 }
 
 func (t *TestGovStaker) GetDelegationCount() int {

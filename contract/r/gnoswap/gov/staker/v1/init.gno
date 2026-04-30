@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -24,13 +24,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 	// Initialize basic configuration
 	if !store.HasUnDelegationLockupPeriodStoreKey() {
 		err := store.SetUnDelegationLockupPeriod(int64(7 * 24 * 60 * 60)) // 7 days default
-		if err != nil {
-			return err
-		}
-	}
-
-	if !store.HasEmissionRewardBalanceStoreKey() {
-		err := store.SetEmissionRewardBalance(int64(0))
 		if err != nil {
 			return err
 		}
@@ -59,7 +52,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 	}
 
 	if !store.HasDelegationsStoreKey() {
-		err := store.SetDelegations(avl.NewTree())
+		err := store.SetDelegations(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
@@ -75,7 +68,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 
 	// Initialize user delegation history (address -> *UintTree[timestamp -> int64])
 	if !store.HasUserDelegationHistoryStoreKey() {
-		err := store.SetUserDelegationHistory(avl.NewTree())
+		err := store.SetUserDelegationHistory(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

@@ -303,6 +303,35 @@ func TestGetPositionTokenBalances(t *testing.T) {
 	}
 }
 
+func TestGetPositionTokenBalances_LiquidityBoundaries(t *testing.T) {
+	t.Run("large bounded stored liquidity remains readable", func(t *testing.T) {
+		setupPositionGetter(t)
+		positionId := uint64(1)
+
+		pos := mockInstance.mustGetPosition(positionId)
+		pos.SetLiquidity("1000000000000")
+		mockInstance.mustUpdatePosition(positionId, *pos)
+
+		balance0, balance1 := mockInstance.GetPositionTokenBalances(positionId)
+		uassert.True(t, balance0 >= 0)
+		uassert.True(t, balance1 >= 0)
+		uassert.True(t, balance0 != 0 || balance1 != 0)
+	})
+
+	t.Run("maxLiquidityPerTick-sized stored liquidity fails at int64 conversion, not earlier", func(t *testing.T) {
+		setupPositionGetter(t)
+		positionId := uint64(1)
+
+		pos := mockInstance.mustGetPosition(positionId)
+		pos.SetLiquidity(u256.MustFromDecimal("1917569901783203986719870431555990").ToString())
+		mockInstance.mustUpdatePosition(positionId, *pos)
+
+		uassert.PanicsContains(t, "overflows int64 range", func() {
+			mockInstance.GetPositionTokenBalances(positionId)
+		})
+	})
+}
+
 func TestGetPositionExistence(t *testing.T) {
 	testCases := []struct {
 		name       string
@@ -595,6 +624,41 @@ func TestGetUnclaimedFeeUsesMulDivForLargeIntermediateProduct(t *testing.T) {
 
 	uassert.Equal(t, expectedFee0.ToString(), fee0.ToString())
 	uassert.Equal(t, "0", fee1.ToString())
+}
+
+func TestGetUnclaimedFeeReconstructsWrappedInsideGrowth(t *testing.T) {
+	setupPositionGetter(t)
+
+	position := mockInstance.mustGetPosition(1)
+	position.SetLiquidity(q128.ToString())
+	position.SetFeeGrowthInside0LastX128("0")
+	position.SetFeeGrowthInside1LastX128("0")
+	mockInstance.mustUpdatePosition(1, *position)
+
+	storedPool := mustGetStoredTestPool(position.PoolKey())
+	storedPool.SetFeeGrowthGlobal0X128(u256.NewUint(15))
+	storedPool.SetFeeGrowthGlobal1X128(u256.NewUint(15))
+
+	lowerTick, err := storedPool.GetTick(position.TickLower())
+	if err != nil {
+		t.Fatalf("failed to get lower tick: %v", err)
+	}
+	lowerTick.SetFeeGrowthOutside0X128(maxUint256Minus3)
+	lowerTick.SetFeeGrowthOutside1X128(maxUint256Minus2)
+	storedPool.SetTick(position.TickLower(), lowerTick)
+
+	upperTick, err := storedPool.GetTick(position.TickUpper())
+	if err != nil {
+		t.Fatalf("failed to get upper tick: %v", err)
+	}
+	upperTick.SetFeeGrowthOutside0X128("3")
+	upperTick.SetFeeGrowthOutside1X128("5")
+	storedPool.SetTick(position.TickUpper(), upperTick)
+
+	fee0, fee1 := mockInstance.GetUnclaimedFee(1)
+
+	uassert.Equal(t, "16", fee0.ToString())
+	uassert.Equal(t, "13", fee1.ToString())
 }
 
 func TestMustGetPositionPanic(t *testing.T) {

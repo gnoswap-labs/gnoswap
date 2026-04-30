@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -12,7 +12,7 @@ import (
 // rewards for deposits associated with a project tier.
 //
 // Fields:
-// - rewards (avl.Tree): A map of deposit IDs to their associated reward states.
+// - rewards (bptree.BPTree): A map of deposit IDs to their associated reward states.
 // - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
 // - accumulatedRewardPerDepositX128 (u256.Uint): The accumulated reward per GNS stake, represented as a Q128 fixed-point number.
 // - totalDistributeAmount (int64): The total amount of tokens to be distributed.
@@ -22,7 +22,7 @@ import (
 // - accumulatedDistributeAmount (int64): The accumulated amount of tokens distributed.
 // - rewardClaimableDuration (int64): The duration of reward claimable.
 type RewardManager struct {
-	rewards *avl.Tree // depositId -> RewardState
+	rewards *bptree.BPTree // depositId -> RewardState
 
 	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
 	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
@@ -37,12 +37,12 @@ type RewardManager struct {
 }
 
 // Rewards returns the rewards tree of the reward manager.
-func (rm *RewardManager) Rewards() *avl.Tree {
+func (rm *RewardManager) Rewards() *bptree.BPTree {
 	return rm.rewards
 }
 
 // SetRewards sets the rewards tree of the reward manager.
-func (rm *RewardManager) SetRewards(rewards *avl.Tree) {
+func (rm *RewardManager) SetRewards(rewards *bptree.BPTree) {
 	rm.rewards = rewards
 }
 
@@ -137,7 +137,7 @@ func (rm *RewardManager) SetRewardClaimableDuration(duration int64) {
 }
 
 func (rm RewardManager) Clone() *RewardManager {
-	rewardsTree := avl.NewTree()
+	rewardsTree := bptree.NewBPTreeN(16)
 	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
 		rewardState, ok := value.(*RewardState)
 		if !ok {
@@ -178,6 +178,6 @@ func NewRewardManager(
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),
 		rewardClaimableDuration:         rewardCollectableDuration,
-		rewards:                         avl.NewTree(),
+		rewards:                         bptree.NewBPTreeN(16),
 	}
 }

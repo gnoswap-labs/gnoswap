@@ -289,8 +289,8 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(t *testing
 			description: "BUG FIX: Active incentive should be found even when inactive incentive appears first in tree iteration",
 			setup: func(t *testing.T, pool *sr.Pool, currentTime int64) {
 				// Execution flow (after fix):
-				// 1. Create incentive "a_ended" (ID starts with 'a', appears first in AVL tree)
-				// 2. Create incentive "b_active" (ID starts with 'b', appears second in AVL tree)
+				// 1. Create incentive "a_ended" (ID starts with 'a', appears first in tree)
+				// 2. Create incentive "b_active" (ID starts with 'b', appears second in tree)
 				// 3. IsExternallyIncentivizedPool iterates over incentives
 				// 4. First: "a_ended" -> isActive() = false -> continue (returns false)
 				// 5. Second: "b_active" -> isActive() = true -> hasActive = true, break (returns true)

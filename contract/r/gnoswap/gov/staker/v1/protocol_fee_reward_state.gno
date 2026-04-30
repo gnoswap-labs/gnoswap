@@ -140,10 +140,10 @@ func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64) {
 //
 // Returns:
 //   - map[string]int64: map of token path to claimed reward amount
-//   - error: nil on success, error if claiming is not allowed
+//   - error: nil on success, error if reward debt is stale
 func (p *ProtocolFeeRewardStateResolver) claimRewards(currentTimestamp int64) (map[string]int64, error) {
 	if !p.IsClaimable(currentTimestamp) {
-		return nil, errors.New("not claimable")
+		return make(map[string]int64), nil
 	}
 
 	if p.GetAccumulatedTimestamp() < currentTimestamp {

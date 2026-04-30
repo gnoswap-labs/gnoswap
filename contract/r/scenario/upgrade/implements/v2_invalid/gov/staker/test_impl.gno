@@ -96,13 +96,6 @@ func (t *TestGovStaker) GetUnDelegationLockupPeriod() int64 {
 	return t.instance.GetUnDelegationLockupPeriod()
 }
 
-func (t *TestGovStaker) GetEmissionRewardBalance() int64 {
-	if !t.isActive("GetEmissionRewardBalance") {
-		panic("test implementation: GetEmissionRewardBalance not supported")
-	}
-	return t.instance.GetEmissionRewardBalance()
-}
-
 func (t *TestGovStaker) GetTotalxGnsSupply() int64 {
 	if !t.isActive("GetTotalxGnsSupply") {
 		panic("test implementation: GetTotalxGnsSupply not supported")
@@ -293,11 +286,11 @@ func (t *TestGovStaker) GetEmissionAccumulatedTimestamp() int64 {
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
 	if !t.isActive("CleanStakerDelegationSnapshotByAdmin") {
 		panic("test implementation: CleanStakerDelegationSnapshotByAdmin not supported")
 	}
-	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold)
+	t.instance.CleanStakerDelegationSnapshotByAdmin(threshold, target)
 }
 
 func (t *TestGovStaker) SetUnDelegationLockupPeriodByAdmin(period int64) {

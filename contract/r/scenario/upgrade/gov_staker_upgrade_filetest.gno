@@ -144,7 +144,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing CleanStakerDelegationSnapshotByAdmin function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: CleanStakerDelegationSnapshotByAdmin not supported", func() {
-		govStaker.CleanStakerDelegationSnapshotByAdmin(cross, 100)
+		govStaker.CleanStakerDelegationSnapshotByAdmin(cross, 100, adminAddr)
 	})
 	ufmt.Println("[EXPECTED] CleanStakerDelegationSnapshotByAdmin panics correctly")
 

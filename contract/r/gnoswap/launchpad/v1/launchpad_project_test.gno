@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -575,6 +575,27 @@ func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 			tier180Ratio:  60,
 			expectedError: errInvalidInput,
 		},
+		{
+			name:          "ratio is invalid by negative tier30 ratio",
+			tier30Ratio:   -10,
+			tier90Ratio:   20,
+			tier180Ratio:  90,
+			expectedError: errInvalidInput,
+		},
+		{
+			name:          "ratio is invalid by negative tier90 ratio",
+			tier30Ratio:   20,
+			tier90Ratio:   -10,
+			tier180Ratio:  90,
+			expectedError: errInvalidInput,
+		},
+		{
+			name:          "ratio is invalid by negative tier180 ratio",
+			tier30Ratio:   20,
+			tier90Ratio:   90,
+			tier180Ratio:  -10,
+			expectedError: errInvalidInput,
+		},
 	}
 
 	for _, test := range tests {
@@ -704,8 +725,8 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 func initLaunchpadProjectTest(t *testing.T) {
 	testing.SetHeight(123)
 	resetTestStore()
-	setTestProjects(new(avl.Tree))
-	setTestProjectTierRewardManagers(new(avl.Tree))
+	setTestProjects(bptree.NewBPTreeN(16))
+	setTestProjectTierRewardManagers(bptree.NewBPTreeN(16))
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {

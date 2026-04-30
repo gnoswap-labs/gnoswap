@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
@@ -58,7 +58,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -89,7 +89,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +167,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -198,7 +198,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
 	if err != nil {
 		panic(err)
 	}
@@ -274,7 +274,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if gv.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -305,7 +305,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Initialize empty voting info tree for this proposal (votes will be added as users vote)
-	err = gv.updateProposalUserVotes(proposal, avl.NewTree())
+	err = gv.updateProposalUserVotes(proposal, bptree.NewBPTreeN(16))
 	if err != nil {
 		panic(err)
 	}

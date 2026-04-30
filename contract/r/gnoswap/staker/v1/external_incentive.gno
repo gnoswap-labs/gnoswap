@@ -6,7 +6,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -184,6 +184,19 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refu
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
+		previousRealm := runtime.PreviousRealm()
+		chain.Emit(
+			"EndExternalIncentiveShortfall",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"incentiveId", incentiveId,
+			"targetPoolPath", targetPoolPath,
+			"refundee", refundAddress.String(),
+			"refundToken", incentiveResolver.RewardToken(),
+			"expectedRefundAmount", formatAnyInt(refund),
+			"actualRefundAmount", formatAnyInt(poolLeftExternalRewardAmount),
+			"creator", incentiveResolver.Creator().String(),
+		)
 		refund = poolLeftExternalRewardAmount
 	}
 
@@ -324,6 +337,19 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	balance := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if balance < penaltyAmount {
+		previousRealm := runtime.PreviousRealm()
+		chain.Emit(
+			"CollectExternalIncentivePenaltyShortfall",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"targetPoolPath", targetPoolPath,
+			"incentiveId", incentiveId,
+			"refundAddress", refundAddress.String(),
+			"refundToken", incentiveResolver.RewardToken(),
+			"expectedPenaltyAmount", formatAnyInt(penaltyAmount),
+			"actualPenaltyAmount", formatAnyInt(balance),
+			"creator", incentiveResolver.Creator().String(),
+		)
 		penaltyAmount = balance
 	}
 
@@ -357,12 +383,12 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 
 	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
 	if !exists {
-		currentPoolIncentiveIdsValue = avl.NewTree()
+		currentPoolIncentiveIdsValue = bptree.NewBPTreeN(16)
 	}
 
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
 	}
 
 	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
@@ -396,9 +422,9 @@ func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string,
 		return
 	}
 
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *bptree.BPTree, got %T", currentPoolIncentiveIdsValue))
 	}
 
 	// check if pool path exists at this time

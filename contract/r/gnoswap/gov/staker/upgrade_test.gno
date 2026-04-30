@@ -332,7 +332,7 @@ func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
 
 			// Action
-			CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold)
+			CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold, address("g1user0000000000000000000000000000000001"))
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)

@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"errors"
-
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -129,11 +127,11 @@ func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
 //   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - int64: amount of rewards claimed
-//   - error: nil on success, error if claiming is not allowed
+//   - int64: amount of rewards claimed (0 if already claimed at this timestamp)
+//   - error: always nil in the current implementation
 func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (int64, error) {
 	if !self.IsClaimable(currentTimestamp) {
-		return 0, errors.New("not claimable")
+		return 0, nil
 	}
 
 	accumulatedRewardAmount := self.GetAccumulatedRewardAmount()

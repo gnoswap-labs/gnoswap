@@ -3,7 +3,7 @@ package v1
 import (
 	"strconv"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -50,7 +50,7 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 
 	// Initialize Configs with default configuration if not already set
 	if !governanceStore.HasConfigsStoreKey() {
-		configs := avl.NewTree()
+		configs := bptree.NewBPTreeN(16)
 		nextConfigVersion := governanceStore.GetConfigCounter().Next()
 
 		configs.Set(formatConfigKey(nextConfigVersion), defaultConfig)
@@ -62,21 +62,21 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 	}
 
 	if !governanceStore.HasProposalsStoreKey() {
-		err := governanceStore.SetProposals(avl.NewTree())
+		err := governanceStore.SetProposals(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
-		err := governanceStore.SetProposalUserVotingInfos(avl.NewTree())
+		err := governanceStore.SetProposalUserVotingInfos(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !governanceStore.HasUserProposalsStoreKey() {
-		err := governanceStore.SetUserProposals(avl.NewTree())
+		err := governanceStore.SetUserProposals(bptree.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

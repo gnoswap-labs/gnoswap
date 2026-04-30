@@ -3,7 +3,7 @@ package v1
 import (
 	"strings"
 
-	avl "gno.land/p/nt/avl/v0"
+	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	cp "gno.land/r/gnoswap/community_pool"
@@ -163,7 +163,7 @@ func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
 // This registry allows proposals to execute parameter changes across different system contracts.
 type ParameterRegistry struct {
-	handlers *avl.Tree // Tree storing handler configurations keyed by package:function
+	handlers map[string]ParameterHandlerOptions // Map storing handler configurations keyed by package:function
 }
 
 // register adds a new parameter handler to the registry.
@@ -172,7 +172,7 @@ type ParameterRegistry struct {
 // Parameters:
 //   - handler: parameter handler configuration to register
 func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
-	r.handlers.Set(handler.HandlerKey(), handler)
+	r.handlers[handler.HandlerKey()] = handler
 }
 
 // handler retrieves a parameter handler by package path and function name.
@@ -187,15 +187,9 @@ func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
 //   - error: error if handler not found or casting fails
 func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 	// Retrieve handler from registry
-	h, exists := r.handlers.Get(key)
+	handler, exists := r.handlers[key]
 	if !exists {
 		return nil, ufmt.Errorf("handler not found for %s", key)
-	}
-
-	// Cast to correct type
-	handler, ok := h.(ParameterHandlerOptions)
-	if !ok {
-		return nil, ufmt.Errorf("failed to cast handler %s to ParameterHandler", key)
 	}
 
 	return &handler, nil
@@ -206,7 +200,7 @@ func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 // Returns:
 //   - *ParameterRegistry: new registry instance
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{handlers: avl.NewTree()}
+	return &ParameterRegistry{handlers: make(map[string]ParameterHandlerOptions)}
 }
 
 // makeHandlerKey creates a unique identifier for a handler based on package path and function.
@@ -346,8 +340,8 @@ func CreateParameterHandlers() *ParameterRegistry {
 				stringValidator,  // token1Path
 				uint64Validator,  // fee
 				addressValidator, // recipient
-				nil,              // amount0Requested (validated in pool logic)
-				nil,              // amount1Requested (validated in pool logic)
+				nonNegativeInt64Validator("amount0Requested"),
+				nonNegativeInt64Validator("amount1Requested"),
 			},
 			handlerFunc: func(params []string) error {
 				pl.CollectProtocol(
@@ -616,7 +610,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RegisterRole",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator,  // roleName
+				roleNameValidator,
 				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -634,7 +628,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "UpdateRoleAddress",
 			paramCount: 2,
 			paramValidators: []paramValidator{
-				stringValidator,  // roleName
+				updatableRoleNameValidator,
 				addressValidator, // roleAddress
 			},
 			handlerFunc: func(params []string) error {
@@ -652,7 +646,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "RemoveRole",
 			paramCount: 1,
 			paramValidators: []paramValidator{
-				stringValidator, // roleName
+				removableRoleNameValidator,
 			},
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
@@ -922,6 +916,52 @@ func uint8RangeValidator(name string) paramValidator {
 			value := parseInt64(s)
 			if value < 0 || value > 255 {
 				panic(ufmt.Sprintf("%s out of range: %d", name, value))
+			}
+		})
+	}
+}
+
+func roleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if roleName == "" {
+			panic(ufmt.Sprintf("role name is empty: %q", s))
+		}
+	})
+}
+
+func updatableRoleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if err := roleNameValidator(roleName); err != nil {
+			panic(err)
+		}
+
+		if roleName == prbac.ROLE_ADMIN.String() {
+			panic(ufmt.Sprintf("admin role cannot be updated: %s", roleName))
+		}
+	})
+}
+
+func removableRoleNameValidator(s string) error {
+	return runValidator(func() {
+		roleName := strings.TrimSpace(s)
+		if err := roleNameValidator(roleName); err != nil {
+			panic(err)
+		}
+
+		if prbac.IsSystemRole(roleName) {
+			panic(ufmt.Sprintf("system role cannot be removed: %s", roleName))
+		}
+	})
+}
+
+func nonNegativeInt64Validator(name string) paramValidator {
+	return func(s string) error {
+		return runValidator(func() {
+			value := parseInt64(s)
+			if value < 0 {
+				panic(ufmt.Sprintf("%s must be non-negative: %d", name, value))
 			}
 		})
 	}
