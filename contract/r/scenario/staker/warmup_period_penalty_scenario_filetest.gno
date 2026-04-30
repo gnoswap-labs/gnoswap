@@ -52,6 +52,9 @@ var (
 
 	max_timeout int64 = 9999999999
 	maxInt64    int64 = 9223372036854775807
+
+	blockTimeSeconds             int64 = 5
+	warmupPenaltyDurationSeconds int64 = 1800 + 3600 + 7200
 )
 
 func main() {
@@ -71,7 +74,7 @@ func main() {
 	stakeTime := stakePosition(positionId)
 	println()
 
-	println("[SCENARIO] 5. Skip time within warmup period")
+	println("[SCENARIO] 5. Skip one hour within warmup period")
 	skipTimeWithinWarmup()
 	println()
 
@@ -175,9 +178,10 @@ func stakePosition(positionId uint64) int64 {
 }
 
 func skipTimeWithinWarmup() {
-	println("[INFO] skip 1 hour (3600 blocks) - staying within warmup period")
-	testing.SkipHeights(3600) // 1 hour = half of warmup period
-	
+	blocksToSkip := int64(3600) / blockTimeSeconds
+	println("[INFO] skip 1 hour (720 blocks) - staying within warmup period")
+	testing.SkipHeights(blocksToSkip)
+
 	currentTime := time.Now().Unix()
 	ufmt.Printf("[EXPECTED] current time advanced to: %d\n", currentTime)
 }
@@ -188,7 +192,10 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	println("[INFO] check time since stake")
 	currentTime := time.Now().Unix()
 	timeSinceStake := currentTime - stakeTime
-	ufmt.Printf("[INFO] time since stake: %d seconds (warmup period: 7200 seconds)\n", timeSinceStake)
+	ufmt.Printf("[INFO] time since stake: %d seconds (warmup penalty period: %d seconds)\n", timeSinceStake, warmupPenaltyDurationSeconds)
+	if timeSinceStake >= warmupPenaltyDurationSeconds {
+		panic("collection should happen during warmup penalty period")
+	}
 	
 	println("[INFO] record balances before collection")
 	userGnsBefore := gns.BalanceOf(adminUser)
@@ -200,7 +207,9 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	ufmt.Printf("[INFO] devOps GNS before: %d\n", devOpsGnsBefore)
 	
 	println("[INFO] collect rewards during warmup period")
-	sr.CollectReward(cross, positionId)
+	internalRewardToUserStr, internalWarmupPenaltyStr, _, _ := sr.CollectReward(cross, positionId)
+	internalRewardToUser := mustParseInt64(internalRewardToUserStr)
+	internalWarmupPenalty := mustParseInt64(internalWarmupPenaltyStr)
 	
 	println("[INFO] check balances after collection")
 	userGnsAfter := gns.BalanceOf(adminUser)
@@ -210,27 +219,43 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	userReward := userGnsAfter - userGnsBefore
 	communityReward := communityGnsAfter - communityGnsBefore
 	devOpsReward := devOpsGnsAfter - devOpsGnsBefore
-	
-	ufmt.Printf("[EXPECTED] user reward (reduced by warmup): %d GNS\n", userReward)
-	ufmt.Printf("[EXPECTED] community pool penalty: %d GNS\n", communityReward)
+	communityEmissionReward := communityReward - internalWarmupPenalty
+
+	ufmt.Printf("[EXPECTED] user reward (reduced by warmup and fee): %d GNS\n", userReward)
+	ufmt.Printf("[EXPECTED] warmup penalty: %d GNS\n", internalWarmupPenalty)
+	ufmt.Printf("[EXPECTED] community pool total increase: %d GNS\n", communityReward)
+	ufmt.Printf("[EXPECTED] community pool emission distribution: %d GNS\n", communityEmissionReward)
 	ufmt.Printf("[EXPECTED] devOps reward: %d GNS\n", devOpsReward)
-	
+
 	println("[INFO] verify total distribution")
-	totalDistributed := userReward + communityReward
-	ufmt.Printf("[EXPECTED] total distributed (user + penalty): %d GNS\n", totalDistributed)
-	
+	totalDistributed := userReward + internalWarmupPenalty
+	ufmt.Printf("[EXPECTED] total distributed (user + warmup penalty): %d GNS\n", totalDistributed)
+
 	if totalDistributed == 0 {
 		panic("total distributed should be positive - rewards should have been generated")
 	}
-	
-	if timeSinceStake < 7200 {
-		if communityReward == 0 {
-			panic("community pool should receive penalty during warmup period")
-		}
-		ufmt.Printf("[VERIFIED] warmup penalty correctly applied - community pool received: %d GNS\n", communityReward)
+
+	if userReward != internalRewardToUser {
+		panic("user balance delta should match CollectReward return value")
 	}
-	
+
+	if internalWarmupPenalty == 0 {
+		panic("community pool should receive penalty during warmup period")
+	}
+	if communityReward < internalWarmupPenalty {
+		panic("community pool increase should include at least the warmup penalty")
+	}
+	ufmt.Printf("[VERIFIED] warmup penalty correctly applied - penalty amount: %d GNS\n", internalWarmupPenalty)
+
 	println("[INFO] warmup period penalty test completed successfully")
+}
+
+func mustParseInt64(value string) int64 {
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return parsed
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -275,22 +300,25 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] approve and stake position
 // [EXPECTED] position staked at time: 1234567905
 //
-// [SCENARIO] 5. Skip time within warmup period
-// [INFO] skip 1 hour (3600 blocks) - staying within warmup period
-// [EXPECTED] current time advanced to: 1234585910
+// [SCENARIO] 5. Skip one hour within warmup period
+// [INFO] skip 1 hour (720 blocks) - staying within warmup period
+// [EXPECTED] current time advanced to: 1234571510
 //
 // [SCENARIO] 6. Collect rewards during warmup and verify penalty
 // [INFO] check time since stake
-// [INFO] time since stake: 18005 seconds (warmup period: 7200 seconds)
+// [INFO] time since stake: 3605 seconds (warmup penalty period: 12600 seconds)
 // [INFO] record balances before collection
 // [INFO] user GNS before: 100000000000000
 // [INFO] community GNS before: 5351025
 // [INFO] devOps GNS before: 21404109
 // [INFO] collect rewards during warmup period
 // [INFO] check balances after collection
-// [EXPECTED] user reward (reduced by warmup): 32496112018 GNS
-// [EXPECTED] community pool penalty: 20415949365 GNS
-// [EXPECTED] devOps reward: 25692065503 GNS
+// [EXPECTED] user reward (reduced by warmup and fee): 3666456126 GNS
+// [EXPECTED] warmup penalty: 5785796862 GNS
+// [EXPECTED] community pool total increase: 7098582207 GNS
+// [EXPECTED] community pool emission distribution: 1312785345 GNS
+// [EXPECTED] devOps reward: 5144120863 GNS
 // [INFO] verify total distribution
-// [EXPECTED] total distributed (user + penalty): 52912061383 GNS
+// [EXPECTED] total distributed (user + warmup penalty): 9452252988 GNS
+// [VERIFIED] warmup penalty correctly applied - penalty amount: 5785796862 GNS
 // [INFO] warmup period penalty test completed successfully
