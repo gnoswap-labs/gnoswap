@@ -284,9 +284,7 @@ func (s *stakerV1) GetDepositLiquidityAsString(lpTokenId uint64) string {
 
 // GetDepositInternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
 func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
-	deposit := s.getDeposit(lpTokenId)
-
-	return deposit.InternalRewardLastCollectTime()
+	return s.getDepositResolver(lpTokenId).InternalRewardLastCollectTime()
 }
 
 // GetDepositCollectedInternalReward returns the collected internal reward amount.
