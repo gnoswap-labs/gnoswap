@@ -9,9 +9,44 @@ patch-admin-address:
 	@bash scripts/patch-admin-address.sh $(ADDR_ADMIN)
 	@echo
 
+# Verify that the admin address in rbac/consts.gno matches ADDR_ADMIN from config.
+# Prevents deploying with a mismatched admin, which causes "insufficient balance" on pool creation.
+.PHONY: verify-admin-address
+verify-admin-address:
+	@CURRENT_ADDR=$$(grep -oE 'ADMIN address = "[^"]*"' $(ROOT_DIR)/contract/r/gnoswap/rbac/consts.gno | grep -oE 'g1[a-z0-9]+'); \
+	if [ "$$CURRENT_ADDR" != "$(ADDR_ADMIN)" ]; then \
+		echo ""; \
+		echo "\033[0;31mERROR: Admin address mismatch!\033[0m"; \
+		echo "  rbac/consts.gno:  $$CURRENT_ADDR"; \
+		echo "  config ADDR_ADMIN: $(ADDR_ADMIN)"; \
+		echo ""; \
+		echo "Run 'make patch-admin-address' first, then re-deploy."; \
+		echo ""; \
+		exit 1; \
+	fi
+
+# Verify that no *_test.gno or testutils.gno files remain under contract/.
+# Test files cause deployment failures on gnovm.
+.PHONY: verify-no-test-files
+verify-no-test-files:
+	@TEST_FILES=$$(find $(ROOT_DIR)/contract -name "*_test.gno" -o -name "testutils.gno" 2>/dev/null); \
+	if [ -n "$$TEST_FILES" ]; then \
+		COUNT=$$(echo "$$TEST_FILES" | wc -l | tr -d ' '); \
+		echo ""; \
+		echo "\033[0;31mERROR: $$COUNT test file(s) found under contract/\033[0m"; \
+		echo "$$TEST_FILES" | head -5; \
+		if [ "$$COUNT" -gt 5 ]; then \
+			echo "  ... and $$((COUNT - 5)) more"; \
+		fi; \
+		echo ""; \
+		echo "Run 'make remove-test' first, then re-deploy."; \
+		echo ""; \
+		exit 1; \
+	fi
+
 ## INIT
 .PHONY: init
-init: deploy-test-tokens deploy-gnoswap
+init: verify-admin-address verify-no-test-files deploy-test-tokens deploy-gnoswap
 
 .PHONY: deploy-gnoswap
 init: deploy-libraries deploy-base-contracts deploy-gnoswap-realms deploy-gnoswap-impl-v1
