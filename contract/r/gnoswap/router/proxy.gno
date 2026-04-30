@@ -86,7 +86,7 @@ func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, a
 //   - inputToken: path of input token
 //   - outputToken: path of output token
 //   - specifiedAmount: specified amount for the swap
-//   - swapTypeStr: swap type string ("ExactIn" or "ExactOut")
+//   - swapTypeStr: swap type string ("EXACT_IN" or "EXACT_OUT")
 //   - strRouteArr: encoded route array
 //   - quoteArr: encoded quote array
 //   - tokenAmountLimit: token amount limit
