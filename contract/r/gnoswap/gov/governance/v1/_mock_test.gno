@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -9,10 +9,10 @@ type mockGovernanceStore struct {
 	configCounter             *governance.Counter
 	proposalCounter           *governance.Counter
 	config                    governance.Config
-	configs                   *avl.Tree
-	proposals                 *avl.Tree
-	proposalUserVotingInfos   *avl.Tree
-	userProposals             *avl.Tree
+	configs                   *bptree.BPTree
+	proposals                 *bptree.BPTree
+	proposalUserVotingInfos   *bptree.BPTree
+	userProposals             *bptree.BPTree
 	setProposalVotingInfosErr error
 }
 
@@ -48,7 +48,7 @@ func (m *mockGovernanceStore) HasConfigsStoreKey() bool {
 	return m.configs != nil
 }
 
-func (m *mockGovernanceStore) SetConfigs(configs *avl.Tree) error {
+func (m *mockGovernanceStore) SetConfigs(configs *bptree.BPTree) error {
 	m.configs = configs
 	return nil
 }
@@ -66,7 +66,7 @@ func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool)
 
 func (m *mockGovernanceStore) SetConfig(version int64, config governance.Config) error {
 	if m.configs == nil {
-		m.configs = avl.NewTree()
+		m.configs = bptree.NewBPTreeN(16)
 	}
 	m.configs.Set(formatInt(version), config)
 	return nil
@@ -77,7 +77,7 @@ func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
 	return m.proposals != nil
 }
 
-func (m *mockGovernanceStore) GetProposals() *avl.Tree {
+func (m *mockGovernanceStore) GetProposals() *bptree.BPTree {
 	return m.proposals
 }
 
@@ -94,13 +94,13 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 
 func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal *governance.Proposal) error {
 	if m.proposals == nil {
-		m.proposals = avl.NewTree()
+		m.proposals = bptree.NewBPTreeN(16)
 	}
 	m.proposals.Set(formatInt(proposalID), proposal)
 	return nil
 }
 
-func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
+func (m *mockGovernanceStore) SetProposals(proposals *bptree.BPTree) error {
 	m.proposals = proposals
 	return nil
 }
@@ -110,11 +110,11 @@ func (m *mockGovernanceStore) HasProposalVotingInfosStoreKey() bool {
 	return true
 }
 
-func (m *mockGovernanceStore) GetProposalUserVotingInfos() *avl.Tree {
+func (m *mockGovernanceStore) GetProposalUserVotingInfos() *bptree.BPTree {
 	return m.proposalUserVotingInfos
 }
 
-func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tree, bool) {
+func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
@@ -122,15 +122,15 @@ func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (*avl.Tre
 	if !exists {
 		return nil, false
 	}
-	return result.(*avl.Tree), true
+	return result.(*bptree.BPTree), true
 }
 
-func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *avl.Tree) error {
+func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos *bptree.BPTree) error {
 	if m.setProposalVotingInfosErr != nil {
 		return m.setProposalVotingInfosErr
 	}
 	if m.proposalUserVotingInfos == nil {
-		m.proposalUserVotingInfos = avl.NewTree()
+		m.proposalUserVotingInfos = bptree.NewBPTreeN(16)
 	}
 	m.proposalUserVotingInfos.Set(formatInt(proposalID), votingInfos)
 	return nil
@@ -140,7 +140,7 @@ func (m *mockGovernanceStore) HasProposalUserVotingInfosStoreKey() bool {
 	return m.proposalUserVotingInfos != nil
 }
 
-func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {
+func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos *bptree.BPTree) error {
 	m.proposalUserVotingInfos = votingInfos
 	return nil
 }
@@ -163,7 +163,7 @@ func (m *mockGovernanceStore) GetUserProposalIDs(user string) ([]int64, bool) {
 
 func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) error {
 	if m.userProposals == nil {
-		m.userProposals = avl.NewTree()
+		m.userProposals = bptree.NewBPTreeN(16)
 	}
 
 	var proposalIDs []int64
@@ -205,7 +205,7 @@ func (m *mockGovernanceStore) RemoveUserProposal(user string, proposalID int64) 
 	return nil
 }
 
-func (m *mockGovernanceStore) SetUserProposals(userProposals *avl.Tree) error {
+func (m *mockGovernanceStore) SetUserProposals(userProposals *bptree.BPTree) error {
 	m.userProposals = userProposals
 	return nil
 }
@@ -222,10 +222,10 @@ func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
 		configCounter:           governance.NewCounter(),
 		proposalCounter:         governance.NewCounter(),
-		configs:                 avl.NewTree(),
-		proposals:               avl.NewTree(),
-		proposalUserVotingInfos: avl.NewTree(),
-		userProposals:           avl.NewTree(),
+		configs:                 bptree.NewBPTreeN(16),
+		proposals:               bptree.NewBPTreeN(16),
+		proposalUserVotingInfos: bptree.NewBPTreeN(16),
+		userProposals:           bptree.NewBPTreeN(16),
 	}
 }
 

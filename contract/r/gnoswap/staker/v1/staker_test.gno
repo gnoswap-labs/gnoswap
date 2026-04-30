@@ -6,7 +6,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -861,12 +861,12 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	tree := sr.NewUintTree()
 
 	// Create pool map for timestamp 100
-	poolMap1 := avl.NewTree()
+	poolMap1 := bptree.NewBPTreeN(16)
 	poolMap1.Set(poolPath1, []string{"incentive1"})
 	tree.Set(100, poolMap1)
 
 	// Create pool map for timestamp 200
-	poolMap2 := avl.NewTree()
+	poolMap2 := bptree.NewBPTreeN(16)
 	poolMap2.Set(poolPath1, []string{"incentive2"})
 	poolMap2.Set(poolPath2, []string{"incentive3"})
 	tree.Set(200, poolMap2)
@@ -892,9 +892,9 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	if !exists1 {
 		t.Error("Expected pool map at timestamp 100")
 	}
-	pMap1, ok := value1.(*avl.Tree)
+	pMap1, ok := value1.(*bptree.BPTree)
 	if !ok {
-		t.Fatalf("Expected *avl.Tree at timestamp 100, got %T", value1)
+		t.Fatalf("Expected *bptree.BPTree at timestamp 100, got %T", value1)
 	}
 	idsValue1, exists := pMap1.Get(poolPath1)
 	if !exists {
@@ -910,9 +910,9 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	if !exists2 {
 		t.Error("Expected pool map at timestamp 200")
 	}
-	pMap2, ok := value2.(*avl.Tree)
+	pMap2, ok := value2.(*bptree.BPTree)
 	if !ok {
-		t.Fatalf("Expected *avl.Tree at timestamp 200, got %T", value2)
+		t.Fatalf("Expected *bptree.BPTree at timestamp 200, got %T", value2)
 	}
 
 	// Check poolPath1 at timestamp 200

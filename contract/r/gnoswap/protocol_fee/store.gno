@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -67,11 +67,11 @@ func (s *protocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToGovStaker() error {
-	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToGovStaker.String(), bptree.NewBPTreeN(16))
 }
 
-func (s *protocolFeeStore) GetAccuToGovStaker() *avl.Tree {
-	accuToGovStaker, err := s.kvStore.GetTree(StoreKeyAccuToGovStaker.String())
+func (s *protocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
+	accuToGovStaker, err := s.kvStore.GetBPTree(StoreKeyAccuToGovStaker.String())
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func (s *protocolFeeStore) GetAccuToGovStaker() *avl.Tree {
 }
 
 func (s *protocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, bool) {
-	accuToGovStaker, err := s.kvStore.GetTree(StoreKeyAccuToGovStaker.String())
+	accuToGovStaker, err := s.kvStore.GetBPTree(StoreKeyAccuToGovStaker.String())
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +99,7 @@ func (s *protocolFeeStore) GetAccuToGovStakerItem(tokenPath string) (int64, bool
 }
 
 func (s *protocolFeeStore) SetAccuToGovStakerItem(tokenPath string, amount int64) error {
-	accuToGovStaker, err := s.kvStore.GetTree(StoreKeyAccuToGovStaker.String())
+	accuToGovStaker, err := s.kvStore.GetBPTree(StoreKeyAccuToGovStaker.String())
 	if err != nil {
 		return err
 	}
@@ -115,11 +115,11 @@ func (s *protocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeAccuToDevOps() error {
-	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyAccuToDevOps.String(), bptree.NewBPTreeN(16))
 }
 
-func (s *protocolFeeStore) GetAccuToDevOps() *avl.Tree {
-	accuToDevOps, err := s.kvStore.GetTree(StoreKeyAccuToDevOps.String())
+func (s *protocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
+	accuToDevOps, err := s.kvStore.GetBPTree(StoreKeyAccuToDevOps.String())
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,7 @@ func (s *protocolFeeStore) GetAccuToDevOps() *avl.Tree {
 }
 
 func (s *protocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, bool) {
-	accuToDevOps, err := s.kvStore.GetTree(StoreKeyAccuToDevOps.String())
+	accuToDevOps, err := s.kvStore.GetBPTree(StoreKeyAccuToDevOps.String())
 	if err != nil {
 		panic(err)
 	}
@@ -147,7 +147,7 @@ func (s *protocolFeeStore) GetAccuToDevOpsItem(tokenPath string) (int64, bool) {
 }
 
 func (s *protocolFeeStore) SetAccuToDevOpsItem(tokenPath string, amount int64) error {
-	accuToDevOps, err := s.kvStore.GetTree(StoreKeyAccuToDevOps.String())
+	accuToDevOps, err := s.kvStore.GetBPTree(StoreKeyAccuToDevOps.String())
 	if err != nil {
 		return err
 	}
@@ -163,11 +163,11 @@ func (s *protocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeDistributedToGovStakerHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), bptree.NewBPTreeN(16))
 }
 
-func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *avl.Tree {
-	distributedToGovStakerHistory, err := s.kvStore.GetTree(StoreKeyDistributedToGovStakerHistory.String())
+func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
+	distributedToGovStakerHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToGovStakerHistory.String())
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +176,7 @@ func (s *protocolFeeStore) GetDistributedToGovStakerHistory() *avl.Tree {
 }
 
 func (s *protocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool) {
-	distributedToGovStakerHistory, err := s.kvStore.GetTree(StoreKeyDistributedToGovStakerHistory.String())
+	distributedToGovStakerHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToGovStakerHistory.String())
 	if err != nil {
 		panic(err)
 	}
@@ -195,7 +195,7 @@ func (s *protocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string
 }
 
 func (s *protocolFeeStore) SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error {
-	distributedToGovStakerHistory, err := s.kvStore.GetTree(StoreKeyDistributedToGovStakerHistory.String())
+	distributedToGovStakerHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToGovStakerHistory.String())
 	if err != nil {
 		return err
 	}
@@ -211,11 +211,11 @@ func (s *protocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 }
 
 func (s *protocolFeeStore) InitializeDistributedToDevOpsHistory() error {
-	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), avl.NewTree())
+	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), bptree.NewBPTreeN(16))
 }
 
-func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *avl.Tree {
-	distributedToDevOpsHistory, err := s.kvStore.GetTree(StoreKeyDistributedToDevOpsHistory.String())
+func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
+	distributedToDevOpsHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToDevOpsHistory.String())
 	if err != nil {
 		panic(err)
 	}
@@ -224,7 +224,7 @@ func (s *protocolFeeStore) GetDistributedToDevOpsHistory() *avl.Tree {
 }
 
 func (s *protocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool) {
-	distributedToDevOpsHistory, err := s.kvStore.GetTree(StoreKeyDistributedToDevOpsHistory.String())
+	distributedToDevOpsHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToDevOpsHistory.String())
 	if err != nil {
 		panic(err)
 	}
@@ -243,7 +243,7 @@ func (s *protocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (
 }
 
 func (s *protocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error {
-	distributedToDevOpsHistory, err := s.kvStore.GetTree(StoreKeyDistributedToDevOpsHistory.String())
+	distributedToDevOpsHistory, err := s.kvStore.GetBPTree(StoreKeyDistributedToDevOpsHistory.String())
 	if err != nil {
 		return err
 	}

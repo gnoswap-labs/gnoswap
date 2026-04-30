@@ -14,7 +14,7 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -479,9 +479,9 @@ type createMockPoolParams struct {
 	feeGrowthGlobal0X128 *u256.Uint
 	feeGrowthGlobal1X128 *u256.Uint
 	liquidity            *u256.Uint
-	ticks                *avl.Tree
+	ticks                *bptree.BPTree
 	tickBitmaps          map[int16]string
-	positions            *avl.Tree
+	positions            *bptree.BPTree
 	observationState     *pl.ObservationState
 }
 

@@ -326,8 +326,6 @@
 // ## Related Packages
 //
 //   - gno.land/p/gnoswap/store: Provides KVStore with permission-based access control
-//   - gno.land/p/nt/avl: AVL tree used for efficient initializer storage and lookup
-//   - gno.land/p/nt/avl/rotree: Read-only tree wrapper for safe external access
 //
 // Package version_manager is intended for use in Gno smart contracts requiring
 // dynamic, upgradeable implementations with zero-downtime version switching.

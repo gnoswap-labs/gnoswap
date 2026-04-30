@@ -66,7 +66,7 @@ type canonicalRewardState struct {
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
-	emissionUpdates *UintTree
+	emissionUpdates *sr.UintTree
 
 	SecondsPerBlock   int64  // How many seconds per block (1 for testing)
 	PerBlockEmission  uint64 // This will be converted to per-second internally
@@ -94,7 +94,7 @@ func NewCanonicalRewardState(
 		},
 		Pool:              make(map[string]*canonicalPool),
 		Reward:            make([]map[uint64]Reward, 124),
-		emissionUpdates:   NewUintTree(),
+		emissionUpdates:   sr.NewUintTree(),
 		SecondsPerBlock:   1, // 1 second per block
 		PerBlockEmission:  1000000000,
 		PerSecondEmission: 1000000000, // Same as per-block since 1 block = 1 second
@@ -140,7 +140,7 @@ func (self *canonicalRewardState) isInRange(deposit *sr.Deposit) bool {
 }
 
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
-	self.emissionUpdates.set(time.Now().Unix(), emission)
+	self.emissionUpdates.Set(time.Now().Unix(), emission)
 	self.PerBlockEmission = emission
 	self.PerSecondEmission = emission // Since 1 block = 1 second in tests
 }

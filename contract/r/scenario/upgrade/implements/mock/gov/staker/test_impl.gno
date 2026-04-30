@@ -183,11 +183,15 @@ func (t *TestGovStaker) GetClaimableRewardByRewardID(rewardID string) (int64, ma
 }
 
 // IGovStakerAdmin interface
-func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
+func (t *TestGovStaker) CleanStakerDelegationSnapshotByAdmin(threshold int64, target address) {
 	t.ExecuteFn(
 		"CleanStakerDelegationSnapshotByAdmin",
-		func(args ...any) any { t.instance.CleanStakerDelegationSnapshotByAdmin(args[0].(int64)); return nil },
+		func(args ...any) any {
+			t.instance.CleanStakerDelegationSnapshotByAdmin(args[0].(int64), args[1].(address))
+			return nil
+		},
 		threshold,
+		target,
 	)
 }
 

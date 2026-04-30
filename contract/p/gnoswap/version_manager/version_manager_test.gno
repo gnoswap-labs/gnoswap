@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -165,8 +164,8 @@ func TestVersionManager_InitialState(t *testing.T) {
 				if initializers == nil {
 					t.Fatal("GetInitializers() should not be nil")
 				}
-				if got := initializers.Size(); got != tt.expectedInitializersSize {
-					t.Errorf("initializers.Size() = %d, want %d", got, tt.expectedInitializersSize)
+				if got := len(initializers); got != tt.expectedInitializersSize {
+					t.Errorf("len(initializers) = %d, want %d", got, tt.expectedInitializersSize)
 				}
 			}
 		})
@@ -189,7 +188,7 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/protocol_fee",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            make(map[string]func(store any) any),
 				}
 				return vm, "gno.land/r/gnoswap/protocol_fee/v999"
 			},
@@ -203,43 +202,13 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/pool",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            make(map[string]func(store any) any),
 				}
 				return vm, ""
 			},
 			errorContains: "initializer not found for package path",
 		},
 		// Invalid initializer type cases
-		{
-			name: "initializer is string",
-			setupFunc: func() (*versionManager, string) {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := &versionManager{
-					domainPath:              "gno.land/r/gnoswap/protocol_fee",
-					domainKVStore:           kvStore,
-					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
-				}
-				vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", "not a function")
-				return vm, "gno.land/r/gnoswap/protocol_fee/v1"
-			},
-			errorContains: "initializer is not a function",
-		},
-		{
-			name: "initializer is int",
-			setupFunc: func() (*versionManager, string) {
-				kvStore := store.NewKVStore(mockDomainAddr)
-				vm := &versionManager{
-					domainPath:              "gno.land/r/gnoswap/pool",
-					domainKVStore:           kvStore,
-					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
-				}
-				vm.initializers.Set("gno.land/r/gnoswap/pool/v1", 42)
-				return vm, "gno.land/r/gnoswap/pool/v1"
-			},
-			errorContains: "initializer is not a function",
-		},
 		{
 			name: "initializer is nil",
 			setupFunc: func() (*versionManager, string) {
@@ -248,9 +217,9 @@ func TestChangeImplementation_Errors(t *testing.T) {
 					domainPath:              "gno.land/r/gnoswap/position",
 					domainKVStore:           kvStore,
 					initializeDomainStoreFn: mockInitializeDomainStoreFn,
-					initializers:            avl.NewTree(),
+					initializers:            make(map[string]func(store any) any),
 				}
-				vm.initializers.Set("gno.land/r/gnoswap/position/v1", nil)
+				vm.initializers["gno.land/r/gnoswap/position/v1"] = nil
 				return vm, "gno.land/r/gnoswap/position/v1"
 			},
 			errorContains: "initializer is not a function",
@@ -425,13 +394,13 @@ func TestChangeImplementation_Success(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            make(map[string]func(store any) any),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}
 
 			for _, pkg := range tt.registerPackages {
-				vmInternal.initializers.Set(pkg, mockInitializer(pkg))
+				vmInternal.initializers[pkg] = mockInitializer(pkg)
 			}
 
 			err := vmInternal.ChangeImplementation(tt.changeToPackage)
@@ -459,22 +428,19 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/protocol_fee",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            make(map[string]func(store any) any),
 		}
 
-		vm.initializers.Set("gno.land/r/gnoswap/protocol_fee/v1", mockInitializer("v1"))
+		vm.initializers["gno.land/r/gnoswap/protocol_fee/v1"] = mockInitializer("v1")
 
 		initializers := vm.GetInitializers()
 		uassert.NotNil(t, initializers, "GetInitializers() should not be nil")
 
-		uassert.Equal(t, initializers.Size(), 1, "initializers.Size() should be 1")
+		uassert.Equal(t, len(initializers), 1, "len(initializers) should be 1")
 
-		result, exists := initializers.Get("gno.land/r/gnoswap/protocol_fee/v1")
+		result, exists := initializers["gno.land/r/gnoswap/protocol_fee/v1"]
 		uassert.True(t, exists, "initializer should exist for v1")
-
-		if _, ok := result.(func(store any) any); !ok {
-			t.Errorf("initializer should be function type, got %T", result)
-		}
+		uassert.NotNil(t, result, "initializer should not be nil")
 	})
 
 	t.Run("multiple initializers", func(t *testing.T) {
@@ -483,26 +449,23 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/pool",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            make(map[string]func(store any) any),
 		}
 
 		versions := []string{"v1", "v2", "v3"}
 		for _, v := range versions {
-			vm.initializers.Set("gno.land/r/gnoswap/pool/"+v, mockInitializer(v))
+			vm.initializers["gno.land/r/gnoswap/pool/"+v] = mockInitializer(v)
 		}
 
 		initializers := vm.GetInitializers()
-		uassert.Equal(t, initializers.Size(), 3, "initializers.Size() should be 3")
+		uassert.Equal(t, len(initializers), 3, "len(initializers) should be 3")
 
 		// Verify all versions exist
 		for _, v := range versions {
 			path := "gno.land/r/gnoswap/pool/" + v
-			result, exists := initializers.Get(path)
+			result, exists := initializers[path]
 			uassert.True(t, exists, "initializer should exist for %s", v)
-
-			if _, ok := result.(func(store any) any); !ok {
-				t.Errorf("initializer for %s should be function type, got %T", v, result)
-			}
+			uassert.NotNil(t, result, "initializer for %s should not be nil", v)
 		}
 	})
 
@@ -512,12 +475,12 @@ func TestGetInitializers(t *testing.T) {
 			domainPath:              "gno.land/r/gnoswap/position",
 			domainKVStore:           kvStore,
 			initializeDomainStoreFn: mockInitializeDomainStoreFn,
-			initializers:            avl.NewTree(),
+			initializers:            make(map[string]func(store any) any),
 		}
 
 		initializers := vm.GetInitializers()
 		uassert.NotNil(t, initializers, "initializers should not be nil")
-		uassert.True(t, initializers.Size() == 0, "initializers.Size() should be 0")
+		uassert.True(t, len(initializers) == 0, "len(initializers) should be 0")
 	})
 }
 
@@ -665,7 +628,7 @@ func TestIsContainDomainPath(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            make(map[string]func(store any) any),
 			}
 
 			result := vm.isContainDomainPath(tt.testPath)
@@ -728,7 +691,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 				domainPath:              tt.domainPath,
 				domainKVStore:           kvStore,
 				initializeDomainStoreFn: mockInitializeDomainStoreFn,
-				initializers:            avl.NewTree(),
+				initializers:            make(map[string]func(store any) any),
 				currentPackagePath:      "",
 				currentImplementation:   nil,
 			}
@@ -736,7 +699,7 @@ func TestChangeImplementation_StateConsistency(t *testing.T) {
 			// Register all packages
 			for _, pkg := range tt.registerPackages {
 				fullPath := tt.domainPath + "/" + pkg
-				vmInternal.initializers.Set(fullPath, mockInitializer(fullPath))
+				vmInternal.initializers[fullPath] = mockInitializer(fullPath)
 			}
 
 			// Execute change sequence

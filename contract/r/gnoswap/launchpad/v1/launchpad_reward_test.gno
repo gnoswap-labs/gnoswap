@@ -8,7 +8,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -69,8 +69,8 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			resetTestStore()
 			lp := getTestImplementation()
 			testing.SetHeight(123)
-			setTestProjects(avl.NewTree())
-			setTestProjectTierRewardManagers(avl.NewTree())
+			setTestProjects(bptree.NewBPTreeN(16))
+			setTestProjectTierRewardManagers(bptree.NewBPTreeN(16))
 
 			// Setup project if needed
 			if tt.setupProject {
@@ -93,7 +93,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			if tt.setupManager {
 				rewardManagers := getTestProjectTierRewardManagers()
 				rewardManager := launchpad.NewRewardManager(1000, 40, 200, 0)
-				rewardManager.SetRewards(avl.NewTree())
+				rewardManager.SetRewards(bptree.NewBPTreeN(16))
 				rewardManager.SetAccumulatedRewardPerDepositX128(u256.Zero())
 				rewardManager.SetDistributeAmountPerSecondX128(u256.NewUintFromInt64(1))
 				rewardManagers.Set(tt.projectID+":30", rewardManager)

@@ -1,7 +1,7 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -39,7 +39,7 @@ func registerPoolV1() {
 
 func initStoreData(poolStore pool.IPoolStore) error {
 	if !poolStore.HasPools() {
-		err := poolStore.SetPools(avl.NewTree())
+		err := poolStore.SetPools(bptree.NewBPTreeN(32))
 		if err != nil {
 			return err
 		}

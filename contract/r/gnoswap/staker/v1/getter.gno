@@ -398,41 +398,21 @@ func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
 
 // GetTotalStakedUserCount returns the total number of users with staked positions.
 func (s *stakerV1) GetTotalStakedUserCount() uint64 {
-	return uint64(s.getStakers().tree.Size())
+	return uint64(s.getUserDeposits().Size())
 }
 
 // GetTotalStakedUserPositionCount returns the staked position count for a user.
 func (s *stakerV1) GetTotalStakedUserPositionCount(user address) uint64 {
-	depositTreeI, ok := s.getStakers().tree.Get(user.String())
-	if !ok {
-		return 0
-	}
-
-	depositTree := retrieveDepositTree(depositTreeI)
-	return uint64(depositTree.Size())
+	return s.getUserDeposits().userPositionCount(user.String())
 }
 
 // GetStakedPositionsByUser returns staked position IDs for a user with pagination.
 func (s *stakerV1) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	if count <= 0 {
-		return []uint64{}
-	}
-	if offset < 0 {
-		offset = 0
-	}
-
-	depositTreeI, ok := s.getStakers().tree.Get(owner.String())
-	if !ok {
-		return []uint64{}
-	}
-
-	depositTree := retrieveDepositTree(depositTreeI)
 	positions := make([]uint64, 0, count)
-	depositTree.IterateByOffset(offset, count, func(depositId string, _ any) bool {
-		positions = append(positions, sr.DecodeUint(depositId))
+	s.getUserDeposits().IterateByOffset(owner, offset, count, func(depositId uint64) bool {
+		positions = append(positions, depositId)
 		return false
 	})
-
 	return positions
 }
 

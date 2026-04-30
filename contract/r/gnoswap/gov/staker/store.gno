@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -19,9 +19,9 @@ const (
 	StoreKeyDelegationNextID = "delegationNextID"
 
 	// Complex data structures
-	StoreKeyDelegations            = "delegations"            // AVL tree of delegations
+	StoreKeyDelegations            = "delegations"            // BPTree of delegations
 	StoreKeyTotalDelegationHistory = "totalDelegationHistory" // UintTree: timestamp -> int64 (cumulative total)
-	StoreKeyUserDelegationHistory  = "userDelegationHistory"  // avl.Tree: address -> *UintTree[timestamp -> int64]
+	StoreKeyUserDelegationHistory  = "userDelegationHistory"  // BPTree: address -> *UintTree[timestamp -> int64]
 
 	// Manager states
 	StoreKeyEmissionRewardManager    = "emissionRewardManager"
@@ -116,7 +116,7 @@ func (s *govStakerStore) HasDelegationsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegations)
 }
 
-func (s *govStakerStore) SetDelegations(delegations *avl.Tree) error {
+func (s *govStakerStore) SetDelegations(delegations *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyDelegations, delegations)
 }
 
@@ -156,15 +156,15 @@ func (s *govStakerStore) RemoveDelegation(id int64) error {
 	return s.kvStore.Set(StoreKeyDelegations, delegations)
 }
 
-func (s *govStakerStore) GetAllDelegations() *avl.Tree {
+func (s *govStakerStore) GetAllDelegations() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyDelegations)
 	if err != nil {
 		panic(err)
 	}
 
-	delegations, ok := result.(*avl.Tree)
+	delegations, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return delegations
@@ -220,21 +220,21 @@ func (s *govStakerStore) HasUserDelegationHistoryStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUserDelegationHistory)
 }
 
-func (s *govStakerStore) GetUserDelegationHistory() *avl.Tree {
+func (s *govStakerStore) GetUserDelegationHistory() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyUserDelegationHistory)
 	if err != nil {
 		panic(err)
 	}
 
-	history, ok := result.(*avl.Tree)
+	history, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return history
 }
 
-func (s *govStakerStore) SetUserDelegationHistory(history *avl.Tree) error {
+func (s *govStakerStore) SetUserDelegationHistory(history *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyUserDelegationHistory, history)
 }
 

@@ -1,17 +1,17 @@
 package v1
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/protocol_fee"
 )
 
 type mockProtocolFeeStore struct {
 	devOpsPct            int64
-	accuToGovStaker      *avl.Tree
-	accuToDevOps         *avl.Tree
-	distributedToGovStakerHistory *avl.Tree
-	distributedToDevOpsHistory    *avl.Tree
+	accuToGovStaker      *bptree.BPTree
+	accuToDevOps         *bptree.BPTree
+	distributedToGovStakerHistory *bptree.BPTree
+	distributedToDevOpsHistory    *bptree.BPTree
 	tokenListWithAmounts map[string]int64
 }
 
@@ -40,11 +40,11 @@ func (s *mockProtocolFeeStore) HasAccuToGovStakerStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToGovStaker() error {
-	s.accuToGovStaker = avl.NewTree()
+	s.accuToGovStaker = bptree.NewBPTreeN(16)
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetAccuToGovStaker() *avl.Tree {
+func (s *mockProtocolFeeStore) GetAccuToGovStaker() *bptree.BPTree {
 	return s.accuToGovStaker
 }
 
@@ -74,11 +74,11 @@ func (s *mockProtocolFeeStore) HasAccuToDevOpsStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccuToDevOps() error {
-	s.accuToDevOps = avl.NewTree()
+	s.accuToDevOps = bptree.NewBPTreeN(16)
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetAccuToDevOps() *avl.Tree {
+func (s *mockProtocolFeeStore) GetAccuToDevOps() *bptree.BPTree {
 	return s.accuToDevOps
 }
 
@@ -107,11 +107,11 @@ func (s *mockProtocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeDistributedToGovStakerHistory() error {
-	s.distributedToGovStakerHistory = avl.NewTree()
+	s.distributedToGovStakerHistory = bptree.NewBPTreeN(16)
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistory() *avl.Tree {
+func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
 	return s.distributedToGovStakerHistory
 }
 
@@ -139,11 +139,11 @@ func (s *mockProtocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeDistributedToDevOpsHistory() error {
-	s.distributedToDevOpsHistory = avl.NewTree()
+	s.distributedToDevOpsHistory = bptree.NewBPTreeN(16)
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistory() *avl.Tree {
+func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
 	return s.distributedToDevOpsHistory
 }
 
@@ -203,10 +203,10 @@ func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amou
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
-		accuToGovStaker:               avl.NewTree(),
-		accuToDevOps:                  avl.NewTree(),
-		distributedToGovStakerHistory: avl.NewTree(),
-		distributedToDevOpsHistory:    avl.NewTree(),
+		accuToGovStaker:               bptree.NewBPTreeN(16),
+		accuToDevOps:                  bptree.NewBPTreeN(16),
+		distributedToGovStakerHistory: bptree.NewBPTreeN(16),
+		distributedToDevOpsHistory:    bptree.NewBPTreeN(16),
 		tokenListWithAmounts:          make(map[string]int64),
 	}
 }

@@ -1,11 +1,11 @@
 package mock
 
 import (
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type MockPoolStore struct {
-	pools                *avl.Tree
+	pools                *bptree.BPTree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -22,12 +22,12 @@ func (s *MockPoolStore) HasPools() bool {
 
 // GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *MockPoolStore) GetPools() *avl.Tree {
+func (s *MockPoolStore) GetPools() *bptree.BPTree {
 	return s.pools
 }
 
 // SetPools stores the map containing all pool data.
-func (s *MockPoolStore) SetPools(pools *avl.Tree) error {
+func (s *MockPoolStore) SetPools(pools *bptree.BPTree) error {
 	s.pools = pools
 	return nil
 }
@@ -171,7 +171,7 @@ func NewMockPoolStoreWithHook(
 	}
 
 	return &MockPoolStore{
-		pools:                avl.NewTree(),
+		pools:                bptree.NewBPTreeN(32),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/onbloc/json"
 )
@@ -31,7 +31,7 @@ func formatInt(v int64) string {
 }
 
 // getUint64FromTree returns the uint64 value from the tree
-func getUint64FromTree(tree *avl.Tree, key string) uint64 {
+func getUint64FromTree(tree *bptree.BPTree, key string) uint64 {
 	value, exists := tree.Get(key)
 	if !exists {
 		return 0
@@ -46,7 +46,7 @@ func getUint64FromTree(tree *avl.Tree, key string) uint64 {
 }
 
 // updateUint64InTree updates the uint64 value in the tree
-func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint64 {
+func updateUint64InTree(tree *bptree.BPTree, key string, delta uint64, add bool) uint64 {
 	current := getUint64FromTree(tree, key)
 	var newValue uint64
 	if add {
@@ -67,17 +67,17 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 }
 
 // getOrCreateInnerTree returns the inner tree for the given key
-func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
+func getOrCreateInnerTree(tree *bptree.BPTree, key string) *bptree.BPTree {
 	value, exists := tree.Get(key)
 	if !exists {
-		innerTree := avl.NewTree()
+		innerTree := bptree.NewBPTreeN(16)
 		tree.Set(key, innerTree)
 		return innerTree
 	}
 
-	v, ok := value.(*avl.Tree)
+	v, ok := value.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast value to *avl.Tree: %T", value))
+		panic(ufmt.Sprintf("failed to cast value to *bptree.BPTree: %T", value))
 	}
 
 	return v
@@ -160,4 +160,58 @@ func safeSubUint64(a, b uint64) uint64 {
 	}
 
 	return a - b
+}
+
+// userHistoryKeySeparator is chosen to be lexicographically smaller than any
+const (
+	userHistoryKeySeparator         = "|"
+	userHistoryKeySeparatorNextWord = string(int32('|') + 1)
+)
+
+// userHistoryTimestampWidth is the zero-padded width that fits the maximum
+const userHistoryTimestampWidth = 20
+
+// makeUserHistoryKey builds the composite key "addr|paddedTimestamp" used in the user delegation history BPTree.
+func makeUserHistoryKey(addrStr string, timestamp int64) string {
+	return addrStr + userHistoryKeySeparator + padTimestamp(timestamp)
+}
+
+// userHistoryKeyRange returns the half-open prefix range that covers all composite keys belonging to addrStr.
+func userHistoryKeyRange(addrStr string) (lo, hi string) {
+	lo = addrStr + userHistoryKeySeparator
+	hi = addrStr + userHistoryKeySeparatorNextWord
+
+	return lo, hi
+}
+
+// padTimestamp left-pads timestamp with zeros to userHistoryTimestampWidth so
+// that lexicographic ordering of the resulting strings matches numeric order.
+func padTimestamp(timestamp int64) string {
+	s := strconv.FormatInt(timestamp, 10)
+	if len(s) >= userHistoryTimestampWidth {
+		return s
+	}
+
+	pad := make([]byte, userHistoryTimestampWidth-len(s))
+	for i := range pad {
+		pad[i] = '0'
+	}
+
+	return string(pad) + s
+}
+
+// parseUserHistoryKey splits a composite key produced by makeUserHistoryKey back into its address and timestamp components.
+func parseUserHistoryKey(key string) (addrStr string, timestamp int64, ok bool) {
+	for i := len(key) - 1; i >= 0; i-- {
+		if key[i] == userHistoryKeySeparator[0] {
+			ts, err := strconv.ParseInt(key[i+1:], 10, 64)
+			if err != nil {
+				return "", 0, false
+			}
+
+			return key[:i], ts, true
+		}
+	}
+
+	return "", 0, false
 }

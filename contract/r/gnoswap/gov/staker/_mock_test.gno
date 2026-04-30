@@ -323,7 +323,7 @@ func (m *MockGovStaker) GetEmissionAccumulatedTimestamp() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64) {
+func (m *MockGovStaker) CleanStakerDelegationSnapshotByAdmin(snapshotTime int64, target address) {
 	m.Response.Get("CleanStakerDelegationSnapshotByAdmin")
 }
 

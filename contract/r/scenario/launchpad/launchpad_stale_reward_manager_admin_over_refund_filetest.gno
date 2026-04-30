@@ -39,6 +39,10 @@ import (
 )
 
 var (
+	blockTimeSeconds int64 = 5
+	secondsInDay     int64 = 24 * 60 * 60
+	skipBlocks180Day int64 = 180 * secondsInDay / blockTimeSeconds
+
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
@@ -67,10 +71,11 @@ func main() {
 	depositGns(aliceAddr, projectTier30Id, int64(1_000_000))
 	println()
 
-	println("[SCENARIO] 3. Skip to end all tiers (180+ days) with NO collect/withdraw")
+	println("[SCENARIO] 3. Skip to end all tiers (180 days) with NO collect/withdraw")
+	ufmt.Printf("[INFO] Skipping %d blocks (%d days at %d sec/block)\n", skipBlocks180Day, int64(180), blockTimeSeconds)
 	println("[INFO] No deposit/collect/withdraw events trigger reward manager update")
 	println("[INFO] Reward manager will be updated during admin refund calculation")
-	testing.SkipHeights(7776000)
+	testing.SkipHeights(skipBlocks180Day)
 	println()
 
 	println("[SCENARIO] 4. Verify launchpad balance before admin refund")
@@ -229,7 +234,8 @@ func collectReward(addr address) {
 // [INFO] Alice approving launchpad to spend GNS
 // [INFO] Deposit created with ID: 1
 //
-// [SCENARIO] 3. Skip to end all tiers (180+ days) with NO collect/withdraw
+// [SCENARIO] 3. Skip to end all tiers (180 days) with NO collect/withdraw
+// [INFO] Skipping 3110400 blocks (180 days at 5 sec/block)
 // [INFO] No deposit/collect/withdraw events trigger reward manager update
 // [INFO] Reward manager will be updated during admin refund calculation
 //

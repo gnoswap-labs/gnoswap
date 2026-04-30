@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -19,7 +19,7 @@ const (
 	StoreKeyMinimumRewardAmount              StoreKey = "minimumRewardAmount"
 	StoreKeyDeposits                         StoreKey = "deposits"
 	StoreKeyExternalIncentives               StoreKey = "externalIncentives"
-	StoreKeyStakers                          StoreKey = "stakers"
+	StoreKeyUserDeposits                     StoreKey = "userDeposits"
 	StoreKeyTotalEmissionSent                StoreKey = "totalEmissionSent"
 	StoreKeyAllowedTokens                    StoreKey = "allowedTokens"
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
@@ -94,21 +94,21 @@ func (s *stakerStore) HasDepositsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDeposits.String())
 }
 
-func (s *stakerStore) GetDeposits() *avl.Tree {
+func (s *stakerStore) GetDeposits() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyDeposits.String())
 	if err != nil {
 		panic(err)
 	}
 
-	deposits, ok := result.(*avl.Tree)
+	deposits, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return deposits
 }
 
-func (s *stakerStore) SetDeposits(deposits *avl.Tree) error {
+func (s *stakerStore) SetDeposits(deposits *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyDeposits.String(), deposits)
 }
 
@@ -117,45 +117,45 @@ func (s *stakerStore) HasExternalIncentivesStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentives.String())
 }
 
-func (s *stakerStore) GetExternalIncentives() *avl.Tree {
+func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyExternalIncentives.String())
 	if err != nil {
 		panic(err)
 	}
 
-	incentives, ok := result.(*avl.Tree)
+	incentives, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return incentives
 }
 
-func (s *stakerStore) SetExternalIncentives(incentives *avl.Tree) error {
+func (s *stakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentives.String(), incentives)
 }
 
-// Stakers
-func (s *stakerStore) HasStakersStoreKey() bool {
-	return s.kvStore.Has(StoreKeyStakers.String())
+// UserDeposits
+func (s *stakerStore) HasUserDepositsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUserDeposits.String())
 }
 
-func (s *stakerStore) GetStakers() *avl.Tree {
-	result, err := s.kvStore.Get(StoreKeyStakers.String())
+func (s *stakerStore) GetUserDeposits() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUserDeposits.String())
 	if err != nil {
 		panic(err)
 	}
 
-	stakers, ok := result.(*avl.Tree)
+	tree, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
-	return stakers
+	return tree
 }
 
-func (s *stakerStore) SetStakers(stakers *avl.Tree) error {
-	return s.kvStore.Set(StoreKeyStakers.String(), stakers)
+func (s *stakerStore) SetUserDeposits(tree *bptree.BPTree) error {
+	return s.kvStore.Set(StoreKeyUserDeposits.String(), tree)
 }
 
 // TotalEmissionSent
@@ -237,21 +237,21 @@ func (s *stakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTokenSpecificMinimumRewards.String())
 }
 
-func (s *stakerStore) GetTokenSpecificMinimumRewards() *avl.Tree {
+func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 	result, err := s.kvStore.Get(StoreKeyTokenSpecificMinimumRewards.String())
 	if err != nil {
 		panic(err)
 	}
 
-	rewards, ok := result.(*avl.Tree)
+	rewards, ok := result.(map[string]int64)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
 	}
 
 	return rewards
 }
 
-func (s *stakerStore) SetTokenSpecificMinimumRewards(rewards *avl.Tree) error {
+func (s *stakerStore) SetTokenSpecificMinimumRewards(rewards map[string]int64) error {
 	return s.kvStore.Set(StoreKeyTokenSpecificMinimumRewards.String(), rewards)
 }
 
@@ -305,21 +305,21 @@ func (s *stakerStore) HasPoolsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPools.String())
 }
 
-func (s *stakerStore) GetPools() *avl.Tree {
+func (s *stakerStore) GetPools() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
 		panic(err)
 	}
 
-	pools, ok := result.(*avl.Tree)
+	pools, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return pools
 }
 
-func (s *stakerStore) SetPools(pools *avl.Tree) error {
+func (s *stakerStore) SetPools(pools *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 
@@ -328,21 +328,21 @@ func (s *stakerStore) HasPoolTierMembershipsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierMemberships.String())
 }
 
-func (s *stakerStore) GetPoolTierMemberships() *avl.Tree {
+func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPoolTierMemberships.String())
 	if err != nil {
 		panic(err)
 	}
 
-	memberships, ok := result.(*avl.Tree)
+	memberships, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return memberships
 }
 
-func (s *stakerStore) SetPoolTierMemberships(memberships *avl.Tree) error {
+func (s *stakerStore) SetPoolTierMemberships(memberships *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyPoolTierMemberships.String(), memberships)
 }
 
@@ -530,7 +530,7 @@ func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
 }
 
 // ExternalIncentivesByCreationTime
-// key: timestamp -> value: *avl.Tree (poolPath -> []string)
+// key: timestamp -> value: *bptree.BPTree (poolPath -> []string)
 func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
 }

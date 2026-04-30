@@ -3,7 +3,7 @@ package pool
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -13,9 +13,9 @@ func makeTestPool() *Pool {
 		token1Path:  "gno.land/r/onbloc/foo",
 		fee:         500,
 		tickSpacing: 10,
-		ticks:       avl.NewTree(),
+		ticks:       bptree.NewBPTreeN(32),
 		tickBitmaps: make(map[int16]string),
-		positions:   avl.NewTree(),
+		positions:   bptree.NewBPTreeN(16),
 	}
 }
 

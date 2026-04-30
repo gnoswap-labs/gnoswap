@@ -1,6 +1,6 @@
 package protocol_fee
 
-import avl "gno.land/p/nt/avl/v0"
+import bptree "gno.land/p/nt/bptree/v0"
 
 type IProtocolFee interface {
 	IProtocolFeeManager
@@ -38,25 +38,25 @@ type IProtocolFeeStore interface {
 
 	HasAccuToGovStakerStoreKey() bool
 	InitializeAccuToGovStaker() error
-	GetAccuToGovStaker() *avl.Tree
+	GetAccuToGovStaker() *bptree.BPTree
 	GetAccuToGovStakerItem(tokenPath string) (int64, bool)
 	SetAccuToGovStakerItem(tokenPath string, amount int64) error
 
 	HasAccuToDevOpsStoreKey() bool
 	InitializeAccuToDevOps() error
-	GetAccuToDevOps() *avl.Tree
+	GetAccuToDevOps() *bptree.BPTree
 	GetAccuToDevOpsItem(tokenPath string) (int64, bool)
 	SetAccuToDevOpsItem(tokenPath string, amount int64) error
 
 	HasDistributedToGovStakerHistoryStoreKey() bool
 	InitializeDistributedToGovStakerHistory() error
-	GetDistributedToGovStakerHistory() *avl.Tree
+	GetDistributedToGovStakerHistory() *bptree.BPTree
 	GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool)
 	SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error
 
 	HasDistributedToDevOpsHistoryStoreKey() bool
 	InitializeDistributedToDevOpsHistory() error
-	GetDistributedToDevOpsHistory() *avl.Tree
+	GetDistributedToDevOpsHistory() *bptree.BPTree
 	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
 	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
 

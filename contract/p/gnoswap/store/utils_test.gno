@@ -3,7 +3,7 @@ package store
 import (
 	"testing"
 
-	avl "gno.land/p/nt/avl/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -254,7 +254,7 @@ func TestcastToAddress(t *testing.T) {
 	}
 }
 
-func TestcastToTree(t *testing.T) {
+func TestcastToBPTree(t *testing.T) {
 	testCases := []struct {
 		name     string
 		verifyFn func(*testing.T)
@@ -262,9 +262,9 @@ func TestcastToTree(t *testing.T) {
 		{
 			name: "Success",
 			verifyFn: func(t *testing.T) {
-				tree := avl.NewTree()
+				tree := bptree.NewBPTreeN(16)
 				var value any = tree
-				result, err := castToTree(value)
+				result, err := castToBPTree(value)
 				uassert.NoError(t, err)
 				uassert.NotEqual(t, nil, result)
 			},
@@ -273,7 +273,7 @@ func TestcastToTree(t *testing.T) {
 			name: "Failure_String",
 			verifyFn: func(t *testing.T) {
 				var value any = "not a tree"
-				_, err := castToTree(value)
+				_, err := castToBPTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 				uassert.ErrorContains(t, err, "string")
 			},
@@ -282,7 +282,7 @@ func TestcastToTree(t *testing.T) {
 			name: "Failure_Map",
 			verifyFn: func(t *testing.T) {
 				var value any = make(map[string]string)
-				_, err := castToTree(value)
+				_, err := castToBPTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
@@ -290,7 +290,7 @@ func TestcastToTree(t *testing.T) {
 			name: "Failure_Nil",
 			verifyFn: func(t *testing.T) {
 				var value any = nil
-				_, err := castToTree(value)
+				_, err := castToBPTree(value)
 				uassert.ErrorContains(t, err, "failed to cast")
 			},
 		},
