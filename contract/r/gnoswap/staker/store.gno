@@ -25,6 +25,7 @@ const (
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
+	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -275,6 +276,28 @@ func (s *stakerStore) GetUnstakingFee() uint64 {
 
 func (s *stakerStore) SetUnstakingFee(fee uint64) error {
 	return s.kvStore.Set(StoreKeyUnstakingFee.String(), fee)
+}
+
+func (s *stakerStore) HasPendingProtocolFeesStoreKey() bool {
+	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
+}
+
+func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
+	if err != nil {
+		panic(err)
+	}
+
+	fees, ok := result.(map[string]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+	}
+
+	return fees
+}
+
+func (s *stakerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), fees)
 }
 
 // Pools

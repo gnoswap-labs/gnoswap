@@ -21,8 +21,9 @@ const (
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
 	// Protocol fee storage keys
-	StoreKeyPoolCreationFee  StoreKey = "poolCreationFee"  // Pool creation fee amount
-	StoreKeyWithdrawalFeeBPS StoreKey = "withdrawalFeeBPS" // Withdrawal fee in basis points
+	StoreKeyPoolCreationFee     StoreKey = "poolCreationFee"     // Pool creation fee amount
+	StoreKeyPendingProtocolFees StoreKey = "pendingProtocolFees" // tokenPath -> amount held locally for protocol_fee
+	StoreKeyWithdrawalFeeBPS    StoreKey = "withdrawalFeeBPS"    // Withdrawal fee in basis points
 
 	// Swap hook storage keys
 	StoreKeySwapStartHook StoreKey = "swapStartHook" // Swap start hook function
@@ -143,6 +144,28 @@ func (s *poolStore) GetPoolCreationFee() int64 {
 // SetPoolCreationFee stores the pool creation fee amount.
 func (s *poolStore) SetPoolCreationFee(poolCreationFee int64) error {
 	return s.kvStore.Set(StoreKeyPoolCreationFee.String(), poolCreationFee)
+}
+
+func (s *poolStore) HasPendingProtocolFees() bool {
+	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
+}
+
+func (s *poolStore) GetPendingProtocolFees() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
+	if err != nil {
+		panic(err)
+	}
+
+	pendingProtocolFees, ok := result.(map[string]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+	}
+
+	return pendingProtocolFees
+}
+
+func (s *poolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
+	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), pendingProtocolFees)
 }
 
 func (s *poolStore) HasWithdrawalFeeBPS() bool {

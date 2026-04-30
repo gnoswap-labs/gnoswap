@@ -10,6 +10,8 @@ type mockProtocolFeeStore struct {
 	devOpsPct            int64
 	accuToGovStaker      *bptree.BPTree
 	accuToDevOps         *bptree.BPTree
+	distributedToGovStakerHistory *bptree.BPTree
+	distributedToDevOpsHistory    *bptree.BPTree
 	tokenListWithAmounts map[string]int64
 }
 
@@ -100,6 +102,70 @@ func (s *mockProtocolFeeStore) SetAccuToDevOpsItem(tokenPath string, amount int6
 	return nil
 }
 
+func (s *mockProtocolFeeStore) HasDistributedToGovStakerHistoryStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeDistributedToGovStakerHistory() error {
+	s.distributedToGovStakerHistory = bptree.NewBPTreeN(16)
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistory() *bptree.BPTree {
+	return s.distributedToGovStakerHistory
+}
+
+func (s *mockProtocolFeeStore) GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool) {
+	result, ok := s.distributedToGovStakerHistory.Get(tokenPath)
+	if !ok {
+		return 0, false
+	}
+
+	amount, ok := result.(int64)
+	if !ok {
+		panic(ufmt.Errorf("failed to cast result to int64: %T", result))
+	}
+
+	return amount, true
+}
+
+func (s *mockProtocolFeeStore) SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error {
+	s.distributedToGovStakerHistory.Set(tokenPath, amount)
+	return nil
+}
+
+func (s *mockProtocolFeeStore) HasDistributedToDevOpsHistoryStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeDistributedToDevOpsHistory() error {
+	s.distributedToDevOpsHistory = bptree.NewBPTreeN(16)
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistory() *bptree.BPTree {
+	return s.distributedToDevOpsHistory
+}
+
+func (s *mockProtocolFeeStore) GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool) {
+	result, ok := s.distributedToDevOpsHistory.Get(tokenPath)
+	if !ok {
+		return 0, false
+	}
+
+	amount, ok := result.(int64)
+	if !ok {
+		panic(ufmt.Errorf("failed to cast result to int64: %T", result))
+	}
+
+	return amount, true
+}
+
+func (s *mockProtocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error {
+	s.distributedToDevOpsHistory.Set(tokenPath, amount)
+	return nil
+}
+
 // handle tokenListWithAmounts store data
 func (s *mockProtocolFeeStore) HasTokenListWithAmountsStoreKey() bool {
 	return true
@@ -136,9 +202,11 @@ func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amou
 
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
-		devOpsPct:            0,
-		accuToGovStaker:      bptree.NewBPTreeN(16),
-		accuToDevOps:         bptree.NewBPTreeN(16),
-		tokenListWithAmounts: make(map[string]int64),
+		devOpsPct:                     0,
+		accuToGovStaker:               bptree.NewBPTreeN(16),
+		accuToDevOps:                  bptree.NewBPTreeN(16),
+		distributedToGovStakerHistory: bptree.NewBPTreeN(16),
+		distributedToDevOpsHistory:    bptree.NewBPTreeN(16),
+		tokenListWithAmounts:          make(map[string]int64),
 	}
 }

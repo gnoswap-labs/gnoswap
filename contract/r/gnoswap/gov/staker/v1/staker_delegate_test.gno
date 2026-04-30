@@ -21,6 +21,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Test Delegate function
@@ -706,6 +707,28 @@ func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerDelegate_CollectUndelegatedGns_EmergencyHaltAllowsRecovery(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+	setupStakerDelegateTestCollectableAmount(t, gs, testutils.TestAddress("alice"), minimumAmount)
+	defer cleanupStakerDelegateTest(t, gs)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("alice")))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.CollectUndelegatedGns()
+			uassert.Equal(t, int64(minimumAmount), result)
+		}(cross)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 }
 
 // Test comprehensive delegation validation including edge cases

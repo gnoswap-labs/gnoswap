@@ -352,7 +352,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 				}
 			}
 
-			testing.SetRealm(testing.NewUserRealm(stakerAddr))
+			testing.SetRealm(stakerRealm)
 			netAmount, feeAmount, err := instance.handleStakingRewardFee(tt.tokenPath, tt.amount, tt.internal)
 
 			if tt.expectError {

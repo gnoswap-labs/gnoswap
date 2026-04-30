@@ -134,7 +134,6 @@ func (s *stakerV1) CreateExternalIncentive(
 //
 // Only callable by Creator or Admin.
 func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string, refundAddress address) {
-	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	// checks pool registry
@@ -287,7 +286,6 @@ func (s *stakerV1) CollectExternalIncentivePenalty(
 	incentiveId string,
 	refundAddress address,
 ) int64 {
-	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsPoolExists(s, targetPoolPath)

@@ -55,15 +55,14 @@ func TestCommunityPool_TransferToken(t *testing.T) {
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "halted: community_pool",
+			panicMsg:    "halted: withdraw",
 		},
 		{
-			name: "panic if halted with safe mode (withdraw blocked)",
+			name: "panic if halted with safe mode (withdraw blocked only)",
 			setup: func() {
 				testing.SetRealm(adminRealm)
 				halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
 			},
-			caller:      adminRealm,
 			tokenPath:   gnsPath,
 			to:          dummyReceiver,
 			amount:      1000,

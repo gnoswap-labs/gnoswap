@@ -35,6 +35,16 @@ func (pfs *protocolFeeState) AccuToDevOps() *bptree.BPTree {
 	return pfs.store.GetAccuToDevOps()
 }
 
+// ActualDistributedToGovStaker returns the cumulative amounts actually distributed to Gov/Staker.
+func (pfs *protocolFeeState) ActualDistributedToGovStaker() *bptree.BPTree {
+	return pfs.store.GetDistributedToGovStakerHistory()
+}
+
+// ActualDistributedToDevOps returns the cumulative amounts actually distributed to DevOps.
+func (pfs *protocolFeeState) ActualDistributedToDevOps() *bptree.BPTree {
+	return pfs.store.GetDistributedToDevOpsHistory()
+}
+
 // TokenListWithAmounts returns the map of token paths to their accumulated amounts.
 func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
 	return pfs.store.GetTokenListWithAmounts()
@@ -53,12 +63,12 @@ func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
-	if err := pfs.addAccuToDevOps(token, amount); err != nil {
-		return err
-	}
-
 	devOpsAddr := access.MustGetAddress(prabc.ROLE_DEVOPS.String())
 	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
+
+	if err := pfs.addActualDistributedToDevOps(token, amount); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -66,12 +76,12 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 // distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
-	if err := pfs.addAccuToGovStaker(token, amount); err != nil {
-		return err
-	}
-
 	govStakerAddr := access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
 	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
+
+	if err := pfs.addActualDistributedToGovStaker(token, amount); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -140,6 +150,26 @@ func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) err
 	return nil
 }
 
+// addActualDistributedToGovStaker adds the amount to the actual distributed amount to gov/staker by token path.
+func (pfs *protocolFeeState) addActualDistributedToGovStaker(tokenPath string, amount int64) error {
+	before := pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath)
+	after := safeAddInt64(before, amount)
+	if err := pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, after); err != nil {
+		return err
+	}
+	return nil
+}
+
+// addActualDistributedToDevOps adds the amount to the actual distributed amount to devOps by token path.
+func (pfs *protocolFeeState) addActualDistributedToDevOps(tokenPath string, amount int64) error {
+	before := pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath)
+	after := safeAddInt64(before, amount)
+	if err := pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, after); err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
 func (pfs *protocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetAccuToGovStaker(), tokenPath)
@@ -148,6 +178,16 @@ func (pfs *protocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath str
 // GetAccuTransferToDevOpsByTokenPath gets the accumulated amount to devOps by token path.
 func (pfs *protocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetAccuToDevOps(), tokenPath)
+}
+
+// GetActualDistributedToGovStakerByTokenPath gets the actual distributed amount to gov/staker by token path.
+func (pfs *protocolFeeState) GetActualDistributedToGovStakerByTokenPath(tokenPath string) int64 {
+	return retrieveAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
+}
+
+// GetActualDistributedToDevOpsByTokenPath gets the actual distributed amount to devOps by token path.
+func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath string) int64 {
+	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.

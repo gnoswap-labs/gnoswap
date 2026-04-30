@@ -154,10 +154,8 @@ func createOBLProject() {
 // Mock protocol fee setup
 func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Setting up mock protocol fees")
-
-	// admin > protocol_fee
-	// send qux, bar for testing
-	println("[INFO] Admin transferring tokens to staker")
+	// admin > staker, protocol_fee pulls from caller via TransferFrom
+	println("[INFO] Admin transferring tokens to staker caller")
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, stakerAddr, barAmount)
 	qux.Transfer(cross, stakerAddr, quxAmount)
@@ -290,7 +288,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 2. Protocol fee setup
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
@@ -312,7 +310,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 4. Protocol fee setup 2
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
@@ -344,7 +342,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 7. Protocol fee setup 3
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000

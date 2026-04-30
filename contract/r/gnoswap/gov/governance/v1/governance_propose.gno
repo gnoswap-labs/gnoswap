@@ -145,7 +145,6 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	amount int64,
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsValidToken(tokenPath)
 

@@ -22,6 +22,8 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
+	s.tryCollectPendingProtocolFees()
+
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		return amount, 0, nil
@@ -41,12 +43,55 @@ func (s *stakerV1) handleStakingRewardFee(
 		tokenPath = GNS_PATH
 	}
 
-	// external contract has fee
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, feeAmount)
-	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
+	s.addPendingProtocolFee(tokenPath, feeAmount)
+	s.tryCollectPendingProtocolFees()
 
 	return safeSubInt64(amount, feeAmount), feeAmount, nil
+}
+
+func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	pendingProtocolFees := clonePendingProtocolFees(s.store.GetPendingProtocolFees())
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func (s *stakerV1) tryCollectPendingProtocolFees() {
+	pendingProtocolFees := clonePendingProtocolFees(s.store.GetPendingProtocolFees())
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			delete(pendingProtocolFees, tokenPath)
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			return
+		}
+		delete(pendingProtocolFees, tokenPath)
+	}
+
+	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+func clonePendingProtocolFees(src map[string]int64) map[string]int64 {
+	clone := make(map[string]int64, len(src))
+	for key, value := range src {
+		clone[key] = value
+	}
+	return clone
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.

@@ -249,6 +249,10 @@ type IPoolStore interface {
 	GetPoolCreationFee() int64
 	SetPoolCreationFee(poolCreationFee int64) error
 
+	HasPendingProtocolFees() bool
+	GetPendingProtocolFees() map[string]int64
+	SetPendingProtocolFees(pendingProtocolFees map[string]int64) error
+
 	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64
 	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error

@@ -69,21 +69,27 @@ func approveProtocolFeeSpender(t *testing.T, ownerRealm runtime.Realm, tokenPath
 	t.Helper()
 
 	testing.SetRealm(ownerRealm)
+	protocolFeeV1Realm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 
 	switch tokenPath {
 	case "gno.land/r/onbloc/bar":
 		bar.Approve(cross, protocolFeeAddr, amount)
+		bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
 	case "gno.land/r/onbloc/obl":
 		obl.Approve(cross, protocolFeeAddr, amount)
+		obl.Approve(cross, protocolFeeV1Realm.Address(), amount)
 	case "gno.land/r/onbloc/qux":
 		qux.Approve(cross, protocolFeeAddr, amount)
+		qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
 	default:
 		panic(ufmt.Sprintf("unsupported token path: %s", tokenPath))
 	}
 }
 
 func fundRealmAndApproveProtocolFee(t *testing.T, ownerRealm runtime.Realm, tokenPath string, amount int64) {
-	t.Helper()
+	if t != nil {
+		t.Helper()
+	}
 
 	if amount <= 0 {
 		return
@@ -91,6 +97,10 @@ func fundRealmAndApproveProtocolFee(t *testing.T, ownerRealm runtime.Realm, toke
 
 	transferTokenTo(t, tokenPath, ownerRealm.Address(), amount)
 	approveProtocolFeeSpender(t, ownerRealm, tokenPath, amount)
+}
+
+func fundAndApproveProtocolFee(holderRealm runtime.Realm, tokenPath string, amount int64) {
+	fundRealmAndApproveProtocolFee(nil, holderRealm, tokenPath, amount)
 }
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -196,7 +206,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 				fundRealmAndApproveProtocolFee(t, positionRealm, token, amount)
 				testing.SetRealm(positionRealm)
 				func(cur realm) {
-					testing.SetRealm(protocolFeeRealm)
 					pf.AddToProtocolFee(token, amount)
 				}(cross)
 			}
@@ -304,56 +313,6 @@ func TestAddToProtocolFee(t *testing.T) {
 			tokenListWithAmount := pf.store.GetTokenListWithAmounts()
 			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
 			uassert.Equal(t, common.BalanceOf(test.tokenPath, protocolFeeAddr)-beforeBalance, test.amount)
-		})
-	}
-}
-
-func TestClearTokenListWithAmount(t *testing.T) {
-	tests := []struct {
-		name        string
-		prevRealm   runtime.Realm
-		want        map[string]int64
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "no permission to clear",
-			prevRealm:   dummyRealm,
-			shouldPanic: true,
-			panicMsg:    "is not gov_staker",
-		},
-		{
-			name:      "clear protocol fee",
-			prevRealm: govStakerRealm,
-			want:      make(map[string]int64, 0),
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Reset and setup test data for each test case
-			pf := createTestProtocolFee(t)
-			pf.store.SetTokenListWithAmounts(map[string]int64{
-				"gno.land/r/foo": 100,
-				"gno.land/r/baz": 200,
-			})
-
-			testing.SetRealm(test.prevRealm)
-
-			if test.shouldPanic {
-				uassert.AbortsContains(t, test.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearTokenListWithAmount()
-					}(cross)
-				})
-			} else {
-				func(cur realm) {
-					pf.ClearTokenListWithAmount()
-				}(cross)
-
-				tokenListWithAmount := pf.store.GetTokenListWithAmounts()
-				uassert.Equal(t, len(tokenListWithAmount), len(test.want))
-			}
 		})
 	}
 }
@@ -544,14 +503,14 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Given
-				pf := createTestProtocolFee(t)
-				protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
-				if !tt.shouldPanic {
-					fundRealmAndApproveProtocolFee(t, tt.prevRealm, "gno.land/r/onbloc/bar", 100)
-				}
-				testing.SetRealm(tt.prevRealm)
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
+			if !tt.shouldPanic {
+				fundRealmAndApproveProtocolFee(t, tt.prevRealm, "gno.land/r/onbloc/bar", 100)
+			}
+			testing.SetRealm(tt.prevRealm)
 
 				// When & Then
 				if tt.shouldPanic {
@@ -569,57 +528,6 @@ func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(t *testing.T) {
 						}(cross)
 					})
 				}
-		})
-	}
-}
-
-func TestProtocolFee_ClearAccuTransferToGovStaker(t *testing.T) {
-	tests := []struct {
-		name        string
-		prevRealm   runtime.Realm
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "error - unauthorized caller",
-			prevRealm:   dummyRealm,
-			shouldPanic: true,
-			panicMsg:    "is not gov_staker",
-		},
-		{
-			name:        "error - admin cannot clear",
-			prevRealm:   adminRealm,
-			shouldPanic: true,
-			panicMsg:    "is not gov_staker",
-		},
-		{
-			name:        "success - gov staker can clear",
-			prevRealm:   govStakerRealm,
-			shouldPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pf.store.SetAccuToGovStakerItem("gno.land/r/foo", int64(1000))
-			testing.SetRealm(tt.prevRealm)
-
-			// When & Then
-			if tt.shouldPanic {
-				uassert.AbortsContains(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearAccuTransferToGovStaker()
-					}(cross)
-				})
-			} else {
-				func(cur realm) {
-					pf.ClearAccuTransferToGovStaker()
-				}(cross)
-				// Verify tree was cleared
-				uassert.Equal(t, pf.store.GetAccuToGovStaker().Size(), 0)
-			}
 		})
 	}
 }
@@ -830,7 +738,7 @@ func TestSetDevOpsPct_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "panic - protocol fee admin change remains blocked during emergency",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -863,6 +771,12 @@ func TestSetDevOpsPct_HaltScenario(t *testing.T) {
 			// When - Then
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetDevOpsPct(tt.pct)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						pf.SetDevOpsPct(tt.pct)
 					}(cross)
@@ -938,7 +852,7 @@ func TestSetGovStakerPct_HaltScenario(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "panic - gov staker pct change remains blocked during emergency",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -971,6 +885,12 @@ func TestSetGovStakerPct_HaltScenario(t *testing.T) {
 			// When - Then
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetGovStakerPct(tt.pct)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
 					func(cur realm) {
 						pf.SetGovStakerPct(tt.pct)
 					}(cross)
@@ -1036,110 +956,6 @@ func TestSetGovStakerPct_UnauthorizedCaller(t *testing.T) {
 	}
 }
 
-func TestClearTokenListWithAmount_HaltScenario(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "panic - protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
-			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pf.store.SetTokenListWithAmounts(map[string]int64{
-				"gno.land/r/foo": 100,
-			})
-			if tt.setup != nil {
-				tt.setup()
-			}
-			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
-			}()
-
-			testing.SetRealm(govStakerRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearTokenListWithAmount()
-					}(cross)
-				})
-			}
-		})
-	}
-}
-
-func TestClearAccuTransferToGovStaker_HaltScenario(t *testing.T) {
-	tests := []struct {
-		name        string
-		setup       func()
-		cleanup     func()
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name: "panic - protocol fee is halted",
-			setup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
-			},
-			cleanup: func() {
-				testing.SetOriginCaller(adminAddr)
-				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pf.store.SetAccuToGovStakerItem("gno.land/r/foo", int64(1000))
-			if tt.setup != nil {
-				tt.setup()
-			}
-			defer func() {
-				if tt.cleanup != nil {
-					tt.cleanup()
-				}
-			}()
-
-			testing.SetRealm(govStakerRealm)
-
-			// When - Then
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.ClearAccuTransferToGovStaker()
-					}(cross)
-				})
-			}
-		})
-	}
-}
-
 func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1147,9 +963,11 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 		cleanup     func()
 		shouldPanic bool
 		panicMsg    string
+		prepare     func(pf *protocolFeeV1)
+		assertState func(t *testing.T, pf *protocolFeeV1)
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - distribute protocol fee remains available during emergency",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -1158,8 +976,42 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
+			panicMsg:    "",
+			prepare: func(pf *protocolFeeV1) {
+				pf.store.SetTokenListWithAmounts(map[string]int64{
+					"gno.land/r/onbloc/bar": 100,
+				})
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
+			},
+			assertState: func(t *testing.T, pf *protocolFeeV1) {
+				uassert.Equal(t, int64(100), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+			},
+		},
+		{
+			name: "success - distribute protocol fee is skipped in safe mode",
+			setup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+			},
+			cleanup: func() {
+				testing.SetOriginCaller(adminAddr)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			},
+			shouldPanic: false,
+			panicMsg:    "",
+			prepare: func(pf *protocolFeeV1) {
+				pf.store.SetTokenListWithAmounts(map[string]int64{
+					"gno.land/r/onbloc/bar": 100,
+				})
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
+			},
+			assertState: func(t *testing.T, pf *protocolFeeV1) {
+				uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
+			},
 		},
 	}
 
@@ -1167,6 +1019,9 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given
 			pf := createTestProtocolFee(t)
+			if tt.prepare != nil {
+				tt.prepare(pf)
+			}
 			if tt.setup != nil {
 				tt.setup()
 			}
@@ -1185,6 +1040,16 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 						pf.DistributeProtocolFee()
 					}(cross)
 				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+						pf.DistributeProtocolFee()
+					}(cross)
+				})
+				if tt.assertState != nil {
+					tt.assertState(t, pf)
+				}
 			}
 		})
 	}
@@ -1197,9 +1062,10 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 		cleanup     func()
 		shouldPanic bool
 		panicMsg    string
+		assertState func(t *testing.T, pf *protocolFeeV1)
 	}{
 		{
-			name: "panic - protocol fee is halted",
+			name: "success - protocol fee accrual returns error during emergency",
 			setup: func() {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
@@ -1208,8 +1074,12 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			},
-			shouldPanic: true,
-			panicMsg:    "halted: protocol_fee",
+			shouldPanic: false,
+			panicMsg:    "",
+			assertState: func(t *testing.T, pf *protocolFeeV1) {
+				tokenList := pf.store.GetTokenListWithAmounts()
+				uassert.Equal(t, int64(0), tokenList["gno.land/r/onbloc/bar"])
+			},
 		},
 	}
 
@@ -1226,7 +1096,9 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 				}
 			}()
 
-			testing.SetRealm(testing.NewCodeRealm(poolPath))
+			holderRealm := testing.NewCodeRealm(poolPath)
+			fundAndApproveProtocolFee(holderRealm, "gno.land/r/onbloc/bar", 100)
+			testing.SetRealm(holderRealm)
 
 			// When - Then
 			if tt.shouldPanic {
@@ -1235,6 +1107,16 @@ func TestAddToProtocolFee_HaltScenario(t *testing.T) {
 						pf.AddToProtocolFee("gno.land/r/foo", 100)
 					}(cross)
 				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						err := pf.AddToProtocolFee("gno.land/r/onbloc/bar", 100)
+						uassert.NotNil(t, err)
+					}(cross)
+				})
+				if tt.assertState != nil {
+					tt.assertState(t, pf)
+				}
 			}
 		})
 	}

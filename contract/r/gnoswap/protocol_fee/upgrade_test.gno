@@ -277,64 +277,6 @@ func TestAddToProtocolFee(t *testing.T) {
 	}
 }
 
-func TestClearTokenListWithAmount(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "clear token list with amount is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			ClearTokenListWithAmount(cross)
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ClearTokenListWithAmount") != 1 {
-				t.Error("ClearTokenListWithAmount was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestClearAccuTransferToGovStaker(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "clear accu transfer to gov staker is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			ClearAccuTransferToGovStaker(cross)
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ClearAccuTransferToGovStaker") != 1 {
-				t.Error("ClearAccuTransferToGovStaker was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestGetDevOpsPct(t *testing.T) {
 	tests := []struct {
 		name string

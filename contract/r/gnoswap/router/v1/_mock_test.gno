@@ -85,6 +85,19 @@ func (r *mockRouterStore) SetSwapFee(fee uint64) error {
 	return nil
 }
 
+func (r *mockRouterStore) HasPendingProtocolFeesKey() bool {
+	return r.data[router.StoreKeyPendingProtocolFees.String()] != nil
+}
+
+func (r *mockRouterStore) GetPendingProtocolFees() map[string]int64 {
+	return r.data[router.StoreKeyPendingProtocolFees.String()].(map[string]int64)
+}
+
+func (r *mockRouterStore) SetPendingProtocolFees(fees map[string]int64) error {
+	r.data[router.StoreKeyPendingProtocolFees.String()] = fees
+	return nil
+}
+
 // Mock NFT Accessor
 type mockNFTAccessor struct {
 	approved map[grc721.TokenID]map[address]bool
@@ -135,6 +148,7 @@ func newMockPositionStore() *mockPositionStore {
 func newMockRouterStore() *mockRouterStore {
 	data := make(map[string]any)
 	data[router.StoreKeySwapFee.String()] = uint64(15) // 0.15%
+	data[router.StoreKeyPendingProtocolFees.String()] = make(map[string]int64)
 
 	return &mockRouterStore{data: data}
 }
