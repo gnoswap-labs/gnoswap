@@ -8,6 +8,26 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
+// stakerDepositKeySeparator separates address and padded deposit id in composite keys.
+// Chosen so that the prefix range [addr+sep, addr+sepNext) covers exactly one address's entries.
+const (
+	stakerDepositKeySeparator         = "|"
+	stakerDepositKeySeparatorNextWord = string(int32('|') + 1)
+)
+
+// makeStakerDepositKey builds the composite key "addr|paddedDepositId".
+func makeStakerDepositKey(addrStr string, depositId uint64) string {
+	return addrStr + stakerDepositKeySeparator + EncodeUint(depositId)
+}
+
+// stakerDepositKeyRange returns the half-open prefix range covering all composite keys belonging to addrStr.
+func stakerDepositKeyRange(addrStr string) (lo, hi string) {
+	lo = addrStr + stakerDepositKeySeparator
+	hi = addrStr + stakerDepositKeySeparatorNextWord
+
+	return lo, hi
+}
+
 // poolPathDivide splits a pool path into token addresses and fee tier.
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
