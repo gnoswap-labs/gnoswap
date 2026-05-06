@@ -94,15 +94,19 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - tid: token ID to transfer
 //
 // Returns error if transfer fails.
-// Only callable by staker contract.
+//
+// Permission model:
+//   - Tokens held by the staker contract (i.e. currently staked) can only be
+//     moved by the staker itself; the underlying staked LP position is
+//     non-transferable.
+//   - Otherwise, ownership and approval are enforced by the GRC721 layer
+//     (owner / approved-for-token / approved-for-all).
 func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
-
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
+	assertIsAllowedTransfer(tid)
 
 	err := nft.SafeTransferFrom(from, to, tid)
 	checkTransferErr(err, from, to, tid)
@@ -117,15 +121,19 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 //   - tid: token ID
 //
 // Returns error if transfer fails.
-// Only callable by staker contract.
+//
+// Permission model:
+//   - Tokens held by the staker contract (i.e. currently staked) can only be
+//     moved by the staker itself; the underlying staked LP position is
+//     non-transferable.
+//   - Otherwise, ownership and approval are enforced by the GRC721 layer
+//     (owner / approved-for-token / approved-for-all).
 func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
-
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
+	assertIsAllowedTransfer(tid)
 
 	err := nft.TransferFrom(from, to, tid)
 	checkTransferErr(err, from, to, tid)
