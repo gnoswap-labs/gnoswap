@@ -732,6 +732,140 @@ func TestMint(t *testing.T) {
 	}
 }
 
+func TestMint_DerivesParticipantsAndReferralFromPreviousRealm(t *testing.T) {
+	t.Run("direct user mints to previous realm and registers referral", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		user := testutils.TestAddress("direct-minter")
+		referrer := testutils.TestAddress("referrer").String()
+
+		testing.SetRealm(adminRealm)
+		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
+		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
+
+		testing.SetRealm(testing.NewUserRealm(user))
+		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+
+		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
+			testing.SetRealm(posRealm)
+			return mockInstance.Mint(
+				barPath, fooPath, fee500,
+				-500, 500,
+				"1000000", "1000000",
+				"0", "0",
+				time.Now().Add(10*time.Minute).Unix(),
+				user,
+				referrer,
+			)
+		}(cross)
+
+		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, user, owner)
+		uassert.Equal(t, referrer, referral.GetReferral(user.String()))
+	})
+
+	t.Run("contract caller can mint through public Mint", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		middleRealm := testing.NewCodeRealm("gno.land/r/gnoswap/test/middle")
+		middleAddr := middleRealm.Address()
+
+		testing.SetRealm(adminRealm)
+		common.SafeGRC20Transfer(cross, barPath, middleAddr, 1000000)
+		common.SafeGRC20Transfer(cross, fooPath, middleAddr, 1000000)
+
+		testing.SetRealm(middleRealm)
+		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+
+		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
+			testing.SetRealm(posRealm)
+			return mockInstance.Mint(
+				barPath, fooPath, fee500,
+				-500, 500,
+				"1000000", "1000000",
+				"0", "0",
+				time.Now().Add(10*time.Minute).Unix(),
+				middleAddr,
+				"",
+			)
+		}(cross)
+
+		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, middleAddr, owner)
+	})
+}
+
+func TestMint_MintToValidation(t *testing.T) {
+	t.Run("user can mint to arbitrary third party", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		user := testutils.TestAddress("mint-stake-user")
+		thirdParty := testutils.TestAddress("third-party")
+
+		testing.SetRealm(adminRealm)
+		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
+		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
+
+		testing.SetRealm(testing.NewUserRealm(user))
+		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+
+		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
+			testing.SetRealm(posRealm)
+			return mockInstance.Mint(
+				barPath, fooPath, fee500,
+				-500, 500,
+				"1000000", "1000000",
+				"0", "0",
+				time.Now().Add(10*time.Minute).Unix(),
+				thirdParty,
+				"",
+			)
+		}(cross)
+
+		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
+		uassert.NoError(t, err)
+		uassert.Equal(t, thirdParty, owner)
+	})
+
+	t.Run("user cannot mint to empty address", func(t *testing.T) {
+		initPositionTest(t)
+		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+		user := testutils.TestAddress("mint-stake-user")
+
+		testing.SetRealm(adminRealm)
+		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
+		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
+
+		testing.SetRealm(testing.NewUserRealm(user))
+		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+
+		uassert.AbortsContains(t, "invalid address", func() {
+			func(cur realm) {
+				testing.SetRealm(posRealm)
+				mockInstance.Mint(
+					barPath, fooPath, fee500,
+					-500, 500,
+					"1000000", "1000000",
+					"0", "0",
+					time.Now().Add(10*time.Minute).Unix(),
+					address(""),
+					"",
+				)
+			}(cross)
+		})
+	})
+}
+
 func TestIncreaseLiquidity(t *testing.T) {
 	tests := []struct {
 		name             string
