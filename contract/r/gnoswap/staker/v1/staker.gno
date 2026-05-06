@@ -336,7 +336,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //
 // Manages NFT custody during staking operations.
 // Transfers ownership to staker contract for reward eligibility.
-// Handles special cases for mint-and-stake operations.
+// Handles cases where the staker already holds custody.
 //
 // Parameters:
 //   - positionId: The ID of the position NFT to transfer
@@ -348,16 +348,16 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //   - Prevents self-transfer exploits
 //   - Validates ownership before transfer
 //   - Atomic operation with staking
-//   - No transfer if owner == to (mint & stake case)
+//   - No transfer if owner == to (already in custody)
 //
 // Returns:
-//   - nil: If owner and recipient are same (mint-and-stake)
+//   - nil: If owner and recipient are same
 //   - error: If caller unauthorized or transfer fails
 //
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
 func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address) error {
-	// if owner is the same as to, when mint and stake, it will be the same address
+	// If the recipient already owns the NFT, no transfer is needed.
 	if owner == to {
 		return nil
 	}
