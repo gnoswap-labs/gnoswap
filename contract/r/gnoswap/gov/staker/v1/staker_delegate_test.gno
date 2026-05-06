@@ -128,6 +128,223 @@ func TestStakerDelegate_Delegate(t *testing.T) {
 	}
 }
 
+func TestStakerDelegate_Delegate_AllowsContractCaller(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	contractCallerRealm := testing.NewCodeRealm("gno.land/r/onbloc/delegator")
+	contractCaller := contractCallerRealm.Address()
+	originCaller := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	amount := int64(minimumAmount)
+	expectedDelegationID := gs.store.GetDelegationCounter().Get() + 1
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, contractCaller, amount)
+
+	testing.SetRealm(contractCallerRealm)
+	gns.Approve(cross, govStakerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(originCaller))
+	testing.SetOriginCaller(originCaller)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Delegate(validator, amount, "")
+			uassert.Equal(t, result, amount)
+		}(cross)
+	}(cross)
+
+	delegationIDs := gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)
+	uassert.Equal(t, len(delegationIDs), 1)
+	uassert.Equal(t, delegationIDs[0], expectedDelegationID)
+	uassert.Equal(t, gs.store.GetDelegationCounter().Get(), expectedDelegationID)
+
+	delegation := gs.getDelegation(delegationIDs[0])
+	uassert.Equal(t, delegation.ID(), expectedDelegationID)
+	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
+	uassert.Equal(t, delegation.DelegateTo(), validator)
+
+	originDelegationIDs := gs.getUserDelegationIDsWithDelegatee(originCaller, validator)
+	uassert.Equal(t, len(originDelegationIDs), 0)
+}
+
+func TestStakerDelegate_Undelegate_MultipleContractDelegationsPreserveIDs(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	contractCallerRealm := testing.NewCodeRealm("gno.land/r/onbloc/delegator")
+	contractCaller := contractCallerRealm.Address()
+	originCaller := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	firstAmount := int64(minimumAmount)
+	secondAmount := int64(minimumAmount * 2)
+	undelegateAmount := int64(minimumAmount * 2)
+	totalAmount := firstAmount + secondAmount
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, contractCaller, totalAmount)
+
+	testing.SetRealm(contractCallerRealm)
+	gns.Approve(cross, govStakerAddr, totalAmount)
+
+	testing.SetRealm(testing.NewUserRealm(originCaller))
+	testing.SetOriginCaller(originCaller)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Delegate(validator, firstAmount, "")
+			uassert.Equal(t, result, firstAmount)
+			result = gs.Delegate(validator, secondAmount, "")
+			uassert.Equal(t, result, secondAmount)
+		}(cross)
+	}(cross)
+
+	delegationIDs := gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)
+	uassert.Equal(t, len(delegationIDs), 2)
+
+	firstDelegationID := delegationIDs[0]
+	secondDelegationID := delegationIDs[1]
+	uassert.Equal(t, firstDelegationID, int64(1))
+	uassert.Equal(t, secondDelegationID, int64(2))
+	uassert.True(t, firstDelegationID != secondDelegationID)
+	uassert.Equal(t, gs.store.GetDelegationCounter().Get(), secondDelegationID)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Undelegate(validator, undelegateAmount)
+			uassert.Equal(t, result, undelegateAmount)
+		}(cross)
+	}(cross)
+
+	delegationIDsAfterUndelegate := gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)
+	uassert.Equal(t, len(delegationIDsAfterUndelegate), 2)
+	uassert.Equal(t, delegationIDsAfterUndelegate[0], firstDelegationID)
+	uassert.Equal(t, delegationIDsAfterUndelegate[1], secondDelegationID)
+
+	firstDelegation := gs.getDelegation(firstDelegationID)
+	secondDelegation := gs.getDelegation(secondDelegationID)
+	uassert.True(t, firstDelegation != nil)
+	uassert.True(t, secondDelegation != nil)
+
+	uassert.Equal(t, firstDelegation.ID(), firstDelegationID)
+	uassert.Equal(t, secondDelegation.ID(), secondDelegationID)
+	uassert.Equal(t, firstDelegation.DelegateFrom(), contractCaller)
+	uassert.Equal(t, secondDelegation.DelegateFrom(), contractCaller)
+	uassert.Equal(t, firstDelegation.DelegateTo(), validator)
+	uassert.Equal(t, secondDelegation.DelegateTo(), validator)
+
+	uassert.Equal(t, firstDelegation.TotalDelegatedAmount(), firstAmount)
+	uassert.Equal(t, secondDelegation.TotalDelegatedAmount(), secondAmount)
+	uassert.Equal(t, firstDelegation.UnDelegatedAmount(), firstAmount)
+	uassert.Equal(t, secondDelegation.UnDelegatedAmount(), undelegateAmount-firstAmount)
+
+	firstWithdraws := firstDelegation.Withdraws()
+	secondWithdraws := secondDelegation.Withdraws()
+	uassert.Equal(t, len(firstWithdraws), 1)
+	uassert.Equal(t, len(secondWithdraws), 1)
+	uassert.Equal(t, firstWithdraws[0].DelegationID(), firstDelegationID)
+	uassert.Equal(t, secondWithdraws[0].DelegationID(), secondDelegationID)
+	uassert.Equal(t, firstWithdraws[0].UnDelegateAmount(), firstAmount)
+	uassert.Equal(t, secondWithdraws[0].UnDelegateAmount(), undelegateAmount-firstAmount)
+
+	originDelegationIDs := gs.getUserDelegationIDsWithDelegatee(originCaller, validator)
+	uassert.Equal(t, len(originDelegationIDs), 0)
+}
+
+func TestStakerDelegate_OriginCannotCollectContractDelegation(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	contractCallerRealm := testing.NewCodeRealm("gno.land/r/onbloc/delegator")
+	contractCaller := contractCallerRealm.Address()
+	originCaller := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	amount := int64(minimumAmount)
+
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		gs.SetUnDelegationLockupPeriodByAdmin(0)
+	}(cross)
+	gns.Transfer(cross, contractCaller, amount)
+
+	testing.SetRealm(contractCallerRealm)
+	gns.Approve(cross, govStakerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(originCaller))
+	testing.SetOriginCaller(originCaller)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Delegate(validator, amount, "")
+			uassert.Equal(t, result, amount)
+			result = gs.Undelegate(validator, amount)
+			uassert.Equal(t, result, amount)
+		}(cross)
+	}(cross)
+
+	contractDelegationIDs := gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)
+	uassert.Equal(t, len(contractDelegationIDs), 1)
+	delegationID := contractDelegationIDs[0]
+	delegation := gs.getDelegation(delegationID)
+	uassert.True(t, delegation != nil)
+	uassert.Equal(t, delegation.ID(), delegationID)
+	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
+	uassert.Equal(t, delegation.UnDelegatedAmount(), amount)
+
+	withdraws := delegation.Withdraws()
+	uassert.Equal(t, len(withdraws), 1)
+	uassert.Equal(t, withdraws[0].DelegationID(), delegationID)
+	uassert.Equal(t, withdraws[0].IsCollected(), false)
+
+	contractGnsBeforeOriginCollect := gns.BalanceOf(contractCaller)
+	originGnsBeforeOriginCollect := gns.BalanceOf(originCaller)
+
+	testing.SetRealm(testing.NewUserRealm(originCaller))
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+		collected := gs.CollectUndelegatedGns()
+		uassert.Equal(t, collected, int64(0))
+	}(cross)
+
+	uassert.Equal(t, gns.BalanceOf(contractCaller), contractGnsBeforeOriginCollect)
+	uassert.Equal(t, gns.BalanceOf(originCaller), originGnsBeforeOriginCollect)
+	uassert.Equal(t, len(gs.getUserDelegationIDsWithDelegatee(originCaller, validator)), 0)
+
+	delegationAfterOriginCollect := gs.getDelegation(delegationID)
+	uassert.True(t, delegationAfterOriginCollect != nil)
+	withdrawsAfterOriginCollect := delegationAfterOriginCollect.Withdraws()
+	uassert.Equal(t, len(withdrawsAfterOriginCollect), 1)
+	uassert.Equal(t, withdrawsAfterOriginCollect[0].DelegationID(), delegationID)
+	uassert.Equal(t, withdrawsAfterOriginCollect[0].IsCollected(), false)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			collected := gs.CollectUndelegatedGns()
+			uassert.Equal(t, collected, amount)
+		}(cross)
+	}(cross)
+
+	uassert.Equal(t, gns.BalanceOf(contractCaller), safeAddInt64(contractGnsBeforeOriginCollect, amount))
+	uassert.Equal(t, gns.BalanceOf(originCaller), originGnsBeforeOriginCollect)
+	uassert.Equal(t, len(gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)), 0)
+}
+
 // Test Undelegate function
 func TestStakerDelegate_Undelegate(t *testing.T) {
 	// govStakerAddr := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
