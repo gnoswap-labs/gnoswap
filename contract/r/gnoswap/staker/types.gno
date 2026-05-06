@@ -102,9 +102,6 @@ type IStakerGetter interface {
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
 	GetWarmupTemplate() []Warmup
-	GetTotalStakedUserCount() uint64
-	GetTotalStakedUserPositionCount(user address) uint64
-	GetStakedPositionsByUser(owner address, offset, count int) []uint64
 }
 
 type IStakerStore interface {
@@ -127,11 +124,6 @@ type IStakerStore interface {
 	HasExternalIncentivesStoreKey() bool
 	GetExternalIncentives() *bptree.BPTree
 	SetExternalIncentives(incentives *bptree.BPTree) error
-
-	// UserDeposits
-	HasUserDepositsStoreKey() bool
-	GetUserDeposits() *bptree.BPTree
-	SetUserDeposits(tree *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool

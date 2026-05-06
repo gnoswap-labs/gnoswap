@@ -396,26 +396,6 @@ func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
 	return s.store.GetWarmupTemplate()
 }
 
-// GetTotalStakedUserCount returns the total number of users with staked positions.
-func (s *stakerV1) GetTotalStakedUserCount() uint64 {
-	return uint64(s.getUserDeposits().Size())
-}
-
-// GetTotalStakedUserPositionCount returns the staked position count for a user.
-func (s *stakerV1) GetTotalStakedUserPositionCount(user address) uint64 {
-	return s.getUserDeposits().userPositionCount(user.String())
-}
-
-// GetStakedPositionsByUser returns staked position IDs for a user with pagination.
-func (s *stakerV1) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	positions := make([]uint64, 0, count)
-	s.getUserDeposits().IterateByOffset(owner, offset, count, func(depositId uint64) bool {
-		positions = append(positions, depositId)
-		return false
-	})
-	return positions
-}
-
 // IsStaked returns whether a position is staked.
 func (s *stakerV1) IsStaked(positionId uint64) bool {
 	return s.getDeposits().Has(positionId)

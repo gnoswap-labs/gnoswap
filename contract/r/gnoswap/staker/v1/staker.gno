@@ -263,8 +263,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
-	s.getUserDeposits().addDeposit(caller, positionId)
-
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
@@ -774,7 +772,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	s.getDeposits().remove(positionId)
-	s.getUserDeposits().removeDeposit(deposit.Owner(), positionId)
 
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	caller := runtime.PreviousRealm().Address()
