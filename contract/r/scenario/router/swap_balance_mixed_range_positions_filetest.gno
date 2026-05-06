@@ -180,9 +180,7 @@ func mintInRangePosition() BalanceSnapshot {
 		"0",           // amount1Min
 		max_timeout,
 		userAddr,
-		userAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] In-Range Position ID:", tokenId)
 	println("[INFO] Liquidity:", liquidity)
@@ -215,9 +213,7 @@ func mintOutOfRangePosition() BalanceSnapshot {
 		"0",            // amount1Min
 		max_timeout,
 		userAddr,
-		userAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Out-of-Range Position ID:", tokenId)
 	println("[INFO] Liquidity:", liquidity)

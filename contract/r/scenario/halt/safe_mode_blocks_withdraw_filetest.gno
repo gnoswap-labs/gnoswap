@@ -150,9 +150,7 @@ func mintPosition() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	positionId = id
 	ufmt.Printf("[INFO] Position minted with ID: %d\n", positionId)
@@ -195,9 +193,7 @@ func testMintInSafeMode() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[SUCCESS] Position minted in Safe Mode! ID: %d, Liquidity: %s\n", id, liquidity)
 }

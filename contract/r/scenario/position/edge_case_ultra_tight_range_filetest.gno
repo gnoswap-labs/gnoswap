@@ -120,9 +120,7 @@ func testSingleTickRange() {
 		"0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Position %d: Single tick range (0 to 1)\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity: %s\n", liquidity)
@@ -151,9 +149,7 @@ func testMultipleUltraTightPositions() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	// Second position at same range
 	pos2Id, liq2, _, _ := pn.Mint(
@@ -167,9 +163,7 @@ func testMultipleUltraTightPositions() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Position %d liquidity: %s\n", pos1Id, liq1)
 	ufmt.Printf("[EXPECTED] Position %d liquidity: %s (should be similar to position %d)\n", pos2Id, liq2, pos1Id)
@@ -201,9 +195,7 @@ func testLargeAmountsMinimalRange() {
 		"0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Position %d: Large amounts in 1-tick range\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity: %s\n", liquidity)
@@ -231,9 +223,7 @@ func testLiquidityPrecision() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	// Position with +1 wei
 	_, liq2, _, _ := pn.Mint(
@@ -247,9 +237,7 @@ func testLiquidityPrecision() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Base liquidity: %s\n", liq1)
 	ufmt.Printf("[EXPECTED] +1 wei liquidity: %s\n", liq2)

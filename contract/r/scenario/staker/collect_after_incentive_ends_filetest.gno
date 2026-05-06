@@ -95,7 +95,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. User mints and stakes position")
-	userMintAndStake()
+	userMintThenStake()
 	println()
 
 	println("[SCENARIO] 5. Collect rewards during incentive period (day 45/90)")
@@ -174,7 +174,7 @@ func createAndStartIncentive() {
 	ufmt.Printf("[INFO] created 90-day incentive - ID: %s\n", actualIncentiveID)
 }
 
-func userMintAndStake() {
+func userMintThenStake() {
 	testing.SetRealm(user1Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -194,9 +194,7 @@ func userMintAndStake() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		user1Addr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")

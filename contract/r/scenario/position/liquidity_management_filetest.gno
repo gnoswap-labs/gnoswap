@@ -154,9 +154,7 @@ func testAddLiquiditySuccess() {
 		"800000",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Adding liquidity to existing position")
 	_, newLiquidity, amount0, amount1, poolPath := pn.IncreaseLiquidity(
@@ -207,9 +205,7 @@ func testAddLiquidityWithInvalidSlippage() {
 		"800000",
 		max_timeout,
 		bobAddr,
-		bobAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Attempting to add liquidity with invalid slippage")
 	// Note: This would normally panic due to slippage, but for testing we check the behavior
@@ -248,9 +244,7 @@ func testAddLiquidityWithZeroLiquidity() {
 		"0",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Attempting to add zero liquidity")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -289,9 +283,7 @@ func testAddLiquidityWithInvalidTickRange() {
 		"800000",
 		max_timeout,
 		bobAddr,
-		bobAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Attempting to add liquidity with invalid tick range")
 	// Note: This would normally panic, but for testing we check the behavior
@@ -368,9 +360,7 @@ func testDecreaseLiquiditySuccess() {
 		"9000",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Verifying position exists before decrease")
 	existsBefore := pn.IsBurned(positionId)
@@ -432,9 +422,7 @@ func testDecreaseLiquidityWithOverRemoval() {
 		"4500",
 		max_timeout,
 		bobAddr,
-		bobAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] PositionId:", positionId)
 
@@ -475,9 +463,7 @@ func testDecreaseLiquidityWithZeroLiquidity() {
 		"900",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] PositionId:", positionId)
 

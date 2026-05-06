@@ -80,7 +80,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/
 # stdout true
 
 ### Mint position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 100 -args -20 -args 20 -args "100000" -args "100000" -args "0" -args "0" -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 100 -args -20 -args 20 -args "100000" -args "100000" -args "0" -args "0" -args 9999999999 -args $test1_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 # stdout 1
 # stdout "50002491"
 # stdout "100000"

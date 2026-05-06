@@ -88,11 +88,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. Provider mints position and stakes")
-	providerMintAndStake()
+	providerMintThenStake()
 	println()
 
 	println("[SCENARIO] 4. User mints tiny position (liquidity: 200) and stakes")
-	userMintAndStake()
+	userMintThenStake()
 	println()
 
 	// 1st cycle: 5 sec → 0 (skip), 10 sec → 1 (collect)
@@ -166,7 +166,7 @@ func createPool() {
 	println("[INFO] created pool with internal tier 1 (GNS emission enabled)")
 }
 
-func providerMintAndStake() {
+func providerMintThenStake() {
 	testing.SetRealm(providerRealm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -186,9 +186,7 @@ func providerMintAndStake() {
 		"1",
 		maxTimeout,
 		providerAddr,
-		providerAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
@@ -196,7 +194,7 @@ func providerMintAndStake() {
 	ufmt.Printf("[INFO] provider staked position %d (liquidity: %s)\n", lpTokenId, liquidity)
 }
 
-func userMintAndStake() {
+func userMintThenStake() {
 	testing.SetRealm(user1Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -216,9 +214,7 @@ func userMintAndStake() {
 		"0",
 		maxTimeout,
 		user1Addr,
-		user1Addr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")

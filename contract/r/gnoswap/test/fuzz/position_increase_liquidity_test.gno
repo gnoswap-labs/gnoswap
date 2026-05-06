@@ -287,9 +287,7 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 		"0",
 		defaultFutureDeadline(),
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	return tokenId
 }

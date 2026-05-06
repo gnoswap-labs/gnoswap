@@ -170,9 +170,7 @@ func setupPoolAndPosition() BalanceSnapshot {
 		"0",
 		max_timeout,
 		userAddr,
-		userAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Large Position ID:", tokenId)
 	println("[INFO] Liquidity:", liquidity)

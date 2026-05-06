@@ -130,9 +130,7 @@ func mintPosition() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)

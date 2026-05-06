@@ -146,9 +146,7 @@ func mintLargePosition() uint64 {
 		"0",            // amount1Min
 		max_timeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 	

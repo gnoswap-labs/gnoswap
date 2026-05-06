@@ -150,9 +150,7 @@ func mintBarQux100Position1() {
 		"1",          // amount1Min
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 01 minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 
@@ -259,9 +257,7 @@ func mintAndStakePosition2() {
 		"1",          // amount1Min
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 02 minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 

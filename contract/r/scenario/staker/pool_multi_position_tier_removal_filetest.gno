@@ -170,9 +170,7 @@ func userACreatePosition() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		user1Addr,
-		"",
-	)
+		"")
 	positionA = uint64(positionId)
 
 	ufmt.Printf("[EXPECTED] User A position ID: %d\n", positionA)
@@ -230,9 +228,7 @@ func userBCreatePosition() {
 		"1",
 		maxTimeout,
 		user2Addr,
-		user2Addr,
-		"",
-	)
+		"")
 	positionB = uint64(positionId)
 
 	ufmt.Printf("[EXPECTED] User B position ID: %d\n", positionB)

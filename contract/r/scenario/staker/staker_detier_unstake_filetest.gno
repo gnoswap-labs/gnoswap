@@ -168,9 +168,7 @@ func mintPosition() {
 		"1",
 		maxTimeout,
 		adminUser,
-		adminUser,
-		"",
-	)
+		"")
 
 	if positionId != 1 {
 		panic("expected position id 1")

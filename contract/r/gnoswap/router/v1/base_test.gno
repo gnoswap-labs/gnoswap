@@ -716,7 +716,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			bar.Approve(cross, routerAddr, math.MaxInt64)
 			baz.Approve(cross, routerAddr, math.MaxInt64)
 			pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
-			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 
 			router := mockRouter()
 

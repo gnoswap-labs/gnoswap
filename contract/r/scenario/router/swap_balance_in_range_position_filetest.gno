@@ -174,9 +174,7 @@ func mintInRangePosition() BalanceSnapshot {
 		"0",           // amount1Min
 		max_timeout,
 		userAddr,
-		userAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Minted position ID:", tokenId)
 	println("[INFO] Liquidity:", liquidity)

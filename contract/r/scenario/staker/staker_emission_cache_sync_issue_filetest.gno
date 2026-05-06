@@ -149,9 +149,7 @@ func createPoolAndPosition() {
 		"1",
 		max_timeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] Position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
 }
@@ -267,9 +265,7 @@ func newUserStakes() {
 		"1",
 		max_timeout,
 		user1Addr,
-		user1Addr,
-		"",
-	)
+		"")
 
 	// Stake triggers cache update
 	gnft.Approve(cross, stakerAddr, positionIdFrom(2))

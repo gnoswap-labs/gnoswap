@@ -304,10 +304,8 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
-		"",
-	)
+		adminAddr,
+		"")
 }
 
 func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
@@ -330,10 +328,8 @@ func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, str
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
-		"",
-	)
+		adminAddr,
+		"")
 }
 
 func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
@@ -356,10 +352,8 @@ func MakeThirdMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
-		"",
-	)
+		adminAddr,
+		"")
 }
 
 func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
@@ -384,10 +378,8 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
-		"",
-	)
+		adminAddr,
+		"")
 }
 
 func initRouterTest(t *testing.T) {

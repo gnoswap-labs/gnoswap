@@ -233,9 +233,7 @@ func mintNativePosition01Post() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 01 - ID: %d\n", lpTokenId)
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
@@ -284,9 +282,7 @@ func mintNativePosition02Post() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 02 - ID: %d\n", lpTokenId)
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)

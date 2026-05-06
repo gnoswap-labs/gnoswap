@@ -166,9 +166,7 @@ func mintAndStakeMultiplePositions() {
 			"1",
 			maxTimeout,
 			adminAddr,
-			adminAddr,
-			"",
-		)
+			"")
 
 		if i <= 5 || i == 50 {
 			ufmt.Printf("[INFO] position %02d: ID=%d, liquidity=%s\n", i, positionId, liquidity)

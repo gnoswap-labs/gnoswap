@@ -136,9 +136,7 @@ func initializePoolAndCreatePosition() {
 		"0",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	// then
 	println("[EXPECTED] Pool initialized successfully")
@@ -176,9 +174,7 @@ func testPositionCreationAndRetrieval() {
 		"45000",
 		max_timeout,
 		bobAddr,
-		bobAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Retrieving position details")
 	testing.SetRealm(bobRealm)
@@ -219,9 +215,7 @@ func testPositionModification() {
 		"27000",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Increasing liquidity to modify position")
 	_, newLiquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
@@ -270,9 +264,7 @@ func testPositionDeletion() {
 		"9000",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
-		"",
-	)
+		"")
 
 	println("[INFO] Verifying position exists before deletion")
 	existsBefore := pn.IsBurned(positionId)

@@ -96,7 +96,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. User mints and stakes position")
-	userMintAndStake()
+	userMintThenStake()
 	println()
 
 	println("[SCENARIO] 5. Skip until after incentive end (no unstake)")
@@ -180,7 +180,7 @@ func createAndStartIncentive() {
 	ufmt.Printf("[INFO] created external incentive %s\n", actualIncentiveID)
 }
 
-func userMintAndStake() {
+func userMintThenStake() {
 	testing.SetRealm(userRealm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -200,9 +200,7 @@ func userMintAndStake() {
 		"1",
 		maxTimeout,
 		userAddr,
-		userAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")

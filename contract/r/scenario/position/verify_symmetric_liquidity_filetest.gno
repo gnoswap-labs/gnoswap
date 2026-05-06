@@ -76,8 +76,8 @@ func main() {
 		"1000000",       // 1e6 for token1 (limiting factor!)
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("  Requested: token0=1e12, token1=1e6\n")
 	ufmt.Printf("  Used: token0=%s, token1=%s\n", amt0_1, amt1_1)
 	ufmt.Printf("  Liquidity: %s\n", liq1)
@@ -94,8 +94,8 @@ func main() {
 		"1000000000000", // 1e12 for token1 (SAME!)
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("  Requested: token0=1e12, token1=1e12\n")
 	ufmt.Printf("  Used: token0=%s, token1=%s\n", amt0_2, amt1_2)
 	ufmt.Printf("  Liquidity: %s\n", liq2)
@@ -112,8 +112,8 @@ func main() {
 		"10000000000", // 1e10
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("  Requested: token0=1e10, token1=1e10\n")
 	ufmt.Printf("  Used: token0=%s, token1=%s\n", amt0_3, amt1_3)
 	ufmt.Printf("  Liquidity: %s\n", liq3)
@@ -140,8 +140,8 @@ func main() {
 			"1000000000000", // 1e12
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
-		)
+			aliceAddr,
+			"")
 		ufmt.Printf("  Range %s: Used %s/%s, Liquidity %s\n",
 			r.desc, amt0, amt1, liq)
 	}

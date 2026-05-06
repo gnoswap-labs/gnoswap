@@ -125,9 +125,7 @@ func testPoolInitializationBehavior() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross, positionId, "")
@@ -173,9 +171,7 @@ func testUnclaimablePeriodRewardDistribution() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross, positionId, "")
@@ -271,9 +267,7 @@ func testClaimablePeriodCollection() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross, positionId, "")

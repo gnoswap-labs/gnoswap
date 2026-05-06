@@ -139,9 +139,7 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		"0",
 		max_timeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 }
 
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
@@ -257,9 +255,7 @@ func MintPosition(t *testing.T,
 		amount1Min,
 		deadline,
 		mintTo,
-		caller,
-		"",
-	)
+		"")
 }
 
 func gnsApprove(t *testing.T, owner, spender address, amount int64) {

@@ -208,9 +208,7 @@ func stakePosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	sr.StakeToken(cross, positionId, "")

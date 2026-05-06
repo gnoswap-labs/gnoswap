@@ -158,9 +158,7 @@ func mintPositionAndStake() {
 		"0",
 		time.Now().Unix()+3600,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	staker.StakeToken(cross, positionId, "")

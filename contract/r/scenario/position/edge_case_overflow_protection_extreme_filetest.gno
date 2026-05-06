@@ -119,8 +119,8 @@ func testExactAttackVector() {
 		largeAmount,
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 
 	ufmt.Printf("[RESULT] Large amount mint:\n")
 	ufmt.Printf("  Requested: %s\n", largeAmount)
@@ -144,8 +144,8 @@ func testExactAttackVector() {
 		"1", "1",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 
 	ufmt.Printf("[RESULT] Minimal amount mint:\n")
 	ufmt.Printf("  Amount used: (%s, %s)\n", amount0Used2, amount1Used2)
@@ -190,8 +190,8 @@ func testOverflowBoundary192() {
 		"1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 
 	ufmt.Printf("[RESULT] Large value test:\n")
 	ufmt.Printf("  Amount requested: %s\n", largeButSafe)
@@ -241,8 +241,8 @@ func testSilentOverflowPrevention() {
 			tc.amount, tc.amount,
 			"0", "0",
 			9999999999,
-			aliceAddr, aliceAddr, "",
-		)
+			aliceAddr,
+			"")
 
 		// Verify the result is reasonable
 		ufmt.Printf("  Result: liq=%s, amt0=%s\n", liq, amt0)
@@ -285,8 +285,8 @@ func testGetDeltaIntegrity() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 
 	// Now with 1000x the amount in same range
 	_, _, largeAmt0, _ := pn.Mint(
@@ -296,8 +296,8 @@ func testGetDeltaIntegrity() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 
 	normalAmt := u256.MustFromDecimal(normalAmt0)
 	largeAmt := u256.MustFromDecimal(largeAmt0)

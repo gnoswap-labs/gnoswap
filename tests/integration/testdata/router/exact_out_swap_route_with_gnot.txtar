@@ -111,7 +111,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uy
 # stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 # stdout 'EVENTS:     \[\{\"type\":\"Approval\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/gnoland/wugnot\.wugnot\"\},\{\"key\":\"owner\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"spender\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"9223372036854775806\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\}.*\]'
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "50000000"
 # stdout 'GAS USED:   8[0-9]{7}'

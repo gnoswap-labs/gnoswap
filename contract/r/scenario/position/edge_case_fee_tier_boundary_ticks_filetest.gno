@@ -123,8 +123,8 @@ func testFeeTier100() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
 	// Test 2: Single tick at minimum boundary
@@ -136,8 +136,8 @@ func testFeeTier100() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
 	// Test 3: Single tick at maximum boundary
@@ -149,8 +149,8 @@ func testFeeTier100() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
@@ -180,8 +180,8 @@ func testFeeTier500() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
 	// Test 2: Single tick spacing at minimum
@@ -193,8 +193,8 @@ func testFeeTier500() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
 	// Test 3: Single tick spacing at maximum
@@ -206,8 +206,8 @@ func testFeeTier500() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
@@ -237,8 +237,8 @@ func testFeeTier3000() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
 	// Test 2: Single tick spacing at minimum
@@ -250,8 +250,8 @@ func testFeeTier3000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
 	// Test 3: Single tick spacing at maximum
@@ -263,8 +263,8 @@ func testFeeTier3000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 }
 
@@ -294,8 +294,8 @@ func testFeeTier10000() {
 		"1000000000", "1000000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId1, liq1, amt0_1, amt1_1)
 
 	// Test 2: Single tick spacing at minimum
@@ -307,8 +307,8 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId2, liq2, amt0_2, amt1_2)
 
 	// Test 3: Single tick spacing at maximum
@@ -320,8 +320,8 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId3, liq3, amt0_3, amt1_3)
 
 	// Test 4: Verify tick spacing validation works
@@ -335,8 +335,8 @@ func testFeeTier10000() {
 		"1000000", "1000000",
 		"0", "0",
 		9999999999,
-		aliceAddr, aliceAddr, "",
-	)
+		aliceAddr,
+		"")
 	ufmt.Printf("[RESULT] Position %d: liquidity=%s, amount0=%s, amount1=%s\n", posId4, liq4, amt0_4, amt1_4)
 }
 

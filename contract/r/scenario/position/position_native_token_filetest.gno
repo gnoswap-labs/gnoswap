@@ -121,9 +121,7 @@ func mintPosition() {
 		"0",
 		9999999999,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)

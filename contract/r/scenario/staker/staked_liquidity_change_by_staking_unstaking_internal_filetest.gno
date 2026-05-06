@@ -151,9 +151,7 @@ func mintAndStakePosition01() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 01 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
 	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)
@@ -188,9 +186,7 @@ func mintAndStakePosition02() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	ufmt.Printf("[EXPECTED] position 02 - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
 	ufmt.Printf("[EXPECTED] amounts - wugnot: %s, gns: %s\n", amount0, amount1)

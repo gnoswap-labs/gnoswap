@@ -82,9 +82,7 @@ func main() {
 		"0",
 		9999999999,
 		adminAddr,
-		adminAddr,
-		"",
-	)
+		"")
 
 	// 3. Attempt swap with native coins - should panic
 	testing.SetOriginSend(chain.Coins{{"ugnot", 12345}})
