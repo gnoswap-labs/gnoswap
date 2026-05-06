@@ -625,31 +625,6 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	).([]staker.Warmup)
 }
 
-func (t *TestStaker) GetTotalStakedUserCount() uint64 {
-	return t.ExecuteFn(
-		"GetTotalStakedUserCount",
-		func(args ...any) any { return t.instance.GetTotalStakedUserCount() },
-	).(uint64)
-}
-
-func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
-	return t.ExecuteFn(
-		"GetTotalStakedUserPositionCount",
-		func(args ...any) any { return t.instance.GetTotalStakedUserPositionCount(args[0].(address)) },
-		user,
-	).(uint64)
-}
-
-func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	return t.ExecuteFn(
-		"GetStakedPositionsByUser",
-		func(args ...any) any {
-			return t.instance.GetStakedPositionsByUser(args[0].(address), args[1].(int), args[2].(int))
-		},
-		owner, offset, count,
-	).([]uint64)
-}
-
 func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
 	return t.ExecuteFn(
 		"GetPoolRewardCacheCount",

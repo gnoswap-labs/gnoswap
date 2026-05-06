@@ -236,21 +236,6 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 			},
 		},
 		{
-			name: "GetStakedPositionsByUser",
-			setup: func(m *MockStaker) { m.Response.Set("GetStakedPositionsByUser", []uint64{1, 2}) },
-			getter: func() any { return GetStakedPositionsByUser(adminAddr, 0, 10) },
-			mutate: func(result any) {
-				values := result.([]uint64)
-				values[0] = 99
-				_ = append(values, 100)
-			},
-			assertRaw: func(t *testing.T, m *MockStaker) {
-				values := m.Response.data["GetStakedPositionsByUser"][0].([]uint64)
-				uassert.Equal(t, uint64(1), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
 			name: "GetPoolRewardCacheIDs",
 			setup: func(m *MockStaker) { m.Response.Set("GetPoolRewardCacheIDs", []int64{10, 20}) },
 			getter: func() any { return GetPoolRewardCacheIDs("foo:bar:500", 0, 10) },

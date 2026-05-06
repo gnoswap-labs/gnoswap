@@ -94,9 +94,6 @@ func setupBasicTestState(t *testing.T) *testState {
 	state.deposit.AddExternalIncentiveId(state.incentiveId)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(state.positionId), state.deposit)
 
-	// Setup stakers tree via Stakers helper (composite-keyed BPTree)
-	state.instance.getUserDeposits().addDeposit(state.owner, state.positionId)
-
 	// Setup pool tier
 	state.instance.store.GetPoolTierMemberships().Set(state.poolPath, uint64(1))
 	counts := state.instance.store.GetPoolTierCounts()
@@ -489,53 +486,6 @@ func TestGetterWarmupTemplate(t *testing.T) {
 	uassert.Equal(t, originalLen, len(newWarmups))
 }
 
-func TestGetterStakedUserCounts(t *testing.T) {
-	state := setupBasicTestState(t)
-
-	// Initial user count should be 1
-	userCount := state.instance.GetTotalStakedUserCount()
-	uassert.Equal(t, uint64(1), userCount)
-
-	userPositionCount := state.instance.GetTotalStakedUserPositionCount(state.owner)
-	uassert.Equal(t, uint64(1), userPositionCount)
-
-	userPositionCountEmpty := state.instance.GetTotalStakedUserPositionCount(addr02)
-	uassert.Equal(t, uint64(0), userPositionCountEmpty)
-
-	// Add another user with one deposit
-	deposit2 := sr.NewDeposit(
-		addr02,
-		state.poolPath,
-		u256.NewUint(2000000),
-		state.fixedTimestamp,
-		-200,
-		200,
-		[]sr.Warmup{},
-	)
-	state.instance.store.GetDeposits().Set(sr.EncodeUint(uint64(2)), deposit2)
-
-	state.instance.getUserDeposits().addDeposit(addr02, uint64(2))
-
-	userCount = state.instance.GetTotalStakedUserCount()
-	uassert.Equal(t, uint64(2), userCount)
-
-	userPositionCount = state.instance.GetTotalStakedUserPositionCount(addr02)
-	uassert.Equal(t, uint64(1), userPositionCount)
-}
-
-func TestGetterStakedPositionsByUser(t *testing.T) {
-	state := setupBasicTestState(t)
-
-	// Test owner with positions
-	positions := state.instance.GetStakedPositionsByUser(state.owner, 0, 10)
-	uassert.Equal(t, 1, len(positions))
-	uassert.Equal(t, state.positionId, positions[0])
-
-	// Test owner without positions
-	positionsEmpty := state.instance.GetStakedPositionsByUser(addr02, 0, 10)
-	uassert.Equal(t, 0, len(positionsEmpty))
-}
-
 func TestGetterNonExistentIncentive(t *testing.T) {
 	state := setupBasicTestState(t)
 
@@ -589,17 +539,6 @@ func TestGetterMultipleDepositsForSameOwner(t *testing.T) {
 	positionId2 := uint64(2)
 	state.instance.store.GetDeposits().Set(sr.EncodeUint(positionId2), deposit2)
 
-	// Update stakers tree via Stakers helper
-	state.instance.getUserDeposits().addDeposit(state.owner, positionId2)
-
-	positionsPage1 := state.instance.GetStakedPositionsByUser(state.owner, 0, 1)
-	positionsPage2 := state.instance.GetStakedPositionsByUser(state.owner, 1, 1)
-	uassert.Equal(t, 1, len(positionsPage1))
-	uassert.Equal(t, 1, len(positionsPage2))
-	uassert.Equal(t, state.positionId, positionsPage1[0])
-	uassert.Equal(t, positionId2, positionsPage2[0])
-
-	// Verify both positions can be queried
 	owner1 := state.instance.GetDepositOwner(state.positionId)
 	owner2 := state.instance.GetDepositOwner(positionId2)
 	uassert.Equal(t, state.owner, owner1)

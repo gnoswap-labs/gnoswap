@@ -520,27 +520,6 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 	return t.instance.GetWarmupTemplate()
 }
 
-func (t *TestStaker) GetTotalStakedUserCount() uint64 {
-	if !t.isActive("GetTotalStakedUserCount") {
-		panic("test implementation: GetTotalStakedUserCount not supported")
-	}
-	return t.instance.GetTotalStakedUserCount()
-}
-
-func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
-	if !t.isActive("GetTotalStakedUserPositionCount") {
-		panic("test implementation: GetTotalStakedUserPositionCount not supported")
-	}
-	return t.instance.GetTotalStakedUserPositionCount(user)
-}
-
-func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	if !t.isActive("GetStakedPositionsByUser") {
-		panic("test implementation: GetStakedPositionsByUser not supported")
-	}
-	return t.instance.GetStakedPositionsByUser(owner, offset, count)
-}
-
 func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {
 	if !t.isActive("GetPoolRewardCacheCount") {
 		panic("test implementation: GetPoolRewardCacheCount not supported")

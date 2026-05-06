@@ -337,63 +337,6 @@ func TestStoreSetAndGetExternalIncentives(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetUserDeposits(t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(IStakerStore)
-		testFn       func(*testing.T, IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get user deposits successfully",
-			setupFn: func(ss IStakerStore) {
-				userDeposits := bptree.NewBPTreeN(16)
-				ss.SetUserDeposits(userDeposits)
-			},
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasUserDepositsStoreKey(), "should have user deposits after setting")
-				retrieved := ss.GetUserDeposits()
-				uassert.NotEqual(t, nil, retrieved)
-			},
-		},
-		{
-			name: "should not have user deposits initially",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasUserDepositsStoreKey(), "should not have user deposits initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized user deposits",
-			testFn: func(t *testing.T, ss IStakerStore) {
-				ss.GetUserDeposits()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized user deposits",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(t, ss)
-		})
-	}
-}
-
 func TestStoreSetAndGetTotalEmissionSent(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1334,10 +1277,6 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	err = ss.SetDeposits(deposits)
 	uassert.NoError(t, err)
 
-	userDeposits := bptree.NewBPTreeN(16)
-	err = ss.SetUserDeposits(userDeposits)
-	uassert.NoError(t, err)
-
 	err = ss.SetTotalEmissionSent(50000)
 	uassert.NoError(t, err)
 
@@ -1351,7 +1290,6 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 	uassert.True(t, ss.HasDepositGnsAmountStoreKey())
 	uassert.True(t, ss.HasMinimumRewardAmountStoreKey())
 	uassert.True(t, ss.HasDepositsStoreKey())
-	uassert.True(t, ss.HasUserDepositsStoreKey())
 	uassert.True(t, ss.HasTotalEmissionSentStoreKey())
 	uassert.True(t, ss.HasAllowedTokensStoreKey())
 	uassert.True(t, ss.HasUnstakingFeeStoreKey())
