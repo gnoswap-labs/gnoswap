@@ -47,7 +47,6 @@ func (gs *govStakerV1) Delegate(
 	halt.AssertIsNotHaltedGovStaker()
 
 	prevRealm := runtime.PreviousRealm()
-	access.AssertIsUser(prevRealm)
 	access.AssertIsValidAddress(to)
 
 	assertIsValidDelegateAmount(amount)
