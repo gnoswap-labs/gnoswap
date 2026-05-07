@@ -430,9 +430,9 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl:123",
 		},
 		{
-			name: "fail when called from contract",
+			name: "successful deposit when called from contract",
 			setupFunc: func(lp *launchpadV1) (string, address) {
-				contractAddr := testutils.TestAddress("contract")
+				contractAddr := chain.PackageAddress("gno.land/r/test/contract")
 				projectAddr := testutils.TestAddress("project12")
 
 				// Reset state
@@ -486,8 +486,13 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			targetProjectTierID:  "",
 			depositAmount:        1000000,
 			referrer:             "",
-			expectedPanic:        true,
-			expectedPanicMessage: "caller is not user",
+			expectedPanic:        false,
+			expectedDepositID:    true,
+			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
+				deposit, err := lp.getDeposit(depositID)
+				uassert.NoError(t, err)
+				uassert.Equal(t, chain.PackageAddress("gno.land/r/test/contract"), deposit.Depositor())
+			},
 		},
 	}
 
@@ -503,8 +508,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 				tt.targetProjectTierID = projectTierID
 			}
 
-			// For contract test case, check if it's a contract call
-			if tt.name == "fail when called from contract" {
+			if userAddr == chain.PackageAddress("gno.land/r/test/contract") {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
 			} else {
 				testing.SetRealm(testing.NewUserRealm(userAddr))
