@@ -76,7 +76,7 @@ func main() {
 	println("[SCENARIO] 7. Skip undelegation lockup and collect as DAO contract")
 	collectAfterLockup()
 	println()
-	}
+}
 
 func setupDaoBalance() {
 	testing.SetRealm(adminRealm)
@@ -146,14 +146,10 @@ func daoRedelegateToValidator2() {
 	testing.SetRealm(govStakerRealm)
 	oldDelegationIDs := staker.GetUserDelegationIDs(daoAddr, validator1Addr)
 	newDelegationIDs := staker.GetUserDelegationIDs(daoAddr, validator2Addr)
-	if len(oldDelegationIDs) == 0 || len(newDelegationIDs) == 0 {
+	if len(oldDelegationIDs) != 0 || len(newDelegationIDs) == 0 {
 		panic("dao redelegation ids missing")
 	}
 
-	oldDelegation, err := staker.GetDelegation(oldDelegationIDs[0])
-	if err != nil {
-		panic(err)
-	}
 	newDelegation, err := staker.GetDelegation(newDelegationIDs[0])
 	if err != nil {
 		panic(err)
@@ -164,8 +160,7 @@ func daoRedelegateToValidator2() {
 	ufmt.Printf("[INFO] DAO redelegated %d GNS from validator1 to validator2\n", delegateAmount)
 	ufmt.Printf("[EXPECTED] DAO delegation count to validator1 after redelegate: %d\n", len(oldDelegationIDs))
 	ufmt.Printf("[EXPECTED] DAO delegation count to validator2 after redelegate: %d\n", len(newDelegationIDs))
-	ufmt.Printf("[EXPECTED] validator1 delegation ID preserved after redelegate: %t\n", oldDelegationIDs[0] == initialDaoDelegationID)
-	ufmt.Printf("[EXPECTED] validator1 record ID matches preserved lookup ID: %t\n", oldDelegation.ID() == initialDaoDelegationID)
+	ufmt.Printf("[EXPECTED] validator1 delegation removed after redelegate: %t\n", len(oldDelegationIDs) == 0)
 	ufmt.Printf("[EXPECTED] validator2 delegation uses a new ID: %t\n", redelegatedDaoDelegationID != initialDaoDelegationID)
 	ufmt.Printf("[EXPECTED] validator2 record ID matches new lookup ID: %t\n", newDelegation.ID() == redelegatedDaoDelegationID)
 	ufmt.Printf("[EXPECTED] DAO xGNS balance after redelegate: %d\n", xgns.BalanceOf(daoAddr))
@@ -287,10 +282,9 @@ func collectAfterLockup() {
 //
 // [SCENARIO] 4. DAO contract redelegates from validator1 to validator2
 // [INFO] DAO redelegated 5000000 GNS from validator1 to validator2
-// [EXPECTED] DAO delegation count to validator1 after redelegate: 1
+// [EXPECTED] DAO delegation count to validator1 after redelegate: 0
 // [EXPECTED] DAO delegation count to validator2 after redelegate: 1
-// [EXPECTED] validator1 delegation ID preserved after redelegate: true
-// [EXPECTED] validator1 record ID matches preserved lookup ID: true
+// [EXPECTED] validator1 delegation removed after redelegate: true
 // [EXPECTED] validator2 delegation uses a new ID: true
 // [EXPECTED] validator2 record ID matches new lookup ID: true
 // [EXPECTED] DAO xGNS balance after redelegate: 5000000
