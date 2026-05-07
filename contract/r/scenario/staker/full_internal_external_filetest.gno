@@ -39,6 +39,7 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
 	_ "gno.land/r/onbloc/qux"
 )
 
@@ -131,11 +132,15 @@ func main() {
 	createPoolBarFoo100Tier03()
 	println()
 
-	println("[SCENARIO] 11. Unstake token 01")
+	println("[SCENARIO] 11. Mint and stake position 07 (out-range)")
+	mintAndStakePos07OutRange()
+	println()
+
+	println("[SCENARIO] 12. Unstake token 01")
 	unstakeToken01()
 	println()
 
-	println("[SCENARIO] 12. Create pool with external incentive only")
+	println("[SCENARIO] 13. Create pool with external incentive only")
 	createPoolExternalOnly()
 	println()
 }
@@ -152,8 +157,8 @@ func initAccount() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] issue coins and prepare wugnot")
@@ -378,6 +383,49 @@ func createPoolBarFoo100Tier03() {
 	testing.SkipHeights(1)
 }
 
+func mintAndStakePos07OutRange() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] mint and stake position 07 (one-click)")
+	bar.Approve(cross, poolAddr, maxInt64)
+	foo.Approve(cross, poolAddr, maxInt64)
+
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
+
+	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+		cross,
+		barPath,
+		fooPath,
+		fee100,
+		int32(-60),
+		int32(60),
+		"1000",
+		"1000",
+		"0",
+		"0",
+		maxTimeout,
+		adminAddr,
+		"")
+
+	gnft.Approve(cross, stakerAddr, positionIdFrom(lpTokenId))
+	sr.StakeToken(cross, lpTokenId, "")
+
+	ufmt.Printf("[EXPECTED] mint and stake result - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
+	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0, amount1)
+
+	testing.SkipHeights(1)
+
+	println("[INFO] collect reward for position 07")
+	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
+	sr.CollectReward(cross, 7)
+	newAdminGnsBalance := gns.BalanceOf(adminAddr)
+
+	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
+	ufmt.Printf("[EXPECTED] reward to admin: %d\n", rewardToAdmin)
+
+	testing.SkipHeights(1)
+}
+
 func unstakeToken01() {
 	testing.SetRealm(adminRealm)
 
@@ -491,11 +539,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create bar:foo:100 pool
 // [INFO] set pool tier to 3
 //
-// [SCENARIO] 11. Unstake token 01
+// [SCENARIO] 11. Mint and stake position 07 (out-range)
+// [INFO] mint and stake position 07 (one-click)
+// [EXPECTED] current pool tick: 600000
+// [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
+// [EXPECTED] amounts - 0: 0, 1: 1000
+// [INFO] collect reward for position 07
+// [EXPECTED] reward to admin: 0
+//
+// [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
 // [EXPECTED] reward from unstaking: 38798148
 //
-// [SCENARIO] 12. Create pool with external incentive only
+// [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
