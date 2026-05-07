@@ -1081,7 +1081,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 
@@ -1279,7 +1280,8 @@ func TestReposition(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
@@ -1549,7 +1551,8 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			deadline := time.Now().Add(time.Hour).Unix()
 
@@ -1604,7 +1607,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 		10000,
 		"1000000",
 		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
 
 	// Step 2: Manually reduce pool balance to simulate insufficient balance
 	pool := mustGetStoredTestPool(pl.GetPoolPath(barPath, fooPath, fee500))
@@ -1702,7 +1706,8 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			// Step 2: Get position liquidity and decrease 100% to clear for reposition
 			position, _ := mockInstance.GetPosition(1)
@@ -1781,7 +1786,8 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 		10000,
 		"1000000",
 		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
 
 	// Alice (non-owner) tries to decrease liquidity
 	testing.SetRealm(testing.NewUserRealm(alice))

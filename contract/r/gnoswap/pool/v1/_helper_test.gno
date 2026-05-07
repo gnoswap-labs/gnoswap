@@ -234,7 +234,8 @@ func InitialisePoolTest(t *testing.T) {
 		TokenFaucet(t, bazPath, alice)
 		TokenApprove(t, barPath, alice, poolAddr, 1000)
 		TokenApprove(t, bazPath, alice, poolAddr, 1000)
-		MintPosition(t,
+		MintPosition(
+			t,
 			barPath,
 			bazPath,
 			fee3000,
@@ -379,7 +380,14 @@ func quxTransfer(t *testing.T, to address, amount int64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
+	unlockPoolForTest()
 	initPoolTest(t)
+}
+
+func unlockPoolForTest() {
+	if mockInstance != nil {
+		mockInstance.unlockPool()
+	}
 }
 
 func burnTokens(t *testing.T) {

@@ -253,6 +253,10 @@ type IPoolStore interface {
 	GetWithdrawalFeeBPS() uint64
 	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error
 
+	HasUnlocked() bool
+	GetUnlocked() bool
+	SetUnlocked(unlocked bool) error
+
 	HasSwapStartHook() bool
 	GetSwapStartHook() func(cur realm, poolPath string, timestamp int64)
 	SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error
