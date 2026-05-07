@@ -90,8 +90,8 @@ gnokey maketx run test1 $WORK/run/direct_pool_swap_with_wrapper_callback.gno -ga
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 # stdout 110283364
 
-gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"g1xt9lk80qqng30ahnk9axg2f2m4xdlp375w2x90\")"
-# stdout 27293886
+gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"$test1_user_addr\")"
+# stdout 126293886
 
 ! gnokey maketx run test1 $WORK/run/direct_pool_swap_with_inline_callback.gno -gas-fee 100000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
 # stderr 'crossing function literal.*non-realm package'
@@ -149,7 +149,6 @@ func HandleSwapCallbackWithContext(
 package main
 
 import (
-	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/pool"
@@ -159,21 +158,20 @@ import (
 func main() {
 	token0Path := "gno.land/r/gnoland/wugnot"
 	token1Path := "gno.land/r/gnoswap/gns"
-	payer := runtime.PreviousRealm().Address()
-	recipient := chain.PackageAddress("gno.land/r/swap_wrapper")
+	userAddr := runtime.PreviousRealm().Address()
 
-	callbackFn := swap_wrapper.PrepareSwapCallback(cross, token0Path, token1Path, payer)
+	callbackFn := swap_wrapper.PrepareSwapCallback(cross, token0Path, token1Path, userAddr)
 
 	pool.Swap(
 		cross,
 		token0Path,
 		token1Path,
 		3000,
-		recipient,
+		userAddr,
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		payer,
+		userAddr,
 		callbackFn,
 	)
 }
@@ -191,23 +189,23 @@ import (
 func main() {
 	token0Path := "gno.land/r/gnoland/wugnot"
 	token1Path := "gno.land/r/gnoswap/gns"
-	payer := runtime.PreviousRealm().Address()
+	userAddr := runtime.PreviousRealm().Address()
 
 	pool.Swap(
 		cross,
 		token0Path,
 		token1Path,
 		3000,
-		payer,
+		userAddr,
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		payer,
+		userAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return swap_wrapper.HandleSwapCallbackWithContext(
 				token0Path,
 				token1Path,
-				payer,
+				userAddr,
 				amount0Delta,
 				amount1Delta,
 			)
