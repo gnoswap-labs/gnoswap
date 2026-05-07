@@ -45,10 +45,10 @@ func (p *positionV1) Mint(
 	referrer string,
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
+	access.AssertIsValidAddress(mintTo)
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	access.AssertIsValidAddress(mintTo)
 
 	assertValidNumberString(amount0Desired)
 	assertValidNumberString(amount1Desired)
