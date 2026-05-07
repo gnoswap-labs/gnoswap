@@ -50,6 +50,7 @@ func (p *positionV1) Mint(
 	caller := previousRealm.Address()
 	access.AssertIsValidAddress(mintTo)
 
+	assertIsNotMintToStaker(mintTo)
 	assertValidNumberString(amount0Desired)
 	assertValidNumberString(amount1Desired)
 	assertValidNumberString(amount0Min)
