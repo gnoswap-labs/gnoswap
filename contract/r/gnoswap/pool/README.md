@@ -102,6 +102,26 @@ For `zeroForOne = false` (token1 → token0):
 - `amount0Delta < 0`: Pool sends token0 (output)
 - `amount1Delta > 0`: Pool receives token1 (input)
 
+**Callback Implementation Example**:
+
+```go
+func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+    caller := runtime.PreviousRealm().Address()
+    poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
+
+    if caller != poolAddr {
+        return errors.New("unauthorized caller")
+    }
+    if amount0Delta > 0 {
+        common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
+    }
+    if amount1Delta > 0 {
+        common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
+    }
+    return nil
+}
+```
+
 **Using `Swap` from `MsgRun`**:
 
 - `pool.Swap` takes a crossing callback, so the callback must be declared in a realm package (`/r/...`).
