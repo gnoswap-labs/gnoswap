@@ -1663,6 +1663,106 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 	}
 }
 
+// TestPoolLock_BlocksMutationEntrypoints complements the callback reentrancy
+// test with direct locked-state coverage. The callback test proves the real
+// attack path; this table makes the lock contract explicit for every protected
+// mutation entrypoint as standalone locked calls.
+func TestPoolLock_BlocksMutationEntrypoints(t *testing.T) {
+	tests := []struct {
+		name     string
+		setRealm func()
+		action   func(t *testing.T)
+	}{
+		{
+			name: "swap",
+			setRealm: func() {
+				testing.SetRealm(rouRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSwap(
+					barPath, bazPath, STANDARD_FEE_TIER,
+					routerAddr, false, "50",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+						return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta)
+					},
+				)
+			},
+		},
+		{
+			name: "mint",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceMint(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+			},
+		},
+		{
+			name: "burn",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceBurn(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+			},
+		},
+		{
+			name: "collect",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceCollect(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
+			},
+		},
+		{
+			name: "collect protocol",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceCollectProtocol(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
+			},
+		},
+		{
+			name: "set fee protocol",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetFeeProtocol(4, 4)
+			},
+		},
+		{
+			name: "increase observation cardinality next",
+			setRealm: func() {
+				testing.SetRealm(rouRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceIncreaseObservationCardinalityNext(barPath, bazPath, STANDARD_FEE_TIER, 3)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			getMockInstance().lockPool()
+			defer getMockInstance().unlockPool()
+
+			tt.setRealm()
+			uassert.AbortsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+				tt.action(t)
+			})
+		})
+	}
+}
+
 // TestSwapCallback_DeltaConvention tests that swap callback parameters follow
 // the Uniswap V3 delta convention:
 //   - Positive delta: Amount the pool must RECEIVE (input token)
