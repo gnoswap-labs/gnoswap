@@ -259,30 +259,30 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 func TestAddToProtocolFee(t *testing.T) {
 	tests := []struct {
-		name          string
-		tokenPath     string
-		initialAmount int64
-		amount        int64
-		want          int64
+		name                  string
+		tokenPath             string
+		initialAmount         int64
+		amount                int64
+		wantReservedGovStaker int64
 	}{
 		{
-			name:      "add bar to protocol fee",
-			tokenPath: "gno.land/r/onbloc/bar",
-			amount:    100,
-			want:      100,
+			name:                  "add bar to protocol fee",
+			tokenPath:             "gno.land/r/onbloc/bar",
+			amount:                100,
+			wantReservedGovStaker: 100,
 		},
 		{
-			name:      "add qux to protocol fee",
-			tokenPath: "gno.land/r/onbloc/qux",
-			amount:    50,
-			want:      50,
+			name:                  "add qux to protocol fee",
+			tokenPath:             "gno.land/r/onbloc/qux",
+			amount:                50,
+			wantReservedGovStaker: 50,
 		},
 		{
-			name:          "add more qux to protocol fee",
-			tokenPath:     "gno.land/r/onbloc/qux",
-			initialAmount: 50,
-			amount:        10,
-			want:          60,
+			name:                  "reserve more qux immediately",
+			tokenPath:             "gno.land/r/onbloc/qux",
+			initialAmount:         50,
+			amount:                10,
+			wantReservedGovStaker: 60,
 		},
 	}
 
@@ -311,7 +311,8 @@ func TestAddToProtocolFee(t *testing.T) {
 			}(cross)
 
 			tokenListWithAmount := pf.store.GetTokenListWithAmounts()
-			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
+			uassert.Equal(t, tokenListWithAmount[test.tokenPath], int64(0))
+			uassert.Equal(t, pf.GetAccuTransferToGovStakerByTokenPath(test.tokenPath), test.wantReservedGovStaker)
 			uassert.Equal(t, common.BalanceOf(test.tokenPath, protocolFeeAddr)-beforeBalance, test.amount)
 		})
 	}
@@ -377,14 +378,15 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(t *testing.T) {
 						}(cross)
 					})
 				} else {
-					func(cur realm) {
-						testing.SetRealm(protocolFeeRealm)
-						pf.AddToProtocolFee(tt.tokenPath, tt.amount)
-					}(cross)
-					if tt.amount > 0 {
-						uassert.Equal(t, pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath], tt.amount)
-						uassert.Equal(t, common.BalanceOf(tt.tokenPath, protocolFeeAddr)-beforeBalance, tt.amount)
-					}
+				func(cur realm) {
+					testing.SetRealm(protocolFeeRealm)
+					pf.AddToProtocolFee(tt.tokenPath, tt.amount)
+				}(cross)
+				if tt.amount > 0 {
+					uassert.Equal(t, pf.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), tt.amount)
+					uassert.Equal(t, pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath], int64(0))
+					uassert.Equal(t, common.BalanceOf(tt.tokenPath, protocolFeeAddr)-beforeBalance, tt.amount)
+				}
 				}
 			})
 		}
@@ -432,30 +434,34 @@ func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Given
-				pf := createTestProtocolFee(t)
-				pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath] = tt.initialValue
-				poolRealm := testing.NewCodeRealm(poolPath)
-				protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
-				fundRealmAndApproveProtocolFee(t, poolRealm, tt.tokenPath, tt.addAmount)
-				testing.SetRealm(poolRealm)
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			pfs := pf.getProtocolFeeState()
+			if err := pfs.addAccuToGovStaker(tt.tokenPath, tt.initialValue); err != nil {
+				panic(err)
+			}
+			poolRealm := testing.NewCodeRealm(poolPath)
+			protocolFeeRealm := testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee")
+			fundRealmAndApproveProtocolFee(t, poolRealm, tt.tokenPath, tt.addAmount)
+			testing.SetRealm(poolRealm)
 
-				// When & Then
-				if tt.shouldPanic {
-					uassert.AbortsContains(t, tt.panicMsg, func() {
-						func(cur realm) {
-							testing.SetRealm(protocolFeeRealm)
-							pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
-						}(cross)
-					})
-				} else {
+			// When & Then
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicMsg, func() {
 					func(cur realm) {
 						testing.SetRealm(protocolFeeRealm)
 						pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
 					}(cross)
-					expectedTotal := tt.initialValue + tt.addAmount
-					uassert.Equal(t, pf.getProtocolFeeState().TokenListWithAmounts()[tt.tokenPath], expectedTotal)
+				})
+			} else {
+				func(cur realm) {
+					testing.SetRealm(protocolFeeRealm)
+					pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
+				}(cross)
+				expectedTotal := tt.initialValue + tt.addAmount
+				uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), expectedTotal)
+				uassert.Equal(t, pfs.TokenListWithAmounts()[tt.tokenPath], int64(0))
 			}
 		})
 	}
@@ -979,9 +985,9 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 			shouldPanic: false,
 			panicMsg:    "",
 			prepare: func(pf *protocolFeeV1) {
-				pf.store.SetTokenListWithAmounts(map[string]int64{
-					"gno.land/r/onbloc/bar": 100,
-				})
+				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/onbloc/bar", 100); err != nil {
+					panic(err)
+				}
 				testing.SetRealm(adminRealm)
 				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
 			},
@@ -1002,9 +1008,9 @@ func TestDistributeProtocolFee_HaltScenario(t *testing.T) {
 			shouldPanic: false,
 			panicMsg:    "",
 			prepare: func(pf *protocolFeeV1) {
-				pf.store.SetTokenListWithAmounts(map[string]int64{
-					"gno.land/r/onbloc/bar": 100,
-				})
+				if err := pf.getProtocolFeeState().addAccuToGovStaker("gno.land/r/onbloc/bar", 100); err != nil {
+					panic(err)
+				}
 				testing.SetRealm(adminRealm)
 				common.SafeGRC20Transfer(cross, "gno.land/r/onbloc/bar", protocolFeeAddr, 100)
 			},

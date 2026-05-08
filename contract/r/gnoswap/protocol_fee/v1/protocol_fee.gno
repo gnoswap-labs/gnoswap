@@ -25,22 +25,19 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
+	if halt.IsHaltedWithdraw() {
+		return make(map[string]int64)
+	}
+
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	pfs := pf.getProtocolFeeState()
 
-	if err := pf.bookCollectedProtocolFees(); err != nil {
-		panic(err)
-	}
-
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
-	if halt.IsHaltedWithdraw() {
-		return toReturnDistributedToGovStaker
-	}
 
 	for _, token := range pf.getOutstandingDistributionTokens() {
 		toDevOpsAmount := safeSubInt64(
@@ -197,21 +194,12 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 		return nil
 	}
 
-	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
-	if !exists {
-		currentAmount = 0
-	}
-
-	// Check for overflow
-	addedAmount := safeAddInt64(currentAmount, amount)
-	if amount == 0 {
-		pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
-		return nil
-	}
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 
-	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
+	if err := pf.reserveCollectedProtocolFee(tokenPath, amount); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -220,27 +208,16 @@ func makeEventString(tokenPath string, amount int64) string {
 	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
 }
 
-func (pf *protocolFeeV1) bookCollectedProtocolFees() error {
+func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) error {
 	pfs := pf.getProtocolFeeState()
-	devOpsPct := pfs.DevOpsPct()
 
-	for token, amount := range pf.store.GetTokenListWithAmounts() {
-		if amount <= 0 {
-			continue
-		}
+	toDevOpsAmount := safeMulDiv(amount, pfs.DevOpsPct(), 10000)
+	toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
 
-		toDevOpsAmount := safeMulDiv(amount, devOpsPct, 10000)
-		toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
-
-		if err := pfs.addAccuToDevOps(token, toDevOpsAmount); err != nil {
-			return err
-		}
-		if err := pfs.addAccuToGovStaker(token, toGovStakerAmount); err != nil {
-			return err
-		}
+	if err := pfs.addAccuToDevOps(tokenPath, toDevOpsAmount); err != nil {
+		return err
 	}
-
-	if err := pfs.clearTokenListWithAmount(); err != nil {
+	if err := pfs.addAccuToGovStaker(tokenPath, toGovStakerAmount); err != nil {
 		return err
 	}
 
