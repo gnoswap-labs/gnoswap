@@ -82,7 +82,8 @@ var (
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	rouRealm = testing.NewCodeRealm(routerPath)
+	rouRealm    = testing.NewCodeRealm(routerPath)
+	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	addrUsedInTest = []address{addr01, addr02}
 
@@ -562,6 +563,30 @@ func mockInstanceIncreaseObservationCardinalityNext(token0Path string, token1Pat
 		const currentPoolPath = "gno.land/r/gnoswap/pool"
 		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
 		getMockInstance().IncreaseObservationCardinalityNext(token0Path, token1Path, fee, newCardinalityNext)
+	}(cross)
+}
+
+func mockInstanceSetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetTickCrossHook(hook)
+	}(cross)
+}
+
+func mockInstanceSetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetSwapStartHook(hook)
+	}(cross)
+}
+
+func mockInstanceSetSwapEndHook(hook func(cur realm, poolPath string) error) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetSwapEndHook(hook)
 	}(cross)
 }
 
