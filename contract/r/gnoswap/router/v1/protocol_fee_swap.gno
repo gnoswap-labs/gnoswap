@@ -76,10 +76,9 @@ func (r *routerV1) handleSwapFee(
 	outputToken string,
 	amount int64,
 ) int64 {
-	r.tryCollectPendingProtocolFees()
-
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
+		r.addToProtocolFee()
 		return amount
 	}
 
@@ -87,7 +86,7 @@ func (r *routerV1) handleSwapFee(
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
-	r.tryCollectPendingProtocolFees()
+	r.addToProtocolFee()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -106,44 +105,40 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	pendingProtocolFees := clonePendingProtocolFees(r.store.GetPendingProtocolFees())
+	pendingProtocolFees := r.store.GetPendingProtocolFees()
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
 
-func (r *routerV1) tryCollectPendingProtocolFees() {
-	pendingProtocolFees := clonePendingProtocolFees(r.store.GetPendingProtocolFees())
+// addToProtocolFee sends pending router protocol fees to the protocol fee realm.
+// It is best-effort: when protocol fee collection is halted, it keeps pending
+// storage unchanged; otherwise it rebuilds pending storage with only entries
+// that could not be added, removing successful and non-positive entries.
+func (r *routerV1) addToProtocolFee() {
+	pendingProtocolFees := r.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
 	}
 
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	remainingProtocolFees := make(map[string]int64)
 	for tokenPath, amount := range pendingProtocolFees {
 		if amount <= 0 {
-			delete(pendingProtocolFees, tokenPath)
 			continue
 		}
 
 		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
 		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
-			return
+			remainingProtocolFees[tokenPath] = amount
+			continue
 		}
-		delete(pendingProtocolFees, tokenPath)
 	}
 
-	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	if err := r.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
 		panic(err)
 	}
-}
-
-func clonePendingProtocolFees(src map[string]int64) map[string]int64 {
-	clone := make(map[string]int64, len(src))
-	for key, value := range src {
-		clone[key] = value
-	}
-	return clone
 }
 
 func calculateRouterFee(amount int64, swapFee uint64) int64 {

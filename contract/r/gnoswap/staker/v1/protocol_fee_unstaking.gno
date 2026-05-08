@@ -22,10 +22,9 @@ func (s *stakerV1) handleStakingRewardFee(
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
-	s.tryCollectPendingProtocolFees()
-
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
+		s.addToProtocolFee()
 		return amount, 0, nil
 	}
 
@@ -36,6 +35,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
+		s.addToProtocolFee()
 		return amount, 0, nil
 	}
 
@@ -44,7 +44,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	s.addPendingProtocolFee(tokenPath, feeAmount)
-	s.tryCollectPendingProtocolFees()
+	s.addToProtocolFee()
 
 	return safeSubInt64(amount, feeAmount), feeAmount, nil
 }
@@ -54,44 +54,40 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	pendingProtocolFees := clonePendingProtocolFees(s.store.GetPendingProtocolFees())
+	pendingProtocolFees := s.store.GetPendingProtocolFees()
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
 		panic(err)
 	}
 }
 
-func (s *stakerV1) tryCollectPendingProtocolFees() {
-	pendingProtocolFees := clonePendingProtocolFees(s.store.GetPendingProtocolFees())
+// addToProtocolFee sends pending staker protocol fees to the protocol fee realm.
+// It is best-effort: when protocol fee collection is halted, it keeps pending
+// storage unchanged; otherwise it rebuilds pending storage with only entries
+// that could not be added, removing successful and non-positive entries.
+func (s *stakerV1) addToProtocolFee() {
+	pendingProtocolFees := s.store.GetPendingProtocolFees()
 	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
 		return
 	}
 
 	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	remainingProtocolFees := make(map[string]int64)
 	for tokenPath, amount := range pendingProtocolFees {
 		if amount <= 0 {
-			delete(pendingProtocolFees, tokenPath)
 			continue
 		}
 
 		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
 		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
-			return
+			remainingProtocolFees[tokenPath] = amount
+			continue
 		}
-		delete(pendingProtocolFees, tokenPath)
 	}
 
-	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+	if err := s.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
 		panic(err)
 	}
-}
-
-func clonePendingProtocolFees(src map[string]int64) map[string]int64 {
-	clone := make(map[string]int64, len(src))
-	for key, value := range src {
-		clone[key] = value
-	}
-	return clone
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
