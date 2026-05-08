@@ -130,7 +130,8 @@ func mintPositionWithEmissionEnabled() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position minted successfully with ID: %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity: %s\n", liquidity)
@@ -174,7 +175,8 @@ func mintPositionWithEmissionHalted() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position minted successfully despite emission halt! ID: %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity: %s\n", liquidity)

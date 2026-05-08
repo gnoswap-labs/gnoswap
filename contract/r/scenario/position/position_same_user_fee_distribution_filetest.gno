@@ -130,7 +130,8 @@ func mintSameRangePositions() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position 1 ID should be %d\n", positionId1)
 	ufmt.Printf("[EXPECTED] Position 1 liquidity should be %s\n", liquidity1)
@@ -151,7 +152,8 @@ func mintSameRangePositions() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position 2 ID should be %d\n", positionId2)
 	ufmt.Printf("[EXPECTED] Position 2 liquidity should be %s\n", liquidity2)
@@ -178,7 +180,8 @@ func mintDifferentRangePositions() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position 3 ID should be %d\n", positionId3)
 	ufmt.Printf("[EXPECTED] Position 3 liquidity should be %s\n", liquidity3)
@@ -199,7 +202,8 @@ func mintDifferentRangePositions() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] Position 4 ID should be %d\n", positionId4)
 	ufmt.Printf("[EXPECTED] Position 4 liquidity should be %s\n", liquidity4)

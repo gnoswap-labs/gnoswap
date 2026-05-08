@@ -135,7 +135,8 @@ func mintPositionsForUsers() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] admin position ID: %d, liquidity: %s\n", positionId1, liquidity1)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_1, amount1_1)
@@ -168,7 +169,8 @@ func mintPositionsForUsers() {
 		"1",
 		maxTimeout,
 		user2Addr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] user2 position ID: %d, liquidity: %s\n", positionId2, liquidity2)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_2, amount1_2)

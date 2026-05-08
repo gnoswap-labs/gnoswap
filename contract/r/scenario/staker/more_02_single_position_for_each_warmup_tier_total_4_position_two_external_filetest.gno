@@ -142,7 +142,8 @@ func mintPositions() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] position 01 - ID: %d, liquidity: %s\n", positionId1, liquidity1)
 	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0_1, amount1_1)
@@ -162,7 +163,8 @@ func mintPositions() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] position 02 - ID: %d, liquidity: %s\n", positionId2, liquidity2)
 	testing.SkipHeights(1)
@@ -181,7 +183,8 @@ func mintPositions() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] position 03 - ID: %d, liquidity: %s\n", positionId3, liquidity3)
 	testing.SkipHeights(1)
@@ -200,7 +203,8 @@ func mintPositions() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] position 04 - ID: %d, liquidity: %s\n", positionId4, liquidity4)
 	testing.SkipHeights(1)

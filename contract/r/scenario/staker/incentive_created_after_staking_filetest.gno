@@ -192,7 +192,8 @@ func user1MintThenStake() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		"")
+		"",
+	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
@@ -220,7 +221,8 @@ func user2MintThenStake() {
 		"1",
 		maxTimeout,
 		user2Addr,
-		"")
+		"",
+	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
@@ -276,7 +278,8 @@ func user3MintThenStake() {
 		"1",
 		maxTimeout,
 		user3Addr,
-		"")
+		"",
+	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")

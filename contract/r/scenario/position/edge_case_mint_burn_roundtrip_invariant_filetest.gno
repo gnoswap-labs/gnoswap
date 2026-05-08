@@ -117,7 +117,8 @@ func testRoundTripUltraTight() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[MINT] Position %d created\n", positionId)
 	ufmt.Printf("[MINT] Liquidity: %s\n", liquidity)
@@ -219,7 +220,8 @@ func testRoundTripVariousAmounts() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
@@ -284,7 +286,8 @@ func testRoundTripPriceBoundaries() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
@@ -330,7 +333,8 @@ func testMultipleRoundTrips() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		// Burn
 		pn.DecreaseLiquidity(

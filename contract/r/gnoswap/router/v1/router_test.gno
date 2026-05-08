@@ -268,7 +268,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				"")
+				"",
+			)
 			testing.SkipHeights(1)
 
 			// Swap
@@ -433,7 +434,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				"")
+				"",
+			)
 			testing.SkipHeights(1)
 
 			// Add Liquidity
@@ -595,7 +597,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				"")
+				"",
+			)
 			testing.SkipHeights(1)
 
 			// Swap

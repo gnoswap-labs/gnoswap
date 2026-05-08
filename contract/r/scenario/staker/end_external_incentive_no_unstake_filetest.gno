@@ -200,7 +200,8 @@ func userMintThenStake() {
 		"1",
 		maxTimeout,
 		userAddr,
-		"")
+		"",
+	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")

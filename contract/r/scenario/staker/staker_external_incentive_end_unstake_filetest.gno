@@ -187,7 +187,8 @@ func mintAndStakePositions() {
 		"1",
 		maxTimeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	// Mint position 2
 	positionId2, _, _, _ := pn.Mint(
@@ -203,7 +204,8 @@ func mintAndStakePositions() {
 		"1",
 		maxTimeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	// Stake both positions
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId1))

@@ -117,7 +117,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	// b. Position 2: (-10%+10%)
 	pn.Mint(
@@ -133,7 +134,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	// c. Position 3: (full range)
 	pn.Mint(
@@ -149,7 +151,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	// d. Position 4: (lower out-range)
 	pn.Mint(
@@ -165,7 +168,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	// e. Position 5: (upper out-range)
 	pn.Mint(
@@ -181,7 +185,8 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	t.Run("successful exact out swap at boundary", func(t *testing.T) {
 		router := mockRouter()
@@ -259,7 +264,8 @@ func setupTestPool(t *testing.T) {
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	pool := pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)
 	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")

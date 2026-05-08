@@ -212,7 +212,8 @@ func mintAndStakePosition() uint64 {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[SUCCESS] Minted position ID=%d with liquidity=%s\n", positionId, liquidity)
 
@@ -253,7 +254,8 @@ func drainBarIncentive() {
 			"1",
 			maxTimeout,
 			adminAddr,
-			"")
+			"",
+		)
 
 		// Stake it
 		gnft.Approve(cross, stakerAddr, positionIdFrom(tempPosId))

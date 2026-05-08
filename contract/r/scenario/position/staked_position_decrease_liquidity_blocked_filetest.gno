@@ -124,7 +124,8 @@ func initPoolAndCreatePosition() {
 		"1",
 		maxTimeout,
 		aliceAddr,
-		"")
+		"",
+	)
 	positionId = id
 
 	println("[EXPECTED] Position created with ID:", positionId)

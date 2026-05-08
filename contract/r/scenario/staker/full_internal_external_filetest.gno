@@ -232,7 +232,8 @@ func mintPos01InRange() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[EXPECTED] position ID: %d, liquidity: %s\n", positionId, liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
@@ -273,7 +274,8 @@ func mintPositions02To06() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	testing.SkipHeights(1)
 
@@ -296,7 +298,8 @@ func mintPositions02To06() {
 			"0",
 			maxTimeout,
 			adminAddr,
-			"")
+			"",
+		)
 
 		testing.SkipHeights(1)
 	}
@@ -405,7 +408,8 @@ func mintAndStakePos07OutRange() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(lpTokenId))
 	sr.StakeToken(cross, lpTokenId, "")

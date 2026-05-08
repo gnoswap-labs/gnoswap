@@ -103,7 +103,8 @@ func testSymmetricNarrowRange() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		requested := u256.MustFromDecimal(amount)
 		used0 := u256.MustFromDecimal(amount0Used)
@@ -166,7 +167,8 @@ func testRangeWidthEfficiency() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		requested := u256.MustFromDecimal(testAmount)
 		used0 := u256.MustFromDecimal(amount0Used)
@@ -227,7 +229,8 @@ func testActualLimits() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		ufmt.Printf("  Result: liquidity=%s\n", liquidity)
 		ufmt.Printf("  Used: token0=%s, token1=%s\n\n", amount0Used, amount1Used)
