@@ -116,7 +116,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
+		routerAddr,
 		"",
 	)
 
@@ -133,7 +133,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
+		routerAddr,
 		"",
 	)
 
@@ -150,7 +150,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
+		routerAddr,
 		"",
 	)
 
@@ -167,7 +167,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
+		routerAddr,
 		"",
 	)
 
@@ -184,7 +184,7 @@ func TestExactOutSwapBoundary(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
+		routerAddr,
 		"",
 	)
 
