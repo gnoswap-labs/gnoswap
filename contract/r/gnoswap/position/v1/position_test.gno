@@ -732,138 +732,120 @@ func TestMint(t *testing.T) {
 	}
 }
 
-func TestMint_DerivesParticipantsAndReferralFromPreviousRealm(t *testing.T) {
-	t.Run("direct user mints to previous realm and registers referral", func(t *testing.T) {
-		initPositionTest(t)
-		createPoolWithoutFee(barPath, fooPath, fee500, 0)
+func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
+	directUser := testutils.TestAddress("direct-minter")
+	referrer := testutils.TestAddress("referrer").String()
+	mintUser := testutils.TestAddress("mint-stake-user")
+	thirdParty := testutils.TestAddress("third-party")
 
-		user := testutils.TestAddress("direct-minter")
-		referrer := testutils.TestAddress("referrer").String()
+	tests := []struct {
+		name             string
+		caller           address
+		callerCodePath   string
+		mintTo           address
+		mintToCaller     bool
+		referrer         string
+		expectedOwner    address
+		expectedReferral string
+		expectAbort      bool
+		errorContains    string
+	}{
+		{
+			name:             "direct user mints to previous realm and registers referral",
+			caller:           directUser,
+			mintTo:           directUser,
+			referrer:         referrer,
+			expectedOwner:    directUser,
+			expectedReferral: referrer,
+		},
+		{
+			name:           "contract caller can mint through public Mint",
+			callerCodePath: "gno.land/r/gnoswap/test/middle",
+			mintToCaller:   true,
+		},
+		{
+			name:          "user can mint to arbitrary third party",
+			caller:        mintUser,
+			mintTo:        thirdParty,
+			expectedOwner: thirdParty,
+		},
+		{
+			name:          "user cannot mint to empty address",
+			caller:        mintUser,
+			mintTo:        address(""),
+			expectAbort:   true,
+			errorContains: "invalid address",
+		},
+		{
+			name:          "user cannot mint directly to staker",
+			caller:        mintUser,
+			mintTo:        stakerAddr,
+			expectAbort:   true,
+			errorContains: "cannot mint to staker",
+		},
+	}
 
-		testing.SetRealm(adminRealm)
-		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
-		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
 
-		testing.SetRealm(testing.NewUserRealm(user))
-		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+			caller := tt.caller
+			mintTo := tt.mintTo
+			if tt.callerCodePath != "" {
+				callerRealm := testing.NewCodeRealm(tt.callerCodePath)
+				caller = callerRealm.Address()
+			}
+			if tt.mintToCaller {
+				mintTo = caller
+			}
 
-		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
-			testing.SetRealm(posRealm)
-			return mockInstance.Mint(
-				barPath, fooPath, fee500,
-				-500, 500,
-				"1000000", "1000000",
-				"0", "0",
-				time.Now().Add(10*time.Minute).Unix(),
-				user,
-				referrer,
-			)
-		}(cross)
+			testing.SetRealm(adminRealm)
+			common.SafeGRC20Transfer(cross, barPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross, fooPath, caller, 1000000)
 
-		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
-		uassert.NoError(t, err)
-		uassert.Equal(t, user, owner)
-		uassert.Equal(t, referrer, referral.GetReferral(user.String()))
-	})
+			if tt.callerCodePath != "" {
+				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
+			} else {
+				testing.SetRealm(testing.NewUserRealm(caller))
+			}
+			common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
 
-	t.Run("contract caller can mint through public Mint", func(t *testing.T) {
-		initPositionTest(t)
-		createPoolWithoutFee(barPath, fooPath, fee500, 0)
-
-		middleRealm := testing.NewCodeRealm("gno.land/r/gnoswap/test/middle")
-		middleAddr := middleRealm.Address()
-
-		testing.SetRealm(adminRealm)
-		common.SafeGRC20Transfer(cross, barPath, middleAddr, 1000000)
-		common.SafeGRC20Transfer(cross, fooPath, middleAddr, 1000000)
-
-		testing.SetRealm(middleRealm)
-		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
-
-		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
-			testing.SetRealm(posRealm)
-			return mockInstance.Mint(
-				barPath, fooPath, fee500,
-				-500, 500,
-				"1000000", "1000000",
-				"0", "0",
-				time.Now().Add(10*time.Minute).Unix(),
-				middleAddr,
-				"",
-			)
-		}(cross)
-
-		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
-		uassert.NoError(t, err)
-		uassert.Equal(t, middleAddr, owner)
-	})
-}
-
-func TestMint_MintToValidation(t *testing.T) {
-	t.Run("user can mint to arbitrary third party", func(t *testing.T) {
-		initPositionTest(t)
-		createPoolWithoutFee(barPath, fooPath, fee500, 0)
-
-		user := testutils.TestAddress("mint-stake-user")
-		thirdParty := testutils.TestAddress("third-party")
-
-		testing.SetRealm(adminRealm)
-		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
-		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
-
-		testing.SetRealm(testing.NewUserRealm(user))
-		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
-
-		positionId, _, _, _ := func(cur realm) (uint64, string, string, string) {
-			testing.SetRealm(posRealm)
-			return mockInstance.Mint(
-				barPath, fooPath, fee500,
-				-500, 500,
-				"1000000", "1000000",
-				"0", "0",
-				time.Now().Add(10*time.Minute).Unix(),
-				thirdParty,
-				"",
-			)
-		}(cross)
-
-		owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
-		uassert.NoError(t, err)
-		uassert.Equal(t, thirdParty, owner)
-	})
-
-	t.Run("user cannot mint to empty address", func(t *testing.T) {
-		initPositionTest(t)
-		createPoolWithoutFee(barPath, fooPath, fee500, 0)
-
-		user := testutils.TestAddress("mint-stake-user")
-
-		testing.SetRealm(adminRealm)
-		common.SafeGRC20Transfer(cross, barPath, user, 1000000)
-		common.SafeGRC20Transfer(cross, fooPath, user, 1000000)
-
-		testing.SetRealm(testing.NewUserRealm(user))
-		common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
-		common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
-
-		uassert.AbortsContains(t, "invalid address", func() {
-			func(cur realm) {
+			mint := func(cur realm) (uint64, string, string, string) {
 				testing.SetRealm(posRealm)
-				mockInstance.Mint(
+				return mockInstance.Mint(
 					barPath, fooPath, fee500,
 					-500, 500,
 					"1000000", "1000000",
 					"0", "0",
 					time.Now().Add(10*time.Minute).Unix(),
-					address(""),
-					"",
+					mintTo,
+					tt.referrer,
 				)
-			}(cross)
+			}
+
+			if tt.expectAbort {
+				uassert.AbortsContains(t, tt.errorContains, func() {
+					mint(cross)
+				})
+				return
+			}
+
+			positionId, _, _, _ := mint(cross)
+			owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
+			uassert.NoError(t, err)
+			expectedOwner := tt.expectedOwner
+			if expectedOwner == address("") {
+				expectedOwner = mintTo
+			}
+			uassert.Equal(t, expectedOwner, owner)
+
+			if tt.expectedReferral != "" {
+				uassert.Equal(t, tt.expectedReferral, referral.GetReferral(caller.String()))
+			}
 		})
-	})
+	}
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
