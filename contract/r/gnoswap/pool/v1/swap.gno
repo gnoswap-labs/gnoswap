@@ -281,7 +281,7 @@ func (i *poolV1) Swap(
 
 // DrySwap simulates a swap without modifying pool state.
 // Returns amount0, amount1 and a success boolean.
-// Returns false if pool is locked, has no liquidity, or computation fails.
+// Returns false if pool has no liquidity or computation fails.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,
@@ -290,10 +290,6 @@ func (i *poolV1) DrySwap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 ) (string, string, bool) {
-	if i.store.HasUnlocked() && !i.store.GetUnlocked() {
-		return "0", "0", false
-	}
-
 	if amountSpecified == "0" {
 		return "0", "0", false
 	}

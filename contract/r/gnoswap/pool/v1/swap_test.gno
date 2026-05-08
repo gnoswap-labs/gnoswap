@@ -471,30 +471,6 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 		})
 	}
 
-	t.Run("locked_pool_returns_false", func(t *testing.T) {
-		getMockInstance().lockPool()
-		defer getMockInstance().unlockPool()
-
-		swapParams := NewSwapBuilder().
-			InPool(barTokenPath, bazTokenPath, FeeTier100).
-			SwapToken0For1().
-			ExactInput("100").
-			WithPriceLimit(MAX_PRICE_IMPACT).
-			Build()
-
-		amount0, amount1, success := getMockInstance().DrySwap(
-			swapParams.token0,
-			swapParams.token1,
-			swapParams.fee,
-			swapParams.zeroForOne,
-			swapParams.amountSpecified.ToString(),
-			swapParams.sqrtPriceLimitX96.ToString(),
-		)
-
-		uassert.False(t, success, "DrySwap should fail while pool is locked")
-		uassert.Equal(t, "0", amount0, "Locked DrySwap token0 movement should be zero")
-		uassert.Equal(t, "0", amount1, "Locked DrySwap token1 movement should be zero")
-	})
 }
 
 func TestSwap_ExecutionAndSecurity(t *testing.T) {
