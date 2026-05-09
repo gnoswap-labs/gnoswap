@@ -45,19 +45,9 @@ func (pfs *protocolFeeState) ActualDistributedToDevOps() *bptree.BPTree {
 	return pfs.store.GetDistributedToDevOpsHistory()
 }
 
-// TokenListWithAmounts returns the map of token paths to their accumulated amounts.
-func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
-	return pfs.store.GetTokenListWithAmounts()
-}
-
-// TokenAmountOfTokenPath returns the accumulated amount for a specific token path.
-func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
-	amount, exists := pfs.store.GetTokenListWithAmountItem(tokenPath)
-	if !exists {
-		return 0
-	}
-
-	return amount
+// ReservedTokens returns token paths reserved for distribution.
+func (pfs *protocolFeeState) ReservedTokens() []string {
+	return pfs.store.GetReservedTokens()
 }
 
 // distributeToDevOps distributes tokens to DevOps and updates related state.
@@ -190,9 +180,9 @@ func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath s
 	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
-// clearTokenListWithAmount clears the tokenListWithAmount.
-func (pfs *protocolFeeState) clearTokenListWithAmount() error {
-	if err := pfs.store.SetTokenListWithAmounts(make(map[string]int64)); err != nil {
+// clearReservedTokens clears the reserved token index after distribution.
+func (pfs *protocolFeeState) clearReservedTokens() error {
+	if err := pfs.store.SetReservedTokens([]string{}); err != nil {
 		return err
 	}
 	return nil

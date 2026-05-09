@@ -55,8 +55,8 @@ func initStoreData(protocolFeeStore protocol_fee.IProtocolFeeStore) error {
 		}
 	}
 
-	if !protocolFeeStore.HasTokenListWithAmountsStoreKey() {
-		err := protocolFeeStore.InitializeTokenListWithAmount()
+	if !protocolFeeStore.HasReservedTokensStoreKey() {
+		err := protocolFeeStore.InitializeReservedTokens()
 		if err != nil {
 			return err
 		}

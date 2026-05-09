@@ -25,12 +25,12 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
+	caller := runtime.PreviousRealm().Address()
+	assertIsAdminOrGovStaker(caller)
+
 	if halt.IsHaltedWithdraw() {
 		return make(map[string]int64)
 	}
-
-	caller := runtime.PreviousRealm().Address()
-	assertIsAdminOrGovStaker(caller)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	pfs := pf.getProtocolFeeState()
@@ -38,8 +38,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
+	reservedTokens := pfs.ReservedTokens()
 
-	for _, token := range pf.getOutstandingDistributionTokens() {
+	for _, token := range reservedTokens {
 		toDevOpsAmount := safeSubInt64(
 			pfs.GetAccuTransferToDevOpsByTokenPath(token),
 			pfs.GetActualDistributedToDevOpsByTokenPath(token),
@@ -80,6 +81,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
 			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
+	}
+	if err := pfs.clearReservedTokens(); err != nil {
+		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
@@ -194,12 +198,9 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 		return nil
 	}
 
+	pf.reserveCollectedProtocolFee(tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
-
-	if err := pf.reserveCollectedProtocolFee(tokenPath, amount); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -208,41 +209,20 @@ func makeEventString(tokenPath string, amount int64) string {
 	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
 }
 
-func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) error {
+func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) {
 	pfs := pf.getProtocolFeeState()
 
 	toDevOpsAmount := safeMulDiv(amount, pfs.DevOpsPct(), 10000)
 	toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
 
 	if err := pfs.addAccuToDevOps(tokenPath, toDevOpsAmount); err != nil {
-		return err
+		panic(err)
 	}
 	if err := pfs.addAccuToGovStaker(tokenPath, toGovStakerAmount); err != nil {
-		return err
+		panic(err)
 	}
 
-	return nil
-}
-
-func (pf *protocolFeeV1) getOutstandingDistributionTokens() []string {
-	tokens := make([]string, 0)
-	seen := make(map[string]bool)
-	addToken := func(token string) {
-		if seen[token] {
-			return
-		}
-		seen[token] = true
-		tokens = append(tokens, token)
+	if err := pfs.store.AddReservedToken(tokenPath); err != nil {
+		panic(err)
 	}
-
-	pf.getProtocolFeeState().AccuToGovStaker().Iterate("", "", func(key string, value any) bool {
-		addToken(key)
-		return false
-	})
-	pf.getProtocolFeeState().AccuToDevOps().Iterate("", "", func(key string, value any) bool {
-		addToken(key)
-		return false
-	})
-
-	return tokens
 }

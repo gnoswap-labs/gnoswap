@@ -79,28 +79,12 @@ func (m *MockProtocolFee) GetGovStakerPct() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockProtocolFee) GetTokenListWithAmount() map[string]int64 {
-	res, ok := m.Response.Get("GetTokenListWithAmount")
-	if !ok {
-		return nil
-	}
-	return res[0].(map[string]int64)
-}
-
-func (m *MockProtocolFee) GetTokenList() []string {
-	res, ok := m.Response.Get("GetTokenList")
+func (m *MockProtocolFee) GetReservedTokens() []string {
+	res, ok := m.Response.Get("GetReservedTokens")
 	if !ok {
 		return nil
 	}
 	return res[0].([]string)
-}
-
-func (m *MockProtocolFee) GetAmountOfToken(tokenPath string) int64 {
-	res, ok := m.Response.Get("GetAmountOfToken")
-	if !ok {
-		return 0
-	}
-	return res[0].(int64)
 }
 
 func (m *MockProtocolFee) GetAccuTransfersToGovStaker() map[string]int64 {

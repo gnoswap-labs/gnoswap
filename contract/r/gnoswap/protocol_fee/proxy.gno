@@ -43,19 +43,9 @@ func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
 }
 
-// GetTokenListWithAmount returns the list of tokens with their amounts.
-func GetTokenListWithAmount() map[string]int64 {
-	return cloneStringInt64Map(getImplementation().GetTokenListWithAmount())
-}
-
-// GetTokenList returns the list of token paths without amounts.
-func GetTokenList() []string {
-	return cloneStringSlice(getImplementation().GetTokenList())
-}
-
-// GetAmountOfToken returns the amount of a specific token.
-func GetAmountOfToken(tokenPath string) int64 {
-	return getImplementation().GetAmountOfToken(tokenPath)
+// GetReservedTokens returns token paths reserved for distribution.
+func GetReservedTokens() []string {
+	return cloneStringSlice(getImplementation().GetReservedTokens())
 }
 
 // GetAccuTransfersToGovStaker returns accumulated transfers to GovStaker.

@@ -87,19 +87,11 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	).(int64)
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
+func (t *TestProtocolFee) GetReservedTokens() []string {
 	return t.ExecuteFn(
-		"GetTokenListWithAmount",
-		func(args ...any) any { return t.instance.GetTokenListWithAmount() },
-	).(map[string]int64)
-}
-
-func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {
-	return t.ExecuteFn(
-		"GetAmountOfToken",
-		func(args ...any) any { return t.instance.GetAmountOfToken(args[0].(string)) },
-		tokenPath,
-	).(int64)
+		"GetReservedTokens",
+		func(args ...any) any { return t.instance.GetReservedTokens() },
+	).([]string)
 }
 
 func (t *TestProtocolFee) GetAccuTransfersToGovStaker() map[string]int64 {
@@ -114,13 +106,6 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 		"GetAccuTransfersToDevOps",
 		func(args ...any) any { return t.instance.GetAccuTransfersToDevOps() },
 	).(map[string]int64)
-}
-
-func (t *TestProtocolFee) GetTokenList() []string {
-	return t.ExecuteFn(
-		"GetTokenList",
-		func(args ...any) any { return t.instance.GetTokenList() },
-	).([]string)
 }
 
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {

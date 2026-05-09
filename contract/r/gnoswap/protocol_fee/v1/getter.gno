@@ -10,29 +10,9 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 	return pf.getProtocolFeeState().GovStakerPct()
 }
 
-// GetTokenListWithAmount returns the token path and amount.
-func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
-	return pf.getProtocolFeeState().TokenListWithAmounts()
-}
-
-// GetTokenList returns the list of token paths without amounts.
-func (pf *protocolFeeV1) GetTokenList() []string {
-	tokenListWithAmount := pf.getProtocolFeeState().TokenListWithAmounts()
-	tokens := make([]string, 0, len(tokenListWithAmount))
-	for token := range tokenListWithAmount {
-		tokens = append(tokens, token)
-	}
-
-	return tokens
-}
-
-// GetAmountOfToken returns the amount of token.
-func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
-	amount, exists := pf.getProtocolFeeState().TokenListWithAmounts()[tokenPath]
-	if !exists {
-		return 0
-	}
-	return amount
+// GetReservedTokens returns token paths reserved for distribution.
+func (pf *protocolFeeV1) GetReservedTokens() []string {
+	return pf.getProtocolFeeState().ReservedTokens()
 }
 
 // GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.

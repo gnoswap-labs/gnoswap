@@ -80,18 +80,11 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	return t.instance.GetGovStakerPct()
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
-	if !t.isActive("GetTokenListWithAmount") {
-		panic("test implementation: GetTokenListWithAmount not supported")
+func (t *TestProtocolFee) GetReservedTokens() []string {
+	if !t.isActive("GetReservedTokens") {
+		panic("test implementation: GetReservedTokens not supported")
 	}
-	return t.instance.GetTokenListWithAmount()
-}
-
-func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {
-	if !t.isActive("GetAmountOfToken") {
-		panic("test implementation: GetAmountOfToken not supported")
-	}
-	return t.instance.GetAmountOfToken(tokenPath)
+	return t.instance.GetReservedTokens()
 }
 
 func (t *TestProtocolFee) GetAccuTransfersToGovStaker() map[string]int64 {
@@ -120,13 +113,6 @@ func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 
 		panic("test implementation: GetAccuTransferToDevOpsByTokenPath not supported")
 	}
 	return t.instance.GetAccuTransferToDevOpsByTokenPath(path)
-}
-
-func (t *TestProtocolFee) GetTokenList() []string {
-	if !t.isActive("GetTokenList") {
-		panic("test implementation: GetTokenList not supported")
-	}
-	return t.instance.GetTokenList()
 }
 
 func (t *TestProtocolFee) GetActualDistributedToGovStaker() map[string]int64 {

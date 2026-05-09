@@ -12,7 +12,7 @@ type mockProtocolFeeStore struct {
 	accuToDevOps         *bptree.BPTree
 	distributedToGovStakerHistory *bptree.BPTree
 	distributedToDevOpsHistory    *bptree.BPTree
-	tokenListWithAmounts map[string]int64
+	reservedTokens []string
 }
 
 // handle devOpsPct store data
@@ -166,37 +166,32 @@ func (s *mockProtocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath strin
 	return nil
 }
 
-// handle tokenListWithAmounts store data
-func (s *mockProtocolFeeStore) HasTokenListWithAmountsStoreKey() bool {
+// handle reservedTokens store data
+func (s *mockProtocolFeeStore) HasReservedTokensStoreKey() bool {
 	return true
 }
 
-func (s *mockProtocolFeeStore) InitializeTokenListWithAmount() error {
-	s.tokenListWithAmounts = make(map[string]int64)
+func (s *mockProtocolFeeStore) InitializeReservedTokens() error {
+	s.reservedTokens = []string{}
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
-	return s.tokenListWithAmounts
+func (s *mockProtocolFeeStore) GetReservedTokens() []string {
+	return s.reservedTokens
 }
 
-func (s *mockProtocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {
-	s.tokenListWithAmounts = tokenListWithAmounts
+func (s *mockProtocolFeeStore) SetReservedTokens(reservedTokens []string) error {
+	s.reservedTokens = reservedTokens
 	return nil
 }
 
-func (s *mockProtocolFeeStore) GetTokenListWithAmountItem(tokenPath string) (int64, bool) {
-	amount, ok := s.tokenListWithAmounts[tokenPath]
-	if !ok {
-		return 0, false
+func (s *mockProtocolFeeStore) AddReservedToken(tokenPath string) error {
+	for _, reservedToken := range s.reservedTokens {
+		if reservedToken == tokenPath {
+			return nil
+		}
 	}
-
-	return amount, true
-}
-
-func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amount int64) error {
-	s.tokenListWithAmounts[tokenPath] = amount
-
+	s.reservedTokens = append(s.reservedTokens, tokenPath)
 	return nil
 }
 
@@ -207,6 +202,6 @@ func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 		accuToDevOps:                  bptree.NewBPTreeN(16),
 		distributedToGovStakerHistory: bptree.NewBPTreeN(16),
 		distributedToDevOpsHistory:    bptree.NewBPTreeN(16),
-		tokenListWithAmounts:          make(map[string]int64),
+		reservedTokens:                []string{},
 	}
 }

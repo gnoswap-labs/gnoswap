@@ -335,12 +335,12 @@ func TestGetGovStakerPct(t *testing.T) {
 	}
 }
 
-func TestGetTokenListWithAmount(t *testing.T) {
+func TestGetReservedTokens(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "get token list with amount is success",
+			name: "get reserved tokens is success",
 		},
 	}
 
@@ -353,72 +353,12 @@ func TestGetTokenListWithAmount(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
 
 			// Action
-			GetTokenListWithAmount()
+			GetReservedTokens()
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetTokenListWithAmount") != 1 {
-				t.Error("GetTokenListWithAmount was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetTokenList(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get token list is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			GetTokenList()
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetTokenList") != 1 {
-				t.Error("GetTokenList was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetAmountOfToken(t *testing.T) {
-	tests := []struct {
-		name      string
-		tokenPath string
-	}{
-		{
-			name:      "get amount of token is success",
-			tokenPath: "gno.land/r/demo/gns",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resetTestState(t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
-			RegisterInitializer(cross, makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-
-			// Action
-			GetAmountOfToken(tt.tokenPath)
-
-			// Assert
-			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAmountOfToken") != 1 {
-				t.Error("GetAmountOfToken was not called on the implementation")
+			if mockProtocolFee.Response.CallCount("GetReservedTokens") != 1 {
+				t.Error("GetReservedTokens was not called on the implementation")
 			}
 		})
 	}

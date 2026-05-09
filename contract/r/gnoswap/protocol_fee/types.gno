@@ -17,9 +17,7 @@ type IProtocolFeeManager interface {
 type IProtocolFeeGetter interface {
 	GetDevOpsPct() int64
 	GetGovStakerPct() int64
-	GetTokenListWithAmount() map[string]int64
-	GetTokenList() []string
-	GetAmountOfToken(tokenPath string) int64
+	GetReservedTokens() []string
 	GetAccuTransfersToGovStaker() map[string]int64
 	GetAccuTransfersToDevOps() map[string]int64
 	GetAccuTransferToGovStakerByTokenPath(path string) int64
@@ -60,10 +58,9 @@ type IProtocolFeeStore interface {
 	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
 	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
 
-	HasTokenListWithAmountsStoreKey() bool
-	InitializeTokenListWithAmount() error
-	GetTokenListWithAmounts() map[string]int64
-	SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error
-	GetTokenListWithAmountItem(tokenPath string) (int64, bool)
-	SetTokenListWithAmountItem(tokenPath string, amount int64) error
+	HasReservedTokensStoreKey() bool
+	InitializeReservedTokens() error
+	GetReservedTokens() []string
+	SetReservedTokens(reservedTokens []string) error
+	AddReservedToken(tokenPath string) error
 }
