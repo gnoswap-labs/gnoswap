@@ -182,8 +182,8 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
 
 	testing.SetRealm(govStakerRealm)
-	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
-	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
+	reservedTokens := protocol_fee.GetReservedTokens()
+	println("[EXPECTED] Reserved protocol fee token count:", len(reservedTokens))
 }
 
 // Deposit GNS to OBL project tier 30
@@ -291,8 +291,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 //
 // [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user1
 // [INFO] Depositing GNS to OBL project tier 30
@@ -321,8 +320,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 //
 // [SCENARIO] 6. Collect protocol fee for OBL project recipient
 // [INFO] Bar balance in protocol fee: 1000
@@ -357,8 +355,7 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 //
 // [SCENARIO] 9. Collect protocol fee for OBL project recipient 2
 // [INFO] Bar balance in protocol fee: 1000
