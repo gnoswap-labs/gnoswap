@@ -105,7 +105,11 @@ func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	pendingProtocolFees := r.store.GetPendingProtocolFees()
+	existingProtocolFees := r.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
 		panic(err)

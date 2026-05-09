@@ -54,7 +54,11 @@ func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	pendingProtocolFees := s.store.GetPendingProtocolFees()
+	existingProtocolFees := s.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
 		panic(err)

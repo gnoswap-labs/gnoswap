@@ -69,7 +69,11 @@ func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
 		return
 	}
 
-	pendingProtocolFees := i.store.GetPendingProtocolFees()
+	existingProtocolFees := i.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
 	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
 	if err := i.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
 		panic(err)
