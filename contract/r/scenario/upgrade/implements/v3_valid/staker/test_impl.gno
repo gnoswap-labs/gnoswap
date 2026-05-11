@@ -33,10 +33,6 @@ func (t *TestStaker) UnStakeToken(positionId uint64) string {
 	return t.instance.UnStakeToken(positionId)
 }
 
-func (t *TestStaker) MintAndStake(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, referrer string) (uint64, string, string, string, string) {
-	return t.instance.MintAndStake(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, referrer)
-}
-
 func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	return t.instance.CollectReward(positionId)
 }

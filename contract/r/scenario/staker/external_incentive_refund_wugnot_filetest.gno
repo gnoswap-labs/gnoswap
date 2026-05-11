@@ -133,7 +133,6 @@ func mintPosition() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

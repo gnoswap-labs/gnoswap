@@ -161,7 +161,6 @@ func mintBarQuxPosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 }

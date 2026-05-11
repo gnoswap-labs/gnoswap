@@ -23,56 +23,6 @@ func UnStakeToken(cur realm, positionId uint64) string {
 	return getImplementation().UnStakeToken(positionId)
 }
 
-// MintAndStake creates a new position and immediately stakes it.
-//
-// Parameters:
-//   - token0: path of the first token
-//   - token1: path of the second token
-//   - fee: pool fee tier
-//   - tickLower: lower tick boundary
-//   - tickUpper: upper tick boundary
-//   - amount0Desired: desired amount of token0
-//   - amount1Desired: desired amount of token1
-//   - amount0Min: minimum amount of token0
-//   - amount1Min: minimum amount of token1
-//   - deadline: transaction deadline
-//   - referrer: referrer address for reward tracking
-//
-// Returns:
-//   - uint64: position ID
-//   - string: liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
-//   - string: staking details
-func MintAndStake(
-	cur realm,
-	token0 string,
-	token1 string,
-	fee uint32,
-	tickLower int32,
-	tickUpper int32,
-	amount0Desired string,
-	amount1Desired string,
-	amount0Min string,
-	amount1Min string,
-	deadline int64,
-	referrer string,
-) (uint64, string, string, string, string) {
-	return getImplementation().MintAndStake(
-		token0,
-		token1,
-		fee,
-		tickLower,
-		tickUpper,
-		amount0Desired,
-		amount1Desired,
-		amount0Min,
-		amount1Min,
-		deadline,
-		referrer,
-	)
-}
-
 // CollectReward collects accumulated rewards from a staked position.
 //
 // Parameters:

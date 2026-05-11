@@ -55,7 +55,6 @@ func (m *MockPosition) Mint(
 	amount1Min string,
 	deadline int64,
 	mintTo address,
-	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
 	res, ok := m.Response.Get("Mint")

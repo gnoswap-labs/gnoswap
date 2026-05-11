@@ -156,7 +156,6 @@ func mintInRangePosition() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -194,7 +193,6 @@ func mintOutRangePosition() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		aliceAddr,
 		aliceAddr,
 		"",
 	)

@@ -66,7 +66,6 @@ func TestFuzzPositionMint_ValidParams_Stateless(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			adminAddr,
 			"",
 		)
 
@@ -134,7 +133,6 @@ func TestFuzzPositionMint_RandomizedParams_Stateless(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			adminAddr,
 			"",
 		)
 	})
@@ -192,7 +190,6 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 			mintParams.amount0Min,
 			mintParams.amount1Min,
 			mintParams.deadline,
-			adminAddr,
 			adminAddr,
 			"",
 		)
@@ -274,7 +271,6 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(t *testing.T) {
 			mintParams.amount0Min,
 			mintParams.amount1Min,
 			mintParams.deadline,
-			adminAddr,
 			adminAddr,
 			"",
 		)

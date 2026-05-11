@@ -196,7 +196,6 @@ func startAndStake() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

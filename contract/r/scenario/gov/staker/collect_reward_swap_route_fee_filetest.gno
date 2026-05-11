@@ -114,7 +114,6 @@ func mintPositionByAdmin(token0, token1 string, fee int64) {
 		"0",
 		time.Now().Unix()+3600,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

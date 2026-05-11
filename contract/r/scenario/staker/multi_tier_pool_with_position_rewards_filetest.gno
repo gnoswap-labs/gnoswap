@@ -209,7 +209,6 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		user1Addr,
 		"",
 	)
 	position1 = uint64(p1)
@@ -234,7 +233,6 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
 		user2Addr,
 		"",
 	)
@@ -261,7 +259,6 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 	position3 = uint64(p3)
@@ -281,7 +278,6 @@ func mintAndStakePerPool() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

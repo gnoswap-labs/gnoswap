@@ -123,12 +123,12 @@ func setupPoolsAndLiquidity() {
 	// WUGNOT/GNS pool
 	wugnot.Approve(cross, poolAddr, 100000000)
 	gns.Approve(cross, poolAddr, 100000000)
-	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	// GNS/USDC pool
 	gns.Approve(cross, poolAddr, 100000000)
 	usdc.Approve(cross, poolAddr, 100000000)
-	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Transfer tokens to user
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 10000000}})

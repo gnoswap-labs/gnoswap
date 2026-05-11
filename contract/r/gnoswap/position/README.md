@@ -134,7 +134,6 @@ tokenId, liquidity, amount0, amount1 := Mint(
     "1900000000",              // amount1Min
     deadline,
     recipient,                 // mintTo
-    caller,                    // caller
     "",                        // referrer
 )
 

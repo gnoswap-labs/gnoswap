@@ -51,23 +51,6 @@ func (m *MockStaker) UnStakeToken(positionId uint64) string {
 	return "unstaked"
 }
 
-func (m *MockStaker) MintAndStake(
-	token0 string,
-	token1 string,
-	fee uint32,
-	tickLower int32,
-	tickUpper int32,
-	amount0Desired string,
-	amount1Desired string,
-	amount0Min string,
-	amount1Min string,
-	deadline int64,
-	referrer string,
-) (uint64, string, string, string, string) {
-	m.Response.Get("MintAndStake")
-	return 1, "1000", "1000", "100", "100"
-}
-
 func (m *MockStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	res, ok := m.Response.Get("CollectReward")
 	if !ok {

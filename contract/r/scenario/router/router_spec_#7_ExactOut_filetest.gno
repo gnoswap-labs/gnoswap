@@ -61,9 +61,9 @@ func main() {
 	foo.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in bar-baz pool")
-	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 	println("[INFO] Minting position in baz-foo pool")
-	pn.Mint(cross, bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
 	bar.Approve(cross, routerAddr, 1000000)
 	foo.Approve(cross, routerAddr, 1000000)

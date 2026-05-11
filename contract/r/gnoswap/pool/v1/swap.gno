@@ -156,18 +156,14 @@ func (i *poolV1) Swap(
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
-	if !slot0Start.Unlocked() {
-		panic(errLockedPool)
-	}
+	i.lockPool()
+	defer i.unlockPool()
 
 	// no liquidity -> no swap, return zero amounts
 	if pool.Liquidity().IsZero() {
 		return "0", "0"
 	}
 
-	// Apply reentrancy lock to the actual pool state
-	slot0Start.SetUnlocked(false)
-	pool.SetSlot0(slot0Start)
 	startTick := pool.Slot0Tick()
 	blockTimestamp := time.Now().Unix()
 
@@ -181,11 +177,6 @@ func (i *poolV1) Swap(
 	}
 
 	defer func() {
-		// Release reentrancy lock on the actual pool state
-		slot0End := pool.Slot0()
-		slot0End.SetUnlocked(true)
-		pool.SetSlot0(slot0End)
-
 		if i.store.HasSwapEndHook() {
 			swapEndHook := i.store.GetSwapEndHook()
 
@@ -290,7 +281,7 @@ func (i *poolV1) Swap(
 
 // DrySwap simulates a swap without modifying pool state.
 // Returns amount0, amount1 and a success boolean.
-// Returns false if pool is locked, has no liquidity, or computation fails.
+// Returns false if pool has no liquidity or computation fails.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,

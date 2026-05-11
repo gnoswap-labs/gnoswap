@@ -127,7 +127,6 @@ func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) 
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

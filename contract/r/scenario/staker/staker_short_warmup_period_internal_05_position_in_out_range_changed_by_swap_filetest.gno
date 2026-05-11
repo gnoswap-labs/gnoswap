@@ -134,7 +134,6 @@ func mintBarQux100_1() {
 		"1",
 		maxTimeout,
 		adminUser,
-		adminUser,
 		"",
 	)
 
@@ -164,7 +163,6 @@ func mintBarQux100_2() {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
 		adminUser,
 		"",
 	)

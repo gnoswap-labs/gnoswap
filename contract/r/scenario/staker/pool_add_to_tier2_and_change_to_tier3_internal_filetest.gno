@@ -138,7 +138,6 @@ func mintAndStakePosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

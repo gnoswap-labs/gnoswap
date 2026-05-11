@@ -123,7 +123,6 @@ func mintUser1Position() {
 		"0",
 		time.Now().Unix()+1000,
 		user1Addr,
-		user1Addr,
 		"",
 	)
 
@@ -153,7 +152,6 @@ func mintUser2Position() {
 		"0",
 		"0",
 		time.Now().Unix()+1000,
-		user2Addr,
 		user2Addr,
 		"",
 	)

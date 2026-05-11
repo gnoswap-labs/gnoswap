@@ -115,7 +115,6 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 		"0",
 		9999999999,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

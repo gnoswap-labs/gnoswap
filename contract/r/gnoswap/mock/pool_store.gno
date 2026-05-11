@@ -10,6 +10,7 @@ type MockPoolStore struct {
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
 	withdrawalFeeBPS     uint64
+	unlocked             bool
 	swapStartHook        func(cur realm, poolPath string, timestamp int64)
 	swapEndHook          func(cur realm, poolPath string) error
 	tickCrossHook        func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -92,6 +93,19 @@ func (s *MockPoolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
 	return nil
 }
 
+func (s *MockPoolStore) HasUnlocked() bool {
+	return true
+}
+
+func (s *MockPoolStore) GetUnlocked() bool {
+	return s.unlocked
+}
+
+func (s *MockPoolStore) SetUnlocked(unlocked bool) error {
+	s.unlocked = unlocked
+	return nil
+}
+
 // HasSwapStartHook checks if the swap start hook is set.
 func (s *MockPoolStore) HasSwapStartHook() bool {
 	return s.swapStartHook != nil
@@ -162,6 +176,7 @@ func NewMockPoolStoreWithHook(
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
 		withdrawalFeeBPS:     100,
+		unlocked:             true,
 		swapStartHook:        swapStartHook,
 		swapEndHook:          swapEndHook,
 		tickCrossHook:        tickCrossHook,

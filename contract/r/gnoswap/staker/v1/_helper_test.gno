@@ -139,7 +139,6 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 		"0",
 		max_timeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 }
@@ -257,7 +256,6 @@ func MintPosition(t *testing.T,
 		amount1Min,
 		deadline,
 		mintTo,
-		caller,
 		"",
 	)
 }

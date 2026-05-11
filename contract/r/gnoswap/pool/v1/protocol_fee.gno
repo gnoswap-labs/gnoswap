@@ -41,6 +41,8 @@ func (i *poolV1) HandleWithdrawalFee(
 ) (string, string, string, string) {
 	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	// only position contract can call this function
 	previousRealm := runtime.PreviousRealm()

@@ -10,7 +10,6 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 | `external_incentive.gno` | External incentive management |
 | `reward_calculation*.gno` | Reward computation |
 | `calculate_pool_position_reward.gno` | Per-position reward calculation |
-| `mint_stake.gno` | Combined mint + stake flow |
 | `type.gno` | Type definitions |
 | `wrap_unwrap.gno` | Token wrapping utilities |
 
@@ -35,10 +34,6 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 ### Warmup
 - Final warmup tier must be `math.MaxInt64`. Finite value → panic when block time passes it.
 - Warmup percentages must sum to ≤ 100 at any point.
-
-### Referral
-- `MintAndStake` must forward `referrer` to `StakeToken`. Empty string loses attribution.
-- `TryRegister` returns bool. Always check it and apply fallback.
 
 ## Pitfalls
 

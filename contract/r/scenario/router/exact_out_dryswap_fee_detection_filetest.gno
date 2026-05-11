@@ -84,7 +84,7 @@ func setup() {
 
 	// 1:1 pool with deep liquidity
 	pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
-	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, 500, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	bar.Transfer(cross, userAddr, 1012141) // user needs to have exactly 1012141 bar to swap 1000000 baz
 	baz.Transfer(cross, userAddr, 1000000)

@@ -6,6 +6,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 )
 
@@ -102,5 +103,13 @@ func assertEqualsAddress(prevAddr, otherAddr address) {
 func assertValidOperatorAddress(operator address) {
 	if operator != address("") && !operator.IsValid() {
 		panic(newErrorWithDetail(errInvalidAddress, ufmt.Sprintf("operator(%s)", operator)))
+	}
+}
+
+// assertIsNotMintToStaker panics if the mintTo address is staker.
+func assertIsNotMintToStaker(mintTo address) {
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	if mintTo == stakerAddr {
+		panic(errCannotMintToStaker)
 	}
 }

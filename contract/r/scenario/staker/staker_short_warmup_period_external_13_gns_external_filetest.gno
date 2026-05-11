@@ -147,7 +147,6 @@ func mintBarQux100Position1() {
 		"1",          // amount1Min
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

@@ -138,7 +138,6 @@ func testInitialTierInternalRewards() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -252,7 +251,6 @@ func testInitialTierExternalRewards() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

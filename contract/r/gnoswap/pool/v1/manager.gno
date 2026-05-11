@@ -61,6 +61,8 @@ func (i *poolV1) CreatePool(
 	sqrtPriceX96 string,
 ) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	assertIsSupportedFeeTier(fee)
 	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)

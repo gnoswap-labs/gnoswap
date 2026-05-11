@@ -169,7 +169,6 @@ func mintBarQux100Position1() {
 		"1",          // amount1Min
 		max_timeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -207,7 +206,6 @@ func mintBarBaz3000Position2() {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

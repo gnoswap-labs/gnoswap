@@ -13,8 +13,7 @@ package position
 //   - amount0Min: minimum amount of token0
 //   - amount1Min: minimum amount of token1
 //   - deadline: transaction deadline
-//   - mintTo: recipient address for the position NFT
-//   - caller: caller address
+//   - mintTo: recipient of the position NFT
 //   - referrer: referrer address for reward tracking
 //
 // Returns:
@@ -35,10 +34,9 @@ func Mint(
 	amount1Min string,
 	deadline int64,
 	mintTo address,
-	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
-	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, caller, referrer)
+	return getImplementation().Mint(token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, mintTo, referrer)
 }
 
 // IncreaseLiquidity adds liquidity to an existing position.
