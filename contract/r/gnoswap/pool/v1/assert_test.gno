@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func TestAssertIsNotAllowedEOA(t *testing.T) {
+func TestAssertIsNotUserCall(t *testing.T) {
 	tests := []struct {
 		name         string
 		currentRealm runtime.Realm
@@ -33,10 +33,10 @@ func TestAssertIsNotAllowedEOA(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					assertIsNotAllowedEOA(tt.currentRealm)
+					assertIsNotUserCall(tt.currentRealm)
 				})
 			} else {
-				assertIsNotAllowedEOA(tt.currentRealm)
+				assertIsNotUserCall(tt.currentRealm)
 			}
 		})
 	}

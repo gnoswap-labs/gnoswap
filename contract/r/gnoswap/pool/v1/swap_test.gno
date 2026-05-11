@@ -1475,8 +1475,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 				// 1. User initiates Swap -> global pool lock is acquired
 				// 2. Swap executes computeSwap and transfers output tokens
 				// 3. Swap calls swapCallback (maliciousCallback)
-				// 4. Inside callback, attacker attempts each mutation entrypoint
-				// 5. Each entrypoint checks global pool lock -> locked -> panic
+				// 4. Inside callback, attacker attempts each protected mutation entrypoint
+				// 5. Protected entrypoints check global pool lock -> locked -> panic
 				// 6. Callback catches abort, completes token transfer
 				// 7. Original Swap completes successfully
 				// 8. defer unlocks global pool lock

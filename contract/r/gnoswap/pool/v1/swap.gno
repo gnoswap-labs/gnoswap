@@ -149,7 +149,7 @@ func (i *poolV1) Swap(
 	halt.AssertIsNotHaltedPool()
 
 	previousRealm := runtime.PreviousRealm()
-	assertIsNotAllowedEOA(previousRealm)
+	assertIsNotUserCall(previousRealm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
