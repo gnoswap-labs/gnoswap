@@ -56,9 +56,12 @@ func setLastExecutedTimestamp(timestamp int64) {
 // to trigger periodic GNS emission. It mints new tokens based on elapsed time since
 // last distribution and distributes them to predefined targets (staker, devops, etc.).
 //
+// Parameters:
+//   - cur: Pass `cross` as argument.
+//
 // Returns:
 //   - distributedAmount: total amount of GNS distributed in this call
-//   - success: true if distribution was attempted
+//   - success: false only when emission is halted; true when processing completes, even if no tokens are distributed
 //
 // Note: Distribution only occurs if start timestamp is set and reached.
 // Any undistributed tokens from previous calls are carried forward.
