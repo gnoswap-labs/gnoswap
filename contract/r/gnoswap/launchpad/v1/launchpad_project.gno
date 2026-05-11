@@ -31,7 +31,8 @@ import (
 //   - tier180Ratio: allocation ratio for 180-day tier
 //   - startTime: unix timestamp for project start
 //
-// Returns project ID.
+// Returns:
+//   - projectID: newly created launchpad project ID
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(
 	name string,
@@ -230,7 +231,14 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Pr
 }
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
-// Only admin can call this function. Returns the amount of rewards transferred.
+// Only admin can call this function.
+//
+// Parameters:
+//   - projectID: ID of the project whose remaining reward tokens should be transferred
+//   - recipient: address that receives the remaining project reward tokens
+//
+// Returns:
+//   - amount: amount of reward tokens transferred to the recipient
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
