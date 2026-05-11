@@ -21,9 +21,10 @@ import (
 // Useful for buying specific amounts regardless of price.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountOut: Exact output amount desired
-//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - routeArr: Swap routes separated by comma; each route may contain up to 3 hops joined by *POOL*
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
 //   - amountInMax: Maximum input to spend (slippage protection)
 //   - deadline: Unix timestamp for expiration
@@ -78,14 +79,15 @@ func (r *routerV1) ExactOutSwapRoute(
 
 // ExactOutSingleSwapRoute swaps tokens for an exact output amount through a single route.
 //
-// Executes single-hop swaps through a single specified route.
+// Executes a single-hop swap through a single specified route.
 // Allows price limit control via sqrtPriceLimitX96 parameter.
 // Applies slippage protection via maximum input amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountOut: Exact output amount desired
-//   - routeArr: Single swap route (max 3 hops)
+//   - routeArr: Single-hop route path
 //   - amountInMax: Maximum input to spend (slippage protection)
 //   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
 //   - deadline: Unix timestamp for expiration
