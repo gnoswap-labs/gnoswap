@@ -95,15 +95,52 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	}
 }
 
-func TestLaunchpadWithdraw_CollectDepositGnsUnauthorized(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsContractDepositor(t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+	const contractPackagePath = "gno.land/r/test/contract"
 
-	initLaunchpadWithdrawTest(t, testutils.TestAddress("user"))
+	contractAddr := chain.PackageAddress(contractPackagePath)
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t, contractAddr)
 	lp := getTestImplementation()
 
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
 
-	uassert.AbortsWithMessage(t, "caller is not user", func() {
+	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
+	testing.SkipHeights(60*60*24*180/5 + 2)
+
+	var amount int64
+	var err error
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		amount, err = lp.CollectDepositGns("1")
+	}(cross)
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000000000), amount)
+}
+
+func TestLaunchpadWithdraw_CollectDepositGnsContractNonOwner(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+	const contractPackagePath = "gno.land/r/test/contract"
+
+	userAddr := testutils.TestAddress("contract_non_owner")
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t, userAddr)
+	lp := getTestImplementation()
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
+
+	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
+	testing.SkipHeights(60*60*24*180/5 + 2)
+
+	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 			lp.CollectDepositGns("1")
