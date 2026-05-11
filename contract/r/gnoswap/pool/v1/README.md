@@ -67,7 +67,7 @@ Claims tokens from burned position + fees.
 
 ### `Swap`
 
-Core swap execution (usually called by Router, and also callable through a realm wrapper when using `MsgRun`).
+Core swap execution (called by Router).
 
 - Iterates through ticks
 - Updates price and liquidity
@@ -109,26 +109,22 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
     caller := runtime.PreviousRealm().Address()
     poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
 
+    // Security check: ensure this callback is invoked by the legitimate pool
     if caller != poolAddr {
         return errors.New("unauthorized caller")
     }
+
     if amount0Delta > 0 {
+        // Transfer token0 to pool
         common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
     }
     if amount1Delta > 0 {
+        // Transfer token1 to pool
         common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
     }
     return nil
 }
 ```
-
-**Using `Swap` from `MsgRun`**:
-
-- `pool.Swap` takes a crossing callback, so the callback must be declared in a realm package (`/r/...`).
-- Declaring the callback inline in `/e/<user>/run` is not supported and fails with `crossing function literal ... declared in non-realm package`.
-- For direct `MsgRun`, prepare the callback in a small realm wrapper first, then pass the returned function value into `pool.Swap`.
-- The callback should verify the caller is the pool and transfer the required positive delta amount back to the pool.
-- If the wrapper is reused outside a controlled script, add wrapper-level authorization before users grant allowances.
 
 **Important Notes**:
 
