@@ -384,12 +384,13 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //   - Position must be staked (have a deposit record)
 //
 // Parameters:
-// CollectReward claims accumulated rewards without unstaking.
-//
-// Parameters:
 //   - positionId: LP position NFT token ID
 //
-// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
+// Returns:
+//   - gnsAmount: GNS reward amount sent to the user after fee handling
+//   - gnsPenalty: GNS penalty amount redirected during collection
+//   - externalRewards: reward amounts sent to the user by reward token path
+//   - externalPenalties: penalty amounts redirected by reward token path
 func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	halt.AssertIsNotHaltedWithdraw()
 
