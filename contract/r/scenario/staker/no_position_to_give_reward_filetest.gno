@@ -173,7 +173,6 @@ func mintPositionButDontStake() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

@@ -3,7 +3,7 @@ package mock
 
 import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/protocol_fee/v1"
+	v1 "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 func NewV3ValidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
@@ -41,11 +41,11 @@ func (t *TestProtocolFee) ExecuteFn(fnName string, actualFn func(args ...any) an
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() map[string]int64 {
-	return t.ExecuteFn(
+func (t *TestProtocolFee) DistributeProtocolFee() {
+	t.ExecuteFn(
 		"DistributeProtocolFee",
-		func(args ...any) any { return t.instance.DistributeProtocolFee() },
-	).(map[string]int64)
+		func(args ...any) any { t.instance.DistributeProtocolFee(); return nil },
+	)
 }
 
 func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
@@ -64,26 +64,12 @@ func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
 	)
 }
 
-func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
-	t.ExecuteFn(
+func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) error {
+	return t.ExecuteFn(
 		"AddToProtocolFee",
-		func(args ...any) any { t.instance.AddToProtocolFee(args[0].(string), args[1].(int64)); return nil },
+		func(args ...any) any { return t.instance.AddToProtocolFee(args[0].(string), args[1].(int64)) },
 		tokenPath, amount,
-	)
-}
-
-func (t *TestProtocolFee) ClearTokenListWithAmount() {
-	t.ExecuteFn(
-		"ClearTokenListWithAmount",
-		func(args ...any) any { t.instance.ClearTokenListWithAmount(); return nil },
-	)
-}
-
-func (t *TestProtocolFee) ClearAccuTransferToGovStaker() {
-	t.ExecuteFn(
-		"ClearAccuTransferToGovStaker",
-		func(args ...any) any { t.instance.ClearAccuTransferToGovStaker(); return nil },
-	)
+	).(error)
 }
 
 // IProtocolFeeGetter interface
@@ -101,19 +87,11 @@ func (t *TestProtocolFee) GetGovStakerPct() int64 {
 	).(int64)
 }
 
-func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
+func (t *TestProtocolFee) GetReservedTokens() []string {
 	return t.ExecuteFn(
-		"GetTokenListWithAmount",
-		func(args ...any) any { return t.instance.GetTokenListWithAmount() },
-	).(map[string]int64)
-}
-
-func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {
-	return t.ExecuteFn(
-		"GetAmountOfToken",
-		func(args ...any) any { return t.instance.GetAmountOfToken(args[0].(string)) },
-		tokenPath,
-	).(int64)
+		"GetReservedTokens",
+		func(args ...any) any { return t.instance.GetReservedTokens() },
+	).([]string)
 }
 
 func (t *TestProtocolFee) GetAccuTransfersToGovStaker() map[string]int64 {
@@ -130,13 +108,6 @@ func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
 	).(map[string]int64)
 }
 
-func (t *TestProtocolFee) GetTokenList() []string {
-	return t.ExecuteFn(
-		"GetTokenList",
-		func(args ...any) any { return t.instance.GetTokenList() },
-	).([]string)
-}
-
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	return t.ExecuteFn(
 		"GetAccuTransferToGovStakerByTokenPath",
@@ -149,6 +120,36 @@ func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 
 	return t.ExecuteFn(
 		"GetAccuTransferToDevOpsByTokenPath",
 		func(args ...any) any { return t.instance.GetAccuTransferToDevOpsByTokenPath(args[0].(string)) },
+		path,
+	).(int64)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStaker() map[string]int64 {
+	return t.ExecuteFn(
+		"GetActualDistributedToGovStaker",
+		func(args ...any) any { return t.instance.GetActualDistributedToGovStaker() },
+	).(map[string]int64)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOps() map[string]int64 {
+	return t.ExecuteFn(
+		"GetActualDistributedToDevOps",
+		func(args ...any) any { return t.instance.GetActualDistributedToDevOps() },
+	).(map[string]int64)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
+	return t.ExecuteFn(
+		"GetActualDistributedToGovStakerByTokenPath",
+		func(args ...any) any { return t.instance.GetActualDistributedToGovStakerByTokenPath(args[0].(string)) },
+		path,
+	).(int64)
+}
+
+func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
+	return t.ExecuteFn(
+		"GetActualDistributedToDevOpsByTokenPath",
+		func(args ...any) any { return t.instance.GetActualDistributedToDevOpsByTokenPath(args[0].(string)) },
 		path,
 	).(int64)
 }

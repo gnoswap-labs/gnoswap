@@ -21,8 +21,10 @@ const (
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
 	// Protocol fee storage keys
-	StoreKeyPoolCreationFee  StoreKey = "poolCreationFee"  // Pool creation fee amount
-	StoreKeyWithdrawalFeeBPS StoreKey = "withdrawalFeeBPS" // Withdrawal fee in basis points
+	StoreKeyPoolCreationFee     StoreKey = "poolCreationFee"     // Pool creation fee amount
+	StoreKeyPendingProtocolFees StoreKey = "pendingProtocolFees" // tokenPath -> amount held locally for protocol_fee
+	StoreKeyWithdrawalFeeBPS    StoreKey = "withdrawalFeeBPS"    // Withdrawal fee in basis points
+	StoreKeyUnlocked            StoreKey = "unlocked"         // Global pool reentrancy lock
 
 	// Swap hook storage keys
 	StoreKeySwapStartHook StoreKey = "swapStartHook" // Swap start hook function
@@ -145,6 +147,28 @@ func (s *poolStore) SetPoolCreationFee(poolCreationFee int64) error {
 	return s.kvStore.Set(StoreKeyPoolCreationFee.String(), poolCreationFee)
 }
 
+func (s *poolStore) HasPendingProtocolFees() bool {
+	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
+}
+
+func (s *poolStore) GetPendingProtocolFees() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
+	if err != nil {
+		panic(err)
+	}
+
+	pendingProtocolFees, ok := result.(map[string]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+	}
+
+	return pendingProtocolFees
+}
+
+func (s *poolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
+	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), pendingProtocolFees)
+}
+
 func (s *poolStore) HasWithdrawalFeeBPS() bool {
 	return s.kvStore.Has(StoreKeyWithdrawalFeeBPS.String())
 }
@@ -167,6 +191,28 @@ func (s *poolStore) GetWithdrawalFeeBPS() uint64 {
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
 func (s *poolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
 	return s.kvStore.Set(StoreKeyWithdrawalFeeBPS.String(), withdrawalFeeBPS)
+}
+
+func (s *poolStore) HasUnlocked() bool {
+	return s.kvStore.Has(StoreKeyUnlocked.String())
+}
+
+func (s *poolStore) GetUnlocked() bool {
+	result, err := s.kvStore.Get(StoreKeyUnlocked.String())
+	if err != nil {
+		panic(err)
+	}
+
+	unlocked, ok := result.(bool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to bool: %T", result))
+	}
+
+	return unlocked
+}
+
+func (s *poolStore) SetUnlocked(unlocked bool) error {
+	return s.kvStore.Set(StoreKeyUnlocked.String(), unlocked)
 }
 
 // HasSwapStartHook checks if the swap start hook is set.

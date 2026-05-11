@@ -132,8 +132,8 @@ func main() {
 	createPoolBarFoo100Tier03()
 	println()
 
-	println("[SCENARIO] 11. One-click staking position 07 (out-range)")
-	oneClickStakingPos07OutRange()
+	println("[SCENARIO] 11. Mint and stake position 07 (out-range)")
+	mintAndStakePos07OutRange()
 	println()
 
 	println("[SCENARIO] 12. Unstake token 01")
@@ -157,8 +157,8 @@ func initAccount() {
 		cross,
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] issue coins and prepare wugnot")
@@ -232,7 +232,6 @@ func mintPos01InRange() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -275,7 +274,6 @@ func mintPositions02To06() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -299,7 +297,6 @@ func mintPositions02To06() {
 			"0",
 			"0",
 			maxTimeout,
-			adminAddr,
 			adminAddr,
 			"",
 		)
@@ -389,7 +386,7 @@ func createPoolBarFoo100Tier03() {
 	testing.SkipHeights(1)
 }
 
-func oneClickStakingPos07OutRange() {
+func mintAndStakePos07OutRange() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint and stake position 07 (one-click)")
@@ -398,7 +395,7 @@ func oneClickStakingPos07OutRange() {
 
 	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
 
-	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
+	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		barPath,
 		fooPath,
@@ -410,11 +407,15 @@ func oneClickStakingPos07OutRange() {
 		"0",
 		"0",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
 
+	gnft.Approve(cross, stakerAddr, positionIdFrom(lpTokenId))
+	sr.StakeToken(cross, lpTokenId, "")
+
 	ufmt.Printf("[EXPECTED] mint and stake result - ID: %d, liquidity: %s\n", lpTokenId, liquidity)
-	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s, pool: %s\n", amount0, amount1, poolPath)
+	ufmt.Printf("[EXPECTED] amounts - 0: %s, 1: %s\n", amount0, amount1)
 
 	testing.SkipHeights(1)
 
@@ -542,11 +543,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create bar:foo:100 pool
 // [INFO] set pool tier to 3
 //
-// [SCENARIO] 11. One-click staking position 07 (out-range)
+// [SCENARIO] 11. Mint and stake position 07 (out-range)
 // [INFO] mint and stake position 07 (one-click)
 // [EXPECTED] current pool tick: 600000
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
-// [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
+// [EXPECTED] amounts - 0: 0, 1: 1000
 // [INFO] collect reward for position 07
 // [EXPECTED] reward to admin: 0
 //
@@ -558,4 +559,3 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] create baz:qux:3000 pool (external only)
 // [INFO] create external incentive (baz)
 // [EXPECTED] external incentive created - start: 1244332800, end: 1252108800
-

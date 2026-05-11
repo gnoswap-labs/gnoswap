@@ -11,6 +11,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 
@@ -74,7 +75,6 @@ func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 		"0",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
 		adminAddr,
 		"",
 	)
@@ -679,25 +679,6 @@ func TestMint(t *testing.T) {
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
-		{
-			name:             "abort: caller not authorized to mintTo",
-			token0:           barPath,
-			token1:           fooPath,
-			fee:              fee500,
-			tickLower:        -500,
-			tickUpper:        500,
-			amount0:          "1000000",
-			amount1:          "2000000",
-			minAmount0:       "950000",
-			minAmount1:       "1900000",
-			deadline:         time.Now().Add(10 * time.Minute).Unix(),
-			mintTo:           adminAddr,
-			caller:           alice,
-			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
-			expectedAmount0:  950000,
-			expectedAmount1:  1900000,
-		},
 	}
 
 	for _, tc := range tests {
@@ -747,6 +728,122 @@ func TestMint(t *testing.T) {
 
 			if tc.referrer != "" {
 				uassert.Equal(t, tc.referrer, referral.GetReferral(tc.caller.String()))
+			}
+		})
+	}
+}
+
+func TestMint_ParticipantDerivationAndMintToValidation(t *testing.T) {
+	directUser := testutils.TestAddress("direct-minter")
+	referrer := testutils.TestAddress("referrer").String()
+	mintUser := testutils.TestAddress("mint-stake-user")
+	thirdParty := testutils.TestAddress("third-party")
+
+	tests := []struct {
+		name             string
+		caller           address
+		callerCodePath   string
+		mintTo           address
+		mintToCaller     bool
+		referrer         string
+		expectedOwner    address
+		expectedReferral string
+		expectAbort      bool
+		errorContains    string
+	}{
+		{
+			name:             "direct user mints to previous realm and registers referral",
+			caller:           directUser,
+			mintTo:           directUser,
+			referrer:         referrer,
+			expectedOwner:    directUser,
+			expectedReferral: referrer,
+		},
+		{
+			name:           "contract caller can mint through public Mint",
+			callerCodePath: "gno.land/r/gnoswap/test/middle",
+			mintToCaller:   true,
+		},
+		{
+			name:          "user can mint to arbitrary third party",
+			caller:        mintUser,
+			mintTo:        thirdParty,
+			expectedOwner: thirdParty,
+		},
+		{
+			name:          "user cannot mint to empty address",
+			caller:        mintUser,
+			mintTo:        address(""),
+			expectAbort:   true,
+			errorContains: "invalid address",
+		},
+		{
+			name:          "user cannot mint directly to staker",
+			caller:        mintUser,
+			mintTo:        stakerAddr,
+			expectAbort:   true,
+			errorContains: "cannot mint to staker",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			caller := tt.caller
+			mintTo := tt.mintTo
+			if tt.callerCodePath != "" {
+				callerRealm := testing.NewCodeRealm(tt.callerCodePath)
+				caller = callerRealm.Address()
+			}
+			if tt.mintToCaller {
+				mintTo = caller
+			}
+
+			testing.SetRealm(adminRealm)
+			common.SafeGRC20Transfer(cross, barPath, caller, 1000000)
+			common.SafeGRC20Transfer(cross, fooPath, caller, 1000000)
+
+			if tt.callerCodePath != "" {
+				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
+			} else {
+				testing.SetRealm(testing.NewUserRealm(caller))
+			}
+			common.SafeGRC20Approve(cross, barPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(cross, fooPath, poolAddr, 1000000)
+
+			mint := func(cur realm) (uint64, string, string, string) {
+				testing.SetRealm(posRealm)
+				return mockInstance.Mint(
+					barPath, fooPath, fee500,
+					-500, 500,
+					"1000000", "1000000",
+					"0", "0",
+					time.Now().Add(10*time.Minute).Unix(),
+					mintTo,
+					tt.referrer,
+				)
+			}
+
+			if tt.expectAbort {
+				uassert.AbortsContains(t, tt.errorContains, func() {
+					mint(cross)
+				})
+				return
+			}
+
+			positionId, _, _, _ := mint(cross)
+			owner, err := mockInstance.nftAccessor.OwnerOf(positionIdFrom(positionId))
+			uassert.NoError(t, err)
+			expectedOwner := tt.expectedOwner
+			if expectedOwner == address("") {
+				expectedOwner = mintTo
+			}
+			uassert.Equal(t, expectedOwner, owner)
+
+			if tt.expectedReferral != "" {
+				uassert.Equal(t, tt.expectedReferral, referral.GetReferral(caller.String()))
 			}
 		})
 	}
@@ -967,7 +1064,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 
@@ -1100,6 +1198,78 @@ func TestCollectFees(t *testing.T) {
 	}
 }
 
+func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
+	initPositionTest(t)
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	uassert.NotPanics(t, func() {
+		_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+			1,
+			"400000",
+			"0",
+			"0",
+			time.Now().Add(time.Hour).Unix(),
+		)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
+func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
+	initPositionTest(t)
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+		1,
+		"50",
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	uassert.NotPanics(t, func() {
+		_, _, _, _, _, _ = mockInstanceCollectFee(1, adminAddr)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
 func TestReposition(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -1165,7 +1335,8 @@ func TestReposition(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
@@ -1435,7 +1606,8 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			deadline := time.Now().Add(time.Hour).Unix()
 
@@ -1490,7 +1662,8 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 		10000,
 		"1000000",
 		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
 
 	// Step 2: Manually reduce pool balance to simulate insufficient balance
 	pool := mustGetStoredTestPool(pl.GetPoolPath(barPath, fooPath, fee500))
@@ -1588,7 +1761,8 @@ func TestReposition_DeadlineValidation(t *testing.T) {
 				10000,
 				"1000000",
 				"1000000",
-				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+			)
 
 			// Step 2: Get position liquidity and decrease 100% to clear for reposition
 			position, _ := mockInstance.GetPosition(1)
@@ -1667,7 +1841,8 @@ func TestDecreaseLiquidity_NonOwner(t *testing.T) {
 		10000,
 		"1000000",
 		"1000000",
-		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
 
 	// Alice (non-owner) tries to decrease liquidity
 	testing.SetRealm(testing.NewUserRealm(alice))

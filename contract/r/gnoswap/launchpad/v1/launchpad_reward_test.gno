@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"chain/runtime"
 	"math"
 	"testing"
@@ -527,7 +528,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-012] not exist deposit",
 		},
 		{
-			name: "FAIL: emergency halt",
+			name: "SUCCESS: emergency halt still allows accrued reward claim",
 			env:  testEnvConfig{initialTime: 9000000},
 			project: testProjectConfig{
 				rewardAmount:    10000000,
@@ -538,7 +539,6 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner1",
 			caller:           "haltOwner1",
 			haltLevel:        halt.HaltLevelEmergency,
-			expectedErrorMsg: "halted: launchpad",
 		},
 		{
 			name: "FAIL: complete halt",
@@ -552,7 +552,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner2",
 			caller:           "haltOwner2",
 			haltLevel:        halt.HaltLevelComplete,
-			expectedErrorMsg: "halted: launchpad",
+			expectedErrorMsg: "halted: withdraw",
 		},
 	}
 
@@ -586,16 +586,25 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 				halt.SetHaltLevel(cross, tt.haltLevel)
 			}
 
-			// Execute and verify error
+			// Execute and verify
 			callerAddr := testutils.TestAddress(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(callerAddr))
 
-			uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-					lp.CollectRewardByDepositId(depositID)
-				}(cross)
-			})
+			if tt.expectedErrorMsg != "" {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+						lp.CollectRewardByDepositId(depositID)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+						_ = lp.CollectRewardByDepositId(depositID)
+					}(cross)
+				})
+			}
 
 			// Cleanup halt
 			if tt.haltLevel != "" {
@@ -604,6 +613,71 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLaunchpadReward_CollectRewardByDepositId_ContractDepositor(t *testing.T) {
+	const contractPackagePath = "gno.land/r/test/contract"
+
+	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 14000000})
+	lp := getTestImplementation()
+	contractAddr := chain.PackageAddress(contractPackagePath)
+
+	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		rewardAmount:    10000000,
+		recipientSuffix: "contractRecv",
+		tier30Pct:       100,
+	})
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, contractAddr, 2000000)
+
+	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
+	gns.Approve(cross, launchpadAddr, 1000000)
+
+	var depositID string
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		depositID = lp.DepositGns(projectID+":30", 1000000, "")
+	}(cross)
+
+	testing.SkipHeights(testSkipTier30Claimable)
+
+	var rewardAmount int64
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+		rewardAmount = lp.CollectRewardByDepositId(depositID)
+	}(cross)
+
+	uassert.True(t, rewardAmount > 0)
+}
+
+func TestLaunchpadReward_CollectRewardByDepositId_ContractNonOwner(t *testing.T) {
+	const contractPackagePath = "gno.land/r/test/contract"
+
+	launchpadAddr, adminRealm := setupTestEnvironment(t, testEnvConfig{initialTime: 14100000})
+	lp := getTestImplementation()
+
+	projectID := createTestProject(t, lp, launchpadAddr, adminRealm, testProjectConfig{
+		rewardAmount:    10000000,
+		recipientSuffix: "contractNonOwnerRecv",
+		tier30Pct:       100,
+	})
+
+	_, depositID := createTestDeposit(t, lp, launchpadAddr, adminRealm, projectID, testDepositConfig{
+		userSuffix:    "contractNonOwner",
+		depositAmount: 1000000,
+		tier:          30,
+	})
+
+	testing.SkipHeights(testSkipTier30Claimable)
+	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
+
+	uassert.AbortsContains(t, "[GNOSWAP-LAUNCHPAD-014] invalid owner", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+			lp.CollectRewardByDepositId(depositID)
+		}(cross)
+	})
 }
 
 // TestCollectRewardByDepositId_ConsecutiveCollections tests multiple collections

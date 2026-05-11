@@ -78,17 +78,15 @@ func (r *routerV1) handleSwapFee(
 ) int64 {
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
+		r.addToProtocolFee()
 		return amount
 	}
 
 	currentTokenPath := outputToken
 
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
-
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Approve(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
-
-	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
+	r.addPendingProtocolFee(currentTokenPath, feeAmountInt64)
+	r.addToProtocolFee()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -100,6 +98,51 @@ func (r *routerV1) handleSwapFee(
 	)
 
 	return safeSubInt64(amount, feeAmountInt64)
+}
+
+func (r *routerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	existingProtocolFees := r.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := r.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+// addToProtocolFee sends pending router protocol fees to the protocol fee realm.
+// It is best-effort: when protocol fee collection is halted, it keeps pending
+// storage unchanged; otherwise it rebuilds pending storage with only entries
+// that could not be added, removing successful and non-positive entries.
+func (r *routerV1) addToProtocolFee() {
+	pendingProtocolFees := r.store.GetPendingProtocolFees()
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	remainingProtocolFees := make(map[string]int64)
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			remainingProtocolFees[tokenPath] = amount
+			continue
+		}
+	}
+
+	if err := r.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+		panic(err)
+	}
 }
 
 func calculateRouterFee(amount int64, swapFee uint64) int64 {

@@ -180,7 +180,6 @@ func mintInRangePosition() BalanceSnapshot {
 		"0",           // amount1Min
 		max_timeout,
 		userAddr,
-		userAddr,
 		"",
 	)
 
@@ -214,7 +213,6 @@ func mintOutOfRangePosition() BalanceSnapshot {
 		"0",            // amount0Min
 		"0",            // amount1Min
 		max_timeout,
-		userAddr,
 		userAddr,
 		"",
 	)

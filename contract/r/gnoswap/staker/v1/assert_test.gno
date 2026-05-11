@@ -658,3 +658,88 @@ func TestAssertIsValidAddress(t *testing.T) {
 		})
 	}
 }
+
+// TestAssertIsPositionOwner covers the strict caller==owner check that gates StakeToken. It must allow only the exact match between the NFT
+func TestAssertIsPositionOwner(t *testing.T) {
+	tests := []struct {
+		name        string
+		owner       address
+		caller      address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "owner equals caller",
+			owner:       alice,
+			caller:      alice,
+			shouldPanic: false,
+		},
+		{
+			name:        "admin owns and calls",
+			owner:       adminAddr,
+			caller:      adminAddr,
+			shouldPanic: false,
+		},
+		{
+			// Different EOA — must reject. Guards against approved/operator
+			name:        "different user is rejected",
+			owner:       alice,
+			caller:      addr01,
+			shouldPanic: true,
+			expectedMsg: "caller has no permission",
+		},
+		{
+			// Used to be tolerated by the old hasTokenOwnership helper;
+			name:        "owner is staker is rejected",
+			owner:       stakerAddr,
+			caller:      alice,
+			shouldPanic: true,
+			expectedMsg: "caller has no permission",
+		},
+		{
+			// Caller is staker, but owner is a user — reject. Staker is
+			name:        "caller is staker is rejected",
+			owner:       alice,
+			caller:      stakerAddr,
+			shouldPanic: true,
+			expectedMsg: "caller has no permission",
+		},
+		{
+			// Both empty — equal, so this guard is a no-op. Address
+			name:        "both empty addresses pass",
+			owner:       address(""),
+			caller:      address(""),
+			shouldPanic: false,
+		},
+		{
+			// Empty owner with a real caller is a mismatch.
+			name:        "empty owner with real caller is rejected",
+			owner:       address(""),
+			caller:      alice,
+			shouldPanic: true,
+			expectedMsg: "caller has no permission",
+		},
+		{
+			// Real owner with an empty caller is a mismatch.
+			name:        "real owner with empty caller is rejected",
+			owner:       alice,
+			caller:      address(""),
+			shouldPanic: true,
+			expectedMsg: "caller has no permission",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.expectedMsg, func() {
+					assertIsPositionOwner(tt.owner, tt.caller)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsPositionOwner(tt.owner, tt.caller)
+				})
+			}
+		})
+	}
+}

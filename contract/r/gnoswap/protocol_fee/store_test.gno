@@ -389,7 +389,7 @@ func TestStoreSetAndGetAccuToDevOpsItem(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetTokenListWithAmounts(t *testing.T) {
+func TestStoreSetAndGetReservedTokens(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFn      func(IProtocolFeeStore)
@@ -398,42 +398,39 @@ func TestStoreSetAndGetTokenListWithAmounts(t *testing.T) {
 		panicMessage string
 	}{
 		{
-			name: "set and get token list with amounts successfully",
+			name: "set and get reserved tokens successfully",
 			setupFn: func(ps IProtocolFeeStore) {
-				ps.InitializeTokenListWithAmount()
-				tokenList := map[string]int64{
-					"gno.land/r/demo/token1": 100,
-					"gno.land/r/demo/token2": 200,
-				}
-				ps.SetTokenListWithAmounts(tokenList)
+				ps.InitializeReservedTokens()
+				ps.SetReservedTokens([]string{"gno.land/r/demo/token1", "gno.land/r/demo/token2"})
 			},
 			testFn: func(t *testing.T, ps IProtocolFeeStore) {
-				uassert.True(t, ps.HasTokenListWithAmountsStoreKey(), "should have token list after initializing")
-				retrieved := ps.GetTokenListWithAmounts()
+				uassert.True(t, ps.HasReservedTokensStoreKey(), "should have reserved tokens after initializing")
+				retrieved := ps.GetReservedTokens()
 				uassert.NotEqual(t, nil, retrieved)
-				uassert.Equal(t, int64(100), retrieved["gno.land/r/demo/token1"])
-				uassert.Equal(t, int64(200), retrieved["gno.land/r/demo/token2"])
+				uassert.Equal(t, 2, len(retrieved))
+				uassert.Equal(t, "gno.land/r/demo/token1", retrieved[0])
+				uassert.Equal(t, "gno.land/r/demo/token2", retrieved[1])
 			},
 		},
 		{
-			name: "should not have token list initially",
+			name: "should not have reserved tokens initially",
 			testFn: func(t *testing.T, ps IProtocolFeeStore) {
-				uassert.False(t, ps.HasTokenListWithAmountsStoreKey(), "should not have token list initially")
+				uassert.False(t, ps.HasReservedTokensStoreKey(), "should not have reserved tokens initially")
 			},
 		},
 		{
-			name: "panic when getting uninitialized token list",
+			name: "panic when getting uninitialized reserved tokens",
 			testFn: func(t *testing.T, ps IProtocolFeeStore) {
-				ps.GetTokenListWithAmounts()
+				ps.GetReservedTokens()
 			},
 			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized token list",
+			panicMessage: "should panic when getting uninitialized reserved tokens",
 		},
 		{
-			name: "error when setting nil token list",
+			name: "error when setting nil reserved tokens",
 			testFn: func(t *testing.T, ps IProtocolFeeStore) {
-				err := ps.SetTokenListWithAmounts(nil)
-				uassert.ErrorContains(t, err, "tokenListWithAmounts is nil")
+				err := ps.SetReservedTokens(nil)
+				uassert.ErrorContains(t, err, "reservedTokens is nil")
 			},
 		},
 	}
@@ -459,31 +456,22 @@ func TestStoreSetAndGetTokenListWithAmounts(t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetTokenListWithAmountItem(t *testing.T) {
+func TestStoreAddReservedToken(t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPath string
-		amount    int64
 	}{
 		{
-			name:      "token1 with 300",
+			name:      "token1",
 			tokenPath: "gno.land/r/demo/token1",
-			amount:    300,
 		},
 		{
-			name:      "token2 with 600",
+			name:      "token2",
 			tokenPath: "gno.land/r/demo/token2",
-			amount:    600,
 		},
 		{
-			name:      "token3 with zero",
+			name:      "token3",
 			tokenPath: "gno.land/r/demo/token3",
-			amount:    0,
-		},
-		{
-			name:      "token4 with large value",
-			tokenPath: "gno.land/r/demo/token4",
-			amount:    1000000000,
 		},
 	}
 
@@ -493,18 +481,21 @@ func TestStoreSetAndGetTokenListWithAmountItem(t *testing.T) {
 
 			ps := NewProtocolFeeStore(kvStore)
 
-			err := ps.InitializeTokenListWithAmount()
+			err := ps.InitializeReservedTokens()
 			uassert.NoError(t, err)
 
-			amount, exists := ps.GetTokenListWithAmountItem(tt.tokenPath)
-			uassert.False(t, exists, "token should not exist initially")
+			uassert.Equal(t, 0, len(ps.GetReservedTokens()))
 
-			err = ps.SetTokenListWithAmountItem(tt.tokenPath, tt.amount)
+			err = ps.AddReservedToken(tt.tokenPath)
 			uassert.NoError(t, err)
 
-			amount, exists = ps.GetTokenListWithAmountItem(tt.tokenPath)
-			uassert.True(t, exists, "token should exist after setting")
-			uassert.Equal(t, tt.amount, amount)
+			reservedTokens := ps.GetReservedTokens()
+			uassert.Equal(t, 1, len(reservedTokens))
+			uassert.Equal(t, tt.tokenPath, reservedTokens[0])
+
+			err = ps.AddReservedToken(tt.tokenPath)
+			uassert.NoError(t, err)
+			uassert.Equal(t, 1, len(ps.GetReservedTokens()))
 		})
 	}
 }
@@ -521,18 +512,18 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				ps.InitializeDevOpsPct()
 				ps.InitializeAccuToGovStaker()
 				ps.InitializeAccuToDevOps()
-				ps.InitializeTokenListWithAmount()
+				ps.InitializeReservedTokens()
 
 				ps.SetDevOpsPct(30)
 				ps.SetAccuToGovStakerItem("token1", 1000)
 				ps.SetAccuToDevOpsItem("token1", 500)
-				ps.SetTokenListWithAmountItem("token1", 1500)
+				ps.AddReservedToken("token1")
 			},
 			verifyFn: func(t *testing.T, ps IProtocolFeeStore) {
 				uassert.True(t, ps.HasDevOpsPctStoreKey())
 				uassert.True(t, ps.HasAccuToGovStakerStoreKey())
 				uassert.True(t, ps.HasAccuToDevOpsStoreKey())
-				uassert.True(t, ps.HasTokenListWithAmountsStoreKey())
+				uassert.True(t, ps.HasReservedTokensStoreKey())
 
 				uassert.Equal(t, int64(30), ps.GetDevOpsPct())
 
@@ -542,8 +533,9 @@ func TestStoreMultipleSetAndGet(t *testing.T) {
 				amount, _ = ps.GetAccuToDevOpsItem("token1")
 				uassert.Equal(t, int64(500), amount)
 
-				amount, _ = ps.GetTokenListWithAmountItem("token1")
-				uassert.Equal(t, int64(1500), amount)
+				reservedTokens := ps.GetReservedTokens()
+				uassert.Equal(t, 1, len(reservedTokens))
+				uassert.Equal(t, "token1", reservedTokens[0])
 			},
 		},
 	}

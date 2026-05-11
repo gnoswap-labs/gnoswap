@@ -146,7 +146,6 @@ func mintPositionsWithDifferentLiquidity() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -168,7 +167,6 @@ func mintPositionsWithDifferentLiquidity() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -188,7 +186,6 @@ func mintPositionsWithDifferentLiquidity() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)
@@ -210,7 +207,6 @@ func mintPositionsWithDifferentLiquidity() {
 		"0",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -230,7 +226,6 @@ func mintPositionsWithDifferentLiquidity() {
 		"0",
 		"0",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

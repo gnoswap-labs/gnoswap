@@ -23,7 +23,6 @@ type IPositionManager interface {
 		amount1Min string,
 		deadline int64,
 		mintTo address,
-		caller address,
 		referrer string,
 	) (uint64, string, string, string)
 

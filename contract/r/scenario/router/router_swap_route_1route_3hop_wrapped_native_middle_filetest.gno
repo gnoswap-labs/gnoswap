@@ -92,7 +92,7 @@ func testPositionMintGnsGnot() {
 
 	println("[INFO] Minting position in gns-wugnot pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -117,7 +117,7 @@ func testPositionMintGnotBar() {
 
 	println("[INFO] Minting position in wugnot-bar pool")
 	testing.SetOriginSend(chain.Coins{})
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)

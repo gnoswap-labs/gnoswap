@@ -24,6 +24,7 @@ func (s *stakerV1) handleStakingRewardFee(
 ) (int64, int64, error) {
 	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
+		s.addToProtocolFee()
 		return amount, 0, nil
 	}
 
@@ -34,6 +35,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	if feeAmount == 0 {
+		s.addToProtocolFee()
 		return amount, 0, nil
 	}
 
@@ -41,12 +43,55 @@ func (s *stakerV1) handleStakingRewardFee(
 		tokenPath = GNS_PATH
 	}
 
-	// external contract has fee
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, feeAmount)
-	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
+	s.addPendingProtocolFee(tokenPath, feeAmount)
+	s.addToProtocolFee()
 
 	return safeSubInt64(amount, feeAmount), feeAmount, nil
+}
+
+func (s *stakerV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	existingProtocolFees := s.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := s.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+// addToProtocolFee sends pending staker protocol fees to the protocol fee realm.
+// It is best-effort: when protocol fee collection is halted, it keeps pending
+// storage unchanged; otherwise it rebuilds pending storage with only entries
+// that could not be added, removing successful and non-positive entries.
+func (s *stakerV1) addToProtocolFee() {
+	pendingProtocolFees := s.store.GetPendingProtocolFees()
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	remainingProtocolFees := make(map[string]int64)
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			remainingProtocolFees[tokenPath] = amount
+			continue
+		}
+	}
+
+	if err := s.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+		panic(err)
+	}
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.

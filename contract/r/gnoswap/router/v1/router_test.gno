@@ -268,7 +268,6 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				tt.recipient,
 				"",
 			)
 			testing.SkipHeights(1)
@@ -435,7 +434,6 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				tt.recipient,
 				"",
 			)
 			testing.SkipHeights(1)
@@ -598,7 +596,6 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				"0",
 				"0",
 				maxTimeout,
-				tt.recipient,
 				tt.recipient,
 				"",
 			)
@@ -948,9 +945,9 @@ func createMultiHopPools(t *testing.T) {
 	qux.Approve(cross, poolAddr, maxApprove)
 	foo.Approve(cross, poolAddr, maxApprove)
 
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
+	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, "")
 }
 
 // Test GetSwapFee

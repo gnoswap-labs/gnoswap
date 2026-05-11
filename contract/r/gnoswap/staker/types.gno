@@ -13,19 +13,6 @@ type IStaker interface {
 type IStakerManager interface {
 	StakeToken(positionId uint64, referrer string) string
 	UnStakeToken(positionId uint64) string
-	MintAndStake(
-		token0 string,
-		token1 string,
-		fee uint32,
-		tickLower int32,
-		tickUpper int32,
-		amount0Desired string,
-		amount1Desired string,
-		amount0Min string,
-		amount1Min string,
-		deadline int64,
-		referrer string,
-	) (uint64, string, string, string, string)
 	CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64)
 
 	SetPoolTier(poolPath string, tier uint64)
@@ -115,9 +102,6 @@ type IStakerGetter interface {
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
 	GetWarmupTemplate() []Warmup
-	GetTotalStakedUserCount() uint64
-	GetTotalStakedUserPositionCount(user address) uint64
-	GetStakedPositionsByUser(owner address, offset, count int) []uint64
 }
 
 type IStakerStore interface {
@@ -140,11 +124,6 @@ type IStakerStore interface {
 	HasExternalIncentivesStoreKey() bool
 	GetExternalIncentives() *bptree.BPTree
 	SetExternalIncentives(incentives *bptree.BPTree) error
-
-	// UserDeposits
-	HasUserDepositsStoreKey() bool
-	GetUserDeposits() *bptree.BPTree
-	SetUserDeposits(tree *bptree.BPTree) error
 
 	// TotalEmissionSent
 	HasTotalEmissionSentStoreKey() bool
@@ -171,6 +150,10 @@ type IStakerStore interface {
 	HasUnstakingFeeStoreKey() bool
 	GetUnstakingFee() uint64
 	SetUnstakingFee(fee uint64) error
+
+	HasPendingProtocolFeesStoreKey() bool
+	GetPendingProtocolFees() map[string]int64
+	SetPendingProtocolFees(fees map[string]int64) error
 
 	// Pools
 	HasPoolsStoreKey() bool

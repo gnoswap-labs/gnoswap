@@ -67,13 +67,6 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
-	if !stakerStore.HasUserDepositsStoreKey() {
-		err := stakerStore.SetUserDeposits(bptree.NewBPTreeN(16))
-		if err != nil {
-			return err
-		}
-	}
-
 	if !stakerStore.HasTotalEmissionSentStoreKey() {
 		err := stakerStore.SetTotalEmissionSent(0)
 		if err != nil {
@@ -106,6 +99,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 
 	if !stakerStore.HasUnstakingFeeStoreKey() {
 		err := stakerStore.SetUnstakingFee(defaultUnstakingFee)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !stakerStore.HasPendingProtocolFeesStoreKey() {
+		err := stakerStore.SetPendingProtocolFees(make(map[string]int64))
 		if err != nil {
 			return err
 		}

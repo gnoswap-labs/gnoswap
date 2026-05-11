@@ -16,6 +16,7 @@ func setHalted(halted bool) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	halt.SetOperationStatus(cross, halt.OpTypePosition, halted)
+	halt.SetOperationStatus(cross, halt.OpTypeWithdraw, halted)
 }
 
 // tid is a test helper function that converts uint64 to TokenID

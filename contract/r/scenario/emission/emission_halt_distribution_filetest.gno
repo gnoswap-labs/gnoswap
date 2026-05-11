@@ -149,7 +149,6 @@ func mintPositionAndStake() {
 		"0",
 		time.Now().Unix()+3600,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

@@ -18,4 +18,7 @@ type IRouterStore interface {
 	HasSwapFeeKey() bool
 	GetSwapFee() uint64
 	SetSwapFee(fee uint64) error
+	HasPendingProtocolFeesKey() bool
+	GetPendingProtocolFees() map[string]int64
+	SetPendingProtocolFees(fees map[string]int64) error
 }

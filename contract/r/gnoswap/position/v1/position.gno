@@ -25,12 +25,10 @@ import (
 //   - amount0Desired, amount1Desired: desired token amounts
 //   - amount0Min, amount1Min: minimum acceptable amounts
 //   - deadline: transaction deadline
-//   - mintTo: NFT recipient address
-//   - caller: transaction initiator
+//   - mintTo: position NFT recipient
 //   - referrer: referral address
 //
 // Returns tokenId, liquidity, amount0, amount1.
-// Only callable by users or staker contract.
 // Note: Slippage protection via amount0Min/amount1Min.
 func (p *positionV1) Mint(
 	token0 string,
@@ -44,20 +42,15 @@ func (p *positionV1) Mint(
 	amount1Min string,
 	deadline int64,
 	mintTo address,
-	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
+	access.AssertIsValidAddress(mintTo)
 
 	previousRealm := runtime.PreviousRealm()
-	prevRealmAddr := previousRealm.Address()
-	if !previousRealm.IsUser() {
-		access.AssertIsStaker(prevRealmAddr)
-	} else {
-		assertEqualsAddress(prevRealmAddr, mintTo)
-		assertEqualsAddress(prevRealmAddr, caller)
-	}
+	caller := previousRealm.Address()
 
+	assertIsNotMintToStaker(mintTo)
 	assertValidNumberString(amount0Desired)
 	assertValidNumberString(amount1Desired)
 	assertValidNumberString(amount0Min)
@@ -85,6 +78,7 @@ func (p *positionV1) Mint(
 		mintTo:         mintTo,
 		caller:         caller,
 	}
+
 	processedInput, err := p.processMintInput(mintInput)
 	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, err.Error()))
@@ -100,7 +94,7 @@ func (p *positionV1) Mint(
 
 	chain.Emit(
 		"Mint",
-		"prevAddr", prevRealmAddr.String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tickLower", formatInt(processedInput.tickLower),
 		"tickUpper", formatInt(processedInput.tickUpper),
@@ -252,7 +246,6 @@ func (p *positionV1) DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -327,7 +320,6 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -429,8 +421,6 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(id uint64, operator address) {
-	halt.AssertIsNotHaltedPosition()
-
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
 	assertValidOperatorAddress(operator)

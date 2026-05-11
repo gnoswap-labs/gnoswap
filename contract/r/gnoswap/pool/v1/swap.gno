@@ -39,6 +39,8 @@ var (
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -57,6 +59,8 @@ func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId i
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -75,6 +79,8 @@ func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestam
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -143,7 +149,7 @@ func (i *poolV1) Swap(
 	halt.AssertIsNotHaltedPool()
 
 	previousRealm := runtime.PreviousRealm()
-	assertIsNotAllowedEOA(previousRealm)
+	assertIsNotUserCall(previousRealm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
@@ -156,18 +162,14 @@ func (i *poolV1) Swap(
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 
 	slot0Start := pool.Slot0()
-	if !slot0Start.Unlocked() {
-		panic(errLockedPool)
-	}
+	i.lockPool()
+	defer i.unlockPool()
 
 	// no liquidity -> no swap, return zero amounts
 	if pool.Liquidity().IsZero() {
 		return "0", "0"
 	}
 
-	// Apply reentrancy lock to the actual pool state
-	slot0Start.SetUnlocked(false)
-	pool.SetSlot0(slot0Start)
 	startTick := pool.Slot0Tick()
 	blockTimestamp := time.Now().Unix()
 
@@ -181,11 +183,6 @@ func (i *poolV1) Swap(
 	}
 
 	defer func() {
-		// Release reentrancy lock on the actual pool state
-		slot0End := pool.Slot0()
-		slot0End.SetUnlocked(true)
-		pool.SetSlot0(slot0End)
-
 		if i.store.HasSwapEndHook() {
 			swapEndHook := i.store.GetSwapEndHook()
 
@@ -290,7 +287,7 @@ func (i *poolV1) Swap(
 
 // DrySwap simulates a swap without modifying pool state.
 // Returns amount0, amount1 and a success boolean.
-// Returns false if pool is locked, has no liquidity, or computation fails.
+// Returns false if pool has no liquidity or computation fails.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,

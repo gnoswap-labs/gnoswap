@@ -464,7 +464,7 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimes
 // Returns:
 //   - map[string]int64: distributed amounts by token path
 func (g *govStakerV1) getDistributedProtocolFees() map[string]int64 {
-	return pf.GetAccuTransfersToGovStaker()
+	return pf.GetActualDistributedToGovStaker()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.

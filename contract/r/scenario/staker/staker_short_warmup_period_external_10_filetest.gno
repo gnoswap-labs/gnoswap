@@ -150,7 +150,6 @@ func mintBarQux100Position1() {
 		"1",          // amount1Min
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -258,7 +257,6 @@ func mintAndStakePosition2() {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

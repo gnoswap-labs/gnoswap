@@ -13,6 +13,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 	"gno.land/r/onbloc/bar"
 )
@@ -2762,6 +2763,96 @@ func TestCollectExternalIncentivePenaltyAccounting(t *testing.T) {
 			uassert.Equal(t, tt.totalRewardAmount, sum)
 		})
 	}
+}
+
+func TestCollectExternalIncentivePenalty_HaltSemantics(t *testing.T) {
+	creator := testutils.TestAddress("creator")
+	refundAddress := testutils.TestAddress("refundee")
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	incentiveId := "test-id"
+
+	setupPenaltyFixture := func(t *testing.T) {
+		t.Helper()
+
+		initStakerTest(t)
+		instance := getMockInstance()
+
+		currentTime := time.Now().Unix()
+		startTime := currentTime
+		endTime := currentTime + 86400*30
+
+		testing.SetRealm(adminRealm)
+		gns.Approve(cross, poolAddr, math.MaxInt)
+		CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
+
+		pool := sr.NewPool(poolPath, currentTime)
+		instance.getPools().set(poolPath, pool)
+
+		incentive := sr.NewExternalIncentive(
+			incentiveId,
+			poolPath,
+			barPath,
+			10_000_000_000,
+			startTime,
+			endTime,
+			creator,
+			100_000_000,
+			runtime.ChainHeight(),
+			currentTime,
+		)
+
+		poolResolver := NewPoolResolver(pool)
+		poolResolver.IncentivesResolver().create(incentive)
+		resolver := NewExternalIncentiveResolver(incentive)
+		resolver.addAccumulatedPenaltyAmount(5000)
+		incentive.SetRefunded(true)
+		poolResolver.IncentivesResolver().update(incentive)
+
+		skipBlocks := (endTime-startTime)/5 + 86400
+		testing.SkipHeights(skipBlocks)
+
+		bar.Transfer(cross, stakerAddr, 10_000_000_000)
+	}
+
+	t.Run("safe mode blocks penalty collection", func(t *testing.T) {
+		setupPenaltyFixture(t)
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelSafeMode)
+
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		testing.SetRealm(testing.NewUserRealm(creator))
+		uassert.AbortsContains(t, "halted: withdraw", func() {
+			mockInstanceCollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+		})
+	})
+
+	t.Run("emergency mode allows penalty collection", func(t *testing.T) {
+		setupPenaltyFixture(t)
+
+		testing.SetRealm(adminRealm)
+		halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+		defer func() {
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross, halt.HaltLevelNone)
+		}()
+
+		testing.SetRealm(testing.NewUserRealm(creator))
+		result := mockInstanceCollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+		uassert.Equal(t, int64(5000), result)
+
+		pool, exists := getMockInstance().getPools().Get(poolPath)
+		uassert.True(t, exists)
+		poolResolver := NewPoolResolver(pool)
+		updatedIncentive, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+		uassert.True(t, exists)
+		uassert.Equal(t, int64(0), updatedIncentive.AccumulatedPenaltyAmount())
+	})
 }
 
 // TestEndExternalIncentiveRefundWithPenalty tests that endExternalIncentive

@@ -39,8 +39,9 @@ func (i *poolV1) HandleWithdrawalFee(
 	amount1 string, // uint256
 	positionCaller address,
 ) (string, string, string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	// only position contract can call this function
 	previousRealm := runtime.PreviousRealm()
@@ -56,22 +57,66 @@ func (i *poolV1) HandleWithdrawalFee(
 	fee0Int64 := safeConvertToInt64(fee0)
 	fee1Int64 := safeConvertToInt64(fee1)
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20Approve(cross, token0Path, protocolFeeAddr, fee0Int64)
-	common.SafeGRC20Approve(cross, token1Path, protocolFeeAddr, fee1Int64)
-
-	pf.AddToProtocolFee(cross, token0Path, fee0Int64)
-	pf.AddToProtocolFee(cross, token1Path, fee1Int64)
+	i.addPendingProtocolFee(token0Path, fee0Int64)
+	i.addPendingProtocolFee(token1Path, fee1Int64)
+	i.addToProtocolFee()
 	common.SafeGRC20Transfer(cross, token0Path, positionCaller, safeConvertToInt64(amount0WithoutFee))
 	common.SafeGRC20Transfer(cross, token1Path, positionCaller, safeConvertToInt64(amount1WithoutFee))
 
 	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
 }
 
+func (i *poolV1) addPendingProtocolFee(tokenPath string, amount int64) {
+	if amount <= 0 {
+		return
+	}
+
+	existingProtocolFees := i.store.GetPendingProtocolFees()
+	pendingProtocolFees := make(map[string]int64)
+	for pendingTokenPath, pendingAmount := range existingProtocolFees {
+		pendingProtocolFees[pendingTokenPath] = pendingAmount
+	}
+	pendingProtocolFees[tokenPath] = safeAddInt64(pendingProtocolFees[tokenPath], amount)
+	if err := i.store.SetPendingProtocolFees(pendingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
+// addToProtocolFee sends pending pool protocol fees to the protocol fee realm.
+// It is best-effort: when protocol fee collection is halted, it keeps pending
+// storage unchanged; otherwise it rebuilds pending storage with only entries
+// that could not be added, removing successful and non-positive entries.
+func (i *poolV1) addToProtocolFee() {
+	pendingProtocolFees := i.store.GetPendingProtocolFees()
+	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	remainingProtocolFees := make(map[string]int64)
+	for tokenPath, amount := range pendingProtocolFees {
+		if amount <= 0 {
+			continue
+		}
+
+		common.SafeGRC20Approve(cross, tokenPath, protocolFeeAddr, amount)
+		if err := pf.AddToProtocolFee(cross, tokenPath, amount); err != nil {
+			remainingProtocolFees[tokenPath] = amount
+			continue
+		}
+	}
+
+	if err := i.store.SetPendingProtocolFees(remainingProtocolFees); err != nil {
+		panic(err)
+	}
+}
+
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(fee int64) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
@@ -96,6 +141,8 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(fee uint64) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()

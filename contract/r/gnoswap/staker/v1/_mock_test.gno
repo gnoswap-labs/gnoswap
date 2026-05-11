@@ -16,12 +16,12 @@ type MockStakerStore struct {
 	minimumRewardAmount              int64
 	deposits                         *bptree.BPTree
 	externalIncentives               *bptree.BPTree
-	userDeposits                     *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
+	pendingProtocolFees              map[string]int64
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
@@ -88,20 +88,6 @@ func (s *MockStakerStore) GetExternalIncentives() *bptree.BPTree {
 
 func (s *MockStakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	s.externalIncentives = incentives
-	return nil
-}
-
-// UserDeposits
-func (s *MockStakerStore) HasUserDepositsStoreKey() bool {
-	return s.userDeposits != nil
-}
-
-func (s *MockStakerStore) GetUserDeposits() *bptree.BPTree {
-	return s.userDeposits
-}
-
-func (s *MockStakerStore) SetUserDeposits(tree *bptree.BPTree) error {
-	s.userDeposits = tree
 	return nil
 }
 
@@ -177,6 +163,19 @@ func (s *MockStakerStore) GetUnstakingFee() uint64 {
 
 func (s *MockStakerStore) SetUnstakingFee(fee uint64) error {
 	s.unstakingFee = fee
+	return nil
+}
+
+func (s *MockStakerStore) HasPendingProtocolFeesStoreKey() bool {
+	return s.pendingProtocolFees != nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFees() map[string]int64 {
+	return s.pendingProtocolFees
+}
+
+func (s *MockStakerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	s.pendingProtocolFees = fees
 	return nil
 }
 
@@ -340,12 +339,12 @@ func newMockStakerStore() *MockStakerStore {
 		minimumRewardAmount:         1_000_000_000,
 		deposits:                    bptree.NewBPTreeN(16),
 		externalIncentives:          bptree.NewBPTreeN(16),
-		userDeposits:                bptree.NewBPTreeN(16),
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns"},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: make(map[string]int64),
 		unstakingFee:                0,
+		pendingProtocolFees:         make(map[string]int64),
 		pools:                       bptree.NewBPTreeN(16),
 		poolTierMemberships:         bptree.NewBPTreeN(16),
 		poolTierRatio: sr.TierRatio{

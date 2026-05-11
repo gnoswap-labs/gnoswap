@@ -368,18 +368,21 @@ func TestXgns_Halted(t *testing.T) {
 		operation       string
 		setupMint       bool
 		expectedMessage string
+		shouldPanic     bool
 	}{
 		{
 			name:            "Halted Mint by gov staker",
 			operation:       "Mint",
 			setupMint:       false,
 			expectedMessage: "halted: xgns",
+			shouldPanic:     true,
 		},
 		{
-			name:            "Halted Burn by gov staker",
+			name:            "Halted Burn by gov staker still allowed for recovery",
 			operation:       "Burn",
 			setupMint:       true,
-			expectedMessage: "halted: xgns",
+			expectedMessage: "",
+			shouldPanic:     false,
 		},
 	}
 
@@ -402,15 +405,29 @@ func TestXgns_Halted(t *testing.T) {
 			// when & then
 			switch tc.operation {
 			case "Mint":
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-					Mint(cross, govStakerAddress, 100)
-				})
+				if tc.shouldPanic {
+					uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
+						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+						Mint(cross, govStakerAddress, 100)
+					})
+				} else {
+					uassert.NotPanics(t, func() {
+						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+						Mint(cross, govStakerAddress, 100)
+					})
+				}
 			case "Burn":
-				uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
-					testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-					Burn(cross, govStakerAddress, 50)
-				})
+				if tc.shouldPanic {
+					uassert.AbortsWithMessage(t, tc.expectedMessage, func() {
+						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+						Burn(cross, govStakerAddress, 50)
+					})
+				} else {
+					uassert.NotPanics(t, func() {
+						testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+						Burn(cross, govStakerAddress, 50)
+					})
+				}
 			}
 		})
 	}

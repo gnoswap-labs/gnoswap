@@ -101,8 +101,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 3. User1 and User2 mint and stake positions (before incentive)")
-	user1MintAndStake()
-	user2MintAndStake()
+	user1MintThenStake()
+	user2MintThenStake()
 	println()
 
 	println("[SCENARIO] 4. Create and start external incentive")
@@ -110,7 +110,7 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. User3 mints and stakes position (after incentive)")
-	user3MintAndStake()
+	user3MintThenStake()
 	println()
 
 	println("[SCENARIO] 6. Skip 30 days for rewards to accumulate")
@@ -172,7 +172,7 @@ func createPoolAndSetTier() {
 	println("[INFO] created pool and set tier")
 }
 
-func user1MintAndStake() {
+func user1MintThenStake() {
 	testing.SetRealm(user1Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -192,7 +192,6 @@ func user1MintAndStake() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		user1Addr,
 		"",
 	)
 
@@ -202,7 +201,7 @@ func user1MintAndStake() {
 	ufmt.Printf("[INFO] user1 staked position %d\n", lpTokenId)
 }
 
-func user2MintAndStake() {
+func user2MintThenStake() {
 	testing.SetRealm(user2Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -221,7 +220,6 @@ func user2MintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
 		user2Addr,
 		"",
 	)
@@ -260,7 +258,7 @@ func createAndStartIncentive() {
 	ufmt.Printf("[INFO] created incentive %s\n", actualIncentiveID)
 }
 
-func user3MintAndStake() {
+func user3MintThenStake() {
 	testing.SetRealm(user3Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -279,7 +277,6 @@ func user3MintAndStake() {
 		"1",
 		"1",
 		maxTimeout,
-		user3Addr,
 		user3Addr,
 		"",
 	)

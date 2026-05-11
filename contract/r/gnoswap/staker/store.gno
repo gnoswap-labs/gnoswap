@@ -19,12 +19,12 @@ const (
 	StoreKeyMinimumRewardAmount              StoreKey = "minimumRewardAmount"
 	StoreKeyDeposits                         StoreKey = "deposits"
 	StoreKeyExternalIncentives               StoreKey = "externalIncentives"
-	StoreKeyUserDeposits                     StoreKey = "userDeposits"
 	StoreKeyTotalEmissionSent                StoreKey = "totalEmissionSent"
 	StoreKeyAllowedTokens                    StoreKey = "allowedTokens"
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
+	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -132,29 +132,6 @@ func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 
 func (s *stakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentives.String(), incentives)
-}
-
-// UserDeposits
-func (s *stakerStore) HasUserDepositsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyUserDeposits.String())
-}
-
-func (s *stakerStore) GetUserDeposits() *bptree.BPTree {
-	result, err := s.kvStore.Get(StoreKeyUserDeposits.String())
-	if err != nil {
-		panic(err)
-	}
-
-	tree, ok := result.(*bptree.BPTree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
-	}
-
-	return tree
-}
-
-func (s *stakerStore) SetUserDeposits(tree *bptree.BPTree) error {
-	return s.kvStore.Set(StoreKeyUserDeposits.String(), tree)
 }
 
 // TotalEmissionSent
@@ -275,6 +252,28 @@ func (s *stakerStore) GetUnstakingFee() uint64 {
 
 func (s *stakerStore) SetUnstakingFee(fee uint64) error {
 	return s.kvStore.Set(StoreKeyUnstakingFee.String(), fee)
+}
+
+func (s *stakerStore) HasPendingProtocolFeesStoreKey() bool {
+	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
+}
+
+func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
+	if err != nil {
+		panic(err)
+	}
+
+	fees, ok := result.(map[string]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+	}
+
+	return fees
+}
+
+func (s *stakerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), fees)
 }
 
 // Pools

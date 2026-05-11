@@ -9,6 +9,7 @@ import (
 var (
 	errInvalidPct    = errors.New("[GNOSWAP-PROTOCOL_FEE-001] invalid percentage")
 	errInvalidAmount = errors.New("[GNOSWAP-PROTOCOL_FEE-002] invalid amount")
+	errProtocolFeeHalted = errors.New("[GNOSWAP-PROTOCOL_FEE-003] protocol fee halted")
 )
 
 // makeErrorWithDetail creates an error with additional context.

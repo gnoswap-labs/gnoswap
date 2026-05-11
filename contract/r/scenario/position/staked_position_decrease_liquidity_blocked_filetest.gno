@@ -124,7 +124,6 @@ func initPoolAndCreatePosition() {
 		"1",
 		maxTimeout,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 	positionId = id

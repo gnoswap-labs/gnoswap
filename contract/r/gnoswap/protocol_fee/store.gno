@@ -27,8 +27,8 @@ const (
 	StoreKeyDistributedToGovStakerHistory StoreKey = "distributedToGovStakerHistory" // tokenPath -> amount
 	StoreKeyDistributedToDevOpsHistory    StoreKey = "distributedToDevOpsHistory"    // tokenPath -> amount
 
-	// tokenListWithAmounts is used to keep track of the token list with amount
-	StoreKeyTokenListWithAmounts StoreKey = "tokenListWithAmounts" // tokenPath -> amount
+	// reservedTokens tracks token paths collected but not yet distributed.
+	StoreKeyReservedTokens StoreKey = "reservedTokens"
 )
 
 const (
@@ -253,70 +253,47 @@ func (s *protocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath string, a
 	return s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), distributedToDevOpsHistory)
 }
 
-// handle tokenListWithAmounts store data
-func (s *protocolFeeStore) HasTokenListWithAmountsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyTokenListWithAmounts.String())
+// handle reservedTokens store data
+func (s *protocolFeeStore) HasReservedTokensStoreKey() bool {
+	return s.kvStore.Has(StoreKeyReservedTokens.String())
 }
 
-func (s *protocolFeeStore) InitializeTokenListWithAmount() error {
-	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), make(map[string]int64))
+func (s *protocolFeeStore) InitializeReservedTokens() error {
+	return s.kvStore.Set(StoreKeyReservedTokens.String(), []string{})
 }
 
-func (s *protocolFeeStore) GetTokenListWithAmounts() map[string]int64 {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
+func (s *protocolFeeStore) GetReservedTokens() []string {
+	result, err := s.kvStore.Get(StoreKeyReservedTokens.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tokenListWithAmounts, ok := result.(map[string]int64)
+	reservedTokens, ok := result.([]string)
 	if !ok {
-		panic(ufmt.Errorf("failed to cast result to map[string]int64: %T", result))
+		panic(ufmt.Errorf("failed to cast result to []string: %T", result))
 	}
 
-	return tokenListWithAmounts
+	return reservedTokens
 }
 
-func (s *protocolFeeStore) SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error {
-	if tokenListWithAmounts == nil {
-		return errors.New("tokenListWithAmounts is nil")
+func (s *protocolFeeStore) SetReservedTokens(reservedTokens []string) error {
+	if reservedTokens == nil {
+		return errors.New("reservedTokens is nil")
 	}
 
-	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), tokenListWithAmounts)
+	return s.kvStore.Set(StoreKeyReservedTokens.String(), reservedTokens)
 }
 
-func (s *protocolFeeStore) GetTokenListWithAmountItem(tokenPath string) (int64, bool) {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
-	if err != nil {
-		panic(err)
+func (s *protocolFeeStore) AddReservedToken(tokenPath string) error {
+	reservedTokens := s.GetReservedTokens()
+	for _, reservedToken := range reservedTokens {
+		if reservedToken == tokenPath {
+			return nil
+		}
 	}
 
-	tokenListWithAmounts, ok := result.(map[string]int64)
-	if !ok {
-		panic(ufmt.Errorf("failed to cast result to map[string]int64: %T", result))
-	}
-
-	amount, ok := tokenListWithAmounts[tokenPath]
-	if !ok {
-		return 0, false
-	}
-
-	return amount, true
-}
-
-func (s *protocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amount int64) error {
-	result, err := s.kvStore.Get(StoreKeyTokenListWithAmounts.String())
-	if err != nil {
-		return err
-	}
-
-	tokenListWithAmounts, ok := result.(map[string]int64)
-	if !ok {
-		return ufmt.Errorf("failed to cast result to map[string]int64: %T", result)
-	}
-
-	tokenListWithAmounts[tokenPath] = amount
-
-	return s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), tokenListWithAmounts)
+	reservedTokens = append(reservedTokens, tokenPath)
+	return s.SetReservedTokens(reservedTokens)
 }
 
 // NewprotocolFeeStore creates a new protocol fee store instance with the provided KV store.

@@ -41,8 +41,22 @@ func initStoreData(protocolFeeStore protocol_fee.IProtocolFeeStore) error {
 		}
 	}
 
-	if !protocolFeeStore.HasTokenListWithAmountsStoreKey() {
-		err := protocolFeeStore.InitializeTokenListWithAmount()
+	if !protocolFeeStore.HasDistributedToGovStakerHistoryStoreKey() {
+		err := protocolFeeStore.InitializeDistributedToGovStakerHistory()
+		if err != nil {
+			return err
+		}
+	}
+
+	if !protocolFeeStore.HasDistributedToDevOpsHistoryStoreKey() {
+		err := protocolFeeStore.InitializeDistributedToDevOpsHistory()
+		if err != nil {
+			return err
+		}
+	}
+
+	if !protocolFeeStore.HasReservedTokensStoreKey() {
+		err := protocolFeeStore.InitializeReservedTokens()
 		if err != nil {
 			return err
 		}

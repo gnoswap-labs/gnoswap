@@ -108,11 +108,11 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. provider mints 100,255,208 liquidity position and stakes")
-	providerMintAndStake()
+	providerMintThenStake()
 	println()
 
 	println("[SCENARIO] 5. User mints 200,510 liquidity position and stakes (0.001996% share)")
-	userMintAndStake()
+	userMintThenStake()
 	println()
 
 	println("[SCENARIO] 6. Collect at 5 sec → expect bar=0 (skip), qux>0 (collect)")
@@ -205,7 +205,7 @@ func createTwoExternalIncentives() {
 		QUX_REWARD_AMOUNT/INCENTIVE_DURATION)
 }
 
-func providerMintAndStake() {
+func providerMintThenStake() {
 	testing.SetRealm(providerRealm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -225,7 +225,6 @@ func providerMintAndStake() {
 		"1",
 		maxTimeout,
 		providerAddr,
-		providerAddr,
 		"",
 	)
 
@@ -235,7 +234,7 @@ func providerMintAndStake() {
 	ufmt.Printf("[INFO] provider staked position %d (liquidity: %s)\n", lpTokenId, liquidity)
 }
 
-func userMintAndStake() {
+func userMintThenStake() {
 	testing.SetRealm(user1Realm)
 
 	bar.Approve(cross, poolAddr, maxInt64)
@@ -255,7 +254,6 @@ func userMintAndStake() {
 		"0",
 		"0",
 		maxTimeout,
-		user1Addr,
 		user1Addr,
 		"",
 	)

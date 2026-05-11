@@ -147,7 +147,6 @@ func mintNarrowRangePosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

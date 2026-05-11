@@ -47,9 +47,6 @@ Unstakes position and collects all rewards.
 ### `CollectReward`
 Collects accumulated rewards without unstaking.
 
-### `MintAndStake`
-Mints new position and stakes in single transaction.
-
 ### `CreateExternalIncentive`
 Creates external reward program for specific pool.
 

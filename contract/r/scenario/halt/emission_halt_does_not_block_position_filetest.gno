@@ -130,7 +130,6 @@ func mintPositionWithEmissionEnabled() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 
@@ -175,7 +174,6 @@ func mintPositionWithEmissionHalted() {
 		"0",
 		"0",
 		time.Now().Unix()+3600,
-		aliceAddr,
 		aliceAddr,
 		"",
 	)

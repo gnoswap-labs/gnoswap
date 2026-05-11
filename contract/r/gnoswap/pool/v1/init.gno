@@ -20,6 +20,8 @@ const (
 	// Example: 100 BPS = 1%
 	// This parameter can be modified through governance.
 	defaultWithdrawalFeeBPS = uint64(100)
+
+	defaultUnlocked = true
 )
 
 func init() {
@@ -66,6 +68,13 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	if !poolStore.HasPendingProtocolFees() {
+		err := poolStore.SetPendingProtocolFees(make(map[string]int64))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !poolStore.HasSlot0FeeProtocol() {
 		err := poolStore.SetSlot0FeeProtocol(defaultSlot0FeeProtocol)
 		if err != nil {
@@ -75,6 +84,13 @@ func initStoreData(poolStore pool.IPoolStore) error {
 
 	if !poolStore.HasWithdrawalFeeBPS() {
 		err := poolStore.SetWithdrawalFeeBPS(defaultWithdrawalFeeBPS)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !poolStore.HasUnlocked() {
+		err := poolStore.SetUnlocked(defaultUnlocked)
 		if err != nil {
 			return err
 		}

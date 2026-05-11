@@ -80,9 +80,9 @@ stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"p
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gnoswap_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 1000000000
-stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE FEE:    6[0-9]{5}ugnot'
-stdout 'TOTAL TX COST:  1006[0-9]{5}ugnot'
+stdout 'GAS USED:   3[0-9]{7}'
+stdout 'STORAGE FEE:    1[0-9]{6}ugnot'
+stdout 'TOTAL TX COST:  101[0-9]{6}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gov/xgns.xGNS\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Delegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"1000000000\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}.*\]'
 
 ### Create Text Proposal
@@ -110,4 +110,4 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText 
 
 # Cannot execute text proposal
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Execute -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stderr 'can not execute text proposal'
+stderr 'cannot execute text proposal'

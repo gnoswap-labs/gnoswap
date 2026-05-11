@@ -448,7 +448,8 @@ func TestTickUpdate(t *testing.T) {
 					}
 				}()
 
-				tickUpdate(pool,
+				tickUpdate(
+					pool,
 					tt.tick,
 					tt.tickCurrent,
 					tt.liquidityDelta,
@@ -461,7 +462,8 @@ func TestTickUpdate(t *testing.T) {
 				if tt.verify != nil {
 					tt.verify()
 				} else {
-					gotFlipped := tickUpdate(pool,
+					gotFlipped := tickUpdate(
+						pool,
 						tt.tick,
 						tt.tickCurrent,
 						tt.liquidityDelta,

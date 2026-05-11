@@ -317,7 +317,7 @@ func mintPosition() {
 	println("[INFO] Minting position in bar-foo pool")
 	testing.SetRealm(adminRealm)
 
-	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	poolLiq := pool.Liquidity()

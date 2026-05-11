@@ -19,7 +19,9 @@ type mockPoolStore struct {
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
+	pendingProtocolFees  map[string]int64
 	withdrawalFeeBPS     uint64
+	unlocked             bool
 	swapStartHook        func(cur realm, poolPath string, timestamp int64)
 	swapEndHook          func(cur realm, poolPath string) error
 	tickCrossHook        func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -87,6 +89,19 @@ func (s *mockPoolStore) SetPoolCreationFee(poolCreationFee int64) error {
 	return nil
 }
 
+func (s *mockPoolStore) HasPendingProtocolFees() bool {
+	return s.pendingProtocolFees != nil
+}
+
+func (s *mockPoolStore) GetPendingProtocolFees() map[string]int64 {
+	return s.pendingProtocolFees
+}
+
+func (s *mockPoolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
+	s.pendingProtocolFees = pendingProtocolFees
+	return nil
+}
+
 func (s *mockPoolStore) HasWithdrawalFeeBPS() bool {
 	return true
 }
@@ -99,6 +114,19 @@ func (s *mockPoolStore) GetWithdrawalFeeBPS() uint64 {
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
 func (s *mockPoolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
 	s.withdrawalFeeBPS = withdrawalFeeBPS
+	return nil
+}
+
+func (s *mockPoolStore) HasUnlocked() bool {
+	return true
+}
+
+func (s *mockPoolStore) GetUnlocked() bool {
+	return s.unlocked
+}
+
+func (s *mockPoolStore) SetUnlocked(unlocked bool) error {
+	s.unlocked = unlocked
 	return nil
 }
 
@@ -167,7 +195,9 @@ func NewMockPoolStoreWithHook(
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
+		pendingProtocolFees:  make(map[string]int64),
 		withdrawalFeeBPS:     100,
+		unlocked:             true,
 		swapStartHook:        swapStartHook,
 		swapEndHook:          swapEndHook,
 		tickCrossHook:        tickCrossHook,
@@ -246,6 +276,19 @@ func (r *mockRouterStore) SetSwapFee(fee uint64) error {
 	return nil
 }
 
+func (r *mockRouterStore) HasPendingProtocolFeesKey() bool {
+	return r.data[router.StoreKeyPendingProtocolFees.String()] != nil
+}
+
+func (r *mockRouterStore) GetPendingProtocolFees() map[string]int64 {
+	return r.data[router.StoreKeyPendingProtocolFees.String()].(map[string]int64)
+}
+
+func (r *mockRouterStore) SetPendingProtocolFees(fees map[string]int64) error {
+	r.data[router.StoreKeyPendingProtocolFees.String()] = fees
+	return nil
+}
+
 // Mock NFT Accessor
 type mockNFTAccessor struct {
 	approved map[grc721.TokenID]map[address]bool
@@ -305,6 +348,7 @@ func newMockPositionStore() *mockPositionStore {
 func newMockRouterStore() *mockRouterStore {
 	data := make(map[string]any)
 	data[router.StoreKeySwapFee.String()] = uint64(15) // 0.15%
+	data[router.StoreKeyPendingProtocolFees.String()] = make(map[string]int64)
 
 	return &mockRouterStore{data: data}
 }
@@ -318,12 +362,12 @@ type MockStakerStore struct {
 	minimumRewardAmount              int64
 	deposits                         *bptree.BPTree
 	externalIncentives               *bptree.BPTree
-	userDeposits                     *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
+	pendingProtocolFees              map[string]int64
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
@@ -391,20 +435,6 @@ func (s *MockStakerStore) GetExternalIncentives() *bptree.BPTree {
 
 func (s *MockStakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	s.externalIncentives = incentives
-	return nil
-}
-
-// UserDeposits
-func (s *MockStakerStore) HasUserDepositsStoreKey() bool {
-	return s.userDeposits != nil
-}
-
-func (s *MockStakerStore) GetUserDeposits() *bptree.BPTree {
-	return s.userDeposits
-}
-
-func (s *MockStakerStore) SetUserDeposits(tree *bptree.BPTree) error {
-	s.userDeposits = tree
 	return nil
 }
 
@@ -480,6 +510,19 @@ func (s *MockStakerStore) GetUnstakingFee() uint64 {
 
 func (s *MockStakerStore) SetUnstakingFee(fee uint64) error {
 	s.unstakingFee = fee
+	return nil
+}
+
+func (s *MockStakerStore) HasPendingProtocolFeesStoreKey() bool {
+	return s.pendingProtocolFees != nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFees() map[string]int64 {
+	return s.pendingProtocolFees
+}
+
+func (s *MockStakerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	s.pendingProtocolFees = fees
 	return nil
 }
 
@@ -657,12 +700,12 @@ func newMockStakerStore() *MockStakerStore {
 		minimumRewardAmount:         1_000_000_000,
 		deposits:                    bptree.NewBPTreeN(16),
 		externalIncentives:          bptree.NewBPTreeN(16),
-		userDeposits:                bptree.NewBPTreeN(16),
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns", oblPath},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: make(map[string]int64),
 		unstakingFee:                0,
+		pendingProtocolFees:         make(map[string]int64),
 		pools:                       bptree.NewBPTreeN(16),
 		poolTierMemberships:         bptree.NewBPTreeN(16),
 		poolTierRatio: sr.TierRatio{

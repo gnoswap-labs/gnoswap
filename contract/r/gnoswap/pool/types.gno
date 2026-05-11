@@ -249,9 +249,17 @@ type IPoolStore interface {
 	GetPoolCreationFee() int64
 	SetPoolCreationFee(poolCreationFee int64) error
 
+	HasPendingProtocolFees() bool
+	GetPendingProtocolFees() map[string]int64
+	SetPendingProtocolFees(pendingProtocolFees map[string]int64) error
+
 	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64
 	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error
+
+	HasUnlocked() bool
+	GetUnlocked() bool
+	SetUnlocked(unlocked bool) error
 
 	HasSwapStartHook() bool
 	GetSwapStartHook() func(cur realm, poolPath string, timestamp int64)

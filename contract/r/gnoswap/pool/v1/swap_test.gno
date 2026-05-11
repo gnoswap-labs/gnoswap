@@ -470,19 +470,21 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 			t.Logf("✓ %s: %s (Risk assessment: %s)", test.description, test.failureReason, test.riskAssessment)
 		})
 	}
+
 }
 
 func TestSwap_ExecutionAndSecurity(t *testing.T) {
+	lockedPool := false
+
 	securityTests := []SwapValidationTest{
 		{
 			name:        "locked_pool_protection",
-			description: "Block transactions in locked pool",
+			description: "Block transactions while the global pool lock is held",
 			setupCondition: func(t *testing.T) *pl.Pool {
 				InitialisePoolTest(t)
 				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 := pool.Slot0()
-				slot0.SetUnlocked(false)
-				pool.SetSlot0(slot0)
+				getMockInstance().lockPool()
+				lockedPool = true
 				return pool
 			},
 			swapParams: SwapScenario{
@@ -491,7 +493,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-014] cannot swap while pool is locked",
+			expectedError: "[GNOSWAP-POOL-014] cannot modify pool while locked",
 			riskFactor:    "Prevent state inconsistency from concurrent transactions",
 		},
 		{
@@ -499,11 +501,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			description: "Prevent meaningless zero swap",
 			setupCondition: func(t *testing.T) *pl.Pool {
 				InitialisePoolTest(t)
-				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 := pool.Slot0()
-				slot0.SetUnlocked(true)
-				pool.SetSlot0(slot0)
-				return pool
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
 			},
 			swapParams: SwapScenario{
 				zeroForOne:      true,
@@ -524,6 +522,12 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 
 			// Given: Specific security test condition
 			pool := test.setupCondition(t)
+			if lockedPool {
+				defer func() {
+					getMockInstance().unlockPool()
+					lockedPool = false
+				}()
+			}
 
 			// When & Then: Proper blocking in security risk situations
 			testing.SetRealm(rouRealm)
@@ -533,7 +537,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			uassert.AbortsWithMessage(t, test.expectedError, func() {
+			uassert.AbortsContains(t, test.expectedError, func() {
 				mockInstanceSwap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
@@ -745,7 +749,8 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
 				barPath, bazPath, test.fee,
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-				test.swapParams.priceLimit)
+				test.swapParams.priceLimit,
+			)
 
 			// Execute actual swap
 			testing.SetRealm(rouRealm)
@@ -1428,13 +1433,12 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 }
 
 // TestSwap_ReentrancyProtection tests that the reentrancy lock properly prevents
-// recursive swap calls during callback execution.
+// recursive mutation calls during callback execution.
 //
 // Security issue addressed:
-// The Swap function uses Slot0.unlocked field as a reentrancy lock. Previously,
-// this lock was ineffective because Slot0() returned a copy of the struct,
-// so SetUnlocked(false) only modified the local copy, not the actual pool state.
-// The fix uses pool.SetSlot0() to persist the lock state.
+// Pool mutation entrypoints share a global reentrancy lock because this realm
+// manages all pools from a single contract, rather than deploying one contract
+// per pool.
 //
 // Attack scenario:
 // 1. Attacker calls Swap with a malicious callback
@@ -1450,8 +1454,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 		verify      func(t *testing.T)
 	}{
 		{
-			name:        "expected panics by reentrant swap in callback",
-			description: "Reentrancy attack via callback should be blocked by pool lock",
+			name:        "expected panics by reentrant mutation entrypoints in callback",
+			description: "Reentrancy attacks via callback should be blocked by pool lock",
 			setup: func(t *testing.T) {
 				initPoolTest(t)
 				InitialisePoolTest(t)
@@ -1468,20 +1472,20 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			},
 			action: func(t *testing.T) {
 				// Execution flow:
-				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 1. User initiates Swap -> global pool lock is acquired
 				// 2. Swap executes computeSwap and transfers output tokens
 				// 3. Swap calls swapCallback (maliciousCallback)
-				// 4. Inside callback, attacker attempts second Swap
-				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-014]
-				// 6. Callback catches panic, completes token transfer
+				// 4. Inside callback, attacker attempts each protected mutation entrypoint
+				// 5. Protected entrypoints check global pool lock -> locked -> panic
+				// 6. Callback catches abort, completes token transfer
 				// 7. Original Swap completes successfully
-				// 8. defer unlocks pool -> pool.Slot0.unlocked = true
+				// 8. defer unlocks global pool lock
 
 				testing.SetRealm(rouRealm)
 
 				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
-					uassert.PanicsContains(t, "[GNOSWAP-POOL-014]", func() {
+					// Step 4-5: Attempt reentrancy, expect panic due to locked pool.
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						getMockInstance().Swap(
 							barPath, bazPath, STANDARD_FEE_TIER,
 							routerAddr, false, "50",
@@ -1490,8 +1494,61 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
 						)
 					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(posRealm)
+						getMockInstance().Mint(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(posRealm)
+						getMockInstance().Burn(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(posRealm)
+						getMockInstance().Collect(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().CollectProtocol(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetFeeProtocol(4, 4)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(rouRealm)
+						getMockInstance().IncreaseObservationCardinalityNext(barPath, bazPath, STANDARD_FEE_TIER, 3)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().CreatePool(barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetPoolCreationFee(1)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetWithdrawalFee(1)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetSwapEndHook(func(cur realm, poolPath string) error { return nil })
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(posRealm)
+						getMockInstance().HandleWithdrawalFee(barPath, "1", bazPath, "1", adminAddr)
+					})
 
 					// Step 6: Complete original swap payment
+					testing.SetRealm(rouRealm)
 					return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta)
 				}
 
@@ -1508,9 +1565,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			},
 			verify: func(t *testing.T) {
 				// Pool should be unlocked after swap
-				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 := pool.Slot0()
-				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after swap")
+				uassert.True(t, getMockInstance().store.GetUnlocked(), "Pool should be unlocked after swap")
 			},
 		},
 		{
@@ -1531,23 +1586,18 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			},
 			action: func(t *testing.T) {
 				// Execution flow:
-				// 1. Check initial state: pool.Slot0.unlocked = true
+				// 1. Check initial state: global pool lock is unlocked
 				// 2. Execute first Swap:
-				//    a. Swap locks pool -> unlocked = false
+				//    a. Swap acquires global pool lock
 				//    b. Swap executes and calls callback
 				//    c. Callback transfers tokens
-				//    d. defer unlocks pool -> unlocked = true
+				//    d. defer releases global pool lock
 				// 3. Verify pool is unlocked after first swap
 				// 4. Execute second Swap (proves unlock worked):
 				//    a. If pool was still locked, this would panic
 				//    b. Swap succeeds -> confirms proper unlock
 
-				// Step 1: Verify initial unlocked state
-				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 := pool.Slot0()
-				uassert.True(t, slot0.Unlocked(), "Pool should start unlocked")
-
-				// Step 2: Execute first swap
+				// Step 1: Execute first swap
 				testing.SetRealm(rouRealm)
 				mockInstanceSwap(
 					barPath, bazPath, STANDARD_FEE_TIER,
@@ -1559,12 +1609,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 					},
 				)
 
-				// Step 3: Verify unlocked after first swap
-				pool = getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 = pool.Slot0()
-				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after first swap")
-
-				// Step 4: Execute second swap to prove unlock worked
+				// Step 2: Execute second swap to prove unlock worked
 				TokenFaucet(t, bazPath, routerAddr)
 				TokenFaucet(t, barPath, routerAddr)
 
@@ -1585,8 +1630,8 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			verify: func(t *testing.T) {},
 		},
 		{
-			name:        "expected lock state during swap",
-			description: "Pool should be locked during callback execution",
+			name:        "expected panic by lock acquisition during swap",
+			description: "Pool should reject lock acquisition during callback execution",
 			setup: func(t *testing.T) {
 				resetObject(t)
 				burnTokens(t)
@@ -1604,23 +1649,19 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			},
 			action: func(t *testing.T) {
 				// Execution flow:
-				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 1. User initiates Swap -> global pool lock is acquired
 				// 2. Swap executes computeSwap
 				// 3. Swap transfers output tokens to recipient
 				// 4. Swap calls swapCallback (callbackWithLockCheck)
-				// 5. Inside callback: check pool.Slot0.unlocked -> should be false (locked)
+				// 5. Inside callback: attempting to acquire the global pool lock should panic
 				// 6. Callback transfers input tokens to pool
-				// 7. Swap completes, defer unlocks pool -> unlocked = true
-				// 8. Verify: lockStateDuringCallback == true (was locked during callback)
-
-				lockStateDuringCallback := false
+				// 7. Swap completes, defer releases global pool lock
+				// 8. Verify: second swap succeeds later, proving defer unlocks the lock
 
 				testing.SetRealm(rouRealm)
 				callbackWithLockCheck := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
-					// Step 5: Verify pool is locked during callback
-					pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-					slot0 := pool.Slot0()
-					lockStateDuringCallback = !slot0.Unlocked() // true if locked
+					// Step 5: Verify pool is locked during callback by attempting to lock it again.
+					uassert.False(t, getMockInstance().store.GetUnlocked(), "Pool should be locked during callback")
 
 					// Step 6: Complete swap payment
 					return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta)
@@ -1634,17 +1675,9 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 					routerAddr, callbackWithLockCheck,
 				)
 
-				// Step 8: Verify lock was active during callback
-				uassert.True(t, lockStateDuringCallback,
-					"Pool should be locked during callback execution")
 				uassert.True(t, amount0 != "0" || amount1 != "0", "Swap should succeed")
 			},
-			verify: func(t *testing.T) {
-				pool := getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
-				slot0 := pool.Slot0()
-				uassert.True(t, slot0.Unlocked(),
-					"Pool should be unlocked after swap completes")
-			},
+			verify: func(t *testing.T) {},
 		},
 	}
 
@@ -1654,6 +1687,169 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 			tt.action(t)
 			tt.verify(t)
 			t.Logf("passed: %s", tt.description)
+		})
+	}
+}
+
+// TestPoolLock_BlocksMutationEntrypoints complements the callback reentrancy
+// test with direct locked-state coverage. The callback test proves the real
+// attack path; this table makes the lock contract explicit for every protected
+// mutation entrypoint as standalone locked calls.
+func TestPoolLock_BlocksMutationEntrypoints(t *testing.T) {
+	tests := []struct {
+		name     string
+		setRealm func()
+		action   func(t *testing.T)
+	}{
+		{
+			name: "swap",
+			setRealm: func() {
+				testing.SetRealm(rouRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSwap(
+					barPath, bazPath, STANDARD_FEE_TIER,
+					routerAddr, false, "50",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+						return mockSwapCallback(barPath, bazPath, amount0Delta, amount1Delta)
+					},
+				)
+			},
+		},
+		{
+			name: "mint",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceMint(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+			},
+		},
+		{
+			name: "burn",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceBurn(barPath, bazPath, STANDARD_FEE_TIER, -887220, 887220, "1", adminAddr)
+			},
+		},
+		{
+			name: "collect",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceCollect(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
+			},
+		},
+		{
+			name: "collect protocol",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceCollectProtocol(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
+			},
+		},
+		{
+			name: "set fee protocol",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetFeeProtocol(4, 4)
+			},
+		},
+		{
+			name: "increase observation cardinality next",
+			setRealm: func() {
+				testing.SetRealm(rouRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceIncreaseObservationCardinalityNext(barPath, bazPath, STANDARD_FEE_TIER, 3)
+			},
+		},
+		{
+			name: "create pool",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceCreatePool(barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+			},
+		},
+		{
+			name: "set pool creation fee",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetPoolCreationFee(1)
+			},
+		},
+		{
+			name: "set withdrawal fee",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetWithdrawalFee(1)
+			},
+		},
+		{
+			name: "set tick cross hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+			},
+		},
+		{
+			name: "set swap start hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+			},
+		},
+		{
+			name: "set swap end hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetSwapEndHook(func(cur realm, poolPath string) error { return nil })
+			},
+		},
+		{
+			name: "handle withdrawal fee",
+			setRealm: func() {
+				testing.SetRealm(posRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceHandleWithdrawalFee(barPath, "1", bazPath, "1", adminAddr)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			getMockInstance().lockPool()
+			defer getMockInstance().unlockPool()
+
+			tt.setRealm()
+			uassert.AbortsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+				tt.action(t)
+			})
 		})
 	}
 }

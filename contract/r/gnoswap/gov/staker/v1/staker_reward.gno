@@ -41,7 +41,6 @@ import (
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
 func (gs *govStakerV1) CollectReward() {
-	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -97,7 +96,6 @@ func (gs *govStakerV1) CollectReward() {
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
-	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -170,8 +168,11 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 //   - if system is halted for withdrawals
 //   - if access control operations fail
 func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add bool) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	if add {
+		halt.AssertIsNotHaltedGovStaker()
+	} else {
+		halt.AssertIsNotHaltedWithdraw()
+	}
 
 	caller := runtime.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()

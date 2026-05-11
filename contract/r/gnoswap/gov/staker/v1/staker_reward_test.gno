@@ -5,6 +5,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
 )
@@ -307,6 +308,77 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerReward_CollectReward_EmergencyHaltAllowsSettlement(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerRewardTest(t)
+	setupStakerRewardTestEmissionRewards(t, gs, testutils.TestAddress("alice"), 1000, 100, 1000)
+	defer cleanupStakerRewardTest(t)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("alice")))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.CollectReward()
+		}(cross)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
+func TestStakerReward_CollectRewardFromLaunchPad_EmergencyHaltAllowsSettlement(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerRewardTest(t)
+	setupStakerRewardTestLaunchpadDeposit(t, gs, testutils.TestAddress("project1"), 1000)
+	setupStakerRewardTestLaunchpadRewards(t, gs, testutils.TestAddress("project1"), 500)
+	defer cleanupStakerRewardTest(t)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.CollectRewardFromLaunchPad(testutils.TestAddress("project1"))
+		}(cross)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
+func TestStakerReward_SetAmountByProjectWallet_EmergencyHaltPolicy(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerRewardTest(t)
+	setupStakerRewardTestLaunchpadStake(t, gs, testutils.TestAddress("project1"), 1000)
+	defer cleanupStakerRewardTest(t)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(launchpadAddr))
+	uassert.NotPanics(t, func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.SetAmountByProjectWallet(testutils.TestAddress("project1"), 500, false)
+		}(cross)
+	})
+
+	uassert.AbortsWithMessage(t, "halted: gov_staker", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			gs.SetAmountByProjectWallet(testutils.TestAddress("project1"), 500, true)
+		}(cross)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 }
 
 // Test transferToken function

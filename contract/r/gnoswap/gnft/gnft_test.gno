@@ -605,13 +605,12 @@ func TestTransferFrom(t *testing.T) {
 			panicMsg:          "[GNOSWAP-GNFT-002] invalid address || to address (this_is_invalid_address)",
 		},
 		{
-			name:              "not-staker contract transfer",
+			name:              "owner directly transfers without staker",
 			callerRealm:       addr01Realm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
-			shouldPanic:       true,
-			panicMsg:          "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
+			shouldPanic:       false,
 		},
 		{
 			name: "transfer to self",
@@ -627,6 +626,43 @@ func TestTransferFrom(t *testing.T) {
 			tokenIdToTransfer: 100,
 			shouldPanic:       true,
 			panicMsg:          "cannot send transfer to self",
+		},
+		{
+			// Tokens custodied by the staker (i.e. currently staked) must
+			// never be transferable by anyone other than the staker itself.
+			name: "third party cannot move staked token",
+			setup: func(cur realm) {
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(200))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(200))
+				testing.SetRealm(stakerRealm)
+				TransferFrom(cross, addr01, stakerRealm.Address(), tid(200))
+				// addr01 still has approval recorded, but token is now staked.
+			},
+			callerRealm:       addr01Realm,
+			fromAddr:          stakerRealm.Address(),
+			toAddr:            addr02,
+			tokenIdToTransfer: 200,
+			shouldPanic:       true,
+			panicMsg:          "[GNOSWAP-GNFT-009] staked token is locked || token (200) is held by staker",
+		},
+		{
+			// Staker can move tokens it custodies (e.g. unstake path).
+			name: "staker can move staked token",
+			setup: func(cur realm) {
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(201))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(201))
+				testing.SetRealm(stakerRealm)
+				TransferFrom(cross, addr01, stakerRealm.Address(), tid(201))
+			},
+			callerRealm:       stakerRealm,
+			fromAddr:          stakerRealm.Address(),
+			toAddr:            addr01,
+			tokenIdToTransfer: 201,
+			shouldPanic:       false,
 		},
 	}
 
@@ -961,13 +997,14 @@ func TestSafeTransferFrom(t *testing.T) {
 			panicMsg:    "[GNOSWAP-GNFT-002] invalid address || to address ()",
 		},
 		{
-			name:        "not-staker contract transfer",
-			callerRealm: addr01Realm,
-			from:        addr01,
-			to:          addr02,
+			// Owner can directly transfer their NFT without going through the
+			// staker; previous case left token 1 owned by addr02.
+			name:        "owner directly transfers without staker",
+			callerRealm: addr02Realm,
+			from:        addr02,
+			to:          addr01,
 			tokenId:     1,
-			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
+			shouldPanic: false,
 		},
 		{
 			name: "safe transfer to self",
@@ -983,6 +1020,25 @@ func TestSafeTransferFrom(t *testing.T) {
 			tokenId:     100,
 			shouldPanic: true,
 			panicMsg:    "cannot send transfer to self",
+		},
+		{
+			// Tokens custodied by the staker must not be moveable via
+			// SafeTransferFrom by anyone other than the staker.
+			name: "safe transfer blocked when token is staked",
+			setup: func(cur realm) {
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(202))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(202))
+				testing.SetRealm(stakerRealm)
+				TransferFrom(cross, addr01, stakerRealm.Address(), tid(202))
+			},
+			callerRealm: addr01Realm,
+			from:        stakerRealm.Address(),
+			to:          addr02,
+			tokenId:     202,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-009] staked token is locked || token (202) is held by staker",
 		},
 	}
 
@@ -1164,140 +1220,6 @@ func TestApprove(t *testing.T) {
 				approved, _ := GetApproved(tid(tt.tokenId))
 				uassert.Equal(t, tt.approved, approved)
 			}
-		})
-	}
-}
-
-func TestHaltedOperations(t *testing.T) {
-	tests := []struct {
-		name        string
-		operation   string
-		setup       func()
-		shouldPanic bool
-		panicMsg    string
-	}{
-		{
-			name:      "Mint when halted",
-			operation: "Mint",
-			setup: func() {
-				resetObject(t)
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "Burn when halted",
-			operation: "Burn",
-			setup: func() {
-				resetObject(t)
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "SafeTransferFrom when halted",
-			operation: "SafeTransferFrom",
-			setup: func() {
-				resetObject(t)
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-				testing.SetRealm(addr01Realm)
-				Approve(cross, stakerRealm.Address(), tid(1))
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "TransferFrom when halted",
-			operation: "TransferFrom",
-			setup: func() {
-				resetObject(t)
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-				testing.SetRealm(addr01Realm)
-				Approve(cross, stakerRealm.Address(), tid(1))
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "Approve when halted",
-			operation: "Approve",
-			setup: func() {
-				resetObject(t)
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "SetApprovalForAll when halted",
-			operation: "SetApprovalForAll",
-			setup: func() {
-				resetObject(t)
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-		{
-			name:      "SetTokenURI when halted",
-			operation: "SetTokenURI",
-			setup: func() {
-				resetObject(t)
-				testing.SetRealm(positionRealm)
-				Mint(cross, addr01, tid(1))
-				setHalted(true)
-			},
-			shouldPanic: true,
-			panicMsg:    "halted: position",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup()
-			}
-
-			if tt.shouldPanic {
-				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					switch tt.operation {
-					case "Mint":
-						testing.SetRealm(positionRealm)
-						Mint(cross, addr01, tid(1))
-					case "Burn":
-						testing.SetRealm(positionRealm)
-						Burn(cross, tid(1))
-					case "SafeTransferFrom":
-						testing.SetRealm(stakerRealm)
-						SafeTransferFrom(cross, addr01, addr02, tid(1))
-					case "TransferFrom":
-						testing.SetRealm(stakerRealm)
-						TransferFrom(cross, addr01, addr02, tid(1))
-					case "Approve":
-						testing.SetRealm(addr01Realm)
-						Approve(cross, addr02, tid(1))
-					case "SetApprovalForAll":
-						testing.SetRealm(addr01Realm)
-						SetApprovalForAll(cross, addr02, true)
-					case "SetTokenURI":
-						testing.SetRealm(positionRealm)
-						SetTokenURI(cross, tid(1), "test-uri")
-					}
-				})
-			}
-
-			// Cleanup: unhalt for next test
-			setHalted(false)
 		})
 	}
 }

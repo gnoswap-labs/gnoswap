@@ -50,6 +50,8 @@ func (i *poolV1) Mint(
 	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
@@ -120,7 +122,9 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
@@ -187,8 +191,9 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
@@ -250,8 +255,9 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
@@ -362,6 +368,8 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	cardinalityNext uint16,
 ) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)

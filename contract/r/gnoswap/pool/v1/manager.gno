@@ -9,11 +9,11 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	gns "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"
-	pf "gno.land/r/gnoswap/protocol_fee"
 
 )
 
@@ -61,6 +61,8 @@ func (i *poolV1) CreatePool(
 	sqrtPriceX96 string,
 ) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	assertIsSupportedFeeTier(fee)
 	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)
@@ -103,14 +105,11 @@ func (i *poolV1) CreatePool(
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
-		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-
 		previousRealm := runtime.PreviousRealm()
 		previousRealmAddr := previousRealm.Address()
-		poolAddr := runtime.CurrentRealm().Address()
-		common.SafeGRC20Approve(cross, GNS_PATH, protocolFeeAddr, poolCreationFee)
-		common.SafeGRC20TransferFrom(cross, GNS_PATH, previousRealmAddr, poolAddr, poolCreationFee)
-		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
+		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
+		gns.TransferFrom(cross, previousRealmAddr, poolAddr, poolCreationFee)
+		i.addPendingProtocolFee(GNS_PATH, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
@@ -121,6 +120,7 @@ func (i *poolV1) CreatePool(
 			"feeAmount", formatInt(poolCreationFee),
 		)
 	}
+	i.addToProtocolFee()
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -145,6 +145,8 @@ func (i *poolV1) CreatePool(
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
