@@ -39,8 +39,6 @@ var (
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -59,8 +57,6 @@ func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId i
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -79,8 +75,6 @@ func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestam
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
 	halt.AssertIsNotHaltedPool()
-	i.lockPool()
-	defer i.unlockPool()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
