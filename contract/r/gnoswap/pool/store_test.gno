@@ -435,6 +435,71 @@ func TestStoreSetAndGetWithdrawalFeeBPS(t *testing.T) {
 	}
 }
 
+func TestStoreSetAndGetUnlocked(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupFn      func(IPoolStore)
+		testFn       func(*testing.T, IPoolStore)
+		shouldPanic  bool
+		panicMessage string
+	}{
+		{
+			name: "set and get unlocked successfully",
+			setupFn: func(ps IPoolStore) {
+				ps.SetUnlocked(true)
+			},
+			testFn: func(t *testing.T, ps IPoolStore) {
+				uassert.True(t, ps.HasUnlocked(), "should have unlocked after setting")
+				uassert.True(t, ps.GetUnlocked(), "unlocked should be true")
+			},
+		},
+		{
+			name: "set locked successfully",
+			setupFn: func(ps IPoolStore) {
+				ps.SetUnlocked(false)
+			},
+			testFn: func(t *testing.T, ps IPoolStore) {
+				uassert.True(t, ps.HasUnlocked(), "should have unlocked after setting")
+				uassert.False(t, ps.GetUnlocked(), "unlocked should be false")
+			},
+		},
+		{
+			name: "should not have unlocked initially",
+			testFn: func(t *testing.T, ps IPoolStore) {
+				uassert.False(t, ps.HasUnlocked(), "should not have unlocked initially")
+			},
+		},
+		{
+			name: "panic when getting uninitialized unlocked",
+			testFn: func(t *testing.T, ps IPoolStore) {
+				ps.GetUnlocked()
+			},
+			shouldPanic:  true,
+			panicMessage: "should panic when getting uninitialized unlocked",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			ps := NewPoolStore(kvStore)
+
+			if tt.setupFn != nil {
+				tt.setupFn(ps)
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					uassert.NotEqual(t, nil, r, tt.panicMessage)
+				}()
+			}
+
+			tt.testFn(t, ps)
+		})
+	}
+}
+
 func TestStoreSetAndGetSwapStartHook(t *testing.T) {
 	tests := []struct {
 		name         string

@@ -66,7 +66,8 @@ func TestFuzzPositionMint_ValidParams_Stateless(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			"")
+			"",
+		)
 
 		// then - verify position was created
 		if tokenId == 0 {
@@ -132,7 +133,8 @@ func TestFuzzPositionMint_RandomizedParams_Stateless(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			"")
+			"",
+		)
 	})
 }
 
@@ -189,7 +191,8 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			"")
+			"",
+		)
 
 		// then - verify position was created
 		if tokenId == 0 {
@@ -269,7 +272,8 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(t *testing.T) {
 			mintParams.amount1Min,
 			mintParams.deadline,
 			adminAddr,
-			"")
+			"",
+		)
 
 		// Track successful mints
 		if tokenId != 0 {

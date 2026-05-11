@@ -161,7 +161,8 @@ func mintBarQuxPosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 }
 
 func createExternalIncentiveGns() {

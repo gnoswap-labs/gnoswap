@@ -283,7 +283,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				"0",
 				maxTimeout,
 				tt.recipient,
-				"")
+				"",
+			)
 			testing.SkipHeights(1)
 
 			// Swap

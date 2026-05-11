@@ -147,7 +147,8 @@ func mintBarQux100_1() {
 		"1",
 		max_timeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil || owner != adminUser {
@@ -177,7 +178,8 @@ func mintBarQux100_2() {
 		"1",
 		max_timeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil || owner != adminUser {

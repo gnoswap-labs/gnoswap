@@ -222,7 +222,8 @@ func createPoolAndPosition() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[INFO] Position minted with ID: %d, Liquidity: %s\n", positionId, liquidity)
 
@@ -284,7 +285,8 @@ func testPositionMintBlocked() {
 			"0",
 			time.Now().Unix()+3600,
 			aliceAddr,
-			"")
+			"",
+		)
 	})
 
 	ufmt.Println("[SUCCESS] Position mint correctly blocked with 'halted: position'")

@@ -133,7 +133,8 @@ func testRoundingOnMint() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		requested := u256.MustFromDecimal(amount)
 		actual0 := u256.MustFromDecimal(actualAmount0)
@@ -176,7 +177,8 @@ func testRoundingOnBurn() {
 		"0", "0",
 		9999999999,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	ufmt.Printf("[MINT] Position %d created with liquidity: %s\n", posId, liquidity)
 
@@ -197,7 +199,8 @@ func testRoundingOnBurn() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		// Burn partial liquidity
 		_, _, _, _, returnAmount0, returnAmount1, _ := pn.DecreaseLiquidity(
@@ -258,7 +261,8 @@ func testRoundingConsistency() {
 				"0", "0",
 				9999999999,
 				aliceAddr,
-				"")
+				"",
+			)
 			positions = append(positions, posId)
 			ufmt.Printf("[%s] Position %d: liquidity=%s\n", op.action, posId, liq)
 		}
@@ -336,7 +340,8 @@ func testRoundingEdgeAmounts() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		if liquidity == "0" && edge.amount != "1" {
 			ufmt.Printf("[WARNING] Zero liquidity for amount %s\n", edge.amount)

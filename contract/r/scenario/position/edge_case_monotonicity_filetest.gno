@@ -123,7 +123,8 @@ func testMonotonicityUltraTight() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		liq := u256.MustFromDecimal(liquidity)
 
@@ -198,7 +199,8 @@ func testMonotonicityScales() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		// Position with incremented amount
 		_, liq2, _, _ := pn.Mint(
@@ -209,7 +211,8 @@ func testMonotonicityScales() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		liquidity1 := u256.MustFromDecimal(liq1)
 		liquidity2 := u256.MustFromDecimal(liq2)
@@ -270,7 +273,8 @@ func testMonotonicityBoundaries() {
 				"0", "0",
 				9999999999,
 				aliceAddr,
-				"")
+				"",
+			)
 
 			liquidity := u256.MustFromDecimal(liq)
 
@@ -320,7 +324,8 @@ func testNoDiscontinuousJumps() {
 			"0", "0",
 			9999999999,
 			aliceAddr,
-			"")
+			"",
+		)
 
 		liquidity := u256.MustFromDecimal(liq)
 		liquidities = append(liquidities, liquidity.Uint64())

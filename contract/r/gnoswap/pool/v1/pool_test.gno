@@ -323,7 +323,8 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 
 				expectedAbortMsg := ufmt.Sprintf(
 					"[GNOSWAP-POOL-006] invalid liquidity calculated || liquidityGrossAfter(%s) overflows maxLiquidity(%s)",
-					overflowAmount, maxLiquidity.ToString())
+					overflowAmount, maxLiquidity.ToString(),
+				)
 				uassert.AbortsWithMessage(t, expectedAbortMsg,
 					func() {
 						mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
@@ -579,7 +580,8 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 				uassert.AbortsWithMessage(t, expectedMsg, func() {
 					mockInstanceCollectProtocol(
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
-						unauthorizedAddr, "100", "100")
+						unauthorizedAddr, "100", "100",
+					)
 				})
 			},
 			expectedError: "unauthorized caller rejected",
@@ -750,7 +752,8 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 				positionKey := getPositionKey(tickLower, tickUpper)
 				expectedError := ufmt.Sprintf(
 					"[GNOSWAP-POOL-005] requested data not found || positionKey(%s) does not exist",
-					positionKey)
+					positionKey,
+				)
 				uassert.AbortsWithMessage(t, expectedError, func() {
 					mockInstanceCollect(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						recipient, tickLower, tickUpper, // Non-existent range

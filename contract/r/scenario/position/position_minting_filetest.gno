@@ -134,7 +134,8 @@ func testBasicPositionMinting() {
 		"90000",
 		max_timeout,
 		aliceAddr,
-		"")
+		"",
+	)
 
 	// then
 	println("[EXPECTED] Position minted successfully")

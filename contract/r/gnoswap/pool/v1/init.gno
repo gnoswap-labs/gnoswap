@@ -20,6 +20,8 @@ const (
 	// Example: 100 BPS = 1%
 	// This parameter can be modified through governance.
 	defaultWithdrawalFeeBPS = uint64(100)
+
+	defaultUnlocked = true
 )
 
 func init() {
@@ -75,6 +77,13 @@ func initStoreData(poolStore pool.IPoolStore) error {
 
 	if !poolStore.HasWithdrawalFeeBPS() {
 		err := poolStore.SetWithdrawalFeeBPS(defaultWithdrawalFeeBPS)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !poolStore.HasUnlocked() {
+		err := poolStore.SetUnlocked(defaultUnlocked)
 		if err != nil {
 			return err
 		}

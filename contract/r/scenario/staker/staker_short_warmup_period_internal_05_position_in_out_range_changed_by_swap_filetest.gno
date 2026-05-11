@@ -134,7 +134,8 @@ func mintBarQux100_1() {
 		"1",
 		maxTimeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	if positionId != 1 {
 		panic("expected position id 1")
@@ -163,7 +164,8 @@ func mintBarQux100_2() {
 		"1",
 		maxTimeout,
 		adminUser,
-		"")
+		"",
+	)
 
 	if positionId != 2 {
 		panic("expected position id 2")

@@ -41,6 +41,8 @@ func (i *poolV1) HandleWithdrawalFee(
 ) (string, string, string, string) {
 	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
+	i.lockPool()
+	defer i.unlockPool()
 
 	// only position contract can call this function
 	previousRealm := runtime.PreviousRealm()
@@ -72,6 +74,8 @@ func (i *poolV1) HandleWithdrawalFee(
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(fee int64) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
@@ -96,6 +100,8 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(fee uint64) {
 	halt.AssertIsNotHaltedPool()
+	i.lockPool()
+	defer i.unlockPool()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()

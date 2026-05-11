@@ -161,7 +161,8 @@ func mintBarQuxPosition01() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 }
 
 func mintBarQuxPosition02() {
@@ -186,7 +187,8 @@ func mintBarQuxPosition02() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 }
 
 func createExternalIncentiveQux() {

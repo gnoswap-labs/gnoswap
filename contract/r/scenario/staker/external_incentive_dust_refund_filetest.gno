@@ -161,7 +161,8 @@ func mintPosition() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 }
 
 var incentiveCreationTime int64

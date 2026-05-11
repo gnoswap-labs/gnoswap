@@ -227,7 +227,8 @@ func mintAndStakeOnlyInternal() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
 
@@ -253,7 +254,8 @@ func mintAndStakeOnlyInternal() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
 
@@ -287,7 +289,8 @@ func mintAndStakeOnlyExternal() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
 
@@ -313,7 +316,8 @@ func mintAndStakeOnlyExternal() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
 
@@ -347,7 +351,8 @@ func mintAndStakeBothInternalExternal() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
 	sr.StakeToken(cross, lpTokenId, "")
 

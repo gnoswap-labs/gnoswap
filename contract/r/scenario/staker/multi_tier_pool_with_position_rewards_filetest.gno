@@ -209,7 +209,8 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		user1Addr,
-		"")
+		"",
+	)
 	position1 = uint64(p1)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position1))
 	sr.StakeToken(cross, position1, "")
@@ -233,7 +234,8 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		user2Addr,
-		"")
+		"",
+	)
 	position2 = uint64(p2)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position2))
 	sr.StakeToken(cross, position2, "")
@@ -257,7 +259,8 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	position3 = uint64(p3)
 	gnft.Approve(cross, stakerAddr, positionIdFrom(position3))
 	sr.StakeToken(cross, position3, "")
@@ -276,7 +279,8 @@ func mintAndStakePerPool() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		"")
+		"",
+	)
 	position4 = uint64(p4)
 
 	ufmt.Printf("[EXPECTED] position IDs: %d,%d,%d,%d\n", position1, position2, position3, position4)

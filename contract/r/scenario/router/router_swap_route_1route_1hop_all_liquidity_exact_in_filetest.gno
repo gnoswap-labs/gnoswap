@@ -176,7 +176,8 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		"0",
 		max_timeout,
 		adminAddr,
-		"")
+		"",
+	)
 }
 
 func barApprove(t *testing.T, owner, spender address, amount int64) {

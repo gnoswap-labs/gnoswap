@@ -105,7 +105,8 @@ func mintUser1Position() {
 		"0",
 		time.Now().Unix()+1000,
 		user1Addr,
-		"")
+		"",
+	)
 
 	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(-6960, 6960))
 
@@ -137,7 +138,8 @@ func mintUser2Position() {
 		"0",
 		time.Now().Unix()+1000,
 		user2Addr,
-		"")
+		"",
+	)
 
 	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(-6960, 6960))
 
