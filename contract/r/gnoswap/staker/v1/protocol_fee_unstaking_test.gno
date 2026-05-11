@@ -93,6 +93,37 @@ func TestHandleStakingRewardFee(t *testing.T) {
 	}
 }
 
+func TestAddPendingProtocolFee(t *testing.T) {
+	initStakerTest(t)
+	instance := getMockInstance()
+
+	instance.addPendingProtocolFee(barPath, 100)
+	instance.addPendingProtocolFee(barPath, 50)
+	instance.addPendingProtocolFee(gnsPath, 25)
+	instance.addPendingProtocolFee(fooPath, 0)
+
+	pendingProtocolFees := instance.store.GetPendingProtocolFees()
+	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
+	uassert.Equal(t, pendingProtocolFees[gnsPath], int64(25))
+	uassert.Equal(t, len(pendingProtocolFees), 2)
+}
+
+func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
+	initStakerTest(t)
+	instance := getMockInstance()
+	originalPendingProtocolFees := map[string]int64{
+		barPath: 0,
+		gnsPath: -10,
+	}
+	instance.store.SetPendingProtocolFees(originalPendingProtocolFees)
+
+	instance.addToProtocolFee()
+
+	pendingProtocolFees := instance.store.GetPendingProtocolFees()
+	uassert.Equal(t, len(pendingProtocolFees), 0)
+	uassert.Equal(t, len(originalPendingProtocolFees), 2)
+}
+
 func TestSetUnStakingFee(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -352,7 +383,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 				}
 			}
 
-			testing.SetRealm(testing.NewUserRealm(stakerAddr))
+			testing.SetRealm(stakerRealm)
 			netAmount, feeAmount, err := instance.handleStakingRewardFee(tt.tokenPath, tt.amount, tt.internal)
 
 			if tt.expectError {

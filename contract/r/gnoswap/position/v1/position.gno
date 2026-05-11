@@ -246,7 +246,6 @@ func (p *positionV1) DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -321,7 +320,6 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(positionId uint64) (uint64, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -423,8 +421,6 @@ func (p *positionV1) collectFee(positionId uint64, caller address) (uint64, stri
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(id uint64, operator address) {
-	halt.AssertIsNotHaltedPosition()
-
 	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
 	assertValidOperatorAddress(operator)

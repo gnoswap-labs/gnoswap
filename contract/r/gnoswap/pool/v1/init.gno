@@ -68,6 +68,13 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	if !poolStore.HasPendingProtocolFees() {
+		err := poolStore.SetPendingProtocolFees(make(map[string]int64))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !poolStore.HasSlot0FeeProtocol() {
 		err := poolStore.SetSlot0FeeProtocol(defaultSlot0FeeProtocol)
 		if err != nil {

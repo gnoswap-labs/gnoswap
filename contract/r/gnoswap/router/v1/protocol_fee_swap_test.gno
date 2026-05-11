@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	uassert "gno.land/p/nt/uassert/v0"
+
 	"gno.land/r/onbloc/bar"
 )
 
@@ -119,6 +121,35 @@ func TestProtocolFeeSwap_GetSwapFee(t *testing.T) {
 	if fee != 15 {
 		t.Errorf("GetSwapFee() = %d, want 15", fee)
 	}
+}
+
+func TestAddPendingProtocolFee(t *testing.T) {
+	router := mockRouter()
+
+	router.addPendingProtocolFee(barPath, 100)
+	router.addPendingProtocolFee(barPath, 50)
+	router.addPendingProtocolFee(gnsPath, 25)
+	router.addPendingProtocolFee(fooPath, 0)
+
+	pendingProtocolFees := router.store.GetPendingProtocolFees()
+	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
+	uassert.Equal(t, pendingProtocolFees[gnsPath], int64(25))
+	uassert.Equal(t, len(pendingProtocolFees), 2)
+}
+
+func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
+	router := mockRouter()
+	originalPendingProtocolFees := map[string]int64{
+		barPath: 0,
+		gnsPath: -10,
+	}
+	router.store.SetPendingProtocolFees(originalPendingProtocolFees)
+
+	router.addToProtocolFee()
+
+	pendingProtocolFees := router.store.GetPendingProtocolFees()
+	uassert.Equal(t, len(pendingProtocolFees), 0)
+	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSetSwapFee_MultipleChanges(t *testing.T) {

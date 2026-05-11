@@ -27,7 +27,16 @@ var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
+
+func fundAndApproveBarFromStaker(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerRealm.Address(), amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] Testing protocol fee distribution with different DevOps percentages")
@@ -55,11 +64,8 @@ func main() {
 }
 
 func prepareRecordedProtocolFee(amount int64) {
-	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
-
+	fundAndApproveBarFromStaker(amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
 }
 
@@ -69,7 +75,6 @@ func testCase0Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 0%")
 	pf.SetDevOpsPct(cross, 0)
-
 	println("[INFO] Recording 1000 bar protocol fee")
 	prepareRecordedProtocolFee(1000)
 
@@ -88,7 +93,6 @@ func testCase25Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 25%")
 	pf.SetDevOpsPct(cross, 2500)
-
 	println("[INFO] Recording 1000 bar protocol fee")
 	prepareRecordedProtocolFee(1000)
 
@@ -107,7 +111,6 @@ func testCase50Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 50%")
 	pf.SetDevOpsPct(cross, 5000)
-
 	println("[INFO] Recording 1000 bar protocol fee")
 	prepareRecordedProtocolFee(1000)
 
@@ -126,7 +129,6 @@ func testCase100Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 100%")
 	pf.SetDevOpsPct(cross, 10000)
-
 	println("[INFO] Recording 1000 bar protocol fee")
 	prepareRecordedProtocolFee(1000)
 
@@ -145,7 +147,6 @@ func testCase3333Percent() {
 	testing.SetRealm(adminRealm)
 	println("[INFO] Setting DevOps percentage to 33.33%")
 	pf.SetDevOpsPct(cross, 3333)
-
 	println("[INFO] Recording 1000 bar protocol fee")
 	prepareRecordedProtocolFee(1000)
 

@@ -154,10 +154,8 @@ func createOBLProject() {
 // Mock protocol fee setup
 func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Setting up mock protocol fees")
-
-	// admin > protocol_fee
-	// send qux, bar for testing
-	println("[INFO] Admin transferring tokens to staker")
+	// admin > staker, protocol_fee pulls from caller via TransferFrom
+	println("[INFO] Admin transferring tokens to staker caller")
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, stakerAddr, barAmount)
 	qux.Transfer(cross, stakerAddr, quxAmount)
@@ -176,8 +174,8 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 
 	testing.SetRealm(govStakerRealm)
 
-	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
-	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
+	reservedTokens := protocol_fee.GetReservedTokens()
+	println("[EXPECTED] Reserved protocol fee token count:", len(reservedTokens))
 
 	protocol_fee.DistributeProtocolFee(cross)
 	println("[EXPECTED] Accumulated transfer to gov staker - Bar:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
@@ -290,13 +288,12 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 2. Protocol fee setup
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 // [EXPECTED] Accumulated transfer to gov staker - Bar: 1000
 // [EXPECTED] Accumulated transfer to gov staker - Qux: 2500
 //
@@ -312,13 +309,12 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 4. Protocol fee setup 2
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 // [EXPECTED] Accumulated transfer to gov staker - Bar: 2000
 // [EXPECTED] Accumulated transfer to gov staker - Qux: 5000
 //
@@ -344,13 +340,12 @@ func collectProtocolFeeForOBLProjectRecipient2() {
 //
 // [SCENARIO] 7. Protocol fee setup 3
 // [INFO] Setting up mock protocol fees
-// [INFO] Admin transferring tokens to staker
+// [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
 // [EXPECTED] Bar balance: 1000
 // [EXPECTED] Qux balance: 2500
-// [EXPECTED] Bar amount in protocol fee: 1000
-// [EXPECTED] Qux amount in protocol fee: 2500
+// [EXPECTED] Reserved protocol fee token count: 2
 // [EXPECTED] Accumulated transfer to gov staker - Bar: 3000
 // [EXPECTED] Accumulated transfer to gov staker - Qux: 7500
 //

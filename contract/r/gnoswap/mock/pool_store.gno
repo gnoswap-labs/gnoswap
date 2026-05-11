@@ -9,6 +9,7 @@ type MockPoolStore struct {
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
+	pendingProtocolFees  map[string]int64
 	withdrawalFeeBPS     uint64
 	unlocked             bool
 	swapStartHook        func(cur realm, poolPath string, timestamp int64)
@@ -75,6 +76,19 @@ func (s *MockPoolStore) GetPoolCreationFee() int64 {
 // SetPoolCreationFee stores the pool creation fee amount.
 func (s *MockPoolStore) SetPoolCreationFee(poolCreationFee int64) error {
 	s.poolCreationFee = poolCreationFee
+	return nil
+}
+
+func (s *MockPoolStore) HasPendingProtocolFees() bool {
+	return s.pendingProtocolFees != nil
+}
+
+func (s *MockPoolStore) GetPendingProtocolFees() map[string]int64 {
+	return s.pendingProtocolFees
+}
+
+func (s *MockPoolStore) SetPendingProtocolFees(pendingProtocolFees map[string]int64) error {
+	s.pendingProtocolFees = pendingProtocolFees
 	return nil
 }
 
@@ -175,6 +189,7 @@ func NewMockPoolStoreWithHook(
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
+		pendingProtocolFees:  make(map[string]int64),
 		withdrawalFeeBPS:     100,
 		unlocked:             true,
 		swapStartHook:        swapStartHook,

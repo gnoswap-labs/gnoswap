@@ -528,7 +528,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			expectedErrorMsg: "[GNOSWAP-LAUNCHPAD-012] not exist deposit",
 		},
 		{
-			name: "FAIL: emergency halt",
+			name: "SUCCESS: emergency halt still allows accrued reward claim",
 			env:  testEnvConfig{initialTime: 9000000},
 			project: testProjectConfig{
 				rewardAmount:    10000000,
@@ -539,7 +539,6 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner1",
 			caller:           "haltOwner1",
 			haltLevel:        halt.HaltLevelEmergency,
-			expectedErrorMsg: "halted: launchpad",
 		},
 		{
 			name: "FAIL: complete halt",
@@ -553,7 +552,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 			depositOwner:     "haltOwner2",
 			caller:           "haltOwner2",
 			haltLevel:        halt.HaltLevelComplete,
-			expectedErrorMsg: "halted: launchpad",
+			expectedErrorMsg: "halted: withdraw",
 		},
 	}
 
@@ -587,16 +586,25 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(t *testing.T) {
 				halt.SetHaltLevel(cross, tt.haltLevel)
 			}
 
-			// Execute and verify error
+			// Execute and verify
 			callerAddr := testutils.TestAddress(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(callerAddr))
 
-			uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
-				func(cur realm) {
-					testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-					lp.CollectRewardByDepositId(depositID)
-				}(cross)
-			})
+			if tt.expectedErrorMsg != "" {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+						lp.CollectRewardByDepositId(depositID)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+						_ = lp.CollectRewardByDepositId(depositID)
+					}(cross)
+				})
+			}
 
 			// Cleanup halt
 			if tt.haltLevel != "" {

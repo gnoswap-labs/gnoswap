@@ -11,6 +11,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 
@@ -1195,6 +1196,78 @@ func TestCollectFees(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDecreaseLiquidity_EmergencyHaltAllowsRecovery(t *testing.T) {
+	initPositionTest(t)
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "",
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	uassert.NotPanics(t, func() {
+		_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+			1,
+			"400000",
+			"0",
+			"0",
+			time.Now().Add(time.Hour).Unix(),
+		)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
+}
+
+func TestCollectFees_EmergencyHaltAllowsAccruedClaim(t *testing.T) {
+	initPositionTest(t)
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetOriginCaller(adminAddr)
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+		1,
+		"50",
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+	)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelEmergency)
+
+	uassert.NotPanics(t, func() {
+		_, _, _, _, _, _ = mockInstanceCollectFee(1, adminAddr)
+	})
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross, halt.HaltLevelNone)
 }
 
 func TestReposition(t *testing.T) {

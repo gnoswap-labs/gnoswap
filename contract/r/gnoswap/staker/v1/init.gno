@@ -104,6 +104,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasPendingProtocolFeesStoreKey() {
+		err := stakerStore.SetPendingProtocolFees(make(map[string]int64))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !stakerStore.HasWarmupTemplateStoreKey() {
 		err := stakerStore.SetWarmupTemplate(sr.DefaultWarmupTemplate())
 		if err != nil {

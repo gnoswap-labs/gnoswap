@@ -391,7 +391,6 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
@@ -689,7 +688,6 @@ func (s *stakerV1) CollectReward(positionId uint64) (string, string, map[string]
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(positionId uint64) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, caller, positionId)
 

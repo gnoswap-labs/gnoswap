@@ -79,7 +79,7 @@ func Mint(cur realm, to address, amount int64) {
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)

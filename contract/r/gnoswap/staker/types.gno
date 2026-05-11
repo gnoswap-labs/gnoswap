@@ -151,6 +151,10 @@ type IStakerStore interface {
 	GetUnstakingFee() uint64
 	SetUnstakingFee(fee uint64) error
 
+	HasPendingProtocolFeesStoreKey() bool
+	GetPendingProtocolFees() map[string]int64
+	SetPendingProtocolFees(fees map[string]int64) error
+
 	// Pools
 	HasPoolsStoreKey() bool
 	GetPools() *bptree.BPTree

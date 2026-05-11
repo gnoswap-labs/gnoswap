@@ -12,7 +12,8 @@ func (s StoreKey) String() string {
 }
 
 const (
-	StoreKeySwapFee StoreKey = "swapFee" // Swap fee in basis points
+	StoreKeySwapFee             StoreKey = "swapFee"             // Swap fee in basis points
+	StoreKeyPendingProtocolFees StoreKey = "pendingProtocolFees" // tokenPath -> amount held locally for protocol_fee
 )
 
 type routerStore struct {
@@ -42,6 +43,28 @@ func (s *routerStore) GetSwapFee() uint64 {
 // SetSwapFee stores the swap fee.
 func (s *routerStore) SetSwapFee(fee uint64) error {
 	return s.kvStore.Set(StoreKeySwapFee.String(), fee)
+}
+
+func (s *routerStore) HasPendingProtocolFeesKey() bool {
+	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
+}
+
+func (s *routerStore) GetPendingProtocolFees() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
+	if err != nil {
+		panic(err)
+	}
+
+	pendingProtocolFees, ok := result.(map[string]int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+	}
+
+	return pendingProtocolFees
+}
+
+func (s *routerStore) SetPendingProtocolFees(fees map[string]int64) error {
+	return s.kvStore.Set(StoreKeyPendingProtocolFees.String(), fees)
 }
 
 // NewRouterStore creates a new router store instance with the provided KV store.

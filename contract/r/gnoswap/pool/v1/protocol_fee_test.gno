@@ -257,6 +257,37 @@ func TestHandleWithdrawalFee_ZeroFeeTransfersAll(t *testing.T) {
 	uassert.Equal(t, TokenBalance(t, bazPath, adminAddr), bazBalanceBefore+1000)
 }
 
+func TestAddPendingProtocolFee(t *testing.T) {
+	initPoolTest(t)
+	instance := getMockInstance()
+
+	instance.addPendingProtocolFee(barPath, 100)
+	instance.addPendingProtocolFee(barPath, 50)
+	instance.addPendingProtocolFee(gnsPath, 25)
+	instance.addPendingProtocolFee(fooPath, 0)
+
+	pendingProtocolFees := instance.store.GetPendingProtocolFees()
+	uassert.Equal(t, pendingProtocolFees[barPath], int64(150))
+	uassert.Equal(t, pendingProtocolFees[gnsPath], int64(25))
+	uassert.Equal(t, len(pendingProtocolFees), 2)
+}
+
+func TestAddToProtocolFeeClearsNonPositiveAmounts(t *testing.T) {
+	initPoolTest(t)
+	instance := getMockInstance()
+	originalPendingProtocolFees := map[string]int64{
+		barPath: 0,
+		gnsPath: -10,
+	}
+	instance.store.SetPendingProtocolFees(originalPendingProtocolFees)
+
+	instance.addToProtocolFee()
+
+	pendingProtocolFees := instance.store.GetPendingProtocolFees()
+	uassert.Equal(t, len(pendingProtocolFees), 0)
+	uassert.Equal(t, len(originalPendingProtocolFees), 2)
+}
+
 func TestSetWithdrawalFee(t *testing.T) {
 	tests := []struct {
 		name        string

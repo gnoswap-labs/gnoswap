@@ -8,24 +8,24 @@ type IProtocolFee interface {
 }
 
 type IProtocolFeeManager interface {
-	DistributeProtocolFee() map[string]int64
+	DistributeProtocolFee()
 	SetDevOpsPct(pct int64)
 	SetGovStakerPct(pct int64)
-	AddToProtocolFee(tokenPath string, amount int64)
-	ClearTokenListWithAmount()
-	ClearAccuTransferToGovStaker()
+	AddToProtocolFee(tokenPath string, amount int64) error
 }
 
 type IProtocolFeeGetter interface {
 	GetDevOpsPct() int64
 	GetGovStakerPct() int64
-	GetTokenListWithAmount() map[string]int64
-	GetTokenList() []string
-	GetAmountOfToken(tokenPath string) int64
+	GetReservedTokens() []string
 	GetAccuTransfersToGovStaker() map[string]int64
 	GetAccuTransfersToDevOps() map[string]int64
 	GetAccuTransferToGovStakerByTokenPath(path string) int64
 	GetAccuTransferToDevOpsByTokenPath(path string) int64
+	GetActualDistributedToGovStaker() map[string]int64
+	GetActualDistributedToDevOps() map[string]int64
+	GetActualDistributedToGovStakerByTokenPath(path string) int64
+	GetActualDistributedToDevOpsByTokenPath(path string) int64
 }
 
 type IProtocolFeeStore interface {
@@ -46,10 +46,21 @@ type IProtocolFeeStore interface {
 	GetAccuToDevOpsItem(tokenPath string) (int64, bool)
 	SetAccuToDevOpsItem(tokenPath string, amount int64) error
 
-	HasTokenListWithAmountsStoreKey() bool
-	InitializeTokenListWithAmount() error
-	GetTokenListWithAmounts() map[string]int64
-	SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error
-	GetTokenListWithAmountItem(tokenPath string) (int64, bool)
-	SetTokenListWithAmountItem(tokenPath string, amount int64) error
+	HasDistributedToGovStakerHistoryStoreKey() bool
+	InitializeDistributedToGovStakerHistory() error
+	GetDistributedToGovStakerHistory() *bptree.BPTree
+	GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool)
+	SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error
+
+	HasDistributedToDevOpsHistoryStoreKey() bool
+	InitializeDistributedToDevOpsHistory() error
+	GetDistributedToDevOpsHistory() *bptree.BPTree
+	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
+	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
+
+	HasReservedTokensStoreKey() bool
+	InitializeReservedTokens() error
+	GetReservedTokens() []string
+	SetReservedTokens(reservedTokens []string) error
+	AddReservedToken(tokenPath string) error
 }

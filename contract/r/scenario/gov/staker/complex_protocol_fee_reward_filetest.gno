@@ -56,7 +56,32 @@ var (
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
+
+func fundAndApproveProtocolFeeCallerBar(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerAddr, amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
+
+func fundAndApproveProtocolFeeCallerQux(amount int64) {
+	testing.SetRealm(adminRealm)
+	qux.Transfer(cross, stakerAddr, amount)
+	testing.SetRealm(stakerRealm)
+	qux.Approve(cross, protocolFeeAddr, amount)
+	qux.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
+
+func fundAndApproveProtocolFeeCallerWugnot(amount int64) {
+	testing.SetRealm(adminRealm)
+	wugnot.Transfer(cross, stakerAddr, amount)
+	testing.SetRealm(stakerRealm)
+	wugnot.Approve(cross, protocolFeeAddr, amount)
+	wugnot.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] 1. Prepare protocol fee tokens (WUGNOT, bar, qux)")
@@ -138,9 +163,7 @@ func depositProtocolFeePre() {
 }
 
 func depositProtocolFeePost() {
-	testing.SetRealm(adminRealm)
-	wugnot.Transfer(cross, stakerAddr, 10000)
-
+	fundAndApproveProtocolFeeCallerWugnot(10000)
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross, protocolFeeAddr, 1000)
 	qux.Approve(cross, protocolFeeAddr, 2500)
@@ -165,11 +188,8 @@ func skipBlocksAndDistribute() {
 
 func depositProtocolFeeAdditional() {
 	// additional protocol fee deposit (bar, qux)
-	testing.SetRealm(adminRealm)
-
-	bar.Transfer(cross, stakerAddr, 2500)
-	qux.Transfer(cross, stakerAddr, 4000)
-
+	fundAndApproveProtocolFeeCallerBar(2500)
+	fundAndApproveProtocolFeeCallerQux(4000)
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross, protocolFeeAddr, 2500)
 	qux.Approve(cross, protocolFeeAddr, 4000)

@@ -90,140 +90,49 @@ func TestGetGovStakerPct(t *testing.T) {
 	}
 }
 
-func TestGetTokenListWithAmount(t *testing.T) {
+func TestGetReservedTokens(t *testing.T) {
 	tests := []struct {
 		name     string
 		setupFn  func() *protocolFeeV1
-		expected map[string]int64
+		expected []string
 	}{
 		{
-			name: "success - get empty token list",
+			name: "success - get empty reserved tokens",
 			setupFn: func() *protocolFeeV1 {
 				return createTestProtocolFee(t)
 			},
-			expected: map[string]int64{},
+			expected: []string{},
 		},
 		{
-			name: "success - get token list with single token",
+			name: "success - get single reserved token",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
+				pf.store.AddReservedToken("gno.land/r/foo")
 				return pf
 			},
-			expected: map[string]int64{"gno.land/r/foo": 1000},
+			expected: []string{"gno.land/r/foo"},
 		},
 		{
-			name: "success - get token list with multiple tokens",
+			name: "success - get multiple reserved tokens",
 			setupFn: func() *protocolFeeV1 {
 				pf := createTestProtocolFee(t)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/bar", 2000)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/baz", 3000)
+				pf.store.AddReservedToken("gno.land/r/foo")
+				pf.store.AddReservedToken("gno.land/r/bar")
+				pf.store.AddReservedToken("gno.land/r/baz")
 				return pf
 			},
-			expected: map[string]int64{
-				"gno.land/r/foo": 1000,
-				"gno.land/r/bar": 2000,
-				"gno.land/r/baz": 3000,
-			},
+			expected: []string{"gno.land/r/foo", "gno.land/r/bar", "gno.land/r/baz"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pf := tt.setupFn()
-			result := pf.GetTokenListWithAmount()
+			result := pf.GetReservedTokens()
 			uassert.Equal(t, len(result), len(tt.expected))
-			for k, v := range tt.expected {
-				uassert.Equal(t, result[k], v)
+			for i, expected := range tt.expected {
+				uassert.Equal(t, expected, result[i])
 			}
-		})
-	}
-}
-
-func TestGetTokenList(t *testing.T) {
-	tests := []struct {
-		name     string
-		setupFn  func() *protocolFeeV1
-		expected map[string]bool
-	}{
-		{
-			name: "success - get empty token list",
-			setupFn: func() *protocolFeeV1 {
-				return createTestProtocolFee(t)
-			},
-			expected: map[string]bool{},
-		},
-		{
-			name: "success - get token list with multiple tokens",
-			setupFn: func() *protocolFeeV1 {
-				pf := createTestProtocolFee(t)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 1000)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/bar", 2000)
-				return pf
-			},
-			expected: map[string]bool{
-				"gno.land/r/foo": true,
-				"gno.land/r/bar": true,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pf := tt.setupFn()
-			result := pf.GetTokenList()
-
-			uassert.Equal(t, len(result), len(tt.expected))
-			for _, token := range result {
-				uassert.True(t, tt.expected[token])
-			}
-		})
-	}
-}
-
-func TestGetAmountOfToken(t *testing.T) {
-	tests := []struct {
-		name      string
-		setupFn   func() *protocolFeeV1
-		tokenPath string
-		expected  int64
-	}{
-		{
-			name: "success - get amount for existing token",
-			setupFn: func() *protocolFeeV1 {
-				pf := createTestProtocolFee(t)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/foo", 5000)
-				return pf
-			},
-			tokenPath: "gno.land/r/foo",
-			expected:  5000,
-		},
-		{
-			name: "success - get 0 for non-existent token",
-			setupFn: func() *protocolFeeV1 {
-				return createTestProtocolFee(t)
-			},
-			tokenPath: "gno.land/r/nonexistent",
-			expected:  0,
-		},
-		{
-			name: "success - get 0 amount for existing token with 0",
-			setupFn: func() *protocolFeeV1 {
-				pf := createTestProtocolFee(t)
-				pf.store.SetTokenListWithAmountItem("gno.land/r/zero", 0)
-				return pf
-			},
-			tokenPath: "gno.land/r/zero",
-			expected:  0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pf := tt.setupFn()
-			result := pf.GetAmountOfToken(tt.tokenPath)
-			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
@@ -401,4 +310,3 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 		})
 	}
 }
-

@@ -248,7 +248,6 @@ func (gs *govStakerV1) Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func (gs *govStakerV1) CollectUndelegatedGns() int64 {
-	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
 	prevRealm := runtime.PreviousRealm()

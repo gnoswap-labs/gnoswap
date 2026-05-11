@@ -19,24 +19,34 @@ import (
 // Splits fees between devOps and gov/staker based on configured percentages.
 // This function processes all accumulated fees since last distribution.
 //
-// Returns:
-//   - map[string]int64: Token paths to amounts distributed to gov/staker
-//
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
-func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
-	halt.AssertIsNotHaltedProtocolFee()
-
+func (pf *protocolFeeV1) DistributeProtocolFee() {
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
 
+	if halt.IsHaltedWithdraw() {
+		return
+	}
+
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	pfs := pf.getProtocolFeeState()
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
-	toReturnDistributedToGovStaker := make(map[string]int64)
+	reservedTokens := pfs.ReservedTokens()
 
-	for token, amount := range pf.store.GetTokenListWithAmounts() {
+	for _, token := range reservedTokens {
+		toDevOpsAmount := safeSubInt64(
+			pfs.GetAccuTransferToDevOpsByTokenPath(token),
+			pfs.GetActualDistributedToDevOpsByTokenPath(token),
+		)
+		toGovStakerAmount := safeSubInt64(
+			pfs.GetAccuTransferToGovStakerByTokenPath(token),
+			pfs.GetActualDistributedToGovStakerByTokenPath(token),
+		)
+
+		amount := safeAddInt64(toDevOpsAmount, toGovStakerAmount)
 		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// amount should be less than or equal to balance
@@ -51,12 +61,8 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			continue
 		}
 
-		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
-		toDevOpsAmount := safeMulDiv(amount, devOpsPct, 10000)    // default 0%
-		toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount) // default 100%
-
 		// Distribute to DevOps
-		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
+		if err := pfs.distributeToDevOps(token, toDevOpsAmount); err != nil {
 			panic(err)
 		}
 		if toDevOpsAmount > 0 {
@@ -64,16 +70,14 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 
 		// Distribute to Gov/Staker
-		if err := pf.getProtocolFeeState().distributeToGovStaker(token, toGovStakerAmount); err != nil {
+		if err := pfs.distributeToGovStaker(token, toGovStakerAmount); err != nil {
 			panic(err)
 		}
 		if toGovStakerAmount > 0 {
 			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
-			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
 	}
-
-	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
+	if err := pfs.clearReservedTokens(); err != nil {
 		panic(err)
 	}
 
@@ -85,8 +89,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
 		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
 	)
-
-	return toReturnDistributedToGovStaker
 }
 
 // SetDevOpsPct sets the devOpsPct.
@@ -170,8 +172,10 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 // Only callable by pool, router or staker contracts.
 // Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
-func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error {
+	if halt.IsHaltedProtocolFee() {
+		return errProtocolFeeHalted
+	}
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
@@ -184,55 +188,34 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	}
 
 	if amount == 0 {
-		return
+		return nil
 	}
 
-	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
-	if !exists {
-		currentAmount = 0
-	}
-
-	// Check for overflow
-	addedAmount := safeAddInt64(currentAmount, amount)
-
-	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
-
+	pf.reserveCollectedProtocolFee(tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
-}
 
-// ClearTokenListWithAmount clears the tokenListWithAmount.
-//
-// Resets all accumulated token amounts to zero.
-// Only callable by gov/staker contract.
-// Note: Should be called after successful distribution.
-func (pf *protocolFeeV1) ClearTokenListWithAmount() {
-	halt.AssertIsNotHaltedProtocolFee()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
-
-	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
-		panic(err)
-	}
-}
-
-// ClearAccuTransferToGovStaker clears the accuToGovStaker.
-//
-// Resets accumulated transfer tracking for gov/staker.
-// This allows gov/staker to track distributions between calls.
-//
-// Only callable by gov/staker contract.
-// Note: Should be called after reading accumulated amounts.
-func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
-	halt.AssertIsNotHaltedProtocolFee()
-
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
-
-	pf.store.InitializeAccuToGovStaker()
+	return nil
 }
 
 func makeEventString(tokenPath string, amount int64) string {
 	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
+}
+
+func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) {
+	pfs := pf.getProtocolFeeState()
+
+	toDevOpsAmount := safeMulDiv(amount, pfs.DevOpsPct(), 10000)
+	toGovStakerAmount := safeSubInt64(amount, toDevOpsAmount)
+
+	if err := pfs.addAccuToDevOps(tokenPath, toDevOpsAmount); err != nil {
+		panic(err)
+	}
+	if err := pfs.addAccuToGovStaker(tokenPath, toGovStakerAmount); err != nil {
+		panic(err)
+	}
+
+	if err := pfs.store.AddReservedToken(tokenPath); err != nil {
+		panic(err)
+	}
 }

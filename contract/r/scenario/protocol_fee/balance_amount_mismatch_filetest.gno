@@ -27,7 +27,16 @@ var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
+	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 )
+
+func fundAndApproveBarFromStaker(amount int64) {
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross, stakerRealm.Address(), amount)
+	testing.SetRealm(stakerRealm)
+	bar.Approve(cross, protocolFeeAddr, amount)
+	bar.Approve(cross, protocolFeeV1Realm.Address(), amount)
+}
 
 func main() {
 	println("[SCENARIO] Testing protocol fee distribution with balance/amount mismatches")
@@ -55,11 +64,8 @@ func main() {
 }
 
 func prepareRecordedProtocolFee(amount int64) {
-	testing.SetRealm(adminRealm)
-	bar.Transfer(cross, stakerAddr, amount)
-
+	fundAndApproveBarFromStaker(amount)
 	testing.SetRealm(stakerRealm)
-	bar.Approve(cross, protocolFeeAddr, amount)
 	pf.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", amount)
 }
 
@@ -93,6 +99,7 @@ func testExternalTransfer() {
 	prepareRecordedProtocolFee(1000)
 
 	println("[INFO] External user sends additional 500 bar tokens")
+	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, protocolFeeAddr, 500)
 
 	println("[INFO] Recording only 1000 bar protocol fee (not including external 500)")
@@ -118,6 +125,7 @@ func testMultipleExternalTransfers() {
 	prepareRecordedProtocolFee(100)
 
 	println("[INFO] Multiple external transfers: 200 + 300 + 400 = 900 bar tokens")
+	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, protocolFeeAddr, 200)
 	bar.Transfer(cross, protocolFeeAddr, 300)
 	bar.Transfer(cross, protocolFeeAddr, 400)
@@ -168,6 +176,7 @@ func test100PercentToDevOps() {
 	prepareRecordedProtocolFee(800)
 
 	println("[INFO] External transfer of 200 bar tokens")
+	testing.SetRealm(adminRealm)
 	bar.Transfer(cross, protocolFeeAddr, 200)
 
 	println("[INFO] Recording 800 bar protocol fee")

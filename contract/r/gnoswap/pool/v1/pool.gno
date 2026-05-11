@@ -122,7 +122,7 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
 	i.lockPool()
 	defer i.unlockPool()
 
@@ -191,7 +191,6 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 	i.lockPool()
 	defer i.unlockPool()
@@ -256,7 +255,6 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 	i.lockPool()
 	defer i.unlockPool()

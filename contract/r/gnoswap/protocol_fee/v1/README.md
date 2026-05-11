@@ -45,8 +45,8 @@ tokenAmounts := DistributeProtocolFee()
 SetDevOpsPct(2000)     // 20% to DevOps
 SetGovStakerPct(8000)  // 80% to xGNS holders
 
-// View accumulated fees
-GetAmountOfToken(tokenPath)
+// View tokens reserved for the next distribution
+GetReservedTokens()
 ```
 
 ## Security

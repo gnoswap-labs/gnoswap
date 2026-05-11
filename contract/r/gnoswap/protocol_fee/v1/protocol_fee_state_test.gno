@@ -182,54 +182,48 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
+func TestProtocolFeeStateClearReservedTokens(t *testing.T) {
 	tests := []struct {
 		name        string
-		initialData map[string]int64
+		initialData []string
 		expectedLen int
 	}{
 		{
-			name:        "clear empty list",
-			initialData: map[string]int64{},
+			name:        "clear empty reserved tokens",
+			initialData: []string{},
 			expectedLen: 0,
 		},
 		{
-			name: "clear list with single token",
-			initialData: map[string]int64{
-				"token1": 100,
-			},
+			name:        "clear reserved tokens with single token",
+			initialData: []string{"token1"},
 			expectedLen: 0,
 		},
 		{
-			name: "clear list with multiple tokens",
-			initialData: map[string]int64{
-				"token1": 100,
-				"token2": 200,
-				"token3": 300,
-			},
+			name:        "clear reserved tokens with multiple tokens",
+			initialData: []string{"token1", "token2", "token3"},
 			expectedLen: 0,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			pfs := newProtocolFeeStateInternal(t)
+			t.Run(test.name, func(t *testing.T) {
+				pfs := newProtocolFeeStateInternal(t)
 
-			// Setup initial data
-			for token, amount := range test.initialData {
-				pfs.store.SetTokenListWithAmountItem(token, amount)
-			}
+				// Setup initial data
+				for _, token := range test.initialData {
+					pfs.store.AddReservedToken(token)
+				}
 
-			// Verify initial state
-			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), len(test.initialData))
+				// Verify initial state
+				uassert.Equal(t, len(pfs.store.GetReservedTokens()), len(test.initialData))
 
-			// Clear the list
-			pfs.clearTokenListWithAmount()
+				// Clear the list
+				pfs.clearReservedTokens()
 
-			// Verify final state
-			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), test.expectedLen)
-		})
-	}
+				// Verify final state
+				uassert.Equal(t, len(pfs.store.GetReservedTokens()), test.expectedLen)
+			})
+		}
 }
 
 func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
@@ -539,52 +533,37 @@ func TestProtocolFeeState_RetrieveAmount_NonExistentKey(t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_ClearTokenListWithAmount_MultipleTokens(t *testing.T) {
+func TestProtocolFeeState_ClearReservedTokens_MultipleTokens(t *testing.T) {
 	tests := []struct {
 		name        string
-		initialData map[string]int64
+		initialData []string
 	}{
 		{
-			name: "clear list with many tokens",
-			initialData: map[string]int64{
-				"token1": 100,
-				"token2": 200,
-				"token3": 300,
-				"token4": 400,
-				"token5": 500,
-			},
+			name:        "clear list with many tokens",
+			initialData: []string{"token1", "token2", "token3", "token4", "token5"},
 		},
 		{
-			name: "clear list with large amounts",
-			initialData: map[string]int64{
-				"token1": 9223372036854775806,
-				"token2": 9223372036854775805,
-			},
+			name:        "clear list with repeated setup",
+			initialData: []string{"token1", "token2"},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given
-			pfs := newProtocolFeeStateInternal(t)
-			for token, amount := range tt.initialData {
-				pfs.TokenListWithAmounts()[token] = amount
-			}
-			uassert.Equal(t, len(pfs.TokenListWithAmounts()), len(tt.initialData))
+			t.Run(tt.name, func(t *testing.T) {
+				// Given
+				pfs := newProtocolFeeStateInternal(t)
+				for _, token := range tt.initialData {
+					pfs.store.AddReservedToken(token)
+				}
+				uassert.Equal(t, len(pfs.ReservedTokens()), len(tt.initialData))
 
-			// When
-			pfs.clearTokenListWithAmount()
+				// When
+				pfs.clearReservedTokens()
 
-			// Then
-			uassert.Equal(t, len(pfs.TokenListWithAmounts()), 0)
-
-			// Verify all tokens were removed
-			for token := range tt.initialData {
-				_, exists := pfs.TokenListWithAmounts()[token]
-				uassert.False(t, exists)
-			}
-		})
-	}
+				// Then
+				uassert.Equal(t, len(pfs.ReservedTokens()), 0)
+			})
+		}
 }
 
 func TestProtocolFeeState_DevOpsPct(t *testing.T) {

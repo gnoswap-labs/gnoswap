@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -74,8 +73,6 @@ func MustOwnerOf(tid grc721.TokenID) address {
 //
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
-	halt.AssertIsNotHaltedPosition()
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 
@@ -102,8 +99,6 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - Otherwise, ownership and approval are enforced by the GRC721 layer
 //     (owner / approved-for-token / approved-for-all).
 func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
-	halt.AssertIsNotHaltedPosition()
-
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
 	assertIsAllowedTransfer(tid)
@@ -129,8 +124,6 @@ func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 //   - Otherwise, ownership and approval are enforced by the GRC721 layer
 //     (owner / approved-for-token / approved-for-all).
 func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
-	halt.AssertIsNotHaltedPosition()
-
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
 	assertIsAllowedTransfer(tid)
@@ -149,7 +142,6 @@ func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 // Returns error if approval fails.
 // Only callable when not halted.
 func Approve(cur realm, approved address, tid grc721.TokenID) error {
-	halt.AssertIsNotHaltedPosition()
 	assertIsValidAddress(approved)
 
 	err := nft.Approve(approved, tid)
@@ -166,7 +158,6 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 // Returns error if operation fails.
 // Only callable when not halted.
 func SetApprovalForAll(cur realm, operator address, approved bool) error {
-	halt.AssertIsNotHaltedPosition()
 	assertIsValidAddress(operator)
 
 	checkErr(nft.SetApprovalForAll(operator, approved))
@@ -203,8 +194,6 @@ func IsApprovedForAll(owner, operator address) bool {
 // Returns minted token ID.
 // Only callable by position contract.
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
-	halt.AssertIsNotHaltedPosition()
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 
@@ -234,8 +223,6 @@ func Exists(tid grc721.TokenID) bool {
 //
 // Only callable by position.
 func Burn(cur realm, tid grc721.TokenID) {
-	halt.AssertIsNotHaltedPosition()
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 
