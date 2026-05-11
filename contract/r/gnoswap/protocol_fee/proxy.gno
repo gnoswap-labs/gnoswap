@@ -1,11 +1,8 @@
 package protocol_fee
 
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
-//
-// Returns:
-//   - map[string]int64: amounts distributed per token
-func DistributeProtocolFee(cur realm) map[string]int64 {
-	return cloneStringInt64Map(getImplementation().DistributeProtocolFee())
+func DistributeProtocolFee(cur realm) {
+	getImplementation().DistributeProtocolFee()
 }
 
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.

@@ -8,7 +8,7 @@ type IProtocolFee interface {
 }
 
 type IProtocolFeeManager interface {
-	DistributeProtocolFee() map[string]int64
+	DistributeProtocolFee()
 	SetDevOpsPct(pct int64)
 	SetGovStakerPct(pct int64)
 	AddToProtocolFee(tokenPath string, amount int64) error

@@ -37,11 +37,11 @@ func (t *TestProtocolFee) isActive(fnName string) bool {
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() map[string]int64 {
+func (t *TestProtocolFee) DistributeProtocolFee() {
 	if !t.isActive("DistributeProtocolFee") {
 		panic("test implementation: DistributeProtocolFee not supported")
 	}
-	return t.instance.DistributeProtocolFee()
+	t.instance.DistributeProtocolFee()
 }
 
 func (t *TestProtocolFee) SetDevOpsPct(pct int64) {

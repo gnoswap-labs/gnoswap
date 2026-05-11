@@ -399,9 +399,13 @@ func testGovStakerCollectUndelegatedAllowed() {
 
 func testProtocolFeeDistributeAllowed() {
 	testing.SetRealm(govStakerRealm2)
-	rewards := pf.DistributeProtocolFee(cross)
-	uassert.True(t, rewards[barPath2] > 0)
-	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee BAR amount: %d\n", rewards[barPath2])
+	protocolFeeBarBefore := bar.BalanceOf(protocolFeeAddr2)
+	govStakerBarBefore := bar.BalanceOf(govStakerAddr2)
+	pf.DistributeProtocolFee(cross)
+	barDelta := bar.BalanceOf(govStakerAddr2) - govStakerBarBefore
+	uassert.True(t, barDelta > 0)
+	uassert.Equal(t, protocolFeeBarBefore-barDelta, bar.BalanceOf(protocolFeeAddr2))
+	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee BAR amount: %d\n", barDelta)
 	ufmt.Println("[EXPECTED] protocol_fee.DistributeProtocolFee succeeded in emergency mode")
 }
 

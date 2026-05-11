@@ -245,13 +245,10 @@ func testCollectsBlockedInSafeMode() {
 	ufmt.Println("[EXPECTED] gov staker launchpad reward collect blocked by withdraw halt")
 
 	testing.SetRealm(govStakerRealm3)
-	rewards := pf.DistributeProtocolFee(cross)
-	if len(rewards) != 0 {
-		panic("expected protocol fee distribution to return no rewards while withdraw is halted")
-	}
+	pf.DistributeProtocolFee(cross)
 	uassert.Equal(t, protocolFeeBarBeforeSafe, bar.BalanceOf(protocolFeeAddr3))
 	uassert.Equal(t, govStakerBarBeforeSafe, bar.BalanceOf(govStakerAddr3))
-	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee in safe mode distributed BAR: %d, protocol fee BAR preserved: %d\n", rewards[barPath3], bar.BalanceOf(protocolFeeAddr3))
+	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee in safe mode preserved protocol fee BAR: %d\n", bar.BalanceOf(protocolFeeAddr3))
 
 	testing.SetRealm(projectRealm3)
 	beforeProjectBarBalance := bar.BalanceOf(projectAddr3)
@@ -295,11 +292,10 @@ func setEmergencyModeForProtocolFeeCollect() {
 
 func testDelegatedProtocolFeeCollectAllowedInEmergencyMode() {
 	testing.SetRealm(govStakerRealm3)
-	rewards := pf.DistributeProtocolFee(cross)
-	uassert.Equal(t, pendingProtocolFeeAmount, rewards[barPath3])
+	pf.DistributeProtocolFee(cross)
 	uassert.Equal(t, protocolFeeBarBeforeSafe-pendingProtocolFeeAmount, bar.BalanceOf(protocolFeeAddr3))
 	uassert.Equal(t, govStakerBarBeforeSafe+pendingProtocolFeeAmount, bar.BalanceOf(govStakerAddr3))
-	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee distributed BAR in emergency mode: %d\n", rewards[barPath3])
+	ufmt.Printf("[EXPECTED] protocol_fee.DistributeProtocolFee distributed BAR in emergency mode: %d\n", pendingProtocolFeeAmount)
 
 	testing.SetRealm(bobRealm3)
 	_, bobProtocolFeeRewards, bobClaimableErr := govstaker.GetClaimableRewardByAddress(bobAddr3)
@@ -378,7 +374,7 @@ func positionIdFromSafe(positionId any) grc721.TokenID {
 // [EXPECTED] gov_staker.CollectReward blocked for bob; BAR before: 0, after: 0
 // [EXPECTED] gov_staker.CollectReward blocked for carol; BAR before: 0, after: 0
 // [EXPECTED] gov staker launchpad reward collect blocked by withdraw halt
-// [EXPECTED] protocol_fee.DistributeProtocolFee in safe mode distributed BAR: 0, protocol fee BAR preserved: 1000
+// [EXPECTED] protocol_fee.DistributeProtocolFee in safe mode preserved protocol fee BAR: 1000
 // [EXPECTED] launchpad collect protocol fee blocked by withdraw halt
 // [EXPECTED] launchpad withdrawal helpers blocked by withdraw halt
 // [EXPECTED] xGNS burn blocked by withdraw halt

@@ -39,12 +39,8 @@ type MockProtocolFee struct {
 	Response *MockResponse
 }
 
-func (m *MockProtocolFee) DistributeProtocolFee() map[string]int64 {
-	res, ok := m.Response.Get("DistributeProtocolFee")
-	if !ok {
-		return nil
-	}
-	return res[0].(map[string]int64)
+func (m *MockProtocolFee) DistributeProtocolFee() {
+	m.Response.Get("DistributeProtocolFee")
 }
 
 func (m *MockProtocolFee) SetDevOpsPct(pct int64) {
@@ -166,6 +162,7 @@ func (m *MockProtocolFee) ApiGetAccuTransferToDevOps() string {
 	}
 	return res[0].(string)
 }
+
 func (m *MockProtocolFee) ApiGetActualBalance() string {
 	res, ok := m.Response.Get("ApiGetActualBalance")
 	if !ok {

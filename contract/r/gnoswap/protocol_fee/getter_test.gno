@@ -24,20 +24,14 @@ func TestGetReservedTokensIsolation(t *testing.T) {
 	}
 }
 
-func TestDistributeProtocolFeeIsolation(t *testing.T) {
+func TestDistributeProtocolFeeForwardsCall(t *testing.T) {
 	resetTestState(t)
 	mockProtocolFee := newMockProtocolFee("v1")
 	implementation = mockProtocolFee
-	stored := map[string]int64{"foo": 10, "bar": 20}
-	mockProtocolFee.Response.Set("DistributeProtocolFee", stored)
 
-	result := DistributeProtocolFee(cross)
-	result["foo"] = 100
-	result["baz"] = 300
+	DistributeProtocolFee(cross)
 
-	uassert.Equal(t, int64(10), stored["foo"])
-	_, ok := stored["baz"]
-	uassert.Equal(t, false, ok)
+	uassert.Equal(t, 1, mockProtocolFee.Response.CallCount("DistributeProtocolFee"))
 }
 
 func TestGetAccuTransfersToGovStakerIsolation(t *testing.T) {

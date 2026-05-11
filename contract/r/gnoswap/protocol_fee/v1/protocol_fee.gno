@@ -19,17 +19,14 @@ import (
 // Splits fees between devOps and gov/staker based on configured percentages.
 // This function processes all accumulated fees since last distribution.
 //
-// Returns:
-//   - map[string]int64: Token paths to amounts distributed to gov/staker
-//
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
-func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
+func (pf *protocolFeeV1) DistributeProtocolFee() {
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
 
 	if halt.IsHaltedWithdraw() {
-		return make(map[string]int64)
+		return
 	}
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
@@ -37,7 +34,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 
 	sentToDevOpsForEvent := make([]string, 0)
 	sentToGovStakerForEvent := make([]string, 0)
-	toReturnDistributedToGovStaker := make(map[string]int64)
 	reservedTokens := pfs.ReservedTokens()
 
 	for _, token := range reservedTokens {
@@ -79,7 +75,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 		if toGovStakerAmount > 0 {
 			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
-			toReturnDistributedToGovStaker[token] = toGovStakerAmount
 		}
 	}
 	if err := pfs.clearReservedTokens(); err != nil {
@@ -94,8 +89,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
 		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
 	)
-
-	return toReturnDistributedToGovStaker
 }
 
 // SetDevOpsPct sets the devOpsPct.

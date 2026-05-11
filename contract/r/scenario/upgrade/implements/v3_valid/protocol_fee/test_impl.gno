@@ -24,8 +24,8 @@ type TestProtocolFee struct {
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() map[string]int64 {
-	return t.instance.DistributeProtocolFee()
+func (t *TestProtocolFee) DistributeProtocolFee() {
+	t.instance.DistributeProtocolFee()
 }
 
 func (t *TestProtocolFee) SetDevOpsPct(pct int64) {

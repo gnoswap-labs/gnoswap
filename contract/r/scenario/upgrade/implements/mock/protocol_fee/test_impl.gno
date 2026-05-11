@@ -3,7 +3,7 @@ package mock
 
 import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/protocol_fee/v1"
+	v1 "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 func NewV3ValidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
@@ -41,11 +41,11 @@ func (t *TestProtocolFee) ExecuteFn(fnName string, actualFn func(args ...any) an
 }
 
 // IProtocolFeeManager interface
-func (t *TestProtocolFee) DistributeProtocolFee() map[string]int64 {
-	return t.ExecuteFn(
+func (t *TestProtocolFee) DistributeProtocolFee() {
+	t.ExecuteFn(
 		"DistributeProtocolFee",
-		func(args ...any) any { return t.instance.DistributeProtocolFee() },
-	).(map[string]int64)
+		func(args ...any) any { t.instance.DistributeProtocolFee(); return nil },
+	)
 }
 
 func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
