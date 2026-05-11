@@ -11,7 +11,7 @@ package staker
 //   - referrer: The referrer address for reward tracking.
 //
 // Returns:
-//   - delegationId: The ID of the delegation.
+//   - delegatedAmount: The amount of GNS delegated and mirrored as xGNS.
 func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 	return getImplementation().Delegate(to, amount, referrer)
 }
@@ -33,12 +33,12 @@ func Undelegate(cur realm, from address, amount int64) int64 {
 //
 // Parameters:
 //   - cur: Pass `cross` as argument.
-//   - delegatee: The address to undelegate.
-//   - newDelegatee: The address to delegate.
+//   - delegatee: The current delegatee address.
+//   - newDelegatee: The new delegatee address.
 //   - amount: The amount of xGNS.
 //
 // Returns:
-//   - resultCode: The redelegation result code.
+//   - redelegatedAmount: The amount moved from the current delegatee to the new delegatee.
 func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
 	return getImplementation().Redelegate(delegatee, newDelegatee, amount)
 }

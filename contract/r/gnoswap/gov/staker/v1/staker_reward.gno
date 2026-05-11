@@ -163,6 +163,12 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 // - When adding: mints xGNS to launchpad address and starts reward accumulation
 // - When removing: burns xGNS from launchpad address and stops reward accumulation
 // Adjusts stake amount for project wallet address.
+//
+// Parameters:
+//   - addr: project wallet address whose launchpad-backed stake should be adjusted
+//   - amount: amount of stake to add or remove
+//   - add: true to add stake and mint xGNS to launchpad, false to remove stake and burn xGNS from launchpad
+//
 // Panics:
 //   - if caller is not the launchpad contract
 //   - if system is halted for withdrawals
