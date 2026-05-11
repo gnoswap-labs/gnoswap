@@ -169,6 +169,9 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 //   - tokenPath: token contract path
 //   - amount: fee amount to add
 //
+// Returns:
+//   - err: nil on success; errProtocolFeeHalted when protocol-fee collection is halted
+//
 // Only callable by pool, router or staker contracts.
 // Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.

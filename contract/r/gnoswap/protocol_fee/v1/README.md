@@ -39,7 +39,7 @@ Adds fees to distribution queue.
 
 ```go
 // Distribute accumulated fees
-tokenAmounts := DistributeProtocolFee()
+DistributeProtocolFee()
 
 // Configure distribution
 SetDevOpsPct(2000)     // 20% to DevOps
