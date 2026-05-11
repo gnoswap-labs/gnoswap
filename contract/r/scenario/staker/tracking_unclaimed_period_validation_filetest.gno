@@ -125,7 +125,6 @@ func testPoolInitializationBehavior() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -172,7 +171,6 @@ func testUnclaimablePeriodRewardDistribution() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)
@@ -270,7 +268,6 @@ func testClaimablePeriodCollection() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

@@ -5,7 +5,6 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
@@ -27,7 +26,6 @@ func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int6
 	halt.AssertIsNotHaltedLaunchpad()
 
 	previousRealm := runtime.PreviousRealm()
-	access.AssertIsUser(previousRealm)
 
 	assertIsValidAmount(depositAmount)
 

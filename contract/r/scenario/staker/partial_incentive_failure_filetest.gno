@@ -212,7 +212,6 @@ func mintAndStakePosition() uint64 {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -254,7 +253,6 @@ func drainBarIncentive() {
 			"1",
 			"1",
 			maxTimeout,
-			adminAddr,
 			adminAddr,
 			"",
 		)

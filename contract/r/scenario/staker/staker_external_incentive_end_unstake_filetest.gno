@@ -187,7 +187,6 @@ func mintAndStakePositions() {
 		"1",
 		maxTimeout,
 		adminUser,
-		adminUser,
 		"",
 	)
 
@@ -204,7 +203,6 @@ func mintAndStakePositions() {
 		"1",
 		"1",
 		maxTimeout,
-		adminUser,
 		adminUser,
 		"",
 	)

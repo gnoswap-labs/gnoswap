@@ -161,7 +161,6 @@ func mintBarQuxPosition01() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 }
@@ -187,7 +186,6 @@ func mintBarQuxPosition02() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

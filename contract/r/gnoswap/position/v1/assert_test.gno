@@ -528,3 +528,60 @@ func TestAssertValidOperatorAddress(t *testing.T) {
 		})
 	}
 }
+
+// TestAssertIsNotMintToStaker covers the guard that prevents users from
+// minting a position NFT directly to the staker contract.
+func TestAssertIsNotMintToStaker(t *testing.T) {
+	tests := []struct {
+		name                 string
+		mintTo               address
+		expectedPanicMessage string
+		shouldPanic          bool
+	}{
+		{
+			name:        "regular user address is allowed",
+			mintTo:      alice,
+			shouldPanic: false,
+		},
+		{
+			name:        "another user address is allowed",
+			mintTo:      bob,
+			shouldPanic: false,
+		},
+		{
+			name:        "admin address is allowed",
+			mintTo:      adminAddr,
+			shouldPanic: false,
+		},
+		{
+			// Empty address passes this guard; address validity is the
+			// concern of access.AssertIsValidAddress earlier in Mint.
+			name:        "empty address is allowed by this guard",
+			mintTo:      address(""),
+			shouldPanic: false,
+		},
+		{
+			// Core policy: cannot mint directly to the staker contract.
+			name:                 "staker address is rejected",
+			mintTo:               stakerAddr,
+			expectedPanicMessage: "[GNOSWAP-POSITION-015] cannot mint to staker",
+			shouldPanic:          true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					assertIsNotMintToStaker(tt.mintTo)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsNotMintToStaker(tt.mintTo)
+				})
+			}
+		})
+	}
+}

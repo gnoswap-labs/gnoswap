@@ -21,6 +21,7 @@ var (
 	errPositionDoesNotExist = errors.New("[GNOSWAP-POSITION-012] position does not exist")
 	errUnderflow            = errors.New("[GNOSWAP-POSITION-013] underflow")
 	errOverflow             = errors.New("[GNOSWAP-POSITION-014] overflow")
+	errCannotMintToStaker   = errors.New("[GNOSWAP-POSITION-015] cannot mint to staker")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.

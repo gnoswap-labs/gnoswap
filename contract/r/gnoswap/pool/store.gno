@@ -24,6 +24,7 @@ const (
 	StoreKeyPoolCreationFee     StoreKey = "poolCreationFee"     // Pool creation fee amount
 	StoreKeyPendingProtocolFees StoreKey = "pendingProtocolFees" // tokenPath -> amount held locally for protocol_fee
 	StoreKeyWithdrawalFeeBPS    StoreKey = "withdrawalFeeBPS"    // Withdrawal fee in basis points
+	StoreKeyUnlocked            StoreKey = "unlocked"         // Global pool reentrancy lock
 
 	// Swap hook storage keys
 	StoreKeySwapStartHook StoreKey = "swapStartHook" // Swap start hook function
@@ -190,6 +191,28 @@ func (s *poolStore) GetWithdrawalFeeBPS() uint64 {
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
 func (s *poolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
 	return s.kvStore.Set(StoreKeyWithdrawalFeeBPS.String(), withdrawalFeeBPS)
+}
+
+func (s *poolStore) HasUnlocked() bool {
+	return s.kvStore.Has(StoreKeyUnlocked.String())
+}
+
+func (s *poolStore) GetUnlocked() bool {
+	result, err := s.kvStore.Get(StoreKeyUnlocked.String())
+	if err != nil {
+		panic(err)
+	}
+
+	unlocked, ok := result.(bool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to bool: %T", result))
+	}
+
+	return unlocked
+}
+
+func (s *poolStore) SetUnlocked(unlocked bool) error {
+	return s.kvStore.Set(StoreKeyUnlocked.String(), unlocked)
 }
 
 // HasSwapStartHook checks if the swap start hook is set.

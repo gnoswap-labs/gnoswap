@@ -126,8 +126,8 @@ func setupSafeScenario() {
 	testing.SetRealm(aliceRealm3)
 	bar.Approve(cross, poolAddr3, safeInt64Max)
 	foo.Approve(cross, poolAddr3, safeInt64Max)
-	positionCollectID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -960, 960, "50000000", "50000000", "0", "0", 4102444800, aliceAddr3, aliceAddr3, "")
-	stakerPositionID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -60, 60, "5000000", "5000000", "1", "1", 4102444800, aliceAddr3, aliceAddr3, "")
+	positionCollectID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -960, 960, "50000000", "50000000", "0", "0", 4102444800, aliceAddr3, "")
+	stakerPositionID3, _, _, _ = position.Mint(cross, barPath3, fooPath3, fee3, -60, 60, "5000000", "5000000", "1", "1", 4102444800, aliceAddr3, "")
 	gnft.Approve(cross, stakerAddr3, positionIdFromSafe(stakerPositionID3))
 	staker.StakeToken(cross, stakerPositionID3, "")
 

@@ -71,7 +71,7 @@ func main() {
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool")
-	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
+	positionId, liquidity, amount0, amount1 := pn.Mint(cross, barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
 	println("[INFO] amount0:", amount0)
@@ -176,7 +176,6 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 		"0",
 		"0",
 		max_timeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

@@ -134,7 +134,6 @@ func testBasicPositionMinting() {
 		"90000",
 		max_timeout,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

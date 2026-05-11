@@ -149,7 +149,6 @@ func createPoolAndPosition() {
 		"1",
 		max_timeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -266,7 +265,6 @@ func newUserStakes() {
 		"1",
 		"1",
 		max_timeout,
-		user1Addr,
 		user1Addr,
 		"",
 	)

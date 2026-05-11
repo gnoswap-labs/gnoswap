@@ -94,7 +94,7 @@ func setupScenario() {
 	bar.Approve(cross, poolAddr, int64Max)
 	foo.Approve(cross, poolAddr, int64Max)
 	testing.SetOriginSend(chain.Coins{})
-	positionId, _, _, _ := position.Mint(cross, barPath, fooPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+	positionId, _, _, _ := position.Mint(cross, barPath, fooPath, fee, -960, 960, "10000000", "10000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	ufmt.Printf("[INFO] setup position id: %d\n", positionId)
 
@@ -175,7 +175,7 @@ func testBlockedEntriesOneByOne() {
 	printBlockedScenario("position", "Mint")
 	uassert.AbortsContains(t, "halted: position", func() {
 		testing.SetOriginSend(chain.Coins{})
-		position.Mint(cross, barPath, fooPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+		position.Mint(cross, barPath, fooPath, fee, -1920, 1920, "1000000", "1000000", "0", "0", time.Now().Unix()+3600, aliceAddr, "")
 	})
 	printBlockedExpected("position", "Mint", "position")
 
@@ -220,11 +220,11 @@ func testBlockedEntriesOneByOne() {
 	})
 	printBlockedExpected("staker", "StakeToken", "staker")
 
-	printBlockedScenario("staker", "MintAndStake")
+	printBlockedScenario("staker", "SetPoolTier")
 	uassert.AbortsContains(t, "halted: staker", func() {
-		staker.MintAndStake(cross, barPath, fooPath, fee, -60, 60, "1000", "1000", "0", "0", time.Now().Unix()+3600, "")
+		staker.SetPoolTier(cross, barPath+":"+fooPath+":3000", 2)
 	})
-	printBlockedExpected("staker", "MintAndStake", "staker")
+	printBlockedExpected("staker", "SetPoolTier", "staker")
 
 	testing.SetRealm(bobRealm)
 	printBlockedScenario("gov_staker", "Delegate")
@@ -494,8 +494,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 16. staker.StakeToken is blocked
 // [EXPECTED] staker.StakeToken blocked by staker halt
 //
-// [SCENARIO] 17. staker.MintAndStake is blocked
-// [EXPECTED] staker.MintAndStake blocked by staker halt
+// [SCENARIO] 17. staker.SetPoolTier is blocked
+// [EXPECTED] staker.SetPoolTier blocked by staker halt
 //
 // [SCENARIO] 18. gov_staker.Delegate is blocked
 // [EXPECTED] gov_staker.Delegate blocked by gov_staker halt

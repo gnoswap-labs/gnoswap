@@ -7,7 +7,6 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -27,7 +26,6 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := runtime.PreviousRealm()
-	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)

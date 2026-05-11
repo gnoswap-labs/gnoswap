@@ -21,6 +21,7 @@ type mockPoolStore struct {
 	poolCreationFee      int64
 	pendingProtocolFees  map[string]int64
 	withdrawalFeeBPS     uint64
+	unlocked             bool
 	swapStartHook        func(cur realm, poolPath string, timestamp int64)
 	swapEndHook          func(cur realm, poolPath string) error
 	tickCrossHook        func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -116,6 +117,19 @@ func (s *mockPoolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
 	return nil
 }
 
+func (s *mockPoolStore) HasUnlocked() bool {
+	return true
+}
+
+func (s *mockPoolStore) GetUnlocked() bool {
+	return s.unlocked
+}
+
+func (s *mockPoolStore) SetUnlocked(unlocked bool) error {
+	s.unlocked = unlocked
+	return nil
+}
+
 // HasSwapStartHook checks if the swap start hook is set.
 func (s *mockPoolStore) HasSwapStartHook() bool {
 	return s.swapStartHook != nil
@@ -183,6 +197,7 @@ func NewMockPoolStoreWithHook(
 		poolCreationFee:      100_000_000,
 		pendingProtocolFees:  make(map[string]int64),
 		withdrawalFeeBPS:     100,
+		unlocked:             true,
 		swapStartHook:        swapStartHook,
 		swapEndHook:          swapEndHook,
 		tickCrossHook:        tickCrossHook,
@@ -347,7 +362,6 @@ type MockStakerStore struct {
 	minimumRewardAmount              int64
 	deposits                         *bptree.BPTree
 	externalIncentives               *bptree.BPTree
-	userDeposits                     *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
 	incentiveCounter                 *sr.Counter
@@ -421,20 +435,6 @@ func (s *MockStakerStore) GetExternalIncentives() *bptree.BPTree {
 
 func (s *MockStakerStore) SetExternalIncentives(incentives *bptree.BPTree) error {
 	s.externalIncentives = incentives
-	return nil
-}
-
-// UserDeposits
-func (s *MockStakerStore) HasUserDepositsStoreKey() bool {
-	return s.userDeposits != nil
-}
-
-func (s *MockStakerStore) GetUserDeposits() *bptree.BPTree {
-	return s.userDeposits
-}
-
-func (s *MockStakerStore) SetUserDeposits(tree *bptree.BPTree) error {
-	s.userDeposits = tree
 	return nil
 }
 
@@ -700,7 +700,6 @@ func newMockStakerStore() *MockStakerStore {
 		minimumRewardAmount:         1_000_000_000,
 		deposits:                    bptree.NewBPTreeN(16),
 		externalIncentives:          bptree.NewBPTreeN(16),
-		userDeposits:                bptree.NewBPTreeN(16),
 		totalEmissionSent:           0,
 		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns", oblPath},
 		incentiveCounter:            sr.NewCounter(),

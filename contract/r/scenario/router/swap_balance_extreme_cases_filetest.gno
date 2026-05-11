@@ -170,7 +170,6 @@ func setupPoolAndPosition() BalanceSnapshot {
 		"0",
 		max_timeout,
 		userAddr,
-		userAddr,
 		"",
 	)
 

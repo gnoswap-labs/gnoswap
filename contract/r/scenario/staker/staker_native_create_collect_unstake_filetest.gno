@@ -234,7 +234,6 @@ func mintNativePosition01Post() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -284,7 +283,6 @@ func mintNativePosition02Post() {
 		"1",
 		"1",
 		maxTimeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)

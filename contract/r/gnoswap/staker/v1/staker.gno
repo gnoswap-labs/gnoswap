@@ -197,14 +197,12 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
 
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
+	assertIsPositionOwner(owner, caller)
 
-	if err := hasTokenOwnership(owner, caller); err != nil {
-		panic(err.Error())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	if err := tokenHasLiquidity(positionId); err != nil {
 		panic(err.Error())
@@ -262,8 +260,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
-
-	s.getUserDeposits().addDeposit(caller, positionId)
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
@@ -336,7 +332,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //
 // Manages NFT custody during staking operations.
 // Transfers ownership to staker contract for reward eligibility.
-// Handles special cases for mint-and-stake operations.
+// Handles cases where the staker already holds custody.
 //
 // Parameters:
 //   - positionId: The ID of the position NFT to transfer
@@ -348,16 +344,16 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //   - Prevents self-transfer exploits
 //   - Validates ownership before transfer
 //   - Atomic operation with staking
-//   - No transfer if owner == to (mint & stake case)
+//   - No transfer if owner == to (already in custody)
 //
 // Returns:
-//   - nil: If owner and recipient are same (mint-and-stake)
+//   - nil: If owner and recipient are same
 //   - error: If caller unauthorized or transfer fails
 //
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
 func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address) error {
-	// if owner is the same as to, when mint and stake, it will be the same address
+	// If the recipient already owns the NFT, no transfer is needed.
 	if owner == to {
 		return nil
 	}
@@ -772,26 +768,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	s.getDeposits().remove(positionId)
-	s.getUserDeposits().removeDeposit(deposit.Owner(), positionId)
-
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
-	caller := runtime.PreviousRealm().Address()
-	if err := hasTokenOwnership(owner, caller); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// hasTokenOwnership validates that the caller has permission to operate the token.
-func hasTokenOwnership(owner, caller address) error {
-	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-	isCallerOwner := owner == caller
-	isStakerOwner := owner == stakerAddr
-
-	if !isCallerOwner && !isStakerOwner {
-		return errNoPermission
-	}
 
 	return nil
 }

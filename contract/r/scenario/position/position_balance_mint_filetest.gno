@@ -90,7 +90,6 @@ func testMintAndBalance() {
 		"0",
 		9999999999,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 

@@ -166,7 +166,6 @@ func mintAlicePosition() {
 		"0",
 		time.Now().Unix()+3600,
 		aliceAddr,
-		aliceAddr,
 		"",
 	)
 

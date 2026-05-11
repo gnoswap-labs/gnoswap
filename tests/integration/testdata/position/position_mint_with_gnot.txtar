@@ -136,7 +136,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uy
 # stdout 'OK!'
 
 ### Mint position with native GNOT as token1Path parameter
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "50000000"
 # stdout 'GAS USED:   8[0-9]{7}'
@@ -217,7 +217,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uy
 # stdout 'OK!'
 
 ### Mint position with native GNOT as token0Path parameter
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 3000 -args "-887220" -args "887220" -args 30000000 -args 30000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 3000 -args "-887220" -args "887220" -args 30000000 -args 30000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 2
 # stdout "30000000"
 # stdout 'GAS USED:   9[0-9]{7}'

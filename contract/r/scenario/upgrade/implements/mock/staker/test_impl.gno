@@ -52,18 +52,6 @@ func (t *TestStaker) UnStakeToken(positionId uint64) string {
 	).(string)
 }
 
-func (t *TestStaker) MintAndStake(token0 string, token1 string, fee uint32, tickLower int32, tickUpper int32, amount0Desired string, amount1Desired string, amount0Min string, amount1Min string, deadline int64, referrer string) (uint64, string, string, string, string) {
-	result := t.ExecuteFn(
-		"MintAndStake",
-		func(args ...any) any {
-			r1, r2, r3, r4, r5 := t.instance.MintAndStake(args[0].(string), args[1].(string), args[2].(uint32), args[3].(int32), args[4].(int32), args[5].(string), args[6].(string), args[7].(string), args[8].(string), args[9].(int64), args[10].(string))
-			return []any{r1, r2, r3, r4, r5}
-		},
-		token0, token1, fee, tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min, amount1Min, deadline, referrer,
-	).([]any)
-	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string)
-}
-
 func (t *TestStaker) CollectReward(positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	result := t.ExecuteFn(
 		"CollectReward",
@@ -635,31 +623,6 @@ func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
 		"GetWarmupTemplate",
 		func(args ...any) any { return t.instance.GetWarmupTemplate() },
 	).([]staker.Warmup)
-}
-
-func (t *TestStaker) GetTotalStakedUserCount() uint64 {
-	return t.ExecuteFn(
-		"GetTotalStakedUserCount",
-		func(args ...any) any { return t.instance.GetTotalStakedUserCount() },
-	).(uint64)
-}
-
-func (t *TestStaker) GetTotalStakedUserPositionCount(user address) uint64 {
-	return t.ExecuteFn(
-		"GetTotalStakedUserPositionCount",
-		func(args ...any) any { return t.instance.GetTotalStakedUserPositionCount(args[0].(address)) },
-		user,
-	).(uint64)
-}
-
-func (t *TestStaker) GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	return t.ExecuteFn(
-		"GetStakedPositionsByUser",
-		func(args ...any) any {
-			return t.instance.GetStakedPositionsByUser(args[0].(address), args[1].(int), args[2].(int))
-		},
-		owner, offset, count,
-	).([]uint64)
 }
 
 func (t *TestStaker) GetPoolRewardCacheCount(poolPath string) uint64 {

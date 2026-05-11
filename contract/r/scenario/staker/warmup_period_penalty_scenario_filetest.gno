@@ -39,10 +39,10 @@ var (
 	adminUser    = adminAddr
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
-	stakerAddr, _  = access.GetAddress(prabc.ROLE_STAKER.String())
-	poolAddr, _    = access.GetAddress(prabc.ROLE_POOL.String())
-	govAddr, _     = access.GetAddress(prabc.ROLE_GOVERNANCE.String())
-	devOpsAddr, _  = access.GetAddress(prabc.ROLE_DEVOPS.String())
+	stakerAddr, _    = access.GetAddress(prabc.ROLE_STAKER.String())
+	poolAddr, _      = access.GetAddress(prabc.ROLE_POOL.String())
+	govAddr, _       = access.GetAddress(prabc.ROLE_GOVERNANCE.String())
+	devOpsAddr, _    = access.GetAddress(prabc.ROLE_DEVOPS.String())
 	communityAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
@@ -84,7 +84,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	
+
 	println("[INFO] set emission start time")
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
@@ -110,17 +110,17 @@ func createPoolAndSetTier() {
 	println("[INFO] create bar:baz:3000 pool")
 	pl.CreatePool(cross, barPath, bazPath, fee3000, "79228162514264337593543950336")
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	
+
 	println("[INFO] set pool to tier 1")
 	sr.SetPoolTier(cross, poolPath, 1)
-	
+
 	println("[INFO] set warmup period tiers")
 	// Set up warmup tiers with the last one having MaxInt64
-	sr.SetWarmUp(cross, 30, 1800)  // 30% reduction for 30 minutes
-	sr.SetWarmUp(cross, 50, 3600)  // 50% reduction for 1 hour  
-	sr.SetWarmUp(cross, 70, 7200)  // 70% reduction for 2 hours
+	sr.SetWarmUp(cross, 30, 1800)                 // 30% reduction for 30 minutes
+	sr.SetWarmUp(cross, 50, 3600)                 // 50% reduction for 1 hour
+	sr.SetWarmUp(cross, 70, 7200)                 // 70% reduction for 2 hours
 	sr.SetWarmUp(cross, 100, 9223372036854775807) // 100% (no reduction) after 2 hours
-	
+
 	ufmt.Printf("[EXPECTED] pool created and configured with warmup period\n")
 	testing.SkipHeights(1)
 }
@@ -135,29 +135,28 @@ func mintLargePosition() uint64 {
 	println("[INFO] mint large position for meaningful rewards")
 	positionId, liquidity, _, _ := pn.Mint(
 		cross,
-		barPath,        // token0
-		bazPath,        // token1
-		fee3000,        // fee
-		int32(-18000),  // tickLower
-		int32(18000),   // tickUpper
-		"100000000",    // amount0Desired - large amount
-		"100000000",    // amount1Desired - large amount
-		"0",            // amount0Min
-		"0",            // amount1Min
+		barPath,       // token0
+		bazPath,       // token1
+		fee3000,       // fee
+		int32(-18000), // tickLower
+		int32(18000),  // tickUpper
+		"100000000",   // amount0Desired - large amount
+		"100000000",   // amount1Desired - large amount
+		"0",           // amount0Min
+		"0",           // amount1Min
 		max_timeout,
-		adminAddr,
 		adminAddr,
 		"",
 	)
 
 	ufmt.Printf("[EXPECTED] position minted: ID=%d, liquidity=%s\n", positionId, liquidity)
-	
+
 	// Verify ownership
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
-	
+
 	testing.SkipHeights(1)
 	return positionId
 }
@@ -167,13 +166,13 @@ func stakePosition(positionId uint64) int64 {
 
 	println("[INFO] approve and stake position")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
-	
+
 	stakeTime := time.Now().Unix()
 	sr.StakeToken(cross, positionId, "")
-	
+
 	ufmt.Printf("[EXPECTED] position staked at time: %d\n", stakeTime)
 	testing.SkipHeights(1)
-	
+
 	return stakeTime
 }
 
@@ -188,7 +187,7 @@ func skipTimeWithinWarmup() {
 
 func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	testing.SetRealm(adminRealm)
-	
+
 	println("[INFO] check time since stake")
 	currentTime := time.Now().Unix()
 	timeSinceStake := currentTime - stakeTime
@@ -196,26 +195,26 @@ func collectRewardsAndVerifyPenalty(positionId uint64, stakeTime int64) {
 	if timeSinceStake >= warmupPenaltyDurationSeconds {
 		panic("collection should happen during warmup penalty period")
 	}
-	
+
 	println("[INFO] record balances before collection")
 	userGnsBefore := gns.BalanceOf(adminUser)
 	communityGnsBefore := gns.BalanceOf(communityAddr)
 	devOpsGnsBefore := gns.BalanceOf(devOpsAddr)
-	
+
 	ufmt.Printf("[INFO] user GNS before: %d\n", userGnsBefore)
 	ufmt.Printf("[INFO] community GNS before: %d\n", communityGnsBefore)
 	ufmt.Printf("[INFO] devOps GNS before: %d\n", devOpsGnsBefore)
-	
+
 	println("[INFO] collect rewards during warmup period")
 	internalRewardToUserStr, internalWarmupPenaltyStr, _, _ := sr.CollectReward(cross, positionId)
 	internalRewardToUser := mustParseInt64(internalRewardToUserStr)
 	internalWarmupPenalty := mustParseInt64(internalWarmupPenaltyStr)
-	
+
 	println("[INFO] check balances after collection")
 	userGnsAfter := gns.BalanceOf(adminUser)
 	communityGnsAfter := gns.BalanceOf(communityAddr)
 	devOpsGnsAfter := gns.BalanceOf(devOpsAddr)
-	
+
 	userReward := userGnsAfter - userGnsBefore
 	communityReward := communityGnsAfter - communityGnsBefore
 	devOpsReward := devOpsGnsAfter - devOpsGnsBefore

@@ -276,21 +276,6 @@ func GetWarmupTemplate() []Warmup {
 	return cloneWarmups(getImplementation().GetWarmupTemplate())
 }
 
-// GetTotalStakedUserCount returns the total number of staked users.
-func GetTotalStakedUserCount() uint64 {
-	return getImplementation().GetTotalStakedUserCount()
-}
-
-// GetTotalStakedUserPositionCount returns the staked position count for a user.
-func GetTotalStakedUserPositionCount(user address) uint64 {
-	return getImplementation().GetTotalStakedUserPositionCount(user)
-}
-
-// GetStakedPositionsByUser returns staked position IDs for a user with pagination.
-func GetStakedPositionsByUser(owner address, offset, count int) []uint64 {
-	return cloneUint64Slice(getImplementation().GetStakedPositionsByUser(owner, offset, count))
-}
-
 // GetPoolRewardCacheCount returns the number of reward cache entries for a pool.
 func GetPoolRewardCacheCount(poolPath string) uint64 {
 	return getImplementation().GetPoolRewardCacheCount(poolPath)

@@ -135,7 +135,6 @@ func mintPositionsForUsers() {
 		"1",
 		maxTimeout,
 		adminAddr,
-		adminAddr,
 		"",
 	)
 
@@ -169,7 +168,6 @@ func mintPositionsForUsers() {
 		"1",
 		"1",
 		maxTimeout,
-		user2Addr,
 		user2Addr,
 		"",
 	)

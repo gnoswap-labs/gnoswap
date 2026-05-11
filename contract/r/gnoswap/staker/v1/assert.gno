@@ -205,3 +205,13 @@ func isMidnight(startTime time.Time) bool {
 
 	return hour == 0 && minute == 0 && second == 0
 }
+
+// assertIsPositionOwner validates that the caller has permission to operate the token.
+func assertIsPositionOwner(owner, caller address) {
+	if owner != caller {
+		panic(makeErrorWithDetails(
+			errNoPermission,
+			ufmt.Sprintf("caller(%s) is not owner of positionId(%s)", caller, owner),
+		))
+	}
+}

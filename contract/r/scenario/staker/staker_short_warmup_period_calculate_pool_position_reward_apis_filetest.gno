@@ -14,9 +14,11 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -212,7 +214,7 @@ func mintAndStakeOnlyInternal() {
 	foo.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 01 (bar:foo:100)")
-	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
+	lpTokenId, liquidity, _, _ := pn.Mint(
 		cross,
 		barPath,
 		fooPath,
@@ -224,8 +226,11 @@ func mintAndStakeOnlyInternal() {
 		"1",
 		"1",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
+	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
+	sr.StakeToken(cross, lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] position 01 minted and staked: ID=%d, liquidity=%s\n", lpTokenId, liquidity)
 
@@ -236,7 +241,7 @@ func mintAndStakeOnlyInternal() {
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position 02 (bar:foo:100)")
-	lpTokenId, liquidity, _, _, _ = sr.MintAndStake(
+	lpTokenId, liquidity, _, _ = pn.Mint(
 		cross,
 		barPath,
 		fooPath,
@@ -248,8 +253,11 @@ func mintAndStakeOnlyInternal() {
 		"1",
 		"1",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
+	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
+	sr.StakeToken(cross, lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] position 02 minted and staked: ID=%d, liquidity=%s\n", lpTokenId, liquidity)
 
@@ -268,7 +276,7 @@ func mintAndStakeOnlyExternal() {
 	baz.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 03 (bar:baz:100)")
-	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
+	lpTokenId, liquidity, _, _ := pn.Mint(
 		cross,
 		barPath,
 		bazPath,
@@ -280,8 +288,11 @@ func mintAndStakeOnlyExternal() {
 		"1",
 		"1",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
+	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
+	sr.StakeToken(cross, lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] position 03 minted and staked: ID=%d, liquidity=%s\n", lpTokenId, liquidity)
 
@@ -292,7 +303,7 @@ func mintAndStakeOnlyExternal() {
 	testing.SkipHeights(1)
 
 	println("[INFO] mint and stake position 04 (bar:baz:100)")
-	lpTokenId, liquidity, _, _, _ = sr.MintAndStake(
+	lpTokenId, liquidity, _, _ = pn.Mint(
 		cross,
 		barPath,
 		bazPath,
@@ -304,8 +315,11 @@ func mintAndStakeOnlyExternal() {
 		"1",
 		"1",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
+	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
+	sr.StakeToken(cross, lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] position 04 minted and staked: ID=%d, liquidity=%s\n", lpTokenId, liquidity)
 
@@ -324,7 +338,7 @@ func mintAndStakeBothInternalExternal() {
 	qux.Approve(cross, poolAddr, maxInt64)
 
 	println("[INFO] mint and stake position 05 (bar:qux:100)")
-	lpTokenId, liquidity, _, _, _ := sr.MintAndStake(
+	lpTokenId, liquidity, _, _ := pn.Mint(
 		cross,
 		barPath,
 		quxPath,
@@ -336,8 +350,11 @@ func mintAndStakeBothInternalExternal() {
 		"1",
 		"1",
 		maxTimeout,
+		adminAddr,
 		"",
 	)
+	gnft.Approve(cross, stakerAddr, positionIdFrom(int(lpTokenId)))
+	sr.StakeToken(cross, lpTokenId, "")
 
 	ufmt.Printf("[EXPECTED] position 05 minted and staked: ID=%d, liquidity=%s\n", lpTokenId, liquidity)
 

@@ -129,7 +129,6 @@ func mintAndStakePosition() uint64 {
 		"1",
 		maxTimeout,
 		adminUser,
-		adminUser,
 		"",
 	)
 

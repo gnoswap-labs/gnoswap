@@ -18,6 +18,7 @@ var (
 	errInvalidTokenParams      = errors.New("[GNOSWAP-GNFT-006] invalid token parameters")
 	errInvalidTokenParamsRange = errors.New("[GNOSWAP-GNFT-007] token parameters out of range")
 	errInvalidColorFormat      = errors.New("[GNOSWAP-GNFT-008] invalid color format")
+	errStakedTokenLocked       = errors.New("[GNOSWAP-GNFT-009] staked token is locked")
 )
 
 // makeErrorWithDetails creates an error with additional context.
