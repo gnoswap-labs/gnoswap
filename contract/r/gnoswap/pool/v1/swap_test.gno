@@ -1511,12 +1511,36 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 						getMockInstance().CollectProtocol(barPath, bazPath, STANDARD_FEE_TIER, adminAddr, "1", "1")
 					})
 					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetFeeProtocol(4, 4)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(rouRealm)
 						getMockInstance().IncreaseObservationCardinalityNext(barPath, bazPath, STANDARD_FEE_TIER, 3)
 					})
 					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(adminRealm)
 						getMockInstance().CreatePool(barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetPoolCreationFee(1)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(adminRealm)
+						getMockInstance().SetWithdrawalFee(1)
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+					})
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
+						testing.SetRealm(stakerRealm)
+						getMockInstance().SetSwapEndHook(func(cur realm, poolPath string) error { return nil })
 					})
 					uassert.PanicsContains(t, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(posRealm)
@@ -1731,6 +1755,15 @@ func TestPoolLock_BlocksMutationEntrypoints(t *testing.T) {
 			},
 		},
 		{
+			name: "set fee protocol",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetFeeProtocol(4, 4)
+			},
+		},
+		{
 			name: "increase observation cardinality next",
 			setRealm: func() {
 				testing.SetRealm(rouRealm)
@@ -1746,6 +1779,51 @@ func TestPoolLock_BlocksMutationEntrypoints(t *testing.T) {
 			},
 			action: func(t *testing.T) {
 				mockInstanceCreatePool(barPath, bazPath, LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+			},
+		},
+		{
+			name: "set pool creation fee",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetPoolCreationFee(1)
+			},
+		},
+		{
+			name: "set withdrawal fee",
+			setRealm: func() {
+				testing.SetRealm(adminRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetWithdrawalFee(1)
+			},
+		},
+		{
+			name: "set tick cross hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetTickCrossHook(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+			},
+		},
+		{
+			name: "set swap start hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetSwapStartHook(func(cur realm, poolPath string, timestamp int64) {})
+			},
+		},
+		{
+			name: "set swap end hook",
+			setRealm: func() {
+				testing.SetRealm(stakerRealm)
+			},
+			action: func(t *testing.T) {
+				mockInstanceSetSwapEndHook(func(cur realm, poolPath string) error { return nil })
 			},
 		},
 		{

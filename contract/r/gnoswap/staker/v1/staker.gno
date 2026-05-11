@@ -197,14 +197,12 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
 
-	actualReferrer := referral.TryRegister(cross, caller, referrer)
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
+	assertIsPositionOwner(owner, caller)
 
-	if err := hasTokenOwnership(owner, caller); err != nil {
-		panic(err.Error())
-	}
+	actualReferrer := referral.TryRegister(cross, caller, referrer)
 
 	if err := tokenHasLiquidity(positionId); err != nil {
 		panic(err.Error())
@@ -262,8 +260,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
-
-	s.getUserDeposits().addDeposit(caller, positionId)
 
 	// transfer NFT ownership to staker contract
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
@@ -774,26 +770,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	s.getDeposits().remove(positionId)
-	s.getUserDeposits().removeDeposit(deposit.Owner(), positionId)
-
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
-	caller := runtime.PreviousRealm().Address()
-	if err := hasTokenOwnership(owner, caller); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// hasTokenOwnership validates that the caller has permission to operate the token.
-func hasTokenOwnership(owner, caller address) error {
-	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
-	isCallerOwner := owner == caller
-	isStakerOwner := owner == stakerAddr
-
-	if !isCallerOwner && !isStakerOwner {
-		return errNoPermission
-	}
 
 	return nil
 }
