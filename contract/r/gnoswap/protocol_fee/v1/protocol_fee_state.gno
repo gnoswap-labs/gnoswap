@@ -54,11 +54,11 @@ func (pfs *protocolFeeState) ReservedTokens() []string {
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
 	devOpsAddr := access.MustGetAddress(prabc.ROLE_DEVOPS.String())
-	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
 
 	if err := pfs.addActualDistributedToDevOps(token, amount); err != nil {
 		return err
 	}
+	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
 
 	return nil
 }
@@ -67,11 +67,11 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
 	govStakerAddr := access.MustGetAddress(prabc.ROLE_GOV_STAKER.String())
-	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
 
 	if err := pfs.addActualDistributedToGovStaker(token, amount); err != nil {
 		return err
 	}
+	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
 
 	return nil
 }
