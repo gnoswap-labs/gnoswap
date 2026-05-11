@@ -16,8 +16,8 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
+	"gno.land/r/gnoswap/gov/staker"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -126,6 +126,50 @@ func TestStakerDelegate_Delegate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerDelegate_Delegate_AllowsContractCaller(t *testing.T) {
+	gs := createTestGovStaker()
+	cleanupStakerDelegateTest(t, gs)
+
+	contractCallerRealm := testing.NewCodeRealm("gno.land/r/onbloc/delegator")
+	contractCaller := contractCallerRealm.Address()
+	originCaller := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("validator1")
+	amount := int64(minimumAmount)
+	expectedDelegationID := gs.store.GetDelegationCounter().Get() + 1
+
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, contractCaller, amount)
+
+	testing.SetRealm(contractCallerRealm)
+	gns.Approve(cross, govStakerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(originCaller))
+	testing.SetOriginCaller(originCaller)
+
+	func(cur realm) {
+		testing.SetRealm(contractCallerRealm)
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+			result := gs.Delegate(validator, amount, "")
+			uassert.Equal(t, result, amount)
+		}(cross)
+	}(cross)
+
+	delegationIDs := gs.getUserDelegationIDsWithDelegatee(contractCaller, validator)
+	uassert.Equal(t, len(delegationIDs), 1)
+	uassert.Equal(t, delegationIDs[0], expectedDelegationID)
+	uassert.Equal(t, gs.store.GetDelegationCounter().Get(), expectedDelegationID)
+
+	delegation := gs.getDelegation(delegationIDs[0])
+	uassert.Equal(t, delegation.ID(), expectedDelegationID)
+	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
+	uassert.Equal(t, delegation.DelegateTo(), validator)
+
+	originDelegationIDs := gs.getUserDelegationIDsWithDelegatee(originCaller, validator)
+	uassert.Equal(t, len(originDelegationIDs), 0)
 }
 
 // Test Undelegate function
@@ -477,6 +521,21 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 			setupDelegation: func() {
 				cleanupStakerDelegateTest(t, gs)
 				setupStakerDelegateTestDelegation(t, gs, testutils.TestAddress("alice"), testutils.TestAddress("validator1"), minimumAmount)
+			},
+			cleanupMocks: func() {
+				cleanupStakerDelegateTest(t, gs)
+			},
+		},
+		{
+			name:          "Redelegate without delegation should panic",
+			caller:        testutils.TestAddress("alice"),
+			delegator:     testutils.TestAddress("validator1"),
+			delegatee:     testutils.TestAddress("validator2"),
+			amount:        minimumAmount,
+			expectPanic:   true,
+			expectedError: errNotEnoughDelegated.Error(),
+			setupDelegation: func() {
+				cleanupStakerDelegateTest(t, gs)
 			},
 			cleanupMocks: func() {
 				cleanupStakerDelegateTest(t, gs)
@@ -1227,11 +1286,11 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 func TestStakerDelegate_collectDelegations_MultipleDelegations(t *testing.T) {
 	tests := []struct {
 		name             string
-		delegationCounts []int          // number of delegations to create
-		amounts          [][]int64      // amounts for each delegation's withdrawals
-		lockupPeriods    []int64        // lockup period for each delegation
-		waitTime         int64          // time to wait before collecting
-		expectedTotal    int64          // expected total collected amount
+		delegationCounts []int     // number of delegations to create
+		amounts          [][]int64 // amounts for each delegation's withdrawals
+		lockupPeriods    []int64   // lockup period for each delegation
+		waitTime         int64     // time to wait before collecting
+		expectedTotal    int64     // expected total collected amount
 		description      string
 	}{
 		{

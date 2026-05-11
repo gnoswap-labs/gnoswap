@@ -7,8 +7,8 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-func assertIsNotAllowedEOA(previousRealm runtime.Realm) {
-	if previousRealm.PkgPath() == "" {
+func assertIsNotUserCall(previousRealm runtime.Realm) {
+	if previousRealm.IsUserCall() {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,
 			ufmt.Sprintf("previousRealm(%s) is EOA", previousRealm.Address()),
