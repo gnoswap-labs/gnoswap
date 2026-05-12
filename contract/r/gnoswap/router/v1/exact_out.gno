@@ -173,18 +173,21 @@ func (r *routerV1) exactOutSwapRoute(
 	resultInputAmount := inputAmount
 	resultOutputAmount := -outputAmount
 
-	chain.Emit(
-		"ExactOutSwap",
-		"prevAddr", previousRealm.Address().String(),
+	eventAttrs := append([]string{
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,
 		"exactAmount", formatInt64(params.exactAmount),
-		"route", params.routeArr,
 		"quote", params.quoteArr,
 		"resultInputAmount", formatInt64(resultInputAmount),
 		"resultOutputAmount", formatInt64(resultOutputAmount),
 		"referrer", actualReferrer,
+	}, buildRouteEventAttrs(params.routeArr)...)
+
+	chain.Emit(
+		"ExactOutSwap",
+		eventAttrs...,
 	)
 
 	return resultInputAmount, resultOutputAmount

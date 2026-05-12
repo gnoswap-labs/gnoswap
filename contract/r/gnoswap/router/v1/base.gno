@@ -186,6 +186,18 @@ func (p *SwapRouteParams) SwapCount() int64 {
 	return swapCount
 }
 
+func buildRouteEventAttrs(routeArr string) []string {
+	routes := strings.Split(routeArr, ",")
+	routeEventAttrs := make([]string, 0, len(routes)*2)
+
+	for index, route := range routes {
+		routeEventAttrs = append(routeEventAttrs, ufmt.Sprintf("routes[%d]", index))
+		routeEventAttrs = append(routeEventAttrs, route)
+	}
+
+	return routeEventAttrs
+}
+
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
 	return p.sqrtPriceLimitX96 != nil && !p.sqrtPriceLimitX96.IsZero()
 }
