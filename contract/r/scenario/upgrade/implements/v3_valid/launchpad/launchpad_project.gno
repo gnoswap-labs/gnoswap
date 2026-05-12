@@ -94,16 +94,15 @@ func (lp *launchpadV1) CreateProject(
 	)
 
 	previousRealm := runtime.PreviousRealm()
-	chain.Emit(
-		"CreateProject",
+	conditionEventAttrs := buildConditionEventAttrs(params.conditionTokens, params.conditionAmounts)
+
+	eventAttrs := append([]string{
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
 		"depositAmount", formatInt(depositAmount),
-		"conditionsToken", params.conditionTokens,
-		"conditionsAmount", params.conditionAmounts,
 		"tier30Ratio", formatInt(params.tier30Ratio),
 		"tier90Ratio", formatInt(params.tier90Ratio),
 		"tier180Ratio", formatInt(params.tier180Ratio),
@@ -115,6 +114,11 @@ func (lp *launchpadV1) CreateProject(
 		"tier90EndTime", formatInt(project.Tiers()[projectTier90].EndTime()),
 		"tier180Amount", formatInt(project.Tiers()[projectTier180].TotalDistributeAmount()),
 		"tier180EndTime", formatInt(project.Tiers()[projectTier180].EndTime()),
+	}, conditionEventAttrs...)
+
+	chain.Emit(
+		"CreateProject",
+		eventAttrs...,
 	)
 
 	return project.ID()
@@ -441,6 +445,9 @@ func (p *createProjectParams) validateConditions() error {
 
 	if len(tokenPaths) != len(minimumAmounts) {
 		return makeErrorWithDetails(errInvalidInput, "conditionTokens and conditionAmounts are not matched")
+	}
+	if len(tokenPaths) > maxProjectConditionCount {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("condition count(%d) exceeds maximum(%d)", len(tokenPaths), maxProjectConditionCount))
 	}
 
 	tokenPathMap := make(map[string]bool)

@@ -15,6 +15,23 @@ func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
 }
 
+func buildConditionEventAttrs(conditionTokens string, conditionAmounts string) []string {
+	if conditionTokens == "" {
+		return []string{}
+	}
+
+	tokenPaths := strings.Split(conditionTokens, stringSplitterPad)
+	amounts := strings.Split(conditionAmounts, stringSplitterPad)
+	eventAttrs := make([]string, 0, len(tokenPaths)*2)
+
+	for index, tokenPath := range tokenPaths {
+		eventAttrs = append(eventAttrs, ufmt.Sprintf("conditionsTokens[%d]", index))
+		eventAttrs = append(eventAttrs, tokenPath+stringSplitterPad+amounts[index])
+	}
+
+	return eventAttrs
+}
+
 // parseProjectTierID parses a project tier ID into its project ID and duration.
 // Returns the project ID {tokenPath}:{createdHeight} and the duration of the project tier (30, 90, 180).
 func parseProjectTierID(projectTierID string) (string, int64) {
