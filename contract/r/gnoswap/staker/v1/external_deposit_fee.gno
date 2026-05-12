@@ -126,7 +126,6 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 		"SetTokenMinimumRewardAmount",
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"paramsStr", paramsStr, // Log the raw input string
 		"tokenPath", tokenPath,
 		"prevAmountFound", formatBool(found),
 		"prevAmount", formatAnyInt(prevAmount), // Will be 0 if !found
