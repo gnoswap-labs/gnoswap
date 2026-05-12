@@ -4,7 +4,6 @@ import (
 	"chain"
 	"chain/runtime"
 	"strconv"
-	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -32,8 +31,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() {
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	pfs := pf.getProtocolFeeState()
 
-	sentToDevOpsForEvent := make([]string, 0)
-	sentToGovStakerForEvent := make([]string, 0)
 	reservedTokens := pfs.ReservedTokens()
 
 	for _, token := range reservedTokens {
@@ -65,16 +62,10 @@ func (pf *protocolFeeV1) DistributeProtocolFee() {
 		if err := pfs.distributeToDevOps(token, toDevOpsAmount); err != nil {
 			panic(err)
 		}
-		if toDevOpsAmount > 0 {
-			sentToDevOpsForEvent = append(sentToDevOpsForEvent, makeEventString(token, toDevOpsAmount))
-		}
 
 		// Distribute to Gov/Staker
 		if err := pfs.distributeToGovStaker(token, toGovStakerAmount); err != nil {
 			panic(err)
-		}
-		if toGovStakerAmount > 0 {
-			sentToGovStakerForEvent = append(sentToGovStakerForEvent, makeEventString(token, toGovStakerAmount))
 		}
 	}
 	if err := pfs.clearReservedTokens(); err != nil {
@@ -86,8 +77,6 @@ func (pf *protocolFeeV1) DistributeProtocolFee() {
 		"TransferProtocolFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"toDevOps", strings.Join(sentToDevOpsForEvent, ","),
-		"toGovStaker", strings.Join(sentToGovStakerForEvent, ","),
 	)
 }
 
@@ -196,10 +185,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) error 
 	common.SafeGRC20TransferFrom(cross, tokenPath, caller, protocolFeeAddr, amount)
 
 	return nil
-}
-
-func makeEventString(tokenPath string, amount int64) string {
-	return tokenPath + "*FEE*" + strconv.FormatInt(amount, 10)
 }
 
 func (pf *protocolFeeV1) reserveCollectedProtocolFee(tokenPath string, amount int64) {
