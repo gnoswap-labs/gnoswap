@@ -170,7 +170,6 @@ func (i *poolV1) Swap(
 		return "0", "0"
 	}
 
-	startTick := pool.Slot0Tick()
 	blockTimestamp := time.Now().Unix()
 
 	// Call swap start hook if set
@@ -275,7 +274,6 @@ func (i *poolV1) Swap(
 		"feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128().ToString(),
 		"balanceToken0", formatInt(pool.BalanceToken0()),
 		"balanceToken1", formatInt(pool.BalanceToken1()),
-		"ticks", ticksToString(pool, startTick, pool.Slot0Tick()),
 		"tickCumulative", formatInt(lastObservation.TickCumulative()),
 		"liquidityCumulative", lastObservation.LiquidityCumulative(),
 		"secondsPerLiquidityCumulativeX128", lastObservation.SecondsPerLiquidityCumulativeX128(),
