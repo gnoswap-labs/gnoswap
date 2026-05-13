@@ -172,10 +172,11 @@ The system maintains:
 
 ```go
 // Stake existing position
-StakeToken(123, "g1referrer...")
+StakeToken(cross, 123, "g1referrer...")
 
 // Create external incentive
 CreateExternalIncentive(
+    cross,
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
     1000000000,
@@ -184,14 +185,14 @@ CreateExternalIncentive(
 )
 
 // Collect rewards without unstaking
-CollectReward(123)
+CollectReward(cross, 123)
 
 // End an incentive and collect remaining penalties
-EndExternalIncentive(poolPath, incentiveId, refundAddress)
-CollectExternalIncentivePenalty(poolPath, incentiveId, refundAddress)
+EndExternalIncentive(cross, poolPath, incentiveId, refundAddress)
+CollectExternalIncentivePenalty(cross, poolPath, incentiveId, refundAddress)
 
 // Unstake and collect all rewards
-UnStakeToken(123)
+UnStakeToken(cross, 123)
 ```
 
 ## Security
