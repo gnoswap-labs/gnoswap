@@ -232,23 +232,20 @@
 //     ↓
 //  3. Executes v2 initializer with shared KVStore
 //     ↓
-//  4. Updates permissions:
-//     - v1: Write → ReadOnly
-//     - v2: ReadOnly → Write
-//     - v3: ReadOnly (unchanged)
+//  4. Replaces the current implementation pointer with v2
 //     ↓
-//  5. v2 is now active with write access
+//  5. v2 is now active through the domain proxy
 //
 // ## Permission Model
 //
 // The version manager enforces a strict permission model:
 //
-//   - **Write Access**: Only the active implementation can modify storage. Granted
-//     automatically to the first registered version or during ChangeImplementation.
-//   - **Read-Only Access**: Inactive versions can read storage but cannot modify it.
-//     All non-active versions are automatically downgraded to read-only.
-//   - **Automatic Transition**: Permission changes are handled automatically by the
-//     manager during version switching.
+//   - **Proxy-Mediated Write Access**: Implementations modify storage only when called
+//     through the domain proxy realm, which owns the KVStore write permission.
+//   - **No Implementation Grants**: Version packages are registered as initializers;
+//     they are not granted direct store permissions.
+//   - **Automatic Transition**: `ChangeImplementation` swaps the active implementation
+//     instance without changing KVStore permissions.
 //   - **Domain Isolation**: Permissions are scoped to the domain's KVStore.
 //
 // ## Security
@@ -268,7 +265,7 @@
 //   - Unauthorized caller attempting to register (not in domain path)
 //   - Duplicate registration of the same package path
 //   - Attempting to switch to an unregistered version
-//   - Permission update failures during version switching
+//   - Implementation initialization failures during version switching
 //   - Invalid initializer function type
 //
 // ## Best Practices
@@ -314,8 +311,8 @@
 //
 //   - **Type Safety**: Requires runtime type assertion to domain interface. No compile-time
 //     type checking for implementation compatibility.
-//   - **Atomic Switching**: Permission updates during ChangeImplementation are not
-//     transactionally rolled back on partial failure. Manual recovery may be required.
+//   - **Atomic Switching**: Implementation initialization during ChangeImplementation is
+//     not separately rolled back on partial failure. Manual recovery may be required.
 //   - **Storage Schema**: Requires careful schema design for cross-version compatibility.
 //     Breaking schema changes require migration or careful version ordering.
 //   - **Registration Order**: The first registered version automatically becomes the
