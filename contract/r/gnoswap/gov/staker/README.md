@@ -69,7 +69,7 @@ Collects launchpad-related rewards for a target address.
 
 ```go
 // Delegate to another address
-delegationId := Delegate(cross, delegatee, 1_000_000, "g1referrer...")
+delegatedAmount := Delegate(cross, delegatee, 1_000_000, "g1referrer...")
 
 // Redelegate part of the balance
 Redelegate(cross, delegatee, newDelegatee, 500_000)
