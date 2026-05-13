@@ -24,9 +24,11 @@ Swaps exact input amount for minimum output.
 
 ### `ExactOutSwapRoute`
 
-Swaps for exact output amount with maximum input.
+Swaps for a requested final user output amount with maximum input. The router requests
+extra pool output to cover the router fee, deducts the fee, then validates and transfers
+the post-fee output amount.
 
-- Fixed output, variable input
+- Fixed post-fee user output, variable input
 - Reverts if input > amountInMax
 - Calculates path backwards
 
@@ -147,6 +149,7 @@ wugnot.Approve(cross, routerAddress, 1000000)
 
 // 2. Call swap function with wrapped GNOT paths
 amountIn, amountOut := ExactInSwapRoute(
+    cross,
     "gno.land/r/gnoland/wugnot",               // input token
     "gno.land/r/demo/bar",                    // output token
     "1000000",                                // amount in wrapped token units
@@ -172,6 +175,7 @@ amountIn, amountOut := ExactInSwapRoute(
 ```go
 // Simple exact input swap
 amountIn, amountOut := ExactInSwapRoute(
+    cross,
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // amount (6 decimals)
@@ -184,6 +188,7 @@ amountIn, amountOut := ExactInSwapRoute(
 
 // Multi-hop swap
 ExactInSwapRoute(
+    cross,
     "gno.land/r/demo/bar",
     "gno.land/r/demo/baz",
     "1000000",
@@ -196,6 +201,7 @@ ExactInSwapRoute(
 
 // Split route for large trades
 ExactInSwapRoute(
+    cross,
     "gno.land/r/demo/usdc",
     "gno.land/r/gnoland/wugnot",
     "10000000000",
@@ -214,6 +220,7 @@ Single swap functions support partial execution through price limits:
 ```go
 // Partial swap with price limit - may not consume full input amount
 amountIn, amountOut := ExactInSingleSwapRoute(
+    cross,
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // max amount to swap
