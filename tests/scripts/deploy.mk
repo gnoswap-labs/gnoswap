@@ -198,7 +198,7 @@ deploy-launchpad-v1:
 
 deploy-pool-v1:
 	$(info ************ deploy pool-v1 ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 85000ugnot -gas-wanted 85000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 90000ugnot -gas-wanted 90000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-position-v1:
