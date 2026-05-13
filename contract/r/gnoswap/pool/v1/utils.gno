@@ -3,12 +3,10 @@ package v1
 import (
 	"math"
 	"strconv"
-	"strings"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -180,31 +178,6 @@ func formatInt(v any) string {
 // formatBool converts a boolean value to string representation.
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
-}
-
-// ticksToString converts tick indices within a range to their string representation,
-// including detailed tick information from the pool's tick storage.
-func ticksToString(pool *pl.Pool, startTick, endTick int32) string {
-	minTick, maxTick := startTick, endTick
-
-	if minTick > maxTick {
-		minTick, maxTick = maxTick, minTick
-	}
-
-	tickInfoStrings := make([]string, 0)
-
-	pool.IterateTicks(minTick, maxTick, func(tick int32, tickInfo pl.TickInfo) bool {
-		tickEventInfo := NewTickEventInfo(tick, tickInfo)
-		tickInfoStrings = append(tickInfoStrings, tickEventInfo.ToString())
-
-		return false
-	})
-
-	if len(tickInfoStrings) == 0 {
-		return "[]"
-	}
-
-	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
 
 // safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow

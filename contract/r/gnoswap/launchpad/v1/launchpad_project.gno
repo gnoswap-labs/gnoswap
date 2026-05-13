@@ -75,11 +75,13 @@ func (lp *launchpadV1) CreateProject(
 	// Checks: validate balance before creating project
 	tokenBalance := common.BalanceOf(tokenPath, caller)
 	if tokenBalance < depositAmount {
-		panic(makeErrorWithDetails(
-			errInsufficientBalance, ufmt.Sprintf(
-				"caller(%s) balance(%d) < depositAmount(%d)",
-				caller.String(), tokenBalance, depositAmount),
-		),
+		panic(
+			makeErrorWithDetails(
+				errInsufficientBalance, ufmt.Sprintf(
+					"caller(%s) balance(%d) < depositAmount(%d)",
+					caller.String(), tokenBalance, depositAmount,
+				),
+			),
 		)
 	}
 
@@ -113,16 +115,15 @@ func (lp *launchpadV1) CreateProject(
 		panic(err)
 	}
 
-	chain.Emit(
-		"CreateProject",
+	conditionEventAttrs := buildConditionEventAttrs(params.conditionTokens, params.conditionAmounts)
+
+	eventAttrs := append([]string{
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
 		"depositAmount", formatInt(depositAmount),
-		"conditionsToken", params.conditionTokens,
-		"conditionsAmount", params.conditionAmounts,
 		"tier30Ratio", formatInt(params.tier30Ratio),
 		"tier90Ratio", formatInt(params.tier90Ratio),
 		"tier180Ratio", formatInt(params.tier180Ratio),
@@ -134,6 +135,11 @@ func (lp *launchpadV1) CreateProject(
 		"tier90EndTime", formatInt(tier90.EndTime()),
 		"tier180Amount", formatInt(tier180.TotalDistributeAmount()),
 		"tier180EndTime", formatInt(tier180.EndTime()),
+	}, conditionEventAttrs...)
+
+	chain.Emit(
+		"CreateProject",
+		eventAttrs...,
 	)
 
 	return project.ID()
@@ -517,6 +523,9 @@ func (p *createProjectParams) validateConditions() error {
 
 	if len(tokenPaths) != len(minimumAmounts) {
 		return makeErrorWithDetails(errInvalidInput, "conditionTokens and conditionAmounts are not matched")
+	}
+	if len(tokenPaths) > maxProjectConditionCount {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("condition count(%d) exceeds maximum(%d)", len(tokenPaths), maxProjectConditionCount))
 	}
 
 	tokenPathMap := make(map[string]bool)

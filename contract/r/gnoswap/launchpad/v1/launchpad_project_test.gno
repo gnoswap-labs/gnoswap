@@ -665,6 +665,9 @@ func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 }
 
 func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
+	conditionTokensOverMax := strings.Repeat("gno.land/r/onbloc/obl*PAD*", maxProjectConditionCount) + "gno.land/r/onbloc/obl"
+	conditionAmountsOverMax := strings.Repeat("1000*PAD*", maxProjectConditionCount) + "1000"
+
 	tests := []struct {
 		name             string
 		conditionTokens  string
@@ -699,6 +702,12 @@ func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 			name:             "conditions are invalid by duplicated token path",
 			conditionTokens:  "gno.land/r/onbloc/obl*PAD*gno.land/r/onbloc/bar*PAD*gno.land/r/onbloc/obl",
 			conditionAmounts: "1000*PAD*2000*PAD*3000",
+			expectedError:    errInvalidInput,
+		},
+		{
+			name:             "conditions are invalid when condition count exceeds event attr limit",
+			conditionTokens:  conditionTokensOverMax,
+			conditionAmounts: conditionAmountsOverMax,
 			expectedError:    errInvalidInput,
 		},
 	}

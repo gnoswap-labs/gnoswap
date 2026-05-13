@@ -15,6 +15,8 @@ const (
 
 	stringSplitterPad = "*PAD*"
 
+	maxProjectConditionCount = 5
+
 	projectMinimumStartDelayTime = int64(dayTime * 3) // 3 days
 )
 

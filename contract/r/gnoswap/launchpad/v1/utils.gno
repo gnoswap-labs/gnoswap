@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const(
+const (
 	MAX_INT64 = math.MaxInt64
 	MIN_INT64 = math.MinInt64
 )
@@ -25,6 +25,23 @@ func formatBool(value bool) string {
 // formatInt returns the string representation of the int64 value.
 func formatInt(value int64) string {
 	return strconv.FormatInt(value, 10)
+}
+
+func buildConditionEventAttrs(conditionTokens string, conditionAmounts string) []string {
+	if conditionTokens == "" {
+		return []string{}
+	}
+
+	tokenPaths := strings.Split(conditionTokens, stringSplitterPad)
+	amounts := strings.Split(conditionAmounts, stringSplitterPad)
+	eventAttrs := make([]string, 0, len(tokenPaths)*2)
+
+	for index, tokenPath := range tokenPaths {
+		eventAttrs = append(eventAttrs, ufmt.Sprintf("conditionsTokens[%d]", index))
+		eventAttrs = append(eventAttrs, tokenPath+stringSplitterPad+amounts[index])
+	}
+
+	return eventAttrs
 }
 
 // parseProjectTierID parses a project tier ID into its project ID and duration.

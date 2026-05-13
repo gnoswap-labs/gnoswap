@@ -203,6 +203,50 @@ func TestUtils_formatInt(t *testing.T) {
 	}
 }
 
+func TestUtils_buildConditionEventAttrs(t *testing.T) {
+	tests := []struct {
+		name             string
+		conditionTokens  string
+		conditionAmounts string
+		expected         []string
+	}{
+		{
+			name:             "empty conditions return empty attrs",
+			conditionTokens:  "",
+			conditionAmounts: "",
+			expected:         []string{},
+		},
+		{
+			name:             "single condition is encoded as one attr pair",
+			conditionTokens:  "gno.land/r/onbloc/bar",
+			conditionAmounts: "1000000",
+			expected: []string{
+				"conditionsTokens[0]", "gno.land/r/onbloc/bar*PAD*1000000",
+			},
+		},
+		{
+			name:             "multiple conditions preserve index order",
+			conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+			conditionAmounts: "1000*PAD*2000",
+			expected: []string{
+				"conditionsTokens[0]", "gno.land/r/onbloc/foo*PAD*1000",
+				"conditionsTokens[1]", "gno.land/r/onbloc/bar*PAD*2000",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildConditionEventAttrs(tt.conditionTokens, tt.conditionAmounts)
+
+			uassert.Equal(t, len(result), len(tt.expected))
+			for i := 0; i < len(tt.expected); i++ {
+				uassert.Equal(t, result[i], tt.expected[i])
+			}
+		})
+	}
+}
+
 func TestSafeMulDivInt64(t *testing.T) {
 	tests := []struct {
 		name        string

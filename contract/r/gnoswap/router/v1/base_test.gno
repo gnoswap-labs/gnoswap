@@ -90,6 +90,41 @@ func TestExecuteSwapOperation(t *testing.T) {
 	}
 }
 
+func TestBuildRouteEventAttrs(t *testing.T) {
+	tests := []struct {
+		name     string
+		routeArr string
+		expected []string
+	}{
+		{
+			name:     "single route emits one bracketed attr pair",
+			routeArr: foobar500,
+			expected: []string{
+				"routes[0]", foobar500,
+			},
+		},
+		{
+			name:     "multiple routes preserve index order",
+			routeArr: foobar500 + "," + barbaz500,
+			expected: []string{
+				"routes[0]", foobar500,
+				"routes[1]", barbaz500,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildRouteEventAttrs(tt.routeArr)
+
+			uassert.Equal(t, len(result), len(tt.expected))
+			for i := 0; i < len(tt.expected); i++ {
+				uassert.Equal(t, result[i], tt.expected[i])
+			}
+		})
+	}
+}
+
 func TestProcessRoute(t *testing.T) {
 	op := &baseSwapOperation{}
 
@@ -375,7 +410,6 @@ func TestSwapRouteParams_ExpectedExactAmountByFee(t *testing.T) {
 		})
 	}
 }
-
 
 // Test SwapRouteParams.SwapCount
 func TestSwapRouteParams_SwapCount(t *testing.T) {
@@ -1311,7 +1345,6 @@ func TestCreateSwapOperation_EdgeCases(t *testing.T) {
 		})
 	}
 }
-
 
 // Test processRoutes remainder calculation accuracy
 func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
