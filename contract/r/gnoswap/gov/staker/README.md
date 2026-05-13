@@ -69,17 +69,17 @@ Collects launchpad-related rewards for a target address.
 
 ```go
 // Delegate to another address
-delegationId := Delegate(delegatee, 1_000_000, "g1referrer...")
+delegationId := Delegate(cross, delegatee, 1_000_000, "g1referrer...")
 
 // Redelegate part of the balance
-Redelegate(delegatee, newDelegatee, 500_000)
+Redelegate(cross, delegatee, newDelegatee, 500_000)
 
 // Collect protocol-fee rewards
-CollectReward()
+CollectReward(cross)
 
 // Start undelegation and collect later
-Undelegate(delegatee, 250_000)
-CollectUndelegatedGns()
+Undelegate(cross, delegatee, 250_000)
+CollectUndelegatedGns(cross)
 ```
 
 ## Security
