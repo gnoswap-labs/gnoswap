@@ -124,6 +124,7 @@ amount1 = L * (sqrtCurrent - sqrtLower)
 ```go
 // Mint new position
 tokenId, liquidity, amount0, amount1 := Mint(
+    cross,
     "gno.land/r/onbloc/weth",  // token0
     "gno.land/r/onbloc/usdc",  // token1
     3000,                      // fee
@@ -140,6 +141,7 @@ tokenId, liquidity, amount0, amount1 := Mint(
 
 // Add liquidity
 positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
+    cross,
     tokenId,
     "500000",
     "1000000000",
@@ -150,11 +152,13 @@ positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 
 // Collect fees
 positionId, collected0, collected1, poolPath, rawAmount0, rawAmount1 := CollectFee(
+    cross,
     tokenId,
 )
 
 // Reposition to new range (requires cleared position)
 positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
+    cross,
     tokenId,
     -443610,                   // new tickLower
     443610,                    // new tickUpper
