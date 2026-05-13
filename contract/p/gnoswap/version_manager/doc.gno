@@ -6,18 +6,17 @@
 // ## Overview
 //
 // Version Manager enables seamless upgrades by allowing multiple versioned implementations
-// (v1, v2, v3) to coexist and share a unified storage layer. The system manages permissions
-// dynamically, granting write access only to the active implementation while keeping
-// previous versions available in read-only mode for backward compatibility.
+// (v1, v2, v3) to coexist and share a unified storage layer. Implementations are selected
+// dynamically while storage write access stays with the domain proxy realm.
 //
 // Key components of this package include:
 //
 //  1. **VersionManager Interface**: Defines the contract for managing multiple versioned
 //     implementations of a domain.
 //  2. **versionManager Implementation**: Concrete implementation that manages version
-//     registration, permission control, and implementation switching.
-//  3. **Permission-Based Access Control**: Dynamically manages read/write permissions
-//     for each version through the shared KVStore.
+//     registration and implementation switching.
+//  3. **Proxy-Mediated Storage Access**: Keeps KVStore write access on the domain proxy
+//     realm while version packages provide implementation logic.
 //  4. **Domain-Scoped Security**: Ensures only authorized packages within the domain
 //     path can register implementations.
 //
@@ -25,14 +24,13 @@
 //
 //   - **Zero-Downtime Upgrades**: Switch implementations at runtime without service
 //     interruption or data migration.
-//   - **Unified Storage**: All versions share a single KVStore with permission-based
-//     access control, eliminating migration overhead.
+//   - **Unified Storage**: All versions share a single KVStore owned by the domain proxy
+//     realm, eliminating migration overhead.
 //   - **Hot-Swapping**: Instant version switching through dynamic strategy replacement
-//     with automatic permission management.
+//     without changing KVStore permissions.
 //   - **Domain-Scoped Security**: Only packages under the authorized domain path can
 //     register implementations, preventing unauthorized access.
-//   - **Backward Compatibility**: Previous versions remain accessible in read-only mode
-//     for gradual migration and rollback support.
+//   - **Backward Compatibility**: Previous versions remain registered for rollback support.
 //   - **Strategy Pattern**: Enables runtime algorithm swapping without code changes.
 //
 // ## Architecture Pattern
@@ -49,10 +47,10 @@
 //  1. **Initialization**: Create a version manager for the domain using NewVersionManager.
 //  2. **Version Registration**: Each version (v1, v2, v3) calls RegisterInitializer during
 //     their init() function to register their implementation.
-//  3. **Active Implementation**: The first registered version becomes the active implementation
-//     with write access; subsequent versions are granted read-only access.
+//  3. **Active Implementation**: The first registered version becomes the active implementation;
+//     subsequent versions are registered for later activation.
 //  4. **Version Switching**: Use ChangeImplementation to hot-swap to a different version,
-//     which automatically updates permissions.
+//     which swaps the active implementation instance.
 //
 // ## Example Usage
 //
@@ -77,15 +75,16 @@
 //
 // import (
 //
-//	"gno.land/p/gnoswap/version_manager"
 //	"gno.land/p/gnoswap/store"
+//	"gno.land/p/gnoswap/version_manager"
+//	"chain/runtime"
 //
 // )
 //
 //	var manager version_manager.VersionManager
 //
 //	func init() {
-//	    kvStore := store.NewKVStore("protocol_fee")
+//	    kvStore := store.NewKVStore(runtime.CurrentRealm().Address())
 //
 //	    manager = version_manager.NewVersionManager(
 //	        "gno.land/r/gnoswap/protocol_fee",
@@ -151,7 +150,7 @@
 // }
 //
 //	func init() {
-//	    // Register v2 - will be read-only until explicitly activated
+//	    // Register v2 for later activation
 //	    manager := protocol_fee.GetManager()
 //	    manager.RegisterInitializer(func(store any) any {
 //	        return &protocolFeeV2{store: store}
@@ -200,8 +199,7 @@
 //	        return err
 //	    }
 //
-//	    // v2 now has write access
-//	    // v1 automatically becomes read-only
+//	    // v2 is now the active implementation through the domain proxy
 //	    return nil
 //	}
 //
@@ -214,13 +212,13 @@
 //  1. Domain package initializes version manager with KVStore
 //     ↓
 //  2. v1 package calls RegisterInitializer during init()
-//     → Becomes active implementation (write access)
+//     → Becomes active implementation
 //     ↓
 //  3. v2 package calls RegisterInitializer during init()
-//     → Registered but read-only
+//     → Registered for later activation
 //     ↓
 //  4. v3 package calls RegisterInitializer during init()
-//     → Registered but read-only
+//     → Registered for later activation
 //
 // ## Version Switching Flow
 //
@@ -316,7 +314,7 @@
 //   - **Storage Schema**: Requires careful schema design for cross-version compatibility.
 //     Breaking schema changes require migration or careful version ordering.
 //   - **Registration Order**: The first registered version automatically becomes the
-//     active implementation with write access. Plan your deployment order carefully.
+//     active implementation. Plan your deployment order carefully.
 //   - **No Unregistration**: Once registered, a version cannot be unregistered. Plan
 //     version lifecycles accordingly.
 //

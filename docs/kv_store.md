@@ -10,7 +10,7 @@ Permission model: unregistered callers have no write access; registered callers 
 - `Get` and typed getters do not enforce read permissions. Sensitive read restrictions must be implemented by the realm exposing the data.
 - Use `RemoveAuthorizedCaller` to revoke write access completely.
 - Implementation realms must NOT receive `Write` permission (proxy already holds it).
-- After every upgrade, audit the full authorized-caller table for each domain store.
+- Upgrades do not change the authorized-caller table; audit it only when introducing new cross-domain writers.
 
 ## Version Manager
 
@@ -19,10 +19,10 @@ Permission model: unregistered callers have no write access; registered callers 
 - `ChangeImplementation` swaps the active implementation instance. Storage write access remains with the domain proxy realm through preserved realm context.
 - Same-version upgrade triggers re-initialization. Ensure initializer handles this without corrupting existing state.
 - Rollback is possible (activate a previous registered version). Test rollback paths.
-- On upgrade: dependent modules (e.g., staker → emission) must manually re-register write access.
+- Dependent modules keep existing write grants across implementation switches; re-register only when the set of authorized writers actually changes.
 
 ## Pitfalls
 
 - Granting implementation realms direct `Write` access → bypasses the proxy-mediated storage model.
-- Upgrade without permission re-registration → dependent modules lose write access.
+- Assuming implementation switches repair permission mistakes → `ChangeImplementation` does not change KVStore grants.
 - Re-initialization on same-version upgrade → potential state corruption if not idempotent.
