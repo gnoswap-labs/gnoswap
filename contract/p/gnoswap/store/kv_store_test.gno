@@ -191,7 +191,7 @@ func TestPermissionUpdateVsRemove(t *testing.T) {
 	err = store.UpdateAuthorizedCaller(caller1, zeroPermission)
 	uassert.ErrorIs(t, ErrInvalidPermission, err)
 
-	// Test removing caller completely (different from setting to ReadOnly)
+	// Test removing caller completely, rather than downgrading to another permission level.
 	err = store.RemoveAuthorizedCaller(caller1)
 	uassert.NoError(t, err)
 
@@ -200,9 +200,9 @@ func TestPermissionUpdateVsRemove(t *testing.T) {
 	_, exists := authorized[caller1]
 	uassert.False(t, exists, "Removed caller should not exist in authorized map")
 
-	// Verify caller1 still has ReadOnly permission
+	// Verify caller1 no longer has an authorized-caller entry.
 	if authorized[caller1] != 0 {
-		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], Write)
+		t.Errorf("authorized[caller1] = %v, want %v", authorized[caller1], 0)
 	}
 }
 
