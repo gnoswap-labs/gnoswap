@@ -1237,11 +1237,11 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 		},
 		{
 			name:         "real gnoswap token paths",
-			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/gnoswap/test_token/usdc:500",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/test_usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/gnoswap/test_token/test_usdc:500",
 			expected: []string{
-				"gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/usdc:500", // first route (already ordered)
-				"gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000",             // second route first hop (already ordered)
-				"gno.land/r/gnoswap/test_token/usdc:gno.land/r/onbloc/gns:500",  // second route second hop (sorted: gnoswap < onbloc)
+				"gno.land/r/demo/wugnot:gno.land/r/gnoswap/test_token/test_usdc:500", // first route (already ordered)
+				"gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000",                  // second route first hop (already ordered)
+				"gno.land/r/gnoswap/test_token/test_usdc:gno.land/r/onbloc/gns:500",  // second route second hop (sorted: gnoswap < onbloc)
 			},
 			wantError: false,
 		},

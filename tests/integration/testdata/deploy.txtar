@@ -26,7 +26,7 @@ gnoland start
 ## deploy test-tokens
 
 ### deploy usdc (expected gas fee: 16820ugnot, gas wanted: 16820000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/usdc -pkgpath gno.land/r/gnoswap/test_token/usdc -gas-fee 25230ugnot -gas-wanted 25230000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/test_token/test_usdc -pkgpath gno.land/r/gnoswap/test_token/test_usdc -gas-fee 25230ugnot -gas-wanted 25230000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'

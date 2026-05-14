@@ -156,52 +156,52 @@ deploy-staker:
 
 deploy-atom:
 	$(info ************ deploy atom ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/atom -pkgpath gno.land/r/gnoswap/test_token/atom -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20295ugnot -gas-wanted 20295000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_atom -pkgpath gno.land/r/gnoswap/test_token/test_atom -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20295ugnot -gas-wanted 20295000 -memo "" gnoswap_admin
 	@echo
 
 deploy-atone:
 	$(info ************ deploy atone ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/atone -pkgpath gno.land/r/gnoswap/test_token/atone -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20470ugnot -gas-wanted 20470000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_atone -pkgpath gno.land/r/gnoswap/test_token/test_atone -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20470ugnot -gas-wanted 20470000 -memo "" gnoswap_admin
 	@echo
 
 deploy-btc:
 	$(info ************ deploy btc ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/btc -pkgpath gno.land/r/gnoswap/test_token/btc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20397ugnot -gas-wanted 20397000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_btc -pkgpath gno.land/r/gnoswap/test_token/test_btc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20397ugnot -gas-wanted 20397000 -memo "" gnoswap_admin
 	@echo
 
 deploy-dai:
 	$(info ************ deploy dai ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/dai -pkgpath gno.land/r/gnoswap/test_token/dai -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_dai -pkgpath gno.land/r/gnoswap/test_token/test_dai -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
 	@echo
 
 deploy-eth:
 	$(info ************ deploy eth ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/eth -pkgpath gno.land/r/gnoswap/test_token/eth -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20471ugnot -gas-wanted 20471000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_eth -pkgpath gno.land/r/gnoswap/test_token/test_eth -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20471ugnot -gas-wanted 20471000 -memo "" gnoswap_admin
 	@echo
 
 deploy-photon:
 	$(info ************ deploy photon ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/photon -pkgpath gno.land/r/gnoswap/test_token/photon -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20400ugnot -gas-wanted 20400000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_photon -pkgpath gno.land/r/gnoswap/test_token/test_photon -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20400ugnot -gas-wanted 20400000 -memo "" gnoswap_admin
 	@echo
 
 deploy-sol:
 	$(info ************ deploy sol ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/sol -pkgpath gno.land/r/gnoswap/test_token/sol -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20297ugnot -gas-wanted 20297000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_sol -pkgpath gno.land/r/gnoswap/test_token/test_sol -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20297ugnot -gas-wanted 20297000 -memo "" gnoswap_admin
 	@echo
 
 deploy-trx:
 	$(info ************ deploy trx ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/trx -pkgpath gno.land/r/gnoswap/test_token/trx -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_trx -pkgpath gno.land/r/gnoswap/test_token/test_trx -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
 	@echo
 
 deploy-usdc:
 	$(info ************ deploy usdc ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/usdc -pkgpath gno.land/r/gnoswap/test_token/usdc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20182ugnot -gas-wanted 20182000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_usdc -pkgpath gno.land/r/gnoswap/test_token/test_usdc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20182ugnot -gas-wanted 20182000 -memo "" gnoswap_admin
 	@echo
 
 deploy-usdt:
 	$(info ************ deploy usdt ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/usdt -pkgpath gno.land/r/gnoswap/test_token/usdt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_usdt -pkgpath gno.land/r/gnoswap/test_token/test_usdt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
 	@echo
 
 deploy-governance-v1:

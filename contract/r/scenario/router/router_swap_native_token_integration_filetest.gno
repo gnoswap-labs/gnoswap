@@ -31,7 +31,6 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/test_token/usdc"
 )
 
 var (
@@ -48,7 +47,7 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	usdcPath   = "gno.land/r/gnoswap/test_token/usdc"
+	usdcPath   = "gno.land/r/gnoswap/test_token/test_usdc"
 
 	gnotPath = "gno.land/r/gnoland/wugnot"
 
@@ -127,20 +126,20 @@ func setupPoolsAndLiquidity() {
 
 	// GNS/USDC pool
 	gns.Approve(cross, poolAddr, 100000000)
-	usdc.Approve(cross, poolAddr, 100000000)
+	test_usdc.Approve(cross, poolAddr, 100000000)
 	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
 	// Transfer tokens to user
 	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 10000000}})
 	gns.Transfer(cross, userAddr, 10000000)
-	usdc.Transfer(cross, userAddr, 10000000)
+	test_usdc.Transfer(cross, userAddr, 10000000)
 
 	// Verify user balances
 	testing.SetRealm(userRealm)
 	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
 	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	userGnsBalance := gns.BalanceOf(userAddr)
-	userUsdcBalance := usdc.BalanceOf(userAddr)
+	userUsdcBalance := test_usdc.BalanceOf(userAddr)
 
 	println("[INFO] User initial balances:")
 	println("  GNOT:", userGnotBalance)
@@ -256,11 +255,11 @@ func testMultiHopGnotToUsdc() {
 	// Deposit already done in main()
 
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
-	prevUsdcBalance := usdc.BalanceOf(userAddr)
+	prevUsdcBalance := test_usdc.BalanceOf(userAddr)
 
 	// Approve for router fees
 	gns.Approve(cross, routerAddr, max_approve)
-	usdc.Approve(cross, routerAddr, max_approve)
+	test_usdc.Approve(cross, routerAddr, max_approve)
 	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop swap
@@ -269,7 +268,7 @@ func testMultiHopGnotToUsdc() {
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/usdc:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoswap/test_token/test_usdc:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -277,7 +276,7 @@ func testMultiHopGnotToUsdc() {
 	)
 
 	afterWugnotBalance := wugnot.BalanceOf(userAddr)
-	afterUsdcBalance := usdc.BalanceOf(userAddr)
+	afterUsdcBalance := test_usdc.BalanceOf(userAddr)
 
 	println("[INFO] WUGNOT spent:", prevWugnotBalance-afterWugnotBalance)
 	println("[INFO] USDC received:", afterUsdcBalance-prevUsdcBalance)
@@ -293,11 +292,11 @@ func testMultiHopUsdcToGnot() {
 	println("[INFO] Testing Multi-hop: USDC → GNS → 1,000,000 WUGNOT")
 	testing.SetRealm(userRealm)
 
-	prevUsdcBalance := usdc.BalanceOf(userAddr)
+	prevUsdcBalance := test_usdc.BalanceOf(userAddr)
 	prevWugnotBalance := wugnot.BalanceOf(userAddr)
 
 	// Approve tokens
-	usdc.Approve(cross, routerAddr, max_approve)
+	test_usdc.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap
@@ -306,13 +305,13 @@ func testMultiHopUsdcToGnot() {
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/test_token/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
+		"gno.land/r/gnoswap/test_token/test_usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
-	afterUsdcBalance := usdc.BalanceOf(userAddr)
+	afterUsdcBalance := test_usdc.BalanceOf(userAddr)
 	afterWugnotBalance := wugnot.BalanceOf(userAddr)
 
 	println("[INFO] USDC spent:", prevUsdcBalance-afterUsdcBalance)
@@ -327,7 +326,7 @@ func testMultiHopUsdcToGnot() {
 	// Verify no intermediate fund locking
 	routerWugnotBalance := wugnot.BalanceOf(routerAddr)
 	routerGnsBalance := gns.BalanceOf(routerAddr)
-	routerUsdcBalance := usdc.BalanceOf(routerAddr)
+	routerUsdcBalance := test_usdc.BalanceOf(routerAddr)
 
 	println("[INFO] Router final balances:")
 	println("  WUGNOT:", routerWugnotBalance)

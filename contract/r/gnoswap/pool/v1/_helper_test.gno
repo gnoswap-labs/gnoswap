@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/test_token/usdc"
+	"gno.land/r/gnoswap/test_token/test_usdc"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -432,7 +432,7 @@ func burnObl(addr address) {
 
 func burnUsdc(addr address) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
+	test_usdc.Burn(cross, addr, test_usdc.BalanceOf(addr))
 }
 
 func TestBurnTokens(t *testing.T) {

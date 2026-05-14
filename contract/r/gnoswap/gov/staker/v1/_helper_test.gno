@@ -35,7 +35,7 @@ var (
 	bazPath  string = "gno.land/r/onbloc/baz"
 	quxPath  string = "gno.land/r/onbloc/qux"
 	oblPath  string = "gno.land/r/onbloc/obl"
-	usdcPath string = "gno.land/r/gnoswap/test_token/usdc"
+	usdcPath string = "gno.land/r/gnoswap/test_token/test_usdc"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

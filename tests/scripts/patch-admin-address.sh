@@ -10,16 +10,16 @@ OLD_ADDRESS="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 # Static list of files to process (from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2)
 TARGET_FILES=(
     "contract/r/gnoswap/rbac/consts.gno"
-    "contract/r/gnoswap/test_token/atom/atom.gno"
-    "contract/r/gnoswap/test_token/atone/atone.gno"
-    "contract/r/gnoswap/test_token/btc/btc.gno"
-    "contract/r/gnoswap/test_token/dai/dai.gno"
-    "contract/r/gnoswap/test_token/eth/eth.gno"
-    "contract/r/gnoswap/test_token/photon/photon.gno"
-    "contract/r/gnoswap/test_token/sol/sol.gno"
-    "contract/r/gnoswap/test_token/trx/trx.gno"
-    "contract/r/gnoswap/test_token/usdc/usdc.gno"
-    "contract/r/gnoswap/test_token/usdt/usdt.gno"
+    "contract/r/gnoswap/test_token/test_atom/atom.gno"
+    "contract/r/gnoswap/test_token/test_atone/atone.gno"
+    "contract/r/gnoswap/test_token/test_btc/btc.gno"
+    "contract/r/gnoswap/test_token/test_dai/dai.gno"
+    "contract/r/gnoswap/test_token/test_eth/eth.gno"
+    "contract/r/gnoswap/test_token/test_photon/photon.gno"
+    "contract/r/gnoswap/test_token/test_sol/sol.gno"
+    "contract/r/gnoswap/test_token/test_trx/trx.gno"
+    "contract/r/gnoswap/test_token/test_usdc/test_usdc.gno"
+    "contract/r/gnoswap/test_token/test_usdt/usdt.gno"
 )
 
 # Check if new address is provided
